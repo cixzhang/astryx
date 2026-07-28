@@ -39,22 +39,40 @@ import {neutralIconRegistry} from './icons';
 const neutralSyntax = defineSyntaxTheme({
   name: 'xds-neutral',
   tokens: {
-    keyword: ['#700084', '#efa8ff'],    // purple T30/T80
-    string: ['#005600', '#a6d2a2'],     // green (sat T30 / pastel T80)
-    comment: ['#737373', '#a3a3a3'],    // neutral
-    number: ['#6e3500', '#ffb37f'],     // orange
-    function: ['#00458c', '#a0caff'],   // blue T30/T80 H=255
-    type: ['#700084', '#efa8ff'],       // purple
-    variable: ['#171717', '#e5e5e5'],   // near-black / near-white
-    operator: ['#737373', '#a3a3a3'],   // neutral
-    constant: ['#6e3500', '#ffb37f'],   // orange
-    tag: ['#89001a', '#ffaeaa'],        // red
-    attribute: ['#584400', '#eec12f'],  // yellow
-    property: ['#005348', '#83dac9'],   // teal
-    punctuation: ['#a3a3a3', '#525252'],// neutral
+    keyword: ['#700084', '#efa8ff'], // purple T30/T80
+    string: ['#005600', '#a6d2a2'], // green (sat T30 / pastel T80)
+    comment: ['#737373', '#a3a3a3'], // neutral
+    number: ['#6e3500', '#ffb37f'], // orange
+    function: ['#00458c', '#a0caff'], // blue T30/T80 H=255
+    type: ['#700084', '#efa8ff'], // purple
+    variable: ['#171717', '#e5e5e5'], // near-black / near-white
+    operator: ['#737373', '#a3a3a3'], // neutral
+    constant: ['#6e3500', '#ffb37f'], // orange
+    tag: ['#89001a', '#ffaeaa'], // red
+    attribute: ['#584400', '#eec12f'], // yellow
+    property: ['#005348', '#83dac9'], // teal
+    punctuation: ['#a3a3a3', '#525252'], // neutral
     background: ['#fafafa', '#0a0a0a'],
   },
 });
+
+/**
+ * Canonical filled semantic colors — the single source of truth for the
+ * "filled" status treatment. The Badge background is the reference; the
+ * ProgressBar fill and the status dots (StatusDot + AvatarStatusDot) all pull
+ * from this same map, so a "success" badge, bar, and dot are the exact same
+ * green in both light and dark mode.
+ *
+ * Values are the saturated palette stops (light) paired with the dark-mode
+ * tonal-palette stop (chroma×0.85, +5 tone-lift). Dark stops are lighter so
+ * dark text stays legible on the badge; dots/bars (no text) use them as-is.
+ */
+const filledSemantic = {
+  accent: 'light-dark(#0074e2, #6d9cfe)', // blue T50 / dark T60 (badge "info")
+  success: 'light-dark(#198100, #64af4c)', // green T45 / dark T60
+  warning: '#ffce2f', // yellow T85, same in both modes
+  error: 'light-dark(#e33f4a, #ff705d)', // red T55 / dark T60
+} as const;
 
 export const neutralTheme = defineTheme({
   name: 'neutral',
@@ -83,7 +101,7 @@ export const neutralTheme = defineTheme({
     },
   },
 
-  // Motion: snappier than default to match shadcn/Tailwind conventions.
+  // Motion: snappier than default for a tighter, more responsive feel.
   // Produces: fast-min=95ms, fast=125ms, fast-max=165ms,
   //           medium-min=225ms, medium=300ms, medium-max=400ms.
   motion: {fast: 125, medium: 300, slow: 700, ratio: 0.75},
@@ -127,39 +145,39 @@ export const neutralTheme = defineTheme({
     // All values use the OKLCH Neutral tonal palette (chroma=0).
     // =========================================================================
     '--color-background-surface': ['#ffffff', '#262626'],
-    '--color-background-body':    ['#f1f1f1', '#1b1b1b'],
-    '--color-background-card':    ['#ffffff', '#1b1b1b'],
+    '--color-background-body': ['#f1f1f1', '#1b1b1b'],
+    '--color-background-card': ['#ffffff', '#1b1b1b'],
     '--color-background-popover': ['#ffffff', '#1b1b1b'],
-    '--color-background-muted':   ['#f1f1f1', '#1b1b1b'],
+    '--color-background-muted': ['#f1f1f1', '#1b1b1b'],
 
     // Accent + neutral surface tints (sit alongside backgrounds)
-    '--color-accent':       ['#262626', '#ebebeb'],
+    '--color-accent': ['#262626', '#ebebeb'],
     '--color-accent-muted': ['#f1f1f1', '#262626'],
-    '--color-neutral':      ['#0000000F', '#FFFFFF1A'],
+    '--color-neutral': ['#0000000F', '#FFFFFF1A'],
 
     // Overlays (modal scrims, hover/pressed tints)
-    '--color-overlay':         ['#00000080', '#000000CC'],
-    '--color-overlay-hover':   ['#0000000D', '#FFFFFF0D'],
+    '--color-overlay': ['#00000080', '#000000CC'],
+    '--color-overlay-hover': ['#0000000D', '#FFFFFF0D'],
     '--color-overlay-pressed': ['#0000001A', '#FFFFFF1A'],
 
     // Text
-    '--color-text-primary':   ['#171717', '#fafafa'],
+    '--color-text-primary': ['#171717', '#fafafa'],
     '--color-text-secondary': ['#737373', '#a3a3a3'],
-    '--color-text-disabled':  ['#a3a3a3', '#525252'],
-    '--color-text-accent':    ['#262626', '#ebebeb'],
-    '--color-on-dark':    '#ffffff',
-    '--color-on-light':   '#171717',
+    '--color-text-disabled': ['#a3a3a3', '#525252'],
+    '--color-text-accent': ['#262626', '#ebebeb'],
+    '--color-on-dark': '#ffffff',
+    '--color-on-light': '#171717',
     // Contrast: neutral accent is near-black (L) / near-white (D)
-    '--color-on-accent':  ['#ffffff', '#171717'],
+    '--color-on-accent': ['#ffffff', '#171717'],
     '--color-on-success': ['#ffffff', '#171717'],
-    '--color-on-error':   ['#ffffff', '#171717'],
+    '--color-on-error': ['#ffffff', '#171717'],
     '--color-on-warning': '#171717',
 
     // Icon
-    '--color-icon-accent':    ['#262626', '#ebebeb'],
-    '--color-icon-primary':   ['#171717', '#fafafa'],
+    '--color-icon-accent': ['#262626', '#ebebeb'],
+    '--color-icon-primary': ['#171717', '#fafafa'],
     '--color-icon-secondary': ['#737373', '#a3a3a3'],
-    '--color-icon-disabled':  ['#a3a3a3', '#525252'],
+    '--color-icon-disabled': ['#a3a3a3', '#525252'],
 
     // Status / Sentiment — dark mode follows the issue #2150 rubric:
     //
@@ -372,8 +390,8 @@ export const neutralTheme = defineTheme({
     // =========================================================================
     button: {
       'variant:destructive': {
-        backgroundColor: 'var(--color-error-muted)',  // locked pastel red bg
-        color: 'var(--color-error)',                  // locked T30 red — matches banner/input error text
+        backgroundColor: 'var(--color-error-muted)', // locked pastel red bg
+        color: 'var(--color-error)', // locked T30 red — matches banner/input error text
       },
     },
 
@@ -399,9 +417,8 @@ export const neutralTheme = defineTheme({
       //          and tames the §4 vibration. Same dark-text-on-bright-bg
       //          treatment that warning yellow uses in both modes.
       'variant:info': {
-        // Light: T50 #0074e2 (palette saturated stop)
-        // Dark : T60 stop from dark-mode tonal palette of source #0074e2
-        backgroundColor: 'light-dark(#0074e2, #6d9cfe)',
+        // Source of truth for the filled semantic colors (see filledSemantic).
+        backgroundColor: filledSemantic.accent,
         color: 'light-dark(#ffffff, #171717)',
       },
       'variant:neutral': {
@@ -413,23 +430,16 @@ export const neutralTheme = defineTheme({
         color: 'var(--color-text-gray)',
       },
       'variant:success': {
-        // Light: T45 #198100 (palette saturated stop)
-        // Dark : T60 stop from dark-mode tonal palette of source #198100
-        backgroundColor: 'light-dark(#198100, #64af4c)',
+        backgroundColor: filledSemantic.success,
         color: 'light-dark(#ffffff, #171717)',
       },
       'variant:warning': {
-        // Yellow stays at the same hex in both modes — chroma reduction
-        // is barely visible at T85, and dark text on yellow doesn't
-        // suffer from the §4 vibration concern.
-        backgroundColor: '#ffce2f',
+        // Yellow stays at the same hex in both modes.
+        backgroundColor: filledSemantic.warning,
         color: '#171717',
       },
       'variant:error': {
-        // Light: T55 #e33f4a (palette saturated stop)
-        // Dark : T60 stop from dark-mode tonal palette of Tailwind red-600
-        //        source #dc2626 (kept on H=27 alarm-red rather than coral)
-        backgroundColor: 'light-dark(#e33f4a, #ff705d)',
+        backgroundColor: filledSemantic.error,
         color: 'light-dark(#ffffff, #171717)',
       },
 
@@ -556,25 +566,48 @@ export const neutralTheme = defineTheme({
         // mode inherits T35 #525252 — same one-step-lighter behavior.
         '--color-background-muted': 'var(--color-border-emphasized)',
       },
-      // Vivid stops match the filled semantic badge colors (info/success/
-      // warning/error variants in the badge override above). Same hex
-      // values; documented per role with palette provenance.
+      // Fill colors pull from the shared filledSemantic map (= badge bg), so
+      // bar and badge stay identical in both light and dark mode.
       'variant:accent': {
-        // Blue T50 saturated stop (= variant:info badge bg)
-        '--color-accent': '#0074e2',
+        '--color-accent': filledSemantic.accent,
       },
       'variant:success': {
-        // Green T45 saturated stop (= variant:success badge bg)
-        '--color-success': '#198100',
+        '--color-success': filledSemantic.success,
       },
       'variant:warning': {
-        // Yellow T85 saturated stop (= variant:warning badge bg)
-        '--color-warning': '#ffce2f',
+        '--color-warning': filledSemantic.warning,
       },
       'variant:error': {
-        // Red T55 saturated stop (= variant:error badge bg)
-        '--color-error': '#e33f4a',
+        '--color-error': filledSemantic.error,
       },
+    },
+
+    // =========================================================================
+    // StatusDot — filled presence/indicator dot. Pulls from the shared
+    // filledSemantic map (= badge bg / progressbar fill) so a "success" dot,
+    // badge, and bar are the exact same green. Set as backgroundColor so the
+    // surface-colored ring (border) is preserved. Overriding here rather than
+    // the global --color-success/--color-error keeps those tokens on the
+    // subdued "text stop" values that banners/inputs still rely on.
+    //
+    // Neutral is intentionally left on its default (--color-icon-secondary):
+    // the badge's neutral chip bg is a pale surface, unusable for a small dot.
+    // =========================================================================
+    statusdot: {
+      'variant:accent': {backgroundColor: filledSemantic.accent},
+      'variant:success': {backgroundColor: filledSemantic.success},
+      'variant:warning': {backgroundColor: filledSemantic.warning},
+      'variant:error': {backgroundColor: filledSemantic.error},
+    },
+
+    // =========================================================================
+    // AvatarStatusDot — same shared filled colors as StatusDot / Badge.
+    // Only success + error are semantic status colors here; neutral stays on
+    // its default (--color-text-secondary).
+    // =========================================================================
+    'avatar-status-dot': {
+      'variant:success': {backgroundColor: filledSemantic.success},
+      'variant:error': {backgroundColor: filledSemantic.error},
     },
 
     // =========================================================================

@@ -52,9 +52,22 @@ export const categories: SandboxCategory[] = [
       'Component demos, composition patterns, and interactive examples.',
     pages: [
       {
+        name: 'Mobile Prototypes',
+        href: '/pages/mobile-prototypes/',
+        description:
+          'Interactive mobile interaction prototypes (bottom sheets, action sheets, drawers) for the component migration table',
+      },
+      {
+        name: 'TextArea Counter',
+        href: '/pages/textarea-counter/',
+        description:
+          'Explore where the character counter sits on the TextArea — below, inline with the label, or overlaid inside the field',
+      },
+      {
         name: 'Card Examples',
         href: '/pages/example-cards/',
-        description: 'Astryx components showcased in realistic card compositions',
+        description:
+          'Astryx components showcased in realistic card compositions',
       },
       {
         name: 'Table Overview',
@@ -158,7 +171,8 @@ export const categories: SandboxCategory[] = [
   {
     label: 'Tools',
     slug: 'tools',
-    description: 'Interactive tools for building and exploring Astryx components.',
+    description:
+      'Interactive tools for building and exploring Astryx components.',
     pages: [
       {
         name: 'CodeBlock Perf',
