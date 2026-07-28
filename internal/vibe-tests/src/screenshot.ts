@@ -51,25 +51,25 @@ function parseArgs(): {iteration: string; prompt?: string} {
 
 function generatePreviewCode(
   componentPath: string,
-  target: 'astryx' | 'baseline' | 'xds-tailwind',
+  target: 'astryx' | 'baseline' | 'astryx-tailwind',
 ): string {
   const relPath = path.relative(path.join(APP_DIR, 'src'), componentPath);
   const importPath = relPath.replace(/\.tsx$/, '').replace(/\\/g, '/');
 
-  if (target === 'astryx' || target === 'xds-tailwind') {
-    // XDS+Tailwind uses the same XDS wrapper but also imports Tailwind CSS
+  if (target === 'astryx' || target === 'astryx-tailwind') {
+    // Astryx+Tailwind uses the same Astryx wrapper but also imports Tailwind CSS
     const tailwindImport =
-      target === 'xds-tailwind' ? `\nimport '../tailwind.css';` : '';
+      target === 'astryx-tailwind' ? `\nimport '../tailwind.css';` : '';
     return `
 import React from 'react';
 import Component from '${importPath}';${tailwindImport}
-import XDSWrapper from './xds-wrapper';
+import AstryxWrapper from './astryx-wrapper';
 
 export default function Preview({ theme }: { theme: string }) {
   return (
-    <XDSWrapper theme={theme}>
+    <AstryxWrapper theme={theme}>
       <Component />
-    </XDSWrapper>
+    </AstryxWrapper>
   );
 }
 `;
@@ -108,7 +108,10 @@ async function main() {
     prompts: Array<{id: string; category: string}>;
   }>(manifestPath);
 
-  const target = manifest.config.target as 'astryx' | 'baseline' | 'xds-tailwind';
+  const target = manifest.config.target as
+    | 'astryx'
+    | 'baseline'
+    | 'astryx-tailwind';
 
   // Determine which prompts to screenshot
   let promptIds = manifest.prompts.map(p => p.id);
@@ -152,10 +155,10 @@ async function main() {
   ensureDir(screenshotsDir);
 
   // Start Vite dev server
-  // Use the preview config for xds-tailwind (includes PostCSS/Tailwind),
+  // Use the preview config for astryx-tailwind (includes PostCSS/Tailwind),
   // default config for other targets
   const configFile =
-    target === 'xds-tailwind'
+    target === 'astryx-tailwind'
       ? path.join(APP_DIR, 'vite.config.preview.ts')
       : undefined;
 

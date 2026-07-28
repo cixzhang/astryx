@@ -95,6 +95,29 @@ describe('Markdown', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
+  it('renders a footer reference-style link as an anchor', () => {
+    // The XDS parser previously had no reference-definition support, so this
+    // rendered as literal `[the docs][docs]` text with the definition leaking
+    // as a paragraph. It now resolves to a real anchor.
+    render(
+      <Markdown>
+        {'See [the docs][docs] here.\n\n[docs]: https://example.com/docs\n'}
+      </Markdown>,
+    );
+    const link = screen.getByText('the docs');
+    expect(link.tagName).toBe('A');
+    expect(link.getAttribute('href')).toBe('https://example.com/docs');
+    // The definition line must not leak into the rendered output.
+    expect(screen.queryByText(/\[docs\]:/)).toBeNull();
+  });
+
+  it('renders a shortcut reference-style link as an anchor', () => {
+    render(<Markdown>{'See [the docs].\n\n[the docs]: /docs'}</Markdown>);
+    const link = screen.getByText('the docs');
+    expect(link.tagName).toBe('A');
+    expect(link.getAttribute('href')).toBe('/docs');
+  });
+
   it('does not add target="_blank" to relative links', () => {
     render(<Markdown>{'[internal](/page)'}</Markdown>);
     const link = screen.getByText('internal');
@@ -187,6 +210,17 @@ describe('Markdown', () => {
     expect(document.querySelector('table')).toBeInTheDocument();
     expect(document.querySelectorAll('th')).toHaveLength(2);
     expect(document.querySelectorAll('td')).toHaveLength(2);
+  });
+
+  it('makes the table scroll wrapper keyboard-focusable', () => {
+    render(<Markdown>{'| A | B |\n| --- | --- |\n| 1 | 2 |'}</Markdown>);
+    const table = document.querySelector('table');
+    expect(table).toBeInTheDocument();
+    // The GFM table's outer overflow wrapper is keyboard-focusable so keyboard
+    // users can horizontally scroll a wide table.
+    const wrapper = table!.closest('[role="group"][tabindex="0"]');
+    expect(wrapper).toBeTruthy();
+    expect(wrapper).toHaveAttribute('aria-label', 'Table');
   });
 
   it('renders horizontal rules', () => {

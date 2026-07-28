@@ -33,6 +33,7 @@ import {
 import {mergeProps, mergeRefs} from '../utils';
 import type {ResizableProps} from './useResizable';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 const KEYBOARD_STEP = 10;
 const KEYBOARD_LARGE_STEP = 50;
@@ -307,7 +308,7 @@ export function ResizeHandle({
   hasDivider = false,
   isAlwaysVisible = true,
   pillPlacement = 'auto',
-  label = 'Resize handle',
+  label: labelFromProps,
   resizable,
   children,
   xstyle,
@@ -315,7 +316,12 @@ export function ResizeHandle({
   ref,
   ...props
 }: ResizeHandleProps) {
+  const t = useTranslator();
+  const label = labelFromProps ?? t('@astryx.resizable.handle.label');
   const handleRef = useRef<HTMLDivElement>(null);
+  // Removes the in-flight drag's window listeners (and resets body styles).
+  // Held in a ref so unmount can tear down a drag that never got a pointerup.
+  const dragCleanupRef = useRef<(() => void) | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -375,10 +381,12 @@ export function ResizeHandle({
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onCancel);
+        dragCleanupRef.current = null;
       }
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
       window.addEventListener('pointercancel', onCancel);
+      dragCleanupRef.current = cleanup;
     },
     [isDisabled, resizable, isHorizontal, getRTLMultiplier, sign],
   );
@@ -454,14 +462,19 @@ export function ResizeHandle({
   }, [isDisabled, resizable]);
 
   // --- Cleanup on unmount ---
+  // A drag in flight when the handle unmounts never gets its pointerup, so
+  // tear down the window listeners here too — otherwise every pointermove
+  // keeps driving the (still-mounted) region's resize state after the handle
+  // is gone, and the body cursor/user-select overrides stick.
   useEffect(() => {
     return () => {
-      if (isDragging) {
+      if (dragCleanupRef.current) {
+        dragCleanupRef.current();
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       }
     };
-  }, [isDragging]);
+  }, []);
 
   // --- ARIA ---
   const ariaValueNow = resizable ? resizable._size : undefined;
@@ -510,7 +523,16 @@ export function ResizeHandle({
         ),
         className,
       )}
-      {...props}>
+      {...props}
+      // Keyboard resizing must fire from the focusable separator, not a child:
+      // keydown fires on the focused element and bubbles up, so a handler on a
+      // descendant never runs (per the WAI-ARIA window-splitter pattern).
+      // Placed after {...props} and composed with any consumer onKeyDown so
+      // this accessibility-critical handler can't be clobbered by a passed prop.
+      onKeyDown={e => {
+        props.onKeyDown?.(e);
+        handleKeyDown(e);
+      }}>
       {/* Wider invisible hit area for pointer interaction */}
       <div
         {...stylex.props(
@@ -528,7 +550,6 @@ export function ResizeHandle({
             setIsHovered(false);
           }
         }}
-        onKeyDown={handleKeyDown}
       />
       {/* Pill grip indicator — themed via .astryx-resize-handle-pill */}
       {children ?? (

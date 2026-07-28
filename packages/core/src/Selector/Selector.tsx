@@ -4,13 +4,15 @@
 
 /**
  * @file Selector.tsx
- * @input Uses React, StyleX, usePopover, Icon
+ * @input Uses React, StyleX, usePopover, useTooltip, Icon, InputGroupContext
  * @output Exports Selector component
  * @position Core implementation; consumed by index.ts
  *
  * SYNC: When modified, update:
  * - /packages/core/src/Selector/Selector.doc.mjs
+ * - /packages/core/src/Selector/Selector.test.tsx
  * - /packages/core/src/Selector/index.ts
+ * - /apps/storybook/stories/InputGroup.stories.tsx
  * - /packages/cli/templates/blocks/components/Selector/ (showcase blocks)
  */
 
@@ -27,6 +29,7 @@ import React, {
 } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {usePopover} from '../Popover/usePopover';
+import {useTooltip} from '../Tooltip';
 import {Icon, renderIconSlot, type IconType} from '../Icon';
 import type {IconName} from '../Icon';
 import {
@@ -34,11 +37,13 @@ import {
   inputStatusBorderStyles,
   inputStatusHoverShadowStyles,
   inputWrapperStyles,
+  type FieldStatusVariant,
 } from '../Field';
 import {Divider} from '../Divider';
 import {layerAnimations} from '../Layer/layerAnimations.stylex';
 import type {LayerPlacement} from '../Layer/useLayer';
 import {Spinner} from '../Spinner';
+import {useAnnounce} from '../hooks/useAnnounce';
 import {
   colorVars,
   sizeVars,
@@ -61,11 +66,15 @@ import {
 } from './utils';
 import {useCombobox, useSelectedItemOffset} from './hooks';
 import {SelectorOption} from './SelectorOption';
-import {mergeProps} from '../utils';
+import {getInputARIA, mergeProps} from '../utils';
 import {useSize} from '../SizeContext/SizeContext';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {themeProps} from '../utils/themeProps';
+import {groupStyles} from '../InputGroup/groupStyles';
+import {useInputGroup} from '../InputGroup/InputGroupContext';
+import {VisuallyHidden} from '../VisuallyHidden';
+import {useTranslator} from '../i18n';
 
 const styles = stylex.create({
   // Trigger container — the enhanced click target wrapping the combobox button and clear button as siblings
@@ -245,7 +254,7 @@ const styles = stylex.create({
     backgroundColor: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    textAlign: 'left',
+    textAlign: 'start',
     outline: 'none',
   },
   itemContent: {
@@ -370,6 +379,28 @@ interface SelectorPropsBase<
   isDisabled?: boolean;
 
   /**
+   * Explains why the selector is disabled. When set together with
+   * `isDisabled`, the selector shows a tooltip with this text on hover and
+   * keyboard focus, and the trigger stays focusable (via `aria-disabled`)
+   * so the reason is discoverable by keyboard and assistive technology.
+   * Activation stays blocked.
+   *
+   * Use this instead of wrapping a disabled selector in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <Selector
+   *   label="Owner"
+   *   options={owners}
+   *   isDisabled
+   *   disabledMessage="You need the Editor role to change this"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
+
+  /**
    * The options to display in the selector.
    * Can be strings, objects, dividers, or sections.
    */
@@ -403,6 +434,13 @@ interface SelectorPropsBase<
    * If message is provided, displays a message box below the selector.
    */
   status?: SelectorStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
 
   /**
    * Width of the field. Numbers are treated as pixels, strings are used as-is
@@ -456,6 +494,13 @@ interface SelectorPropsBase<
   isDefaultOpen?: boolean;
 
   /**
+   * The HTML name attribute for form submissions. When set, a hidden input
+   * carries the selected value under this name, matching how a native
+   * select serializes.
+   */
+  htmlName?: string;
+
+  /**
    * Test ID for testing frameworks.
    */
   'data-testid'?: string;
@@ -474,34 +519,46 @@ type SelectorPropsNonClearable<
   changeAction?: (value: string) => void | Promise<void>;
 };
 
-type SelectorPropsClearable<
-  T extends SelectorOptionType = SelectorOptionType,
-> = SelectorPropsBase<T> & {
-  /**
-   * Whether to show a clear button when a value is selected.
-   * When clicked, resets the value to `null` and returns focus to the trigger.
-   *
-   * When enabled, `value` and `onChange` widen to include `null`.
-   */
-  hasClear: true;
-  value: string | null;
-  onChange?: (value: string | null) => void;
-  changeAction?: (value: string | null) => void | Promise<void>;
-};
+type SelectorPropsClearable<T extends SelectorOptionType = SelectorOptionType> =
+  SelectorPropsBase<T> & {
+    /**
+     * Whether to show a clear button when a value is selected.
+     * When clicked, resets the value to `null` and returns focus to the trigger.
+     *
+     * When enabled, `value` and `onChange` widen to include `null`.
+     */
+    hasClear: true;
+    value: string | null;
+    onChange?: (value: string | null) => void;
+    changeAction?: (value: string | null) => void | Promise<void>;
+  };
 
-export type SelectorProps<
-  T extends SelectorOptionType = SelectorOptionType,
-> = SelectorPropsNonClearable<T> | SelectorPropsClearable<T>;
+export type SelectorProps<T extends SelectorOptionType = SelectorOptionType> =
+  SelectorPropsNonClearable<T> | SelectorPropsClearable<T>;
 
 /**
  * Default option renderer
  */
 function DefaultOption({option}: {option: SelectorOptionData}) {
   return (
-    <SelectorOption
-      icon={option.icon}
-      label={option.label ?? option.value}
-    />
+    <SelectorOption icon={option.icon} label={option.label ?? option.value} />
+  );
+}
+
+// Case-insensitive substring filter over the selectable options. Shared by the
+// `filteredItems` memo (rendering) and the search-change handler, which needs
+// the count for the *next* query synchronously to announce it exactly once per
+// keystroke rather than reacting to state in an effect.
+function filterOptionsByQuery(
+  items: SelectorOptionData[],
+  query: string,
+): SelectorOptionData[] {
+  if (!query) {
+    return items;
+  }
+  const q = query.toLowerCase();
+  return items.filter(item =>
+    (item.label ?? item.value).toLowerCase().includes(q),
   );
 }
 
@@ -522,6 +579,7 @@ function DefaultOption({option}: {option: SelectorOptionData}) {
 export function Selector<T extends SelectorOptionType>(
   props: SelectorProps<T>,
 ) {
+  const t = useTranslator();
   const {
     label,
     isLabelHidden = false,
@@ -529,19 +587,22 @@ export function Selector<T extends SelectorOptionType>(
     isOptional = false,
     isRequired = false,
     isDisabled = false,
+    disabledMessage,
     options,
     value,
     onChange,
     changeAction,
     isLoading = false,
-    placeholder = 'Select...',
+    placeholder: placeholderFromProps,
     size: sizeProp,
     status,
+    statusVariant = 'attached',
     labelTooltip,
     startIcon,
+    htmlName,
     renderOption,
     hasSearch = false,
-    searchPlaceholder = 'Search...',
+    searchPlaceholder: searchPlaceholderFromProps,
     placement,
     isDefaultOpen = false,
     'data-testid': testId,
@@ -552,6 +613,9 @@ export function Selector<T extends SelectorOptionType>(
     hasClear: hasClearProp,
     ...rest
   } = props as SelectorPropsClearable<T>;
+  const placeholder = placeholderFromProps ?? t('@astryx.selector.placeholder');
+  const searchPlaceholder =
+    searchPlaceholderFromProps ?? t('@astryx.selector.searchPlaceholder');
   const hasClear = hasClearProp === true;
   const size = useSize(sizeProp, 'md');
 
@@ -561,9 +625,11 @@ export function Selector<T extends SelectorOptionType>(
   const listboxId = useId();
   const descriptionId = useId();
   const statusMessageId = useId();
+  const inputLabelId = useId();
   const searchId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const inputGroup = useInputGroup();
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -571,14 +637,29 @@ export function Selector<T extends SelectorOptionType>(
   const [optimisticValue, setOptimisticValue] = useOptimistic(normalizedValue);
   const isBusy = isLoading || optimisticValue !== normalizedValue;
 
-  // Build aria-describedby
-  const ariaDescribedBy =
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the trigger container (which already exists)
+  // and the trigger button stays perceivable via aria-disabled instead of the
+  // disabled attribute. Activation is blocked by the isDisabled guards in
+  // useCombobox (onTriggerClick / onKeyDown).
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The container div is not naturally focusable; focusin bubbles up from
+    // the trigger button, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
+
+  const {ariaLabelledBy, ariaDescribedBy} = getInputARIA(
+    inputLabelId,
     [
       description ? descriptionId : null,
       status?.message ? statusMessageId : null,
-    ]
-      .filter(Boolean)
-      .join(' ') || undefined;
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
+    ],
+    inputGroup,
+  );
 
   // Flatten options for keyboard navigation
   const selectableItems = useMemo(
@@ -587,15 +668,10 @@ export function Selector<T extends SelectorOptionType>(
   );
 
   // Filter items by search query
-  const filteredItems = useMemo(() => {
-    if (!searchQuery) {
-      return selectableItems;
-    }
-    const query = searchQuery.toLowerCase();
-    return selectableItems.filter(item =>
-      (item.label ?? item.value).toLowerCase().includes(query),
-    );
-  }, [selectableItems, searchQuery]);
+  const filteredItems = useMemo(
+    () => filterOptionsByQuery(selectableItems, searchQuery),
+    [selectableItems, searchQuery],
+  );
 
   // Find selected item and its index for positioning
   const selectedItemIndex = useMemo(() => {
@@ -611,17 +687,29 @@ export function Selector<T extends SelectorOptionType>(
   // Ref for listbox to measure selected item position
   const listboxRef = useRef<HTMLDivElement>(null);
 
+  // Announce match counts / "No results found" politely as the user types, so
+  // screen-reader users hear how many options remain. Filtering was previously
+  // silent (comboboxes-7). Mirrors BaseTypeahead, which announces from its
+  // query-change callback (not a reactive effect) via the same useAnnounce hook.
+  const announce = useAnnounce();
+
   // Layer for dropdown positioning
   const handleLayerHide = useCallback(() => {
     setSearchQuery('');
+    // Clear any lingering result count when the popover closes so stale status
+    // text does not linger in the a11y tree.
+    announce('');
     triggerRef.current?.focus();
-  }, []);
+  }, [announce]);
 
   const popover = usePopover({
     onHide: handleLayerHide,
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own role="listbox" is the exposed semantics; the trigger
+    // keeps DOM focus, so wrapping it in a modal dialog would misrepresent it.
+    role: 'none',
   });
 
   // Open dropdown on mount when isDefaultOpen is true
@@ -631,6 +719,29 @@ export function Selector<T extends SelectorOptionType>(
     }
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- mount-only: isDefaultOpen is not reactive
   }, []);
+
+  // Announce the filtered result count from the query-change handler (matching
+  // BaseTypeahead) rather than a reactive effect: computing the count for the
+  // next query here fires the announcement exactly once per keystroke and does
+  // not re-speak on unrelated re-renders.
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const nextQuery = event.target.value;
+      setSearchQuery(nextQuery);
+      if (nextQuery.length === 0) {
+        // Emptying the query clears the region rather than announcing a count.
+        announce('');
+        return;
+      }
+      const count = filterOptionsByQuery(selectableItems, nextQuery).length;
+      announce(
+        count === 0
+          ? 'No results found'
+          : `${count} result${count === 1 ? '' : 's'}`,
+      );
+    },
+    [announce, selectableItems],
+  );
 
   // Calculate offset to position selected item over trigger. Explicit
   // placement opts out of the selector-specific overlay behavior and uses the
@@ -652,6 +763,18 @@ export function Selector<T extends SelectorOptionType>(
     selectedItemOffset > 0
       ? {marginBlockStart: `-${selectedItemOffset}px`}
       : undefined;
+
+  // Clear the current value. Shared by the clear button and the keyboard
+  // Delete/Backspace path so clearing is reachable without a mouse.
+  const clearValue = useCallback(() => {
+    onChange?.(null);
+    if (changeAction) {
+      startTransition(async () => {
+        setOptimisticValue(undefined);
+        await changeAction(null);
+      });
+    }
+  }, [onChange, changeAction, startTransition, setOptimisticValue]);
 
   // Selector behavior (keyboard nav, typeahead, selection)
   const {
@@ -689,22 +812,30 @@ export function Selector<T extends SelectorOptionType>(
       },
       [onChange, changeAction, startTransition, setOptimisticValue],
     ),
+    onClear: hasClear ? clearValue : undefined,
     listboxId,
   });
+
+  // Keep the highlighted option visible during keyboard navigation. The
+  // listbox is a fixed-height scroll container, so without this the virtual
+  // cursor walks off-screen once navigation passes the visible window. Mirrors
+  // CommandPaletteItem's scrollIntoView({block: 'nearest'}) behavior.
+  useEffect(() => {
+    if (!popover.isOpen || highlightedIndex < 0) {
+      return;
+    }
+    document
+      .getElementById(getItemId(highlightedIndex))
+      ?.scrollIntoView?.({block: 'nearest'});
+  }, [popover.isOpen, highlightedIndex, getItemId]);
 
   // Handle clear button click
   const handleClear = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation(); // Don't open dropdown
-      onChange?.(null);
-      if (changeAction) {
-        startTransition(async () => {
-          setOptimisticValue(undefined);
-          await changeAction(null);
-        });
-      }
+      clearValue();
     },
-    [onChange, changeAction, startTransition, setOptimisticValue],
+    [clearValue],
   );
 
   // Render search input
@@ -717,16 +848,34 @@ export function Selector<T extends SelectorOptionType>(
         <input
           ref={searchRef}
           id={searchId}
-          role="searchbox"
+          // When hasSearch is set, focus moves into this input on open, so it —
+          // not the trigger — must be the combobox that reports the highlighted
+          // option via aria-activedescendant (comboboxes-4). A bare searchbox
+          // left the highlight silent to screen readers.
+          role="combobox"
+          aria-expanded={popover.isOpen}
           aria-controls={listboxId}
-          aria-label="Search options"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            popover.isOpen && highlightedIndex >= 0
+              ? getItemId(highlightedIndex)
+              : undefined
+          }
+          aria-label={t('@astryx.selector.searchOptions')}
           type="text"
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
           onKeyDown={e => {
+            // Arrow keys navigate options; Enter selects; Escape/Tab close.
+            // Home/End are left to the input for caret movement (APG editable
+            // combobox); PageUp/PageDown are the sanctioned substitute for
+            // jumping to the first/last option.
             if (
               e.key === 'ArrowDown' ||
               e.key === 'ArrowUp' ||
+              e.key === 'PageUp' ||
+              e.key === 'PageDown' ||
+              e.key === 'Enter' ||
               e.key === 'Escape' ||
               e.key === 'Tab'
             ) {
@@ -744,7 +893,12 @@ export function Selector<T extends SelectorOptionType>(
     listboxId,
     searchQuery,
     searchPlaceholder,
+    handleSearchChange,
     onKeyDown,
+    popover.isOpen,
+    highlightedIndex,
+    getItemId,
+    t,
   ]);
 
   // Render an individual item
@@ -812,9 +966,7 @@ export function Selector<T extends SelectorOptionType>(
       const option = options[i];
 
       if (isDivider(option)) {
-        elements.push(
-          <Divider key={`divider-${i}`} xstyle={styles.divider} />,
-        );
+        elements.push(<Divider key={`divider-${i}`} xstyle={styles.divider} />);
       } else if (isSection(option)) {
         const sectionItems: ReactNode[] = [];
         for (const opt of option.options) {
@@ -844,30 +996,15 @@ export function Selector<T extends SelectorOptionType>(
     return elements;
   }, [options, renderItem, hasSearch, searchQuery, filteredItems]);
 
-  return (
-    <Field
-      label={label}
-      isLabelHidden={isLabelHidden}
-      description={description}
-      inputID={triggerId}
-      descriptionID={description ? descriptionId : undefined}
-      isOptional={isOptional}
-      isRequired={isRequired}
-      isDisabled={isDisabled}
-      status={
-        status
-          ? {
-              type: status.type,
-              message: status.message,
-              messageID: status.message ? statusMessageId : undefined,
-            }
-          : undefined
-      }
-      labelTooltip={labelTooltip}
-      width={width}>
+  const selectorContent = (
+    <>
       <div
         ref={el => {
           popover.triggerRef(el);
+          // Anchor + hover/focus listeners for the disabled-message tooltip.
+          // Handlers are gated internally by isEnabled, and anchor names
+          // compose, so attaching unconditionally is safe.
+          disabledMessageTooltip.ref(el);
         }}
         onClick={onTriggerClick}
         data-testid={testId}
@@ -881,6 +1018,7 @@ export function Selector<T extends SelectorOptionType>(
             !selectedItem && styles.triggerPlaceholder,
             status && inputStatusBorderStyles[status.type],
             status && inputStatusHoverShadowStyles[status.type],
+            inputGroup && groupStyles.inGroup,
             xstyle,
           ),
           className,
@@ -888,39 +1026,59 @@ export function Selector<T extends SelectorOptionType>(
         )}>
         {startIcon &&
           renderIconSlot(startIcon, {size: 'sm', color: 'secondary'})}
+        {inputGroup && (
+          <VisuallyHidden id={inputLabelId}>{label}</VisuallyHidden>
+        )}
         <button
           ref={triggerRef}
           id={triggerId}
           type="button"
-          role="combobox"
+          // In hasSearch mode the popup's search input is the combobox (it owns
+          // focus + aria-activedescendant, comboboxes-4), so the trigger is a
+          // plain button that opens the listbox — not a second combobox.
+          role={hasSearch ? undefined : 'combobox'}
           {...rest}
           aria-haspopup="listbox"
           aria-expanded={popover.isOpen}
           aria-controls={listboxId}
           aria-activedescendant={
-            popover.isOpen && highlightedIndex >= 0
+            !hasSearch && popover.isOpen && highlightedIndex >= 0
               ? getItemId(highlightedIndex)
               : undefined
           }
           aria-describedby={ariaDescribedBy}
+          aria-labelledby={ariaLabelledBy}
           aria-required={isRequired ? 'true' : undefined}
           aria-invalid={status?.type === 'error' ? 'true' : undefined}
           aria-busy={isBusy || undefined}
-          disabled={isDisabled}
+          // With a disabledMessage the trigger keeps focusability via
+          // aria-disabled so the reason is focus-discoverable; activation is
+          // still blocked by the isDisabled guards in useCombobox.
+          disabled={isDisabled && !showsDisabledMessage}
+          aria-disabled={showsDisabledMessage ? 'true' : undefined}
           onKeyDown={onKeyDown}
-          tabIndex={-1}
+          tabIndex={isDisabled && !showsDisabledMessage ? -1 : 0}
           {...stylex.props(styles.trigger)}>
           <span {...stylex.props(styles.triggerLabel)}>
             {selectedItem?.label ?? placeholder}
           </span>
         </button>
+        {htmlName != null && (
+          <input
+            type="hidden"
+            name={htmlName}
+            value={value ?? ''}
+            // Disabled native controls are excluded from form submission;
+            // mirror that for the hidden carrier.
+            disabled={isDisabled}
+          />
+        )}
         {isBusy && <Spinner size="sm" />}
         {hasClear && value != null && !isDisabled && (
           <button
             type="button"
-            tabIndex={-1}
             onClick={handleClear}
-            aria-label={`Clear ${label}`}
+            aria-label={t('@astryx.selector.clearLabel', {label})}
             {...stylex.props(styles.clearButton)}>
             <Icon icon="close" size="sm" color="secondary" />
           </button>
@@ -976,6 +1134,39 @@ export function Selector<T extends SelectorOptionType>(
           style: popoverOffsetStyle,
         },
       )}
+
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
+    </>
+  );
+
+  if (inputGroup) {
+    return selectorContent;
+  }
+
+  return (
+    <Field
+      label={label}
+      isLabelHidden={isLabelHidden}
+      description={description}
+      inputID={triggerId}
+      descriptionID={description ? descriptionId : undefined}
+      isOptional={isOptional}
+      isRequired={isRequired}
+      isDisabled={isDisabled}
+      status={
+        status
+          ? {
+              type: status.type,
+              message: status.message,
+              messageID: status.message ? statusMessageId : undefined,
+            }
+          : undefined
+      }
+      statusVariant={statusVariant}
+      labelTooltip={labelTooltip}
+      width={width}>
+      {selectorContent}
     </Field>
   );
 }

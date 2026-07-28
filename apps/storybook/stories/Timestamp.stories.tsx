@@ -15,6 +15,8 @@ const meta: Meta<typeof Timestamp> = {
         'relative',
         'auto',
         'date',
+        'date_long',
+        'date_weekday',
         'date_time',
         'time',
         'system_date',
@@ -61,7 +63,7 @@ const meta: Meta<typeof Timestamp> = {
         'secondary',
         'disabled',
         'placeholder',
-        'active',
+        'accent',
         'inherit',
       ],
       description: 'Text color',
@@ -119,6 +121,20 @@ export const DateFormat: Story = {
   args: {
     value: '2026-02-19T17:00:00Z',
     format: 'date',
+  },
+};
+
+export const DateLongFormat: Story = {
+  args: {
+    value: '2026-02-19T17:00:00Z',
+    format: 'date_long',
+  },
+};
+
+export const DateWeekdayFormat: Story = {
+  args: {
+    value: '2026-02-19T17:00:00Z',
+    format: 'date_weekday',
   },
 };
 
@@ -200,6 +216,18 @@ export const AllFormats: Story = {
         </div>
         <div>
           <Text type="label" color="secondary">
+            date_long:{' '}
+          </Text>
+          <Timestamp value={date} format="date_long" />
+        </div>
+        <div>
+          <Text type="label" color="secondary">
+            date_weekday:{' '}
+          </Text>
+          <Timestamp value={date} format="date_weekday" />
+        </div>
+        <div>
+          <Text type="label" color="secondary">
             date_time:{' '}
           </Text>
           <Timestamp value={date} format="date_time" />
@@ -249,16 +277,8 @@ export const TextTypes: Story = {
         format="date_time"
         type="supporting"
       />
-      <Timestamp
-        value="2026-02-19T17:00:00Z"
-        format="date_time"
-        type="body"
-      />
-      <Timestamp
-        value="2026-02-19T17:00:00Z"
-        format="date_time"
-        type="large"
-      />
+      <Timestamp value="2026-02-19T17:00:00Z" format="date_time" type="body" />
+      <Timestamp value="2026-02-19T17:00:00Z" format="date_time" type="large" />
       <Timestamp
         value="2026-02-19T17:00:00Z"
         format="date_time"
@@ -290,7 +310,7 @@ export const Colors: Story = {
       <Timestamp
         value="2026-02-19T17:00:00Z"
         format="date_time"
-        color="active"
+        color="accent"
       />
     </div>
   ),

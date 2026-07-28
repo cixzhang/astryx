@@ -60,6 +60,11 @@ const meta: Meta<typeof Selector> = {
       control: 'boolean',
       description: 'Whether the selector is disabled',
     },
+    disabledMessage: {
+      control: 'text',
+      description:
+        'Explains why the selector is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the trigger focusable via aria-disabled (activation stays blocked). Use this instead of wrapping a disabled Selector in Tooltip.',
+    },
     isOptional: {
       control: 'boolean',
       description: 'Whether the field is optional',
@@ -431,6 +436,21 @@ export const Disabled: Story = {
   },
 };
 
+// Disabled with an explanation tooltip. Hover or keyboard-focus the trigger to
+// see why it's disabled — the reason is announced to assistive tech via
+// aria-describedby, and the trigger stays focusable (activation is still
+// blocked). Use disabledMessage instead of wrapping a disabled Selector in
+// Tooltip: disabled controls swallow the pointer events a Tooltip wrapper needs.
+export const DisabledWithMessage: Story = {
+  args: {
+    label: 'Owner',
+    options: ['Alice', 'Bob', 'Carol'],
+    isDisabled: true,
+    disabledMessage: 'You need the Editor role to change this',
+    placeholder: 'Select an owner...',
+  },
+};
+
 // Pre-selected
 export const PreSelected: Story = {
   render: args => {
@@ -582,4 +602,39 @@ export const PlacementAbove: Story = {
       />
     );
   },
+};
+
+export const StatusVariantComparison: Story = {
+  render: () => {
+    const [a, setA] = useState<string | undefined>();
+    const [b, setB] = useState<string | undefined>();
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 24, width: 280}}>
+        <Selector
+          label="Attached (default)"
+          options={[
+            {value: 'apple', label: 'Apple'},
+            {value: 'banana', label: 'Banana'},
+          ]}
+          value={a}
+          onChange={setA}
+          placeholder="Select a fruit..."
+          status={{type: 'error', message: 'Please select a fruit'}}
+        />
+        <Selector
+          label="Detached"
+          options={[
+            {value: 'apple', label: 'Apple'},
+            {value: 'banana', label: 'Banana'},
+          ]}
+          value={b}
+          onChange={setB}
+          placeholder="Select a fruit..."
+          status={{type: 'error', message: 'Please select a fruit'}}
+          statusVariant="detached"
+        />
+      </div>
+    );
+  },
+  decorators: [Story => <Story />],
 };

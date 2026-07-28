@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "build:theme": "astryx theme build src/themes/astryxTheme.ts --out src/themes/astryx.css",
-    "generate": "pnpm build:theme && node scripts/generate-data.mjs && node scripts/generate-scope.mjs && node scripts/generate-xle-registry.mjs && node scripts/generate-xle-tokenizer.mjs && node scripts/generate-playground-types.mjs && node scripts/copy-vendor.mjs",
-    "dev": "pnpm generate && next dev",
-    "build": "pnpm generate && next build",
+    "generate": "node scripts/check-workspace-build.mjs && pnpm build:theme && node scripts/generate-data.mjs && node scripts/generate-scope.mjs && node scripts/generate-playground-types.mjs && node scripts/copy-vendor.mjs",
+    "dev": "pnpm generate && next dev --webpack",
+    "build": "pnpm generate && next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -15,9 +15,11 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@monaco-editor/react": "^4.7.0",
-    "@stylexjs/stylex": "^0.18.3",
+    "@monaco-editor/react": "^4.8.0-rc.3",
+    "@stylexjs/stylex": "^0.19.0",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^1.2.0",
+    "@astryxdesign/charts": "*",
     "@astryxdesign/cli": "*",
     "@astryxdesign/core": "*",
     "@astryxdesign/theme-butter": "*",
@@ -31,23 +33,23 @@
     "lz-string": "^1.5.0",
     "mcp-handler": "^1.1.0",
     "monaco-editor": "^0.55.1",
-    "next": "^15.5.16",
+    "next": "16.3.0-preview.5",
+    "prettier": "^3.9.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.29.7",
+    "@babel/preset-react": "^8.0.1",
     "@babel/preset-typescript": "^7.29.7",
     "@stylexjs/babel-plugin": "^0.19.0",
     "@stylexjs/postcss-plugin": "^0.19.0",
     "@types/lz-string": "^1.5.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.0",
-    "gpt-tokenizer": "^2.0.0",
+    "autoprefixer": "^10.5.2",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.1"
+    "vitest": "^4.1.9"
   },
   "browserslist": [
     "last 1 Chrome version"

@@ -263,6 +263,84 @@ describe('componentRegistry', () => {
     });
   });
 
+  it('Chat sub-components declare a playground wrapper for realistic preview geometry', () => {
+    const core = components['@astryxdesign/core'];
+    const chatComposer = core.find(c => c.name === 'ChatComposer');
+    expect(chatComposer).toBeDefined();
+    expect(chatComposer!.playground?.wrapper).toMatchObject({
+      component: 'Stack',
+      props: {width: 480},
+    });
+
+    const chatComposerDrawer = core.find(c => c.name === 'ChatComposerDrawer');
+    expect(chatComposerDrawer).toBeDefined();
+    expect(chatComposerDrawer!.playground?.wrapper).toMatchObject({
+      component: 'Stack',
+      props: {width: 480},
+    });
+    expect(chatComposerDrawer!.playground?.defaults).toMatchObject({
+      count: 3,
+      label: 'Attachments',
+    });
+  });
+
+  it('Citation satisfies its required source prop via playground defaults', () => {
+    const core = components['@astryxdesign/core'];
+    const citation = core.find(c => c.name === 'Citation');
+    expect(citation).toBeDefined();
+    // `source` is a custom object type the preview cannot auto-generate;
+    // without these defaults the properties tab has no interactive preview.
+    expect(citation!.playground?.defaults).toMatchObject({
+      source: {title: 'Astryx Design', url: 'https://example.com'},
+      number: 1,
+    });
+  });
+
+  it('MetadataListItem declares a playground wrapper for realistic preview structure', () => {
+    const core = components['@astryxdesign/core'];
+    const metadataListItem = core.find(c => c.name === 'MetadataListItem');
+    expect(metadataListItem).toBeDefined();
+    expect(metadataListItem!.playground?.defaults).toMatchObject({
+      label: 'Status',
+      children: 'Active',
+    });
+    expect(metadataListItem!.playground?.wrapper).toMatchObject({
+      component: 'MetadataList',
+    });
+  });
+
+  it('Lightbox declares an overlay playground with a closed initial state (#3657)', () => {
+    const core = components['@astryxdesign/core'];
+    const lightbox = core.find(c => c.name === 'Lightbox');
+    expect(lightbox).toBeDefined();
+    // Lightbox opens via showModal() and renders nothing while closed; without
+    // overlay mode the properties tab is an empty stage on load.
+    expect(lightbox!.playground?.overlay).toBe(true);
+    expect(lightbox!.playground?.defaults).toMatchObject({
+      isOpen: false,
+      media: {
+        src: expect.stringContaining('https://'),
+        alt: expect.any(String),
+      },
+    });
+  });
+
+  it('dialog-family components keep contained isInline previews, not overlay mode (#3657)', () => {
+    const core = components['@astryxdesign/core'];
+    for (const name of ['Dialog', 'AlertDialog', 'CommandPalette']) {
+      const entry = core.find(c => c.name === name);
+      expect(entry, name).toBeDefined();
+      // Intentional: the contained preview keeps knobs usable while the
+      // component is visible. Guard the half-migrated shape too — overlay
+      // with isOpen: true would never show the open trigger.
+      expect(entry!.playground?.overlay, name).toBeUndefined();
+      expect(entry!.playground?.defaults, name).toMatchObject({
+        isOpen: true,
+        isInline: true,
+      });
+    }
+  });
+
   it('Chat has many sub-components (standalone docs take priority over compound entries)', () => {
     const core = components['@astryxdesign/core'];
     // Chat compound doc has 14 sub-components, but ChatToolCalls and
@@ -332,13 +410,12 @@ describe('componentRegistry', () => {
     const core = components['@astryxdesign/core'];
     // Public hooks (useTheme, useToast, useTableSortable, …) ship example
     // blocks; internal utility hooks (useFocusTrap, useScrollLock, …) do not.
-    // Post un-prefix migration (P2380608025) the doc `name` is bare for both,
+    // Post un-prefix migration the doc `name` is bare for both,
     // so the public set is identified by having an example-registry entry
     // rather than by a name prefix.
     const hooks = core.filter(
       c =>
-        /^use[A-Z]/.test(c.name) &&
-        (exampleRegistry[c.name]?.length ?? 0) > 0,
+        /^use[A-Z]/.test(c.name) && (exampleRegistry[c.name]?.length ?? 0) > 0,
     );
     expect(hooks.length).toBeGreaterThan(15);
     expect(hooks.map(h => h.name)).toContain('useTheme');
@@ -666,7 +743,9 @@ describe('themeRegistry', () => {
   });
 
   it('has no entries for non-theme packages', () => {
-    const nonTheme = packages.filter(p => !p.name.startsWith('@astryxdesign/theme-'));
+    const nonTheme = packages.filter(
+      p => !p.name.startsWith('@astryxdesign/theme-'),
+    );
     for (const pkg of nonTheme) {
       expect(registrySource).not.toContain(`'${pkg.name}':`);
     }
@@ -807,5 +886,127 @@ describe('exampleRegistry', () => {
       .flat()
       .reduce((max, e) => Math.max(max, e.description.length), 0);
     expect(longest).toBeGreaterThan(200);
+  });
+});
+
+// ── Block example title convention (Component — Variant) ─────────────────
+// Example block `displayName`s should read like "Component — Variant" using an
+// em-dash separator, not leak PascalCase/export-name wording. The Card example
+// titles previously rendered as "Clickable Card With Nested Button" and
+// "Selectable Card Multi".
+describe('block example title convention', () => {
+  const blocksDir = fileURLToPath(
+    new URL('../../../../packages/cli/templates/blocks', import.meta.url),
+  );
+
+  function displayNameOf(relPath: string): string | null {
+    const content = fs.readFileSync(`${blocksDir}/${relPath}`, 'utf-8');
+    const m = content.match(/displayName:\s*['"]([^'"]+)['"]/);
+    return m ? m[1] : null;
+  }
+
+  it('Card example titles use the em-dash variant convention', () => {
+    expect(
+      displayNameOf('components/Card/ClickableCardWithNestedButton.doc.mjs'),
+    ).toBe('Clickable Card — Nested Button');
+    expect(displayNameOf('components/Card/SelectableCardMulti.doc.mjs')).toBe(
+      'Selectable Card — Multi-select',
+    );
+  });
+});
+
+// ── Playground defaults for Card components (BB-006 / #2008) ──────────────
+// ClickableCard and SelectableCard playgrounds rendered empty because their
+// docs carried no `playground.defaults`. Defaults must flow into the generated
+// registry so previews demonstrate realistic card layouts.
+describe('Card playground defaults', () => {
+  function coreComponent(name: string) {
+    return Object.values(components)
+      .flat()
+      .find(c => c.name === name);
+  }
+
+  it('ClickableCard has playground defaults with label, href, and body content', () => {
+    const entry = coreComponent('ClickableCard');
+    expect(entry).toBeDefined();
+    const defaults = entry!.playground?.defaults as
+      Record<string, unknown> | undefined;
+    expect(defaults).toBeDefined();
+    expect(typeof defaults!.label).toBe('string');
+    expect(defaults!.href).toBeDefined();
+    // children is a resolved element descriptor, not empty.
+    expect(defaults!.children).toBeTruthy();
+    expect(typeof defaults!.children).toBe('object');
+  });
+
+  it('SelectableCard has playground defaults with label, selection state, and body content', () => {
+    const entry = coreComponent('SelectableCard');
+    expect(entry).toBeDefined();
+    const defaults = entry!.playground?.defaults as
+      Record<string, unknown> | undefined;
+    expect(defaults).toBeDefined();
+    expect(typeof defaults!.label).toBe('string');
+    expect(typeof defaults!.isSelected).toBe('boolean');
+    expect(defaults!.children).toBeTruthy();
+    expect(typeof defaults!.children).toBe('object');
+  });
+});
+
+// ── Vertical ToggleButtonGroup example (#2707) ─────────────────────────────
+// ToggleButtonGroup supports orientation="vertical", but no docsite example
+// demonstrated it — the prop was undiscoverable without reading the API
+// table. A dedicated vertical example block must exist and actually use the
+// vertical orientation.
+describe('ToggleButtonGroup vertical example', () => {
+  it('discovers the ToggleButtonGroupVertical block', () => {
+    const block = blocks.find(b => b.dirName === 'ToggleButtonGroupVertical');
+    expect(block).toBeDefined();
+    expect(block!.exampleFor).toBe('ToggleButtonGroup');
+    expect(block!.isShowcase).toBe(false);
+    expect(block!.name).toBe('ToggleButtonGroup — Vertical');
+  });
+
+  it('registers it among the ToggleButtonGroup examples', () => {
+    const examples = exampleRegistry['ToggleButtonGroup'] ?? [];
+    const vertical = examples.find(e => /Vertical/i.test(e.name));
+    expect(vertical).toBeDefined();
+    expect(vertical!.source).toContain('orientation="vertical"');
+  });
+
+  it('demonstrates both single-select and multi-select stacks', () => {
+    const examples = exampleRegistry['ToggleButtonGroup'] ?? [];
+    const vertical = examples.find(e => /Vertical/i.test(e.name));
+    expect(vertical).toBeDefined();
+    expect(vertical!.source).toContain('type="multiple"');
+  });
+});
+
+// ── LinkProvider utility page (#2733) ──────────────────────────────────────
+// LinkProvider is a non-visual provider: its page renders the hook-style
+// static layout (props table on the main page, no interactive playground).
+// That layout keys off `category: 'Utility'` with no curated playground, and
+// still needs props and an example block to have content to show.
+describe('LinkProvider utility page', () => {
+  const linkProvider = components['@astryxdesign/core'].find(
+    c => c.name === 'LinkProvider',
+  );
+
+  it('is a Utility entry without a curated playground', () => {
+    expect(linkProvider).toBeDefined();
+    expect(linkProvider!.category).toBe('Utility');
+    expect(linkProvider!.params).toBeNull();
+    expect(linkProvider!.playground).toBeNull();
+  });
+
+  it('documents props for the static props table', () => {
+    const propNames = linkProvider!.props.map(p => p.name);
+    expect(propNames).toContain('component');
+    expect(propNames).toContain('children');
+  });
+
+  it('registers an example block demonstrating a custom link component', () => {
+    const examples = exampleRegistry['LinkProvider'] ?? [];
+    expect(examples.length).toBeGreaterThanOrEqual(1);
+    expect(examples[0].source).toContain('<LinkProvider component=');
   });
 });

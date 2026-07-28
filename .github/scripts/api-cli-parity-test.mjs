@@ -6,7 +6,7 @@
  *
  * Auto-discovers every component, doc topic, and CLI command,
  * then verifies the programmatic API returns identical results
- * to `xds --json` for each one. Nothing is hardcoded.
+ * to `astryx --json` for each one. Nothing is hardcoded.
  *
  * Usage:
  *   node .github/scripts/api-cli-parity-test.mjs              # full run
@@ -73,11 +73,16 @@ function typeOf(r) {
 
 console.log('Discovering...');
 
-const api = await import('../../packages/cli/src/api/index.mjs');
+const api = await import('../../packages/cli/api/index.mjs');
 
 const componentList = cliJson(['component', '--list']);
+// `component --list` data is package-qualified: each group value is an array
+// of { name, package } objects. Map to bare names for the per-component cases.
+// (Tolerate plain strings too, in case the shape is ever simplified.)
 const allComponents = componentList.data && !componentList.error
-  ? Object.values(componentList.data).flat()
+  ? Object.values(componentList.data)
+      .flat()
+      .map(c => (typeof c === 'string' ? c : c.name))
   : [];
 
 const docsList = cliJson(['docs']);
@@ -101,7 +106,7 @@ console.log(`  ${allHooks.length} hooks, ${hookCategories.length} hook categorie
 // ─── Build cases ──────────────────────────────────────────────────────────────
 //
 // Each case: { label, cli, apiFn? }
-//   - cli:   args for `xds --json ...`
+//   - cli:   args for `astryx --json ...`
 //   - apiFn: if present, called to get API result; compared with CLI result
 //   - if apiFn is absent, CLI-only (still counted for coverage)
 
@@ -194,6 +199,14 @@ if (firstTemplate) {
 add('template nonexistent', ['template', 'nonexistent99'],
   () => apiCall(api.template, 'nonexistent99'));
 
+// Theme add — list + error paths (read-only; never scaffolds files here).
+add('theme list', ['theme', 'list'],
+  () => apiCall(api.themeAdd, undefined, {list: true, cwd: ROOT}));
+add('theme add --list', ['theme', 'add', '--list'],
+  () => apiCall(api.themeAdd, undefined, {list: true, cwd: ROOT}));
+add('theme add nonexistent', ['theme', 'add', 'nonexistent99'],
+  () => apiCall(api.themeAdd, 'nonexistent99', {cwd: ROOT}));
+
 // Hook — list variants
 add('hook --list', ['hook', '--list'],
   () => apiCall(api.hook, undefined, {list: true, cwd: ROOT}));
@@ -241,12 +254,33 @@ add('discover (list)', ['discover'],
 // checks (and their statuses) is deterministic and must match exactly.
 add('doctor', ['doctor'], () => apiCall(api.doctor, {cwd: ROOT}));
 
+// Build — playbook signal (build.help) + composition kit (build.kit).
+add('build', ['build'],
+  () => apiCall(api.build, undefined, {cwd: ROOT}));
+add('build dashboard', ['build', 'dashboard'],
+  () => apiCall(api.build, 'dashboard', {cwd: ROOT}));
+add('build (no match)', ['build', 'zzznomatch99'],
+  () => apiCall(api.build, 'zzznomatch99', {cwd: ROOT}));
+
+// Swizzle — list + not-found are read-only; the api matches the CLI envelope.
+add('swizzle --list', ['swizzle', '--list'],
+  () => apiCall(api.swizzle, undefined, {list: true, cwd: ROOT}));
+add('swizzle (not found)', ['swizzle', 'NotARealComponent99'],
+  () => apiCall(api.swizzle, 'NotARealComponent99', {cwd: ROOT}));
+
+// Upgrade — list + the two argument-validation errors are read-only: they
+// return/throw before any codemod or agent-docs side effect, so the api matches
+// the CLI envelope exactly. The full run/status pipeline is covered by the
+// upgrade unit tests (side-effecting, needs a fixtured project).
+add('upgrade --list', ['upgrade', '--list'],
+  () => apiCall(api.upgrade, {list: true}, {cwd: ROOT}));
+add('upgrade (missing --from)', ['upgrade'],
+  () => apiCall(api.upgrade, {}, {cwd: ROOT}));
+add('upgrade (invalid --from)', ['upgrade', '--from', 'not-a-version'],
+  () => apiCall(api.upgrade, {from: 'not-a-version'}, {cwd: ROOT}));
+
 // Other commands — probe with safe read-only args (no API yet)
-const otherCommands = [
-  ['swizzle', '--list'],
-  ['gap-report', '--list-categories'],
-  ['upgrade', '--list'],
-];
+const otherCommands = [];
 for (const args of otherCommands) {
   const probe = cliJson(args);
   if (!probe.__parse_error && !probe.error?.includes('not supported')) {

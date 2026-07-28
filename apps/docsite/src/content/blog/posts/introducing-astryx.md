@@ -4,12 +4,12 @@ description: "Astryx is an open source design system that's AI-fluent and fully 
 date: '2026-06-18'
 type: 'update'
 authors:
-  - 'cvkxx'
+  - 'team'
 tags:
   - 'Release'
   - 'AI'
   - 'Design systems'
-coverImage: '/astryx-og-banner.png'
+coverImage: 'https://lookaside.facebook.com/assets/astryx/Astryx-Banner.png'
 coverAlt: 'Introducing Astryx by Meta'
 relatedDocs:
   - title: 'Getting started'

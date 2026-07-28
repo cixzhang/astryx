@@ -3,8 +3,8 @@
 /**
  * @file authors.ts
  *
- * Shared author registry for the blog. Posts reference authors by key in their
- * frontmatter (`authors: ["xds-team"]`) so profile metadata is defined once.
+ * Shared author registry for the blog. Posts reference team or individual
+ * authors by key in their frontmatter so profile metadata is defined once.
  *
  * For GitHub-backed authors, set `github` and the site derives a stable avatar
  * and profile link from github.com without fetching profile data at build time.
@@ -43,14 +43,35 @@ export interface ResolvedAuthor extends Omit<AuthorProfile, 'avatar' | 'href'> {
  * `authors` frontmatter list.
  */
 export const authors = {
+  team: {
+    name: 'Astryx team',
+    avatar: '/blog/authors/astryx-team.png',
+    href: 'https://github.com/facebook/astryx',
+  },
   cvkxx: {
     name: 'Catherine',
     github: 'cvkxx',
     role: 'Design',
   },
+  cixzhang: {
+    name: 'Cindy',
+    github: 'cixzhang',
+    role: 'Engineering',
+  },
+  josephfarina: {
+    name: 'Joey',
+    github: 'josephfarina',
+    role: 'Engineering',
+  },
+  liya: {
+    name: 'Liya',
+    github: 'liyalabubu',
+  },
+  ernest: {
+    name: 'Ernest',
+    github: 'ernestt',
+  },
 } as const satisfies Record<string, AuthorProfile>;
-
-export type AuthorKey = keyof typeof authors;
 
 /**
  * Resolve an author key to a complete profile, deriving GitHub avatar/href

@@ -4,7 +4,7 @@
 
 /**
  * @file NumberInput.tsx
- * @input Uses React, useId, useState, useMemo, useCallback, Field, Icon
+ * @input Uses React, useId, useState, useMemo, useCallback, Field, Icon, InputGroupContext
  * @output Exports NumberInput component, NumberInputProps
  * @position Core implementation; consumed by index.ts, tested by NumberInput.test.tsx
  *
@@ -44,8 +44,12 @@ import {
   inputStatusBorderStyles,
   inputStatusHoverShadowStyles,
   inputStatusFocusWithinStyles,
+  type FieldStatusVariant,
 } from '../Field';
 import {Icon, renderIconSlot, type IconType} from '../Icon';
+import {VisuallyHidden} from '../VisuallyHidden';
+import {useTooltip} from '../Tooltip';
+import {getInputARIA} from '../utils';
 import {useSize} from '../SizeContext/SizeContext';
 import {useInputContainer} from '../hooks/useInputContainer';
 import {useInputGroup} from '../InputGroup/InputGroupContext';
@@ -132,6 +136,7 @@ import {mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 interface NumberInputPropsBase extends Omit<
   BaseProps,
@@ -168,6 +173,27 @@ interface NumberInputPropsBase extends Omit<
    */
   isDisabled?: boolean;
   /**
+   * Explains why the input is disabled. When set together with `isDisabled`,
+   * the input shows a tooltip with this text on hover and keyboard focus, and
+   * stays focusable (via `aria-disabled`) so the reason is discoverable by
+   * keyboard and assistive technology. The field cannot be edited (it becomes
+   * read-only) while disabled.
+   *
+   * Use this instead of wrapping a disabled input in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <NumberInput
+   *   label="Quantity"
+   *   value={quantity}
+   *   isDisabled
+   *   disabledMessage="Editing is locked while the order is processing"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
+  /**
    * Icon to display at the start of the input.
    * Accepts a ReactNode (e.g. `<Icon icon={SearchIcon} />`) or an SVG icon component directly.
    */
@@ -182,6 +208,13 @@ interface NumberInputPropsBase extends Omit<
    * If message is provided, displays a floating message box below the input.
    */
   status?: InputStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
   /**
    * The size of the input.
    * - 'sm': Compact size (28px height)
@@ -286,8 +319,7 @@ type NumberInputPropsClearable = NumberInputPropsBase & {
 };
 
 export type NumberInputProps =
-  | NumberInputPropsNonClearable
-  | NumberInputPropsClearable;
+  NumberInputPropsNonClearable | NumberInputPropsClearable;
 
 /**
  * Parse and validate a string input as a number.
@@ -346,9 +378,11 @@ export function NumberInput({
   isOptional = false,
   isRequired = false,
   isDisabled = false,
+  disabledMessage,
   startIcon,
   labelIcon,
   status,
+  statusVariant = 'attached',
   size: sizeProp,
   onChange,
   value,
@@ -374,16 +408,33 @@ export function NumberInput({
   ref,
   ...rest
 }: NumberInputProps) {
+  const t = useTranslator();
   const size = useSize(sizeProp, 'md');
   const id = useId();
+  const inputLabelID = useId();
   const descriptionID = useId();
   const statusMessageID = useId();
+  const unitsID = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputGroup = useInputGroup();
 
   // Pending input while user is typing (null = show formatted value)
   const [pendingInput, setPendingInput] = useState<string | null>(null);
+
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the input container (which already exists) and
+  // the input stays perceivable via aria-disabled instead of the native
+  // disabled attribute. The field is made read-only so it can't be typed into,
+  // and value mutation is blocked by the isDisabled guard in the handlers.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The container div is not naturally focusable; focusin bubbles up from
+    // the input, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
 
   const statusIconMap: Record<InputStatusType, IconName> = {
     warning: 'warning',
@@ -400,13 +451,18 @@ export function NumberInput({
     success: 'success',
   };
 
-  const ariaDescribedBy =
+  const {ariaLabelledBy, ariaDescribedBy} = getInputARIA(
+    inputLabelID,
     [
       description ? descriptionID : null,
-      status?.message ? statusMessageID : null,
-    ]
-      .filter(Boolean)
-      .join(' ') || undefined;
+      // The status message element is rendered by Field, which is skipped
+      // inside an InputGroup — only reference it when it actually exists.
+      !inputGroup && status?.message ? statusMessageID : null,
+      units ? unitsID : null,
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
+    ],
+    inputGroup,
+  );
 
   // Display value: pending input if typing, otherwise the raw value
   // Note: With type="number", we can't use formatted display values
@@ -431,6 +487,12 @@ export function NumberInput({
   // Handle input text change - update immediately if valid
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Value can't change while showing a disabled message (the field is
+      // read-only and non-native-disabled), but guard the handler too so the
+      // pending value and onChange never fire.
+      if (isDisabled) {
+        return;
+      }
       const newValue = e.target.value;
       setPendingInput(newValue);
 
@@ -440,7 +502,7 @@ export function NumberInput({
         onChange(parsed);
       }
     },
-    [value, onChange, min, max, isIntegerOnly],
+    [value, onChange, min, max, isIntegerOnly, isDisabled],
   );
 
   // Handle focus
@@ -455,13 +517,21 @@ export function NumberInput({
   const handleBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       if (pendingInput !== null) {
-        const parsed = parseNumberInput(pendingInput, {
-          min,
-          max,
-          isIntegerOnly,
-        });
-        if (parsed !== null && parsed !== value) {
-          onChange(parsed);
+        if (hasClear && pendingInput.trim() === '') {
+          // Keyboard clearing honors the clearable contract: an emptied
+          // input commits null instead of silently reverting on blur.
+          if (value != null) {
+            onChange(null);
+          }
+        } else {
+          const parsed = parseNumberInput(pendingInput, {
+            min,
+            max,
+            isIntegerOnly,
+          });
+          if (parsed !== null && parsed !== value) {
+            onChange(parsed);
+          }
         }
       }
 
@@ -469,7 +539,7 @@ export function NumberInput({
       setPendingInput(null);
       onBlur?.(e);
     },
-    [pendingInput, value, onChange, min, max, isIntegerOnly, onBlur],
+    [pendingInput, value, onChange, min, max, isIntegerOnly, onBlur, hasClear],
   );
 
   // Handle keyboard events
@@ -478,13 +548,21 @@ export function NumberInput({
       if (e.key === 'Enter') {
         // Validate and commit on Enter
         if (pendingInput !== null) {
-          const parsed = parseNumberInput(pendingInput, {
-            min,
-            max,
-            isIntegerOnly,
-          });
-          if (parsed !== null && parsed !== value) {
-            onChange(parsed);
+          if (hasClear && pendingInput.trim() === '') {
+            // Same clearable contract as blur: Enter on an emptied input
+            // commits null instead of reverting.
+            if (value != null) {
+              onChange(null);
+            }
+          } else {
+            const parsed = parseNumberInput(pendingInput, {
+              min,
+              max,
+              isIntegerOnly,
+            });
+            if (parsed !== null && parsed !== value) {
+              onChange(parsed);
+            }
           }
         }
         onEnter?.();
@@ -500,6 +578,7 @@ export function NumberInput({
       isIntegerOnly,
       onEnter,
       onKeyDown,
+      hasClear,
     ],
   );
 
@@ -522,7 +601,13 @@ export function NumberInput({
 
   const inputWrapper = (
     <div
-      ref={containerRef}
+      ref={el => {
+        containerRef.current = el;
+        // Anchor + hover/focus listeners for the disabled-message tooltip.
+        // Handlers are gated internally by isEnabled, and anchor names
+        // compose, so attaching unconditionally is safe.
+        disabledMessageTooltip.ref(el);
+      }}
       onClick={handleWrapperClick}
       onMouseUp={handleWrapperMouseUp}
       {...mergeProps(
@@ -542,6 +627,7 @@ export function NumberInput({
         style,
       )}>
       {startIcon && renderIconSlot(startIcon, {size: 'sm', color: 'secondary'})}
+      {inputGroup && <VisuallyHidden id={inputLabelID}>{label}</VisuallyHidden>}
       <input
         {...rest}
         ref={mergeRefs(ref, inputRef)}
@@ -555,7 +641,12 @@ export function NumberInput({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={isDisabled}
+        // With a disabledMessage the input keeps focusability via aria-disabled
+        // so the reason is focus-discoverable; readOnly + the handler guards
+        // keep the value from changing.
+        disabled={isDisabled && !showsDisabledMessage}
+        aria-disabled={showsDisabledMessage ? 'true' : undefined}
+        readOnly={showsDisabledMessage || undefined}
         autoFocus={hasAutoFocus}
         data-autofocus={hasAutoFocus || undefined}
         min={min ?? undefined}
@@ -563,20 +654,34 @@ export function NumberInput({
         step={step ?? undefined}
         aria-describedby={ariaDescribedBy}
         aria-required={isRequired === true ? 'true' : undefined}
-        aria-invalid={status?.type === 'error' ? 'true' : undefined}
-        aria-label={inputGroup ? label : undefined}
+        aria-invalid={
+          status?.type === 'error' || !isInputValid ? 'true' : undefined
+        }
+        aria-labelledby={ariaLabelledBy}
         {...stylex.props(
           styles.input,
           isDisabled && styles.inputDisabled,
           !isInputValid && styles.inputInvalid,
         )}
       />
-      {units && <span {...stylex.props(styles.units)}>{units}</span>}
+      {units && (
+        <span id={unitsID} {...stylex.props(styles.units)}>
+          {units}
+        </span>
+      )}
+      {/*
+        Live region announcing invalid typed input to assistive technology.
+        The value silently reverts on blur, so without this a screen-reader
+        user would get no feedback that their entry was rejected (WCAG 3.3.1).
+      */}
+      <VisuallyHidden as="div" role="alert" aria-live="assertive">
+        {!isInputValid ? 'Invalid number' : ''}
+      </VisuallyHidden>
       {hasClear && value != null && !isDisabled && (
         <button
           type="button"
           onClick={handleClear}
-          aria-label={`Clear ${label}`}
+          aria-label={t('@astryx.numberInput.clearLabel', {label})}
           {...stylex.props(styles.clearButton)}>
           <Icon icon="close" size="sm" color="secondary" />
         </button>
@@ -592,7 +697,13 @@ export function NumberInput({
   );
 
   if (inputGroup) {
-    return inputWrapper;
+    return (
+      <>
+        {inputWrapper}
+        {showsDisabledMessage &&
+          disabledMessageTooltip.renderTooltip(disabledMessage)}
+      </>
+    );
   }
 
   return (
@@ -615,9 +726,12 @@ export function NumberInput({
             }
           : undefined
       }
+      statusVariant={statusVariant}
       labelTooltip={labelTooltip}
       width={width}>
       {inputWrapper}
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
     </Field>
   );
 }

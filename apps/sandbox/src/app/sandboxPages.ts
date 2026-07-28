@@ -175,9 +175,21 @@ export const categories: SandboxCategory[] = [
       'Interactive tools for building and exploring Astryx components.',
     pages: [
       {
+        name: 'Layout DSL',
+        href: '/pages/layout-dsl/',
+        description:
+          'Write compressed XLE/XLO layout expressions and expand them to TSX with live token metrics',
+      },
+      {
         name: 'CodeBlock Perf',
         href: '/pages/codeblock-perf/',
         description: 'Compare highlight modes and scroll performance',
+      },
+      {
+        name: 'Table Lab',
+        href: '/pages/table-lab/',
+        description:
+          'Test any combination of Table plugins with live scroll FPS, dropped-frame, and re-render metrics',
       },
       {
         name: 'Foundations',

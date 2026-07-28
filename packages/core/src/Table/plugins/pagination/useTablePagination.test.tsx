@@ -132,6 +132,19 @@ describe('paginateData', () => {
     expect(paginateData([], 1, 10)).toEqual([]);
   });
 
+  it('clamps invalid page numbers to the first page (#3593)', () => {
+    const data = generateItems(30);
+    // Negative pages previously fed a negative index to Array.slice, which
+    // counts from the END of the data — the tail dressed up as a page.
+    expect(paginateData(data, -1, 10)[0].id).toBe('1');
+    expect(paginateData(data, 0, 10)[0].id).toBe('1');
+    expect(paginateData(data, NaN, 10)[0].id).toBe('1');
+    // Fractional pages floor to the containing page instead of straddling two.
+    expect(paginateData(data, 1.5, 10).map(i => i.id)).toEqual(
+      paginateData(data, 1, 10).map(i => i.id),
+    );
+  });
+
   it('returns empty array when page exceeds data', () => {
     const data = generateItems(10);
     expect(paginateData(data, 5, 10)).toEqual([]);
@@ -182,6 +195,22 @@ describe('useTablePagination', () => {
       expect(
         table.compareDocumentPosition(nav) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
+    });
+
+    it('guards pageSize 0 against Infinity page counts', () => {
+      render(<PaginatedTable data={generateItems(5)} pageSize={0} />);
+      expect(
+        screen.getByRole('navigation', {name: 'Table pagination'}),
+      ).toBeInTheDocument();
+      // pageSize is coerced to 1, so 5 items produce 5 pages, not Infinity,
+      // and page 1 shows the first item instead of an empty slice
+      expect(
+        screen.queryByRole('button', {name: 'Go to page Infinity'}),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', {name: 'Go to page 5'}),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
     });
 
     it('transformTableContext renders Pagination above table', () => {

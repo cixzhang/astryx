@@ -9,10 +9,26 @@
  * SYNC: When Pagination.tsx changes, update tests to match new behavior
  */
 
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, within, fireEvent, act} from '@testing-library/react';
+import {describe, it, expect, vi, afterEach} from 'vitest';
+import {
+  render,
+  screen,
+  within,
+  fireEvent,
+  act,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {Pagination, generatePageRange} from './Pagination';
+import {__resetLiveRegionsForTest} from '../hooks/useAnnounce';
+
+afterEach(() => {
+  __resetLiveRegionsForTest();
+});
+
+function politeRegion(): HTMLElement | null {
+  return document.querySelector('[data-astryx-live-region="polite"]');
+}
 
 // =============================================================================
 // generatePageRange helper
@@ -240,6 +256,65 @@ describe('Pagination', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // pageSize guarding
+  // ---------------------------------------------------------------------------
+
+  describe('pageSize guarding', () => {
+    it('does not crash the dots variant when pageSize is 0', () => {
+      render(
+        <Pagination
+          page={1}
+          onChange={() => {}}
+          totalItems={5}
+          pageSize={0}
+          variant="dots"
+        />,
+      );
+      const group = screen.getByRole('group', {name: 'Page indicators'});
+      expect(within(group).getAllByRole('button')).toHaveLength(5);
+    });
+
+    it('treats NaN pageSize as the default', () => {
+      render(
+        <Pagination
+          page={1}
+          onChange={() => {}}
+          totalItems={50}
+          pageSize={NaN}
+          variant="compact"
+        />,
+      );
+      expect(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+    });
+
+    it('clamps negative pageSize to 1', () => {
+      render(
+        <Pagination
+          page={1}
+          onChange={() => {}}
+          totalItems={5}
+          pageSize={-10}
+          variant="compact"
+        />,
+      );
+      expect(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+    });
+
+    it('floors fractional pageSize', () => {
+      render(
+        <Pagination
+          page={1}
+          onChange={() => {}}
+          totalItems={50}
+          pageSize={2.5}
+          variant="compact"
+        />,
+      );
+      expect(screen.getByText('Page 1 of 25')).toBeInTheDocument();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Variant: dots
   // ---------------------------------------------------------------------------
 
@@ -269,6 +344,149 @@ describe('Pagination', () => {
       );
       const activeDot = screen.getByRole('button', {name: 'Go to page 3'});
       expect(activeDot).toHaveAttribute('aria-current', 'page');
+    });
+
+    // -------------------------------------------------------------------------
+    // Keyboard navigation (roving tabindex + arrow keys via useListFocus).
+    // Selection follows focus: arrow/Home/End move focus and select that page.
+    // -------------------------------------------------------------------------
+
+    it('uses roving tabindex — active dot has tabIndex 0, others -1', () => {
+      render(
+        <Pagination
+          page={2}
+          onChange={() => {}}
+          totalPages={4}
+          variant="dots"
+        />,
+      );
+      expect(
+        screen.getByRole('button', {name: 'Go to page 2'}),
+      ).toHaveAttribute('tabindex', '0');
+      expect(
+        screen.getByRole('button', {name: 'Go to page 1'}),
+      ).toHaveAttribute('tabindex', '-1');
+      expect(
+        screen.getByRole('button', {name: 'Go to page 3'}),
+      ).toHaveAttribute('tabindex', '-1');
+    });
+
+    it('ArrowRight moves focus to the next dot and selects it', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Pagination
+          page={2}
+          onChange={onChange}
+          totalPages={4}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 2'}).focus();
+      await user.keyboard('{ArrowRight}');
+      expect(onChange).toHaveBeenCalledWith(3);
+      expect(screen.getByRole('button', {name: 'Go to page 3'})).toHaveFocus();
+    });
+
+    it('ArrowLeft moves focus to the previous dot and selects it', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Pagination
+          page={3}
+          onChange={onChange}
+          totalPages={4}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 3'}).focus();
+      await user.keyboard('{ArrowLeft}');
+      expect(onChange).toHaveBeenCalledWith(2);
+      expect(screen.getByRole('button', {name: 'Go to page 2'})).toHaveFocus();
+    });
+
+    it('Home selects the first page, End the last', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const {rerender} = render(
+        <Pagination
+          page={3}
+          onChange={onChange}
+          totalPages={5}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 3'}).focus();
+      await user.keyboard('{Home}');
+      expect(onChange).toHaveBeenCalledWith(1);
+      expect(screen.getByRole('button', {name: 'Go to page 1'})).toHaveFocus();
+
+      onChange.mockClear();
+      rerender(
+        <Pagination
+          page={3}
+          onChange={onChange}
+          totalPages={5}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 3'}).focus();
+      await user.keyboard('{End}');
+      expect(onChange).toHaveBeenCalledWith(5);
+      expect(screen.getByRole('button', {name: 'Go to page 5'})).toHaveFocus();
+    });
+
+    it('wraps from the last dot to the first with ArrowRight', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Pagination
+          page={4}
+          onChange={onChange}
+          totalPages={4}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 4'}).focus();
+      await user.keyboard('{ArrowRight}');
+      expect(onChange).toHaveBeenCalledWith(1);
+      expect(screen.getByRole('button', {name: 'Go to page 1'})).toHaveFocus();
+    });
+
+    it('wraps from the first dot to the last with ArrowLeft', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Pagination
+          page={1}
+          onChange={onChange}
+          totalPages={4}
+          variant="dots"
+        />,
+      );
+      screen.getByRole('button', {name: 'Go to page 1'}).focus();
+      await user.keyboard('{ArrowLeft}');
+      expect(onChange).toHaveBeenCalledWith(4);
+      expect(screen.getByRole('button', {name: 'Go to page 4'})).toHaveFocus();
+    });
+
+    it('does not navigate with arrow keys when disabled', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Pagination
+          page={2}
+          onChange={onChange}
+          totalPages={4}
+          variant="dots"
+          isDisabled
+        />,
+      );
+      const dot = screen.getByRole('button', {name: 'Go to page 2'});
+      expect(dot).toBeDisabled();
+      dot.focus();
+      await user.keyboard('{ArrowRight}');
+      expect(onChange).not.toHaveBeenCalled();
     });
   });
 
@@ -304,6 +522,38 @@ describe('Pagination', () => {
   // ---------------------------------------------------------------------------
 
   describe('page change callbacks', () => {
+    it('does not announce on initial mount', () => {
+      render(<Pagination page={1} onChange={() => {}} totalPages={10} />);
+      expect(politeRegion()).toBeNull();
+    });
+
+    it('announces the new page politely when navigating', async () => {
+      const user = userEvent.setup();
+      render(<Pagination page={2} onChange={() => {}} totalPages={10} />);
+      await user.click(screen.getByRole('button', {name: 'Go to page 3'}));
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('Page 3 of 10');
+      });
+    });
+
+    it('announces the next page when clicking next', async () => {
+      const user = userEvent.setup();
+      render(<Pagination page={2} onChange={() => {}} totalPages={5} />);
+      await user.click(screen.getByRole('button', {name: 'Go to next page'}));
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('Page 3 of 5');
+      });
+    });
+
+    it('announces without a total when only hasMore is known', async () => {
+      const user = userEvent.setup();
+      render(<Pagination page={1} onChange={() => {}} hasMore />);
+      await user.click(screen.getByRole('button', {name: 'Go to next page'}));
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('Page 2');
+      });
+    });
+
     it('calls onChange when clicking a page button', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
@@ -395,7 +645,9 @@ describe('Pagination', () => {
       // reflects the page being navigated to.
       await user.click(screen.getByRole('button', {name: 'Go to next page'}));
       expect(changeAction).toHaveBeenCalledWith(2);
-      expect(screen.getByText('Page 2 of 5')).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('navigation')).getByText('Page 2 of 5'),
+      ).toBeInTheDocument();
 
       await act(async () => {
         resolveAction?.();
@@ -425,14 +677,17 @@ describe('Pagination', () => {
       );
 
       const next = screen.getByRole('button', {name: 'Go to next page'});
+      const nav = screen.getByRole('navigation');
       await act(async () => {
         fireEvent.click(next);
       });
-      expect(screen.getByText('Page 2 of 5')).toBeInTheDocument();
+      // Scope to the nav landmark: the live region on document.body also
+      // carries the announced page text.
+      expect(within(nav).getByText('Page 2 of 5')).toBeInTheDocument();
       await act(async () => {
         fireEvent.click(next);
       });
-      expect(screen.getByText('Page 3 of 5')).toBeInTheDocument();
+      expect(within(nav).getByText('Page 3 of 5')).toBeInTheDocument();
 
       expect(changeAction).toHaveBeenCalledTimes(2);
       expect(changeAction).toHaveBeenNthCalledWith(1, 2);
@@ -646,6 +901,25 @@ describe('Pagination', () => {
       expect(
         screen.queryByRole('button', {name: 'Go to page 6'}),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('rest forwarding', () => {
+    it('forwards data-testid, id, and aria-* to the root nav', () => {
+      const {container} = render(
+        <Pagination
+          page={1}
+          onChange={() => {}}
+          totalPages={3}
+          data-testid="pager"
+          id="pager-1"
+          aria-describedby="hint"
+        />,
+      );
+      const nav = container.querySelector('nav')!;
+      expect(nav).toHaveAttribute('data-testid', 'pager');
+      expect(nav).toHaveAttribute('id', 'pager-1');
+      expect(nav).toHaveAttribute('aria-describedby', 'hint');
     });
   });
 });

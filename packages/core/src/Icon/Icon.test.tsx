@@ -11,48 +11,48 @@
 
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
-import {HomeIcon} from '@heroicons/react/24/outline';
+import {TestIcon} from '../__tests__/TestIcon';
 import {Icon} from './Icon';
 
 describe('Icon', () => {
   it('renders the icon component', () => {
-    render(<Icon icon={HomeIcon} data-testid="icon" />);
+    render(<Icon icon={TestIcon} data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
 
   it('renders as an SVG element', () => {
-    render(<Icon icon={HomeIcon} data-testid="icon" />);
+    render(<Icon icon={TestIcon} data-testid="icon" />);
     const icon = screen.getByTestId('icon');
     expect(icon.tagName.toLowerCase()).toBe('svg');
   });
 
   it('applies aria-hidden by default', () => {
-    render(<Icon icon={HomeIcon} data-testid="icon" />);
+    render(<Icon icon={TestIcon} data-testid="icon" />);
     expect(screen.getByTestId('icon')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('renders with different color variants', () => {
     const {rerender} = render(
-      <Icon icon={HomeIcon} color="primary" data-testid="icon" />,
+      <Icon icon={TestIcon} color="primary" data-testid="icon" />,
     );
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="secondary" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="secondary" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="accent" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="accent" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="success" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="success" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="error" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="error" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="warning" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="warning" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} color="inherit" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} color="inherit" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
 
@@ -70,50 +70,87 @@ describe('Icon', () => {
       'purple',
     ] as const;
     const {rerender} = render(
-      <Icon
-        icon={HomeIcon}
-        color={nonSemanticColors[0]}
-        data-testid="icon"
-      />,
+      <Icon icon={TestIcon} color={nonSemanticColors[0]} data-testid="icon" />,
     );
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
     for (const c of nonSemanticColors.slice(1)) {
-      rerender(<Icon icon={HomeIcon} color={c} data-testid="icon" />);
+      rerender(<Icon icon={TestIcon} color={c} data-testid="icon" />);
       expect(screen.getByTestId('icon')).toBeInTheDocument();
     }
   });
 
   it('renders with different size variants', () => {
     const {rerender} = render(
-      <Icon icon={HomeIcon} size="xsm" data-testid="icon" />,
+      <Icon icon={TestIcon} size="xsm" data-testid="icon" />,
     );
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} size="sm" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} size="sm" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} size="md" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} size="md" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
 
-    rerender(<Icon icon={HomeIcon} size="lg" data-testid="icon" />);
+    rerender(<Icon icon={TestIcon} size="lg" data-testid="icon" />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
+  });
+
+  it('sizes component-mode icons in rem so they scale with root font-size', () => {
+    const sizes = {
+      xsm: '0.75rem',
+      sm: '1rem',
+      md: '1.25rem',
+      lg: '1.5rem',
+    } as const;
+    for (const [size, expected] of Object.entries(sizes)) {
+      const {unmount} = render(
+        <Icon
+          icon={TestIcon}
+          size={size as keyof typeof sizes}
+          data-testid="icon"
+        />,
+      );
+      const style = getComputedStyle(screen.getByTestId('icon'));
+      expect(style.width).toBe(expected);
+      expect(style.height).toBe(expected);
+      unmount();
+    }
+  });
+
+  it('sizes registry (string-mode) icons in rem, including fontSize', () => {
+    const sizes = {
+      xsm: '0.75rem',
+      sm: '1rem',
+      md: '1.25rem',
+      lg: '1.5rem',
+    } as const;
+    for (const [size, expected] of Object.entries(sizes)) {
+      const {unmount} = render(
+        <Icon
+          icon="check"
+          size={size as keyof typeof sizes}
+          data-testid="icon"
+        />,
+      );
+      const style = getComputedStyle(screen.getByTestId('icon'));
+      expect(style.width).toBe(expected);
+      expect(style.height).toBe(expected);
+      // fontSize is expressed in rem so 1em-based registry icons scale too.
+      expect(style.fontSize).toBe(expected);
+      unmount();
+    }
   });
 
   it('forwards ref correctly', () => {
     const ref = vi.fn();
-    render(<Icon icon={HomeIcon} ref={ref} />);
+    render(<Icon icon={TestIcon} ref={ref} />);
     expect(ref).toHaveBeenCalledWith(expect.any(SVGSVGElement));
   });
 
   it('passes additional SVG props', () => {
     render(
-      <Icon
-        icon={HomeIcon}
-        data-testid="icon"
-        role="img"
-        aria-label="Home"
-      />,
+      <Icon icon={TestIcon} data-testid="icon" role="img" aria-label="Home" />,
     );
     const icon = screen.getByTestId('icon');
     expect(icon).toHaveAttribute('role', 'img');
@@ -121,8 +158,125 @@ describe('Icon', () => {
   });
 
   it('uses default color and size when not specified', () => {
-    render(<Icon icon={HomeIcon} data-testid="icon" />);
+    render(<Icon icon={TestIcon} data-testid="icon" />);
     // The component should render without errors with defaults
     expect(screen.getByTestId('icon')).toBeInTheDocument();
+  });
+
+  it('applies aria-hidden by default in string (registry) mode', () => {
+    render(<Icon icon="check" data-testid="icon" />);
+    expect(screen.getByTestId('icon')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('lets a string-mode icon be made meaningful by overriding aria-hidden', () => {
+    render(
+      <Icon
+        icon="check"
+        data-testid="icon"
+        role="img"
+        aria-label="Done"
+        aria-hidden={false}
+      />,
+    );
+    const icon = screen.getByTestId('icon');
+    expect(icon).toHaveAttribute('role', 'img');
+    expect(icon).toHaveAttribute('aria-label', 'Done');
+    expect(icon).toHaveAttribute('aria-hidden', 'false');
+  });
+
+  describe('label (accessible name)', () => {
+    it('makes a component-mode icon meaningful: role="img" + aria-label, no aria-hidden', () => {
+      render(<Icon icon={TestIcon} label="Completed" data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('role', 'img');
+      expect(icon).toHaveAttribute('aria-label', 'Completed');
+      expect(icon).not.toHaveAttribute('aria-hidden');
+    });
+
+    it('makes a string-mode (registry) icon meaningful: role="img" + aria-label, no aria-hidden', () => {
+      render(<Icon icon="check" label="Completed" data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('role', 'img');
+      expect(icon).toHaveAttribute('aria-label', 'Completed');
+      expect(icon).not.toHaveAttribute('aria-hidden');
+    });
+
+    it('keeps the decorative default when label is omitted (component mode)', () => {
+      render(<Icon icon={TestIcon} data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+      expect(icon).not.toHaveAttribute('role');
+      expect(icon).not.toHaveAttribute('aria-label');
+    });
+
+    it('keeps the decorative default when label is omitted (string mode)', () => {
+      render(<Icon icon="check" data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+      expect(icon).not.toHaveAttribute('role');
+      expect(icon).not.toHaveAttribute('aria-label');
+    });
+
+    it('treats an empty string label as decorative (component mode)', () => {
+      render(<Icon icon={TestIcon} label="" data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+      expect(icon).not.toHaveAttribute('role');
+      expect(icon).not.toHaveAttribute('aria-label');
+    });
+
+    it('treats an empty string label as decorative (string mode)', () => {
+      render(<Icon icon="check" label="" data-testid="icon" />);
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+      expect(icon).not.toHaveAttribute('role');
+      expect(icon).not.toHaveAttribute('aria-label');
+    });
+
+    it('lets an explicit aria-hidden win over label (component mode)', () => {
+      render(
+        <Icon icon={TestIcon} label="Close" aria-hidden data-testid="icon" />,
+      );
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('lets an explicit aria-hidden win over label (string mode)', () => {
+      render(
+        <Icon icon="check" label="Close" aria-hidden data-testid="icon" />,
+      );
+      const icon = screen.getByTestId('icon');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('lets an explicit aria-label override the label-derived name (component mode)', () => {
+      render(
+        <Icon
+          icon={TestIcon}
+          label="Close"
+          aria-label="Dismiss"
+          data-testid="icon"
+        />,
+      );
+      expect(screen.getByTestId('icon')).toHaveAttribute(
+        'aria-label',
+        'Dismiss',
+      );
+    });
+
+    it('lets an explicit role override the label-derived role (string mode)', () => {
+      render(
+        <Icon
+          icon="check"
+          label="Close"
+          role="presentation"
+          data-testid="icon"
+        />,
+      );
+      expect(screen.getByTestId('icon')).toHaveAttribute(
+        'role',
+        'presentation',
+      );
+    });
   });
 });

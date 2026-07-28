@@ -24,9 +24,34 @@ export const docs = {
       props: [
         {
           name: 'gap',
-          type: 'SpacingStep',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             'Spacing step (number literal): 0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10. Pass as a JSX number expression e.g. gap={4}, NOT a string like gap="4".',
+        },
+        {
+          name: 'padding',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inner padding on all sides, using the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10). Matches the padding prop on Card, LayoutContent, and LayoutPanel. Pass as a JSX number expression e.g. padding={3}.',
+        },
+        {
+          name: 'paddingInline',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.',
+        },
+        {
+          name: 'paddingBlock',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.',
+        },
+        {
+          name: 'isScrollable',
+          type: 'boolean',
+          description:
+            'Enables scrollable overflow (overflow: auto). Matches isScrollable on LayoutContent and LayoutPanel.',
+          default: 'false',
         },
         {
           name: 'width',
@@ -37,6 +62,16 @@ export const docs = {
           name: 'height',
           type: 'SizeValue',
           description: "Height of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'maxWidth',
+          type: 'SizeValue',
+          description: "Maximum width of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'minHeight',
+          type: 'SizeValue',
+          description: "Minimum height of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
         },
         {
           name: 'hAlign',
@@ -92,9 +127,34 @@ export const docs = {
       props: [
         {
           name: 'gap',
-          type: 'SpacingStep',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             'Spacing step (number literal): 0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10. Pass as a JSX number expression e.g. gap={4}, NOT a string like gap="4".',
+        },
+        {
+          name: 'padding',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inner padding on all sides, using the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10). Matches the padding prop on Card, LayoutContent, and LayoutPanel. Pass as a JSX number expression e.g. padding={3}.',
+        },
+        {
+          name: 'paddingInline',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.',
+        },
+        {
+          name: 'paddingBlock',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.',
+        },
+        {
+          name: 'isScrollable',
+          type: 'boolean',
+          description:
+            'Enables scrollable overflow (overflow: auto). Matches isScrollable on LayoutContent and LayoutPanel.',
+          default: 'false',
         },
         {
           name: 'width',
@@ -105,6 +165,16 @@ export const docs = {
           name: 'height',
           type: 'SizeValue',
           description: "Height of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'maxWidth',
+          type: 'SizeValue',
+          description: "Maximum width of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'minHeight',
+          type: 'SizeValue',
+          description: "Minimum height of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
         },
         {
           name: 'hAlign',
@@ -161,6 +231,13 @@ export const docs = {
           default: "'static'",
         },
         {
+          name: 'isScrollable',
+          type: 'boolean',
+          description:
+            'Enables scrollable overflow (overflow: auto). StackItem already applies the flex min-height/min-width reset, so <StackItem size="fill" isScrollable> is a complete scroll region. Matches isScrollable on LayoutContent and LayoutPanel.',
+          default: 'false',
+        },
+        {
           name: 'crossAlignSelf',
           type: "'start' | 'center' | 'end' | 'stretch'",
           description:
@@ -212,7 +289,7 @@ export const docsZh = {
       props: [
         {
           name: 'gap',
-          type: 'SpacingStep',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             '间距步进（数字字面量）：0、0.5、1、1.5、2、3、4、5、6、8、10。在 JSX 中使用数字表达式 e.g. gap={4}，不要使用字符串 gap="4"。',
         },
@@ -281,7 +358,7 @@ export const docsZh = {
       props: [
         {
           name: 'gap',
-          type: 'SpacingStep',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             '间距步进（数字字面量）：0、0.5、1、1.5、2、3、4、5、6、8、10。在 JSX 中使用数字表达式 e.g. gap={4}，不要使用字符串 gap="4"。',
         },

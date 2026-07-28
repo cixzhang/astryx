@@ -60,7 +60,7 @@ function winner(
   astryxVal: number,
   baseVal: number,
   htmlVal?: number,
-  xdsTailwindVal?: number,
+  astryxTailwindVal?: number,
 ): WinnerType {
   const entries: [TargetName, number][] = [
     ['astryx', astryxVal],
@@ -69,8 +69,8 @@ function winner(
   if (htmlVal != null) {
     entries.push(['html', htmlVal]);
   }
-  if (xdsTailwindVal != null) {
-    entries.push(['astryx-tailwind', xdsTailwindVal]);
+  if (astryxTailwindVal != null) {
+    entries.push(['astryx-tailwind', astryxTailwindVal]);
   }
 
   const max = Math.max(...entries.map(([, v]) => v));
@@ -90,7 +90,7 @@ function winnerIcon(w: WinnerType): string {
     case 'html':
       return '🟡 HTML';
     case 'astryx-tailwind':
-      return '🟣 XDS+TW';
+      return '🟣 Astryx+TW';
     case 'tie':
       return '⚪ Tie';
   }
@@ -100,7 +100,7 @@ function parseArgs(): {
   astryx: string;
   baseline: string;
   html?: string;
-  xdsTailwind?: string;
+  astryxTailwind?: string;
   json: boolean;
   markdown: boolean;
 } {
@@ -108,7 +108,7 @@ function parseArgs(): {
   let astryx = '';
   let baseline = '';
   let html: string | undefined;
-  let xdsTailwind: string | undefined;
+  let astryxTailwind: string | undefined;
   let json = false;
   let markdown = false;
 
@@ -120,7 +120,7 @@ function parseArgs(): {
     } else if (args[i] === '--html' && args[i + 1]) {
       html = args[++i];
     } else if (args[i] === '--astryx-tailwind' && args[i + 1]) {
-      xdsTailwind = args[++i];
+      astryxTailwind = args[++i];
     } else if (args[i] === '--json') {
       json = true;
     } else if (args[i] === '--markdown' || args[i] === '--md') {
@@ -135,7 +135,7 @@ function parseArgs(): {
     process.exit(1);
   }
 
-  return {astryx, baseline, html, xdsTailwind, json, markdown};
+  return {astryx, baseline, html, astryxTailwind, json, markdown};
 }
 
 /**
@@ -147,15 +147,16 @@ function toMarkdown(opts: {
   astryxId: string;
   baselineId: string;
   htmlId?: string;
-  xdsTailwindId?: string;
+  astryxTailwindId?: string;
   byPrompt: UniversalComparison['byPrompt'];
 }): string {
-  const {comparison, astryxId, baselineId, htmlId, xdsTailwindId, byPrompt} = opts;
+  const {comparison, astryxId, baselineId, htmlId, astryxTailwindId, byPrompt} =
+    opts;
   const {
     astryx,
     baseline,
     html: htmlData,
-    xdsTailwind: twData,
+    astryxTailwind: twData,
     winners,
   } = comparison;
   const dimensions = getDimensionNames();
@@ -177,7 +178,9 @@ function toMarkdown(opts: {
   ];
 
   const astryxRow = dimOrder.map(d => astryx.averages[d]).join(' | ');
-  lines.push(`| **Astryx** | \`${astryxId}\` | ${astryx.overall} | ${astryxRow} |`);
+  lines.push(
+    `| **Astryx** | \`${astryxId}\` | ${astryx.overall} | ${astryxRow} |`,
+  );
 
   const baseRow = dimOrder.map(d => baseline.averages[d]).join(' | ');
   lines.push(
@@ -194,7 +197,7 @@ function toMarkdown(opts: {
   if (twData) {
     const twRow = dimOrder.map(d => twData.averages[d]).join(' | ');
     lines.push(
-      `| **XDS+TW** | \`${xdsTailwindId}\` | ${twData.overall} | ${twRow} |`,
+      `| **Astryx+TW** | \`${astryxTailwindId}\` | ${twData.overall} | ${twRow} |`,
     );
   }
 
@@ -226,7 +229,7 @@ function toMarkdown(opts: {
       parts.push(`HTML ${hWins}`);
     }
     if (twData) {
-      parts.push(`XDS+TW ${twWins}`);
+      parts.push(`Astryx+TW ${twWins}`);
     }
     parts.push(`Tie ${ties}`);
     lines.push(
@@ -244,7 +247,7 @@ function toMarkdown(opts: {
     dmParts.push(`HTML ${htmlData.darkModeRate}%`);
   }
   if (twData) {
-    dmParts.push(`XDS+TW ${twData.darkModeRate}%`);
+    dmParts.push(`Astryx+TW ${twData.darkModeRate}%`);
   }
   lines.push(`**Dark mode:** ${dmParts.join(' · ')}`);
 
@@ -273,7 +276,7 @@ async function main() {
     astryx: astryxId,
     baseline: baselineId,
     html: htmlId,
-    xdsTailwind: xdsTailwindId,
+    astryxTailwind: astryxTailwindId,
     json,
     markdown,
   } = parseArgs();
@@ -281,7 +284,9 @@ async function main() {
   const astryx = loadOrGenerate(astryxId);
   const baseline = loadOrGenerate(baselineId);
   const htmlData = htmlId ? loadOrGenerate(htmlId) : undefined;
-  const twData = xdsTailwindId ? loadOrGenerate(xdsTailwindId) : undefined;
+  const twData = astryxTailwindId
+    ? loadOrGenerate(astryxTailwindId)
+    : undefined;
 
   const dimensions = getDimensionNames();
   const isThreeWay = !!htmlData;
@@ -318,7 +323,7 @@ async function main() {
         astryx: astryxScore,
         baseline: baselineScore,
         ...(htmlScore ? {html: htmlScore} : {}),
-        ...(twScore ? {xdsTailwind: twScore} : {}),
+        ...(twScore ? {astryxTailwind: twScore} : {}),
         winner: winner(
           getAverageScore(astryxScore),
           getAverageScore(baselineScore),
@@ -333,7 +338,7 @@ async function main() {
     astryx,
     baseline,
     ...(htmlData ? {html: htmlData} : {}),
-    ...(twData ? {xdsTailwind: twData} : {}),
+    ...(twData ? {astryxTailwind: twData} : {}),
     winners,
     byPrompt,
   };
@@ -343,8 +348,8 @@ async function main() {
   if (htmlId) {
     idParts.push(htmlId);
   }
-  if (xdsTailwindId) {
-    idParts.push(xdsTailwindId);
+  if (astryxTailwindId) {
+    idParts.push(astryxTailwindId);
   }
   const outputFilename = `comparison-${idParts.join('-')}.json`;
   const outputPath = path.join(getResultsDir(), outputFilename);
@@ -362,7 +367,7 @@ async function main() {
         astryxId,
         baselineId,
         htmlId,
-        xdsTailwindId,
+        astryxTailwindId,
         byPrompt,
       }),
     );
@@ -375,7 +380,7 @@ async function main() {
     targetNames.push('HTML');
   }
   if (isFourWay) {
-    targetNames.push('XDS+TW');
+    targetNames.push('Astryx+TW');
   }
 
   const title = `📊 Universal Comparison: ${targetNames.join(' vs ')}`;
@@ -392,7 +397,7 @@ async function main() {
     targets.push({label: 'HTML', data: htmlData});
   }
   if (isFourWay && twData != null) {
-    targets.push({label: 'XDS+TW', data: twData});
+    targets.push({label: 'Astryx+TW', data: twData});
   }
 
   // Use markdown-style table for CLI (simpler than box-drawing for N targets)
@@ -547,7 +552,7 @@ async function main() {
       } else if (data.winner === 'html') {
         winCounts['HTML']++;
       } else if (data.winner === 'astryx-tailwind') {
-        winCounts['XDS+TW']++;
+        winCounts['Astryx+TW']++;
       } else {
         winCounts['Tie']++;
       }

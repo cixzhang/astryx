@@ -11,6 +11,7 @@ import {Grid, GridSpan} from '@astryxdesign/core/Grid';
 import {Divider} from '@astryxdesign/core/Divider';
 import {Section} from '@astryxdesign/core/Section';
 import {useAppShellMobile} from '@astryxdesign/core/AppShell';
+import {DocsVersionFooterLink} from './DocsVersionFooterLink';
 import {
   GITHUB_REPO,
   DISCORD_URL,
@@ -103,6 +104,7 @@ function NavLinks() {
           {item.label}
         </Link>
       ))}
+      <DocsVersionFooterLink />
     </>
   );
 }
@@ -148,20 +150,17 @@ function LegalLinks() {
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({year}: {year: number}) {
   const {isMobile} = useAppShellMobile();
-  const year = new Date().getFullYear();
 
   // The regex compliance check requires the year to immediately follow the
   // copyright mark — `©{year}`, no separating space. See PR description.
   const copyright = `\u00A9${year} Meta Platforms, Inc.`;
 
   const astryxLogo = (
-    <AstryxLogo
-      role="img"
-      aria-label="Astryx"
-      {...stylex.props(styles.astryxLogo)}
-    />
+    <Link href="/" label="Astryx">
+      <AstryxLogo aria-hidden="true" {...stylex.props(styles.astryxLogo)} />
+    </Link>
   );
 
   const metaOpenSourceLink = (

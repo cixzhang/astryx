@@ -8,10 +8,33 @@ export const docs = {
   group: 'DropdownMenu',
   category: 'Action',
   keywords: ["dropdown","menu","popover","select","actions","contextmenu","overflow","kebab","menubutton"],
+  playground: {
+    // `items` is required; without seeded entries the properties-tab preview
+    // renders an empty trigger button. Provide a few actions so the preview
+    // is meaningful.
+    defaults: {
+      button: {label: 'Actions'},
+      items: [
+        {label: 'Edit'},
+        {label: 'Duplicate'},
+        {label: 'Delete'},
+      ],
+    },
+  },
   theming: {
     targets: [
       {className: 'astryx-dropdown-menu'},
-      {className: 'astryx-dropdown-menu-item'},
+      {className: 'astryx-dropdown-menu-item', visualProps: ['size']},
+      {
+        className: 'astryx-dropdown-menu-checkbox',
+        visualProps: ['size'],
+        states: ['checked', 'disabled'],
+      },
+      {
+        className: 'astryx-dropdown-menu-radio',
+        visualProps: ['size'],
+        states: ['checked', 'disabled'],
+      },
     ],
     vars: [
       {name: '--_dropdown-menu-radius', description: 'Border radius of the menu popup', default: 'var(--radius-element)', private: true},
@@ -61,14 +84,7 @@ export const docs = {
       type: 'boolean',
       description: 'Whether to show a chevron icon on the trigger button. Set to false for icon-only triggers.',
       default: 'true',
-    },
-    {
-      name: 'hasAutoFocus',
-      type: 'boolean',
-      description: 'Whether to auto-focus the first menu item when the menu opens. Set to false for inline showcases or documentation previews.',
-      default: 'true',
-    },
-    {
+    },    {
       name: 'children',
       type: '(item: DropdownMenuItemData) => ReactNode',
       description: 'Custom render function for each item in the list.',

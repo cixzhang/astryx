@@ -22,8 +22,13 @@ export const docs = {
     },
     {
       name: 'media',
+      // Left as the named type on purpose: the shape carries `caption?:
+      // ReactNode`, so spelling it out makes the docsite playground parse the
+      // whole prop as an editable *string*, which would feed the preview text
+      // where a media object belongs. The shape and its legal values live in
+      // the description instead (#1645).
       type: 'LightboxMedia | LightboxMedia[]',
-      description: 'Media to display. Pass a single object for one item, or an array for gallery mode with prev/next navigation. Each item has src, alt, optional caption and type.',
+      description: "Media to display. Pass a single object for one item, or an array for gallery mode with prev/next navigation. Each item is {src: string, alt: string, caption?: ReactNode, type?: 'image' | 'video'}; type defaults to 'image', and zoom/pan is disabled for 'video'.",
       required: true,
     },
     {
@@ -64,6 +69,20 @@ export const docs = {
       { guidance: false, description: 'Nest interactive content inside captions; keep them plain text.' },
     ],
   },
+  // The lightbox opens via showModal() and renders nothing while closed —
+  // overlay mode gives the Properties preview an open trigger instead of an
+  // empty stage, mirroring MobileNav (#3616).
+  playground: {
+    overlay: true,
+    defaults: {
+      isOpen: false,
+      media: {
+        src: 'https://lookaside.facebook.com/assets/astryx/light-scene-horizontal-1.png',
+        alt: 'Coastal shoreline with ocean waves',
+        caption: 'A scenic coastline with waves rolling onto a sandy beach beneath a clear sky.',
+      },
+    },
+  },
 };
 
 /** @type {import('../docs-types').ComponentDoc} */
@@ -86,7 +105,7 @@ export const docsZh = {
     {
       name: 'media',
       type: 'LightboxMedia | LightboxMedia[]',
-      description: '要显示的媒体。传入单个对象或数组（用于画廊模式的上一张/下一张导航）。',
+      description: "要显示的媒体。传入单个对象或数组（用于画廊模式的上一张/下一张导航）。每项为 {src, alt, caption?, type?: 'image' | 'video'}；type 默认为 'image'，'video' 禁用缩放/平移。",
       required: true,
     },
     {

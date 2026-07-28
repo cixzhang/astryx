@@ -29,6 +29,7 @@ import React, {
 import * as stylex from '@stylexjs/stylex';
 import type {StyleXStyles} from '@stylexjs/stylex';
 import {usePopover} from '../Popover/usePopover';
+import {useAnnounce} from '../hooks/useAnnounce';
 import {TypeaheadItem} from './TypeaheadItem';
 import {Icon} from '../Icon';
 import {
@@ -43,14 +44,16 @@ import {getKey, mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import type {SearchableItem, SearchSource} from './types';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export interface BaseTypeaheadProps<
-  T extends SearchableItem,
-> extends Omit<BaseProps<HTMLElement>, 'onChange'> {
+export interface BaseTypeaheadProps<T extends SearchableItem> extends Omit<
+  BaseProps<HTMLElement>,
+  'onChange'
+> {
   ref?: React.Ref<HTMLInputElement>;
   /**
    * Search source providing items.
@@ -102,6 +105,16 @@ export interface BaseTypeaheadProps<
   isDisabled?: boolean;
 
   /**
+   * When disabled with a reason, keeps the input focusable via `aria-disabled`
+   * (instead of the native `disabled` attribute) and `readOnly` so an
+   * associated disabled-reason tooltip stays discoverable by keyboard and
+   * assistive technology. Value mutation is still blocked by the `isDisabled`
+   * guards. Consumers (Typeahead) own the tooltip and wrapper.
+   * @default false
+   */
+  isFocusableDisabled?: boolean;
+
+  /**
    * Auto-focus on mount.
    * @default false
    */
@@ -133,6 +146,11 @@ export interface BaseTypeaheadProps<
    * Additional aria-describedby IDs.
    */
   ariaDescribedBy?: string;
+
+  /**
+   * Additional aria-labelledby IDs.
+   */
+  ariaLabelledBy?: string;
 
   /**
    * Additional StyleX styles for the input element.
@@ -212,7 +230,7 @@ const styles = stylex.create({
     outline: 'none',
     backgroundColor: 'transparent',
     border: 'none',
-    textAlign: 'left',
+    textAlign: 'start',
   },
   itemHighlighted: {
     backgroundColor: colorVars['--color-overlay-hover'],
@@ -280,23 +298,23 @@ const itemSizeStyles = stylex.create({
  * />
  * ```
  */
-export const BaseTypeahead = function BaseTypeahead<
-  T extends SearchableItem,
->({
+export const BaseTypeahead = function BaseTypeahead<T extends SearchableItem>({
   searchSource,
   value,
   onChange,
   renderItem,
-  placeholder = 'Search...',
+  placeholder: placeholderFromProps,
   hasEntriesOnFocus = false,
   maxMenuItems = 10,
-  emptySearchResultsText = 'No results found',
+  emptySearchResultsText: emptySearchResultsTextFromProps,
   isDisabled = false,
+  isFocusableDisabled = false,
   hasAutoFocus = false,
   onChangeQuery,
   onOpenChange,
   inputId: externalInputId,
   ariaDescribedBy,
+  ariaLabelledBy,
   inputXStyle,
   anchorRef,
   onKeyDown: externalOnKeyDown,
@@ -304,12 +322,23 @@ export const BaseTypeahead = function BaseTypeahead<
   size = 'md',
   ref,
 }: BaseTypeaheadProps<T>) {
+  const t = useTranslator();
+  const placeholder =
+    placeholderFromProps ?? t('@astryx.typeahead.searchPlaceholder');
+  const emptySearchResultsText =
+    emptySearchResultsTextFromProps ??
+    t('@astryx.typeahead.emptySearchResults');
   const generatedId = useId();
   const inputId = externalInputId ?? generatedId;
   const listboxId = useId();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fallbackAnchorRef = useRef<HTMLInputElement>(null);
+
+  // Announce result counts / "no results" to screen readers via a persistent
+  // live region (comboboxes-6). The combobox's own popup carries no working
+  // live region, so highlight/result changes were previously silent.
+  const announce = useAnnounce();
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<T[]>([]);
@@ -353,6 +382,9 @@ export const BaseTypeahead = function BaseTypeahead<
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own role="listbox" is the exposed semantics; the input keeps
+    // DOM focus, so wrapping it in a modal dialog would misrepresent it.
+    role: 'none',
   });
 
   // Show the layer, deferring past the active click if a pointer is down.
@@ -385,7 +417,10 @@ export const BaseTypeahead = function BaseTypeahead<
   const performSearch = useCallback(
     async (searchQuery: string) => {
       searchSource.cancel?.();
-      const gen = searchGenRef.current;
+      // Claim a new generation so overlapping searches can't race: an
+      // in-flight response for an older query fails the gen check below
+      // instead of overwriting the newer results.
+      const gen = ++searchGenRef.current;
       setIsLoading(true);
       setHasSearched(true);
       try {
@@ -394,10 +429,20 @@ export const BaseTypeahead = function BaseTypeahead<
           return;
         }
         resultsGenRef.current = gen;
-        setResults(searchResults.slice(0, maxMenuItems));
-        setHighlightedIndex(searchResults.length > 0 ? 0 : -1);
+        const shown = searchResults.slice(0, maxMenuItems);
+        setResults(shown);
+        setHighlightedIndex(shown.length > 0 ? 0 : -1);
         if (searchResults.length > 0 || searchQuery.length > 0) {
           showLayer();
+        }
+        // Announce the outcome only for an active query (not the initial
+        // focus-open), so screen-reader users hear result counts / no-results.
+        if (searchQuery.length > 0) {
+          announce(
+            shown.length === 0
+              ? emptySearchResultsText
+              : `${shown.length} ${shown.length === 1 ? 'result' : 'results'}`,
+          );
         }
       } catch {
         if (searchGenRef.current !== gen) {
@@ -411,12 +456,12 @@ export const BaseTypeahead = function BaseTypeahead<
         }
       }
     },
-    [searchSource, maxMenuItems, showLayer],
+    [searchSource, maxMenuItems, showLayer, announce, emptySearchResultsText],
   );
 
   // Perform bootstrap
   const performBootstrap = useCallback(async () => {
-    const gen = searchGenRef.current;
+    const gen = ++searchGenRef.current;
     setIsLoading(true);
     try {
       const bootstrapResults = await searchSource.bootstrap();
@@ -424,8 +469,9 @@ export const BaseTypeahead = function BaseTypeahead<
         return;
       }
       resultsGenRef.current = gen;
-      setResults(bootstrapResults.slice(0, maxMenuItems));
-      setHighlightedIndex(bootstrapResults.length > 0 ? 0 : -1);
+      const shown = bootstrapResults.slice(0, maxMenuItems);
+      setResults(shown);
+      setHighlightedIndex(shown.length > 0 ? 0 : -1);
       if (bootstrapResults.length > 0) {
         showLayer();
       }
@@ -456,6 +502,8 @@ export const BaseTypeahead = function BaseTypeahead<
         searchSource.cancel?.();
         setResults([]);
         setHasSearched(false);
+        // Clear any lingering result-count / no-results announcement.
+        announce('');
         popover.hide();
         return;
       }
@@ -482,6 +530,7 @@ export const BaseTypeahead = function BaseTypeahead<
       popover,
       debounceMs,
       searchSource,
+      announce,
     ],
   );
 
@@ -539,6 +588,32 @@ export const BaseTypeahead = function BaseTypeahead<
     showLayer,
   ]);
 
+  // Handle blur — close the dropdown when focus leaves the input for an
+  // element that is neither inside the field wrapper (anchor) nor inside the
+  // dropdown popover. The native popover="auto" light-dismiss only fires on
+  // outside pointer clicks and Escape; it does not close when focus moves away
+  // via the keyboard (Tab) or programmatically, which would otherwise leave an
+  // orphaned open menu. Clicking a result moves focus onto the option (it is
+  // tabIndex={-1}, so it lives inside the popover) and selection re-focuses the
+  // input, so this only closes on a genuine focus-out of the whole field.
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      if (!popover.isOpen) {
+        return;
+      }
+      const next = e.relatedTarget as Node | null;
+      if (next) {
+        const anchorEl = anchorRef?.current ?? fallbackAnchorRef.current;
+        const popoverEl = document.getElementById(popover.id);
+        if (anchorEl?.contains(next) || popoverEl?.contains(next)) {
+          return;
+        }
+      }
+      popover.hide();
+    },
+    [popover, anchorRef],
+  );
+
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -563,15 +638,19 @@ export const BaseTypeahead = function BaseTypeahead<
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setHighlightedIndex(prev =>
-            prev < results.length - 1 ? prev + 1 : 0,
-          );
+          if (results.length > 0) {
+            setHighlightedIndex(prev =>
+              prev < results.length - 1 ? prev + 1 : 0,
+            );
+          }
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setHighlightedIndex(prev =>
-            prev > 0 ? prev - 1 : results.length - 1,
-          );
+          if (results.length > 0) {
+            setHighlightedIndex(prev =>
+              prev > 0 ? prev - 1 : results.length - 1,
+            );
+          }
           break;
         case 'Enter':
           e.preventDefault();
@@ -586,13 +665,17 @@ export const BaseTypeahead = function BaseTypeahead<
         case 'Home':
           if (popover.isOpen) {
             e.preventDefault();
-            setHighlightedIndex(0);
+            if (results.length > 0) {
+              setHighlightedIndex(0);
+            }
           }
           break;
         case 'End':
           if (popover.isOpen) {
             e.preventDefault();
-            setHighlightedIndex(results.length - 1);
+            if (results.length > 0) {
+              setHighlightedIndex(results.length - 1);
+            }
           }
           break;
       }
@@ -614,6 +697,23 @@ export const BaseTypeahead = function BaseTypeahead<
     (index: number) => `${listboxId}-option-${index}`,
     [listboxId],
   );
+
+  // Keep the highlighted option visible during keyboard navigation. The
+  // listbox is a fixed-height scroll container, so without this the virtual
+  // cursor walks off-screen once navigation passes the visible window. Mirrors
+  // CommandPaletteItem's scrollIntoView({block: 'nearest'}) behavior.
+  useEffect(() => {
+    if (
+      !popover.isOpen ||
+      highlightedIndex < 0 ||
+      highlightedIndex >= results.length
+    ) {
+      return;
+    }
+    document
+      .getElementById(getItemId(highlightedIndex))
+      ?.scrollIntoView?.({block: 'nearest'});
+  }, [popover.isOpen, highlightedIndex, getItemId, results.length]);
 
   const selectedKey =
     value == null ? null : getKey(value.id, () => results.indexOf(value));
@@ -638,12 +738,16 @@ export const BaseTypeahead = function BaseTypeahead<
         aria-expanded={popover.isOpen}
         aria-controls={listboxId}
         aria-activedescendant={
-          popover.isOpen && highlightedIndex >= 0
+          popover.isOpen &&
+          highlightedIndex >= 0 &&
+          highlightedIndex < results.length
             ? getItemId(highlightedIndex)
             : undefined
         }
         aria-autocomplete="list"
         aria-describedby={ariaDescribedBy}
+        aria-labelledby={ariaLabelledBy}
+        aria-disabled={isFocusableDisabled ? 'true' : undefined}
         value={query}
         onChange={handleInputChange}
         onPointerDown={() => {
@@ -657,9 +761,14 @@ export const BaseTypeahead = function BaseTypeahead<
           );
         }}
         onFocus={handleFocus}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={isDisabled}
+        // When a disabled-reason tooltip is shown the input keeps focusability
+        // via aria-disabled + readOnly instead of the native disabled
+        // attribute; value mutation stays blocked by the isDisabled guards.
+        disabled={isDisabled && !isFocusableDisabled}
+        readOnly={isFocusableDisabled || undefined}
         autoFocus={hasAutoFocus}
         data-autofocus={hasAutoFocus || undefined}
         autoComplete="off"
@@ -672,7 +781,7 @@ export const BaseTypeahead = function BaseTypeahead<
       {isLoading && (
         <span
           role="status"
-          aria-label="Loading"
+          aria-label={t('@astryx.typeahead.loading')}
           {...stylex.props(styles.loadingSpinner)}>
           <Icon icon="clock" size="sm" color="secondary" />
         </span>
@@ -682,7 +791,7 @@ export const BaseTypeahead = function BaseTypeahead<
         <div
           id={listboxId}
           role="listbox"
-          aria-label="Search results"
+          aria-label={t('@astryx.typeahead.searchResults')}
           {...mergeProps(
             themeProps('typeahead-dropdown'),
             stylex.props(styles.dropdown),

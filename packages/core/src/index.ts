@@ -42,6 +42,7 @@ export * from './Collapsible';
 export * from './RadioList';
 export * from './Resizable';
 export * from './Divider';
+export * from './VisuallyHidden';
 export * from './EmptyState';
 export * from './Lightbox';
 export * from './Link';
@@ -168,6 +169,9 @@ export * from './utils';
 
 // Theme
 export * from './theme';
+
+// Internationalization
+export * from './i18n';
 
 // Doc types — for external library authors writing .doc.mjs files
 export type {

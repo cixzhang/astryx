@@ -25,6 +25,7 @@ import {
   buildInitialState,
   buildRuntimePreviewState,
   getMissingRequiredProps,
+  isOverlayPreviewClosed,
   pickPrimaryProps,
   type KnobProp,
 } from './interactiveState';
@@ -133,16 +134,24 @@ function formatValue(
         if (typeof v === 'string') {
           return `${k}="${v}"`;
         }
-        return `${k}={${JSON.stringify(v)}}`;
+        try {
+          return `${k}={${JSON.stringify(v)}}`;
+        } catch {
+          return `${k}={/* ... */}`;
+        }
       })
       .join(' ');
     return `<${type} ${propStr} />`;
   }
-  return JSON.stringify(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '/* ... */';
+  }
 }
 
 function generateCode(name: string, state: Record<string, unknown>): string {
-  const componentName = `XDS${name}`;
+  const componentName = name;
   // Filter out docs-only props that shouldn't appear in user code
   const entries = Object.entries(state).filter(
     ([k, v]) => v !== undefined && k !== 'isInline',
@@ -354,6 +363,29 @@ export function InteractivePreviewStage({
             <PreviewErrorBoundary
               resetKeys={[Component, runtimeState, WrapperComponent]}>
               {renderPreview(createElement(Component, runtimeState))}
+              {isOverlayPreviewClosed(playground, state) && (
+                <VStack
+                  gap={2}
+                  style={{
+                    alignItems: 'center',
+                    paddingBlock: 24,
+                    paddingInline: 16,
+                    textAlign: 'center',
+                  }}>
+                  <Text type="supporting" color="secondary">
+                    Opens as a full-screen overlay — nothing renders while it is
+                    closed.
+                  </Text>
+                  {onPropChange != null && canControlOpenState && (
+                    <Button
+                      label="Open preview"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onPropChange('isOpen', true)}
+                    />
+                  )}
+                </VStack>
+              )}
             </PreviewErrorBoundary>
           </Center>
         )}

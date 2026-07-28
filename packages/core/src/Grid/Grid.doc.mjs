@@ -17,6 +17,7 @@ export const docs = {
       { guidance: true, description: 'Use `repeat: \'fill\'` (the default) for consistent item widths. Use `\'fit\'` when items should stretch to fill leftover space.' },
       { guidance: false, description: 'Write manual CSS grid; Grid handles spacing and responsive behavior for you.' },
       { guidance: false, description: 'Use `HStack` with wrapping for grids; use Grid instead.' },
+      { guidance: true, description: 'Track templates use CSS-variable indirection (not raw inline styles), so `xstyle` overrides of `gridTemplateColumns` (including inside `@media` queries) take effect.' },
     ],
   },
   theming: {
@@ -39,38 +40,48 @@ export const docs = {
     },
     {
       name: 'width',
-      type: 'number | string',
-      description: 'Container width.',
+      type: 'SizeValue',
+      description: 'Container width. Numbers are treated as pixels, strings are used as-is.',
     },
     {
       name: 'height',
-      type: 'number | string',
-      description: 'Container height.',
+      type: 'SizeValue',
+      description: 'Container height. Numbers are treated as pixels, strings are used as-is.',
+    },
+    {
+      name: 'maxWidth',
+      type: 'SizeValue',
+      description: 'Maximum container width. Numbers are treated as pixels, strings are used as-is.',
+    },
+    {
+      name: 'minHeight',
+      type: 'SizeValue',
+      description: 'Minimum container height. Numbers are treated as pixels, strings are used as-is.',
     },
     {
       name: 'gap',
-      type: 'SpacingStep',
+      type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
       description: 'Spacing between all items.',
     },
     {
       name: 'rowGap',
-      type: 'SpacingStep',
+      type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
       description: 'Row spacing; overrides `gap` for the row axis.',
     },
     {
       name: 'columnGap',
-      type: 'SpacingStep',
+      type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
       description: 'Column spacing; overrides `gap` for the column axis.',
     },
     {
       name: 'align',
-      type: 'GridAlignment',
+      type: "'start' | 'center' | 'end' | 'stretch'",
       description: 'Vertical alignment of items.',
       default: "'stretch'",
     },
     {
       name: 'justify',
-      type: 'GridAlignment',
+      type: "'start' | 'center' | 'end' | 'stretch'",
       description: 'Horizontal alignment of items.',
       default: "'stretch'",
     },
@@ -101,6 +112,7 @@ export const docsZh = {
       { guidance: true, description: 'Use `repeat: \'fill\'` (the default) for consistent item widths. Use `\'fit\'` when items should stretch to fill leftover space.' },
       { guidance: false, description: 'Write manual CSS grid; Grid handles spacing and responsive behavior for you.' },
       { guidance: false, description: 'Use `HStack` with wrapping for grids; use Grid instead.' },
+      { guidance: true, description: 'Track templates use CSS-variable indirection (not raw inline styles), so `xstyle` overrides of `gridTemplateColumns` (including inside `@media` queries) take effect.' },
     ],
   },
 };
@@ -116,6 +128,7 @@ export const docsDense = {
       { guidance: true, description: 'Use repeat: \'fill\' (the default) for consistent item widths. Use \'fit\' when items should stretch to fill leftover space.' },
       { guidance: false, description: 'Write manual CSS grid; Grid handles spacing and responsive behavior for you.' },
       { guidance: false, description: 'Use HStack with wrapping for grids; use Grid instead.' },
+      { guidance: true, description: 'track templates use CSS-var indirection, not inline styles, so xstyle/@media overrides of gridTemplateColumns work.' },
     ],
   },
 };

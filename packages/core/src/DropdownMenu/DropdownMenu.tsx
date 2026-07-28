@@ -38,11 +38,13 @@ import {Icon} from '../Icon';
 import type {IconType} from '../Icon';
 
 import {renderDropdownItems} from './renderDropdownItems';
+import {MENU_ITEM_ROLES, MENU_ITEM_SELECTOR} from './menuItemRoles';
 import {
   DropdownMenuContext,
   type DropdownMenuContextValue,
 } from './DropdownMenuContext';
 import {useListFocus} from '../hooks/useListFocus';
+import {useTypeahead} from '../hooks/useTypeahead';
 import {layerAnimations} from '../Layer/layerAnimations.stylex';
 import type {LayerPlacement} from '../Layer/useLayer';
 import {
@@ -54,6 +56,7 @@ import {
 import {mergeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 const styles = stylex.create({
   dropdown: {
@@ -110,9 +113,7 @@ export interface DropdownMenuSection {
 }
 
 export type DropdownMenuOption =
-  | DropdownMenuItemData
-  | DropdownMenuDivider
-  | DropdownMenuSection;
+  DropdownMenuItemData | DropdownMenuDivider | DropdownMenuSection;
 
 // =============================================================================
 // Props
@@ -134,13 +135,6 @@ interface DropdownMenuBaseProps extends BaseProps {
    */
   placement?: LayerPlacement;
 
-  /**
-   * Whether to auto-focus the first menu item when the menu opens.
-   * Set to `false` for inline showcases or documentation previews
-   * where stealing focus is undesirable.
-   * @default true
-   */
-  hasAutoFocus?: boolean;
   'data-testid'?: string;
 }
 
@@ -155,8 +149,7 @@ interface DropdownMenuCompoundProps extends DropdownMenuBaseProps {
 }
 
 export type DropdownMenuProps =
-  | DropdownMenuDataProps
-  | DropdownMenuCompoundProps;
+  DropdownMenuDataProps | DropdownMenuCompoundProps;
 
 // =============================================================================
 // DropdownMenu
@@ -182,28 +175,33 @@ export type DropdownMenuProps =
  * />
  * ```
  */
-const DEFAULT_BUTTON = {label: 'Menu'} as const;
+// When the consumer doesn't pass `button`, the default label is looked up
+// at render time so it respects the active InternationalizationProvider
+// locale.
+const DEFAULT_BUTTON_I18N_KEY = '@astryx.dropdownMenu.label' as const;
 
 export function DropdownMenu({
-  button = DEFAULT_BUTTON,
+  button: buttonFromProps,
   isMenuOpen: controlledIsOpen,
   onOpenChange,
   menuWidth,
   onClick,
   hasChevron = true,
   placement = 'below',
-  hasAutoFocus = true,
   className,
   style,
   xstyle,
   'data-testid': testId,
   ...props
 }: DropdownMenuProps) {
+  const t = useTranslator();
+  const button = buttonFromProps ?? {label: t(DEFAULT_BUTTON_I18N_KEY)};
+
   const items = ('items' in props ? props.items : undefined) ?? [];
   const children = props.children;
 
   const menuId = useId();
-  const menuSize = button?.size ?? 'md';
+  const menuSize = button.size ?? 'md';
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Open state
@@ -249,21 +247,49 @@ export function DropdownMenu({
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own role="menu" is the exposed semantics; wrapping it in a
+    // modal dialog would announce an unnamed dialog around the menu.
+    role: 'none',
   });
 
   const closeMenu = useCallback(() => {
     popover.hide();
   }, [popover]);
 
-  // Single keyboard navigation path for both modes
+  // Single keyboard navigation path for both modes.
+  // The selector matches plain items plus selectable items
+  // (menuitemradio/menuitemcheckbox) so lab checkbox/radio rows are reachable
+  // and roved to alongside plain items — not just role="menuitem".
   const {
     listRef,
     handleKeyDown: listNavKeyDown,
     focusFirst,
+    focusItem,
   } = useListFocus<HTMLDivElement>({
-    itemSelector: '[role="menuitem"]:not([aria-disabled="true"])',
+    itemSelector: MENU_ITEM_SELECTOR,
     wrap: false,
     onEscape: closeMenu,
+  });
+
+  // First-character typeahead over the (enabled) menu items — jump to the next
+  // item whose label starts with the typed text (menus-11).
+  const getMenuItems = useCallback(
+    (): HTMLElement[] =>
+      listRef.current
+        ? Array.from(
+            listRef.current.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR),
+          )
+        : [],
+    [listRef],
+  );
+  const typeahead = useTypeahead({
+    getItemLabels: () => getMenuItems().map(el => el.textContent),
+    onMatch: focusItem,
+    getCurrentIndex: () =>
+      getMenuItems().findIndex(
+        el =>
+          el === document.activeElement || el.contains(document.activeElement),
+      ),
   });
 
   // Sync controlled open state → popover, and focus first item on open
@@ -271,37 +297,50 @@ export function DropdownMenu({
     if (isControlled) {
       if (controlledIsOpen && !popover.isOpen) {
         popover.show();
-        if (hasAutoFocus) {
-          requestAnimationFrame(() => focusFirst());
-        }
+        requestAnimationFrame(() => focusFirst());
       } else if (!controlledIsOpen && popover.isOpen) {
         popover.hide();
       }
     }
-  }, [controlledIsOpen, isControlled, popover, hasAutoFocus, focusFirst]);
+  }, [controlledIsOpen, isControlled, popover, focusFirst]);
 
-  // Extend useListFocus with Enter/Space activation
+  // Extend useListFocus with Enter/Space activation + typeahead
   const listKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         const focused = document.activeElement as HTMLElement | null;
-        if (focused?.getAttribute('role') === 'menuitem') {
+        if (
+          focused &&
+          MENU_ITEM_ROLES.has(focused.getAttribute('role') ?? '')
+        ) {
           focused.click();
         }
         return;
       }
+      // APG menu-button pattern: Tab closes the menu. Menu items are
+      // tabIndex={-1} so the focus trap has nothing trappable and Tab would
+      // otherwise leak into the page while the menu stayed open (menus-5).
+      // Do NOT preventDefault — closing restores focus to the trigger, and the
+      // browser's default Tab then continues from there to the next element.
+      if (e.key === 'Tab') {
+        closeMenu();
+        return;
+      }
+      // Type-to-focus next; if it consumed a printable key, stop here.
+      if (typeahead.onKeyDown(e)) {
+        e.preventDefault();
+        return;
+      }
       listNavKeyDown(e);
     },
-    [listNavKeyDown],
+    [listNavKeyDown, closeMenu, typeahead],
   );
 
   const openAndFocus = useCallback(() => {
     popover.show();
-    if (hasAutoFocus) {
-      requestAnimationFrame(() => focusFirst());
-    }
-  }, [popover, hasAutoFocus, focusFirst]);
+    requestAnimationFrame(() => focusFirst());
+  }, [popover, focusFirst]);
 
   const handleButtonClick = useCallback(() => {
     // If the menu was just closed by light dismiss (e.g. iOS Safari fires
@@ -399,6 +438,10 @@ export function DropdownMenu({
           ref={listRef}
           id={menuId}
           role="menu"
+          // Give the menu an accessible name from its trigger's label, so
+          // screen readers announce e.g. "Actions menu" rather than an unnamed
+          // menu (menus-13).
+          aria-label={button.label}
           onKeyDown={listKeyDown}
           {...mergeProps(
             themeProps('dropdown-menu'),

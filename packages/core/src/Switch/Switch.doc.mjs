@@ -63,6 +63,18 @@ export const docs = {
       default: 'false',
     },
     {
+      name: 'htmlName',
+      type: 'string',
+      description:
+        'The HTML name attribute for the underlying checkbox input, useful for form submissions (submits "on" when the switch is on).',
+    },
+    {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        'Explains why the switch is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the switch focusable via aria-disabled (toggling stays blocked). Use this instead of wrapping a disabled Switch in Tooltip. Disabled controls swallow the hover events an external Tooltip needs.',
+    },
+    {
       name: 'isOptional',
       type: 'boolean',
       description:
@@ -78,7 +90,7 @@ export const docs = {
     },
     {
       name: 'status',
-      type: 'InputStatus',
+      type: "{type: 'warning' | 'error' | 'success', message?: string}",
       description:
         'Status indicator with type and message. Displays a colored message box below the switch and sets aria-invalid when type is "error".',
     },
@@ -95,7 +107,7 @@ export const docs = {
     {
       name: 'labelIcon',
       type: 'IconType',
-      description: 'Icon displayed before the label text. See `npx astryx docs icons` for valid semantic names.',
+      description: 'Icon displayed before the label text. See `astryx docs icons` for valid semantic names.',
     },
     {
       name: 'labelTooltip',
@@ -112,10 +124,10 @@ export const docs = {
     },
     {
       name: 'labelSpacing',
-      type: "'default' | 'spread'",
+      type: "'hug' | 'spread'",
       description:
-        'Spacing behavior between label and switch. "spread" pushes them to opposite ends of the container (full width).',
-      default: "'default'",
+        'Spacing behavior between label and switch. "hug" places them next to each other; "spread" pushes them to opposite ends of the container (full width). "default" is a deprecated alias for "hug".',
+      default: "'hug'",
     },
   ],
   theming: {
@@ -133,6 +145,7 @@ export const docs = {
       { guidance: true, description: 'Pair with a clear, concise label that describes the setting being controlled.' },
       { guidance: false, description: 'Use for options that require a form submission to take effect; use a checkbox instead.' },
       { guidance: false, description: 'Use a switch for multi-state values; it\'s strictly on/off.' },
+      { guidance: false, description: 'Wrap a disabled switch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
     ],
   },
 };
@@ -197,6 +210,17 @@ export const docsZh = {
       default: 'false',
     },
     {
+      name: 'htmlName',
+      type: 'string',
+      description: '底层复选框输入的 HTML name 属性，用于表单提交（开启时提交 "on"）。',
+    },
+    {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        'Explains why the switch is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the switch focusable via aria-disabled (toggling stays blocked). Use this instead of wrapping a disabled Switch in Tooltip. Disabled controls swallow the hover events an external Tooltip needs.',
+    },
+    {
       name: 'isOptional',
       type: 'boolean',
       description:
@@ -212,7 +236,7 @@ export const docsZh = {
     },
     {
       name: 'status',
-      type: 'InputStatus',
+      type: "{type: 'warning' | 'error' | 'success', message?: string}",
       description:
         '带类型和消息的状态指示器。在开关下方显示彩色消息框，当类型为 "error" 时设置 aria-invalid。',
     },
@@ -246,10 +270,10 @@ export const docsZh = {
     },
     {
       name: 'labelSpacing',
-      type: "'default' | 'spread'",
+      type: "'hug' | 'spread'",
       description:
-        '标签和开关之间的间距行为。"spread" 将它们推到容器的两端（全宽）。',
-      default: "'default'",
+        '标签和开关之间的间距行为。"hug" 将它们并排放置；"spread" 将它们推到容器的两端（全宽）。"default" 是 "hug" 的已弃用别名。',
+      default: "'hug'",
     },
   ],
   theming: {
@@ -267,6 +291,7 @@ export const docsZh = {
       { guidance: true, description: 'Pair with a clear, concise label that describes the setting being controlled.' },
       { guidance: false, description: 'Use for options that require a form submission to take effect; use a checkbox instead.' },
       { guidance: false, description: 'Use a switch for multi-state values; it\'s strictly on/off.' },
+      { guidance: false, description: 'Wrap a disabled switch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
     ],
   },
 };
@@ -282,6 +307,7 @@ export const docsDense = {
       { guidance: true, description: 'Pair with a clear, concise label that describes the setting being controlled.' },
       { guidance: false, description: 'Use for options that require a form submission to take effect; use a checkbox instead.' },
       { guidance: false, description: 'Use a switch for multi-state values; it\'s strictly on/off.' },
+      { guidance: false, description: 'Wrap a disabled switch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
     ],
   },
   propDescriptions: {
@@ -294,6 +320,7 @@ export const docsDense = {
     isLabelHidden: 'Visually hides label; still accessible to screen readers.',
     description: 'Description text below label.',
     isDisabled: 'Whether switch is disabled.',
+    htmlName: 'HTML name attr for the checkbox; submits "on" when on.',
     isOptional: 'Whether field is optional; mutually exclusive w/ isRequired.',
     isRequired: 'Whether switch is required; mutually exclusive w/ isOptional.',
     status: 'Status indicator w/ type + message; colored message box, sets aria-invalid on error.',
@@ -302,6 +329,6 @@ export const docsDense = {
     labelIcon: 'Icon before label text.',
     labelTooltip: 'Tooltip text in info icon at label end.',
     labelPosition: 'Which side label appears; "start" places before switch.',
-    labelSpacing: 'Spacing behavior; "spread" pushes to opposite ends (full width).',
+    labelSpacing: 'Spacing behavior; "hug" places next to each other, "spread" pushes to opposite ends (full width). "default" is deprecated alias for "hug".',
   },
 };

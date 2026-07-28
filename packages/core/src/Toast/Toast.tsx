@@ -22,6 +22,7 @@ import {useTheme} from '../theme';
 import {MediaTheme} from '../theme/MediaTheme';
 import type {ToastType, ToastDismissReason} from './types';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 const styles = stylex.create({
   root: {
@@ -115,14 +116,21 @@ export function Toast({
   isExiting = false,
   onDismiss,
 }: ToastProps) {
+  const t = useTranslator();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPausedRef = useRef(false);
   const remainingRef = useRef(autoHideDuration);
   // Will be initialized by startTimer when actually used
   const startTimeRef = useRef<number | null>(null);
 
+  // Read onDismiss through a ref: the viewport re-creates it on every render
+  // (another toast arriving/exiting), and a startTimer that depends on it
+  // would restart — and un-pause — this toast's timer on unrelated renders.
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   const startTimer = useCallback(() => {
-    if (!isAutoHide) {
+    if (!isAutoHide || isPausedRef.current) {
       return;
     }
     if (timerRef.current) {
@@ -130,9 +138,9 @@ export function Toast({
     }
     startTimeRef.current = Date.now();
     timerRef.current = setTimeout(() => {
-      onDismiss('auto');
+      onDismissRef.current('auto');
     }, remainingRef.current);
-  }, [isAutoHide, onDismiss]);
+  }, [isAutoHide]);
 
   const pauseTimer = useCallback(() => {
     if (!isAutoHide || isPausedRef.current) {
@@ -165,7 +173,23 @@ export function Toast({
         clearTimeout(timerRef.current);
       }
     };
+    // startTimer's identity is stable per isAutoHide, so this runs on mount
+    // and on a genuine duration change — not on unrelated viewport renders.
   }, [autoHideDuration, startTimer]);
+
+  // Pause the auto-hide timer while the window is not focused, so a toast
+  // doesn't silently expire while the user is in another window or tab.
+  useEffect(() => {
+    if (!isAutoHide) {
+      return;
+    }
+    window.addEventListener('blur', pauseTimer);
+    window.addEventListener('focus', resumeTimer);
+    return () => {
+      window.removeEventListener('blur', pauseTimer);
+      window.removeEventListener('focus', resumeTimer);
+    };
+  }, [isAutoHide, pauseTimer, resumeTimer]);
 
   const handleDismiss = useCallback(() => {
     onDismiss('manual');
@@ -204,7 +228,7 @@ export function Toast({
               variant="ghost"
               size="sm"
               icon={<Icon icon="close" size="sm" color="inherit" />}
-              label="Dismiss notification"
+              label={t('@astryx.toast.dismiss')}
               onClick={handleDismiss}
               isIconOnly
             />

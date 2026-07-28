@@ -3,8 +3,8 @@
 import type {Plugin, UserConfig} from 'vite';
 import stylexBabelPlugin from '@stylexjs/babel-plugin';
 import stylex from '@stylexjs/unplugin';
-import path from 'path';
-import {fileURLToPath} from 'url';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -79,9 +79,8 @@ export interface AstryxVitePluginOptions {
    * build uses a distinct prefix so library and product atoms never collide
    * across layers.
    *
-   * Configurable to support the Astryx-prefix migration: a consumer
-   * can rebrand the library atom prefix to `astryx` before the final cutover.
-   * Defaults to `xds` so existing consumers are unaffected.
+   * Configurable if a consumer needs a custom library atom prefix.
+   * Defaults to `astryx`.
    *
    * @default 'astryx'
    */
@@ -190,7 +189,7 @@ export function astryxStylex(
       // strips stylex.create/defineVars calls and causes runtime errors.
       let xdsPackages: string[] = ['@astryxdesign/core'];
       try {
-        const fs = require('fs');
+        const fs = require('node:fs');
         const xdsDir = path.resolve(rootDir, 'node_modules/@astryxdesign');
         if (fs.existsSync(xdsDir)) {
           xdsPackages = fs
@@ -209,7 +208,10 @@ export function astryxStylex(
               rootDir,
               'node_modules/@astryxdesign/core/src/theme/tokens.stylex.ts',
             ),
-            '@astryxdesign/core': path.resolve(rootDir, 'node_modules/@astryxdesign/core/src'),
+            '@astryxdesign/core': path.resolve(
+              rootDir,
+              'node_modules/@astryxdesign/core/src',
+            ),
           },
         },
         optimizeDeps: {

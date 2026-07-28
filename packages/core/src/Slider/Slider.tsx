@@ -4,7 +4,7 @@
 
 /**
  * @file Slider.tsx
- * @input Uses React, useId, useRef, useCallback, Field, Tooltip
+ * @input Uses React, useId, useRef, useCallback, Field, Tooltip, useTooltip, VisuallyHidden
  * @output Exports Slider component, SliderProps, SliderSingleProps, SliderRangeProps, SliderBaseProps
  * @position Core implementation; consumed by index.ts, tested by Slider.test.tsx
  *
@@ -37,6 +37,8 @@ import {
 } from '../theme/tokens.stylex';
 import {Field} from '../Field/Field';
 import {Tooltip} from '../Tooltip/Tooltip';
+import {useTooltip} from '../Tooltip';
+import {VisuallyHidden} from '../VisuallyHidden';
 import type {InputStatus} from '../Field/types';
 import {mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
@@ -61,6 +63,27 @@ export interface SliderBaseProps extends Omit<
   description?: string;
   /** Whether the slider is disabled. @default false */
   isDisabled?: boolean;
+  /**
+   * Explains why the slider is disabled. When set together with `isDisabled`,
+   * the slider shows a tooltip with this text on hover and keyboard focus, and
+   * the thumb stays focusable (via `aria-disabled`) so the reason is
+   * discoverable by keyboard and assistive technology. Value changes stay
+   * blocked.
+   *
+   * Use this instead of wrapping a disabled slider in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <Slider
+   *   label="Volume"
+   *   value={50}
+   *   isDisabled
+   *   disabledMessage="Volume is locked while sharing your screen"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
   /** Whether the field is optional. @default false */
   isOptional?: boolean;
   /** Whether the field is required. @default false */
@@ -89,6 +112,12 @@ export interface SliderBaseProps extends Omit<
   valueDisplay?: 'tooltip' | 'text' | 'none';
   /** Tick marks at specified positions with optional labels. */
   marks?: {value: number; label?: string}[];
+  /**
+   * The HTML name attribute for form submissions. When set, the slider
+   * renders hidden inputs carrying the current value (two in range mode,
+   * matching how paired native range inputs submit).
+   */
+  htmlName?: string;
   /** Test ID for the root element. */
   'data-testid'?: string;
 }
@@ -331,6 +360,7 @@ export function Slider({ref, ...props}: SliderProps) {
     isLabelHidden = false,
     description,
     isDisabled = false,
+    disabledMessage,
     isOptional = false,
     isRequired = false,
     status,
@@ -340,6 +370,7 @@ export function Slider({ref, ...props}: SliderProps) {
     step = 1,
     orientation = 'horizontal',
     formatValue,
+    htmlName,
     valueDisplay = 'tooltip',
     marks,
     width,
@@ -363,10 +394,31 @@ export function Slider({ref, ...props}: SliderProps) {
   const id = useId();
   const descriptionID = useId();
   const statusMessageID = useId();
+  const requiredID = useId();
 
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingThumbRef = useRef<number | null>(null);
   const [draggingThumb, setDraggingThumb] = useState<number | null>(null);
+
+  // Disabled-reason tooltip. This is a *separate* useTooltip instance from the
+  // per-thumb value bubble (the `<Tooltip>` component below): it anchors to the
+  // track container and fires on hover/focus of the whole control. Disabled
+  // controls swallow pointer events, so the thumb stays perceivable via
+  // aria-disabled while pointer/keyboard handlers early-return on isDisabled.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The track container is not naturally focusable; focusin bubbles up from
+    // the thumb, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
+
+  // Required state. `aria-required` is not a supported property of
+  // role="slider" in WAI-ARIA 1.2, so the thumb instead points its
+  // aria-describedby at a visually hidden "Required" span — mirroring the
+  // Field label's visible indicator (where isOptional takes precedence).
+  const conveysRequired = isRequired && !isOptional;
 
   // Build aria-describedby
   const describedByParts: string[] = [];
@@ -376,15 +428,23 @@ export function Slider({ref, ...props}: SliderProps) {
   if (status?.message) {
     describedByParts.push(statusMessageID);
   }
+  if (conveysRequired) {
+    describedByParts.push(requiredID);
+  }
+  if (showsDisabledMessage) {
+    describedByParts.push(disabledMessageTooltip.describedBy);
+  }
   const ariaDescribedBy =
     describedByParts.length > 0 ? describedByParts.join(' ') : undefined;
 
   // Value helpers — guard against undefined value (e.g. playground previews
   // that render the component without providing a value prop).
-  const values: number[] = useMemo(
-    () => (isRange ? value : [value != null ? value : min]),
-    [isRange, value, min],
-  );
+  const values: number[] = useMemo(() => {
+    const currentValues = Array.isArray(value)
+      ? value
+      : [value != null ? value : min];
+    return currentValues.map(currentValue => clamp(currentValue, min, max));
+  }, [value, min, max]);
 
   const valuesRef = useRef(values);
   valuesRef.current = values;
@@ -641,7 +701,10 @@ export function Slider({ref, ...props}: SliderProps) {
         : `${label}, maximum value`
       : label;
 
-    const useTooltip = valueDisplay === 'tooltip';
+    // Suppress the per-thumb value bubble while the disabled-message tooltip is
+    // showing, so a disabled slider surfaces the *reason* on hover/focus rather
+    // than stacking two tooltips over the same thumb.
+    const useValueTooltip = valueDisplay === 'tooltip' && !showsDisabledMessage;
     const tooltipPlacement = isHorizontal ? 'above' : 'start';
 
     const thumbElement = (
@@ -649,7 +712,10 @@ export function Slider({ref, ...props}: SliderProps) {
         key={thumbIndex}
         id={!isRange ? id : undefined}
         role="slider"
-        tabIndex={isDisabled ? -1 : 0}
+        // With a disabledMessage the thumb keeps focusability so the reason is
+        // focus-discoverable; value changes stay blocked by the isDisabled
+        // guards in the pointer/keyboard handlers.
+        tabIndex={isDisabled && !showsDisabledMessage ? -1 : 0}
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={val}
@@ -678,7 +744,7 @@ export function Slider({ref, ...props}: SliderProps) {
       />
     );
 
-    if (useTooltip) {
+    if (useValueTooltip) {
       return (
         <Tooltip
           key={thumbIndex}
@@ -757,8 +823,21 @@ export function Slider({ref, ...props}: SliderProps) {
           }),
           stylex.props(styles.sliderRow),
         )}>
+        {htmlName != null &&
+          values.map((v, i) => (
+            <input
+              // Positional identity: index 0 is the start thumb, 1 the end.
+              key={i === 0 ? 'start' : 'end'}
+              type="hidden"
+              name={htmlName}
+              value={String(v)}
+              // Disabled native controls are excluded from form submission;
+              // mirror that for the hidden carrier.
+              disabled={isDisabled}
+            />
+          ))}
         <div
-          ref={mergeRefs(ref, trackRef)}
+          ref={mergeRefs(ref, trackRef, disabledMessageTooltip.ref)}
           {...(isRange ? {role: 'group', 'aria-label': label} : undefined)}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -855,6 +934,11 @@ export function Slider({ref, ...props}: SliderProps) {
 
         {textDisplay}
       </div>
+      {conveysRequired && (
+        <VisuallyHidden id={requiredID}>Required</VisuallyHidden>
+      )}
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
     </Field>
   );
 }

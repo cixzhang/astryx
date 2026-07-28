@@ -42,7 +42,7 @@ function getInstallSteps(pkgName: string): InstallStep[] {
   if (pkgName.endsWith('/cli')) {
     return [
       {label: 'Install the CLI', code: `npm install -D ${pkgName}`},
-      {label: 'Run a command', code: `npx astryx component --list`},
+      {label: 'Run a command', code: `npx @astryxdesign/cli component --list`},
     ];
   }
   return [
@@ -56,7 +56,7 @@ function getInstallSteps(pkgName: string): InstallStep[] {
 }
 
 /** Sections to remove from the @astryxdesign/core README on the package page. */
-const CORE_STRIP_SECTIONS = ['Quick Start', 'Resources', 'XDS CLI'];
+const CORE_STRIP_SECTIONS = ['Quick Start', 'Resources', 'Astryx CLI'];
 
 export function generateStaticParams() {
   return [

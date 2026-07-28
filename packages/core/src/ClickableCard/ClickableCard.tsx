@@ -14,6 +14,7 @@
  * - /apps/storybook/stories/ClickableCard.stories.tsx (storybook stories)
  * - /packages/cli/templates/blocks/components/Card/ClickableCardShowcase.tsx (showcase block)
  * - /packages/cli/templates/blocks/components/Card/ClickableCardWithNestedButton.tsx (block)
+ * - /packages/cli/templates/blocks/components/Card/ClickableCardElevated.tsx (block)
  *
  * Composes Card for all visual styling (radius, padding, variants,
  * container tokens, theming). Adds an interactive wrapper with
@@ -31,8 +32,13 @@
 import {type ReactNode, type MouseEvent, useRef, type Ref} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import type {StyleXStyles} from '@stylexjs/stylex';
-import {colorVars, durationVars, easeVars} from '../theme/tokens.stylex';
-import type {SizeValue, SpacingStep} from '../utils/types';
+import {
+  borderVars,
+  colorVars,
+  durationVars,
+  easeVars,
+} from '../theme/tokens.stylex';
+import type {SizeValue, SpacingStep, Elevation} from '../utils/types';
 import {mergeProps, mergeRefs} from '../utils';
 import {Card} from '../Card/Card';
 import type {CardVariant} from '../Card/Card';
@@ -66,7 +72,6 @@ const styles = stylex.create({
       content: '""',
       position: 'absolute',
       inset: 0,
-      borderRadius: 'inherit',
       pointerEvents: 'none',
       transitionProperty: 'background-color',
       transitionDuration: durationVars['--duration-fast'],
@@ -74,13 +79,45 @@ const styles = stylex.create({
       backgroundColor: 'transparent',
     },
     ':active::after': {
-      backgroundColor: 'color-mix(in srgb, currentColor 10%, transparent)',
+      backgroundColor: colorVars['--color-overlay-pressed'],
     },
   },
   hoverOnPointer: {
     '@media (hover: hover)': {
       ':hover::after': {
-        backgroundColor: 'color-mix(in srgb, currentColor 5%, transparent)',
+        backgroundColor: colorVars['--color-overlay-hover'],
+      },
+    },
+  },
+  // Borderless variants (everything except `default`): drop the transparent
+  // 1px border Card applies. The overlay is inset to the padding box — inside
+  // that border — so a transparent border strip stays untinted on hover and
+  // reads as a faint ring. With no border, the overlay covers the full box
+  // edge-to-edge and the ring disappears.
+  borderless: {
+    borderWidth: 0,
+  },
+  // Bordered variant (`default`): draw the 1px border *within* the padding by
+  // subtracting the border width from every side. Total inset (border +
+  // padding) then equals the borderless variants' padding, so content geometry
+  // and outer dimensions stay identical across all variants. The border rests
+  // at the subtle token and emphasizes on hover.
+  bordered: {
+    borderColor: colorVars['--color-border'],
+    paddingInlineStart: `calc(var(--container-padding-inline-start) - ${borderVars['--border-width']})`,
+    paddingInlineEnd: `calc(var(--container-padding-inline-end) - ${borderVars['--border-width']})`,
+    paddingBlockStart: `calc(var(--container-padding-block-start) - ${borderVars['--border-width']})`,
+    paddingBlockEnd: `calc(var(--container-padding-block-end) - ${borderVars['--border-width']})`,
+    transitionProperty: 'border-color',
+    transitionDuration: durationVars['--duration-fast'],
+    transitionTimingFunction: easeVars['--ease-standard'],
+  },
+  // Emphasize the bordered variant's border on hover. Guarded by
+  // @media (hover: hover) so touch devices don't get a stuck hover state.
+  borderedHoverOnPointer: {
+    '@media (hover: hover)': {
+      ':hover': {
+        borderColor: colorVars['--color-border-emphasized'],
       },
     },
   },
@@ -161,6 +198,13 @@ export interface ClickableCardProps extends BaseProps {
    */
   variant?: CardVariant;
 
+  /**
+   * Resting elevation — the shadow depth the card sits at. Often raised to
+   * signal that the whole card is clickable.
+   * @default 'none'
+   */
+  elevation?: Elevation;
+
   /** Width of the card. */
   width?: SizeValue;
 
@@ -217,6 +261,7 @@ export function ClickableCard({
   children,
   padding,
   variant = 'default',
+  elevation = 'none',
   width,
   height,
   maxWidth,
@@ -248,6 +293,11 @@ export function ClickableCard({
 
   const isLink = href != null;
 
+  // Only the `default` variant has a visible border. Card draws a transparent
+  // 1px border on every other variant purely to avoid layout jitter; we drop
+  // it here so the hover overlay covers the full box with no untinted ring.
+  const hasBorder = variant === 'default';
+
   return (
     <Card
       ref={mergeRefs(ref, containerRef)}
@@ -256,6 +306,7 @@ export function ClickableCard({
       maxWidth={maxWidth}
       padding={padding}
       variant={variant}
+      elevation={elevation}
       {...mergeProps(themeProps('clickable-card', {variant}), {
         className: classNameProp,
         style,
@@ -264,8 +315,10 @@ export function ClickableCard({
         [
           styles.interactive,
           styles.focusWithin,
+          hasBorder ? styles.bordered : styles.borderless,
           !isDisabled && styles.overlay,
           !isDisabled && styles.hoverOnPointer,
+          !isDisabled && hasBorder && styles.borderedHoverOnPointer,
           isDisabled && styles.disabled,
           xstyleProp,
         ] as unknown as StyleXStyles

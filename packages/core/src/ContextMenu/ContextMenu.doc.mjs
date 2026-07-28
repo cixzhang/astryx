@@ -53,10 +53,10 @@ export const docs = {
       default: "'md'",
     },
     {
-      name: 'hasAutoFocus',
-      type: 'boolean',
-      description: 'Whether to auto-focus the first menu item when the menu opens. Set to false for inline showcases.',
-      default: 'true',
+      name: 'label',
+      type: 'string',
+      description: 'Accessible name for the menu surface, announced when it opens.',
+      default: "'Context menu'",
     },
     {
       name: 'isDisabled',
@@ -77,6 +77,21 @@ export const docs = {
       { guidance: false, description: 'Use a ContextMenu as the only way to access important actions; not all users know to right-click.' },
       { guidance: false, description: 'Place more than 10–12 items in a single menu without grouping them into sections.' },
     ],
+  },
+  playground: {
+    defaults: {
+      children: {
+        __element: 'Card',
+        props: {padding: 6},
+        children: {__element: 'Text', props: {color: 'secondary'}, children: 'Right-click this area'},
+      },
+      items: [
+        {label: 'Edit'},
+        {label: 'Duplicate'},
+        {type: 'divider'},
+        {label: 'Delete'},
+      ],
+    },
   },
 };
 

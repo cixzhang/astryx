@@ -47,14 +47,12 @@ import {
   inputStatusFocusWithinStyles,
 } from '../Field';
 import {Icon} from '../Icon';
+import {VisuallyHidden} from '../VisuallyHidden';
 import {Spinner} from '../Spinner';
-import {
-  Calendar,
-  type ISODateString,
-  type CalendarHandle,
-} from '../Calendar';
+import {Calendar, type ISODateString, type CalendarHandle} from '../Calendar';
 import {useCalendarConstraints} from '../Calendar/hooks';
 import {usePopover} from '../Popover';
+import {useTooltip} from '../Tooltip';
 import {useInputContainer} from '../hooks/useInputContainer';
 import {
   type ISOTimeString,
@@ -74,11 +72,12 @@ import {
   plainDateFormat,
   DATE_FORMAT_LONG,
 } from '../utils/plainDate';
-import type {StyleXStyles} from '@stylexjs/stylex';
+
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {useSize} from '../SizeContext/SizeContext';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 export type ISODateTimeString = string & {
   readonly __brand: 'ISODateTimeString';
@@ -87,6 +86,9 @@ export type ISODateTimeString = string & {
 export type DateTimeInputHourFormat = '12h' | '24h';
 
 export type DateTimeInputSize = 'sm' | 'md' | 'lg';
+
+/** Supported minute increments for arrow-key stepping of the time field. */
+export type DateTimeInputTimeIncrement = 1 | 5 | 10 | 15 | 30;
 
 export type {
   InputStatus as DateTimeInputStatus,
@@ -214,6 +216,29 @@ export interface DateTimeInputProps extends Omit<
   isDisabled?: boolean;
 
   /**
+   * Explains why the input is disabled. When set together with
+   * `isDisabled`, the input shows a tooltip with this text on hover and
+   * keyboard focus, and the date and time fields stay focusable (via
+   * `aria-disabled`) so the reason is discoverable by keyboard and assistive
+   * technology. Typing and calendar activation stay blocked.
+   *
+   * Use this instead of wrapping a disabled input in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <DateTimeInput
+   *   label="Meeting time"
+   *   value={dateTime}
+   *   onChange={setDateTime}
+   *   isDisabled
+   *   disabledMessage="You need the Editor role to change this"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
+
+  /**
    * The selected datetime in ISO 8601 format ("YYYY-MM-DDTHH:MM" or "YYYY-MM-DDTHH:MM:SS").
    */
   value?: ISODateTimeString;
@@ -266,10 +291,11 @@ export interface DateTimeInputProps extends Omit<
   hourFormat?: DateTimeInputHourFormat;
 
   /**
-   * Time increment in minutes when using arrow keys in the time input.
+   * Minutes added or subtracted when stepping the time field with the arrow
+   * keys. Constrained to a set of sensible increments.
    * @default 1
    */
-  timeIncrement?: number;
+  timeIncrement?: DateTimeInputTimeIncrement;
 
   /**
    * Whether to show a clear button when a value is set.
@@ -278,10 +304,23 @@ export interface DateTimeInputProps extends Omit<
   hasClear?: boolean;
 
   /**
-   * Placeholder text shown when no date is selected.
+   * Placeholder text shown in the date portion when no date is selected.
    * @default "Select a date"
    */
   placeholder?: string;
+
+  /**
+   * Placeholder text shown in the time portion when no time is selected.
+   * @default "Select a time"
+   */
+  timePlaceholder?: string;
+
+  /**
+   * Accessible label for the time portion of the field. Defaults to
+   * `"{label} time"` so it is tied to the field's own label and localizable,
+   * rather than a hardcoded English "Time".
+   */
+  timeLabel?: string;
 
   /**
    * The size of the inputs.
@@ -310,11 +349,6 @@ export interface DateTimeInputProps extends Omit<
    * @default 1
    */
   numberOfMonths?: 1 | 2;
-
-  /**
-   * Style overrides applied to the outer row container.
-   */
-  xstyle?: StyleXStyles;
 }
 
 function splitDateTime(dt: ISODateTimeString | undefined): {
@@ -373,6 +407,7 @@ export function DateTimeInput({
   isOptional = false,
   isRequired = false,
   isDisabled = false,
+  disabledMessage,
   value,
   onChange,
   changeAction,
@@ -384,7 +419,9 @@ export function DateTimeInput({
   hourFormat = '12h',
   timeIncrement = 1,
   hasClear = false,
-  placeholder = 'Select a date',
+  placeholder: placeholderFromProps,
+  timePlaceholder: timePlaceholderFromProps,
+  timeLabel,
   size: sizeProp,
   status,
   labelTooltip,
@@ -396,6 +433,11 @@ export function DateTimeInput({
   ref,
   ...rest
 }: DateTimeInputProps) {
+  const t = useTranslator();
+  const placeholder =
+    placeholderFromProps ?? t('@astryx.dateTimeInput.placeholder');
+  const timePlaceholder =
+    timePlaceholderFromProps ?? t('@astryx.dateTimeInput.timePlaceholder');
   const size = useSize(sizeProp, 'md');
   const dateInputId = useId();
   const timeInputId = useId();
@@ -411,6 +453,22 @@ export function DateTimeInput({
   const [optimisticValue, setOptimisticValue] = useOptimistic(value);
   const isBusy = isLoading || optimisticValue !== value;
   const isEffectivelyDisabled = isDisabled || isBusy;
+
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the outer row container (which already exists)
+  // and both the date and time inputs stay perceivable via aria-disabled
+  // instead of the disabled attribute. Typing is blocked with readOnly and the
+  // value mutation guards; calendar activation is blocked by the
+  // isEffectivelyDisabled guards. Only the persistent isDisabled state (not the
+  // transient busy state) surfaces a reason.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The container div is not naturally focusable; focusin bubbles up from
+    // the inputs, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
 
   const statusIconMap: Record<InputStatusType, IconName> = {
     warning: 'warning',
@@ -431,6 +489,7 @@ export function DateTimeInput({
     [
       description ? descriptionID : null,
       status?.message ? statusMessageID : null,
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
     ]
       .filter(Boolean)
       .join(' ') || undefined;
@@ -520,12 +579,12 @@ export function DateTimeInput({
     return isTimeInRange(parsed, timeMin, timeMax);
   }, [timePendingInput, hasSeconds, timeMin, timeMax]);
 
-  const timePlaceholder = useMemo(() => {
+  const resolvedTimePlaceholder = useMemo(() => {
     if (isTimeFocused && !timeDisplayValue) {
       return hourFormat === '12h' ? 'e.g., 2:30 PM' : 'e.g., 14:30';
     }
-    return 'Select a time';
-  }, [isTimeFocused, timeDisplayValue, hourFormat]);
+    return timePlaceholder;
+  }, [isTimeFocused, timeDisplayValue, hourFormat, timePlaceholder]);
 
   // --- Unified change handler ---
   const fireChange = useCallback(
@@ -546,8 +605,8 @@ export function DateTimeInput({
 
   // --- Popover ---
   const popover = usePopover({
-    dialogLabel: 'Choose date',
-    closeButtonLabel: 'Close calendar',
+    dialogLabel: t('@astryx.dateTimeInput.dialogLabel'),
+    closeButtonLabel: t('@astryx.dateInput.closeCalendar'),
     onHide: () => dateInputRef.current?.focus(),
   });
 
@@ -598,6 +657,11 @@ export function DateTimeInput({
 
   const handleDateInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      // With a disabledMessage the input drops `disabled` for focusability, so
+      // guard value mutation explicitly (readOnly also blocks typing).
+      if (isEffectivelyDisabled) {
+        return;
+      }
       const text = e.target.value;
       setDatePendingInput(text);
 
@@ -613,7 +677,7 @@ export function DateTimeInput({
         calendarRef.current?.navigateTo(parsedISO);
       }
     },
-    [valueParts.date, isDateDisabled, handleDateChange],
+    [valueParts.date, isDateDisabled, handleDateChange, isEffectivelyDisabled],
   );
 
   const commitDatePendingInput = useCallback(() => {
@@ -655,17 +719,32 @@ export function DateTimeInput({
       if (e.key === 'Escape' && popover.isOpen) {
         e.preventDefault();
         popover.hide();
+      } else if (
+        (e.key === 'ArrowDown' || (e.altKey && e.key === 'ArrowDown')) &&
+        !popover.isOpen
+      ) {
+        // APG combobox: ArrowDown (and Alt+ArrowDown) opens the calendar
+        // popover from the keyboard, keeping focus in the input (forms-13).
+        e.preventDefault();
+        if (!isEffectivelyDisabled) {
+          popover.show({skipAutoFocus: true});
+        }
       } else if (e.key === 'Enter') {
         e.preventDefault();
         commitDatePendingInput();
       }
     },
-    [popover, commitDatePendingInput],
+    [popover, commitDatePendingInput, isEffectivelyDisabled],
   );
 
   // --- Time handlers ---
   const handleTimeInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      // With a disabledMessage the input drops `disabled` for focusability, so
+      // guard value mutation explicitly (readOnly also blocks typing).
+      if (isEffectivelyDisabled) {
+        return;
+      }
       const text = e.target.value;
       setTimePendingInput(text);
 
@@ -690,10 +769,19 @@ export function DateTimeInput({
       valueParts.time,
       valueParts.date,
       fireChange,
+      isEffectivelyDisabled,
     ],
   );
 
-  const handleTimeFocus = useCallback(() => setIsTimeFocused(true), []);
+  const handleTimeFocus = useCallback(() => {
+    // A disabled/busy input stays focusable (via aria-disabled) so its reason
+    // is discoverable, but it must not present editing affordances — keep the
+    // static placeholder rather than swapping in the format hint.
+    if (isEffectivelyDisabled) {
+      return;
+    }
+    setIsTimeFocused(true);
+  }, [isEffectivelyDisabled]);
 
   const handleTimeBlur = useCallback(() => {
     setIsTimeFocused(false);
@@ -788,6 +876,7 @@ export function DateTimeInput({
       statusVariant="detached"
       width={width}>
       <div
+        ref={disabledMessageTooltip.ref}
         {...rest}
         {...mergeProps(
           themeProps('date-time-input', {
@@ -801,20 +890,30 @@ export function DateTimeInput({
         {/* Date input */}
         <div
           ref={popover.triggerRef}
-          {...stylex.props(
-            inputWrapperStyles.base,
-            sizeStyles[size],
-            styles.dateWrapper,
-            isEffectivelyDisabled && inputWrapperStyles.disabled,
-            status && inputStatusBorderStyles[status.type],
-            status && inputStatusHoverShadowStyles[status.type],
-            status && inputStatusFocusWithinStyles[status.type],
+          {...mergeProps(
+            themeProps('date-time-input-date-segment', {
+              size,
+              status: status?.type ?? null,
+            }),
+            stylex.props(
+              inputWrapperStyles.base,
+              sizeStyles[size],
+              styles.dateWrapper,
+              isEffectivelyDisabled && inputWrapperStyles.disabled,
+              status && inputStatusBorderStyles[status.type],
+              status && inputStatusHoverShadowStyles[status.type],
+              status && inputStatusFocusWithinStyles[status.type],
+            ),
           )}>
           <button
             type="button"
             onClick={handleCalendarToggle}
             disabled={isEffectivelyDisabled}
-            aria-label={popover.isOpen ? 'Close calendar' : 'Open calendar'}
+            aria-label={
+              popover.isOpen
+                ? t('@astryx.dateInput.toggleCalendarClose')
+                : t('@astryx.dateInput.openCalendar')
+            }
             {...stylex.props(
               styles.iconButton,
               isEffectivelyDisabled && styles.iconButtonDisabled,
@@ -832,10 +931,18 @@ export function DateTimeInput({
             onClick={handleDateInputClick}
             onKeyDown={handleDateKeyDown}
             placeholder={placeholder}
-            disabled={isEffectivelyDisabled}
+            // With a disabledMessage the input keeps focusability via
+            // aria-disabled so the reason is focus-discoverable; typing is
+            // blocked with readOnly and the mutation guards, and calendar
+            // activation is blocked by the isEffectivelyDisabled guards.
+            disabled={isEffectivelyDisabled && !showsDisabledMessage}
+            aria-disabled={showsDisabledMessage ? 'true' : undefined}
+            readOnly={showsDisabledMessage || undefined}
             aria-describedby={ariaDescribedBy}
             aria-required={isRequired === true ? 'true' : undefined}
-            aria-invalid={status?.type === 'error' ? 'true' : undefined}
+            aria-invalid={
+              status?.type === 'error' || !isDateInputValid ? 'true' : undefined
+            }
             aria-busy={isBusy || undefined}
             aria-expanded={popover.isOpen}
             aria-haspopup="dialog"
@@ -848,11 +955,20 @@ export function DateTimeInput({
               !isDateInputValid && styles.inputInvalid,
             )}
           />
+          {/*
+            Live region announcing invalid typed date input to assistive
+            technology. The value silently reverts on blur, so without this a
+            screen-reader user would get no feedback that their entry was
+            rejected (WCAG 3.3.1).
+          */}
+          <VisuallyHidden as="div" role="alert" aria-live="assertive">
+            {!isDateInputValid ? 'Invalid date' : ''}
+          </VisuallyHidden>
           {hasClear && value !== undefined && !isEffectivelyDisabled && (
             <button
               type="button"
               onClick={handleClear}
-              aria-label={`Clear ${label}`}
+              aria-label={t('@astryx.dateInput.clear', {label})}
               {...stylex.props(styles.iconButton)}>
               <Icon icon="close" size="sm" color="secondary" />
             </button>
@@ -872,14 +988,20 @@ export function DateTimeInput({
           ref={timeContainerRef}
           onClick={handleTimeWrapperClick}
           onMouseUp={handleTimeWrapperMouseUp}
-          {...stylex.props(
-            inputWrapperStyles.base,
-            sizeStyles[size],
-            styles.timeWrapper,
-            isEffectivelyDisabled && inputWrapperStyles.disabled,
-            status && inputStatusBorderStyles[status.type],
-            status && inputStatusHoverShadowStyles[status.type],
-            status && inputStatusFocusWithinStyles[status.type],
+          {...mergeProps(
+            themeProps('date-time-input-time-segment', {
+              size,
+              status: status?.type ?? null,
+            }),
+            stylex.props(
+              inputWrapperStyles.base,
+              sizeStyles[size],
+              styles.timeWrapper,
+              isEffectivelyDisabled && inputWrapperStyles.disabled,
+              status && inputStatusBorderStyles[status.type],
+              status && inputStatusHoverShadowStyles[status.type],
+              status && inputStatusFocusWithinStyles[status.type],
+            ),
           )}>
           <div {...stylex.props(styles.icon)}>
             <Icon icon="clock" size="sm" color="secondary" />
@@ -893,17 +1015,35 @@ export function DateTimeInput({
             onFocus={handleTimeFocus}
             onBlur={handleTimeBlur}
             onKeyDown={handleTimeKeyDown}
-            placeholder={timePlaceholder}
-            disabled={isEffectivelyDisabled}
-            aria-label="Time"
+            placeholder={resolvedTimePlaceholder}
+            // With a disabledMessage the input keeps focusability via
+            // aria-disabled so the reason is focus-discoverable; typing is
+            // blocked with readOnly and the mutation guards.
+            disabled={isEffectivelyDisabled && !showsDisabledMessage}
+            aria-disabled={showsDisabledMessage ? 'true' : undefined}
+            readOnly={showsDisabledMessage || undefined}
+            aria-label={
+              timeLabel ?? t('@astryx.dateTimeInput.timeSuffix', {label})
+            }
+            aria-describedby={ariaDescribedBy}
             aria-required={isRequired === true ? 'true' : undefined}
-            aria-invalid={status?.type === 'error' ? 'true' : undefined}
+            aria-invalid={
+              status?.type === 'error' || !isTimeInputValid ? 'true' : undefined
+            }
+            aria-busy={isBusy || undefined}
             {...stylex.props(
               styles.input,
               isEffectivelyDisabled && styles.inputDisabled,
               !isTimeInputValid && styles.inputInvalid,
             )}
           />
+          {/*
+            Live region announcing invalid typed time input to assistive
+            technology (WCAG 3.3.1).
+          */}
+          <VisuallyHidden as="div" role="alert" aria-live="assertive">
+            {!isTimeInputValid ? 'Invalid time' : ''}
+          </VisuallyHidden>
         </div>
       </div>
 
@@ -920,6 +1060,9 @@ export function DateTimeInput({
         />,
         {placement: 'below', alignment: 'start'},
       )}
+
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
     </Field>
   );
 }

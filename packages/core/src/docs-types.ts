@@ -217,6 +217,11 @@ export interface ComponentEntry {
   examples?: ExampleDoc[];
   /** When true, this sub-component is excluded from the overview page. */
   isHiddenFromOverview?: boolean;
+  /** Playground configuration for this specific component. Falls back to
+   *  the directory doc's `playground` when omitted — declare one here when
+   *  siblings must not share it (e.g. an overlay drawer whose toggle
+   *  sub-component should not inherit `overlay: true`). */
+  playground?: PlaygroundConfig;
 }
 
 /**
@@ -390,6 +395,19 @@ export interface PlaygroundConfig {
   /** Initial prop values for the playground preview.
    *  Keys are prop names. Values are primitives or ElementDescriptors. */
   defaults?: Record<string, unknown>;
+  /** The component opens as a full-viewport overlay (e.g. via
+   *  `dialog.showModal()`) and renders nothing inline while closed. The
+   *  interactive preview shows an open-trigger placeholder instead of an
+   *  empty stage while `isOpen` is false, and lets the real overlay render
+   *  when opened. Include `isOpen: false` in `defaults` so the preview can
+   *  bridge `onOpenChange` back into playground state.
+   *
+   *  Only for components with no inline containment (MobileNav, Lightbox).
+   *  Components with an `isInline` docs-preview prop (Dialog, AlertDialog,
+   *  CommandPalette) intentionally keep contained inline previews instead:
+   *  the component is visible on load and knobs stay usable, whereas a real
+   *  top-layer modal makes the rest of the page inert (#3657). */
+  overlay?: boolean;
   /** Required parent wrapper for sub-components that depend on a parent
    *  context provider (e.g. `Tab` calls `useTabListContext()` and throws
    *  standalone). The preview wraps the component in this parent before
@@ -598,9 +616,7 @@ export interface SubComponentDoc extends Omit<BaseDoc, 'usage'> {
  * in its own file inside its parent's directory.
  */
 export type ComponentDoc =
-  | SingleComponentDoc
-  | MultiComponentDoc
-  | SubComponentDoc;
+  SingleComponentDoc | MultiComponentDoc | SubComponentDoc;
 
 /**
  * Translation overlay for component documentation.
@@ -653,6 +669,7 @@ export interface TranslationDoc {
  * @example
  * ```
  * { type: 'prose', text: 'Spacing tokens control gap and padding...' }
+ * { type: 'heading', level: 3, text: 'Examples' }
  * { type: 'code', lang: 'tsx', code: 'padding: spacingVars[...]' }
  * { type: 'table', headers: ['Token', 'Value'], rows: [['--spacing-4', '16px']] }
  * { type: 'list', style: 'do', items: ['Use semantic tokens'] }
@@ -661,6 +678,7 @@ export interface TranslationDoc {
  */
 export type ContentBlock =
   | {type: 'prose'; text: string}
+  | {type: 'heading'; level: 3 | 4 | 5 | 6; text: string}
   | {type: 'code'; lang: string; code: string; label?: string}
   | {type: 'table'; headers: string[]; rows: string[][]}
   | {
@@ -713,6 +731,9 @@ export type TokenPreviewType =
 export interface ReferenceSection {
   /** Section title, e.g. "Spacing Tokens", "Light/Dark Mode" */
   title: string;
+  /** Navigation category ('guide' | 'foundations'). Mirrors the parent doc's
+   *  category so sections can be grouped independently in the docsite nav. */
+  category?: string;
   /** Ordered content blocks. Mix prose, code, tables, and lists freely. */
   content: ContentBlock[];
   /** Preview type for token tables in this section. When set, the docsite
@@ -763,16 +784,23 @@ export interface ReferenceDoc {
 export interface ReferenceTranslationDoc {
   /** Translated/compressed description. */
   description: string;
-  /** Section overrides. Array indices must match base doc sections. */
+  /** Section overrides, keyed to base sections by `section`. Order does not
+   *  matter, and an overlay may cover any subset — sections it does not name
+   *  keep their base content. (These used to be matched by array index, which
+   *  meant a reordered or partial overlay grafted every title onto the wrong
+   *  body: `docs tokens --dense` printed the colour table under a "Spacing"
+   *  heading. See #2182.) */
   sections: {
-    /** Translated section title. */
+    /** Title of the BASE section this entry overrides, verbatim and in English
+     *  (e.g. 'Spacing Tokens'). Must match a section in the base doc. */
+    section: string;
+    /** Translated/compressed section title, shown in place of the base title. */
     title: string;
-    /** Content block overrides. Only prose and list blocks need entries.
-     *  Use null for blocks that don't change (code, table). */
+    /** Content block overrides, by index within the anchored base section.
+     *  Only prose and list blocks need entries. Use null for blocks that don't
+     *  change (code, table). */
     content: (
-      | {type: 'prose'; text: string}
-      | {type: 'list'; items: string[]}
-      | null
+      {type: 'prose'; text: string} | {type: 'list'; items: string[]} | null
     )[];
   }[];
 }
@@ -847,6 +875,7 @@ export type TemplateCategory =
   | 'Tools - File Explorer'
   | 'Tools - Page Editor'
   | 'Tools - IDE'
+  | 'Tools - Incident Console'
   | 'Tools - Kanban Board'
   | 'Tools - Notebook/Report Page'
   | 'Tools - Diff Compare Viewer'
@@ -877,6 +906,7 @@ export type TemplateCategory =
   | 'Shell - Top Nav'
   | 'Shell - Top Nav + Left Sidebar'
   | 'Shell - Breadcrumb Driven Layout'
+  | 'Shell - Messaging'
   | 'Shell - Blank';
 
 interface BaseTemplateDoc {

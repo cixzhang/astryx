@@ -79,6 +79,12 @@ export const docs = {
       default: 'false',
     },
     {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        'Explains why the input is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the input focusable via aria-disabled (the field becomes read-only). Use this instead of wrapping a disabled TextInput in Tooltip. Disabled controls swallow the hover events an external Tooltip needs.',
+    },
+    {
       name: 'isLoading',
       type: 'boolean',
       description:
@@ -100,13 +106,20 @@ export const docs = {
       name: 'startIcon',
       type: 'IconType',
       description:
-        'SVG icon component displayed at the start of the input. See `npx astryx docs icons` for valid semantic names.',
+        'SVG icon component displayed at the start of the input. See `astryx docs icons` for valid semantic names.',
     },
     {
       name: 'status',
       type: "{type: 'error' | 'warning' | 'success', message?: string}",
       description:
         'Validation status: applies a colored border and status icon. If message is provided, displays a floating message below the input. Error type also sets aria-invalid.',
+    },
+    {
+      name: 'statusVariant',
+      type: "'attached' | 'detached'",
+      description:
+        'How the status message is placed relative to the input. attached overlaps directly below the input (bordered treatment); detached floats below as a separate element with spacing.',
+      default: "'attached'",
     },
     {
       name: 'hasClear',
@@ -144,6 +157,7 @@ export const docs = {
       {guidance: false, description: "Don't use placeholder text as a replacement for a label; placeholders disappear on focus and are not reliably read by screen readers."},
       {guidance: false, description: "Don't use TextInput for multi-line content like comments or descriptions; use TextArea instead."},
       {guidance: false, description: "Don't mark every field as required; only flag mandatory fields so users are not overwhelmed by validation errors."},
+      {guidance: false, description: "Don't wrap a disabled TextInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead."},
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'Text that identifies the field. Always rendered for accessibility even when visually hidden.'},
@@ -232,6 +246,12 @@ export const docsZh = {
       default: 'false',
     },
     {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        '说明输入框被禁用的原因。与 isDisabled 一起使用时，在悬停/键盘聚焦时显示工具提示，并通过 aria-disabled 保持输入框可聚焦（字段变为只读）。请使用此属性，而不是用 Tooltip 包裹已禁用的 TextInput——已禁用的控件会吞掉外部 Tooltip 所需的悬停事件。',
+    },
+    {
       name: 'isLoading',
       type: 'boolean',
       description:
@@ -260,6 +280,13 @@ export const docsZh = {
       type: "{type: 'error' | 'warning' | 'success', message?: string}",
       description:
         '验证状态：应用彩色边框和状态图标。如果提供了 message，在输入框下方显示浮动消息。错误类型还会设置 aria-invalid。',
+    },
+    {
+      name: 'statusVariant',
+      type: "'attached' | 'detached'",
+      description:
+        '状态消息相对于输入框的放置方式。attached 直接叠加在输入框下方（带边框处理）；detached 作为独立元素浮于下方并留有间距。',
+      default: "'attached'",
     },
     {
       name: 'hasClear',
@@ -296,6 +323,7 @@ export const docsZh = {
       {guidance: false, description: "Don't use placeholder text as a replacement for a label; placeholders disappear on focus and are not reliably read by screen readers."},
       {guidance: false, description: "Don't use TextInput for multi-line content like comments or descriptions; use TextArea instead."},
       {guidance: false, description: "Don't mark every field as required; only flag mandatory fields so users are not overwhelmed by validation errors."},
+      {guidance: false, description: "Don't wrap a disabled TextInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead."},
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'Text that identifies the field. Always rendered for accessibility even when visually hidden.'},
@@ -323,6 +351,7 @@ export const docsDense = {
       {guidance: false, description: "Don't use placeholder text as a replacement for a label; placeholders disappear on focus and are not reliably read by screen readers."},
       {guidance: false, description: "Don't use TextInput for multi-line content like comments or descriptions; use TextArea instead."},
       {guidance: false, description: "Don't mark every field as required; only flag mandatory fields so users are not overwhelmed by validation errors."},
+      {guidance: false, description: "Don't wrap a disabled TextInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead."},
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'Text that identifies the field. Always rendered for accessibility even when visually hidden.'},
@@ -346,11 +375,14 @@ export const docsDense = {
     isOptional: 'Shows "Optional" indicator. Mutually exclusive w/ isRequired.',
     isRequired: 'Shows "Required" indicator+sets aria-required. Mutually exclusive w/ isOptional.',
     isDisabled: 'Disables input, prevents interaction, dims element.',
+    disabledMessage:
+      'Explains why input is disabled. With isDisabled, shows tooltip on hover/focus + keeps input focusable via aria-disabled (field becomes read-only). Use instead of wrapping a disabled TextInput in Tooltip.',
     isLoading: 'Loading state w/ spinner+aria-busy.',
     placeholder: 'Placeholder when input empty.',
     labelTooltip: 'Tooltip in info icon at label end.',
     startIcon: 'SVG icon at input start (e.g. heroicons or lucide).',
     status: 'Validation status; colored border+icon. Message floats below. Error sets aria-invalid.',
+    statusVariant: 'How status message is placed: attached overlaps below input; detached floats below w/ spacing.',
     hasClear: 'Shows clear button when input has value. Clears value on click.',
     hasAutoFocus: 'Auto-focus input on mount.',
     htmlName: 'HTML name attr for form submissions.',

@@ -25,6 +25,11 @@ export const docs = {
   theming: {
     targets: [
       {className: 'astryx-base-table'},
+      {className: 'astryx-table'},
+      {className: 'astryx-table-scroll-wrapper'},
+      {className: 'astryx-table-header'},
+      {className: 'astryx-table-body'},
+      {className: 'astryx-table-footer'},
       {className: 'astryx-table-row'},
       {className: 'astryx-table-cell'},
       {className: 'astryx-table-header-cell'},
@@ -40,7 +45,7 @@ export const docs = {
     {
       name: 'columns',
       type: 'TableColumn<T>[]',
-      description: 'Column definitions: each column has {key, header, width?, align?, renderCell?}. The `header` field sets the column heading text. If omitted, columns are auto-generated from data object keys.',
+      description: 'Column definitions: each column has {key, header, width?, align?, renderCell?}. The `header` field sets the column heading text. If omitted, columns are auto-generated from data object keys. The `width` field is typed as `ColumnWidth` (not a number); use `proportional(n)` or `pixel(n)` helpers imported from `@astryxdesign/core/Table`. Example: `width: pixel(120)` for 120px fixed, `width: proportional(1)` for flex distribution.',
     },
     {
       name: 'idKey',
@@ -106,6 +111,8 @@ export const docs = {
     {name: 'useTableSelection'},
     {name: 'useTableSelectionState'},
     {name: 'useTableSortable'},
+    {name: 'useTableTreeData'},
+    {name: 'useTableTreeState'},
     {name: 'useTablePagination'},
     {name: 'useTableColumnSettings'},
     {name: 'useTableFiltering'},
@@ -118,6 +125,7 @@ export const docs = {
       { guidance: true, description: 'Use density and divider variants to match the information density and scanning needs of your data.' },
       { guidance: true, description: 'Compose rich cell content with Astryx components like Badge, StatusDot, and Avatar via renderCell.' },
       { guidance: true, description: 'Set explicit width on every column using proportional() or pixel(). proportional(1) gives equal flex distribution with a 120px minimum that prevents columns from collapsing on narrow viewports. Omitting width skips the minimum.' },
+      { guidance: true, description: 'Use the data-driven API from React Server Components: proportional(), pixel(), and column definitions without function props are server-safe. Columns using renderCell (or any function prop) need the table wrapped in a "use client" component, since functions cannot cross the server-client boundary.' },
       { guidance: false, description: 'Use a table for data without consistent columns. Use a list or card layout for heterogeneous content.' },
       { guidance: false, description: 'Enable every plugin at once. Add only the features your use case requires to keep the interface focused.' },
       { guidance: false, description: 'Omit width on text-heavy columns; without an explicit proportional() width they have no minimum and can squish to near-zero on mobile.' },
@@ -165,6 +173,7 @@ export const docsDense = {
       { guidance: true, description: 'Use density and divider variants to match the information density and scanning needs of your data.' },
       { guidance: true, description: 'Compose rich cell content with Astryx components like Badge, StatusDot, and Avatar via renderCell.' },
       { guidance: true, description: 'Set explicit width on every column via proportional() or pixel(). proportional(1) = equal flex w/ 120px min preventing collapse on narrow viewports. Omitting width skips the minimum.' },
+      { guidance: true, description: 'Data-driven API is RSC-safe: proportional(), pixel(), column defs w/o function props work in Server Components. renderCell (any function prop) requires a "use client" wrapper.' },
       { guidance: false, description: 'Use a table for data without consistent columns. Use a list or card layout for heterogeneous content.' },
       { guidance: false, description: 'Enable every plugin at once. Add only the features your use case requires to keep the interface focused.' },
       { guidance: false, description: 'Omit width on text-heavy columns; w/o explicit proportional() width they have no minimum and can squish to near-zero on mobile.' },

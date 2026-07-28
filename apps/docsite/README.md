@@ -1,6 +1,6 @@
-# XDS Docsite
+# Astryx Docsite
 
-The OSS documentation site for XDS. Built with Next.js and StyleX.
+The OSS documentation site for Astryx. Built with Next.js and StyleX.
 
 ## Quick Start
 
@@ -24,17 +24,17 @@ from the monorepo and writes typed TypeScript registries to `src/generated/`.
 
 `scripts/generate-data.mjs` scans the monorepo and produces:
 
-| Registry               | Source                            | What it contains                                              |
-| ---------------------- | --------------------------------- | ------------------------------------------------------------- |
-| `packageRegistry.ts`   | `packages/*/package.json`         | Name, version, description, README for each published package |
-| `componentRegistry.ts` | `*.doc.mjs` files                 | Props, usage docs, hooks, groups, per package                 |
-| `blockRegistry.ts`     | CLI `templates/blocks/`           | Showcase and example blocks with metadata                     |
-| `templateRegistry.ts`  | CLI `templates/pages/`            | Page-level templates (e.g. dashboard, settings)               |
-| `docsRegistry.ts`      | CLI `docs/`                       | Long-form guide and foundation topics                         |
-| `blogRegistry.ts`      | `src/content/blog/posts/`         | Human-authored blog posts (frontmatter validated)             |
+| Registry               | Source                                     | What it contains                                              |
+| ---------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| `packageRegistry.ts`   | `packages/*/package.json`                  | Name, version, description, README for each published package |
+| `componentRegistry.ts` | `*.doc.mjs` files                          | Props, usage docs, hooks, groups, per package                 |
+| `blockRegistry.ts`     | CLI `templates/blocks/`                    | Showcase and example blocks with metadata                     |
+| `templateRegistry.ts`  | CLI `templates/pages/`                     | Page-level templates (e.g. dashboard, settings)               |
+| `docsRegistry.ts`      | CLI `docs/`                                | Long-form guide and foundation topics                         |
+| `blogRegistry.ts`      | `src/content/blog/posts/`                  | Human-authored blog posts (frontmatter validated)             |
 | `themeRegistry.ts`     | Installed `@astryxdesign/theme-*` packages | Built theme objects, keyed by package name                    |
-| `showcaseRegistry.ts`  | Blocks with `isShowcase`          | Copied showcase source files                                  |
-| `exampleRegistry.ts`   | Blocks with `exampleFor`          | Copied example blocks per component                           |
+| `showcaseRegistry.ts`  | Blocks with `isShowcase`                   | Copied showcase source files                                  |
+| `exampleRegistry.ts`   | Blocks with `exampleFor`                   | Copied example blocks per component                           |
 
 The `src/generated/` directory is gitignored. Pages import from these registries
 and render whatever the pipeline found, with no manual wiring needed.
@@ -50,6 +50,40 @@ This means:
 - No `import {fooTheme} from '@astryxdesign/theme-foo/built'` in page files; use `themeObjects` from the generated `themeRegistry`
 - No hand-maintained arrays of component names; use `componentRegistry`
 - No `if (pkg === '@astryxdesign/core')` switches; let the pipeline classify packages
+
+## Versioned Content: latest vs canary
+
+The docsite ships one codebase deployed from `main`, but the data pipeline can
+read package docs from two different sources depending on the build **target**.
+The two targets mirror the two npm dist-tags the packages publish under:
+
+| Target   | npm dist-tag | Reads package docs from            | Deploys                                |
+| -------- | ------------ | ---------------------------------- | -------------------------------------- |
+| `latest` | `@latest`    | the last **published** npm release | production (`astryx.atmeta.com`)       |
+| `canary` | `@canary`    | the live monorepo (`main`, WIP)    | the canary site + **every PR preview** |
+
+The target is derived from Vercel's `VERCEL_ENV`: the production deploy is
+`latest`; preview deploys (the `main` canary site and all PR previews) and local
+dev are `canary`. `scripts/resolve-content-root.mjs` maps the target to the
+filesystem root the pipeline reads from — for `latest` it downloads the
+published package tarballs from npm (their `src/` ships the `.doc.mjs` the
+pipeline needs); for `canary` it reads the live workspace. Only the documented
+**data** is version-pinned — CLI template demos are live-rendered React and
+always resolve `@astryxdesign/core` from the bundled workspace version.
+
+> **⚠️ Contributor gotcha: library changes don't show on the production site
+> until they're released.** Production (`astryx.atmeta.com`) documents the last
+> **published** release. If you add a component, change a prop, or update docs
+> and merge to `main`, those changes will **not** appear in production until the
+> next release publishes to npm. To see your merged change in a deployed site,
+> use the **canary** site or any **PR preview** (both read `main`) — or the
+> "Canary docs" link in the footer. The canary banner links back to
+> production.
+
+**Local dev is unaffected.** `pnpm dev` has no `VERCEL_ENV`, so it defaults to
+`canary` and reads the live workspace — your local changes show up as expected.
+To preview the `latest` view locally, run the pipeline with
+`DOCSITE_TARGET=latest` (needs network to fetch the published tarballs).
 
 ## Adding a New Theme
 
@@ -110,7 +144,7 @@ apps/docsite/
 ├── src/
 │   ├── generated/            # gitignored — pipeline output
 │   ├── app/
-│   │   ├── globals.css       # CSS imports (reset, xds base, theme stylesheets)
+│   │   ├── globals.css       # CSS imports (reset, astryx base, theme stylesheets)
 │   │   ├── layout.tsx        # Root layout
 │   │   ├── providers.tsx     # Theme + client providers
 │   │   ├── (docs)/           # Main docs routes (components, packages, docs)

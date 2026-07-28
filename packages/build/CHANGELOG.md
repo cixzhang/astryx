@@ -1,5 +1,78 @@
 # @xds/build
 
+# 0.1.9
+
+#### Fixes
+
+- Scope the `source` resolve condition to @astryxdesign packages in withAstryx
+  `withAstryx` set webpack's `conditionNames` to `['source', …]` globally, which resolved _any_ dependency shipping a `source` export to its raw TypeScript — not just Astryx packages. Third-party deps that ship a `source` export (e.g. `lexical`, pulled in by the new RichTextEditor lab component) were then fed untranspiled `.ts` through Next's babel and failed on syntax like `declare` class fields.
+
+#### Contributors
+
+Thanks to everyone who contributed to this release:
+
+- @potatowagon
+
+---
+
+# 0.1.8
+
+---
+
+# 0.1.7
+
+---
+
+# 0.1.6
+
+---
+
+# 0.1.5
+
+#### Other Changes
+
+- Use node: protocol prefix for Node.js builtin imports (#3737)
+
+#### Contributors
+
+Thanks to everyone who contributed to this release:
+
+- @Han5991
+
+---
+
+# 0.1.4
+
+---
+
+# 0.1.3
+
+#### Fixes
+
+- Use `pnpm build` in the `prepack` script so publishing no longer fails the `devEngines` package-manager check (#3564).
+
+#### Contributors
+
+Thanks to everyone who contributed to this release:
+
+- @cixzhang
+
+---
+
+# 0.1.2
+
+#### Fixes
+
+- ship TypeScript declarations for the `@astryxdesign/build/vite` export
+
+#### Contributors
+
+Thanks to everyone who contributed to this release:
+
+- @benjipeng
+
+---
+
 # 0.1.1
 
 #### Breaking Changes

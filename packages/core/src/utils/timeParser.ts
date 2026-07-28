@@ -164,10 +164,13 @@ export function parseTimeInput(
 
   const trimmed = input.trim().toLowerCase();
 
-  // Check for AM/PM
-  const hasMeridiem = /[ap]m?\s*$/i.test(trimmed);
+  // Check for AM/PM. hasMeridiem is derived from isPM/isAM so the detection
+  // can never drift from them: it previously used its own regex without the
+  // optional dots, so dotted meridiems ("2:30 p.m.") skipped the 12h -> 24h
+  // conversion and parsed 12 hours off.
   const isPM = /p\.?m?\.?\s*$/i.test(trimmed);
   const isAM = /a\.?m?\.?\s*$/i.test(trimmed);
+  const hasMeridiem = isPM || isAM;
 
   // Remove AM/PM suffix
   const timeStr = trimmed.replace(/\s*[ap]\.?m?\.?\s*$/i, '').trim();
@@ -358,13 +361,16 @@ export function adjustTime(
     return time;
   }
 
+  // A non-finite delta would spin the wrap-around forever (-Infinity) or
+  // produce "NaN:NaN" (NaN) — return the input unchanged instead.
+  if (!Number.isFinite(deltaMinutes)) {
+    return time;
+  }
+
   let totalMinutes = parsed.hour * 60 + parsed.minute + deltaMinutes;
 
-  // Wrap around midnight
-  while (totalMinutes < 0) {
-    totalMinutes += 24 * 60;
-  }
-  totalMinutes = totalMinutes % (24 * 60);
+  // Wrap around midnight (double-modulo handles negatives in O(1))
+  totalMinutes = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
 
   const newHour = Math.floor(totalMinutes / 60);
   const newMinute = totalMinutes % 60;

@@ -4,7 +4,8 @@
 
 /**
  * @file Pagination.tsx
- * @input Uses React, StyleX, Button, Icon, Selector, Text; page number buttons delegate to Button
+ * @input Uses React, StyleX, Button, Icon, Selector, Text; page number buttons delegate to Button.
+ *   Reads i18n direction via useDirection() to flip the prev/next chevrons under RTL.
  * @output Exports Pagination component, PaginationProps, PaginationVariant, PaginationSize types
  * @position Core implementation; consumed by index.ts, tested by Pagination.test.tsx
  *
@@ -34,9 +35,13 @@ import {Button} from '../Button';
 import {Icon} from '../Icon';
 import {Selector} from '../Selector';
 import {Text} from '../Text';
+import {useAnnounce} from '../hooks/useAnnounce';
+import {useListFocus} from '../hooks/useListFocus';
 import {mergeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n/useTranslator';
+import {useDirection} from '../i18n/useDirection';
 
 // =============================================================================
 // Types
@@ -335,25 +340,69 @@ export function Pagination({
   totalItems,
   totalPages: totalPagesProp,
   hasMore,
-  pageSize = 10,
+  pageSize: pageSizeProp = 10,
   pageSizeOptions,
   onPageSizeChange,
   variant = 'pages',
   siblingCount = 1,
   size = 'md',
   isDisabled = false,
-  label = 'Pagination',
+  label: labelFromProps,
   'data-testid': testId,
   xstyle,
   className,
   style,
   ref,
+  ...rest
 }: PaginationProps) {
   const [, startTransition] = useTransition();
+
+  // Resolve system strings once per render. Prop overrides win.
+  const t = useTranslator();
+  const label = labelFromProps ?? t('@astryx.pagination.label');
+  const previousLabel = t('@astryx.pagination.previous');
+  const nextLabel = t('@astryx.pagination.next');
+
+  // Directional icons: under RTL, the "previous" control points right and the
+  // "next" control points left. aria-labels stay semantic (unchanged).
+  const direction = useDirection();
+  const previousIcon = direction === 'rtl' ? 'chevronRight' : 'chevronLeft';
+  const nextIcon = direction === 'rtl' ? 'chevronLeft' : 'chevronRight';
+  const pageIndicatorsLabel = t('@astryx.pagination.pageIndicators');
+  const itemsPerPageLabel = t('@astryx.pagination.itemsPerPage');
+
+  // pageSize is typed as number, so 0, NaN, and negatives are valid at the
+  // type level but yield Infinity/NaN page counts, and
+  // Array.from({length: Infinity}) crashes the dots variant. Coerce to a
+  // positive integer; non-finite values fall back to the default.
+  const pageSize = Number.isFinite(pageSizeProp)
+    ? Math.max(1, Math.floor(pageSizeProp))
+    : 10;
+
+  // Announce page changes politely (navigation-10). The controls carry no
+  // live region, so page transitions were previously silent to screen readers.
+  // Only user-driven changes go through handlePageChange, so initial mount is
+  // never announced.
+  const announce = useAnnounce();
 
   // Track the page optimistically so rapid prev/next clicks advance from the
   // in-flight target instead of stalling on the last committed page.
   const [optimisticPage, setOptimisticPage] = useOptimistic(page);
+
+  // Roving-tabindex + arrow/Home/End keyboard nav for the dots variant, owned
+  // by the shared useListFocus primitive (mirrors SegmentedControl). It stamps a
+  // single tab stop across the dots and moves focus horizontally; selection
+  // follows focus via handleDotsFocus so arrow keys move the active page.
+  const {
+    listRef: dotsListRef,
+    handleKeyDown: handleDotsKeyDown,
+    handleFocus: handleDotsRovingFocus,
+  } = useListFocus<HTMLDivElement>({
+    itemSelector: 'button',
+    hasRovingTabIndex: true,
+    wrap: true,
+    orientation: 'horizontal',
+  });
 
   // Compute pagination state
   const computedTotalPages =
@@ -384,10 +433,40 @@ export function Pagination({
     // Keep onChange urgent so controlled page state updates in the same commit
     // as the click; only the optimistic indicator and changeAction defer.
     onChange(newPage);
+    announce(
+      computedTotalPages != null
+        ? t('@astryx.pagination.pageOfTotal', {
+            current: newPage,
+            total: computedTotalPages,
+          })
+        : t('@astryx.pagination.pageAnnounce', {current: newPage}),
+    );
     startTransition(async () => {
       setOptimisticPage(newPage);
       await changeAction?.(newPage);
     });
+  };
+
+  // Selection-follows-focus for the dots (APG radiogroup pattern): useListFocus
+  // only *moves* focus, so when focus lands on a dot -- via arrow/Home/End, or a
+  // click that focuses it -- we select that dot's page. handleDotsRovingFocus
+  // keeps the roving tab stop in sync. The current page is skipped so tabbing
+  // into the group is a no-op.
+  const handleDotsFocus = (e: React.FocusEvent) => {
+    handleDotsRovingFocus(e);
+    if (isDisabled) {
+      return;
+    }
+    const focused = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+      'button[data-page]',
+    );
+    if (!focused) {
+      return;
+    }
+    const nextPage = Number(focused.dataset.page);
+    if (Number.isFinite(nextPage) && nextPage !== optimisticPage) {
+      handlePageChange(nextPage);
+    }
   };
 
   const handlePrevious = () => {
@@ -452,8 +531,10 @@ export function Pagination({
               return (
                 <Button
                   key={item}
-                  label={`Go to page ${item}`}
-                  aria-label={`Go to page ${item}`}
+                  label={t('@astryx.pagination.goToPage', {page: item})}
+                  aria-label={t('@astryx.pagination.goToPage', {
+                    page: item,
+                  })}
                   variant="ghost"
                   size={buttonSize}
                   onClick={() => handlePageChange(item)}
@@ -475,7 +556,11 @@ export function Pagination({
         return (
           <span {...stylex.props(styles.infoText)}>
             <Text type="body" size="sm" color="secondary">
-              {`${rangeStart}\u2013${rangeEnd} of ${totalItems}`}
+              {t('@astryx.pagination.count', {
+                from: rangeStart,
+                to: rangeEnd,
+                total: totalItems,
+              })}
             </Text>
           </span>
         );
@@ -488,7 +573,10 @@ export function Pagination({
         return (
           <span {...stylex.props(styles.infoText)}>
             <Text type="body" size="sm" color="secondary">
-              {`Page ${optimisticPage} of ${computedTotalPages}`}
+              {t('@astryx.pagination.pageOfTotal', {
+                current: optimisticPage,
+                total: computedTotalPages,
+              })}
             </Text>
           </span>
         );
@@ -498,33 +586,49 @@ export function Pagination({
         if (computedTotalPages == null) {
           return null;
         }
+
         return (
           <div
+            ref={dotsListRef}
             {...stylex.props(styles.dotsContainer)}
             role="group"
-            aria-label="Page indicators">
-            {Array.from({length: computedTotalPages}, (_, i) => (
-              <button
-                key={i + 1}
-                type="button"
-                aria-label={`Go to page ${i + 1}`}
-                aria-current={i + 1 === optimisticPage ? 'page' : undefined}
-                onClick={() => handlePageChange(i + 1)}
-                disabled={isDisabled}
-                {...mergeProps(
-                  themeProps('pagination-dot', {
-                    active: i + 1 === optimisticPage ? 'active' : null,
-                    size,
-                  }),
-                  stylex.props(
-                    styles.dot,
-                    isSm && styles.dotSm,
-                    i + 1 === optimisticPage && styles.dotActive,
-                    isDisabled && styles.dotDisabled,
-                  ),
-                )}
-              />
-            ))}
+            aria-label={pageIndicatorsLabel}
+            onKeyDown={handleDotsKeyDown}
+            onFocus={handleDotsFocus}>
+            {Array.from({length: computedTotalPages}, (_, i) => {
+              const isActive = i + 1 === optimisticPage;
+              return (
+                <button
+                  key={i + 1}
+                  type="button"
+                  data-page={i + 1}
+                  aria-label={t('@astryx.pagination.goToPage', {
+                    page: i + 1,
+                  })}
+                  aria-current={isActive ? 'page' : undefined}
+                  // The active dot is the single roving tab stop; useListFocus
+                  // maintains it as focus and the active page move.
+                  tabIndex={isActive ? 0 : -1}
+                  // Selection is driven by focus (handleDotsFocus); clicking only
+                  // needs to focus the dot, which some browsers (Safari) skip for
+                  // buttons, so focus it explicitly.
+                  onClick={e => e.currentTarget.focus()}
+                  disabled={isDisabled}
+                  {...mergeProps(
+                    themeProps('pagination-dot', {
+                      active: isActive ? 'active' : null,
+                      size,
+                    }),
+                    stylex.props(
+                      styles.dot,
+                      isSm && styles.dotSm,
+                      isActive && styles.dotActive,
+                      isDisabled && styles.dotDisabled,
+                    ),
+                  )}
+                />
+              );
+            })}
           </div>
         );
       }
@@ -538,19 +642,20 @@ export function Pagination({
   return (
     <nav
       ref={ref}
-      aria-label={label}
-      data-testid={testId}
       {...mergeProps(
         themeProps('pagination', {variant, size}),
         stylex.props(styles.root, xstyle),
         className,
         style,
-      )}>
+      )}
+      {...rest}
+      aria-label={label}
+      data-testid={testId}>
       {pageSizeOptions != null && pageSizeOptions.length > 0 && (
         <div {...stylex.props(styles.pageSizeSelector)}>
           <div {...stylex.props(styles.pageSizeSelectorControl)}>
             <Selector
-              label="Items per page"
+              label={itemsPerPageLabel}
               isLabelHidden
               options={pageSizeOptions.map(opt => String(opt))}
               value={String(pageSize)}
@@ -563,10 +668,10 @@ export function Pagination({
       )}
       <div {...stylex.props(styles.controls)}>
         <Button
-          label="Go to previous page"
+          label={previousLabel}
           variant="ghost"
           size={buttonSize}
-          icon={<Icon icon="chevronLeft" size={isSm ? 'sm' : 'md'} />}
+          icon={<Icon icon={previousIcon} size={isSm ? 'sm' : 'md'} />}
           onClick={handlePrevious}
           isDisabled={isDisabled || !hasPrevious}
           isIconOnly
@@ -575,10 +680,10 @@ export function Pagination({
         {renderIndicator()}
 
         <Button
-          label="Go to next page"
+          label={nextLabel}
           variant="ghost"
           size={buttonSize}
-          icon={<Icon icon="chevronRight" size={isSm ? 'sm' : 'md'} />}
+          icon={<Icon icon={nextIcon} size={isSm ? 'sm' : 'md'} />}
           onClick={handleNext}
           isDisabled={isDisabled || !hasNext}
           isIconOnly

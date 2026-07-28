@@ -14,8 +14,8 @@
 
 import {describe, it, expect} from 'vitest';
 import {derivedVarRegistry, getDerivedVars} from './derivedVarRegistry';
-import {readdirSync, readFileSync, existsSync} from 'fs';
-import {join} from 'path';
+import {readdirSync, readFileSync} from 'node:fs';
+import {join} from 'node:path';
 
 const SRC_DIR = join(__dirname, '..');
 
@@ -129,8 +129,9 @@ function discoverComponents(): ComponentInfo[] {
 
   for (const dir of dirs) {
     const dirPath = join(SRC_DIR, dir);
+    const dirEntries = readdirSync(dirPath);
     // Find source files with component vars (.tsx and .ts, excluding tests/docs)
-    const sourceFiles = readdirSync(dirPath)
+    const sourceFiles = dirEntries
       .filter(
         f =>
           (f.endsWith('.tsx') || f.endsWith('.ts')) &&
@@ -150,11 +151,15 @@ function discoverComponents(): ComponentInfo[] {
       continue;
     }
 
-    // Only check component directories (those with a doc file)
-    const docPath = join(dirPath, `${dir}.doc.mjs`);
-    if (!existsSync(docPath)) {
+    // Only check component directories (those with a doc file named after the
+    // directory). Match against the on-disk listing rather than existsSync so
+    // the comparison is case-exact everywhere — on case-insensitive
+    // filesystems (macOS, Windows) existsSync('theme/theme.doc.mjs') matches
+    // theme/Theme.doc.mjs and pulls in a directory that CI never checks.
+    if (!dirEntries.includes(`${dir}.doc.mjs`)) {
       continue;
     }
+    const docPath = join(dirPath, `${dir}.doc.mjs`);
 
     let docVars: string[] = [];
     let docDerived: DerivedDocEntry[] = [];
@@ -181,6 +186,7 @@ function discoverComponents(): ComponentInfo[] {
 // ---------------------------------------------------------------------------
 
 const DIR_TO_REGISTRY_KEY: Record<string, string> = {
+  Avatar: 'avatar',
   Banner: 'banner',
   Button: 'button',
   Card: 'card',

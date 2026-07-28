@@ -30,6 +30,7 @@ import {
 import {Icon} from '../Icon';
 import {Tooltip} from '../Tooltip';
 import {Text} from '../Text';
+import {VisuallyHidden} from '../VisuallyHidden';
 import type {
   TextType,
   TextSize,
@@ -43,6 +44,7 @@ import {mergeProps} from '../utils';
 import {computeTargetAndRel} from './computeTargetAndRel';
 import {useInteractiveRole} from '../hooks/useInteractiveRole';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 /**
  * Base link styles
@@ -106,10 +108,20 @@ const styles = stylex.create({
  */
 const linkColorStyles = stylex.create({
   primary: {
-    color: colorVars['--color-text-primary'],
+    color: {
+      default: colorVars['--color-text-primary'],
+      ':hover': {
+        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-primary']}, ${colorVars['--color-tint-hover']} 15%)`,
+      },
+    },
   },
   secondary: {
-    color: colorVars['--color-text-secondary'],
+    color: {
+      default: colorVars['--color-text-secondary'],
+      ':hover': {
+        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-secondary']}, ${colorVars['--color-tint-hover']} 15%)`,
+      },
+    },
   },
   disabled: {
     color: colorVars['--color-text-disabled'],
@@ -117,8 +129,13 @@ const linkColorStyles = stylex.create({
   placeholder: {
     color: colorVars['--color-text-secondary'],
   },
-  active: {
-    color: colorVars['--color-text-accent'],
+  accent: {
+    color: {
+      default: colorVars['--color-text-accent'],
+      ':hover': {
+        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
+      },
+    },
   },
   inherit: {
     color: 'inherit',
@@ -158,6 +175,10 @@ export interface LinkProps extends BaseProps<
   hasUnderline?: boolean;
   /**
    * Whether the link is disabled.
+   * A disabled link renders as a plain anchor without an href (and without
+   * target/rel/onClick), so it cannot be focused or activated — no
+   * navigation and no onClick, even via programmatic focus or assistive
+   * technology activation.
    * @default false
    */
   isDisabled?: boolean;
@@ -167,6 +188,12 @@ export interface LinkProps extends BaseProps<
    * @default false
    */
   isExternalLink?: boolean;
+  /**
+   * Screen-reader text appended to an external link to announce that it opens
+   * in a new tab (the visual icon is decorative). Override for localization.
+   * @default '(opens in new tab)'
+   */
+  newTabLabel?: string;
   /**
    * Where to open the linked document.
    * Overridden to "_blank" when isExternalLink is true.
@@ -203,6 +230,10 @@ export interface LinkProps extends BaseProps<
   isStandalone?: boolean;
   /**
    * Semantic text type for Text. Determines base typography.
+   *
+   * Use `type="inherit"` for inline links inside an existing `Text` element so
+   * the link adopts the surrounding text's size and line-height instead of
+   * imposing its own (e.g. a link within a `large` paragraph).
    * @default 'body'
    */
   type?: TextType;
@@ -216,7 +247,7 @@ export interface LinkProps extends BaseProps<
   weight?: TextWeight;
   /**
    * Text color. Forwarded to Text.
-   * @default 'active'
+   * @default 'accent'
    */
   color?: TextColor;
   /**
@@ -236,6 +267,15 @@ export interface LinkProps extends BaseProps<
 }
 
 /**
+ * Click handler for disabled links. The disabled anchor renders without an
+ * href, so there is no navigation to block in practice; preventDefault is a
+ * defensive guard against synthetic/programmatic clicks.
+ */
+function preventDefaultClick(event: React.MouseEvent<HTMLAnchorElement>): void {
+  event.preventDefault();
+}
+
+/**
  * A styled anchor link component.
  *
  * Uses Text internally for typography styling.
@@ -248,6 +288,9 @@ export interface LinkProps extends BaseProps<
  * <Link href="/settings" color="secondary">Settings</Link>
  * <Link href="/privacy" hasUnderline>Privacy Policy</Link>
  * <Link label="Close dialog" href="/home"><Icon icon="x" /></Link>
+ * <Text type="large">
+ *   Read our <Link href="/terms" type="inherit">terms</Link> first.
+ * </Text>
  * ```
  */
 export function Link({
@@ -257,6 +300,7 @@ export function Link({
   hasUnderline = false,
   isDisabled = false,
   isExternalLink = false,
+  newTabLabel: newTabLabelFromProps,
   target: targetFromProps,
   onClick,
   tooltip,
@@ -264,7 +308,7 @@ export function Link({
   type = 'body',
   size,
   weight,
-  color = 'active',
+  color = 'accent',
   display = 'inline',
   maxLines = 0,
   children,
@@ -275,6 +319,8 @@ export function Link({
   ref,
   ...props
 }: LinkProps) {
+  const t = useTranslator();
+  const newTabLabel = newTabLabelFromProps ?? t('@astryx.link.newTab');
   const LinkComponent = useLinkComponent(as);
   const role = useInteractiveRole({href, onClick, isDisabled});
   // Determine target and rel based on isExternalLink
@@ -300,7 +346,10 @@ export function Link({
         {children}
       </Text>
       {isExternalLink && !renderAsButton && (
-        <Icon icon="externalLink" size="xsm" color="inherit" />
+        <>
+          <Icon icon="externalLink" size="xsm" color="inherit" />
+          <VisuallyHidden>{newTabLabel}</VisuallyHidden>
+        </>
       )}
     </>
   );
@@ -334,6 +383,37 @@ export function Link({
         {...props}>
         {sharedContent}
       </button>
+    );
+  } else if (isDisabled) {
+    // A disabled link renders as a plain <a> with no href: an href-less
+    // anchor is not focusable and exposes no link affordance, so programmatic
+    // focus + Enter, AT activation commands, and middle-click cannot navigate
+    // or fire the consumer onClick. The router LinkComponent is deliberately
+    // skipped — a disabled link performs no navigation, and custom router
+    // links may require a live href. target/rel are omitted with the href.
+    linkElement = (
+      <a
+        ref={ref as React.Ref<HTMLAnchorElement>}
+        onClick={preventDefaultClick}
+        aria-label={label || undefined}
+        aria-disabled={true}
+        tabIndex={-1}
+        {...mergeProps(
+          themeProps('link', {color}),
+          stylex.props(
+            styles.base,
+            linkColorStyles[color],
+            hasUnderline && styles.hasUnderline,
+            isStandalone && styles.standalone,
+            styles.disabled,
+            xstyle,
+          ),
+          className,
+          style,
+        )}
+        {...props}>
+        {sharedContent}
+      </a>
     );
   } else {
     linkElement = (

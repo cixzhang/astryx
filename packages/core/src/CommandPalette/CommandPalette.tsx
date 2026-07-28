@@ -24,12 +24,7 @@ import {
   type ReactNode,
 } from 'react';
 import {Dialog} from '../Dialog';
-import {
-  Layout,
-  LayoutHeader,
-  LayoutContent,
-  LayoutFooter,
-} from '../Layout';
+import {Layout, LayoutHeader, LayoutContent, LayoutFooter} from '../Layout';
 import type {SearchSource, SearchableItem} from '../Typeahead';
 import {useCombobox} from '../Selector';
 import type {SelectorOptionData} from '../Selector';
@@ -41,6 +36,7 @@ import {CommandPaletteInput} from './CommandPaletteInput';
 import {CommandPaletteFooter} from './CommandPaletteFooter';
 import {CommandPaletteEmpty} from './CommandPaletteEmpty';
 import type {BaseProps} from '../BaseProps';
+import {useTranslator} from '../i18n';
 
 export interface CommandPaletteProps<
   T extends SearchableItem = SearchableItem,
@@ -133,9 +129,7 @@ function getGroup(item: SearchableItem): string | undefined {
  * When groups are present, items are ordered by group (preserving insertion order),
  * with ungrouped items at the end — matching the DefaultRenderer layout.
  */
-function buildSelectableItems(
-  items: SearchableItem[],
-): SelectorOptionData[] {
+function buildSelectableItems(items: SearchableItem[]): SelectorOptionData[] {
   const hasGroups = items.some(item => getGroup(item) != null);
 
   if (!hasGroups) {
@@ -258,9 +252,7 @@ function ItemRenderer<T extends SearchableItem>({
  * />
  * ```
  */
-export function CommandPalette<
-  T extends SearchableItem = SearchableItem,
->({
+export function CommandPalette<T extends SearchableItem = SearchableItem>({
   ref,
   isOpen,
   isInline,
@@ -269,14 +261,21 @@ export function CommandPalette<
   input,
   footer,
   renderItem,
-  emptySearchText = 'No results',
-  emptyBootstrapText = 'Type to search',
+  emptySearchText: emptySearchTextFromProps,
+  emptyBootstrapText: emptyBootstrapTextFromProps,
   value: controlledValue,
   onValueChange,
-  label = 'Command palette',
+  label: labelFromProps,
   width = 640,
   maxHeight = 480,
+  ...rest
 }: CommandPaletteProps<T>) {
+  const t = useTranslator();
+  const label = labelFromProps ?? t('@astryx.commandPalette.label');
+  const emptySearchText =
+    emptySearchTextFromProps ?? t('@astryx.commandPalette.emptySearch');
+  const emptyBootstrapText =
+    emptyBootstrapTextFromProps ?? t('@astryx.commandPalette.emptyBootstrap');
   const listId = useId();
   // search: the committed query — only advances when async results arrive.
   // optimisticSearch: updates immediately on keystroke, drives input + empty state.
@@ -447,11 +446,13 @@ export function CommandPalette<
   const contextValue = useMemo(
     () => ({
       // Input uses optimisticSearch — reflects keystrokes immediately.
-      // setSearch calls setOptimisticSearch for instant feedback then
-      // triggers the async search directly (no effect indirection).
+      // setSearch calls setOptimisticSearch inside a transition for instant
+      // feedback then triggers the async search directly (no effect indirection).
       search: optimisticSearch,
       setSearch: (query: string) => {
-        setOptimisticSearch(query);
+        startTransition(() => {
+          setOptimisticSearch(query);
+        });
         runSearch(query);
       },
       value,
@@ -488,13 +489,12 @@ export function CommandPalette<
     ],
   );
 
-  // Empty state uses committed search (= what current results correspond to),
-  // not optimisticSearch (= what the user typed).
-  // While the transition is pending, search stays at '' so showEmptyBootstrap
-  // remains true even after the user has started typing.
+  // `search` is the committed query the on-screen results correspond to (it
+  // still holds the previous query while a transition is pending). Keeping both
+  // flags ungated by `isPending` makes them exhaustive over the empty case, so
+  // the empty state is never unmounted and re-added mid-search (which flashed).
   const showEmptyBootstrap = search === '' && optimisticResults.length === 0;
-  const showEmptySearch =
-    !isPending && search !== '' && optimisticResults.length === 0;
+  const showEmptySearch = search !== '' && optimisticResults.length === 0;
 
   let listContent: ReactNode;
   if (showEmptyBootstrap) {
@@ -502,9 +502,7 @@ export function CommandPalette<
       <CommandPaletteEmpty>{emptyBootstrapText}</CommandPaletteEmpty>
     );
   } else if (showEmptySearch) {
-    listContent = (
-      <CommandPaletteEmpty>{emptySearchText}</CommandPaletteEmpty>
-    );
+    listContent = <CommandPaletteEmpty>{emptySearchText}</CommandPaletteEmpty>;
   } else {
     listContent = (
       <ItemRenderer
@@ -530,7 +528,8 @@ export function CommandPalette<
       width={width}
       maxHeight={maxHeight}
       purpose="info"
-      aria-label={label}>
+      aria-label={label}
+      {...rest}>
       <CommandPaletteContext value={contextValue}>
         <Layout
           defaultHasDividers

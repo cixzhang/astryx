@@ -41,6 +41,11 @@ const meta: Meta<typeof TimeInput> = {
       control: 'boolean',
       description: 'Whether the input is disabled',
     },
+    disabledMessage: {
+      control: 'text',
+      description:
+        'Explains why the input is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the field focusable via aria-disabled (activation stays blocked). Use this instead of wrapping a disabled TimeInput in Tooltip.',
+    },
     size: {
       control: 'radio',
       options: ['sm', 'md', 'lg'],
@@ -208,6 +213,23 @@ export const Disabled: Story = {
   },
 };
 
+// Disabled with an explanation tooltip. Hover or keyboard-focus the field to
+// see why it's disabled — the reason is announced to assistive tech via
+// aria-describedby, and the field stays focusable (activation is still
+// blocked). Use disabledMessage instead of wrapping a disabled TimeInput in Tooltip:
+// disabled controls swallow the pointer events a Tooltip wrapper needs.
+export const DisabledWithMessage: Story = {
+  render: args => {
+    const [value, setValue] = useState<ISOTimeString | undefined>(undefined);
+    return <TimeInput {...args} value={value} onChange={setValue} />;
+  },
+  args: {
+    label: 'Start time',
+    isDisabled: true,
+    disabledMessage: 'You need the Editor role to change this',
+  },
+};
+
 export const SmallSize: Story = {
   render: args => {
     const [value, setValue] = useState<ISOTimeString | undefined>(undefined);
@@ -340,6 +362,34 @@ export const AllVariations: Story = {
             type: 'error',
             message: 'Invalid time selection',
           }}
+        />
+      </div>
+    );
+  },
+};
+
+export const StatusVariantComparison: Story = {
+  render: () => {
+    const [a, setA] = useState<ISOTimeString | undefined>(
+      '22:00' as ISOTimeString,
+    );
+    const [b, setB] = useState<ISOTimeString | undefined>(
+      '22:00' as ISOTimeString,
+    );
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 24, width: 280}}>
+        <TimeInput
+          label="Attached (default)"
+          value={a}
+          onChange={setA}
+          status={{type: 'error', message: 'Must be during business hours'}}
+        />
+        <TimeInput
+          label="Detached"
+          value={b}
+          onChange={setB}
+          status={{type: 'error', message: 'Must be during business hours'}}
+          statusVariant="detached"
         />
       </div>
     );

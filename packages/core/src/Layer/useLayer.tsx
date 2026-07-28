@@ -9,12 +9,14 @@
  * @position Core layer utility; used by useHoverCard, useTooltip, etc.
  *
  * SYNC: When modified, update:
- * - /packages/core/src/Layer/Layer.doc.mjs
+ * - /packages/core/src/Layer/useLayer.doc.mjs
+ * - /packages/core/src/Layer/useLayer.test.tsx
  * - /packages/core/src/Layer/index.ts
  */
 
 import React, {
   useCallback,
+  useEffect,
   useId,
   useRef,
   useState,
@@ -23,6 +25,7 @@ import React, {
 } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import type {StyleXStyles} from '@stylexjs/stylex';
+import {addAnchorName, removeAnchorName} from './anchorName';
 import {typographyVars} from '../theme/tokens.stylex';
 
 const styles = stylex.create({
@@ -50,7 +53,9 @@ const styles = stylex.create({
 });
 
 /**
- * Position placement relative to anchor
+ * Position placement relative to anchor.
+ * Logical: start/end resolve against the popover's own inherited direction
+ * via CSS (RTL contexts mirror automatically, no JS involved).
  */
 export type LayerPlacement = 'above' | 'below' | 'start' | 'end';
 
@@ -63,8 +68,44 @@ export type LayerAlignment = 'start' | 'center' | 'end';
  * Render props for context mode (anchor positioning)
  */
 export interface ContextRenderProps {
+  /**
+   * Who authors the layer's position styles.
+   *
+   * `'anchor'` (default): the hook derives CSS anchor-positioning styles —
+   * `position-area` and `position-try-fallbacks` — from the logical
+   * `placement`/`alignment`.
+   *
+   * `'custom'`: the consumer authors its own position styles via `style`
+   * (e.g. explicit `anchor()` insets or an `anchor-size()` cover). The hook
+   * keeps the popover behavior and the `position-anchor` wiring but emits no
+   * placement-derived styles, so direction handling becomes the consumer's
+   * responsibility. `placement`/`alignment` are ignored.
+   *
+   * @default 'anchor'
+   */
+  positioning?: 'anchor' | 'custom';
+  /**
+   * Logical placement relative to the anchor. Ignored when `positioning`
+   * is `'custom'`.
+   */
   placement?: LayerPlacement;
+  /**
+   * Alignment along the placement axis. Ignored when `positioning`
+   * is `'custom'`.
+   */
   alignment?: LayerAlignment;
+  /**
+   * ARIA role applied to the popover container (e.g. `'tooltip'`). Lets
+   * consumers complete the ARIA pattern and gives test tooling a stable,
+   * non-hashed selector for the layer.
+   */
+  role?: string;
+  /**
+   * Accessible name applied to the popover container via `aria-label`.
+   * Pair with `role` so layers with a named role (e.g. `'dialog'`) expose a
+   * proper name to assistive technology.
+   */
+  'aria-label'?: string;
   /**
    * StyleX styles for the popover container.
    */
@@ -92,6 +133,16 @@ export interface ContextRenderProps {
    * @default 'div'
    */
   as?: 'div' | 'span';
+  /**
+   * Pointer-enter handler attached to the popover container itself. Lets a
+   * consumer keep a hover-driven layer open while the pointer is over the
+   * surface (e.g. Tooltip/HoverCard "hoverable" behavior — WCAG 1.4.13).
+   */
+  onMouseEnter?: React.MouseEventHandler<HTMLElement>;
+  /**
+   * Pointer-leave handler attached to the popover container itself.
+   */
+  onMouseLeave?: React.MouseEventHandler<HTMLElement>;
 }
 
 /**
@@ -234,40 +285,75 @@ export interface FixedLayerReturn {
 }
 
 /**
- * Map placement and alignment to CSS position-area value.
+ * Map logical placement/alignment to a CSS position-area value.
+ *
+ * Uses the self-* logical keyword family: the inline axis resolves against
+ * the popover's own inherited direction (the layer renders inside the
+ * trigger's subtree, so it inherits `direction` and mirrors in RTL with no
+ * JS). The block axis is direction-neutral but must come from the same
+ * keyword family — mixing physical `top` with `self-inline-*` produces an
+ * invalid position-area (computes to `none`, which pins the popover to the
+ * viewport corner because styles.base zeroes the UA margins).
+ *
+ * Note the plain logical family (`inline-start`, no `self-`) is NOT a
+ * substitute: it resolves against the containing block — the page root for
+ * a top-layer popover — so it ignores `direction` set on a subtree, which
+ * is exactly #3389's repro.
  */
 function getPositionArea(
   placement: LayerPlacement = 'above',
   alignment: LayerAlignment = 'center',
 ): string {
-  const placementMap: Record<LayerPlacement, string> = {
-    above: 'top',
-    below: 'bottom',
-    start: 'left',
-    end: 'right',
-  };
-
-  const cssPlacement = placementMap[placement];
-
-  // For above/below, alignment is horizontal
   if (placement === 'above' || placement === 'below') {
+    const block = placement === 'above' ? 'self-block-start' : 'self-block-end';
     if (alignment === 'start') {
-      return `${cssPlacement} span-right`;
+      return `${block} span-self-inline-end`;
     }
     if (alignment === 'end') {
-      return `${cssPlacement} span-left`;
+      return `${block} span-self-inline-start`;
     }
-    return cssPlacement; // center
+    return block; // center
   }
 
-  // For start/end, alignment is vertical
+  const inline =
+    placement === 'start' ? 'self-inline-start' : 'self-inline-end';
   if (alignment === 'start') {
-    return `${cssPlacement} span-bottom`;
+    return `${inline} span-self-block-end`;
   }
   if (alignment === 'end') {
-    return `${cssPlacement} span-top`;
+    return `${inline} span-self-block-start`;
   }
-  return `${cssPlacement} center`;
+  return inline; // center
+}
+
+/**
+ * Compute the `position-try-fallbacks` list for a placement/alignment pair.
+ *
+ * Flips alone cannot rescue a centered layer — flipping along the alignment
+ * axis maps center → center, so overflow on that axis renders clipped
+ * (#3671). Centered alignments therefore append span-based fallbacks letting
+ * the browser slide the layer along the alignment axis as a last resort
+ * (same-side spans first). Flips already resolve non-centered alignments.
+ */
+export function getPositionTryFallbacks(
+  placement: LayerPlacement = 'above',
+  alignment: LayerAlignment = 'center',
+): string {
+  const flips = 'flip-block, flip-inline, flip-block flip-inline';
+
+  if (alignment !== 'center') {
+    return flips;
+  }
+
+  if (placement === 'above' || placement === 'below') {
+    const [same, opposite] =
+      placement === 'above' ? ['top', 'bottom'] : ['bottom', 'top'];
+    return `${flips}, ${same} span-left, ${same} span-right, ${opposite} span-left, ${opposite} span-right`;
+  }
+
+  const [same, opposite] =
+    placement === 'start' ? ['left', 'right'] : ['right', 'left'];
+  return `${flips}, ${same} span-top, ${same} span-bottom, ${opposite} span-top, ${opposite} span-bottom`;
 }
 
 /**
@@ -303,8 +389,19 @@ export function useLayer(
   const isOpenRef = useRef(false);
 
   const show = useCallback(() => {
-    if (popoverRef.current && !isOpenRef.current) {
-      popoverRef.current.showPopover();
+    const popover = popoverRef.current;
+    if (popover && !isOpenRef.current) {
+      // Finding infra-4: the Popover API is unsupported on Safari <17 and
+      // Firefox <125. On those browsers `showPopover` does not exist, so
+      // calling it unconditionally throws a TypeError and the layer never
+      // opens. Guard behind a feature check; when the API is missing, fall
+      // back to plain visibility (the [popover] attribute is inert there, so
+      // the element sits in normal flow) so the layer still becomes visible.
+      if (typeof popover.showPopover === 'function') {
+        popover.showPopover();
+      } else {
+        popover.style.display = 'block';
+      }
       isOpenRef.current = true;
       setIsOpen(true);
       onShow?.();
@@ -313,7 +410,16 @@ export function useLayer(
 
   const hide = useCallback(() => {
     if (isOpenRef.current) {
-      popoverRef.current?.hidePopover();
+      const el = popoverRef.current;
+      // See finding infra-4 note in `show`: mirror the same guard on hide so
+      // unsupported browsers degrade gracefully instead of throwing.
+      if (el) {
+        if (typeof el.hidePopover === 'function') {
+          el.hidePopover();
+        } else {
+          el.style.display = 'none';
+        }
+      }
       isOpenRef.current = false;
       setIsOpen(false);
       onHide?.();
@@ -324,16 +430,14 @@ export function useLayer(
   const ref: RefCallback<HTMLElement> | undefined =
     mode === 'context'
       ? (el: HTMLElement | null) => {
-          // Cleanup previous element
-          if (triggerRef.current) {
-            (
-              triggerRef.current.style as unknown as Record<string, string>
-            ).anchorName = '';
+          // Remove only THIS layer's anchor name from the previous element so
+          // other layers sharing the same trigger keep their anchors.
+          if (triggerRef.current && triggerRef.current !== el) {
+            removeAnchorName(triggerRef.current, anchorId);
           }
 
           if (el) {
-            (el.style as unknown as Record<string, string>).anchorName =
-              anchorId;
+            addAnchorName(el, anchorId);
           }
 
           triggerRef.current = el;
@@ -362,16 +466,62 @@ export function useLayer(
     [onHide],
   );
 
-  // Ref callback for popover element — sets up toggle listener
+  // Ref callback for popover element — sets up the `toggle` listener.
+  // Tracks the element + handler currently bound so the listener is removed
+  // when the element detaches or when `handleToggle`'s identity changes (a new
+  // `onHide` prop), preventing stale-closure listeners from accumulating on the
+  // same element (infra-10).
+  const listenedElRef = useRef<HTMLElement | null>(null);
+  const listenedHandlerRef = useRef<((e: Event) => void) | null>(null);
+
+  const bindToggleListener = useCallback(
+    (el: HTMLElement | null, handler: (e: Event) => void) => {
+      if (
+        listenedElRef.current &&
+        listenedHandlerRef.current &&
+        (listenedElRef.current !== el || listenedHandlerRef.current !== handler)
+      ) {
+        listenedElRef.current.removeEventListener(
+          'toggle',
+          listenedHandlerRef.current,
+        );
+        listenedElRef.current = null;
+        listenedHandlerRef.current = null;
+      }
+      if (el && listenedElRef.current !== el) {
+        el.addEventListener('toggle', handler);
+        listenedElRef.current = el;
+        listenedHandlerRef.current = handler;
+      }
+    },
+    [],
+  );
+
   const popoverRefCallback = useCallback(
     (el: HTMLElement | null) => {
       popoverRef.current = el;
-      if (el) {
-        el.addEventListener('toggle', handleToggle);
-      }
+      bindToggleListener(el, handleToggle);
     },
-    [handleToggle],
+    [handleToggle, bindToggleListener],
   );
+
+  // Re-bind when the handler identity changes while the element stays mounted,
+  // and detach on unmount.
+  useEffect(() => {
+    if (popoverRef.current) {
+      bindToggleListener(popoverRef.current, handleToggle);
+    }
+    return () => {
+      if (listenedElRef.current && listenedHandlerRef.current) {
+        listenedElRef.current.removeEventListener(
+          'toggle',
+          listenedHandlerRef.current,
+        );
+        listenedElRef.current = null;
+        listenedHandlerRef.current = null;
+      }
+    };
+  }, [handleToggle, bindToggleListener]);
 
   // Render function for context mode
   const renderContext = useCallback(
@@ -379,18 +529,31 @@ export function useLayer(
       const {
         placement = 'above',
         alignment = 'center',
+        positioning = 'anchor',
+        role,
+        'aria-label': ariaLabel,
         xstyle,
         className: extraClassName,
         style: extraStyle,
         as: Container = 'div',
+        onMouseEnter,
+        onMouseLeave,
       } = props || {};
 
       // CSS anchor positioning (dynamic, not in StyleX)
-      const anchorStyle: React.CSSProperties = {
-        positionAnchor: anchorId,
-        positionArea: getPositionArea(placement, alignment),
-        positionTryFallbacks: 'flip-block, flip-inline, flip-block flip-inline',
-      };
+      const anchorStyle: React.CSSProperties =
+        positioning === 'custom'
+          ? // Consumer authors its own position styles via `style` — keep
+            // only the anchor wiring, derive nothing from placement.
+            {positionAnchor: anchorId}
+          : {
+              positionAnchor: anchorId,
+              positionArea: getPositionArea(placement, alignment),
+              positionTryFallbacks: getPositionTryFallbacks(
+                placement,
+                alignment,
+              ),
+            };
 
       const stylexResult = stylex.props(styles.base, xstyle);
       const combinedClassName = extraClassName
@@ -404,9 +567,13 @@ export function useLayer(
         <Container
           ref={popoverRefCallback}
           id={id}
+          role={role}
+          aria-label={ariaLabel}
           popover={lightDismiss ? 'auto' : 'manual'}
           className={combinedClassName}
-          style={{...stylexResult.style, ...anchorStyle, ...extraStyle}}>
+          style={{...stylexResult.style, ...anchorStyle, ...extraStyle}}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}>
           {children}
         </Container>
       );

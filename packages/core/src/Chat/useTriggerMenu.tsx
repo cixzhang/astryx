@@ -40,10 +40,8 @@ import {
 import {mergeProps, groupItems} from '../utils';
 import type {SearchableItem} from '../Typeahead/types';
 import {themeProps} from '../utils/themeProps';
-import type {
-  ChatComposerTrigger,
-  ChatComposerToken,
-} from './ChatComposerInput';
+import {useTranslator} from '../i18n';
+import type {ChatComposerTrigger, ChatComposerToken} from './ChatComposerInput';
 
 // =============================================================================
 // Types
@@ -81,8 +79,15 @@ export interface UseTriggerMenuReturn {
   renderMenu: () => ReactNode;
   /** Reset/close the trigger menu */
   reset: () => void;
-  /** ARIA props to spread onto the textbox element */
+  /**
+   * ARIA props to spread onto the editable element. When triggers are
+   * configured the element becomes a `combobox` (which is the only role that
+   * permits `aria-expanded`/`aria-haspopup`/`aria-controls`/
+   * `aria-activedescendant`); otherwise it stays a plain `textbox` and no
+   * combobox attributes are emitted.
+   */
   ariaProps: {
+    role: 'combobox' | 'textbox';
     'aria-expanded'?: boolean;
     'aria-controls'?: string;
     'aria-activedescendant'?: string;
@@ -120,7 +125,7 @@ const styles = stylex.create({
     outline: 'none',
     backgroundColor: 'transparent',
     border: 'none',
-    textAlign: 'left' as const,
+    textAlign: 'start' as const,
     fontFamily: typographyVars['--font-family-body'],
     fontSize: typeScaleVars['--text-body-size'],
     lineHeight: typeScaleVars['--text-body-leading'],
@@ -250,6 +255,7 @@ function deleteTriggerText(
 export function useTriggerMenu(
   options: UseTriggerMenuOptions,
 ): UseTriggerMenuReturn {
+  const t = useTranslator();
   const {
     triggers,
     editableRef,
@@ -296,6 +302,9 @@ export function useTriggerMenu(
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own role="listbox" is the exposed semantics; focus stays in
+    // the contenteditable composer, so a modal dialog wrapper is incorrect.
+    role: 'none',
   });
 
   // Cleanup on unmount
@@ -598,10 +607,17 @@ export function useTriggerMenu(
     el?.scrollIntoView({block: 'nearest'});
   }, [state.highlightedIndex, popover.isOpen, getItemId]);
 
-  // ARIA props for the textbox element
-  const ariaProps =
-    state.isActive && popover.isOpen
+  // ARIA props for the editable element. Combobox attributes
+  // (aria-expanded/haspopup/controls/activedescendant) are only valid on
+  // role="combobox", so we only switch to that role — and only emit those
+  // attributes — when triggers are actually configured. With no triggers the
+  // element stays a plain role="textbox".
+  const hasTriggers = (triggers?.length ?? 0) > 0;
+  const ariaProps: UseTriggerMenuReturn['ariaProps'] = !hasTriggers
+    ? {role: 'textbox'}
+    : state.isActive && popover.isOpen
       ? {
+          role: 'combobox',
           'aria-expanded': true as const,
           'aria-controls': listboxId,
           'aria-activedescendant':
@@ -611,6 +627,7 @@ export function useTriggerMenu(
           'aria-haspopup': 'listbox' as const,
         }
       : {
+          role: 'combobox',
           'aria-expanded': false as const,
           'aria-haspopup': 'listbox' as const,
         };
@@ -682,7 +699,9 @@ export function useTriggerMenu(
       <div
         id={listboxId}
         role="listbox"
-        aria-label={trigger?.menuLabel ?? 'Suggestions'}
+        aria-label={
+          trigger?.menuLabel ?? t('@astryx.chatTriggerMenu.suggestions')
+        }
         {...mergeProps(
           themeProps('trigger-menu'),
           stylex.props(styles.dropdown),
@@ -695,7 +714,7 @@ export function useTriggerMenu(
         xstyle: [styles.popoverSurface, styles.popoverGap],
       },
     );
-  }, [popover, listboxId, state, selectItem, getItemId]);
+  }, [popover, listboxId, state, selectItem, getItemId, t]);
 
   return {
     state,

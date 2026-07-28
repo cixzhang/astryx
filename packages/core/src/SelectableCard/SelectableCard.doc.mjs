@@ -25,8 +25,9 @@ export const docs = {
     {name: 'onChange', type: '(isSelected: boolean) => void', description: 'Called when toggled.', required: true},
     {name: 'isDisabled', type: 'boolean', description: 'Disables the card.', default: 'false'},
     {name: 'children', type: 'ReactNode', description: 'Card content.'},
-    {name: 'padding', type: "SpacingStep", description: 'Inner padding.', default: '4'},
+    {name: 'padding', type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10', description: 'Inner padding.', default: '4'},
     {name: 'variant', type: "'default' | 'transparent' | 'muted' | 'blue' | 'cyan' | 'gray' | 'green' | 'orange' | 'pink' | 'purple' | 'red' | 'teal' | 'yellow'", description: 'Background color variant.', default: "'default'"},
+    {name: 'elevation', type: "'none' | 'low' | 'med' | 'high'", description: 'Resting shadow depth. The selection ring composes on top, so a selected card keeps its shadow.', default: "'none'"},
     {name: 'width', type: 'SizeValue', description: 'Card width.'},
     {name: 'height', type: 'SizeValue', description: 'Card height.'},
     {name: 'maxWidth', type: 'SizeValue', description: 'Maximum card width.'},
@@ -34,7 +35,22 @@ export const docs = {
   ],
   theming: {
     container: true,
-    targets: [{className: 'astryx-selectable-card', visualProps: ['selected']}],
+    targets: [{className: 'astryx-selectable-card', visualProps: ['selected', 'variant']}],
+  },
+  playground: {
+    defaults: {
+      label: 'Pro plan',
+      isSelected: true,
+      padding: 4,
+      children: {
+        __element: 'XDSVStack',
+        props: {gap: 1},
+        children: [
+          {__element: 'XDSHeading', props: {level: 3}, children: 'Pro plan'},
+          {__element: 'XDSText', props: {type: 'body'}, children: '$29/month, unlimited projects and priority support.'},
+        ],
+      },
+    },
   },
 };
 
@@ -56,6 +72,7 @@ export const docsDense = {
     isDisabled: 'disables card',
     padding: 'inner padding',
     variant: 'background color variant',
+    elevation: 'resting shadow depth: none|low|med|high; selection ring composes on top',
     width: 'card width',
     height: 'card height',
     maxWidth: 'max card width',

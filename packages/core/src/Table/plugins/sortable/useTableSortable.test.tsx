@@ -7,16 +7,14 @@
  * @position Testing; validates sortable plugin implementation
  */
 
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {render, screen, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {useState} from 'react';
 import {Table} from '../../Table';
+import {InternationalizationProvider} from '../../../i18n';
 import type {TableColumn} from '../../types';
-import {
-  useTableSortable,
-  type TableSortState,
-} from './useTableSortable';
+import {useTableSortable, type TableSortState} from './useTableSortable';
 
 // =============================================================================
 // Test Data
@@ -73,9 +71,7 @@ function SortableTable({
     isMultiSortEnabled,
   });
 
-  return (
-    <Table data={data} columns={columns} plugins={{sort: sortPlugin}} />
-  );
+  return <Table data={data} columns={columns} plugins={{sort: sortPlugin}} />;
 }
 
 // =============================================================================
@@ -618,5 +614,184 @@ describe('useTableSortable', () => {
         'sorted descending',
       );
     });
+  });
+});
+
+// =============================================================================
+// Context-menu actions (colocated with the sortable plugin)
+// =============================================================================
+
+describe('useTableSortable — context menu actions', () => {
+  // jsdom doesn't implement the Popover API; mock it so the menu can "open"
+  // and its items become queryable (as hidden).
+  beforeEach(() => {
+    HTMLElement.prototype.showPopover = vi.fn(function (this: HTMLElement) {
+      this.setAttribute('popover-open', '');
+      const event = new Event('toggle', {bubbles: false});
+      Object.defineProperty(event, 'newState', {value: 'open'});
+      this.dispatchEvent(event);
+    });
+    HTMLElement.prototype.hidePopover = vi.fn(function (this: HTMLElement) {
+      this.removeAttribute('popover-open');
+      const event = new Event('toggle', {bubbles: false});
+      Object.defineProperty(event, 'newState', {value: 'closed'});
+      this.dispatchEvent(event);
+    });
+    const originalMatches = HTMLElement.prototype.matches;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (HTMLElement.prototype as any).matches = function (
+      selector: string,
+    ): boolean {
+      if (selector === ':popover-open') {
+        return this.hasAttribute('popover-open');
+      }
+      return originalMatches.call(this, selector);
+    };
+  });
+
+  it('offers Sort ascending/descending on a sortable header, and Clear sort once sorted', () => {
+    render(<SortableTable allowUnsortedState />);
+
+    // Unsorted: asc + desc, no "Clear sort".
+    fireEvent.contextMenu(screen.getByText('Name'));
+    expect(
+      screen.getAllByRole('menuitem', {name: 'Sort ascending', hidden: true})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole('menuitem', {name: 'Sort descending', hidden: true})
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('menuitem', {name: 'Clear sort', hidden: true}),
+    ).not.toBeInTheDocument();
+
+    // Apply ascending → "Clear sort" now appears.
+    fireEvent.click(
+      screen.getAllByRole('menuitem', {
+        name: 'Sort ascending',
+        hidden: true,
+      })[0],
+    );
+    fireEvent.contextMenu(screen.getByText('Name'));
+    expect(
+      screen.getAllByRole('menuitem', {name: 'Clear sort', hidden: true})
+        .length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('resolves fresh actions on each open as sort state changes (lazy getter)', () => {
+    const onSortChange = vi.fn();
+    render(<SortableTable allowUnsortedState onSortChange={onSortChange} />);
+
+    // Open (unsorted) and pick descending.
+    fireEvent.contextMenu(screen.getByText('Name'));
+    fireEvent.click(
+      screen.getAllByRole('menuitem', {
+        name: 'Sort descending',
+        hidden: true,
+      })[0],
+    );
+    expect(onSortChange).toHaveBeenLastCalledWith([
+      {sortKey: 'name', direction: 'descending'},
+    ]);
+
+    // Re-open: the getter recomputes against the now-descending state, so
+    // "Clear sort" is present and clicking it clears — proving the actions are
+    // freshly derived on each open, not memoized from the first render.
+    fireEvent.contextMenu(screen.getByText('Name'));
+    const clear = screen.getAllByRole('menuitem', {
+      name: 'Clear sort',
+      hidden: true,
+    });
+    expect(clear.length).toBeGreaterThan(0);
+    fireEvent.click(clear[0]);
+    expect(onSortChange).toHaveBeenLastCalledWith([]);
+  });
+});
+
+// =============================================================================
+// i18n (header-button aria-labels route through the catalog)
+// =============================================================================
+
+describe('useTableSortable — i18n', () => {
+  it('localizes the unsorted sort-by aria-label via @astryx.table.sort.sortBy', () => {
+    render(
+      <InternationalizationProvider
+        locale="fr"
+        overrides={{
+          fr: {'@astryx.table.sort.sortBy': 'Trier par {label}'},
+        }}>
+        <SortableTable />
+      </InternationalizationProvider>,
+    );
+
+    expect(
+      screen.getByRole('button', {name: 'Trier par Name'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Trier par Age'}),
+    ).toBeInTheDocument();
+  });
+
+  it('localizes the multi-sort priority aria-label with ICU number args', () => {
+    render(
+      <InternationalizationProvider
+        locale="fr"
+        overrides={{
+          fr: {
+            '@astryx.table.sort.sortedByWithPriority':
+              'Trier par {label}, tri {direction}, priorité {rank, number} sur {total, number}',
+            '@astryx.table.sort.direction.ascending': 'croissant',
+            '@astryx.table.sort.direction.descending': 'décroissant',
+          },
+        }}>
+        <SortableTable
+          isMultiSortEnabled
+          initialSort={[
+            {sortKey: 'name', direction: 'ascending'},
+            {sortKey: 'age', direction: 'descending'},
+          ]}
+        />
+      </InternationalizationProvider>,
+    );
+
+    // The overridden direction words deliberately differ from the raw enum
+    // values ('ascending'/'descending'), so an implementation interpolating
+    // the enum without translating it cannot pass — for either direction.
+    expect(
+      screen.getByRole('button', {
+        name: 'Trier par Name, tri croissant, priorité 1 sur 2',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Trier par Age, tri décroissant, priorité 2 sur 2',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('localizes the sorted aria-label and direction word via their own keys', () => {
+    render(
+      <InternationalizationProvider
+        locale="fr"
+        overrides={{
+          fr: {
+            '@astryx.table.sort.sortedBy': 'Trié par {label}, {direction}',
+            '@astryx.table.sort.direction.ascending': 'croissant',
+          },
+        }}>
+        <SortableTable
+          initialSort={[{sortKey: 'name', direction: 'ascending'}]}
+        />
+      </InternationalizationProvider>,
+    );
+
+    // Both the composed template and the direction word resolve through
+    // their own catalog keys; 'croissant' differs from the raw enum value,
+    // so neither a hardcoded English frame nor raw-enum interpolation passes.
+    expect(
+      screen.getByRole('button', {name: 'Trié par Name, croissant'}),
+    ).toBeInTheDocument();
   });
 });

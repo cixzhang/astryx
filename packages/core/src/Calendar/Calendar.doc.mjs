@@ -19,7 +19,7 @@ export const docs = {
       {guidance: false, description: 'Disable large blocks of dates without context. The user should understand why dates are unavailable.'},
     ],
     anatomy: [
-      {name: 'Month header', required: true, description: 'The month name and year with navigation arrows to move between months.'},
+      {name: 'Month header', required: true, description: 'The month name and year with navigation arrows to move between months. The arrows mirror automatically under dir="rtl".'},
       {name: 'Day grid', required: true, description: 'A 7-column grid of days with column headers for the day names.'},
       {name: 'Selected day', required: false, description: 'The currently selected date, highlighted. In range mode, the start and end dates plus the days between them.'},
       {name: 'Today marker', required: false, description: 'A subtle indicator on the current date for orientation.'},
@@ -103,15 +103,16 @@ export const docs = {
     },
     {
       name: 'weekStartsOn',
-      type: '0 | 1 | 2 | 3 | 4 | 5 | 6',
-      description: 'First day of week (0=Sunday).',
+      type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+      description: 'First day of week. Accepts a number (0=Sunday) or a three-letter day name (e.g. "mon").',
       default: '0',
     },
   ],
   theming: {
     targets: [
       {className: 'astryx-calendar', visualProps: ['mode']},
-      {className: 'astryx-calendar-day', states: ['selected', 'today', 'disabled', 'in-range']},
+      {className: 'astryx-calendar-nav', visualProps: ['nav'], states: ['disabled']},
+      {className: 'astryx-calendar-day', states: ['selected', 'today', 'disabled', 'in-range', 'marker']},
     ],
   },
 };
@@ -147,7 +148,7 @@ export const docsZh = {
     {name: 'hasOutsideDays', type: 'boolean', description: '显示相邻月份的日期。', default: 'true'},
     {name: 'hasWeekNumbers', type: 'boolean', description: '显示 ISO 周数。', default: 'false'},
     {name: 'hasVariableRowCount', type: 'boolean', description: '可变行数与固定 6 行网格。', default: 'false'},
-    {name: 'weekStartsOn', type: '0 | 1 | 2 | 3 | 4 | 5 | 6', description: '每周起始日（0=周日）。', default: '0'},
+    {name: 'weekStartsOn', type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'", description: '每周起始日。可为数字（0=周日）或三字母星期缩写（如 "mon"）。', default: '0'},
   ],
   theming: {
     targets: [
@@ -158,12 +159,22 @@ export const docsZh = {
         ],
       },
       {
+        className: 'astryx-calendar-nav',
+        visualProps: [
+          'nav',
+        ],
+        states: [
+          'disabled',
+        ],
+      },
+      {
         className: 'astryx-calendar-day',
         states: [
           'selected',
           'today',
           'disabled',
           'in-range',
+          'marker',
         ],
       },
     ],
@@ -200,6 +211,6 @@ export const docsDense = {
     hasOutsideDays: 'show days from adjacent months',
     hasWeekNumbers: 'show ISO week numbers',
     hasVariableRowCount: 'variable vs fixed 6-row grid',
-    weekStartsOn: 'first day of week (0=Sunday)',
+    weekStartsOn: 'first day of week (0=Sunday, or name e.g. "mon")',
   },
 };

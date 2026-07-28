@@ -23,6 +23,17 @@ interface UseMultiComboboxOptions {
   onOpen: () => void;
   onClose: () => void;
   onToggle: (itemValue: string) => void;
+  /**
+   * Clear all selected values. When provided, pressing Delete or Backspace on
+   * the closed trigger clears the selection — a keyboard equivalent of the
+   * clear button (comboboxes-2). No-op when the popup is open or search is on.
+   */
+  onClear?: () => void;
+  /**
+   * Whether at least one value is selected (i.e. there is something to clear).
+   * The Delete/Backspace clear path is skipped when false.
+   */
+  hasValue?: boolean;
   listboxId: string;
 }
 
@@ -49,6 +60,8 @@ export function useMultiCombobox({
   onOpen,
   onClose,
   onToggle,
+  onClear,
+  hasValue = false,
   listboxId,
 }: UseMultiComboboxOptions): UseMultiComboboxResult {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -179,6 +192,35 @@ export function useMultiCombobox({
           }
           break;
 
+        // PageUp/PageDown mirror Home/End. In search mode Home/End stay on
+        // the input for caret movement (APG editable combobox), so these are
+        // the sanctioned substitute for jumping to the first/last option.
+        case 'PageUp':
+          e.preventDefault();
+          if (isOpen && enabledIndices.length > 0) {
+            setHighlightedIndex(enabledIndices[0]);
+          }
+          break;
+
+        case 'PageDown':
+          e.preventDefault();
+          if (isOpen && enabledIndices.length > 0) {
+            setHighlightedIndex(enabledIndices[enabledIndices.length - 1]);
+          }
+          break;
+
+        case 'Delete':
+        case 'Backspace':
+          // Keyboard equivalent of the clear button (comboboxes-2): clear all
+          // selected values from the closed trigger so clearing is not
+          // mouse-only. Skipped in search mode (keys edit the query) and while
+          // the popup is open (arrow navigation owns interaction).
+          if (!hasSearch && !isOpen && onClear != null && hasValue) {
+            e.preventDefault();
+            onClear();
+          }
+          break;
+
         default:
           // Typeahead only when search is not present
           if (!hasSearch && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
@@ -218,6 +260,8 @@ export function useMultiCombobox({
       getEnabledIndices,
       typeahead,
       hasSearch,
+      onClear,
+      hasValue,
     ],
   );
 

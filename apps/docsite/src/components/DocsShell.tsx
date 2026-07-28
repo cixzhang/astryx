@@ -9,20 +9,17 @@ import {AppShell} from '@astryxdesign/core/AppShell';
 import {SideNav, SideNavItem, SideNavSection} from '@astryxdesign/core/SideNav';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import {SharedTopNav} from './SharedTopNav';
-import type {ComponentEntry} from '../generated/componentRegistry';
+import {CanaryBanner} from './CanaryBanner';
+import {CURRENT_TARGET} from '../lib/docsVersions';
 import type {PackageMeta} from '../generated/packageRegistry';
 import type {DocTopic} from '../generated/docsRegistry';
-import type {TemplateEntry} from '../generated/templateRegistry';
 import type {GroupedEntry} from '../generated/groupedComponentRegistry';
 import {getComponentSidebarData} from './componentSidebarData';
 
 interface DocsShellProps {
   children: React.ReactNode;
-  components: Record<string, ComponentEntry[]>;
   packages: PackageMeta[];
   docTopics: DocTopic[];
-  templates: TemplateEntry[];
-  defaultIsMobile?: boolean;
 }
 
 /** Foundations: tokens first, then alphabetical */
@@ -38,14 +35,7 @@ const foundationsSort = (a: DocTopic, b: DocTopic) => {
 
 // ── Shell ──────────────────────────────────────────────────────────────
 
-export function DocsShell({
-  children,
-  components: _components,
-  packages,
-  docTopics,
-  templates: _templates,
-  defaultIsMobile,
-}: DocsShellProps) {
+export function DocsShell({children, packages, docTopics}: DocsShellProps) {
   const pathname = usePathname();
   const [componentQuery, setComponentQuery] = useState('');
 
@@ -118,7 +108,7 @@ export function DocsShell({
     <AppShell
       variant="surface"
       height="auto"
-      mobileNav={{defaultIsMobile}}
+      banner={CURRENT_TARGET === 'canary' ? <CanaryBanner /> : undefined}
       topNav={<SharedTopNav />}
       sideNav={
         <SideNav topContent={isOnComponentsRoute ? componentSearch : undefined}>
@@ -181,7 +171,8 @@ export function DocsShell({
                       label={p.name}
                       href={`/docs/${p.name.replace('@astryxdesign/', '')}`}
                       isSelected={
-                        pathname === `/docs/${p.name.replace('@astryxdesign/', '')}`
+                        pathname ===
+                        `/docs/${p.name.replace('@astryxdesign/', '')}`
                       }
                     />
                   ))}

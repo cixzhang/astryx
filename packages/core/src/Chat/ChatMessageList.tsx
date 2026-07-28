@@ -72,6 +72,20 @@ export interface ChatMessageListProps extends BaseProps<HTMLDivElement> {
    * be grouped) and row spacing should be tuned separately from density.
    */
   gap?: SpacingStep;
+
+  /**
+   * Whether an assistant message is actively streaming into the list.
+   *
+   * The list is a `role="log"` / `aria-live="polite"` region, so while a
+   * message streams in token-by-token, screen readers would otherwise
+   * re-announce the accumulating partial text on every mutation. Set
+   * `isStreaming` to `true` for the duration of a stream: it marks the log
+   * `aria-busy="true"` so assistive tech waits and announces the completed
+   * message once, when `isStreaming` returns to `false`.
+   *
+   * @default false
+   */
+  isStreaming?: boolean;
 }
 
 // =============================================================================
@@ -190,11 +204,13 @@ export function ChatMessageList({
   scrollToTopAction,
   density = 'balanced',
   gap,
+  isStreaming = false,
   xstyle,
   className,
   style,
   'data-testid': testId,
   ref,
+  ...rest
 }: ChatMessageListProps) {
   const layoutContext = useChatLayoutContext();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -249,9 +265,11 @@ export function ChatMessageList({
   return (
     <ChatListContext value={contextValue}>
       <div
+        {...rest}
         ref={ref}
         role="log"
         aria-live="polite"
+        aria-busy={isStreaming || undefined}
         tabIndex={0}
         data-testid={testId}
         {...mergeProps(

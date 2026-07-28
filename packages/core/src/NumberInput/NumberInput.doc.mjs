@@ -63,6 +63,12 @@ export const docs = {
       description: 'Whether the input is disabled.',
     },
     {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        'Explains why the input is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the input focusable via aria-disabled (the field becomes read-only). Use this instead of wrapping a disabled NumberInput in Tooltip.',
+    },
+    {
       name: 'placeholder',
       type: 'string',
       description: 'Placeholder text.',
@@ -76,17 +82,24 @@ export const docs = {
     {
       name: 'startIcon',
       type: 'IconType',
-      description: 'Icon to display at the start of the input. See `npx astryx docs icons` for valid semantic names.',
+      description: 'Icon to display at the start of the input. See `astryx docs icons` for valid semantic names.',
     },
     {
       name: 'labelIcon',
       type: 'IconType',
-      description: 'Icon to display before the label text. See `npx astryx docs icons` for valid semantic names.',
+      description: 'Icon to display before the label text. See `astryx docs icons` for valid semantic names.',
     },
     {
       name: 'status',
       type: "{type: 'error' | 'warning' | 'success', message?: string}",
       description: 'Validation status with optional message.',
+    },
+    {
+      name: 'statusVariant',
+      type: "'attached' | 'detached'",
+      description:
+        'How the status message is placed relative to the input. attached overlaps directly below the input (bordered treatment); detached floats below as a separate element with spacing.',
+      default: "'attached'",
     },
     {
       name: 'min',
@@ -166,6 +179,7 @@ export const docs = {
       { guidance: true, description: 'Show units (e.g. "%" or "GB") so users know what the number represents.' },
       { guidance: false, description: 'Use NumberInput for free-form text that happens to contain numbers; use TextInput instead.' },
       { guidance: false, description: 'Set both isOptional and isRequired on the same field.' },
+      { guidance: false, description: "Wrap a disabled NumberInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead." },
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'The label for the number input.'},
@@ -237,6 +251,12 @@ export const docsZh = {
       description: '输入框是否禁用。',
     },
     {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        '说明输入框被禁用的原因。与 isDisabled 一起使用时，在悬停/键盘聚焦时显示工具提示，并通过 aria-disabled 保持输入框可聚焦（字段变为只读）。请使用此属性，而不是用 Tooltip 包裹已禁用的 NumberInput。',
+    },
+    {
       name: 'placeholder',
       type: 'string',
       description: '占位符文本。',
@@ -261,6 +281,13 @@ export const docsZh = {
       name: 'status',
       type: "{type: 'error' | 'warning' | 'success', message?: string}",
       description: '带可选消息的验证状态。',
+    },
+    {
+      name: 'statusVariant',
+      type: "'attached' | 'detached'",
+      description:
+        '状态消息相对于输入框的放置方式。attached 直接叠加在输入框下方（带边框处理）；detached 作为独立元素浮于下方并留有间距。',
+      default: "'attached'",
     },
     {
       name: 'min',
@@ -339,6 +366,7 @@ export const docsZh = {
       { guidance: true, description: 'Show units (e.g. "%" or "GB") so users know what the number represents.' },
       { guidance: false, description: 'Use NumberInput for free-form text that happens to contain numbers; use TextInput instead.' },
       { guidance: false, description: 'Set both isOptional and isRequired on the same field.' },
+      { guidance: false, description: "Wrap a disabled NumberInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead." },
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'The label for the number input.'},
@@ -361,6 +389,7 @@ export const docsDense = {
       { guidance: true, description: 'Show units (e.g. "%" or "GB") so users know what the number represents.' },
       { guidance: false, description: 'Use NumberInput for free-form text that happens to contain numbers; use TextInput instead.' },
       { guidance: false, description: 'Set both isOptional and isRequired on the same field.' },
+      { guidance: false, description: "Wrap a disabled NumberInput in Tooltip to explain why it's disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead." },
     ],
     anatomy: [
       {name: 'Label', required: true, description: 'The label for the number input.'},
@@ -380,11 +409,14 @@ export const docsDense = {
     isOptional: 'Field optional (mutually exclusive w/ isRequired).',
     isRequired: 'Field required (mutually exclusive w/ isOptional).',
     isDisabled: 'Input disabled.',
+    disabledMessage:
+      'Explains why input is disabled. With isDisabled, shows tooltip on hover/focus + keeps input focusable via aria-disabled (field becomes read-only). Use instead of wrapping a disabled NumberInput in Tooltip.',
     placeholder: 'Placeholder text.',
     labelTooltip: 'Tooltip text in info icon at label end.',
     startIcon: 'Icon at input start.',
     labelIcon: 'Icon before label text.',
     status: 'Validation status w/ optional message.',
+    statusVariant: 'How status message is placed: attached overlaps below input; detached floats below w/ spacing.',
     min: 'Minimum value allowed.',
     max: 'Maximum value allowed.',
     step: 'Step increment.',

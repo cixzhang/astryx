@@ -32,6 +32,11 @@ const meta: Meta<typeof Typeahead> = {
     label: {control: 'text'},
     placeholder: {control: 'text'},
     isDisabled: {control: 'boolean'},
+    disabledMessage: {
+      control: 'text',
+      description:
+        'Explains why the input is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the field focusable via aria-disabled (activation stays blocked). Use this instead of wrapping a disabled Typeahead in Tooltip.',
+    },
     isRequired: {control: 'boolean'},
     isOptional: {control: 'boolean'},
     hasEntriesOnFocus: {control: 'boolean'},
@@ -138,6 +143,20 @@ export const Disabled: Story = {
   },
 };
 
+// Disabled with an explanation tooltip. Hover or keyboard-focus the field to
+// see why it's disabled — the reason is announced to assistive tech via
+// aria-describedby, and the field stays focusable (activation is still
+// blocked). Use disabledMessage instead of wrapping a disabled Typeahead in Tooltip:
+// disabled controls swallow the pointer events a Tooltip wrapper needs.
+export const DisabledWithMessage: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    isDisabled: true,
+    disabledMessage: 'You need the Editor role to change this',
+  },
+};
+
 export const NoClear: Story = {
   ...Default,
   args: {
@@ -201,4 +220,30 @@ export const WithStartIcon: Story = {
     hasEntriesOnFocus: true,
   },
   name: 'With Start Icon',
+};
+
+export const StatusVariantComparison: Story = {
+  render: () => {
+    const [a, setA] = useState<SearchableItem | null>(null);
+    const [b, setB] = useState<SearchableItem | null>(null);
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 24, width: 300}}>
+        <Typeahead
+          label="Attached (default)"
+          searchSource={fruitSource}
+          value={a}
+          onChange={setA}
+          status={{type: 'error', message: 'Please make a selection'}}
+        />
+        <Typeahead
+          label="Detached"
+          searchSource={fruitSource}
+          value={b}
+          onChange={setB}
+          status={{type: 'error', message: 'Please make a selection'}}
+          statusVariant="detached"
+        />
+      </div>
+    );
+  },
 };

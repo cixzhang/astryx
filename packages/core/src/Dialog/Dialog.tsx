@@ -16,10 +16,18 @@
  * - /packages/cli/templates/blocks/components/Dialog/ (showcase blocks)
  */
 
-import {useEffect, useMemo, useRef, type ReactNode} from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react';
 import type {BaseProps} from '../BaseProps';
 import * as stylex from '@stylexjs/stylex';
 import {useScrollLock} from '../hooks/useScrollLock';
+import {hasActiveFocusTrapEscape, isImeKeyEvent} from '../hooks/useFocusTrap';
 import {
   colorVars,
   radiusVars,
@@ -38,6 +46,7 @@ import {
 } from '../Layout/padding.stylex';
 import type {SpacingStep} from '../utils/types';
 import {mergeProps, mergeRefs} from '../utils';
+import {devWarn} from '../utils/devWarning';
 import {DialogContext} from './DialogContext';
 import {themeProps} from '../utils/themeProps';
 
@@ -151,7 +160,13 @@ const styles = stylex.create({
   open: {
     display: 'flex',
     opacity: 1,
-    animationName: enterDirectional,
+    // Disable the entry keyframe animation under
+    // `prefers-reduced-motion: reduce` so the dialog appears instantly
+    // instead of translating/scaling in (same pattern as layerAnimations).
+    animationName: {
+      default: enterDirectional,
+      '@media (prefers-reduced-motion: reduce)': 'none',
+    },
   },
   // Backdrop using ::backdrop pseudo-element
   backdrop: {
@@ -311,6 +326,9 @@ export interface DialogProps extends BaseProps<HTMLDialogElement> {
  *
  * Designed to be used with Layout as its child for structured content.
  * Uses the browser's built-in modal behavior for optimal accessibility.
+ * When a DialogHeader is rendered inside, its title automatically names the
+ * dialog via aria-labelledby; pass `aria-label` or `aria-labelledby` to
+ * override.
  *
  * @example
  * ```
@@ -347,9 +365,46 @@ export function Dialog({
   const paddingToken = spacingStepToToken[effectivePadding] as SpacingToken;
 
   const isFullscreen = variant === 'fullscreen';
-  const dialogContextValue = useMemo(() => ({isInline}), [isInline]);
+
+  // Default accessible name: publish a title id through DialogContext so a
+  // DialogHeader applies it to its heading (mirrors AlertDialog's explicit
+  // useId wiring). Whether to emit the default aria-labelledby is decided
+  // imperatively in the callback ref below by checking whether the title
+  // element actually rendered — so a dialog with no header never points at a
+  // missing id, and we avoid the extra render a registration-via-state effect
+  // would cost at the dialog level.
+  const titleId = useId();
+
+  const dialogContextValue = useMemo(
+    () => ({isInline, titleId}),
+    [isInline, titleId],
+  );
+
+  // Consumer-provided labels always win over the DialogHeader default.
+  const hasConsumerName =
+    props['aria-label'] != null || props['aria-labelledby'] != null;
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Callback ref on the <dialog>: sync the default aria-labelledby from the
+  // DialogHeader title (if one rendered) in the same commit, with no second
+  // render. Consumer aria-label/aria-labelledby win — when present we leave
+  // the attribute to the {...safeProps} spread and never touch it here.
+  const attachDialog = useCallback(
+    (node: HTMLDialogElement | null) => {
+      dialogRef.current = node;
+      if (!node || hasConsumerName) {
+        return;
+      }
+      const hasTitle = node.querySelector(`#${CSS.escape(titleId)}`) != null;
+      if (hasTitle) {
+        node.setAttribute('aria-labelledby', titleId);
+      } else {
+        node.removeAttribute('aria-labelledby');
+      }
+    },
+    [titleId, hasConsumerName],
+  );
 
   // Capture the element that was focused when the dialog opened,
   // for directional animation origin and focus restoration on close.
@@ -422,6 +477,12 @@ export function Dialog({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        // Ignore IME composition-cancel, and defer to any popover/menu layered
+        // on top of this dialog so a single Escape closes only the top-most
+        // layer (the popover's own focus trap handles it and stops propagation).
+        if (isImeKeyEvent(event) || hasActiveFocusTrapEscape()) {
+          return;
+        }
         event.preventDefault();
         if (allowEscape) {
           onOpenChange(false);
@@ -432,6 +493,29 @@ export function Dialog({
     dialog.addEventListener('keydown', handleKeyDown);
     return () => dialog.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isInline, allowEscape, onOpenChange]);
+
+  // Dev-time guardrail: an open modal should always have an accessible name.
+  // The header-title check reads the DOM, so this stays in an effect; the ref
+  // keeps it to one warning per component instance.
+  const warnedUnnamedDialogRef = useRef(false);
+  useEffect(() => {
+    const hasHeaderTitle =
+      dialogRef.current?.querySelector(`#${CSS.escape(titleId)}`) != null;
+    if (
+      isOpen &&
+      !isInline &&
+      !hasConsumerName &&
+      !hasHeaderTitle &&
+      !warnedUnnamedDialogRef.current
+    ) {
+      warnedUnnamedDialogRef.current = true;
+      devWarn(
+        'Dialog',
+        'open dialog has no accessible name. Add a DialogHeader ' +
+          'with a `title`, or pass `aria-label`/`aria-labelledby`.',
+      );
+    }
+  }, [isOpen, isInline, hasConsumerName, titleId]);
 
   // Handle backdrop click — when the user clicks the ::backdrop pseudo-element,
   // the event target is the <dialog> element itself; clicks on child content
@@ -447,6 +531,11 @@ export function Dialog({
   // Handle native cancel event (browser Escape handling)
   const handleCancel = (event: React.SyntheticEvent<HTMLDialogElement>) => {
     event.preventDefault();
+    // Defer to a popover/menu layered on top of this dialog; it will dismiss
+    // itself on the same Escape press.
+    if (hasActiveFocusTrapEscape()) {
+      return;
+    }
     if (allowEscape) {
       onOpenChange(false);
     }
@@ -496,6 +585,10 @@ export function Dialog({
     </div>
   );
 
+  // Filter out native open to prevent InvalidStateError when accidentally passed
+  const hasPosition = position != null && !isFullscreen;
+  const {open: _open, ...safeProps} = props as Record<string, unknown>;
+
   // --- Inline rendering path (for documentation previews) ---
   if (isInline) {
     if (!isOpen) {
@@ -504,6 +597,7 @@ export function Dialog({
 
     return (
       <div
+        {...safeProps}
         {...mergeProps(
           themeProps('dialog', {variant}),
           stylex.props(
@@ -517,8 +611,7 @@ export function Dialog({
         )}
         data-testid={
           (props as Record<string, unknown>)['data-testid'] as
-            | string
-            | undefined
+            string | undefined
         }>
         {innerContent}
       </div>
@@ -526,18 +619,11 @@ export function Dialog({
   }
 
   // --- Standard modal rendering path ---
-  const hasPosition = position != null && !isFullscreen;
-
-  // Filter out native open to prevent InvalidStateError when accidentally passed
-  const {open: _open, ...safeProps} = props as Record<string, unknown>;
 
   return (
     <dialog
-      ref={mergeRefs(ref, dialogRef)}
-      onClick={handleClick}
-      onCancel={handleCancel}
-      aria-modal="true"
-      role={purpose === 'required' ? 'alertdialog' : undefined}
+      ref={mergeRefs(ref, attachDialog)}
+      {...safeProps}
       {...mergeProps(
         themeProps('dialog', {variant}),
         stylex.props(
@@ -558,7 +644,13 @@ export function Dialog({
         className,
         style,
       )}
-      {...safeProps}>
+      onClick={handleClick}
+      onCancel={handleCancel}
+      aria-modal="true"
+      // The default aria-labelledby (from a DialogHeader title) is set
+      // imperatively in `attachDialog`; a consumer-provided aria-labelledby
+      // flows through {...safeProps} above and wins.
+      {...(purpose === 'required' ? {role: 'alertdialog'} : undefined)}>
       {innerContent}
     </dialog>
   );

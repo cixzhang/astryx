@@ -2,14 +2,18 @@
 
 The CLI is the primary interface for working with the design system, for humans and machines alike. It provides component documentation, design tokens, page templates, theming tools, and upgrade codemods, all accessible via terminal commands, a typed JSON API, or programmatic imports. AI agents and build tools use the same API that powers the CLI, enabling end-to-end frontend development loops.
 
+Run it one-off with the scoped package (works whether or not it's installed):
+
 ```bash
-npx astryx --help
-npx astryx search button
-npx astryx component Button
-npx astryx docs tokens
-npx astryx docs migration
-npx astryx template --list
+npx @astryxdesign/cli --help
+npx @astryxdesign/cli search button
+npx @astryxdesign/cli component Button
+npx @astryxdesign/cli docs tokens
+npx @astryxdesign/cli docs migration
+npx @astryxdesign/cli template --list
 ```
+
+Once it's a project dependency (`npm install -D @astryxdesign/cli`), drop the scope and use the shorter `astryx` — e.g. `npx astryx component Button` or `pnpm exec astryx component Button`. Bare `astryx` resolves to an unrelated npm package until the CLI is installed, so prefer the scoped form above for first-run/one-off use.
 
 ## Finding things: `astryx search`
 
@@ -20,26 +24,28 @@ fuzzy matching for typos) and tagged with their domain plus the follow-up
 command to run:
 
 ```bash
-$ npx astryx search button
+$ astryx search button
 
 Results for "button" (20):
 
   [component]  Button
                Button triggers an action when clicked. Use it for form submissions…
-               → npx astryx component Button
+               → astryx component Button
 
   [component]  IconButton
                A button that shows only an icon with no visible text…
-               → npx astryx component IconButton
+               → astryx component IconButton
 
   [hook]       useClickableContainer
                Makes a container element clickable while preserving nested…
-               → npx astryx hook useClickableContainer
+               → astryx hook useClickableContainer
 
   [template]   Banner — Collapsible
                Combine an action button, dismiss control, and expandable detail area…
-               → npx astryx template BannerCollapsibleContent
+               → astryx template BannerCollapsibleContent
 ```
+
+(The CLI prints the follow-up commands with your actual runner — `npx astryx …` when installed, or `npx @astryxdesign/cli …` when run one-off.)
 
 Options:
 
@@ -62,8 +68,7 @@ Options:
 | `upgrade`     | Run codemods to migrate between versions                                                             |
 | `theme build` | Compile a defineTheme file to production CSS and JS                                                  |
 | `discover`    | Discover external packages and components                                                            |
-| `gap-report`  | Report a gap when a component doesn't meet your needs                                                |
-| `doctor`      | Diagnose your XDS setup and report problems with fixes (CI-friendly via exit code)                   |
+| `doctor`      | Diagnose your Astryx setup and report problems with fixes (CI-friendly via exit code)                |
 
 ### Global options
 
@@ -161,7 +166,6 @@ if (isError(result)) {
 | `ERR_INVALID_VERSION`    | A `--from`/`--to` value was not a valid semver string.                                 |
 | `ERR_DEP_MISSING`        | A required external dependency (e.g. jscodeshift) is missing.                          |
 | `ERR_GH_CLI`             | GitHub CLI (`gh`) is not installed or not authenticated.                               |
-| `ERR_GAP_REPORT_FAILED`  | Filing a gap report failed (disabled, or the integration errored).                     |
 
 ## Capability manifest (agent discovery)
 
@@ -172,7 +176,7 @@ discriminators each command can emit. Think of it as an OpenAPI spec for the CLI
 
 ```bash
 astryx manifest --json        # dedicated surface — type: "manifest"
-xds --json                 # bare invocation — embeds the same payload under data.manifest
+astryx --json                 # bare invocation — embeds the same payload under data.manifest
 ```
 
 Shape:
@@ -182,7 +186,7 @@ Shape:
   "apiVersion": 1,
   "type": "manifest",
   "data": {
-    "name": "xds",
+    "name": "astryx",
     "version": "0.0.14",
     "description": "Design system CLI — components, themes, and tooling",
     "globalOptions": [
@@ -249,14 +253,14 @@ the `JSON_SUPPORTED` allowlist and a small declarative `RESPONSE_TYPES` map in
 `src/lib/manifest.mjs`, guarded by a drift test (`manifest.test.mjs`) so adding a
 command without describing it fails CI.
 
-**Backwards-compat:** the bare `xds --json` envelope keeps `type: "help"` and its
+**Backwards-compat:** the bare `astryx --json` envelope keeps `type: "help"` and its
 original shallow fields (`name`, `version`, `commands` as a `string[]` of names,
 `jsonSupported`); the full structured manifest is additive under `data.manifest`.
 For the standalone manifest envelope (`type: "manifest"`), use `astryx manifest --json`.
 
 ## Programmatic API
 
-The same logic that powers `xds --json` is available as importable, type-safe functions:
+The same logic that powers `astryx --json` is available as importable, type-safe functions:
 
 ```typescript
 import {
@@ -269,20 +273,20 @@ import {
   AstryxError,
 } from '@astryxdesign/cli/api';
 
-// Same result as: xds --json component Button
+// Same result as: astryx --json component Button
 const btn = await component('Button');
 btn.type; // 'component.detail'
 btn.data.name; // 'Button' (typed as ComponentDoc)
 
-// Same result as: xds --json component --list
+// Same result as: astryx --json component --list
 const list = await component(undefined, {list: true});
 list.data; // Record<string, string[]>
 
-// Same result as: xds --json docs principles
+// Same result as: astryx --json docs principles
 const principles = await docs('principles');
-principles.data.title; // 'XDS Principles'
+principles.data.title; // 'Principles'
 
-// Same result as: xds --json hook useMediaQuery
+// Same result as: astryx --json hook useMediaQuery
 const useMediaQuery = await hook('useMediaQuery');
 useMediaQuery.data.params; // typed as HookParamDoc[]
 
@@ -296,7 +300,7 @@ try {
 }
 ```
 
-The CLI command handlers are thin wrappers around these functions: they parse args, call the API, then format the output (JSON or text). This guarantees that `@astryxdesign/cli/api` and `xds --json` always return identical data.
+The CLI command handlers are thin wrappers around these functions: they parse args, call the API, then format the output (JSON or text). This guarantees that `@astryxdesign/cli/api` and `astryx --json` always return identical data.
 
 ### Consumer utilities
 
@@ -326,43 +330,41 @@ detail.data.name; // already narrowed
 
 Every response has a `type` string that uniquely identifies it:
 
-| Command                                        | Type                        | Response                          |
-| ---------------------------------------------- | --------------------------- | --------------------------------- |
-| `xds --json component [--list]`                | `component.list`            | `ComponentListResponse`           |
-| `xds --json component --list --detail compact` | `component.brief`           | `ComponentBriefResponse`          |
-| `xds --json component --list --detail full`    | `component.full`            | `ComponentFullResponse`           |
-| `xds --json component <name>`                  | `component.detail`          | `ComponentDetailResponse`         |
-| `xds --json component <name> --props`          | `component.detail.props`    | `ComponentDetailPropsResponse`    |
-| `xds --json component <name> --source`         | `component.detail.source`   | `ComponentDetailSourceResponse`   |
-| `xds --json component <name> --showcase`       | `component.detail.showcase` | `ComponentDetailShowcaseResponse` |
-| `xds --json component <name> --blocks`         | `component.detail.blocks`   | `ComponentDetailBlocksResponse`   |
-| `xds --json discover`                          | `discover.list`             | `DiscoverListResponse`            |
-| `xds --json discover @scope/name`              | `discover.detail`           | `DiscoverDetailResponse`          |
-| `xds --json discover @scope/name/Comp`         | `discover.detail.doc`       | `DiscoverDetailDocResponse`       |
-| `xds --json discover <search>`                 | `discover.search`           | `DiscoverSearchResponse`          |
-| `xds --json docs`                              | `docs.list`                 | `DocsListResponse`                |
-| `xds --json docs <topic>`                      | `docs.detail`               | `DocsDetailResponse`              |
-| `xds --json docs <topic> <section>`            | `docs.detail.section`       | `DocsDetailSectionResponse`       |
-| `xds --json template [--list]`                 | `template.list`             | `TemplateListResponse`            |
-| `xds --json template <name>`                   | `template.show`             | `TemplateShowResponse`            |
-| `xds --json template <name> --skeleton`        | `template.skeleton`         | `TemplateSkeletonResponse`        |
-| `xds --json template <name> [path]`            | `template.copy`             | `TemplateCopyResponse`            |
-| `xds --json hook [--list]`                     | `hook.list`                 | `HookListResponse`                |
-| `xds --json hook --list --detail compact`      | `hook.brief`                | `HookBriefResponse`               |
-| `xds --json hook --list --detail full`         | `hook.full`                 | `HookFullResponse`                |
-| `xds --json hook <name>`                       | `hook.detail`               | `HookDetailResponse`              |
-| `xds --json hook <name> --params`              | `hook.detail.params`        | `HookDetailParamsResponse`        |
-| `xds --json search <query>`                    | `search`                    | `SearchResponse`                  |
-| `xds --json swizzle [--list]`                  | `swizzle.list`              | `SwizzleListResponse`             |
-| `xds --json swizzle <component>`               | `swizzle.copy`              | `SwizzleCopyResponse`             |
-| `xds --json theme build <file>`                | `theme.build`               | `ThemeBuildResponse`              |
-| `xds --json upgrade --list`                    | `upgrade.list`              | `UpgradeListResponse`             |
-| `xds --json upgrade [--apply]`                 | `upgrade.run`               | `UpgradeRunResponse`              |
-| `xds --json gap-report --list-categories`      | `gap-report.categories`     | `GapReportCategoriesResponse`     |
-| `xds --json gap-report --component X ...`      | `gap-report.file`           | `GapReportFileResponse`           |
-| `xds --json doctor`                            | `doctor`                    | `DoctorResponse`                  |
-| any error                                      | —                           | `CLIError`                        |
-| unsupported command                            | —                           | `CLIUnsupportedError`             |
+| Command                                           | Type                        | Response                          |
+| ------------------------------------------------- | --------------------------- | --------------------------------- |
+| `astryx --json component [--list]`                | `component.list`            | `ComponentListResponse`           |
+| `astryx --json component --list --detail compact` | `component.brief`           | `ComponentBriefResponse`          |
+| `astryx --json component --list --detail full`    | `component.full`            | `ComponentFullResponse`           |
+| `astryx --json component <name>`                  | `component.detail`          | `ComponentDetailResponse`         |
+| `astryx --json component <name> --props`          | `component.detail.props`    | `ComponentDetailPropsResponse`    |
+| `astryx --json component <name> --source`         | `component.detail.source`   | `ComponentDetailSourceResponse`   |
+| `astryx --json component <name> --showcase`       | `component.detail.showcase` | `ComponentDetailShowcaseResponse` |
+| `astryx --json component <name> --blocks`         | `component.detail.blocks`   | `ComponentDetailBlocksResponse`   |
+| `astryx --json discover`                          | `discover.list`             | `DiscoverListResponse`            |
+| `astryx --json discover @scope/name`              | `discover.detail`           | `DiscoverDetailResponse`          |
+| `astryx --json discover @scope/name/Comp`         | `discover.detail.doc`       | `DiscoverDetailDocResponse`       |
+| `astryx --json discover <search>`                 | `discover.search`           | `DiscoverSearchResponse`          |
+| `astryx --json docs`                              | `docs.list`                 | `DocsListResponse`                |
+| `astryx --json docs <topic>`                      | `docs.detail`               | `DocsDetailResponse`              |
+| `astryx --json docs <topic> <section>`            | `docs.detail.section`       | `DocsDetailSectionResponse`       |
+| `astryx --json template [--list]`                 | `template.list`             | `TemplateListResponse`            |
+| `astryx --json template <name>`                   | `template.show`             | `TemplateShowResponse`            |
+| `astryx --json template <name> --skeleton`        | `template.skeleton`         | `TemplateSkeletonResponse`        |
+| `astryx --json template <name> [path]`            | `template.copy`             | `TemplateCopyResponse`            |
+| `astryx --json hook [--list]`                     | `hook.list`                 | `HookListResponse`                |
+| `astryx --json hook --list --detail compact`      | `hook.brief`                | `HookBriefResponse`               |
+| `astryx --json hook --list --detail full`         | `hook.full`                 | `HookFullResponse`                |
+| `astryx --json hook <name>`                       | `hook.detail`               | `HookDetailResponse`              |
+| `astryx --json hook <name> --params`              | `hook.detail.params`        | `HookDetailParamsResponse`        |
+| `astryx --json search <query>`                    | `search`                    | `SearchResponse`                  |
+| `astryx --json swizzle [--list]`                  | `swizzle.list`              | `SwizzleListResponse`             |
+| `astryx --json swizzle <component>`               | `swizzle.copy`              | `SwizzleCopyResponse`             |
+| `astryx --json theme build <file>`                | `theme.build`               | `ThemeBuildResponse`              |
+| `astryx --json upgrade --list`                    | `upgrade.list`              | `UpgradeListResponse`             |
+| `astryx --json upgrade [--apply]`                 | `upgrade.run`               | `UpgradeRunResponse`              |
+| `astryx --json doctor`                            | `doctor`                    | `DoctorResponse`                  |
+| any error                                         | —                           | `CLIError`                        |
+| unsupported command                               | —                           | `CLIUnsupportedError`             |
 
 ## Doctor
 
@@ -383,7 +385,7 @@ astryx doctor — diagnosing your setup
       @astryxdesign/core v0.0.14 is in step with @astryxdesign/cli v0.0.14.
   ⚠ Theme packages
       No @astryxdesign/theme-* packages are installed.
-      → fix: Install a theme, e.g. `npm install @astryxdesign/theme-neutral`, then import its CSS or set xds.theme.
+      → fix: Install a theme, e.g. `npm install @astryxdesign/theme-neutral`, then import its CSS or set astryx.theme.
   ℹ astryx.config.mjs
       No astryx.config.mjs found — using defaults.
   ℹ AI agent docs
@@ -408,7 +410,7 @@ No failures — but review the ⚠ warnings above when you can.
 | Version alignment            | pass / warn / info   | Installed `@astryxdesign/core` is in step with `@astryxdesign/cli`   |
 | Theme packages               | pass / warn          | An `@astryxdesign/theme-*` package is installed and a theme is wired |
 | astryx.config.mjs            | pass / fail / info   | Config (if present) loads cleanly with a valid shape                 |
-| AI agent docs                | pass / warn / info   | Agent docs exist and contain the XDS section markers                 |
+| AI agent docs                | pass / warn / info   | Agent docs exist and contain the Astryx section markers              |
 | Peer dependencies            | pass / warn / info   | `@astryxdesign/core`'s peer deps (react, …) are installed            |
 | Package manager              | info                 | Reports the detected package manager                                 |
 
@@ -419,7 +421,7 @@ failures (warnings are fine) and `1` when any check fails. That makes it
 usable directly as a CI step:
 
 ```yaml
-- run: npx astryx doctor
+- run: npx @astryxdesign/cli doctor
 ```
 
 Use `--json` for a structured envelope (`{ apiVersion, type: "doctor",
@@ -427,15 +429,103 @@ data: { checks, summary } }`) that AI agents and scripts can parse.
 
 ## Configuration
 
-The CLI reads from an optional `astryx.config.mjs` in your project root:
+The CLI reads an optional `astryx.config.{ts,mjs,js}` from your project root
+(a sibling of `package.json`). Every field is optional; with no config file the
+CLI runs on defaults.
 
-```javascript
-export default {
-  templates: {
-    get: async id => fetchTemplateFromAPI(id),
-  },
-  gapReport: {
-    url: 'https://your-api.com/gaps',
-  },
-};
+```typescript
+import {createConfig} from '@astryxdesign/core/config';
+
+export default createConfig({
+  integrations: ['@acme/astryx-widgets'],
+  issuesUrl: 'https://github.com/your-org/your-repo/issues',
+});
+```
+
+`createConfig` is a type-preserving helper: it returns its argument unchanged
+and exists only to give the config file editor autocomplete and type-checking. A
+plain `export default {}` object works identically. It's exported from
+`@astryxdesign/core` (not the CLI) so your config file gets type feedback
+without depending on the CLI; the same helper is re-exported from
+`@astryxdesign/cli/config` for back-compat.
+
+| Field                         | Type                           | Purpose                                                                                         |
+| ----------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `integrations`                | `string[]`                     | Integration package names to load (see [Integrations](#integrations)).                          |
+| `issuesUrl`                   | `string`                       | Where "report an issue" links point for your project. Defaults to the core issue tracker.       |
+| `hooks.postCodemod`           | `PostCodemodHook[]`            | Commands to run after `astryx upgrade` applies codemods (e.g. reinstall, rebuild, reformat).    |
+| `experimental.xle.components` | `Record<string, XleComponent>` | Register app-local components so layout (XLE) expressions can reference them by name. Unstable. |
+
+The config is validated against a strict schema when the CLI loads it, so an
+unknown field is a hard error rather than a silent no-op. `astryx doctor`
+reports whether the config loads cleanly.
+
+## Integrations
+
+An **integration** is any npm package that contributes its own components,
+templates, and upgrade codemods to Astryx. The CLI surfaces them next to core's,
+through the same commands, so a consumer can `astryx component`,
+`astryx template`, and `astryx upgrade` across core and every integration
+uniformly. Use it to ship a first-party add-on, publish a third-party component
+library, or share an internal design-system package across apps.
+
+The system runs on two files, each with a small typed API:
+
+| File                             | Written by | Role                                      |
+| -------------------------------- | ---------- | ----------------------------------------- |
+| `astryx.config.{ts,mjs,js}`      | Consumer   | Lists which integration packages to load. |
+| `astryx.integration.{ts,mjs,js}` | Author     | Declares what a package contributes.      |
+
+The consumer side is the `integrations` field of [`astryx.config`](#configuration).
+The author side is the integration manifest below.
+
+### The integration manifest
+
+A package becomes an integration by exporting a manifest from
+`astryx.integration.{ts,mjs,js}` at its root (a sibling of `package.json`). The
+manifest points at where each kind of contribution lives; identity (name,
+version) comes from `package.json`, not the manifest.
+
+```typescript
+import {createIntegration} from '@astryxdesign/core/authoring';
+
+export default createIntegration({
+  components: './components',
+  templates: './templates',
+  codemods: './codemods',
+  issuesUrl: 'https://github.com/acme/widgets/issues',
+});
+```
+
+| Field        | Type     | Purpose                                                               |
+| ------------ | -------- | --------------------------------------------------------------------- |
+| `components` | `string` | Directory holding the package's components and their `.doc.*` files.  |
+| `templates`  | `string` | Directory holding the package's page/block templates.                 |
+| `codemods`   | `string` | Directory holding upgrade codemods run by `astryx upgrade`.           |
+| `issuesUrl`  | `string` | Where "report an issue" links for this package's contributions point. |
+
+Every field is optional; declare only the roots the package ships.
+`createIntegration` is a type-preserving helper (editor autocomplete and
+type-checking); it lives in `@astryxdesign/core/authoring` and is re-exported
+from `@astryxdesign/cli/integration` for back-compat.
+
+### How it works
+
+Every command loads the consumer's `astryx.config`, resolves each listed
+integration's manifest from `node_modules`, and discovers its contributions.
+Everything is validated against one strict schema at the load boundary, so the
+CLI presents core and integration contributions through a single, uniform
+surface.
+
+Discovery is resilient: a broken or misconfigured integration is skipped with a
+one-line warning on stderr instead of crashing the CLI, and it never corrupts a
+`--json` envelope. To inspect problems, run
+`astryx validate-integration <package>` for a detailed report on one package, or
+`astryx doctor` for an overall health check.
+
+For the full authoring walkthrough (component doc format, template packaging
+and `exports` requirements, and codemod authoring), see the guide:
+
+```bash
+astryx docs cli-integrations
 ```

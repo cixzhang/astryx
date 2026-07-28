@@ -16,6 +16,7 @@
 
 import React, {
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -36,8 +37,9 @@ import {layerAnimations} from '../Layer/layerAnimations.stylex';
 import {Icon} from '../Icon';
 import type {IconType} from '../Icon';
 import type {IconName} from '../Icon/globalIconRegistry';
-import type {InputStatus} from '../Field';
+import type {InputStatus, FieldStatusVariant} from '../Field';
 import {usePopover} from '../Popover/usePopover';
+import {useAnnounce} from '../hooks/useAnnounce';
 import {
   spacingVars,
   colorVars,
@@ -50,7 +52,9 @@ import {useInternalConfig} from './useInternalConfig';
 import {usePowerSearchSource} from './usePowerSearchSource';
 import {formatFilterValue} from './formatFilterValue';
 import {PowerSearchEditPopover} from './PowerSearchEditPopover';
+import {resolveOperatorLabel} from './resolveOperatorLabel';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 import type {
   PowerSearchConfig,
   PowerSearchFilter,
@@ -359,6 +363,16 @@ export interface PowerSearchProps extends Omit<
   /** Whether the input is disabled. @default false */
   isDisabled?: boolean;
   /**
+   * Explains why the search is disabled. When set together with `isDisabled`,
+   * the search shows a tooltip with this text on hover and keyboard focus, and
+   * the input stays focusable (via `aria-disabled`) so the reason is
+   * discoverable by keyboard and assistive technology. Input stays blocked.
+   *
+   * Use this instead of wrapping a disabled PowerSearch in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   */
+  disabledMessage?: string;
+  /**
    * Icon to display at the start of the input.
    * Accepts a ReactNode (e.g. `<Icon icon={SearchIcon} />`) or an SVG icon component directly.
    */
@@ -369,6 +383,13 @@ export interface PowerSearchProps extends Omit<
   onBlur?: (e: React.FocusEvent) => void;
   /** Validation status. */
   status?: InputStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
   /** Max width for dropdown menu. */
   menuWidth?: number;
   /** Max display length for filter token values. @default 40 */
@@ -501,19 +522,21 @@ export function PowerSearch({
   config: configProp,
   filters,
   onChange,
-  label = 'Search',
+  label: labelFromProps,
   isLabelHidden = true,
-  placeholder = 'Search...',
+  placeholder: placeholderFromProps,
   hasAutoFocus = false,
   hasClear = true,
   isReadOnly = false,
   isDisabled = false,
+  disabledMessage,
   startIcon,
   onFocus,
   onBlur,
   status,
+  statusVariant = 'attached',
   maxTokenLength = 40,
-  popoverSaveButtonLabel = 'Apply',
+  popoverSaveButtonLabel: popoverSaveButtonLabelFromProps,
   timezoneID,
   tokenOverflowBehavior,
   endContent,
@@ -530,6 +553,12 @@ export function PowerSearch({
   const size = useSize(sizeProp, 'md');
   const config = useInternalConfig(configProp);
   const searchSource = usePowerSearchSource(config);
+  const t = useTranslator();
+  const label = labelFromProps ?? t('@astryx.powersearch.label');
+  const placeholder =
+    placeholderFromProps ?? t('@astryx.powersearch.placeholder');
+  const popoverSaveButtonLabel =
+    popoverSaveButtonLabelFromProps ?? t('@astryx.powersearch.editor.apply');
   const tokenizerRef = useRef<TokenizerHandle>(null);
 
   const [popoverState, setPopoverStateRaw] = useState<PopoverState>({
@@ -546,6 +575,9 @@ export function PowerSearch({
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own listbox/menu content is the exposed semantics; focus
+    // stays on the tokenizer input, so a modal dialog wrapper is incorrect.
+    role: 'none',
   });
 
   // Wrapper that manages layer visibility and tokenizer focus alongside state
@@ -582,13 +614,15 @@ export function PowerSearch({
     return filters.map((filter, index) => {
       const field = config.getField(filter.field);
       const operator = config.getOperator(filter.field, filter.operator);
-      const operatorLabel = operator?.label ? `: ${operator.label}` : '';
+      const resolvedOp = operator ? resolveOperatorLabel(operator, t) : '';
+      const operatorLabel = resolvedOp ? `: ${resolvedOp}` : '';
       const valueStr = operator
         ? formatFilterValue(
             config,
             operator.value,
             filter.value,
             maxTokenLength,
+            t,
             timezoneID,
           )
         : '';
@@ -608,7 +642,7 @@ export function PowerSearch({
         },
       };
     });
-  }, [filters, config, maxTokenLength, timezoneID]);
+  }, [filters, config, maxTokenLength, timezoneID, t]);
 
   // Handle tokenizer onChange (field selected from typeahead)
   const handleTokenizerChange = useCallback(
@@ -771,7 +805,7 @@ export function PowerSearch({
 
       // Default token rendering
       const fieldLabel = field?.label ?? '';
-      const operatorLabel = operator?.label ?? '';
+      const operatorLabel = operator ? resolveOperatorLabel(operator, t) : '';
       const tokenLabel = `${fieldLabel}: ${operatorLabel}`.trim();
       const adjustedMaxLength = Math.max(
         maxTokenLength - fieldLabel.length - operatorLabel.length,
@@ -795,9 +829,7 @@ export function PowerSearch({
         filter.value.value[0].photo
       ) {
         const entity = filter.value.value[0];
-        tokenIcon = (
-          <Avatar src={entity.photo} name={entity.label} size={16} />
-        );
+        tokenIcon = <Avatar src={entity.photo} name={entity.label} size={16} />;
       }
 
       return (
@@ -829,6 +861,7 @@ export function PowerSearch({
       isDisabled,
       handleTokenClick,
       componentOverrides,
+      t,
     ],
   );
 
@@ -933,23 +966,43 @@ export function PowerSearch({
     isReadOnly,
   ]);
 
+  // Plain-text form of the result count, shared by the visible label and the
+  // screen-reader announcement so the two never drift. The ICU plural handles
+  // the number formatting + `result` vs `results` in one message so translators
+  // can match the locale's plural rules.
+  const resultCountText = useMemo((): string | null => {
+    if (resultCount == null) {
+      return null;
+    }
+    if (typeof resultCount === 'number') {
+      return t('@astryx.powersearch.resultCount', {count: resultCount});
+    }
+    return resultCount;
+  }, [resultCount, t]);
+
+  // Announce result-count changes to screen readers through a polite live
+  // region, mirroring the way Typeahead announces its dropdown result count.
+  // The count is otherwise only shown visually and stays silent to assistive
+  // tech. Skip the first run so the count already present on mount isn't
+  // announced unprompted — only user-driven changes are spoken.
+  const announce = useAnnounce();
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (resultCountText != null) {
+      announce(resultCountText);
+    }
+  }, [resultCountText, announce]);
+
   // Build combined endContent from resultCount + endContent props
   const combinedEndContent = useMemo((): React.ReactNode => {
-    let resultCountNode: React.ReactNode = null;
-    if (resultCount != null) {
-      if (typeof resultCount === 'number') {
-        const formatted = new Intl.NumberFormat().format(resultCount);
-        resultCountNode = (
-          <span {...stylex.props(resultCountStyles.text)}>
-            {formatted} {resultCount === 1 ? 'result' : 'results'}
-          </span>
-        );
-      } else {
-        resultCountNode = (
-          <span {...stylex.props(resultCountStyles.text)}>{resultCount}</span>
-        );
-      }
-    }
+    const resultCountNode =
+      resultCountText != null ? (
+        <span {...stylex.props(resultCountStyles.text)}>{resultCountText}</span>
+      ) : null;
 
     if (resultCountNode && endContent) {
       return (
@@ -960,7 +1013,7 @@ export function PowerSearch({
       );
     }
     return resultCountNode || endContent || undefined;
-  }, [resultCount, endContent]);
+  }, [resultCountText, endContent]);
 
   return (
     <>
@@ -982,11 +1035,13 @@ export function PowerSearch({
           startIcon={startIcon}
           endContent={combinedEndContent}
           isDisabled={isDisabled}
+          disabledMessage={disabledMessage}
           size={size}
           tokenOverflowBehavior={tokenOverflowBehavior}
           hasEntriesOnFocus
           debounceMs={0}
           status={status}
+          statusVariant={statusVariant}
           onFocus={onFocus}
           onBlur={onBlur}
           xstyle={xstyle}

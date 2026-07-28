@@ -6,7 +6,8 @@
     "build:deps": "pnpm -F @astryxdesign/theme-neutral build && pnpm -F @astryxdesign/theme-matcha build && pnpm -F @astryxdesign/theme-stone build && pnpm -F @astryxdesign/theme-gothic build && pnpm -F @astryxdesign/theme-chocolate build && pnpm -F @astryxdesign/theme-y2k build && pnpm -F @astryxdesign/theme-butter build",
     "generate:changelog": "node scripts/generate-changelog.js",
     "generate:cli": "node scripts/generate-cli-registry.mjs",
-    "generate": "node ../../scripts/sync-templates.js && pnpm generate:changelog && pnpm generate:cli && node scripts/generate-foundation-docs.mjs",
+    "generate:xle": "node scripts/generate-xle-registry.mjs && node scripts/generate-xle-tokenizer.mjs",
+    "generate": "node ../../scripts/sync-templates.js && pnpm generate:changelog && pnpm generate:cli && node scripts/generate-foundation-docs.mjs && pnpm generate:xle",
     "dev": "pnpm generate && (node ../../scripts/sync-templates.js --watch & next dev)",
     "build": "pnpm generate && next build",
     "start": "next start",
@@ -14,7 +15,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@stylexjs/stylex": "^0.18.3",
+    "@stylexjs/stylex": "^0.19.0",
+    "@astryxdesign/charts": "*",
     "@astryxdesign/cli": "*",
     "@astryxdesign/core": "*",
     "@astryxdesign/lab": "*",
@@ -23,7 +25,7 @@
     "next": "^15.5.16",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "recharts": "^3.8.1",
+    "recharts": "^3.9.2",
     "@astryxdesign/theme-stone": "*",
     "@astryxdesign/theme-gothic": "*",
     "@astryxdesign/theme-chocolate": "*",
@@ -31,7 +33,7 @@
     "@astryxdesign/theme-butter": "*"
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.29.7",
+    "@babel/preset-react": "^8.0.1",
     "@babel/preset-typescript": "^7.29.7",
     "@stylexjs/babel-plugin": "^0.19.0",
     "@stylexjs/postcss-plugin": "^0.19.0",

@@ -97,4 +97,123 @@ describe('ChatToolCalls', () => {
     );
     expect(screen.getByText('git status')).toBeInTheDocument();
   });
+
+  it('exposes no aria-expanded on a call row without resultDetail', () => {
+    const {container} = render(
+      <ChatToolCalls calls={[{name: 'bash', status: 'complete'}]} />,
+    );
+    expect(container.querySelector('[aria-expanded]')).toBeNull();
+  });
+
+  it('wires disclosure semantics on an expandable call row', () => {
+    render(
+      <ChatToolCalls
+        calls={[
+          {
+            name: 'readFile',
+            status: 'complete',
+            resultDetail: <div>file contents here</div>,
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByRole('button');
+    expect(row).toHaveAttribute('aria-expanded', 'false');
+    // Detail panel is conditionally mounted, so no aria-controls while closed.
+    expect(row).not.toHaveAttribute('aria-controls');
+    expect(screen.queryByText('file contents here')).not.toBeInTheDocument();
+
+    fireEvent.click(row);
+
+    expect(row).toHaveAttribute('aria-expanded', 'true');
+    const detailId = row.getAttribute('aria-controls');
+    expect(detailId).toBeTruthy();
+    const panel = document.getElementById(detailId as string);
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveTextContent('file contents here');
+  });
+
+  it('exposes the error message as text without requiring hover', () => {
+    render(
+      <ChatToolCalls
+        calls={[
+          {
+            name: 'bash',
+            status: 'error',
+            errorMessage: 'Command exited with code 1',
+          },
+        ]}
+      />,
+    );
+    // The message must exist as real (screen-reader-visible) text content,
+    // not only inside a hover-only title attribute.
+    expect(screen.getByText(/Command exited with code 1/)).toBeInTheDocument();
+  });
+
+  it('includes the error message in the accessible name of an expandable error row', () => {
+    render(
+      <ChatToolCalls
+        calls={[
+          {
+            name: 'bash',
+            status: 'error',
+            errorMessage: 'Command exited with code 1',
+            resultDetail: <div>stderr output</div>,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole('button', {name: /Command exited with code 1/}),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the hover tooltip on the error status icon', () => {
+    const {container} = render(
+      <ChatToolCalls
+        calls={[
+          {
+            name: 'bash',
+            status: 'error',
+            errorMessage: 'Command exited with code 1',
+          },
+        ]}
+      />,
+    );
+    expect(
+      container.querySelector('[title="Command exited with code 1"]'),
+    ).not.toBeNull();
+  });
+
+  it('renders no error text for non-error calls', () => {
+    render(
+      <ChatToolCalls
+        calls={[
+          {name: 'bash', status: 'complete', errorMessage: 'stale message'},
+        ]}
+      />,
+    );
+    expect(screen.queryByText(/stale message/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Error:/)).not.toBeInTheDocument();
+  });
+
+  it('points the group header aria-controls at the content region', () => {
+    render(
+      <ChatToolCalls
+        defaultIsExpanded={true}
+        calls={[
+          {name: 'searchCode', status: 'complete'},
+          {name: 'readFile', status: 'complete'},
+        ]}
+      />,
+    );
+    const header = screen.getByRole('button');
+    expect(header).toHaveAttribute('aria-expanded', 'true');
+    const regionId = header.getAttribute('aria-controls');
+    expect(regionId).toBeTruthy();
+    const region = document.getElementById(regionId as string);
+    expect(region).not.toBeNull();
+    expect(region).toHaveTextContent('searchCode');
+    expect(region).toHaveTextContent('readFile');
+  });
 });

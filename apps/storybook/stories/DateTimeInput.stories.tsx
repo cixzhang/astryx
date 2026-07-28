@@ -4,6 +4,7 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react';
 import {DateTimeInput} from '@astryxdesign/core/DateTimeInput';
 import type {ISODateTimeString} from '@astryxdesign/core/DateTimeInput';
+import {Theme, defineTheme} from '@astryxdesign/core/theme';
 
 const meta: Meta<typeof DateTimeInput> = {
   title: 'Core/DateTimeInput',
@@ -40,6 +41,11 @@ const meta: Meta<typeof DateTimeInput> = {
     isDisabled: {
       control: 'boolean',
       description: 'Whether the input is disabled',
+    },
+    disabledMessage: {
+      control: 'text',
+      description:
+        'Explains why the input is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the field focusable via aria-disabled (activation stays blocked). Use this instead of wrapping a disabled DateTimeInput in Tooltip.',
     },
     size: {
       control: 'radio',
@@ -220,6 +226,25 @@ export const Disabled: Story = {
   },
 };
 
+// Disabled with an explanation tooltip. Hover or keyboard-focus the field to
+// see why it's disabled — the reason is announced to assistive tech via
+// aria-describedby, and the field stays focusable (activation is still
+// blocked). Use disabledMessage instead of wrapping a disabled DateTimeInput in Tooltip:
+// disabled controls swallow the pointer events a Tooltip wrapper needs.
+export const DisabledWithMessage: Story = {
+  render: args => {
+    const [value, setValue] = useState<ISODateTimeString | undefined>(
+      undefined,
+    );
+    return <DateTimeInput {...args} value={value} onChange={setValue} />;
+  },
+  args: {
+    label: 'Meeting time',
+    isDisabled: true,
+    disabledMessage: 'You need the Editor role to change this',
+  },
+};
+
 export const SizeVariants: Story = {
   render: () => {
     const [sm, setSm] = useState<ISODateTimeString | undefined>(undefined);
@@ -388,6 +413,48 @@ export const AllVariations: Story = {
           }}
         />
       </div>
+    );
+  },
+};
+
+/**
+ * Theme the two segments precisely via `defineTheme`.
+ *
+ * Before the segment targets existed, the date and time wrappers were
+ * anonymous nodes with hashed atomic classes only, so a theme that restyles
+ * input geometry through the `text-input` / `date-input` / `time-input`
+ * targets could not reach them — DateTimeInput rendered visibly shorter than
+ * every other input under such a theme.
+ *
+ * `components['date-time-input-date-segment']` and its time twin scope
+ * overrides to one segment each, and both reflect `size` and `status` the same
+ * way the root does. Defaults are unchanged; this story only demonstrates the
+ * override channel.
+ */
+const segmentTheme = defineTheme({
+  name: 'date-time-input-segments-demo',
+  components: {
+    'date-time-input-date-segment': {
+      base: {borderColor: 'var(--color-accent)'},
+    },
+    'date-time-input-time-segment': {
+      base: {backgroundColor: 'var(--color-background-muted)'},
+    },
+  },
+});
+
+export const ThemedSegments: Story = {
+  render: () => {
+    const [value, setValue] = useState<ISODateTimeString | undefined>();
+    return (
+      <Theme theme={segmentTheme} mode="light">
+        <DateTimeInput
+          label="Themed segments"
+          description="Date segment gets an accent border; time segment a muted fill."
+          value={value}
+          onChange={setValue}
+        />
+      </Theme>
     );
   },
 };

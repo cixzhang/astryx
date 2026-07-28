@@ -9,10 +9,43 @@
  * SYNC: When Slider.tsx changes, update tests to match new behavior
  */
 
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, act, fireEvent} from '@testing-library/react';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {render, screen, act, fireEvent, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {Slider} from './Slider';
+
+// Mock showPopover/hidePopover (not implemented in jsdom) so the tooltip layer
+// reflects its open state via a `popover-open` attribute the tests can assert.
+beforeEach(() => {
+  HTMLElement.prototype.showPopover = vi.fn(function (this: HTMLElement) {
+    this.setAttribute('popover-open', '');
+    const event = new Event('toggle', {bubbles: false});
+    Object.defineProperty(event, 'newState', {value: 'open'});
+    this.dispatchEvent(event);
+  });
+  HTMLElement.prototype.hidePopover = vi.fn(function (this: HTMLElement) {
+    this.removeAttribute('popover-open');
+    const event = new Event('toggle', {bubbles: false});
+    Object.defineProperty(event, 'newState', {value: 'closed'});
+    this.dispatchEvent(event);
+  });
+  const originalMatches = HTMLElement.prototype.matches;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (HTMLElement.prototype as any).matches = function (
+    selector: string,
+  ): boolean {
+    if (selector === ':popover-open') {
+      return this.hasAttribute('popover-open');
+    }
+    // jsdom does not derive :focus-visible from keyboard focus for a
+    // div[role="slider"] thumb; treat the focused thumb as focus-visible so the
+    // disabled-reason tooltip's keyboard-focus path can be exercised.
+    if (selector === ':focus-visible') {
+      return this === document.activeElement;
+    }
+    return originalMatches.call(this, selector);
+  };
+});
 
 describe('Slider', () => {
   // --- Aria labels ---
@@ -51,6 +84,19 @@ describe('Slider', () => {
     expect(slider).toHaveAttribute('aria-valuemax', '90');
     expect(slider).toHaveAttribute('aria-valuenow', '72');
   });
+
+  it.each([
+    {value: 150, expectedValue: 100, expectedPosition: '100%'},
+    {value: -50, expectedValue: 0, expectedPosition: '0%'},
+  ])(
+    'clamps a controlled value of $value to $expectedValue',
+    ({value, expectedValue, expectedPosition}) => {
+      render(<Slider label="Volume" value={value} min={0} max={100} />);
+      const slider = screen.getByRole('slider');
+      expect(slider).toHaveAttribute('aria-valuenow', String(expectedValue));
+      expect(slider).toHaveStyle({left: expectedPosition});
+    },
+  );
 
   it('range mode sets correct aria values on both thumbs', () => {
     render(
@@ -120,6 +166,60 @@ describe('Slider', () => {
     const {container} = render(<Slider label="Volume" value={50} />);
     const ariaHidden = container.querySelectorAll('[aria-hidden="true"]');
     expect(ariaHidden.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // --- Required state ---
+
+  it('conveys required state through the accessible description', () => {
+    render(<Slider label="Volume" value={50} isRequired />);
+    const slider = screen.getByRole('slider');
+    expect(slider).toHaveAccessibleDescription(/Required/);
+    // aria-required is not a supported property of role="slider" in
+    // WAI-ARIA 1.2, so it must never appear on the thumb.
+    expect(slider).not.toHaveAttribute('aria-required');
+  });
+
+  it('conveys required state on both thumbs of a range slider', () => {
+    render(
+      <Slider
+        label="Price range"
+        value={[20, 80] as [number, number]}
+        isRequired
+      />,
+    );
+    const sliders = screen.getAllByRole('slider');
+    expect(sliders).toHaveLength(2);
+    for (const thumb of sliders) {
+      expect(thumb).toHaveAccessibleDescription(/Required/);
+      expect(thumb).not.toHaveAttribute('aria-required');
+    }
+  });
+
+  it('combines required with other describedby parts in the description', () => {
+    render(
+      <Slider
+        label="Volume"
+        value={50}
+        description="Adjust the volume level"
+        isRequired
+      />,
+    );
+    const slider = screen.getByRole('slider');
+    expect(slider).toHaveAccessibleDescription(/Adjust the volume level/);
+    expect(slider).toHaveAccessibleDescription(/Required/);
+  });
+
+  it('does not mention required without isRequired', () => {
+    render(
+      <Slider
+        label="Volume"
+        value={50}
+        description="Adjust the volume level"
+      />,
+    );
+    const slider = screen.getByRole('slider');
+    expect(slider).not.toHaveAccessibleDescription(/Required/);
+    expect(slider).not.toHaveAttribute('aria-required');
   });
 
   // --- Disabled guards ---
@@ -381,5 +481,161 @@ describe('Slider', () => {
     });
     await user.keyboard('{ArrowLeft}');
     expect(handleChange).toHaveBeenCalledWith(0);
+  });
+
+  describe('disabledMessage', () => {
+    const h = {hidden: true} as const;
+
+    function getTrack(): HTMLElement {
+      return screen.getByRole('slider').parentElement!;
+    }
+
+    it('shows the reason tooltip on hover when disabled with a reason', async () => {
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          isDisabled
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(tooltip).toHaveTextContent(
+        'Volume is locked while sharing your screen',
+      );
+      fireEvent.mouseEnter(getTrack());
+      await waitFor(() => expect(tooltip).toHaveAttribute('popover-open'));
+      fireEvent.mouseLeave(getTrack());
+      await waitFor(() => expect(tooltip).not.toHaveAttribute('popover-open'));
+    });
+
+    it('shows the reason tooltip on keyboard focus', async () => {
+      const user = userEvent.setup();
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          isDisabled
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      const tooltip = screen.getByRole('tooltip', h);
+      await user.tab();
+      expect(screen.getByRole('slider')).toHaveFocus();
+      await waitFor(() => expect(tooltip).toHaveAttribute('popover-open'));
+    });
+
+    it('does not render a tooltip when not disabled', () => {
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('does not render a tooltip when disabled without a reason', () => {
+      render(
+        <Slider label="Volume" value={50} valueDisplay="none" isDisabled />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('keeps the thumb focusable via aria-disabled when a reason is provided', () => {
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          isDisabled
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      const thumb = screen.getByRole('slider');
+      expect(thumb).toHaveAttribute('aria-disabled', 'true');
+      expect(thumb).toHaveAttribute('tabindex', '0');
+    });
+
+    it('links the reason tooltip via aria-describedby', () => {
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          isDisabled
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      const thumb = screen.getByRole('slider');
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(thumb.getAttribute('aria-describedby')).toContain(tooltip.id);
+    });
+
+    it('blocks value changes while focusable-disabled', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <Slider
+          label="Volume"
+          value={50}
+          valueDisplay="none"
+          onChange={onChange}
+          isDisabled
+          disabledMessage="Volume is locked while sharing your screen"
+        />,
+      );
+      const thumb = screen.getByRole('slider');
+      thumb.focus();
+      await user.keyboard('{ArrowRight}');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('remains non-focusable when disabled without a reason', () => {
+      render(
+        <Slider label="Volume" value={50} valueDisplay="none" isDisabled />,
+      );
+      expect(screen.getByRole('slider')).toHaveAttribute('tabindex', '-1');
+    });
+  });
+  describe('form participation', () => {
+    it('submits the value under htmlName', () => {
+      const {container} = render(
+        <form>
+          <Slider label="Volume" htmlName="volume" value={50} />
+        </form>,
+      );
+      const data = new FormData(container.querySelector('form')!);
+      expect(data.get('volume')).toBe('50');
+    });
+
+    it('submits both range values under the same name', () => {
+      const {container} = render(
+        <form>
+          <Slider
+            label="Price"
+            htmlName="price"
+            value={[20, 80] as [number, number]}
+          />
+        </form>,
+      );
+      const data = new FormData(container.querySelector('form')!);
+      expect(data.getAll('price')).toEqual(['20', '80']);
+    });
+
+    it('is excluded from form data when disabled', () => {
+      const {container} = render(
+        <form>
+          <Slider label="Volume" htmlName="volume" value={50} isDisabled />
+        </form>,
+      );
+      expect([
+        ...new FormData(container.querySelector('form')!).keys(),
+      ]).toEqual([]);
+    });
   });
 });

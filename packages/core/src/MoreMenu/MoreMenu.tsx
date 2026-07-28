@@ -26,6 +26,7 @@ import type {DropdownMenuOption} from '../DropdownMenu';
 import type {ButtonVariant, ButtonSize} from '../Button';
 import type {BaseProps} from '../BaseProps';
 import {stableClassName} from '../naming';
+import {useTranslator} from '../i18n';
 
 export interface MoreMenuProps extends Pick<
   BaseProps,
@@ -81,13 +82,6 @@ export interface MoreMenuProps extends Pick<
    */
   onOpenChange?: (isOpen: boolean) => void;
 
-  /**
-   * Whether to auto-focus the first menu item when the menu opens.
-   * Set to `false` for inline showcases or documentation previews.
-   * @default true
-   */
-  hasAutoFocus?: boolean;
-
   /** Test ID for testing frameworks. */
   'data-testid'?: string;
 }
@@ -109,20 +103,21 @@ export interface MoreMenuProps extends Pick<
  */
 export function MoreMenu({
   items,
-  label = 'More options',
+  label: labelFromProps,
   variant = 'ghost',
   size: sizeProp,
   icon,
   isDisabled = false,
   isMenuOpen,
   onOpenChange,
-  hasAutoFocus,
   xstyle,
   className: classNameProp,
   style,
   'data-testid': testId,
   ref,
 }: MoreMenuProps) {
+  const t = useTranslator();
+  const label = labelFromProps ?? t('@astryx.moreMenu.label');
   const size = useSize(sizeProp, 'md');
   const moreIcon = getIcon('moreHorizontal');
 
@@ -149,7 +144,6 @@ export function MoreMenu({
       }}
       items={items}
       hasChevron={false}
-      hasAutoFocus={hasAutoFocus}
       data-testid={testId}
     />
   );

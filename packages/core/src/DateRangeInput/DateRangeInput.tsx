@@ -43,16 +43,19 @@ import {
   inputStatusBorderStyles,
   inputStatusHoverShadowStyles,
   inputStatusFocusWithinStyles,
+  type FieldStatusVariant,
 } from '../Field';
 import {Icon} from '../Icon';
 import {Spinner} from '../Spinner';
 import {Calendar, type ISODateString, type DateRange} from '../Calendar';
 import {usePopover} from '../Popover';
+import {useTooltip} from '../Tooltip';
 import {mergeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {useSize} from '../SizeContext/SizeContext';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 export type {DateRange} from '../Calendar';
 
@@ -125,9 +128,9 @@ const styles = stylex.create({
     flexDirection: 'column',
     gap: spacingVars['--spacing-1'],
     padding: spacingVars['--spacing-3'],
-    borderRightWidth: borderVars['--border-width'],
-    borderRightStyle: 'solid',
-    borderRightColor: colorVars['--color-border-emphasized'],
+    borderInlineEndWidth: borderVars['--border-width'],
+    borderInlineEndStyle: 'solid',
+    borderInlineEndColor: colorVars['--color-border-emphasized'],
     minWidth: 140,
   },
   presetButton: {
@@ -145,8 +148,8 @@ const styles = stylex.create({
       },
     },
     fontFamily: typographyVars['--font-family-body'],
-    fontSize: typeScaleVars['--text-body-size'],
-    lineHeight: typeScaleVars['--text-body-leading'],
+    fontSize: typeScaleVars['--text-label-size'],
+    lineHeight: typeScaleVars['--text-label-leading'],
     color: colorVars['--color-text-primary'],
     cursor: 'pointer',
     textAlign: 'start',
@@ -241,6 +244,29 @@ export interface DateRangeInputProps extends Omit<
   isDisabled?: boolean;
 
   /**
+   * Explains why the input is disabled. When set together with
+   * `isDisabled`, the input shows a tooltip with this text on hover and
+   * keyboard focus, and the trigger stays focusable (via `aria-disabled`)
+   * so the reason is discoverable by keyboard and assistive technology.
+   * Activation stays blocked.
+   *
+   * Use this instead of wrapping a disabled input in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <DateRangeInput
+   *   label="Reporting period"
+   *   value={range}
+   *   onChange={setRange}
+   *   isDisabled
+   *   disabledMessage="You need the Editor role to change this"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
+
+  /**
    * The selected date range, or null if no range is selected.
    */
   value: DateRange | null;
@@ -305,6 +331,13 @@ export interface DateRangeInputProps extends Omit<
    * Status indicator for the input.
    */
   status?: InputStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
 
   /**
    * Width of the field. Numbers are treated as pixels, strings are used as-is
@@ -347,6 +380,7 @@ export function DateRangeInput({
   isOptional = false,
   isRequired = false,
   isDisabled = false,
+  disabledMessage,
   value,
   onChange,
   changeAction,
@@ -356,9 +390,10 @@ export function DateRangeInput({
   dateConstraints,
   presets,
   hasClear = true,
-  placeholder = 'Select date range',
+  placeholder: placeholderFromProps,
   size: sizeProp,
   status,
+  statusVariant = 'attached',
   labelTooltip,
   numberOfMonths = 2,
   width,
@@ -368,6 +403,9 @@ export function DateRangeInput({
   ref,
   ...rest
 }: DateRangeInputProps) {
+  const t = useTranslator();
+  const placeholder =
+    placeholderFromProps ?? t('@astryx.dateRangeInput.placeholder');
   const size = useSize(sizeProp, 'md');
   const id = useId();
   const descriptionID = useId();
@@ -377,6 +415,21 @@ export function DateRangeInput({
   const [optimisticValue, setOptimisticValue] = useOptimistic(value);
   const isBusy = isLoading || optimisticValue !== value;
   const isEffectivelyDisabled = isDisabled || isBusy;
+
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the trigger container (which already exists)
+  // and the trigger button stays perceivable via aria-disabled instead of the
+  // disabled attribute. Activation is blocked by the isEffectivelyDisabled
+  // guard in handleToggle. Only the persistent isDisabled state (not the
+  // transient busy state) surfaces a reason.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The container div is not naturally focusable; focusin bubbles up from
+    // the trigger button, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
 
   const statusIconMap: Record<InputStatusType, IconName> = {
     warning: 'warning',
@@ -397,6 +450,7 @@ export function DateRangeInput({
     [
       description ? descriptionID : null,
       status?.message ? statusMessageID : null,
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
     ]
       .filter(Boolean)
       .join(' ') || undefined;
@@ -407,8 +461,8 @@ export function DateRangeInput({
   );
 
   const popover = usePopover({
-    dialogLabel: 'Choose date range',
-    closeButtonLabel: 'Close calendar',
+    dialogLabel: t('@astryx.dateRangeInput.dialogLabel'),
+    closeButtonLabel: t('@astryx.dateInput.closeCalendar'),
   });
 
   const fireChange = useCallback(
@@ -484,10 +538,17 @@ export function DateRangeInput({
             }
           : undefined
       }
+      statusVariant={statusVariant}
       labelTooltip={labelTooltip}
       width={width}>
       <div
-        ref={popover.triggerRef}
+        ref={el => {
+          popover.triggerRef(el);
+          // Anchor + hover/focus listeners for the disabled-message tooltip.
+          // Handlers are gated internally by isEnabled, and anchor names
+          // compose, so attaching unconditionally is safe.
+          disabledMessageTooltip.ref(el);
+        }}
         {...rest}
         {...mergeProps(
           themeProps('date-range-input', {
@@ -510,7 +571,11 @@ export function DateRangeInput({
           type="button"
           onClick={handleToggle}
           disabled={isEffectivelyDisabled}
-          aria-label={popover.isOpen ? 'Close calendar' : 'Open calendar'}
+          aria-label={
+            popover.isOpen
+              ? t('@astryx.dateInput.toggleCalendarClose')
+              : t('@astryx.dateInput.openCalendar')
+          }
           tabIndex={-1}
           {...stylex.props(
             styles.iconButton,
@@ -523,7 +588,11 @@ export function DateRangeInput({
           id={id}
           type="button"
           onClick={handleToggle}
-          disabled={isEffectivelyDisabled}
+          // With a disabledMessage the trigger keeps focusability via
+          // aria-disabled so the reason is focus-discoverable; activation is
+          // still blocked by the isEffectivelyDisabled guard in handleToggle.
+          disabled={isEffectivelyDisabled && !showsDisabledMessage}
+          aria-disabled={showsDisabledMessage ? 'true' : undefined}
           aria-label={triggerAriaLabel}
           aria-describedby={ariaDescribedBy}
           aria-required={isRequired === true ? 'true' : undefined}
@@ -543,7 +612,7 @@ export function DateRangeInput({
           <button
             type="button"
             onClick={handleClear}
-            aria-label={`Clear ${label}`}
+            aria-label={t('@astryx.dateInput.clear', {label})}
             {...stylex.props(styles.iconButton)}>
             <Icon icon="close" size="sm" color="secondary" />
           </button>
@@ -561,8 +630,8 @@ export function DateRangeInput({
         <div {...stylex.props(styles.popoverLayout)}>
           {presets && presets.length > 0 && (
             <div
-              role="listbox"
-              aria-label="Preset date ranges"
+              role="group"
+              aria-label={t('@astryx.dateRangeInput.presetDateRanges')}
               {...stylex.props(styles.presetSidebar)}>
               {presets.map(preset => {
                 const presetRange = preset.getRange();
@@ -571,8 +640,12 @@ export function DateRangeInput({
                   <button
                     key={preset.label}
                     type="button"
-                    role="option"
-                    aria-selected={isActive}
+                    // These presets are independent action buttons navigated by
+                    // Tab, not a single-tab-stop listbox — so they are a labeled
+                    // group of buttons, and the currently-applied preset is
+                    // marked with aria-current (not aria-selected, a listbox
+                    // concept that contradicted the Tab interaction) (forms-5).
+                    aria-current={isActive ? 'true' : undefined}
                     onClick={() => handlePresetClick(preset)}
                     {...stylex.props(
                       styles.presetButton,
@@ -596,6 +669,9 @@ export function DateRangeInput({
         </div>,
         {placement: 'below', alignment: 'start'},
       )}
+
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
     </Field>
   );
 }

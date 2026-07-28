@@ -10,7 +10,7 @@
  */
 
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {Link} from './Link';
 import {LinkProvider} from './LinkProvider';
@@ -99,8 +99,8 @@ describe('Link', () => {
 
   it('renders with different color values', () => {
     const {rerender} = render(
-      <Link href="/test" color="active">
-        Active
+      <Link href="/test" color="accent">
+        Accent
       </Link>,
     );
     expect(screen.getByRole('link')).toBeInTheDocument();
@@ -120,6 +120,24 @@ describe('Link', () => {
     expect(screen.getByRole('link')).toBeInTheDocument();
   });
 
+  it('defaults the inner text type to body', () => {
+    render(<Link href="/test">Body link</Link>);
+    expect(screen.getByText('Body link')).toHaveClass('astryx-text', 'body');
+  });
+
+  it('forwards type="inherit" so the link adopts the surrounding text type', () => {
+    render(
+      <Link href="/test" type="inherit">
+        Inline link
+      </Link>,
+    );
+    // The inner Text renders with the `inherit` type, so font-size/line-height
+    // inherit from the surrounding text rather than imposing the body type.
+    const text = screen.getByText('Inline link');
+    expect(text).toHaveClass('astryx-text', 'inherit');
+    expect(text).not.toHaveClass('body');
+  });
+
   it('applies hasUnderline style when true', () => {
     render(
       <Link href="/test" hasUnderline>
@@ -135,9 +153,81 @@ describe('Link', () => {
         Disabled Link
       </Link>,
     );
-    const link = screen.getByRole('link');
+    // An href-less anchor has no implicit `link` role, so query by text.
+    const link = screen.getByText('Disabled Link').closest('a');
+    expect(link).not.toBeNull();
     expect(link).toHaveAttribute('aria-disabled', 'true');
     expect(link).toHaveAttribute('tabIndex', '-1');
+    // Visual classes are preserved in the disabled state.
+    expect(link?.className).toContain('astryx-link');
+  });
+
+  it('disabled link has no href attribute', () => {
+    render(
+      <Link href="/test" isDisabled>
+        Disabled Link
+      </Link>,
+    );
+    const link = screen.getByText('Disabled Link').closest('a');
+    expect(link).not.toBeNull();
+    expect(link).not.toHaveAttribute('href');
+  });
+
+  it('clicking a disabled link cancels default navigation', () => {
+    render(
+      <Link href="/test" isDisabled>
+        Disabled Link
+      </Link>,
+    );
+    const link = screen.getByText('Disabled Link').closest('a');
+    expect(link).not.toBeNull();
+    // fireEvent bypasses pointer-events, simulating programmatic/AT
+    // activation. It returns false when preventDefault was called, i.e.
+    // any default navigation behavior is cancelled.
+    const notCancelled = fireEvent.click(link as HTMLAnchorElement);
+    expect(notCancelled).toBe(false);
+  });
+
+  it('disabled link with onClick fires neither navigation nor the consumer onClick', () => {
+    const handleClick = vi.fn();
+    const {container} = render(
+      <Link href="/test" isDisabled onClick={handleClick}>
+        Disabled Link
+      </Link>,
+    );
+    // With onClick present, a disabled Link renders as a disabled <button>
+    // (useInteractiveRole excludes a disabled href). Either way the rendered
+    // root must carry no live href and never invoke the consumer handler.
+    const el = container.firstElementChild as HTMLElement;
+    expect(el).not.toHaveAttribute('href');
+    fireEvent.click(el);
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('disabled link omits target and rel', () => {
+    render(
+      <Link href="https://example.com" isDisabled isExternalLink>
+        Disabled External
+      </Link>,
+    );
+    const link = screen.getByText('Disabled External').closest('a');
+    expect(link).not.toBeNull();
+    expect(link).not.toHaveAttribute('target');
+    expect(link).not.toHaveAttribute('rel');
+  });
+
+  it('disabled link renders a plain anchor, not the custom LinkComponent', () => {
+    render(
+      <LinkProvider component={CustomLink}>
+        <Link href="/custom" as={CustomLink} isDisabled>
+          Disabled Custom
+        </Link>
+      </LinkProvider>,
+    );
+    const link = screen.getByText('Disabled Custom').closest('a');
+    expect(link).not.toBeNull();
+    expect(link).not.toHaveAttribute('data-custom-link');
+    expect(link).not.toHaveAttribute('href');
   });
 
   it('renders external link with icon and target="_blank"', () => {
@@ -150,6 +240,38 @@ describe('Link', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(link.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('announces the new-tab context via screen-reader text (obs-4)', () => {
+    render(
+      <Link href="https://example.com" isExternalLink>
+        Docs
+      </Link>,
+    );
+    // The link's accessible name includes the new-tab hint (the icon is
+    // decorative).
+    expect(
+      screen.getByRole('link', {name: 'Docs (opens in new tab)'}),
+    ).toBeInTheDocument();
+  });
+
+  it('supports a custom newTabLabel for localization', () => {
+    render(
+      <Link
+        href="https://example.com"
+        isExternalLink
+        newTabLabel="(new window)">
+        Docs
+      </Link>,
+    );
+    expect(
+      screen.getByRole('link', {name: 'Docs (new window)'}),
+    ).toBeInTheDocument();
+  });
+
+  it('does not add new-tab text to non-external links', () => {
+    render(<Link href="/internal">Internal</Link>);
+    expect(screen.getByRole('link', {name: 'Internal'})).toBeInTheDocument();
   });
 
   it('renders external link with existing rel merged', () => {

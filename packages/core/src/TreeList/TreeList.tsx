@@ -4,7 +4,7 @@
 
 /**
  * @file TreeList.tsx
- * @input Uses React, StyleX, theme tokens, TreeListItem, TreeListTypes
+ * @input Uses React, StyleX, theme tokens, TreeListItem, TreeListTypes, useTreeFocus
  * @output Exports TreeList component, TreeListProps type
  * @position Core implementation; consumed by index.ts
  *
@@ -21,14 +21,19 @@ import {spacingVars} from '../theme/tokens.stylex';
 import {mergeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {TreeListItem} from './TreeListItem';
-import type {TreeListItemData, TreeListDensity} from './TreeListTypes';
+import type {
+  TreeListItemData,
+  TreeListDensity,
+  TreeListVariant,
+} from './TreeListTypes';
 import {themeProps} from '../utils/themeProps';
+import {useTreeFocus} from '../hooks/useTreeFocus';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export {type TreeListDensity} from './TreeListTypes';
+export {type TreeListDensity, type TreeListVariant} from './TreeListTypes';
 
 export interface TreeListProps extends BaseProps<HTMLDivElement> {
   /** Ref forwarded to the root element */
@@ -48,6 +53,16 @@ export interface TreeListProps extends BaseProps<HTMLDivElement> {
    * @default 'balanced'
    */
   density?: TreeListDensity;
+
+  /**
+   * Visual treatment of the hierarchy guide (connector) lines.
+   * - `lineGuides`: connector lines between parent and child rows
+   * - `noGuides`: no connector lines; indentation alone conveys nesting
+   *
+   * Orthogonal to `density` (which controls spacing) — the two compose.
+   * @default 'lineGuides'
+   */
+  variant?: TreeListVariant;
 
   /**
    * Header content rendered above the tree list.
@@ -97,6 +112,35 @@ function collectExpandedKeys(items: TreeListItemData[]): string[] {
   return keys;
 }
 
+/**
+ * Compute the initial roving-tabindex seed: the first selected enabled item in
+ * document order, else the first enabled item, else the first item. The hook
+ * (useTreeFocus with hasRovingTabIndex) takes ownership after mount — it
+ * preserves this seeded `tabindex="0"` on its repair pass and moves the stop
+ * with keyboard navigation.
+ */
+function findInitialTabbableId(items: TreeListItemData[]): string | undefined {
+  let firstEnabled: string | undefined;
+  const walk = (list: TreeListItemData[]): string | undefined => {
+    for (const item of list) {
+      if (item.isSelected && item.isDisabled !== true) {
+        return item.id;
+      }
+      if (firstEnabled == null && item.isDisabled !== true) {
+        firstEnabled = item.id;
+      }
+      if (item.children != null && item.children.length > 0) {
+        const selected = walk(item.children);
+        if (selected != null) {
+          return selected;
+        }
+      }
+    }
+    return undefined;
+  };
+  return walk(items) ?? firstEnabled ?? items[0]?.id;
+}
+
 // =============================================================================
 // Component
 // =============================================================================
@@ -126,6 +170,7 @@ function collectExpandedKeys(items: TreeListItemData[]): string[] {
 export function TreeList({
   items,
   density = 'balanced',
+  variant = 'lineGuides',
   header,
   xstyle,
   className,
@@ -159,6 +204,46 @@ export function TreeList({
     },
     [expandedKeysFromProps],
   );
+
+  // ---------------------------------------------------------------------------
+  // Roving tabindex + APG tree keyboard model (via useTreeFocus)
+  // ---------------------------------------------------------------------------
+
+  // The hook (hasRovingTabIndex) owns the tree's single tab stop: it repairs
+  // the stop on mount and moves it with keyboard navigation. We only seed the
+  // initially-tabbable treeitem in the render (selected item or first enabled);
+  // the hook's repair pass preserves that seeded `tabindex="0"`.
+  const initialTabbableId = useMemo(
+    () => findInitialTabbableId(items),
+    [items],
+  );
+
+  // Enter/Space activation: prefer the treeitem's own inner action (link or
+  // button); return true when handled so the hook does not also toggle. Scoped
+  // to this treeitem's own row — never a descendant treeitem's action inside an
+  // expanded group.
+  const activateItem = useCallback((current: HTMLElement): boolean => {
+    // The chevron toggle is marked with `data-tree-toggle` (set by
+    // TreeListItem) so this filter stays stable across locales — matching by
+    // aria-label would break under any locale where "Toggle children" is
+    // translated.
+    const candidates = current.querySelectorAll<HTMLElement>(
+      'a[href], button:not([data-tree-toggle])',
+    );
+    for (const candidate of candidates) {
+      if (candidate.closest('[role="treeitem"]') === current) {
+        candidate.click();
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  const {treeRef, handleKeyDown, handleFocus} = useTreeFocus<HTMLUListElement>({
+    onToggleExpand: handleToggle,
+    onActivate: activateItem,
+    hasRovingTabIndex: true,
+  });
 
   function renderItems(
     items: TreeListItemData[],
@@ -205,7 +290,11 @@ export function TreeList({
           isExpanded={isExpanded}
           onToggle={handleToggle}
           density={density}
+          variant={variant}
           renderedChildren={renderedChildren}
+          posInSet={index + 1}
+          setSize={items.length}
+          isTabbable={item.id === initialTabbableId}
         />
       );
     });
@@ -227,8 +316,11 @@ export function TreeList({
         </div>
       )}
       <ul
+        ref={treeRef}
         role="tree"
         aria-labelledby={header != null ? headerId : undefined}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
         {...stylex.props(styles.list)}>
         {renderItems(items, 0, [])}
       </ul>

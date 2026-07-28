@@ -31,7 +31,7 @@
  * - /packages/cli/templates/blocks/components/Banner/ (showcase blocks)
  */
 
-import {useState, type ReactNode} from 'react';
+import {useId, useState, type ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import type {BaseProps} from '../BaseProps';
 import {Button} from '../Button';
@@ -46,10 +46,13 @@ import {
   borderVars,
   durationVars,
   easeVars,
+  shadowVars,
 } from '../theme/tokens.stylex';
 import {mergeProps} from '../utils';
+import type {Elevation} from '../utils/types';
 import {edgeCompSlot} from '../Layout/edgeCompensation.stylex';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 // =============================================================================
 // Types
@@ -157,6 +160,13 @@ export interface BannerProps extends BaseProps<HTMLDivElement> {
    */
   container?: BannerContainer;
   /**
+   * Resting elevation — the shadow depth the banner sits at. Use for a
+   * floating banner that hovers above content. `none` is the default inline
+   * banner.
+   * @default 'none'
+   */
+  elevation?: Elevation;
+  /**
    * Whether the content area (children) starts expanded.
    * Only relevant when children are provided.
    * @default false
@@ -213,6 +223,11 @@ const styles = stylex.create({
     display: 'flex',
     flexDirection: 'column',
     fontFamily: 'inherit',
+  },
+  // When elevated, a card-container banner rounds its root so the shadow
+  // follows the same silhouette as the header/content border-radius.
+  rootElevatedCard: {
+    borderRadius: radiusVars['--radius-container'],
   },
   // Header area — colored status background with icon, title, description, actions
   // This is the primary theme target ('banner')
@@ -279,14 +294,14 @@ const styles = stylex.create({
     backgroundColor: colorVars['--color-background-card'],
     paddingBlock: spacingVars['--spacing-3'],
     paddingInline: spacingVars['--spacing-4'],
-    borderLeftWidth: borderVars['--border-width'],
-    borderRightWidth: borderVars['--border-width'],
+    borderInlineStartWidth: borderVars['--border-width'],
+    borderInlineEndWidth: borderVars['--border-width'],
     borderBottomWidth: borderVars['--border-width'],
-    borderLeftStyle: 'solid',
-    borderRightStyle: 'solid',
+    borderInlineStartStyle: 'solid',
+    borderInlineEndStyle: 'solid',
     borderBottomStyle: 'solid',
-    borderLeftColor: colorVars['--color-border'],
-    borderRightColor: colorVars['--color-border'],
+    borderInlineStartColor: colorVars['--color-border'],
+    borderInlineEndColor: colorVars['--color-border'],
     borderBottomColor: colorVars['--color-border'],
   },
   contentAreaCard: {
@@ -296,7 +311,10 @@ const styles = stylex.create({
   chevron: {
     display: 'inline-flex',
     transitionProperty: 'transform',
-    transitionDuration: durationVars['--duration-fast'],
+    transitionDuration: {
+      default: durationVars['--duration-fast'],
+      '@media (prefers-reduced-motion: reduce)': '0s',
+    },
     transitionTimingFunction: easeVars['--ease-standard'],
   },
   chevronExpanded: {
@@ -317,6 +335,18 @@ const statusStyles = stylex.create({
   success: {
     backgroundColor: colorVars['--color-success-muted'],
   },
+});
+
+// Resting elevation for the banner. Applied to the root so the shadow wraps
+// the whole banner (header + optional content). 'none' is the default and
+// leaves the layout-only root untouched. For the `card` container the root is
+// rounded (rootElevatedCard) so the shadow follows the card silhouette; the
+// full-width `section` container stays square.
+const elevationStyles = stylex.create({
+  none: {boxShadow: 'none'},
+  low: {boxShadow: shadowVars['--shadow-low']},
+  med: {boxShadow: shadowVars['--shadow-med']},
+  high: {boxShadow: shadowVars['--shadow-high']},
 });
 
 // =============================================================================
@@ -377,6 +407,7 @@ export function Banner({
   onDismiss,
   endContent,
   container = 'card',
+  elevation = 'none',
   defaultIsExpanded = false,
   children,
   xstyle,
@@ -385,8 +416,14 @@ export function Banner({
   ref,
   ...rest
 }: BannerProps) {
+  const t = useTranslator();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isExpanded, setIsExpanded] = useState(defaultIsExpanded);
+  // Links the expand/collapse toggle to the content region it shows/hides so
+  // assistive tech can move from the button to its controlled content
+  // (disclosure pattern). The region is conditionally rendered, so aria-controls
+  // below is set only while it's mounted to avoid a dangling reference.
+  const contentId = useId();
   const defaultIconName = defaultIconNames[status];
   const role = statusRole[status];
   const iconColor = statusIconColor[status];
@@ -419,7 +456,16 @@ export function Banner({
     <div
       ref={ref}
       role={role}
-      {...mergeProps(stylex.props(styles.root, xstyle), className, style)}
+      {...mergeProps(
+        stylex.props(
+          styles.root,
+          elevationStyles[elevation],
+          isCard && elevation !== 'none' && styles.rootElevatedCard,
+          xstyle,
+        ),
+        className,
+        style,
+      )}
       {...rest}>
       {/* Header: colored status background — primary theme target ('banner') */}
       <div
@@ -464,8 +510,16 @@ export function Banner({
               <Button
                 variant="ghost"
                 size="sm"
-                label={isExpanded ? 'Collapse' : 'Expand'}
-                tooltip={isExpanded ? 'Collapse' : 'Expand'}
+                label={
+                  isExpanded
+                    ? t('@astryx.banner.collapse')
+                    : t('@astryx.banner.expand')
+                }
+                tooltip={
+                  isExpanded
+                    ? t('@astryx.banner.collapse')
+                    : t('@astryx.banner.expand')
+                }
                 icon={
                   <span
                     {...stylex.props(
@@ -477,6 +531,7 @@ export function Banner({
                 }
                 onClick={handleToggleExpand}
                 aria-expanded={isExpanded}
+                aria-controls={showContent ? contentId : undefined}
                 isIconOnly
               />
             )}
@@ -484,8 +539,8 @@ export function Banner({
               <Button
                 variant="ghost"
                 size="sm"
-                label="Dismiss"
-                tooltip="Dismiss"
+                label={t('@astryx.banner.dismiss')}
+                tooltip={t('@astryx.banner.dismiss')}
                 icon={<Icon icon="close" size="sm" color="inherit" />}
                 onClick={handleDismiss}
                 isIconOnly
@@ -497,6 +552,7 @@ export function Banner({
       {/* Content area: collapsible card background — theme target ('banner-content') */}
       {showContent && (
         <div
+          id={contentId}
           {...mergeProps(
             themeProps('banner-content', {container, status}),
             stylex.props(styles.contentArea, isCard && styles.contentAreaCard),

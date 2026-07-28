@@ -10,11 +10,13 @@
  */
 
 import {useState} from 'react';
-import {describe, it, expect, vi, beforeAll, afterAll} from 'vitest';
-import {render, screen, act} from '@testing-library/react';
+import {describe, it, expect, vi, beforeAll, afterAll, afterEach} from 'vitest';
+import {render, screen, act, fireEvent, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {PowerSearch} from './PowerSearch';
+import {__resetLiveRegionsForTest} from '../hooks/useAnnounce';
 import type {PowerSearchConfig, PowerSearchFilter} from './types';
+import {TestIcon} from '../__tests__/TestIcon';
 
 // =============================================================================
 // Test infrastructure
@@ -57,6 +59,12 @@ beforeAll(() => {
 afterAll(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (HTMLElement.prototype as any).matches = originalMatches;
+});
+
+// Reset the singleton live regions between tests so result-count
+// announcements from one test don't leak into the next.
+afterEach(() => {
+  __resetLiveRegionsForTest();
 });
 
 // =============================================================================
@@ -150,6 +158,25 @@ describe('PowerSearch', () => {
     expect(screen.getByRole('combobox')).toHaveFocus();
   });
 
+  describe('startIcon', () => {
+    it('does not render a start icon when omitted', () => {
+      render(<PowerSearch config={config} filters={[]} onChange={() => {}} />);
+      expect(document.querySelector('svg')).not.toBeInTheDocument();
+    });
+
+    it('forwards startIcon to the internal Tokenizer', () => {
+      render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          startIcon={<TestIcon data-testid="start-icon" />}
+        />,
+      );
+      expect(screen.getByTestId('start-icon')).toBeInTheDocument();
+    });
+  });
+
   describe('paste behavior', () => {
     it('pasting a field name shows matching field suggestions', async () => {
       const user = userEvent.setup();
@@ -198,5 +225,225 @@ describe('PowerSearch', () => {
 
       expect(pasteResults).toEqual(typeResults);
     });
+  });
+
+  describe('disabledMessage', () => {
+    const h = {hidden: true} as const;
+    const isOpen = (el: Element) => el.matches(':popover-open');
+
+    function renderSearch(props?: {onChange?: () => void}) {
+      return render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={props?.onChange ?? (() => {})}
+          isDisabled
+          disabledMessage="You need edit access to search"
+        />,
+      );
+    }
+
+    it('shows the reason tooltip on hover when disabled with a reason', async () => {
+      renderSearch();
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(tooltip).toHaveTextContent('You need edit access to search');
+      const wrapper = screen.getByRole('group');
+      fireEvent.mouseEnter(wrapper);
+      await waitFor(() => expect(isOpen(tooltip)).toBe(true));
+      fireEvent.mouseLeave(wrapper);
+      await waitFor(() => expect(isOpen(tooltip)).toBe(false));
+    });
+
+    it('shows the reason tooltip on keyboard focus', async () => {
+      const user = userEvent.setup();
+      renderSearch();
+      const tooltip = screen.getByRole('tooltip', h);
+      await user.tab();
+      expect(screen.getByRole('combobox')).toHaveFocus();
+      await waitFor(() => expect(isOpen(tooltip)).toBe(true));
+    });
+
+    it('does not render a tooltip when not disabled', () => {
+      render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          disabledMessage="You need edit access to search"
+        />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('does not render a tooltip when disabled without a reason', () => {
+      render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          isDisabled
+        />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('keeps the input focusable via aria-disabled when a reason is provided', () => {
+      renderSearch();
+      const input = screen.getByRole('combobox');
+      expect(input).not.toBeDisabled();
+      expect(input).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('links the reason tooltip via aria-describedby', () => {
+      renderSearch();
+      const input = screen.getByRole('combobox');
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(input.getAttribute('aria-describedby')).toContain(tooltip.id);
+    });
+
+    it('blocks input while focusable-disabled', async () => {
+      const user = userEvent.setup();
+      renderSearch();
+      const input = screen.getByRole('combobox');
+      input.focus();
+      await user.keyboard('open');
+      expect((input as HTMLInputElement).value).toBe('');
+    });
+
+    it('keeps the input natively disabled when disabled without a reason', () => {
+      render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          isDisabled
+        />,
+      );
+      expect(screen.getByRole('combobox')).toBeDisabled();
+    });
+  });
+
+  describe('result count announcements', () => {
+    const politeRegion = () =>
+      document.querySelector('[data-astryx-live-region="polite"]');
+
+    it('announces the result count to a polite live region when it changes', async () => {
+      const {rerender} = render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount={0}
+        />,
+      );
+      rerender(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount={5}
+        />,
+      );
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('5 results');
+      });
+    });
+
+    it('announces "1 result" (singular) for a single match', async () => {
+      const {rerender} = render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount={0}
+        />,
+      );
+      rerender(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount={1}
+        />,
+      );
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('1 result');
+      });
+      expect(politeRegion()?.textContent).not.toMatch(/results/);
+    });
+
+    it('announces a string result count verbatim', async () => {
+      const {rerender} = render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount="0 items"
+        />,
+      );
+      rerender(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount="Showing 1.2k matches"
+        />,
+      );
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('Showing 1.2k matches');
+      });
+    });
+
+    it('does not announce the result count present on initial mount', async () => {
+      render(
+        <PowerSearch
+          config={config}
+          filters={[]}
+          onChange={() => {}}
+          resultCount={42}
+        />,
+      );
+      // Flush effects and any pending live-region rAF writes.
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      });
+      expect(politeRegion()?.textContent ?? '').not.toContain('42');
+    });
+
+    it('leaves Typeahead dropdown announcements intact and stays silent when no resultCount is set', async () => {
+      const user = userEvent.setup();
+      render(<PowerSearchWrapper config={config} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'Status');
+      // BaseTypeahead announces the dropdown suggestion count; PowerSearch adds
+      // no result-count announcement because resultCount is unset.
+      await waitFor(() => {
+        expect(politeRegion()?.textContent).toMatch(/\d+ results?/);
+      });
+    });
+  });
+});
+
+
+describe('PowerSearch statusVariant forwarding', () => {
+  it('defaults to attached (status renders with data-variant="attached")', () => {
+    const {container} = render(
+      <PowerSearch config={config} filters={[]} onChange={() => {}} status={{type: 'error', message: 'Required'}} />,
+    );
+    expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
+      'data-variant',
+      'attached',
+    );
+  });
+
+  it('forwards statusVariant="detached" to the underlying Field status', () => {
+    const {container} = render(
+      <PowerSearch config={config} filters={[]} onChange={() => {}} status={{type: 'error', message: 'Required'}} statusVariant="detached" />,
+    );
+    expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
+      'data-variant',
+      'detached',
+    );
   });
 });

@@ -5,8 +5,12 @@ For the full contribution process — what we accept, how to propose new compone
 Key pages:
 
 - **[API Conventions](https://github.com/facebook/astryx/wiki/API-Conventions)** — naming, prop patterns, composition rules (read before submitting an RFC)
+- **[Design Conventions](https://github.com/facebook/astryx/wiki/Design-Conventions)** — the design-side bar: tokens, spacing, radius, elevation, type, color, motion, and state representations
 - **[Specification Protocol](https://github.com/facebook/astryx/wiki/Component-Specification-Protocol)** — the 9-phase process for new components
+- **[Component Lifecycle](https://github.com/facebook/astryx/wiki/Component-Lifecycle)** — how components move from lab → core and templates from hidden → visible
 - **[API Arbitration](https://github.com/facebook/astryx/wiki/API-Arbitration)** — how we resolve API design questions
+- **[Contributing Templates](https://github.com/facebook/astryx/wiki/Contributing-Templates)** — building templates/blocks and the template grading rubric
+- **[Blog Review Rubric](https://github.com/facebook/astryx/wiki/Blog-Review-Rubric)** — how docsite blog posts are reviewed
 - **[Contributing with AI](https://github.com/facebook/astryx/wiki/Contributing-with-AI-Assistants)** — safe zones, spec protocol, and working with AI tools
 
 This file covers local development setup.
@@ -17,15 +21,20 @@ This file covers local development setup.
 
 ### Node.js
 
-Install Node.js v22+ using one of these methods:
+The Node version lives in `.nvmrc` (currently the 24.x line). CI reads the same
+file via `node-version-file`, so local and CI never drift apart. Don't declare
+the version anywhere else.
 
 **Via nvm (recommended):**
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 source ~/.zshrc
-nvm install 22
+nvm install   # no argument — reads .nvmrc
 ```
+
+`fnm` and `mise` read `.nvmrc` too. `asdf` does not; its `.tool-versions` is
+git-ignored precisely so it cannot become a competing source of truth.
 
 **Via nodejs.org:**
 Download and install from https://nodejs.org
@@ -33,36 +42,44 @@ Download and install from https://nodejs.org
 ### pnpm
 
 Astryx uses [pnpm](https://pnpm.io/) as its package manager (declared in
-the `packageManager` field of `package.json`). The easiest way to install
-it is via [Corepack](https://nodejs.org/api/corepack.html), which ships
-with Node.js:
-
-```bash
-corepack enable
-```
-
-This makes the `pnpm` command available with the exact version Astryx pins.
-Alternatively, install pnpm directly:
+the `packageManager` and `devEngines.packageManager` fields of
+`package.json`). You can install pnpm directly:
 
 ```bash
 # Via npm
-npm install -g pnpm@10
+npm install -g pnpm@11
 
 # Via Homebrew (macOS)
 brew install pnpm
 
 # Via standalone installer (no npm or Node.js required)
-curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.33.4 sh -
+curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=11.10.0 sh -
 
 # Via GitHub releases (single binary, no dependencies)
 # https://github.com/pnpm/pnpm/releases/latest
 ```
 
+Or use [Corepack](https://nodejs.org/api/corepack.html) to install the exact
+pnpm version Astryx pins:
+
+```bash
+corepack enable
+```
+
+Corepack ships with Node.js 22 and 24, but current Node.js 25+ releases no
+longer bundle it. If `corepack` is missing and you want the auto-pinning path,
+install Corepack manually first:
+
+```bash
+npm install -g corepack
+corepack enable
+```
+
 Verify installation:
 
 ```bash
-node --version   # v22.x.x
-pnpm --version   # 10.x.x
+node --version   # v22.x.x or v24.x.x
+pnpm --version   # 11.x.x
 ```
 
 ## Getting Started
@@ -121,6 +138,27 @@ cd apps/storybook
 pnpm dev
 ```
 
+### Running the Doc Site
+
+The doc site (`apps/docsite/`) is a Next.js app that renders the component
+documentation at https://astryx.dev. To run it locally:
+
+```bash
+# First time only — build the workspace packages it depends on
+pnpm build
+
+# Start the doc site (Next dev server, defaults to localhost:3000)
+pnpm docsite
+```
+
+`pnpm docsite` is a thin alias for `pnpm -F @astryxdesign/docsite dev`,
+which runs the doc site's `generate` step (theme CSS, registries,
+playground scope) before booting Next.
+
+> **Note:** `pnpm docs` collides with the `npm docs` builtin, which
+> tries to open the package's npm page in a browser. Use `pnpm docsite`
+> instead.
+
 ## Project Structure
 
 ```
@@ -131,7 +169,7 @@ astryx/
 │
 ├── packages/
 │   ├── core/           # Core components (Button, Input, etc.)
-│   ├── cli/            # CLI tooling (npx astryx)
+│   ├── cli/            # CLI tooling (astryx)
 │   ├── lab/            # Experimental components (not yet stable)
 │   └── themes/         # Theme presets (default, neutral, daily, and more)
 │
@@ -188,7 +226,7 @@ export interface MyComponentProps extends HTMLAttributes<HTMLDivElement> {
  * Brief description of the component.
  *
  * @example
- * ```tsx
+ * ```
  * <MyComponent>Hello</MyComponent>
  * ```
  */
@@ -304,7 +342,7 @@ This wrapper:
 1. **Detects which packages you changed** from your git diff and pre-selects them — no hand-enumerating the frontmatter.
 2. **Asks for a category** (`breaking`, `component`, `feat`, `fix`, `perf`, `docs`, `chore`) — this drives changelog grouping, _not_ the semver bump.
 3. **Captures the contributor(s)** — defaults to your `gh`/git identity, so credit is recorded at authoring time (not reconstructed from the release bot's commit).
-4. **Forces a `patch` bump** while we're pre-1.0 (see below).
+4. **Derives the semver bump from the category** — a `[breaking]` change bumps the minor; everything else bumps the patch (see below).
 
 It writes a normal `.changeset/<id>.md` — commit it with your PR. The body looks like:
 
@@ -326,11 +364,12 @@ pnpm changeset:new --category fix --summary "…" --pr 2717 --contributor yourha
 > The bare `pnpm changeset` CLI still works, but you must follow the body
 > convention by hand (`[category]` first line + `@handle` line). CI
 > (`pnpm check:changesets`) rejects changesets missing a category or
-> contributor, or declaring a `minor`/`major` bump while pre-1.0.
+> contributor, or whose bump doesn't match the category (`[breaking]` must be
+> `minor`, everything else `patch`), or declaring a `major` bump while 0.x.
 
 ### Version Bumps
 
-- **Pre-1.0 (current): always `patch`.** The Changesets CLI maps `minor` → 0.0.x → 0.1.0 and `major` → 1.0.0. While we're on 0.0.x we ship every change — features, fixes, and breaking changes alike — as a `patch`. Signal a breaking change with the `[breaking]` **category**, not a `major` bump. `pnpm changeset:new` enforces this; `pnpm check:changesets` is the CI backstop.
+- **0.x (current): bump follows the category.** We track standard semver for the `0.x.y` range, where a minor bump is the breaking tier (under a caret range like `^0.1.8`, npm resolves `<0.2.0`, so `0.1.x → 0.2.0` is what signals "may break you"). A `[breaking]` change bumps the **minor** (`0.x.y → 0.(x+1).0`); every other category (`feat`, `fix`, `component`, `perf`, `docs`, `chore`) bumps the **patch**. `major` is never used while 0.x — it would jump to `1.0.0`. `pnpm changeset:new` writes the right bump from the category you pick; `pnpm check:changesets` is the CI backstop that enforces the coupling both ways.
 - All publishable packages are a `fixed` group, so a single change co-bumps them to the same version. Only genuinely-affected packages get a changelog entry — the rest get a clean version-only bump.
 
 ### How a release is cut
@@ -341,6 +380,18 @@ pnpm version-packages   # changeset version + scripts/format-changelogs.mjs
 
 `format-changelogs.mjs` rewrites each just-bumped package CHANGELOG into the doc-site format (h1 version, `#### <Category>` sections in canonical order, and a `#### Contributors` section aggregated from the changeset `@handle`s). It's idempotent and has a `--check` mode for CI drift detection.
 
+## Finding Something to Work On
+
+Labels signal what's open for contribution:
+
+- **`good first issue`** / **`help wanted`** — ready to be picked up; start here.
+- **`discussion`** — still being shaped and **not ready for contribution**. The problem is
+  recorded but the solution isn't decided. Please don't start work on a fix until it's triaged
+  out of `discussion`. Comments and ideas are welcome.
+
+For **pull requests**, use GitHub's native **Draft** state to signal "not ready to review/merge
+yet" — open the PR as a draft and mark it ready for review when it's done.
+
 ## Pull Request Guidelines
 
 1. Create a feature branch from `main`
@@ -348,6 +399,17 @@ pnpm version-packages   # changeset version + scripts/format-changelogs.mjs
 3. Run `pnpm test` and `pnpm lint`
 4. Add a changeset if needed: `pnpm changeset:new`
 5. Open a PR with a clear description
+6. **Leave "Allow edits by maintainers" enabled** (it's checked by default when
+   you open the PR). This lets us rebase your branch onto the latest `main` to
+   clear merge conflicts and keep CI passing against current `main`, so a PR
+   that's ready doesn't get stuck behind staleness while you're away.
+
+> **Why this helps.** `main` moves quickly, and a branch that was green a few
+> days ago can go stale — CI last ran against an older `main`, or a merge
+> conflict appears. With maintainer edits enabled we can rebase and re-run CI
+> for you instead of round-tripping. (One exception: PRs that modify
+> `.github/workflows/**` can't be pushed on your behalf — GitHub requires the
+> author to update those; we'll ping you if so.)
 
 ## Code Style
 
@@ -357,6 +419,54 @@ pnpm version-packages   # changeset version + scripts/format-changelogs.mjs
 - Export types alongside components
 
 ## Troubleshooting
+
+### Setup Issues
+
+**`pnpm: command not found`**
+
+Install pnpm directly:
+
+```bash
+npm install -g pnpm@11
+```
+
+Or enable Corepack if you want to use the repository's pinned pnpm version:
+
+```bash
+corepack enable
+```
+
+**`corepack: command not found`**
+
+Install Corepack manually, then enable it:
+
+```bash
+npm install -g corepack
+corepack enable
+```
+
+Node 25+ does not include Corepack. You can either install Corepack manually or
+install pnpm directly.
+
+**Unexpected Node.js version**
+
+Check the active version before installing dependencies:
+
+```bash
+node --version
+```
+
+Use an active LTS line such as 22 or 24 if your shell selected a different
+version, such as a non-LTS `stable` release.
+
+**CLI path issues**
+
+If `astryx` is not found in a consuming app, add the package script shown in the
+root `README.md` and run it through your package manager:
+
+```bash
+pnpm astryx -- component --list
+```
 
 ### pnpm Installation Issues
 
@@ -369,7 +479,7 @@ your environment likely blocks outbound network access.
 ```bash
 brew install pnpm                        # Homebrew (macOS)
 curl -fsSL https://get.pnpm.io/install.sh | sh -  # Standalone installer
-npm install -g pnpm@10                   # Via npm
+npm install -g pnpm@11                   # Via npm
 ```
 
 You can also download the binary directly from
@@ -402,6 +512,13 @@ and doesn't need network to use.
 - Rebuild the package: `pnpm -F @astryxdesign/core build`
 - Hard refresh browser: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
 - Clear Storybook cache: Remove `apps/storybook/node_modules/.cache`
+
+## Translations
+
+Astryx accepts community translations via Crowdin. To help translate astryx
+into your language, visit <https://crowdin.com/project/astryx>. New locales are
+picked up automatically after a maintainer reviews the auto-generated
+translations PR.
 
 ## Contributor License Agreement ("CLA")
 

@@ -36,7 +36,8 @@ export const docs = {
     {
       name: 'options',
       type: 'SelectorOption[]',
-      description: 'Array of items: strings, objects with value/label/icon/disabled, dividers ({type: "divider"}), or sections ({type: "section", title, items}).',
+      description:
+        'Array of items: strings, objects with value/label/icon/disabled, dividers ({type: "divider"}), or sections ({type: "section", title, items}).',
       required: true,
     },
     {
@@ -59,7 +60,8 @@ export const docs = {
     {
       name: 'hasSearch',
       type: 'boolean',
-      description: 'Whether to show a search input for filtering options.',
+      description:
+        'Whether to show a search input for filtering options. As the user types, the match count (or "No results found") is announced to screen readers via a polite live region.',
       default: 'false',
     },
     {
@@ -85,6 +87,18 @@ export const docs = {
       type: 'boolean',
       description: 'Disables the selector.',
       default: 'false',
+    },
+    {
+      name: 'htmlName',
+      type: 'string',
+      description:
+        'The HTML name attribute for form submissions. Renders a hidden input carrying the selected value, like a native select.',
+    },
+    {
+      name: 'disabledMessage',
+      type: 'string',
+      description:
+        'Explains why the selector is disabled. With isDisabled, shows a tooltip on hover/keyboard focus and keeps the trigger focusable via aria-disabled (activation stays blocked). Use this instead of wrapping a disabled Selector in Tooltip. Disabled controls swallow the hover events an external Tooltip needs.',
     },
     {
       name: 'isLabelHidden',
@@ -115,6 +129,13 @@ export const docs = {
       description: 'Validation status with an optional message.',
     },
     {
+      name: 'statusVariant',
+      type: "'attached' | 'detached'",
+      description:
+        'How the status message is placed relative to the input. attached overlaps directly below the input (bordered treatment); detached floats below as a separate element with spacing.',
+      default: "'attached'",
+    },
+    {
       name: 'renderOption',
       type: '(option: SelectorOptionData) => ReactNode',
       description:
@@ -123,7 +144,8 @@ export const docs = {
     {
       name: 'xstyle',
       type: 'StyleXStyles',
-      description: 'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value: not an inline style object like style={{}}.',
+      description:
+        'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value: not an inline style object like style={{}}.',
     },
   ],
   components: [{name: 'SelectorOption'}],
@@ -152,6 +174,11 @@ export const docs = {
           'Set a meaningful placeholder that hints at the expected selection (e.g. "Choose a country" not "Select...").',
       },
       {
+        guidance: true,
+        description:
+          'Use inside InputGroup only when the selector needs a short prefix or suffix addon as part of one decorated input surface.',
+      },
+      {
         guidance: false,
         description:
           'Use for action menus; use Dropdown Menu for triggering commands or navigation.',
@@ -175,6 +202,11 @@ export const docs = {
         guidance: false,
         description:
           'Put more than ~20 options without sections; consider Typeahead for large lists.',
+      },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled Selector in Tooltip to explain why it is disabled; disabled triggers swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
       },
     ],
     anatomy: [
@@ -263,6 +295,11 @@ export const docsZh = {
         description:
           'Put more than ~20 options without sections; consider Typeahead for large lists.',
       },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled Selector in Tooltip to explain why it is disabled; disabled triggers swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
+      },
     ],
     anatomy: [
       {
@@ -326,6 +363,11 @@ export const docsDense = {
           'Set a meaningful placeholder that hints at the expected selection (e.g. "Choose a country" not "Select...").',
       },
       {
+        guidance: true,
+        description:
+          'Use inside InputGroup only when the selector needs a short prefix or suffix addon.',
+      },
+      {
         guidance: false,
         description:
           'Use for action menus; use Dropdown Menu for triggering commands or navigation.',
@@ -349,6 +391,11 @@ export const docsDense = {
         guidance: false,
         description:
           'Put more than ~20 options without sections; consider Typeahead for large lists.',
+      },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled Selector in Tooltip to explain why it is disabled; disabled triggers swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
       },
     ],
     anatomy: [

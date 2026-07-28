@@ -16,7 +16,7 @@
  * - /packages/cli/templates/blocks/components/TabList/ (showcase blocks)
  */
 
-import React, {useCallback, useId, type ReactNode} from 'react';
+import React, {useCallback, useId, useRef, type ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {Icon} from '../Icon';
 import {renderIconSlot, type IconType} from '../Icon';
@@ -122,9 +122,12 @@ const styles = stylex.create({
   },
   indicator: {
     position: 'absolute',
-    bottom: '-1px',
-    left: spacingVars['--spacing-3'],
-    right: spacingVars['--spacing-3'],
+    // Mirrors Tab's indicator: sits on the bottom edge by default (-1px), or
+    // drops onto the divider rail when an ancestor (TabList `hasDivider` or a
+    // Toolbar with a bottom divider) sets `--_tab-indicator-bottom`.
+    bottom: 'var(--_tab-indicator-bottom, -1px)',
+    insetInlineStart: spacingVars['--spacing-3'],
+    insetInlineEnd: spacingVars['--spacing-3'],
     height: '2px',
     borderRadius: radiusVars['--radius-full'],
     pointerEvents: 'none',
@@ -262,25 +265,59 @@ export function TabMenu({
 }: TabMenuProps) {
   const tabListCtx = useTabListContext();
   const menuId = useId();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const popover = usePopover({
     hasLightDismiss: true,
     hasCloseButton: false,
     hasAutoFocus: false,
+    // The popup's own role="menu" is the exposed semantics; a modal dialog
+    // wrapper would announce an unnamed dialog around the menu.
+    role: 'none',
+    // Return focus to the trigger when the menu closes (Escape, Tab, select,
+    // or light dismiss) so keyboard focus is never dropped to <body>.
+    onHide: useCallback(() => {
+      buttonRef.current?.focus();
+    }, []),
   });
 
-  const {listRef, handleKeyDown: handleListKeyDown} =
-    useListFocus<HTMLDivElement>({
-      onEscape: () => popover.hide(),
-    });
+  // The overflow menu is a composite widget: a single roving tab stop with
+  // arrow-key navigation between items, per the APG menu pattern. The hook owns
+  // item tabindex — items render tabIndex={-1} and exactly one is promoted to 0.
+  const {
+    listRef,
+    handleKeyDown: handleListKeyDown,
+    handleFocus,
+    focusFirst,
+  } = useListFocus<HTMLDivElement>({
+    hasRovingTabIndex: true,
+    onEscape: () => popover.hide(),
+  });
 
   const handleToggle = useCallback(() => {
     if (popover.isOpen) {
       popover.hide();
     } else {
       popover.show();
+      // Move focus into the menu on open so arrow navigation works and the
+      // roving tab stop lands on a real item (APG menu-button focus-on-open).
+      requestAnimationFrame(() => focusFirst());
     }
-  }, [popover]);
+  }, [popover, focusFirst]);
+
+  const handleMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      // APG menu-button: Tab leaves the menu rather than walking its items.
+      // Close and let onHide return focus to the trigger, from which the
+      // browser's default Tab continues to the next element.
+      if (e.key === 'Tab') {
+        popover.hide();
+        return;
+      }
+      handleListKeyDown(e);
+    },
+    [handleListKeyDown, popover],
+  );
 
   const selectedOption = options.find(o => o.value === tabListCtx.value);
   const triggerLabel = selectedOption?.label ?? label;
@@ -296,7 +333,11 @@ export function TabMenu({
     [tabListCtx, popover],
   );
 
-  const setButtonRef = mergeRefs<HTMLButtonElement>(popover.triggerRef, ref);
+  const setButtonRef = mergeRefs<HTMLButtonElement>(
+    popover.triggerRef,
+    buttonRef,
+    ref,
+  );
 
   return (
     <>
@@ -306,6 +347,8 @@ export function TabMenu({
         aria-haspopup="menu"
         aria-expanded={popover.isOpen}
         aria-controls={menuId}
+        data-tab-menu=""
+        tabIndex={hasSelectedOption ? 0 : -1}
         onClick={handleToggle}
         {...mergeProps(
           themeProps('tab-menu'),
@@ -352,7 +395,8 @@ export function TabMenu({
           id={menuId}
           role="menu"
           aria-label={label}
-          onKeyDown={handleListKeyDown}
+          onKeyDown={handleMenuKeyDown}
+          onFocus={handleFocus}
           {...mergeProps(
             themeProps('tab-menu-dropdown'),
             stylex.props(styles.dropdown),
@@ -366,7 +410,7 @@ export function TabMenu({
               <div
                 key={option.value}
                 role="menuitem"
-                tabIndex={0}
+                tabIndex={-1}
                 aria-current={isSelected ? 'true' : undefined}
                 onClick={() => handleSelect(option.value)}
                 onKeyDown={e => {
@@ -390,9 +434,7 @@ export function TabMenu({
                     })}
                   {option.label}
                 </span>
-                {isSelected && (
-                  <Icon icon="check" size="sm" color="accent" />
-                )}
+                {isSelected && <Icon icon="check" size="sm" color="accent" />}
               </div>
             );
           })}

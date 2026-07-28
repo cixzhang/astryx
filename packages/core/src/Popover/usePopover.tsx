@@ -27,6 +27,8 @@ import {
   shadowVars,
 } from '../theme/tokens.stylex';
 import {Button} from '../Button';
+import {useTranslator} from '../i18n';
+import {useDevWarning} from '../hooks/useDevWarning';
 
 const styles = stylex.create({
   // Default popover surface — background, radius, shadow.
@@ -110,6 +112,19 @@ export interface UsePopoverOptions {
   hasLightDismiss?: boolean;
 
   /**
+   * Whether pressing Escape dismisses the popover.
+   *
+   * Takes effect together with `hasLightDismiss: false`: with light dismiss
+   * on, the native popover uses `popover="auto"`, whose browser-level light
+   * dismiss also closes on Escape, so Escape handling stays registered to
+   * keep topmost-only dismissal intact. Set both to `false` for
+   * explicit-dismiss-only surfaces like onboarding coachmarks.
+   *
+   * @default true
+   */
+  hasEscapeDismiss?: boolean;
+
+  /**
    * Whether to automatically focus the first focusable element when opened.
    * @default true
    */
@@ -130,9 +145,34 @@ export interface UsePopoverOptions {
 
   /**
    * Accessible label for the dialog.
-   * Required for screen readers to announce the dialog purpose.
+   * Required for screen readers to announce the dialog purpose
+   * (only applies when `role` is `'dialog'`).
    */
   dialogLabel?: string;
+
+  /**
+   * ARIA role stamped on the popover content wrapper.
+   *
+   * - `'dialog'` (default): the wrapper is a `role="dialog"` and, when
+   *   `isModal` is true, carries `aria-modal`. Use for genuine dialog content.
+   * - `'none'`: the wrapper carries no role or `aria-modal`, so the popup's own
+   *   content role (e.g. a child `role="listbox"` or `role="menu"`) is the
+   *   exposed semantics. Use for comboboxes, listboxes, and menus — their
+   *   trigger keeps DOM focus, so announcing an unnamed modal dialog around
+   *   them is incorrect.
+   *
+   * @default 'dialog'
+   */
+  role?: 'dialog' | 'none';
+
+  /**
+   * Whether the dialog is modal (`aria-modal`). Only applies when `role` is
+   * `'dialog'`. Set to `false` for non-modal dialogs that do not inert the rest
+   * of the page.
+   *
+   * @default true
+   */
+  isModal?: boolean;
 
   /**
    * Whether to apply the default popover surface (background, border-radius,
@@ -215,7 +255,7 @@ export interface UsePopoverReturn {
    * ARIA attributes to spread on the trigger element
    */
   triggerProps: {
-    'aria-haspopup': 'dialog';
+    'aria-haspopup': 'dialog' | 'true';
     'aria-expanded': boolean;
     'aria-controls': string;
   };
@@ -228,7 +268,7 @@ export interface UsePopoverReturn {
  * - `useLayer` for popover positioning using CSS anchor positioning
  * - `useFocusTrap` for trapping focus within the popover content
  * - Auto-focus first element on open
- * - Escape key to close
+ * - Escape key to close (configurable via hasEscapeDismiss)
  * - Hidden close button that reveals on focus for accessibility
  *
  * The render function automatically wraps your content in a focus trap container
@@ -261,20 +301,25 @@ export interface UsePopoverReturn {
  * }
  * ```
  */
-export function usePopover(
-  options: UsePopoverOptions = {},
-): UsePopoverReturn {
+export function usePopover(options: UsePopoverOptions = {}): UsePopoverReturn {
   const {
     onShow,
     onHide,
     xstyle,
     hasLightDismiss = true,
+    hasEscapeDismiss = true,
     hasAutoFocus = true,
     hasSurface = true,
     hasCloseButton = true,
-    closeButtonLabel = 'Close popover',
+    closeButtonLabel: closeButtonLabelFromProps,
     dialogLabel,
+    role = 'dialog',
+    isModal = true,
   } = options;
+
+  const t = useTranslator();
+  const closeButtonLabel =
+    closeButtonLabelFromProps ?? t('@astryx.popover.close');
 
   // Track the trigger element for returning focus
   const triggerElementRef = useRef<HTMLElement | null>(null);
@@ -290,10 +335,12 @@ export function usePopover(
     onHide,
   });
 
-  // Focus trap for the popover content
+  // Focus trap for the popover content. Escape stays registered while light
+  // dismiss is on (native popover="auto" closes on Escape regardless), so a
+  // host Dialog keeps deferring to this trap instead of double-dismissing.
   const {containerRef: contentRef, focusFirst} = useFocusTrap<HTMLDivElement>({
     isActive: layer.isOpen,
-    onEscape: layer.hide,
+    onEscape: hasEscapeDismiss || hasLightDismiss ? layer.hide : undefined,
   });
 
   // Auto-focus first element when popover opens (unless skipped)
@@ -339,10 +386,20 @@ export function usePopover(
 
   // ARIA attributes for the trigger
   const triggerProps = {
-    'aria-haspopup': 'dialog' as const,
+    'aria-haspopup':
+      role === 'dialog' ? ('dialog' as const) : ('true' as const),
     'aria-expanded': layer.isOpen,
     'aria-controls': layer.id,
   };
+
+  // Dev-time guardrail: a dialog popover should always be labeled.
+  useDevWarning(
+    'usePopover',
+    'role="dialog" without a `dialogLabel` renders an unnamed ' +
+      'dialog. Pass `dialogLabel`, or use `role: "none"` for listbox/menu ' +
+      'popups whose content already carries its own role.',
+    role === 'dialog' && !dialogLabel,
+  );
 
   // Wrapped render function that includes surface styles and optional hidden close button
   const render = useCallback(
@@ -350,9 +407,9 @@ export function usePopover(
       return layer.render(
         <div
           ref={contentRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={dialogLabel}
+          role={role === 'dialog' ? 'dialog' : undefined}
+          aria-modal={role === 'dialog' && isModal ? true : undefined}
+          aria-label={role === 'dialog' ? dialogLabel : undefined}
           {...stylex.props(
             styles.contentWrapper,
             hasSurface && styles.surface,
@@ -379,6 +436,8 @@ export function usePopover(
       closeButtonLabel,
       contentRef,
       dialogLabel,
+      role,
+      isModal,
       xstyle,
     ],
   );

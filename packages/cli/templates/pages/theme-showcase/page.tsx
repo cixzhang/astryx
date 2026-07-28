@@ -143,12 +143,6 @@ const styles: Record<string, CSSProperties> = {
     textAlign: 'center' as const,
     maxWidth: 560,
   },
-  // Hero headline painted with the theme's accent-text ink. Text has no
-  // 'accent' color value, so we set the dedicated --color-text-accent token
-  // directly (distinct from --color-accent / the 'active' color).
-  heroHeadline: {
-    color: 'var(--color-text-accent)',
-  },
   centerText: {
     textAlign: 'center',
   },
@@ -288,14 +282,14 @@ const DEFAULT_PRODUCTS: ProductSpec[] = [
 
 // Neutral product photos, served from the shared astryx asset CDN so the
 // scaffolded template renders real imagery without needing local public assets.
-const NEUTRAL_CDN = 'https://lookaside.facebook.com/assets/astryx';
 const DEFAULT_IMAGES: Record<string, string> = {
-  watch: `${NEUTRAL_CDN}/Neutral-Watch.png`,
-  headphones: `${NEUTRAL_CDN}/Neutral-Headphones.png`,
-  backpack: `${NEUTRAL_CDN}/Neutral-Backpack.png`,
-  wallet: `${NEUTRAL_CDN}/Neutral-Wallet.png`,
-  tumbler: `${NEUTRAL_CDN}/Neutral-Tumbler.png`,
-  throw_: `${NEUTRAL_CDN}/Neutral-Blanket.png`,
+  watch: 'https://lookaside.facebook.com/assets/astryx/Neutral-Watch.png',
+  headphones:
+    'https://lookaside.facebook.com/assets/astryx/Neutral-Headphones.png',
+  backpack: 'https://lookaside.facebook.com/assets/astryx/Neutral-Backpack.png',
+  wallet: 'https://lookaside.facebook.com/assets/astryx/Neutral-Wallet.png',
+  tumbler: 'https://lookaside.facebook.com/assets/astryx/Neutral-Tumbler.png',
+  throw_: 'https://lookaside.facebook.com/assets/astryx/Neutral-Blanket.png',
 };
 
 export interface ThemeShowcaseProps {
@@ -438,7 +432,7 @@ function StorePreview({
           <VStack gap={10} style={{...styles.content, ...styles.contentFluid}}>
             <Center>
               <VStack gap={4} hAlign="center" style={styles.heroText}>
-                <Text type="display-2" style={styles.heroHeadline}>
+                <Text type="display-2" color="accent">
                   Little joys,
                   <br />
                   everywhere you go
@@ -462,10 +456,7 @@ function StorePreview({
                       />
                     </AspectRatio>
                     <div style={inlineStyles.cardBody}>
-                      <VStack
-                        gap={2}
-                        hAlign="center"
-                        style={styles.cardStack}>
+                      <VStack gap={2} hAlign="center" style={styles.cardStack}>
                         <HStack>
                           <Badge label={p.badge} variant={p.badgeVariant} />
                         </HStack>
@@ -475,7 +466,10 @@ function StorePreview({
                         <Text
                           type="supporting"
                           color="secondary"
-                          style={{...styles.cardDescription, ...styles.centerText}}>
+                          style={{
+                            ...styles.cardDescription,
+                            ...styles.centerText,
+                          }}>
                           {p.description}
                         </Text>
                         <HStack gap={2} vAlign="center" hAlign="center">
@@ -746,9 +740,7 @@ function ChatCard() {
 
           <ChatMessage sender="assistant">
             <VStack gap={3}>
-              <Text type="body">
-                Here’s everything I have on order #1043:
-              </Text>
+              <Text type="body">Here’s everything I have on order #1043:</Text>
               <Card padding={3}>
                 <VStack gap={1}>
                   <Item
@@ -1107,10 +1099,7 @@ function InventoryCard({
   ).length;
   return (
     <Card padding={0} style={styles.inventoryCard}>
-      <HStack
-        hAlign="between"
-        vAlign="center"
-        style={styles.inventoryHeader}>
+      <HStack hAlign="between" vAlign="center" style={styles.inventoryHeader}>
         <Heading level={2}>Inventory</Heading>
         <Button
           label="Add item"

@@ -1,5 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
+import {describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {createEventFromISO} from './CalendarEvent';
 import {Schedule} from './Schedule';
@@ -96,6 +97,45 @@ describe('Schedule', () => {
     });
     expect(screen.getByText('Design review')).toBeInTheDocument();
     expect(screen.queryByText('Outside range')).not.toBeInTheDocument();
+  });
+
+  it('renders monthly weekday headings at the configured headingLevel (default 3)', async () => {
+    render(
+      <Schedule
+        view={createScheduleMonthlyView()}
+        events={events}
+        categories={categories}
+        date={Date.UTC(2026, 4, 13)}
+        focusDate={Date.UTC(2026, 4, 13)}
+        timezoneID="UTC"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Visible sync')).toBeInTheDocument();
+    });
+    expect(
+      screen.getAllByRole('heading', {level: 3}).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('renders list day headings at the configured headingLevel (default 3)', async () => {
+    render(
+      <Schedule
+        view={createScheduleListView({days: 7})}
+        events={events}
+        categories={categories}
+        date={Date.UTC(2026, 4, 13)}
+        timezoneID="UTC"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Visible sync')).toBeInTheDocument();
+    });
+    expect(
+      screen.getAllByRole('heading', {level: 3}).length,
+    ).toBeGreaterThan(0);
   });
 
   it('loads async events with Instant range boundaries', async () => {

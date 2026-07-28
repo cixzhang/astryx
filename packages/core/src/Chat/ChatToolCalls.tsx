@@ -18,7 +18,7 @@
  * for builders to wire up.
  */
 
-import React, {useState, useCallback, type ReactNode} from 'react';
+import React, {useState, useCallback, useId, type ReactNode} from 'react';
 import type {BaseProps} from '../BaseProps';
 import * as stylex from '@stylexjs/stylex';
 import {
@@ -35,17 +35,14 @@ import {getKey, mergeProps} from '../utils';
 import {Badge} from '../Badge';
 import {Icon, type IconName} from '../Icon';
 import {Spinner} from '../Spinner';
+import {VisuallyHidden} from '../VisuallyHidden';
 import {themeProps} from '../utils/themeProps';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export type ChatToolCallStatus =
-  | 'pending'
-  | 'running'
-  | 'complete'
-  | 'error';
+export type ChatToolCallStatus = 'pending' | 'running' | 'complete' | 'error';
 
 export interface ChatToolCallItem {
   /** Tool/function name. */
@@ -64,7 +61,11 @@ export interface ChatToolCallItem {
   deletions?: number;
   /** Additional info rendered after the label. Free-form ReactNode. */
   stats?: ReactNode;
-  /** Error message when status is 'error'. Shown in a tooltip on the status icon. */
+  /**
+   * Error message when status is 'error'. Rendered as visually hidden text in
+   * the row (so screen readers and keyboard users perceive it) and echoed in a
+   * hover tooltip on the status icon.
+   */
   errorMessage?: string;
   /** Unique key for React list rendering. Derived from stable metadata if omitted. */
   key?: string;
@@ -132,7 +133,10 @@ const styles = stylex.create({
     width: '14px',
     height: '14px',
     color: colorVars['--color-text-disabled'],
-    transition: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
+    transition: {
+      default: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
+      '@media (prefers-reduced-motion: reduce)': 'none',
+    },
   },
   chevronExpanded: {
     transform: 'rotate(180deg)',
@@ -140,7 +144,10 @@ const styles = stylex.create({
   groupContent: {
     display: 'grid',
     gridTemplateRows: '0fr',
-    transition: `grid-template-rows ${durationVars['--duration-medium']} ${easeVars['--ease-standard']}`,
+    transition: {
+      default: `grid-template-rows ${durationVars['--duration-medium']} ${easeVars['--ease-standard']}`,
+      '@media (prefers-reduced-motion: reduce)': 'none',
+    },
   },
   groupContentExpanded: {
     gridTemplateRows: '1fr',
@@ -265,7 +272,10 @@ const styles = stylex.create({
     width: '14px',
     height: '14px',
     color: colorVars['--color-text-disabled'],
-    transition: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
+    transition: {
+      default: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
+      '@media (prefers-reduced-motion: reduce)': 'none',
+    },
     marginInlineStart: 'auto',
   },
   callDetailContent: {
@@ -356,6 +366,7 @@ function CallRow({call}: {call: ChatToolCallItem}) {
   const status = call.status ?? 'complete';
   const hasDetail = call.resultDetail != null;
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const detailId = useId();
 
   const toggleDetail = hasDetail
     ? () => setIsDetailOpen(prev => !prev)
@@ -365,6 +376,8 @@ function CallRow({call}: {call: ChatToolCallItem}) {
     <div
       role={hasDetail ? 'button' : undefined}
       tabIndex={hasDetail ? 0 : undefined}
+      aria-expanded={hasDetail ? isDetailOpen : undefined}
+      aria-controls={hasDetail && isDetailOpen ? detailId : undefined}
       onClick={toggleDetail}
       onKeyDown={
         hasDetail
@@ -396,14 +409,17 @@ function CallRow({call}: {call: ChatToolCallItem}) {
             </span>
           </>
         )}
+        {status === 'error' && call.errorMessage != null && (
+          // The title attribute above is hover-only; expose the error detail
+          // as real text so it reaches screen readers, keyboard, and touch
+          // users. Rendering it inside the row also folds it into the
+          // accessible name of expandable (role="button") rows.
+          <VisuallyHidden>{`Error: ${call.errorMessage}`}</VisuallyHidden>
+        )}
       </span>
       <span {...stylex.props(styles.callName)}>{call.name}</span>
       {call.node != null && (
-        <Badge
-          label={call.node}
-          variant="neutral"
-          xstyle={styles.nodePill}
-        />
+        <Badge label={call.node} variant="neutral" xstyle={styles.nodePill} />
       )}
       {call.target != null && (
         <span {...stylex.props(styles.callLabel)}>{call.target}</span>
@@ -448,7 +464,7 @@ function CallRow({call}: {call: ChatToolCallItem}) {
     <div>
       {row}
       {isDetailOpen && (
-        <div {...stylex.props(styles.callDetailContent)}>
+        <div id={detailId} {...stylex.props(styles.callDetailContent)}>
           {call.resultDetail}
         </div>
       )}
@@ -497,6 +513,7 @@ export function ChatToolCalls(props: ChatToolCallsProps) {
 
   const autoDefault = defaultIsExpanded ?? false;
   const [internalExpanded, setInternalExpanded] = useState(autoDefault);
+  const contentId = useId();
   const isControlled = controlledExpanded !== undefined;
   const isExpanded = isControlled ? controlledExpanded : internalExpanded;
 
@@ -548,6 +565,7 @@ export function ChatToolCalls(props: ChatToolCallsProps) {
         role="button"
         tabIndex={0}
         aria-expanded={isExpanded}
+        aria-controls={contentId}
         onClick={toggle}
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -613,6 +631,7 @@ export function ChatToolCalls(props: ChatToolCallsProps) {
 
       {/* Expanded: all calls with full metadata */}
       <div
+        id={contentId}
         {...stylex.props(
           styles.groupContent,
           isExpanded && styles.groupContentExpanded,

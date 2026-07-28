@@ -4,7 +4,7 @@
 
 /**
  * @file DateInput.tsx
- * @input Uses React, useId, useState, useCallback, useRef, Field, Icon, Calendar, usePopover
+ * @input Uses React, useId, useState, useCallback, useRef, Field, Icon, Calendar, usePopover, InputGroupContext
  * @output Exports DateInput component, DateInputProps
  * @position Core implementation; consumed by index.ts, tested by DateInput.test.tsx
  *
@@ -42,23 +42,25 @@ import {
   inputStatusBorderStyles,
   inputStatusHoverShadowStyles,
   inputStatusFocusWithinStyles,
+  type FieldStatusVariant,
 } from '../Field';
 import {Icon} from '../Icon';
+import {VisuallyHidden} from '../VisuallyHidden';
+import {useInputGroup} from '../InputGroup/InputGroupContext';
+import {groupStyles} from '../InputGroup/groupStyles';
+import {useSize} from '../SizeContext/SizeContext';
 import {Spinner} from '../Spinner';
-import {
-  Calendar,
-  type ISODateString,
-  type CalendarHandle,
-} from '../Calendar';
+import {Calendar, type ISODateString, type CalendarHandle} from '../Calendar';
 import {useCalendarConstraints} from '../Calendar/hooks';
 import {usePopover} from '../Popover';
-import {parseDateInput} from '../utils';
+import {useTooltip} from '../Tooltip';
+import {getInputARIA, parseDateInput} from '../utils';
 import {
   plainDateFromISO,
   plainDateToISO,
-  plainDateFormat,
-  DATE_FORMAT_LONG,
+  formatSharedDate,
 } from '../utils/plainDate';
+import type {TimestampFormat} from '../Timestamp';
 
 const styles = stylex.create({
   iconButton: {
@@ -126,6 +128,25 @@ const sizeStyles = stylex.create({
 
 export type DateInputSize = keyof typeof sizeStyles;
 
+/**
+ * Named display formats for a committed date value. These are the date-only
+ * members of Timestamp's `format` vocabulary — reused verbatim (via
+ * `Extract`) so the same literal renders the same date shape in both
+ * `Timestamp` and `DateInput`:
+ * - `'date'`: locale short-month date, e.g. "Mar 21, 2026"
+ * - `'date_long'`: locale long-month date, e.g. "March 21, 2026" (the default)
+ * - `'date_weekday'`: short weekday + date, e.g. "Wed, Mar 21, 2026"
+ * - `'system_date'`: ISO 8601 calendar date, e.g. "2026-03-21"
+ *
+ * Because `DateInputFormat` is `Extract`ed from `TimestampFormat`, the two
+ * types stay in compile-time lockstep: renaming or removing one of these
+ * members from `TimestampFormat` breaks this type at build time.
+ */
+export type DateInputFormat = Extract<
+  TimestampFormat,
+  'date' | 'date_long' | 'date_weekday' | 'system_date'
+>;
+
 // Re-export shared types for convenience
 
 export type {
@@ -136,6 +157,7 @@ import {mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 export interface DateInputProps extends Omit<
   BaseProps,
@@ -176,6 +198,29 @@ export interface DateInputProps extends Omit<
    * @default false
    */
   isDisabled?: boolean;
+
+  /**
+   * Explains why the input is disabled. When set together with
+   * `isDisabled`, the input shows a tooltip with this text on hover and
+   * keyboard focus, and the field stays focusable (via `aria-disabled`)
+   * so the reason is discoverable by keyboard and assistive technology.
+   * Typing and calendar activation stay blocked.
+   *
+   * Use this instead of wrapping a disabled input in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <DateInput
+   *   label="Event date"
+   *   value={date}
+   *   onChange={setDate}
+   *   isDisabled
+   *   disabledMessage="You need the Editor role to change this"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
 
   /**
    * The selected date in ISO format (YYYY-MM-DD).
@@ -234,6 +279,13 @@ export interface DateInputProps extends Omit<
    * If message is provided, displays below the input.
    */
   status?: InputStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
 
   /**
    * Width of the field. Numbers are treated as pixels, strings are used as-is
@@ -258,6 +310,37 @@ export interface DateInputProps extends Omit<
    * @default 1
    */
   numberOfMonths?: 1 | 2;
+
+  /**
+   * How the committed date value is displayed in the text field. Accepts a
+   * named format reused from `Timestamp`'s `format` vocabulary (so the same
+   * literal renders the same date shape in both components) or a function that
+   * maps the ISO value to a custom display string.
+   *
+   * - `'date_long'` (default): long-month date, e.g. "March 21, 2026"
+   * - `'date'`: short-month date, e.g. "Mar 21, 2026"
+   * - `'date_weekday'`: short weekday + date, e.g. "Wed, Mar 21, 2026"
+   * - `'system_date'`: ISO 8601 calendar date, e.g. "2026-03-21"
+   * - `(value: ISODateString) => string`: fully custom display string
+   *
+   * Formatting applies only to the committed value — never to text the user is
+   * actively typing. A custom function's output that `parseDateInput` cannot
+   * read back can't be re-committed after an edit; external `value` changes
+   * always recompute the display from the ISO value.
+   *
+   * @default 'date_long'
+   * @example
+   * ```
+   * <DateInput label="Ship date" value={date} onChange={setDate} format="date" />
+   * <DateInput
+   *   label="Ship date"
+   *   value={date}
+   *   onChange={setDate}
+   *   format={iso => new Date(iso + 'T00:00').toDateString()}
+   * />
+   * ```
+   */
+  format?: DateInputFormat | ((value: ISODateString) => string);
 }
 
 /**
@@ -279,6 +362,7 @@ export function DateInput({
   isOptional = false,
   isRequired = false,
   isDisabled = false,
+  disabledMessage,
   value,
   onChange,
   changeAction,
@@ -286,12 +370,14 @@ export function DateInput({
   min,
   max,
   dateConstraints,
-  placeholder = 'Select a date',
-  size = 'md',
+  placeholder: placeholderFromProps,
+  size: sizeProp,
   status,
+  statusVariant = 'attached',
   labelTooltip,
   hasClear = false,
   numberOfMonths = 1,
+  format = 'date_long',
   width,
   xstyle,
   className,
@@ -299,17 +385,39 @@ export function DateInput({
   ref,
   ...rest
 }: DateInputProps) {
+  const t = useTranslator();
+  const placeholder =
+    placeholderFromProps ?? t('@astryx.dateInput.placeholder');
+  const size = useSize(sizeProp, 'md');
   const id = useId();
+  const inputLabelID = useId();
   const descriptionID = useId();
   const statusMessageID = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const calendarRef = useRef<CalendarHandle | null>(null);
   const lastFiredValueRef = useRef<ISODateString | undefined>(undefined);
+  const inputGroup = useInputGroup();
 
   const [, startTransition] = useTransition();
   const [optimisticValue, setOptimisticValue] = useOptimistic(value);
   const isBusy = isLoading || optimisticValue !== value;
   const isEffectivelyDisabled = isDisabled || isBusy;
+
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the input container (which already exists) and
+  // the text input stays perceivable via aria-disabled instead of the disabled
+  // attribute. Typing is blocked with readOnly and value mutation guards;
+  // calendar activation is blocked by the isEffectivelyDisabled guards. Only
+  // the persistent isDisabled state (not the transient busy state) surfaces a
+  // reason.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    // The container div is not naturally focusable; focusin bubbles up from
+    // the input, so always attach focus listeners.
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
 
   // Status icon mapping
   const statusIconMap: Record<InputStatusType, IconName> = {
@@ -330,13 +438,15 @@ export function DateInput({
   // Constraint checking for text input validation (reuses calendar logic)
   const {isDateDisabled} = useCalendarConstraints({min, max, dateConstraints});
 
-  const ariaDescribedBy =
+  const {ariaLabelledBy, ariaDescribedBy} = getInputARIA(
+    inputLabelID,
     [
       description ? descriptionID : null,
       status?.message ? statusMessageID : null,
-    ]
-      .filter(Boolean)
-      .join(' ') || undefined;
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
+    ],
+    inputGroup,
+  );
 
   // Pending input while user is typing (null = show formatted value)
   const [pendingInput, setPendingInput] = useState<string | null>(null);
@@ -354,12 +464,26 @@ export function DateInput({
     }
   }
 
+  // Format a committed ISO value for display. The default `date_long` renders
+  // the long-month shape (byte-identical to the historical hardcoded
+  // DATE_FORMAT_LONG rendering, so still non-breaking); a function is called
+  // with the ISO value; every other named member reuses Timestamp's shared
+  // date mapping. Applies ONLY to the committed value, never to in-progress
+  // typed input.
+  const formatCommittedValue = useCallback(
+    (iso: ISODateString): string =>
+      typeof format === 'function'
+        ? format(iso)
+        : formatSharedDate(plainDateFromISO(iso), format),
+    [format],
+  );
+
   // Display value: pending input if typing, otherwise formatted value
   const displayValue =
     pendingInput !== null
       ? pendingInput
       : optimisticValue && /^\d{4}-\d{2}-\d{2}$/.test(optimisticValue)
-        ? plainDateFormat(plainDateFromISO(optimisticValue), DATE_FORMAT_LONG)
+        ? formatCommittedValue(optimisticValue)
         : '';
 
   // Check if current input is valid (for styling purposes)
@@ -369,8 +493,8 @@ export function DateInput({
       : parseDateInput(pendingInput) !== null;
 
   const popover = usePopover({
-    dialogLabel: 'Choose date',
-    closeButtonLabel: 'Close calendar',
+    dialogLabel: t('@astryx.dateInput.dialogLabel'),
+    closeButtonLabel: t('@astryx.dateInput.closeCalendar'),
     onHide: () => inputRef.current?.focus(),
   });
 
@@ -428,6 +552,11 @@ export function DateInput({
   // Handle input text change - update immediately if valid and allowed
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      // With a disabledMessage the input drops `disabled` for focusability, so
+      // guard value mutation explicitly (readOnly also blocks typing).
+      if (isEffectivelyDisabled) {
+        return;
+      }
       const newValue = e.target.value;
       setPendingInput(newValue);
 
@@ -445,7 +574,7 @@ export function DateInput({
         calendarRef.current?.navigateTo(parsedISO);
       }
     },
-    [value, fireChange, isDateDisabled],
+    [value, fireChange, isDateDisabled, isEffectivelyDisabled],
   );
 
   // Commit pending input (shared by blur and Enter key)
@@ -483,13 +612,147 @@ export function DateInput({
       if (e.key === 'Escape' && popover.isOpen) {
         e.preventDefault();
         popover.hide();
+      } else if (
+        (e.key === 'ArrowDown' || (e.altKey && e.key === 'ArrowDown')) &&
+        !popover.isOpen
+      ) {
+        // APG combobox: ArrowDown (and Alt+ArrowDown) opens the calendar
+        // popover from the keyboard, keeping focus in the input (forms-13).
+        e.preventDefault();
+        if (!isEffectivelyDisabled) {
+          popover.show({skipAutoFocus: true});
+        }
       } else if (e.key === 'Enter') {
         e.preventDefault();
         commitPendingInput();
       }
     },
-    [popover, commitPendingInput],
+    [popover, commitPendingInput, isEffectivelyDisabled],
   );
+
+  const inputWrapper = (
+    <div
+      ref={el => {
+        popover.triggerRef(el);
+        // Anchor + hover/focus listeners for the disabled-message tooltip.
+        // Handlers are gated internally by isEnabled, and anchor names
+        // compose, so attaching unconditionally is safe.
+        disabledMessageTooltip.ref(el);
+      }}
+      {...rest}
+      {...mergeProps(
+        themeProps('date-input', {size, status: status?.type ?? null}),
+        stylex.props(
+          inputWrapperStyles.base,
+          sizeStyles[size],
+          isEffectivelyDisabled && inputWrapperStyles.disabled,
+          status && inputStatusBorderStyles[status.type],
+          status && inputStatusHoverShadowStyles[status.type],
+          status && inputStatusFocusWithinStyles[status.type],
+          inputGroup && groupStyles.inGroup,
+          xstyle,
+        ),
+        className,
+        style,
+      )}>
+      {inputGroup && <VisuallyHidden id={inputLabelID}>{label}</VisuallyHidden>}
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={isEffectivelyDisabled}
+        aria-label={
+          popover.isOpen
+            ? t('@astryx.dateInput.toggleCalendarClose')
+            : t('@astryx.dateInput.openCalendar')
+        }
+        {...stylex.props(
+          styles.iconButton,
+          isEffectivelyDisabled && styles.iconButtonDisabled,
+        )}>
+        <Icon icon="calendar" size="sm" color="secondary" />
+      </button>
+      <input
+        ref={mergeRefs(ref, inputRef)}
+        id={id}
+        type="text"
+        role="combobox"
+        value={displayValue}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        onClick={handleInputClick}
+        onKeyDown={handleInputKeyDown}
+        placeholder={placeholder}
+        // With a disabledMessage the input keeps focusability via
+        // aria-disabled so the reason is focus-discoverable; typing is
+        // blocked with readOnly and the mutation guards, and calendar
+        // activation is blocked by the isEffectivelyDisabled guards.
+        disabled={isEffectivelyDisabled && !showsDisabledMessage}
+        aria-disabled={showsDisabledMessage ? 'true' : undefined}
+        readOnly={showsDisabledMessage || undefined}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        aria-required={isRequired === true ? 'true' : undefined}
+        aria-invalid={
+          status?.type === 'error' || !isInputValid ? 'true' : undefined
+        }
+        aria-busy={isBusy || undefined}
+        aria-expanded={popover.isOpen}
+        aria-haspopup="dialog"
+        aria-controls={popover.isOpen ? popover.id : undefined}
+        aria-autocomplete="none"
+        autoComplete="off"
+        {...stylex.props(
+          styles.input,
+          isEffectivelyDisabled && styles.inputDisabled,
+          !isInputValid && styles.inputInvalid,
+        )}
+      />
+      {/*
+          Live region announcing invalid typed input to assistive technology.
+          The value silently reverts on blur, so without this a screen-reader
+          user would get no feedback that their entry was rejected (WCAG 3.3.1).
+        */}
+      <VisuallyHidden as="div" role="alert" aria-live="assertive">
+        {!isInputValid ? 'Invalid date' : ''}
+      </VisuallyHidden>
+      {hasClear && value !== undefined && !isEffectivelyDisabled && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label={t('@astryx.dateInput.clear', {label})}
+          {...stylex.props(styles.iconButton)}>
+          <Icon icon="close" size="sm" color="secondary" />
+        </button>
+      )}
+      {isBusy && <Spinner size="sm" />}
+      {status && !inputGroup && (
+        <Icon
+          icon={statusIconMap[status.type]}
+          size="md"
+          color={statusIconColorMap[status.type]}
+        />
+      )}
+      {popover.render(
+        <Calendar
+          handleRef={calendarRef}
+          mode="single"
+          value={optimisticValue}
+          onChange={handleDateSelect}
+          min={min}
+          max={max}
+          dateConstraints={dateConstraints}
+          numberOfMonths={numberOfMonths}
+        />,
+        {placement: 'below', alignment: 'start'},
+      )}
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
+    </div>
+  );
+
+  if (inputGroup) {
+    return inputWrapper;
+  }
 
   return (
     <Field
@@ -510,94 +773,10 @@ export function DateInput({
             }
           : undefined
       }
+      statusVariant={statusVariant}
       labelTooltip={labelTooltip}
       width={width}>
-      <div
-        ref={popover.triggerRef}
-        {...rest}
-        {...mergeProps(
-          themeProps('date-input', {size, status: status?.type ?? null}),
-          stylex.props(
-            inputWrapperStyles.base,
-            sizeStyles[size],
-            isEffectivelyDisabled && inputWrapperStyles.disabled,
-            status && inputStatusBorderStyles[status.type],
-            status && inputStatusHoverShadowStyles[status.type],
-            status && inputStatusFocusWithinStyles[status.type],
-            xstyle,
-          ),
-          className,
-          style,
-        )}>
-        <button
-          type="button"
-          onClick={handleToggle}
-          disabled={isEffectivelyDisabled}
-          aria-label={popover.isOpen ? 'Close calendar' : 'Open calendar'}
-          {...stylex.props(
-            styles.iconButton,
-            isEffectivelyDisabled && styles.iconButtonDisabled,
-          )}>
-          <Icon icon="calendar" size="sm" color="secondary" />
-        </button>
-        <input
-          ref={mergeRefs(ref, inputRef)}
-          id={id}
-          type="text"
-          role="combobox"
-          value={displayValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur}
-          onClick={handleInputClick}
-          onKeyDown={handleInputKeyDown}
-          placeholder={placeholder}
-          disabled={isEffectivelyDisabled}
-          aria-describedby={ariaDescribedBy}
-          aria-required={isRequired === true ? 'true' : undefined}
-          aria-invalid={status?.type === 'error' ? 'true' : undefined}
-          aria-busy={isBusy || undefined}
-          aria-expanded={popover.isOpen}
-          aria-haspopup="dialog"
-          aria-controls={popover.isOpen ? popover.id : undefined}
-          aria-autocomplete="none"
-          autoComplete="off"
-          {...stylex.props(
-            styles.input,
-            isEffectivelyDisabled && styles.inputDisabled,
-            !isInputValid && styles.inputInvalid,
-          )}
-        />
-        {hasClear && value !== undefined && !isEffectivelyDisabled && (
-          <button
-            type="button"
-            onClick={handleClear}
-            aria-label={`Clear ${label}`}
-            {...stylex.props(styles.iconButton)}>
-            <Icon icon="close" size="sm" color="secondary" />
-          </button>
-        )}
-        {isBusy && <Spinner size="sm" />}
-        {status && (
-          <Icon
-            icon={statusIconMap[status.type]}
-            size="md"
-            color={statusIconColorMap[status.type]}
-          />
-        )}
-      </div>
-      {popover.render(
-        <Calendar
-          handleRef={calendarRef}
-          mode="single"
-          value={optimisticValue}
-          onChange={handleDateSelect}
-          min={min}
-          max={max}
-          dateConstraints={dateConstraints}
-          numberOfMonths={numberOfMonths}
-        />,
-        {placement: 'below', alignment: 'start'},
-      )}
+      {inputWrapper}
     </Field>
   );
 }

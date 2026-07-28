@@ -29,6 +29,7 @@ const meta: Meta<typeof MultiSelector> = {
       options: ['count', 'labels', 'badges'],
     },
     isDisabled: {control: 'boolean'},
+    disabledMessage: {control: 'text'},
     isOptional: {control: 'boolean'},
     isRequired: {control: 'boolean'},
     hasSelectAll: {control: 'boolean'},
@@ -201,6 +202,29 @@ export const DisabledItems: Story = {
         onChange={setValue}
         hasSelectAll
         placeholder="Select roles..."
+      />
+    );
+  },
+  decorators: [Story => <Story />],
+};
+
+// Disabled with an explanation tooltip. Hover or keyboard-focus the trigger to
+// see why it's disabled — the reason is announced to assistive tech via
+// aria-describedby, and the trigger stays focusable (activation is still
+// blocked). Use disabledMessage instead of wrapping a disabled MultiSelector in
+// Tooltip: disabled controls swallow the pointer events a Tooltip wrapper needs.
+export const DisabledWithMessage: Story = {
+  render: () => {
+    const [value, setValue] = useState<string[]>([]);
+    return (
+      <MultiSelector
+        label="Columns"
+        options={['Name', 'Email', 'Role', 'Status', 'Created']}
+        value={value}
+        onChange={setValue}
+        isDisabled
+        disabledMessage="Select a table before choosing columns"
+        placeholder="Select columns..."
       />
     );
   },
@@ -380,4 +404,33 @@ export const Clearable: Story = {
     label: 'Technologies',
     placeholder: 'Select technologies...',
   },
+};
+
+export const StatusVariantComparison: Story = {
+  render: () => {
+    const [a, setA] = useState<string[]>([]);
+    const [b, setB] = useState<string[]>([]);
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: 24, width: 300}}>
+        <MultiSelector
+          label="Attached (default)"
+          options={['Name', 'Email', 'Role']}
+          value={a}
+          onChange={setA}
+          status={{type: 'error', message: 'Select at least one column'}}
+          placeholder="Select..."
+        />
+        <MultiSelector
+          label="Detached"
+          options={['Name', 'Email', 'Role']}
+          value={b}
+          onChange={setB}
+          status={{type: 'error', message: 'Select at least one column'}}
+          statusVariant="detached"
+          placeholder="Select..."
+        />
+      </div>
+    );
+  },
+  decorators: [Story => <Story />],
 };

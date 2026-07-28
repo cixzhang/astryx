@@ -11,10 +11,14 @@
 
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
+import * as stylex from '@stylexjs/stylex';
 import {BaseTable} from './BaseTable';
 import {Table} from './Table';
 import {TableRow} from './TableRow';
 import {TableCell} from './TableCell';
+import {TableHeader} from './TableHeader';
+import {TableBody} from './TableBody';
+import {TableFooter} from './TableFooter';
 import {
   proportional,
   pixel,
@@ -229,6 +233,34 @@ describe('BaseTable', () => {
     expect(headers[2]).toHaveTextContent('Email');
   });
 
+  it('renders every column header with scope="col"', () => {
+    render(<BaseTable data={users} columns={columns} />);
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers).toHaveLength(3);
+    for (const header of headers) {
+      expect(header).toHaveAttribute('scope', 'col');
+    }
+  });
+
+  it('lets a consumer override scope via header html props', () => {
+    // A `<th scope="row">` maps to the `rowheader` role, so query the DOM
+    // directly to assert the attribute regardless of the resolved ARIA role.
+    const plugin: TablePlugin<User> = {
+      transformHeaderCell: (props, column) =>
+        column.key === 'name'
+          ? {...props, htmlProps: {...props.htmlProps, scope: 'row'}}
+          : props,
+    };
+    const {container} = render(
+      <BaseTable data={users} columns={columns} plugins={[plugin]} />,
+    );
+    const headerCells = container.querySelectorAll('thead th');
+    // columns fixture order: name, age, email — plugin overrides name → 'row'
+    expect(headerCells[0]).toHaveAttribute('scope', 'row');
+    expect(headerCells[1]).toHaveAttribute('scope', 'col');
+    expect(headerCells[2]).toHaveAttribute('scope', 'col');
+  });
+
   it('renders data cells', () => {
     render(<BaseTable data={users} columns={columns} />);
     const cells = screen.getAllByRole('cell');
@@ -243,6 +275,27 @@ describe('BaseTable', () => {
     render(<BaseTable data={users} columns={columns} />);
     // 1 header row + 3 data rows
     expect(screen.getAllByRole('row')).toHaveLength(4);
+  });
+
+  it('does not apply hover styling to the header row when hasHover is set', () => {
+    // Use the public Table (provides TableContext); BaseTable alone has no
+    // context, so rows wouldn't pick up hover styling at all.
+    const {container} = render(
+      <Table data={users} columns={columns} hasHover />,
+    );
+    const headerRow = container.querySelector('thead tr');
+    const bodyRow = container.querySelector('tbody tr');
+    expect(headerRow).not.toBeNull();
+    expect(bodyRow).not.toBeNull();
+
+    const headerClasses = new Set(
+      (headerRow?.className ?? '').split(/\s+/).filter(Boolean),
+    );
+    // The body row carries hover-styling class(es) that the header row does not.
+    const bodyOnlyClasses = (bodyRow?.className ?? '')
+      .split(/\s+/)
+      .filter(c => c && !headerClasses.has(c));
+    expect(bodyOnlyClasses.length).toBeGreaterThan(0);
   });
 
   it('auto-generates columns from data keys when columns omitted', () => {
@@ -276,11 +329,7 @@ describe('BaseTable', () => {
 
   it('uses idKey function to key rows', () => {
     render(
-      <BaseTable
-        data={users}
-        columns={columns}
-        idKey={item => item.email}
-      />,
+      <BaseTable data={users} columns={columns} idKey={item => item.email} />,
     );
     expect(screen.getAllByRole('row')).toHaveLength(4);
   });
@@ -366,6 +415,136 @@ describe('BaseTable', () => {
     );
   });
 
+  describe('root element styling props (#3679)', () => {
+    it('applies className to the table element', () => {
+      render(<Table data={users} columns={columns} className="custom-table" />);
+      expect(screen.getByRole('table').className).toContain('custom-table');
+    });
+
+    it('applies style to the table element', () => {
+      render(<Table data={users} columns={columns} style={{opacity: 0.9}} />);
+      expect(screen.getByRole('table').style.opacity).toBe('0.9');
+    });
+
+    it('accepts xstyle without error', () => {
+      render(<Table data={users} columns={columns} xstyle={undefined} />);
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    it('spreads id and aria attributes onto the table element', () => {
+      render(
+        <Table
+          data={users}
+          columns={columns}
+          id="users-table"
+          aria-label="Users"
+          data-analytics="tables"
+        />,
+      );
+      const table = screen.getByRole('table', {name: 'Users'});
+      expect(table.id).toBe('users-table');
+      expect(table).toHaveAttribute('data-analytics', 'tables');
+    });
+
+    it('composes with deprecated tableProps, direct props winning conflicts', () => {
+      render(
+        <Table
+          data={users}
+          columns={columns}
+          className="direct"
+          style={{opacity: 1}}
+          tableProps={{
+            className: 'legacy',
+            style: {color: 'red', opacity: 0.5},
+          }}
+        />,
+      );
+      const table = screen.getByRole('table');
+      expect(table.className).toContain('legacy');
+      expect(table.className).toContain('direct');
+      // Direct style wins the conflicting key; non-conflicting legacy survives.
+      expect(table.style.opacity).toBe('1');
+      expect(table.style.color).toBe('red');
+    });
+
+    it('keeps the computed column min-width over a consumer style.minWidth', () => {
+      const {tableMinWidth} = resolveColumnWidths(columns);
+      render(
+        <Table data={users} columns={columns} style={{minWidth: '10px'}} />,
+      );
+      expect(screen.getByRole('table').style.minWidth).toBe(
+        `${tableMinWidth}px`,
+      );
+    });
+
+    it('lets a consumer style.minWidth survive when columns compute none', () => {
+      const plain: TableColumn<User>[] = [{key: 'name'}, {key: 'age'}];
+      render(<Table data={users} columns={plain} style={{minWidth: '10px'}} />);
+      expect(screen.getByRole('table').style.minWidth).toBe('10px');
+    });
+
+    it('direct id and aria attributes beat the same keys in tableProps', () => {
+      render(
+        <Table
+          data={users}
+          columns={columns}
+          id="direct-id"
+          aria-label="Direct"
+          tableProps={{id: 'legacy-id', 'aria-label': 'Legacy'}}
+        />,
+      );
+      const table = screen.getByRole('table', {name: 'Direct'});
+      expect(table.id).toBe('direct-id');
+    });
+
+    it('keeps the astryx theme classes alongside a consumer className', () => {
+      render(<Table data={users} columns={columns} className="custom-table" />);
+      const table = screen.getByRole('table');
+      expect(table.className).toContain('astryx-base-table');
+      expect(table.className).toContain('astryx-table');
+      expect(table.className).toContain('custom-table');
+    });
+
+    it('passes event handlers through to the table element', async () => {
+      const onClick = vi.fn();
+      render(<Table data={users} columns={columns} onClick={onClick} />);
+      screen
+        .getByRole('table')
+        .dispatchEvent(new MouseEvent('click', {bubbles: true}));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('applies dynamic xstyle values to the table element', () => {
+      const dynamic = stylex.create({
+        opacity: (value: number) => ({opacity: value}),
+      });
+      render(
+        <Table data={users} columns={columns} xstyle={dynamic.opacity(0.42)} />,
+      );
+      expect(screen.getByRole('table').getAttribute('style')).toContain('0.42');
+    });
+
+    it('honors className in children mode', () => {
+      render(
+        <Table className="custom-table">
+          <tbody>
+            <TableRow>
+              <TableCell>Cell</TableCell>
+            </TableRow>
+          </tbody>
+        </Table>,
+      );
+      expect(screen.getByRole('table').className).toContain('custom-table');
+    });
+
+    it('honors className on an unwrapped BaseTable (no scrollWrapper)', () => {
+      render(
+        <BaseTable data={users} columns={columns} className="custom-table" />,
+      );
+      expect(screen.getByRole('table').className).toContain('custom-table');
+    });
+  });
+
   describe('plugin pipeline', () => {
     it('applies transformTable plugin', () => {
       const plugin: TablePlugin<User> = {
@@ -374,9 +553,7 @@ describe('BaseTable', () => {
           htmlProps: {...props.htmlProps, 'data-testid': 'plugin-table'},
         }),
       };
-      render(
-        <BaseTable data={users} columns={columns} plugins={[plugin]} />,
-      );
+      render(<BaseTable data={users} columns={columns} plugins={[plugin]} />);
       expect(screen.getByTestId('plugin-table')).toBeInTheDocument();
     });
 
@@ -387,9 +564,7 @@ describe('BaseTable', () => {
           htmlProps: {...props.htmlProps, 'data-testid': 'plugin-header-row'},
         }),
       };
-      render(
-        <BaseTable data={users} columns={columns} plugins={[plugin]} />,
-      );
+      render(<BaseTable data={users} columns={columns} plugins={[plugin]} />);
       expect(screen.getByTestId('plugin-header-row')).toBeInTheDocument();
     });
 
@@ -404,9 +579,7 @@ describe('BaseTable', () => {
           };
         },
       };
-      render(
-        <BaseTable data={users} columns={columns} plugins={[plugin]} />,
-      );
+      render(<BaseTable data={users} columns={columns} plugins={[plugin]} />);
       expect(receivedKeys).toEqual(['name', 'age', 'email']);
       const headers = screen.getAllByRole('columnheader');
       expect(headers[0]).toHaveAttribute('data-column', 'name');
@@ -423,9 +596,7 @@ describe('BaseTable', () => {
           };
         },
       };
-      render(
-        <BaseTable data={users} columns={columns} plugins={[plugin]} />,
-      );
+      render(<BaseTable data={users} columns={columns} plugins={[plugin]} />);
       expect(receivedItems).toEqual(['Alice', 'Bob', 'Charlie']);
     });
 
@@ -437,9 +608,7 @@ describe('BaseTable', () => {
           return props;
         },
       };
-      render(
-        <BaseTable data={users} columns={columns} plugins={[plugin]} />,
-      );
+      render(<BaseTable data={users} columns={columns} plugins={[plugin]} />);
       // 3 rows * 3 columns = 9 calls
       expect(calls).toHaveLength(9);
       expect(calls[0]).toEqual({col: 'name', name: 'Alice'});
@@ -610,6 +779,29 @@ describe('BaseTable', () => {
 // =============================================================================
 
 describe('Table', () => {
+  it('clears a cell when the field is removed from the row object (#3595)', () => {
+    const cols: TableColumn<Record<string, unknown>>[] = [
+      {key: 'name', header: 'Name'},
+      {key: 'status', header: 'Status'},
+    ];
+    const {rerender} = render(
+      <Table
+        data={[{id: '1', name: 'Alice', status: 'active'}]}
+        columns={cols}
+        idKey="id"
+      />,
+    );
+    expect(screen.getByText('active')).toBeInTheDocument();
+
+    // Clearing a field by omitting it (optimistic update / server response)
+    // must re-render the row — the memo previously only compared the keys of
+    // the NEW item, so the deleted field's stale value kept rendering.
+    rerender(
+      <Table data={[{id: '1', name: 'Alice'}]} columns={cols} idKey="id" />,
+    );
+    expect(screen.queryByText('active')).not.toBeInTheDocument();
+  });
+
   it('renders a table with correct structure', () => {
     render(<Table data={users} columns={columns} />);
     expect(screen.getByRole('table')).toBeInTheDocument();
@@ -624,6 +816,16 @@ describe('Table', () => {
     const wrapper = table.parentElement;
     expect(wrapper).toBeTruthy();
     expect(wrapper!.className).toContain('astryx-table-scroll-wrapper');
+  });
+
+  it('makes the scroll container keyboard-focusable', () => {
+    render(<Table data={users} columns={columns} />);
+    const table = screen.getByRole('table');
+    const wrapper = table.parentElement;
+    expect(wrapper).toBeTruthy();
+    expect(wrapper!).toHaveAttribute('tabindex', '0');
+    expect(wrapper!).toHaveAttribute('role', 'group');
+    expect(wrapper!).toHaveAttribute('aria-label', 'Table');
   });
 
   it('uses table-layout: auto in children mode', () => {
@@ -746,11 +948,7 @@ describe('Table', () => {
       }),
     };
     render(
-      <Table
-        data={users}
-        columns={columns}
-        plugins={{custom: userPlugin}}
-      />,
+      <Table data={users} columns={columns} plugins={{custom: userPlugin}} />,
     );
     expect(screen.getByTestId('custom-plugin')).toBeInTheDocument();
   });
@@ -759,7 +957,7 @@ describe('Table', () => {
     const userPlugin: TablePlugin<User> = {
       transformTable: props => {
         // XDS plugin should have already added styles
-        expect(props.styles.length).toBeGreaterThan(1);
+        expect(props.xstyle.length).toBeGreaterThan(1);
         return {
           ...props,
           htmlProps: {...props.htmlProps, 'data-testid': 'after-xds'},
@@ -767,11 +965,7 @@ describe('Table', () => {
       },
     };
     render(
-      <Table
-        data={users}
-        columns={columns}
-        plugins={{custom: userPlugin}}
-      />,
+      <Table data={users} columns={columns} plugins={{custom: userPlugin}} />,
     );
     expect(screen.getByTestId('after-xds')).toBeInTheDocument();
   });
@@ -1222,5 +1416,38 @@ describe('emptyState', () => {
     );
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Age')).toBeInTheDocument();
+  });
+
+  describe('table section rest forwarding', () => {
+    it('forwards data-testid and id to the tbody, thead, and tfoot', () => {
+      const {container} = render(
+        <table>
+          <TableHeader data-testid="thead" id="head-1">
+            <tr>
+              <th>H</th>
+            </tr>
+          </TableHeader>
+          <TableBody data-testid="tbody" id="body-1">
+            <tr>
+              <td>B</td>
+            </tr>
+          </TableBody>
+          <TableFooter data-testid="tfoot" id="foot-1">
+            <tr>
+              <td>F</td>
+            </tr>
+          </TableFooter>
+        </table>,
+      );
+      const thead = container.querySelector('thead')!;
+      const tbody = container.querySelector('tbody')!;
+      const tfoot = container.querySelector('tfoot')!;
+      expect(thead).toHaveAttribute('data-testid', 'thead');
+      expect(thead).toHaveAttribute('id', 'head-1');
+      expect(tbody).toHaveAttribute('data-testid', 'tbody');
+      expect(tbody).toHaveAttribute('id', 'body-1');
+      expect(tfoot).toHaveAttribute('data-testid', 'tfoot');
+      expect(tfoot).toHaveAttribute('id', 'foot-1');
+    });
   });
 });

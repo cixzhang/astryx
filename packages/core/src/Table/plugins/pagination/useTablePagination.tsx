@@ -22,6 +22,7 @@ import {spacingVars} from '../../../theme/tokens.stylex';
 import {Pagination} from '../../../Pagination';
 import type {PaginationProps} from '../../../Pagination';
 import type {TablePlugin} from '../../types';
+import {useTranslator} from '../../../i18n';
 
 // =============================================================================
 // Styles
@@ -193,21 +194,30 @@ export interface UseTablePaginationConfig {
 export function useTablePagination<T extends Record<string, unknown>>(
   config: UseTablePaginationConfig,
 ): TablePlugin<T> {
+  const t = useTranslator();
   const {
     page,
     onPageChange,
     totalItems,
     totalPages: totalPagesProp,
     hasMore,
-    pageSize = 10,
+    pageSize: pageSizeConfig = 10,
     onPageSizeChange,
     pageSizeOptions,
     variant = 'pages',
     size = 'md',
     position = 'below',
     align = 'center',
-    label = 'Table pagination',
+    label: labelFromProps,
   } = config;
+  const label = labelFromProps ?? t('@astryx.table.pagination.label');
+
+  // Same guard as Pagination itself: 0/NaN/negative pageSize would produce an
+  // Infinity/NaN totalPages here, which bypasses Pagination's own coercion
+  // because it is passed down as the explicit totalPages prop.
+  const pageSize = Number.isFinite(pageSizeConfig)
+    ? Math.max(1, Math.floor(pageSizeConfig))
+    : 10;
 
   const computedTotalPages =
     totalPagesProp ??

@@ -19,6 +19,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -28,11 +29,13 @@ import * as stylex from '@stylexjs/stylex';
 import {colorVars, spacingVars, typeScaleVars} from '../theme/tokens.stylex';
 import {Icon} from '../Icon';
 import {IconButton} from '../IconButton';
+import {useAnnounce} from '../hooks/useAnnounce';
 import {useScrollLock} from '../hooks/useScrollLock';
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
 import {mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 /**
  * Media type for lightbox items.
@@ -196,7 +199,7 @@ const styles = stylex.create({
   closeButton: {
     position: 'absolute',
     top: spacingVars['--spacing-3'],
-    right: spacingVars['--spacing-3'],
+    insetInlineEnd: spacingVars['--spacing-3'],
     zIndex: 1,
   },
   navButton: {
@@ -206,15 +209,15 @@ const styles = stylex.create({
     zIndex: 1,
   },
   navPrev: {
-    left: spacingVars['--spacing-3'],
+    insetInlineStart: spacingVars['--spacing-3'],
   },
   navNext: {
-    right: spacingVars['--spacing-3'],
+    insetInlineEnd: spacingVars['--spacing-3'],
   },
   counter: {
     position: 'absolute',
     top: spacingVars['--spacing-3'],
-    left: spacingVars['--spacing-3'],
+    insetInlineStart: spacingVars['--spacing-3'],
     color: colorVars['--color-on-dark'],
     fontSize: typeScaleVars['--text-body-size'],
     lineHeight: typeScaleVars['--text-body-leading'],
@@ -280,6 +283,7 @@ export function Lightbox({
   onKeyDown: onKeyDownProp,
   ...props
 }: LightboxProps) {
+  const t = useTranslator();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const triggerElementRef = useRef<Element | null>(null);
@@ -306,7 +310,10 @@ export function Lightbox({
   const dragStartRef = useRef({x: 0, y: 0, panX: 0, panY: 0});
 
   // Resolve current media item
-  const mediaArray = Array.isArray(media) ? media : [media];
+  const mediaArray = useMemo(
+    () => (Array.isArray(media) ? media : [media]),
+    [media],
+  );
   const isGallery = mediaArray.length > 1;
   const currentItem =
     mediaArray.length > 0
@@ -328,6 +335,29 @@ export function Lightbox({
     // eslint-disable-next-line @eslint-react/set-state-in-effect
     setPan({x: 0, y: 0});
   }, [index, currentItem?.src]);
+
+  // Announce gallery navigation to screen readers. Moving between images only
+  // updates the visual counter, which is silent to assistive tech, so mirror
+  // each change in a polite live region ("<alt>, 3 of 12", or "Image 3 of 12"
+  // when the image has no alt). Announce only when the image changes during an
+  // already-open session — not on mount, not when opening (even at a new
+  // index, since the dialog's aria-label already names the current image), and
+  // not on close.
+  const announce = useAnnounce();
+  const prevIndexRef = useRef(index);
+  const wasOpenRef = useRef(isOpen);
+  useEffect(() => {
+    const indexChanged = prevIndexRef.current !== index;
+    const wasOpen = wasOpenRef.current;
+    prevIndexRef.current = index;
+    wasOpenRef.current = isOpen;
+    if (!indexChanged || !isOpen || !wasOpen) {
+      return;
+    }
+    const item = mediaArray[Math.min(index, mediaArray.length - 1)];
+    const position = `${index + 1} of ${mediaArray.length}`;
+    announce(item?.alt ? `${item.alt}, ${position}` : `Image ${position}`);
+  }, [index, isOpen, announce, mediaArray]);
 
   // Open/close dialog
   useIsomorphicLayoutEffect(() => {
@@ -476,7 +506,7 @@ export function Lightbox({
         handleKeyDown(e);
         onKeyDownProp?.(e);
       }}
-      aria-label={currentItem.alt || 'Media viewer'}
+      aria-label={currentItem.alt || t('@astryx.lightbox.mediaViewer')}
       {...mergeProps(
         themeProps('lightbox'),
         stylex.props(styles.dialog, xstyle),
@@ -489,20 +519,23 @@ export function Lightbox({
         <div {...stylex.props(styles.closeButton)}>
           <IconButton
             icon={<Icon icon="close" size="sm" color="inherit" />}
-            label="Close"
+            label={t('@astryx.lightbox.close')}
             variant="ghost"
             onClick={handleClose}
             xstyle={styles.controlButton}
           />
         </div>
 
-        {/* Gallery nav: prev */}
-        {isGallery && canPrev && (
+        {/* Gallery nav: prev — stays mounted and is disabled at the start of
+            the range so pressing/arrowing to the boundary doesn't unmount the
+            focused control and drop focus to <body>. */}
+        {isGallery && (
           <div {...stylex.props(styles.navButton, styles.navPrev)}>
             <IconButton
               icon={<Icon icon="chevronLeft" size="sm" color="inherit" />}
-              label="Previous"
+              label={t('@astryx.lightbox.previous')}
               variant="ghost"
+              isDisabled={!canPrev}
               onClick={goToPrev}
               xstyle={styles.controlButton}
             />
@@ -549,13 +582,15 @@ export function Lightbox({
           )}
         </div>
 
-        {/* Gallery nav: next */}
-        {isGallery && canNext && (
+        {/* Gallery nav: next — see "prev" above; stays mounted and disabled at
+            the end of the range instead of unmounting. */}
+        {isGallery && (
           <div {...stylex.props(styles.navButton, styles.navNext)}>
             <IconButton
               icon={<Icon icon="chevronRight" size="sm" color="inherit" />}
-              label="Next"
+              label={t('@astryx.lightbox.next')}
               variant="ghost"
+              isDisabled={!canNext}
               onClick={goToNext}
               xstyle={styles.controlButton}
             />

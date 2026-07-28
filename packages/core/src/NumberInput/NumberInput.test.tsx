@@ -9,17 +9,55 @@
  * SYNC: When NumberInput.tsx changes, update tests to match new behavior
  */
 
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {HashtagIcon} from '@heroicons/react/24/outline';
+import {TestIcon} from '../__tests__/TestIcon';
+import {InputGroup} from '../InputGroup';
 import {NumberInput} from './NumberInput';
+import {__resetLiveRegionsForTest} from '../hooks/useAnnounce';
+
+// FieldStatus announces status messages through the persistent useAnnounce
+// singletons; remove them between tests so role/aria-live queries in this
+// file never match a leftover region.
+afterEach(() => {
+  __resetLiveRegionsForTest();
+});
+
+// Mock showPopover/hidePopover since jsdom does not implement them. Used by the
+// disabledMessage tooltip.
+beforeEach(() => {
+  HTMLElement.prototype.showPopover = vi.fn(function (this: HTMLElement) {
+    this.setAttribute('popover-open', '');
+    const event = new Event('toggle', {bubbles: false});
+    Object.defineProperty(event, 'newState', {value: 'open'});
+    this.dispatchEvent(event);
+  });
+  HTMLElement.prototype.hidePopover = vi.fn(function (this: HTMLElement) {
+    this.removeAttribute('popover-open');
+    const event = new Event('toggle', {bubbles: false});
+    Object.defineProperty(event, 'newState', {value: 'closed'});
+    this.dispatchEvent(event);
+  });
+  const originalMatches = HTMLElement.prototype.matches;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (HTMLElement.prototype as any).matches = function (
+    selector: string,
+  ): boolean {
+    if (selector === ':popover-open') {
+      return this.hasAttribute('popover-open');
+    }
+    return originalMatches.call(this, selector);
+  };
+});
+
+// jsdom popover content is in the DOM but may not be "visible" in the
+// accessibility tree. Use hidden: true to find it.
+const h = {hidden: true} as const;
 
 describe('NumberInput', () => {
   it('renders with label', () => {
-    render(
-      <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-    );
+    render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
     expect(screen.getByLabelText('Quantity')).toBeInTheDocument();
   });
 
@@ -41,9 +79,7 @@ describe('NumberInput', () => {
   });
 
   it('displays null for null value', () => {
-    render(
-      <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-    );
+    render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
     expect(screen.getByRole('spinbutton')).toHaveValue(null);
   });
 
@@ -103,9 +139,7 @@ describe('NumberInput', () => {
   });
 
   it('does not set aria-required when isRequired is false', () => {
-    render(
-      <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-    );
+    render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
     expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-required');
   });
 
@@ -139,9 +173,7 @@ describe('NumberInput', () => {
   });
 
   it('is not disabled by default', () => {
-    render(
-      <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-    );
+    render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
     expect(screen.getByRole('spinbutton')).not.toBeDisabled();
   });
 
@@ -151,7 +183,7 @@ describe('NumberInput', () => {
         label="Count"
         value={null}
         onChange={() => {}}
-        startIcon={HashtagIcon}
+        startIcon={TestIcon}
       />,
     );
     expect(screen.getByRole('spinbutton')).toBeInTheDocument();
@@ -176,12 +208,7 @@ describe('NumberInput', () => {
 
     it('sets max attribute', () => {
       render(
-        <NumberInput
-          label="Age"
-          value={null}
-          onChange={() => {}}
-          max={120}
-        />,
+        <NumberInput label="Age" value={null} onChange={() => {}} max={120} />,
       );
       expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '120');
     });
@@ -204,11 +231,7 @@ describe('NumberInput', () => {
       const user = userEvent.setup();
       const handleChange = vi.fn();
       render(
-        <NumberInput
-          label="Quantity"
-          value={null}
-          onChange={handleChange}
-        />,
+        <NumberInput label="Quantity" value={null} onChange={handleChange} />,
       );
 
       const input = screen.getByRole('spinbutton');
@@ -313,6 +336,33 @@ describe('NumberInput', () => {
       render(<NumberInput label="Amount" value={100} onChange={() => {}} />);
       expect(screen.queryByText('%')).not.toBeInTheDocument();
       expect(screen.queryByText('GB')).not.toBeInTheDocument();
+    });
+
+    it('includes the units text in the accessible description (WCAG 1.3.1)', () => {
+      render(
+        <NumberInput
+          label="Storage"
+          value={50}
+          onChange={() => {}}
+          units="GB"
+        />,
+      );
+      expect(screen.getByRole('spinbutton')).toHaveAccessibleDescription(/GB/);
+    });
+
+    it('combines units with the description in the accessible description', () => {
+      render(
+        <NumberInput
+          label="Discount"
+          value={10}
+          onChange={() => {}}
+          description="Applied at checkout"
+          units="%"
+        />,
+      );
+      const input = screen.getByRole('spinbutton');
+      expect(input).toHaveAccessibleDescription(/Applied at checkout/);
+      expect(input).toHaveAccessibleDescription(/%/);
     });
   });
 
@@ -441,6 +491,26 @@ describe('NumberInput', () => {
       expect(screen.getByText('Value must be positive')).toBeInTheDocument();
     });
 
+    it('has no dangling aria-describedby ids inside InputGroup (WCAG 1.3.1)', () => {
+      // Inside an InputGroup no Field renders, so the status message element
+      // does not exist; aria-describedby must not reference its id.
+      render(
+        <InputGroup label="Price">
+          <NumberInput
+            label="Amount"
+            value={null}
+            onChange={() => {}}
+            status={{type: 'error', message: 'Value must be positive'}}
+          />
+        </InputGroup>,
+      );
+      const input = screen.getByRole('spinbutton');
+      const describedBy = input.getAttribute('aria-describedby') ?? '';
+      for (const idToken of describedBy.split(/\s+/).filter(Boolean)) {
+        expect(document.getElementById(idToken)).not.toBeNull();
+      }
+    });
+
     it('does not render status message when not provided', () => {
       render(
         <NumberInput
@@ -497,6 +567,68 @@ describe('NumberInput', () => {
     });
   });
 
+  describe('invalid typed input feedback (WCAG 3.3.1)', () => {
+    it('sets aria-invalid="true" when typed input is unparseable', async () => {
+      const user = userEvent.setup();
+      render(
+        <NumberInput
+          label="Count"
+          value={null}
+          onChange={() => {}}
+          isIntegerOnly
+        />,
+      );
+
+      const input = screen.getByRole('spinbutton');
+      await user.click(input);
+      // "3.5" is invalid when isIntegerOnly is set
+      await user.type(input, '3.5');
+
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('does not set aria-invalid when typed input is valid', async () => {
+      const user = userEvent.setup();
+      render(<NumberInput label="Count" value={null} onChange={() => {}} />);
+
+      const input = screen.getByRole('spinbutton');
+      await user.click(input);
+      await user.type(input, '42');
+
+      expect(input).not.toHaveAttribute('aria-invalid');
+    });
+
+    it('announces an alert message when typed input is invalid', async () => {
+      const user = userEvent.setup();
+      render(
+        <NumberInput
+          label="Count"
+          value={null}
+          onChange={() => {}}
+          isIntegerOnly
+        />,
+      );
+
+      const input = screen.getByRole('spinbutton');
+      await user.click(input);
+      await user.type(input, '3.5');
+
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid number');
+    });
+
+    it('does not announce an alert message when input is valid', async () => {
+      const user = userEvent.setup();
+      render(<NumberInput label="Count" value={null} onChange={() => {}} />);
+
+      const input = screen.getByRole('spinbutton');
+      await user.click(input);
+      await user.type(input, '42');
+
+      expect(screen.getByRole('alert')).toHaveTextContent('');
+      expect(screen.queryByText('Invalid number')).not.toBeInTheDocument();
+    });
+  });
+
   it('renders tooltip info icon when labelTooltip is provided', () => {
     render(
       <NumberInput
@@ -510,9 +642,7 @@ describe('NumberInput', () => {
   });
 
   it('does not render tooltip icon when labelTooltip is not provided', () => {
-    render(
-      <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-    );
+    render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
     expect(document.querySelector('svg')).not.toBeInTheDocument();
   });
 
@@ -530,9 +660,7 @@ describe('NumberInput', () => {
     });
 
     it('does not focus when hasAutoFocus is false', () => {
-      render(
-        <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-      );
+      render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
       expect(screen.getByRole('spinbutton')).not.toHaveFocus();
     });
   });
@@ -554,9 +682,7 @@ describe('NumberInput', () => {
     });
 
     it('does not set name attribute when htmlName is not provided', () => {
-      render(
-        <NumberInput label="Quantity" value={null} onChange={() => {}} />,
-      );
+      render(<NumberInput label="Quantity" value={null} onChange={() => {}} />);
       expect(screen.getByRole('spinbutton')).not.toHaveAttribute('name');
     });
   });
@@ -590,12 +716,7 @@ describe('NumberInput', () => {
 
     it('does not show clear button when value is null', () => {
       render(
-        <NumberInput
-          label="Qty"
-          value={null}
-          onChange={() => {}}
-          hasClear
-        />,
+        <NumberInput label="Qty" value={null} onChange={() => {}} hasClear />,
       );
       expect(
         screen.queryByRole('button', {name: 'Clear Qty'}),
@@ -642,7 +763,7 @@ describe('NumberInput', () => {
           label="Qty"
           value={0}
           onChange={() => {}}
-          startIcon={<HashtagIcon />}
+          startIcon={<TestIcon />}
         />,
       );
 
@@ -663,5 +784,206 @@ describe('NumberInput', () => {
       fireEvent.click(wrapper);
       expect(input).toHaveFocus();
     });
+  });
+
+  describe('disabledMessage', () => {
+    it('shows the reason tooltip on hover when disabled with a reason', async () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+          disabledMessage="You need the Editor role"
+        />,
+      );
+
+      const input = screen.getByRole('spinbutton');
+      const container = input.parentElement as HTMLElement;
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(tooltip).toHaveTextContent('You need the Editor role');
+
+      fireEvent.mouseEnter(container);
+      await waitFor(() => {
+        expect(tooltip).toHaveAttribute('popover-open');
+      });
+
+      fireEvent.mouseLeave(container);
+      await waitFor(() => {
+        expect(tooltip).not.toHaveAttribute('popover-open');
+      });
+    });
+
+    it('shows the reason tooltip on keyboard focus', async () => {
+      const user = userEvent.setup();
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+          disabledMessage="You need the Editor role"
+        />,
+      );
+
+      const tooltip = screen.getByRole('tooltip', h);
+      await user.tab();
+      expect(screen.getByRole('spinbutton')).toHaveFocus();
+      await waitFor(() => {
+        expect(tooltip).toHaveAttribute('popover-open');
+      });
+    });
+
+    it('does not render a tooltip when not disabled', () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          disabledMessage="You need the Editor role"
+        />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('does not render a tooltip when disabled without a reason', () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+        />,
+      );
+      expect(screen.queryByRole('tooltip', h)).not.toBeInTheDocument();
+    });
+
+    it('keeps the input focusable via aria-disabled when a reason is provided', () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+          disabledMessage="You need the Editor role"
+        />,
+      );
+      const input = screen.getByRole('spinbutton');
+      expect(input).not.toBeDisabled();
+      expect(input).toHaveAttribute('aria-disabled', 'true');
+      expect(input).toHaveAttribute('readonly');
+    });
+
+    it('links the reason tooltip from the input via aria-describedby', () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+          disabledMessage="You need the Editor role"
+        />,
+      );
+      const input = screen.getByRole('spinbutton');
+      const tooltip = screen.getByRole('tooltip', h);
+      expect(input.getAttribute('aria-describedby')).toContain(tooltip.id);
+    });
+
+    it('blocks value changes while focusable-disabled', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={onChange}
+          isDisabled
+          disabledMessage="You need the Editor role"
+        />,
+      );
+
+      const input = screen.getByRole('spinbutton');
+      await user.click(input);
+      await user.keyboard('9');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('remains natively disabled when disabled without a reason', () => {
+      render(
+        <NumberInput
+          label="Quantity"
+          value={5}
+          onChange={() => {}}
+          isDisabled
+        />,
+      );
+      const input = screen.getByRole('spinbutton');
+      expect(input).toBeDisabled();
+      expect(input).not.toHaveAttribute('aria-disabled');
+    });
+  });
+});
+
+describe('keyboard clearing with hasClear (#3599)', () => {
+  it('commits null when the input is emptied and blurred', () => {
+    const onChange = vi.fn();
+    render(<NumberInput label="Qty" hasClear value={42} onChange={onChange} />);
+    const input = screen.getByLabelText('Qty');
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('commits null when the input is emptied and Enter is pressed', () => {
+    const onChange = vi.fn();
+    render(<NumberInput label="Qty" hasClear value={42} onChange={onChange} />);
+    const input = screen.getByLabelText('Qty');
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.keyDown(input, {key: 'Enter'});
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('does not fire when emptied and blurred with no prior value', () => {
+    const onChange = vi.fn();
+    render(
+      <NumberInput label="Qty" hasClear value={null} onChange={onChange} />,
+    );
+    const input = screen.getByLabelText('Qty');
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('still reverts on blur when hasClear is not set', () => {
+    const onChange = vi.fn();
+    render(<NumberInput label="Qty" value={42} onChange={onChange} />);
+    const input = screen.getByLabelText('Qty');
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.blur(input);
+    expect(onChange).not.toHaveBeenCalled();
+    expect((input as HTMLInputElement).value).toBe('42');
+  });
+});
+
+
+describe('NumberInput statusVariant forwarding', () => {
+  it('defaults to attached (status renders with data-variant="attached")', () => {
+    const {container} = render(
+      <NumberInput label="Amount" value={null} onChange={() => {}} status={{type: 'error', message: 'Must be positive'}} />,
+    );
+    expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
+      'data-variant',
+      'attached',
+    );
+  });
+
+  it('forwards statusVariant="detached" to the underlying Field status', () => {
+    const {container} = render(
+      <NumberInput label="Amount" value={null} onChange={() => {}} status={{type: 'error', message: 'Must be positive'}} statusVariant="detached" />,
+    );
+    expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
+      'data-variant',
+      'detached',
+    );
   });
 });

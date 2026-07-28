@@ -223,13 +223,13 @@ export interface TableColumn<T extends Record<string, unknown>> {
 /** Props passed through the plugin pipeline for the `<table>` element */
 export interface TableRenderProps {
   htmlProps: HTMLAttributes<HTMLTableElement>;
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
 }
 
 /** Props passed through the plugin pipeline for the header `<tr>` */
 export interface HeaderRowRenderProps {
   htmlProps: HTMLAttributes<HTMLTableRowElement>;
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
   children: ReactNode;
 }
 
@@ -250,7 +250,7 @@ export interface HeaderRowRenderProps {
  */
 export interface HeaderCellRenderProps {
   htmlProps: ThHTMLAttributes<HTMLTableCellElement>;
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
   /** Content rendered before the header label. */
   before?: ReactNode;
   /** The header label content. Initialized from `column.header ?? column.key`. Plugins may wrap or replace. */
@@ -261,6 +261,12 @@ export interface HeaderCellRenderProps {
   overlay?: ReactNode;
   /** Content rendered below the header label row (e.g. inline filter controls). */
   below?: ReactNode;
+  /**
+   * Right-click context-menu actions for this header cell. Plugins append
+   * their actions in `transformHeaderCell`; BaseTable concatenates the arrays
+   * across plugins (never overridden) and renders one menu per header cell.
+   */
+  contextMenuActions?: TableContextActions;
   /**
    * Index of this column within the final, ordered list of rendered columns
    * (after column injection/reordering by other plugins). Populated by
@@ -280,7 +286,7 @@ export interface HeaderCellRenderProps {
 /** Props passed through the plugin pipeline for each body `<tr>` */
 export interface BodyRowRenderProps {
   htmlProps: HTMLAttributes<HTMLTableRowElement>;
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
   children: ReactNode;
   /** Ref for the `<tr>` element. Plugins can set this to access the row DOM node. */
   ref?: Ref<HTMLTableRowElement>;
@@ -289,7 +295,14 @@ export interface BodyRowRenderProps {
 /** Props passed through the plugin pipeline for each body `<td>` */
 export interface BodyCellRenderProps {
   htmlProps: TdHTMLAttributes<HTMLTableCellElement>;
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
+  /**
+   * Right-click context-menu actions for this body cell. Plugins append their
+   * actions in `transformBodyCell`; BaseTable concatenates the arrays across
+   * plugins and across the row's cells (never overridden) and renders one menu
+   * per row.
+   */
+  contextMenuActions?: TableContextActions;
   /**
    * Index of this cell's column within the final ordered column list.
    * Mirrors the `columnIndex` passed to `transformHeaderCell`. Populated by
@@ -328,12 +341,55 @@ export interface ScrollWrapperRenderProps {
   htmlProps: HTMLAttributes<HTMLDivElement> & {
     ref?: Ref<HTMLDivElement>;
   };
-  styles: StyleXStyles[];
+  xstyle: StyleXStyles[];
   /** Content rendered before the `<table>`, inside the scroll container. */
   beforeTable?: ReactNode;
   /** Content rendered after the `<table>`, inside the scroll container. */
   afterTable?: ReactNode;
 }
+
+// =============================================================================
+// Context-menu actions
+// =============================================================================
+
+/**
+ * A single right-click context-menu action contributed by a plugin.
+ *
+ * Plugins contribute actions via the `contextMenuActions` field on
+ * `HeaderCellRenderProps` / `BodyCellRenderProps` (set in
+ * `transformHeaderCell` / `transformBodyCell`); the table aggregates actions
+ * from every enabled plugin into a single menu per header cell / row.
+ */
+export interface TableContextAction {
+  /** Stable identifier, unique within a single menu. */
+  id: string;
+  /** Visible label for the menu item. */
+  label: ReactNode;
+  /** Optional leading icon. */
+  icon?: ReactNode;
+  /** Invoked when the item is selected. */
+  onSelect: () => void;
+  /** When true, the item is rendered but not selectable. */
+  disabled?: boolean;
+  /**
+   * Group key used to cluster related actions and insert a divider between
+   * groups (e.g. 'sort', 'selection'). Actions without a group form a trailing
+   * group. Group order follows first-seen order across the aggregated list.
+   */
+  group?: string;
+  /** When true, the item renders as checked (e.g. the active sort direction). */
+  checked?: boolean;
+}
+
+/**
+ * Context-menu actions for a cell — either a static array, or a getter that
+ * returns the actions lazily. Prefer the getter for actions derived from state
+ * (e.g. the active sort direction): it's only invoked when the menu is opened,
+ * so the plugin doesn't build an action array (with closures) for every cell on
+ * every render.
+ */
+export type TableContextActions =
+  TableContextAction[] | (() => TableContextAction[]);
 
 // =============================================================================
 // Plugin Interface
@@ -353,6 +409,10 @@ export interface ScrollWrapperRenderProps {
  * 6. `transformBodyCell` — transform each body `<td>` props
  * 7. `transformScrollWrapper` — transform the scroll-container wrapper around the table
  * 8. `transformTableContext` — wrap the table output in context providers
+ *
+ * Plugins may also contribute right-click menu actions by appending to
+ * `contextMenuActions` in `transformHeaderCell` / `transformBodyCell`
+ * (aggregated into one menu per header cell / row).
  */
 export interface TablePlugin<
   T extends Record<string, unknown> = Record<string, unknown>,
@@ -421,18 +481,36 @@ export interface TableRowComponentProps extends HTMLAttributes<HTMLTableRowEleme
   ref?: Ref<HTMLTableRowElement>;
   children: ReactNode;
   xstyle?: StyleXStyles[];
+  /**
+   * Whether this row is the header row. Header rows skip the striped/hover
+   * row styling, which is only meant for body rows.
+   */
+  isHeaderRow?: boolean;
 }
 
 /** Props for cell components used in the components prop */
 export interface TableCellComponentProps extends TdHTMLAttributes<HTMLTableCellElement> {
   children?: ReactNode;
   xstyle?: StyleXStyles | StyleXStyles[];
+  /**
+   * Right-click actions to render as a context menu around the cell content.
+   * The cell owns the menu wrapper so it can control how it interacts with
+   * padding / content sizing. Empty/undefined renders no menu (native passes
+   * through).
+   */
+  contextMenuActions?: TableContextActions;
 }
 
 /** Props for header cell components used in the components prop */
 export interface TableHeaderCellComponentProps extends ThHTMLAttributes<HTMLTableCellElement> {
   children?: ReactNode;
   xstyle?: StyleXStyles | StyleXStyles[];
+  /**
+   * Right-click actions to render as a context menu around the header content.
+   * The cell owns the menu wrapper so it can control how it interacts with
+   * padding / content sizing. Empty/undefined renders no menu.
+   */
+  contextMenuActions?: TableContextActions;
 }
 
 // =============================================================================
@@ -464,7 +542,14 @@ export interface BaseTableProps<
 
   /** Children mode — render `<tr>`/`<td>` directly instead of data-driven */
   children?: ReactNode;
-  /** Additional HTML attributes for the `<table>` element */
+  /**
+   * Additional HTML attributes for the `<table>` element.
+   *
+   * @deprecated Pass `className`, `style`, `xstyle`, and other HTML
+   * attributes directly on the component instead — they now reach the root
+   * `<table>` and win over `tableProps` on conflicts. Migrate with
+   * `npx astryx upgrade --codemod migrate-table-tableprops-to-direct-props`.
+   */
   tableProps?: HTMLAttributes<HTMLTableElement>;
   /**
    * Optional wrapper rendered around the `<table>` element, inside the
@@ -472,15 +557,15 @@ export interface BaseTableProps<
    * horizontal scroll container so plugin chrome (pagination, toolbars)
    * stays outside the scrollable area.
    *
-   * Receives `htmlProps` (including an optional `ref`) and `styles` produced
+   * Receives `htmlProps` (including an optional `ref`) and `xstyle` produced
    * by the plugin `transformScrollWrapper` pipeline, plus `beforeTable`/`afterTable`
-   * chrome. The wrapper must spread `htmlProps` (and apply `styles`) onto its
+   * chrome. The wrapper must spread `htmlProps` (and apply `xstyle`) onto its
    * scroll-container element so plugins can attach refs / scroll listeners.
    */
   scrollWrapper?: ComponentType<{
     children: ReactNode;
     htmlProps?: HTMLAttributes<HTMLDivElement> & {ref?: Ref<HTMLDivElement>};
-    styles?: StyleXStyles[];
+    xstyle?: StyleXStyles[];
     beforeTable?: ReactNode;
     afterTable?: ReactNode;
   }>;

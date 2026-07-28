@@ -4,7 +4,7 @@
 
 /**
  * @file FileInput.tsx
- * @input Uses React, useId, Field, Icon, Spinner
+ * @input Uses React, useId, Field, Icon, Spinner, VisuallyHidden
  * @output Exports FileInput component, FileInputProps, FileInputStatus
  * @position Core implementation; consumed by index.ts, tested by FileInput.test.tsx
  *
@@ -41,9 +41,13 @@ import {
   InputClearButton,
   type InputStatus,
   type InputStatusType,
+  type FieldStatusVariant,
 } from '../Field';
 import {Icon, type IconName} from '../Icon';
 import {Spinner} from '../Spinner';
+import {VisuallyHidden} from '../VisuallyHidden';
+import {useAnnounce} from '../hooks/useAnnounce';
+import {useTooltip} from '../Tooltip';
 
 export type {
   InputStatus as FileInputStatus,
@@ -53,6 +57,7 @@ import {mergeProps, mergeRefs} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {themeProps} from '../utils/themeProps';
+import {useTranslator} from '../i18n';
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) {
@@ -243,17 +248,6 @@ const styles = stylex.create({
     flex: 1,
     minWidth: 0,
   },
-  liveRegion: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: 'hidden',
-    clip: 'rect(0, 0, 0, 0)',
-    whiteSpace: 'nowrap',
-    borderWidth: 0,
-  },
 });
 
 const statusBorderStyles = stylex.create({
@@ -321,6 +315,27 @@ export interface FileInputProps extends Omit<
    */
   isDisabled?: boolean;
   /**
+   * Explains why the input is disabled. When set together with `isDisabled`,
+   * the file input shows a tooltip with this text on hover and keyboard focus,
+   * and its trigger stays focusable (via `aria-disabled`) so the reason is
+   * discoverable by keyboard and assistive technology. Opening the file picker
+   * stays blocked.
+   *
+   * Use this instead of wrapping a disabled input in `Tooltip` — disabled
+   * controls don't emit the pointer events an external tooltip needs.
+   *
+   * @example
+   * ```
+   * <FileInput
+   *   label="Resume"
+   *   value={file}
+   *   isDisabled
+   *   disabledMessage="Uploads are locked until your profile is verified"
+   * />
+   * ```
+   */
+  disabledMessage?: string;
+  /**
    * Whether the input is required.
    * @default false
    */
@@ -334,6 +349,13 @@ export interface FileInputProps extends Omit<
    * Validation status for the input.
    */
   status?: InputStatus;
+  /**
+   * How the status message is placed relative to the input.
+   * - 'attached': message overlaps directly below the input (bordered treatment)
+   * - 'detached': message floats below as a separate element with spacing
+   * @default 'attached'
+   */
+  statusVariant?: FieldStatusVariant;
   /**
    * Description text displayed below the label.
    */
@@ -386,9 +408,11 @@ export function FileInput({
   maxSize,
   maxFiles,
   isDisabled = false,
+  disabledMessage,
   isRequired = false,
   isLoading = false,
   status: statusProp,
+  statusVariant = 'attached',
   description,
   placeholder,
   mode = 'input',
@@ -401,14 +425,33 @@ export function FileInput({
   ref,
   ...rest
 }: FileInputProps) {
+  const t = useTranslator();
   const id = useId();
   const descriptionID = useId();
   const statusMessageID = useId();
-  const liveRegionID = useId();
+  const requiredID = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // Announce successful file selection to screen readers via a persistent
+  // live region (forms-17). Validation errors are announced (assertively) by
+  // the FieldStatus that the derived error status mounts, so only the
+  // successful attach needs an explicit announcement here.
+  const announce = useAnnounce();
+
+  // Disabled-reason tooltip. Disabled controls swallow pointer events, so the
+  // tooltip listeners attach to the role="button" trigger (which already
+  // exists) and the trigger stays perceivable via aria-disabled instead of the
+  // native disabled attribute. Opening the picker is blocked by the isDisabled
+  // guards in handleClick / handleKeyDown / handleFiles.
+  const showsDisabledMessage = isDisabled && !!disabledMessage;
+  const disabledMessageTooltip = useTooltip({
+    placement: 'above',
+    focusTrigger: 'always',
+    isEnabled: showsDisabledMessage,
+  });
 
   const status =
     statusProp ??
@@ -431,10 +474,19 @@ export function FileInput({
     success: 'success',
   };
 
+  // Required state. `aria-required` is not a supported property of
+  // role="button" in WAI-ARIA 1.2 (AT does not announce it there), so the
+  // trigger instead points its aria-describedby at a visually hidden
+  // "Required" span — mirroring the Field label's visible indicator (where
+  // isOptional takes precedence) and the pattern Slider uses for its thumbs.
+  const conveysRequired = isRequired && !isOptional;
+
   const ariaDescribedBy =
     [
       description ? descriptionID : null,
       status?.message ? statusMessageID : null,
+      conveysRequired ? requiredID : null,
+      showsDisabledMessage ? disabledMessageTooltip.describedBy : null,
     ]
       .filter(Boolean)
       .join(' ') || undefined;
@@ -470,6 +522,18 @@ export function FileInput({
       const result = isMultiple ? valid : valid[0];
       onChange(result);
 
+      // Announce the successful selection politely. Validation errors are
+      // announced assertively by the FieldStatus that the derived error
+      // status mounts, so only announce the attach here (do not
+      // double-announce errors).
+      if (errors.length === 0) {
+        announce(
+          valid.length === 1
+            ? `1 file selected: ${valid[0].name}`
+            : `${valid.length} files selected`,
+        );
+      }
+
       if (changeAction) {
         startTransition(async () => {
           await changeAction(result);
@@ -485,6 +549,7 @@ export function FileInput({
       onChange,
       changeAction,
       startTransition,
+      announce,
     ],
   );
 
@@ -553,6 +618,15 @@ export function FileInput({
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Moving over the dropzone's own children (icon, text) fires dragleave on
+    // the container too — only a leave that actually exits the dropzone ends
+    // the drag-over state, otherwise the highlight flickers mid-drag.
+    if (
+      e.relatedTarget instanceof Node &&
+      e.currentTarget.contains(e.relatedTarget)
+    ) {
+      return;
+    }
     setIsDragOver(false);
   }, []);
 
@@ -663,15 +737,46 @@ export function FileInput({
             }
           : undefined
       }
+      statusVariant={statusVariant}
       labelTooltip={labelTooltip}
       width={width}>
       <div
+        ref={el => {
+          // Anchor + hover/focus listeners for the disabled-message tooltip.
+          // Handlers are gated internally by isEnabled, and anchor names
+          // compose, so attaching unconditionally is safe.
+          disabledMessageTooltip.ref(el);
+        }}
         role="button"
-        tabIndex={isDisabled ? -1 : 0}
+        // With a disabledMessage the trigger keeps focusability via
+        // aria-disabled so the reason is focus-discoverable; opening the picker
+        // is still blocked by the isDisabled guards in the handlers.
+        tabIndex={isDisabled && !showsDisabledMessage ? -1 : 0}
+        aria-disabled={showsDisabledMessage ? 'true' : undefined}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        aria-label={label}
+        // aria-label suppresses child content from the accessible name, so
+        // compose the selected filenames into it — otherwise a screen-reader
+        // user refocusing the control hears only the field label and cannot
+        // tell what (if anything) is attached.
+        aria-label={
+          hasFiles && fileNames
+            ? t('@astryx.fileInput.triggerWithFiles', {label, fileNames})
+            : label
+        }
         aria-busy={isLoading || undefined}
+        // These describe the operable control, so they belong on the focusable
+        // role="button" wrapper — not the hidden tabIndex={-1} file input the
+        // user never focuses (forms-6). Required state is conveyed through
+        // the visually hidden "Required" node in aria-describedby, not
+        // aria-required, which role="button" does not support in ARIA 1.2.
+        aria-describedby={ariaDescribedBy}
+        // aria-invalid is likewise unsupported on role="button", but it stays:
+        // a message-less error status (`status={{type: 'error'}}`) has no
+        // described-by replacement, and some AT still honor the attribute, so
+        // removing it would not be strictly better. Errors *with* a message
+        // are described via statusMessageID above.
+        aria-invalid={status?.type === 'error' ? 'true' : undefined}
         {...dragDropProps}
         {...mergeProps(
           themeProps('file-input', {mode, status: status?.type ?? null}),
@@ -696,24 +801,27 @@ export function FileInput({
           multiple={isMultiple}
           disabled={isDisabled}
           onChange={handleInputChange}
-          aria-describedby={ariaDescribedBy}
-          aria-required={isRequired ? 'true' : undefined}
-          aria-invalid={status?.type === 'error' ? 'true' : undefined}
+          // The visually-hidden native input is never focused (tabIndex={-1});
+          // its describedby/required/invalid live on the role="button" wrapper.
+          aria-hidden="true"
           tabIndex={-1}
           {...stylex.props(styles.hiddenInput)}
         />
         {isDropzone ? renderDropzoneContent() : renderCompactContent()}
         {hasFiles && !isDisabled && !isLoading && (
-          <InputClearButton label={`Clear ${label}`} onClick={handleClear} />
+          <InputClearButton
+            label={t('@astryx.fileInput.clearLabel', {label})}
+            onClick={handleClear}
+          />
         )}
       </div>
-      <div
-        id={liveRegionID}
-        role="status"
-        aria-live="polite"
-        {...stylex.props(styles.liveRegion)}>
-        {validationError}
-      </div>
+      {conveysRequired && (
+        <VisuallyHidden id={requiredID}>
+          {t('@astryx.fileInput.required')}
+        </VisuallyHidden>
+      )}
+      {showsDisabledMessage &&
+        disabledMessageTooltip.renderTooltip(disabledMessage)}
     </Field>
   );
 }
