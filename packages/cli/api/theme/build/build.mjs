@@ -868,6 +868,9 @@ export async function themeBuild(file, options = {}, {cwd = process.cwd(), logge
         radius: themeDef.radius,
         tokens: themeDef.tokens,
         components: themeDef.components,
+        onDark: themeDef.onDark,
+        onLight: themeDef.onLight,
+        surfaces: themeDef.surfaces,
       });
     }
     const scopeSelector = themeScopeStart(themeDef.name);
