@@ -291,6 +291,7 @@ export function TopNavMegaMenu({
   delay = 150,
   hideDelay = 250,
   onOpenChange,
+  xstyle,
 }: TopNavMegaMenuProps) {
   const renderMode = useTopNavRenderMode();
 
@@ -305,7 +306,14 @@ export function TopNavMegaMenu({
   // Drawer mode — inline collapsible
   // =========================================================================
   if (renderMode === 'drawer') {
-    return <DrawerMegaMenu label={label} items={items} featured={featured} />;
+    return (
+      <DrawerMegaMenu
+        label={label}
+        items={items}
+        featured={featured}
+        xstyle={xstyle}
+      />
+    );
   }
 
   // =========================================================================
@@ -320,6 +328,7 @@ export function TopNavMegaMenu({
       delay={delay}
       hideDelay={hideDelay}
       onOpenChange={onOpenChange}
+      xstyle={xstyle}
     />
   );
 }
@@ -338,6 +347,7 @@ function DefaultMegaMenu({
   delay = 150,
   hideDelay = 250,
   onOpenChange,
+  xstyle,
 }: TopNavMegaMenuProps) {
   const slot = useTopNavSlot();
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -444,7 +454,11 @@ function DefaultMegaMenu({
         onMouseLeave={handleMouseLeave}
         {...mergeProps(
           themeProps('top-nav-mega-menu'),
-          stylex.props(styles.trigger, popover.isOpen && styles.triggerOpen),
+          stylex.props(
+            styles.trigger,
+            popover.isOpen && styles.triggerOpen,
+            xstyle,
+          ),
         )}>
         {label}
         <span
@@ -499,12 +513,13 @@ function DrawerMegaMenu({
   label,
   items,
   featured,
-}: Pick<TopNavMegaMenuProps, 'label' | 'items' | 'featured'>) {
+  xstyle,
+}: Pick<TopNavMegaMenuProps, 'label' | 'items' | 'featured' | 'xstyle'>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const menuId = `mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div {...stylex.props(styles.drawerSection)}>
+    <div {...stylex.props(styles.drawerSection, xstyle)}>
       {/* Header toggle — same pattern as TopNavMenu drawer */}
       <button
         type="button"
