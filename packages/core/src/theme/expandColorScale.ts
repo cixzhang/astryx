@@ -45,7 +45,9 @@ export interface ColorScaleConfig {
   neutralStyle?: 'warm' | 'cool' | 'neutral';
 
   /**
-   * Contrast level. Affects tone assignments for text and UI elements.
+   * Contrast level. `'high'` pulls text, icons, and borders toward stronger
+   * tones (and thickens the subtle border's alpha) so structural and textual
+   * boundaries stay perceivable.
    * @default 'standard'
    */
   contrast?: 'standard' | 'high';
@@ -95,9 +97,7 @@ function accentWithAlpha(alpha: number): string {
  * // tokens['--color-accent'] === 'light-dark(#..., #...)'
  * ```
  */
-export function expandColorScale(
-  config: ColorScaleConfig,
-): ColorScaleTokens {
+export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
   const {accent, neutralStyle = 'cool', contrast = 'standard'} = config;
 
   const seed = hexToHct(accent);
@@ -117,6 +117,15 @@ export function expandColorScale(
   const textPrimaryDarkTone = isHigh ? 99 : 90;
   const textSecondaryLightTone = isHigh ? 20 : 30;
   const textSecondaryDarkTone = isHigh ? 80 : 70;
+
+  // Borders track contrast the same way text does: high contrast pulls the
+  // emphasized border tone toward mid-scale (stronger against both the near-
+  // white light surface and the near-black dark surface) and thickens the
+  // otherwise-decorative subtle hairline by doubling its alpha, so structural
+  // boundaries stay perceivable for users who opt into high contrast.
+  const borderEmphasizedLightTone = isHigh ? 50 : 70;
+  const borderEmphasizedDarkTone = isHigh ? 50 : 30;
+  const borderSubtleAlpha = isHigh ? 0.2 : 0.1;
 
   return {
     // Core semantic
@@ -168,8 +177,14 @@ export function expandColorScale(
     '--color-background-inverted': ld(N[10], N[99]),
 
     // Border
-    '--color-border': ld(hexWithAlpha(N[10], 0.1), hexWithAlpha(N[95], 0.1)),
-    '--color-border-emphasized': ld(NV[70], NV[30]),
+    '--color-border': ld(
+      hexWithAlpha(N[10], borderSubtleAlpha),
+      hexWithAlpha(N[95], borderSubtleAlpha),
+    ),
+    '--color-border-emphasized': ld(
+      NV[borderEmphasizedLightTone],
+      NV[borderEmphasizedDarkTone],
+    ),
 
     // Effects
     '--color-skeleton': ld(NV[70], NV[30]),
