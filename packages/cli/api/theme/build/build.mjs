@@ -40,12 +40,14 @@ import {AstryxError} from '../../error.mjs';
 /** @type {any} */ let _defineTheme = null;
 /** @type {any} */ let _generateThemeRulesSplit = null;
 /** @type {any} */ let _generateOnMediaCSS = null;
+/** @type {any} */ let _generateMediaSurfaceCSS = null;
 /** @type {any} */ let _coreImportError = null;
 try {
   const coreTheme = await import('@astryxdesign/core/theme');
   _defineTheme = coreTheme.defineTheme;
   _generateThemeRulesSplit = coreTheme.generateThemeRulesSplit;
   _generateOnMediaCSS = coreTheme.generateOnMediaCSS;
+  _generateMediaSurfaceCSS = coreTheme.generateMediaSurfaceCSS;
 } catch (e) {
   // Capture the reason so the theme action can surface a precise, actionable
   // error. We don't throw here: this module is imported eagerly by the CLI
@@ -899,6 +901,13 @@ export async function themeBuild(file, options = {}, {cwd = process.cwd(), logge
       const onMediaCss = _generateOnMediaCSS(resolvedTheme);
       if (onMediaCss) {
         cssParts.push(`@layer astryx-theme {\n${onMediaCss}\n}`);
+      }
+    }
+    // Media-surface opt-outs (surfaces: { toast: 'normal' } etc.)
+    if (_generateMediaSurfaceCSS) {
+      const mediaSurfaceCss = _generateMediaSurfaceCSS(resolvedTheme);
+      if (mediaSurfaceCss) {
+        cssParts.push(`@layer astryx-theme {\n${mediaSurfaceCss}\n}`);
       }
     }
     if (cssParts.length === 0) {
