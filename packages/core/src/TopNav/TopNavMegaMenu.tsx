@@ -535,10 +535,11 @@ function DrawerMegaMenu({
 
   return (
     <div
-      {...mergeProps(stylex.props(styles.drawerSection, xstyle), {
+      {...mergeProps(
+        stylex.props(styles.drawerSection, xstyle),
         className,
         style,
-      })}>
+      )}>
       {/* Header toggle — same pattern as TopNavMenu drawer */}
       <button
         type="button"

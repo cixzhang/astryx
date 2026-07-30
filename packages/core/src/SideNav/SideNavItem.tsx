@@ -508,10 +508,7 @@ export function SideNavItem({
       return (
         <div
           {...rest}
-          {...mergeProps(stylex.props(styles.root, xstyle), {
-            className,
-            style,
-          })}>
+          {...mergeProps(stylex.props(styles.root, xstyle), className, style)}>
           <button
             ref={mergeRefs(ref, popover.triggerRef)}
             type="button"
@@ -566,7 +563,7 @@ export function SideNavItem({
       <div
         ref={itemRef}
         {...rest}
-        {...mergeProps(stylex.props(styles.root, xstyle), {className, style})}>
+        {...mergeProps(stylex.props(styles.root, xstyle), className, style)}>
         {collapsedElement}
         <Tooltip content={label} placement="end" anchorRef={itemRef} />
       </div>
@@ -685,7 +682,7 @@ export function SideNavItem({
     <div
       ref={itemRef}
       {...rest}
-      {...mergeProps(stylex.props(styles.root, xstyle), {className, style})}>
+      {...mergeProps(stylex.props(styles.root, xstyle), className, style)}>
       {itemElement}
       {hasChildren && !isCollapsed && (
         <div
