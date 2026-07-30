@@ -331,6 +331,8 @@ export function TopNavMenu({
   delay = 150,
   hideDelay = 200,
   xstyle,
+  className,
+  style,
 }: TopNavMenuProps) {
   const renderMode = useTopNavRenderMode();
   const {closeMobileNav} = useAppShellMobile();
@@ -433,7 +435,11 @@ export function TopNavMenu({
   // Drawer mode: collapsible section
   if (renderMode === 'drawer') {
     return (
-      <div {...stylex.props(drawerStyles.section, xstyle)}>
+      <div
+        {...mergeProps(stylex.props(drawerStyles.section, xstyle), {
+          className,
+          style,
+        })}>
         <button
           type="button"
           onClick={() => setDrawerExpanded(v => !v)}
@@ -501,6 +507,8 @@ export function TopNavMenu({
             popover.isOpen && styles.triggerOpen,
             xstyle,
           ),
+          className,
+          style,
         )}>
         {label}
         <span

@@ -292,6 +292,8 @@ export function TopNavMegaMenu({
   hideDelay = 250,
   onOpenChange,
   xstyle,
+  className,
+  style,
 }: TopNavMegaMenuProps) {
   const renderMode = useTopNavRenderMode();
 
@@ -312,6 +314,8 @@ export function TopNavMegaMenu({
         items={items}
         featured={featured}
         xstyle={xstyle}
+        className={className}
+        style={style}
       />
     );
   }
@@ -329,6 +333,8 @@ export function TopNavMegaMenu({
       hideDelay={hideDelay}
       onOpenChange={onOpenChange}
       xstyle={xstyle}
+      className={className}
+      style={style}
     />
   );
 }
@@ -348,6 +354,8 @@ function DefaultMegaMenu({
   hideDelay = 250,
   onOpenChange,
   xstyle,
+  className,
+  style,
 }: TopNavMegaMenuProps) {
   const slot = useTopNavSlot();
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -459,6 +467,8 @@ function DefaultMegaMenu({
             popover.isOpen && styles.triggerOpen,
             xstyle,
           ),
+          className,
+          style,
         )}>
         {label}
         <span
@@ -514,12 +524,21 @@ function DrawerMegaMenu({
   items,
   featured,
   xstyle,
-}: Pick<TopNavMegaMenuProps, 'label' | 'items' | 'featured' | 'xstyle'>) {
+  className,
+  style,
+}: Pick<
+  TopNavMegaMenuProps,
+  'label' | 'items' | 'featured' | 'xstyle' | 'className' | 'style'
+>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const menuId = `mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div {...stylex.props(styles.drawerSection, xstyle)}>
+    <div
+      {...mergeProps(stylex.props(styles.drawerSection, xstyle), {
+        className,
+        style,
+      })}>
       {/* Header toggle — same pattern as TopNavMenu drawer */}
       <button
         type="button"
