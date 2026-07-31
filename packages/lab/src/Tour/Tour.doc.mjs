@@ -12,6 +12,7 @@ export const docs = {
   components: [
     {
       name: 'Tour',
+      displayName: 'Tour',
       description:
         'Controller for a guided tour. Coordinates the active step among its TourStep children, exposes advance / retreat / complete / dismiss, and optionally dims the background. Controlled via isActive — the consumer owns "has this user seen the tour?".',
       props: [
@@ -62,6 +63,7 @@ export const docs = {
     },
     {
       name: 'TourStep',
+      displayName: 'Tour Step',
       description:
         'A single spotlight step. Highlights a target element and renders a callout anchored to it (via the core Popover), with a heading, body, optional step progress, and back / next / close controls. Registers with the parent Tour on mount and renders its callout only while active.',
       props: [
