@@ -21,6 +21,29 @@ function generateThemeTestCSS(theme: Parameters<typeof generateThemeCSS>[0]) {
   const {prose, component} = generateThemeCSS(theme);
   return [prose, component].filter(Boolean).join('\n\n');
 }
+
+/**
+ * Concatenate all StyleX-injected CSS (both CSSOM sheets and <style> text) so
+ * tests can assert on compiled stylesheet rules — jsdom does not resolve the
+ * @layer cascade or compute layout, so structural CSS assertions read the
+ * generated declarations directly.
+ */
+function collectCssText(): string {
+  let out = '';
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      for (const rule of Array.from(sheet.cssRules)) {
+        out += rule.cssText + '\n';
+      }
+    } catch {
+      // ignore cross-origin sheets
+    }
+  }
+  out += Array.from(document.querySelectorAll('style'))
+    .map(s => s.textContent || '')
+    .join('\n');
+  return out;
+}
 const simpleItems: TreeListItemData[] = [
   {id: 'a', label: 'Item A'},
   {id: 'b', label: 'Item B'},
@@ -545,6 +568,140 @@ describe('TreeList', () => {
       };
       expect(indentOf('Mid')).toContain('var(--tree-list-indent)');
       expect(indentOf('Leaf')).toContain('var(--tree-list-indent)');
+    });
+  });
+
+  // ===========================================================================
+  // Leaf chevron-column offset (group-expandable-sibling awareness)
+  // ===========================================================================
+
+  describe('leaf chevron-column offset', () => {
+    // A row publishes its indent as the inline `--_tree-indent` custom property.
+    // A leaf that reserves the chevron column adds a fixed offset
+    // (chevron width + gap) on top of its level indent; a flush leaf does not.
+    // The reserved column is expressed as the literal `+ <spacing-4> + <spacing-2>`
+    // suffix in the calc(), so its presence is what we assert (jsdom does not
+    // resolve the token values, so we check the structure, not pixels).
+    const indentStyleOf = (text: string): string => {
+      const li = screen.getByText(text).closest('li')!;
+      const styled = li.querySelector('[style*="--_tree-indent"]');
+      return styled?.getAttribute('style') ?? '';
+    };
+    // A reserved chevron column adds two extra terms to the indent calc()
+    // beyond the single `level * var(--tree-list-indent)` term.
+    const reservesColumn = (text: string): boolean => {
+      const style = indentStyleOf(text);
+      // count the `var(` occurrences inside --_tree-indent: a flush row has
+      // exactly one (the indent step); a reserving leaf adds the chevron
+      // width + gap tokens, so it has more.
+      const m = /--_tree-indent:\s*calc\(([^;]*)\)/.exec(style);
+      const body = m?.[1] ?? '';
+      return (body.match(/\bvar\(/g)?.length ?? 0) > 1 || body.includes('+');
+    };
+
+    it('a leaf in a mixed group reserves the chevron column (aligns under its expandable sibling)', () => {
+      // Group: [Parent (has children), Sibling (leaf)] → Sibling must line up
+      // under Parent's caret, so it keeps the chevron-column offset.
+      render(<TreeList items={nestedItems} />);
+      expect(reservesColumn('Sibling')).toBe(true);
+    });
+
+    it('a leaf under an expandable ancestor reserves the chevron column even when its own group is all leaves', () => {
+      // 'Root' → 'Mid' → 'Leaf'; 'Leaf' is the only item in its immediate
+      // group, but the tree has carets (Root, Mid), so Leaf must reserve the
+      // chevron column to stay indented past its parent's label. Flushing it
+      // here would push it left of Mid's label — the all-leaf-group bug.
+      render(<TreeList items={deepItems} variant="noGuides" />);
+      expect(reservesColumn('Leaf')).toBe(true);
+    });
+
+    it("an expanded parent's all-leaf children reserve the chevron column (do not flush left of the parent label)", () => {
+      // Regression: Parent (caret) → [Child 1, Child 2] is an all-leaf group
+      // nested under an expandable parent. Per-group flushing wrongly dropped
+      // these children's chevron column, pushing them LEFT of Parent's own
+      // label. Because the tree has a caret, they must reserve the column and
+      // stay indented past Parent.
+      render(<TreeList items={nestedItemsExpanded} />);
+      expect(reservesColumn('Child 1')).toBe(true);
+      expect(reservesColumn('Child 2')).toBe(true);
+    });
+
+    it('every row in a flat (all-leaf) tree sits flush — no chevron column reserved', () => {
+      render(<TreeList items={flatItems} />);
+      expect(reservesColumn('Apple')).toBe(false);
+      expect(reservesColumn('Banana')).toBe(false);
+      expect(reservesColumn('Cherry')).toBe(false);
+    });
+
+    it('leaves flush in an all-leaf group have the same indent structure as a parent at that level', () => {
+      // In a mixed group the reserving leaf indent has the extra terms; in an
+      // all-leaf group the leaf indent is the bare level step, exactly like a
+      // parent row's indent.
+      render(<TreeList items={flatItems} />);
+      const flush = indentStyleOf('Apple');
+      // bare level step: one var(--tree-list-indent), no additive chevron terms
+      expect(flush).toContain('var(--tree-list-indent)');
+      expect(/--_tree-indent:\s*calc\([^;]*\+[^;]*\)/.test(flush)).toBe(false);
+    });
+  });
+
+  // ===========================================================================
+  // Inter-row gap lever (--tree-list-row-gap) + guide spanning
+  // ===========================================================================
+
+  describe('row gap lever', () => {
+    it('defaults the row gap to 0 so existing layouts are unchanged', () => {
+      // The lever is published on the tree-list root; its default is 0px so
+      // rows stay contiguous unless a theme opts into a gap.
+      render(<TreeList items={simpleItems} data-testid="tree" />);
+      const root = screen.getByTestId('tree');
+      expect(
+        getComputedStyle(root).getPropertyValue('--tree-list-row-gap').trim(),
+      ).toBe('0px');
+    });
+
+    it('lets a theme open a row gap via the tree-list target', () => {
+      // jsdom cannot resolve the @layer cascade, so the generated CSS is what
+      // proves the override reaches the lever.
+      const theme = defineTheme({
+        name: 'tree-list-row-gap-test',
+        components: {
+          'tree-list': {
+            base: {'--tree-list-row-gap': 'var(--spacing-1)'},
+          },
+        },
+      });
+      const css = generateThemeCSSFlat(theme);
+      expect(css).toContain('.astryx-tree-list {');
+      expect(css).toContain('--tree-list-row-gap: var(--spacing-1)');
+    });
+
+    it('the guide height accounts for the row gap so the connector spans it', () => {
+      // The connector guide segment reads --tree-list-row-gap in its height so
+      // it bridges the gap the row box opens — the line stays continuous
+      // without any consumer-side guide tuning. jsdom exposes the compiled
+      // stylesheet height rule on the guide element.
+      const {container} = render(<TreeList items={nestedItemsExpanded} />);
+      const guide = container.querySelector<HTMLElement>(
+        '.astryx-tree-list-guide',
+      );
+      expect(guide).not.toBeNull();
+      const rules = collectCssText();
+      // The guide's height declaration references the row-gap var.
+      expect(rules).toMatch(
+        /height:\s*calc\([^;]*var\(--tree-list-row-gap[^;]*\)/,
+      );
+    });
+
+    it('clamps the last-in-group guide so it does not overhang the gap', () => {
+      // The last connector uses a height that subtracts half the row gap so it
+      // ends at the row box bottom instead of hanging into empty space below
+      // the last row.
+      render(<TreeList items={nestedItemsExpanded} />);
+      const rules = collectCssText();
+      expect(rules).toMatch(
+        /height:\s*calc\([^;]*var\(--tree-list-row-gap[^;]*\)\s*\/\s*2\)/,
+      );
     });
   });
 
