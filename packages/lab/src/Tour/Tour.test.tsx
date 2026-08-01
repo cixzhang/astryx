@@ -37,13 +37,11 @@ function TwoStepTour({
   isStepCountShown = false,
   handleRef,
   onDismiss,
-  onComplete,
 }: {
   hasBackdrop?: boolean;
   isStepCountShown?: boolean;
   handleRef?: React.Ref<TourHandle>;
   onDismiss?: (source: string) => void;
-  onComplete?: () => void;
 }) {
   const [isActive, setIsActive] = useState(true);
   const aRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +60,6 @@ function TwoStepTour({
         isStepCountShown={isStepCountShown}
         handleRef={handleRef}
         data-testid="tour-backdrop"
-        onComplete={onComplete}
         onDismiss={source => {
           onDismiss?.(source);
           if (source !== 'skip') {
@@ -115,12 +112,10 @@ describe('Tour', () => {
 
   it('dismisses with "complete" when advancing past the last step', () => {
     const onDismiss = vi.fn();
-    const onComplete = vi.fn();
-    render(<TwoStepTour onDismiss={onDismiss} onComplete={onComplete} />);
+    render(<TwoStepTour onDismiss={onDismiss} />);
     fireEvent.click(screen.getByText('Next')); // → step 2
     fireEvent.click(screen.getByText('Done')); // → complete
     expect(onDismiss).toHaveBeenCalledWith('complete');
-    expect(onComplete).toHaveBeenCalledTimes(1);
     // Tour turned off — no step content remains.
     expect(screen.queryByText('First')).not.toBeInTheDocument();
     expect(screen.queryByText('Second')).not.toBeInTheDocument();

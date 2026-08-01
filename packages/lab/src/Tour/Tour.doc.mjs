@@ -34,13 +34,8 @@ export const docs = {
           name: 'onDismiss',
           type: '(source: TourDismissSource) => void',
           description:
-            "Called on every exit, with the reason ('backdrop' | 'escape' | 'close' | 'skip' | 'complete'). The consumer flips isActive to false in response.",
+            "Called on every exit, with the reason ('backdrop' | 'escape' | 'close' | 'skip' | 'complete'). The consumer flips isActive to false in response, and can branch on the source to distinguish a successful finish from an early exit.",
           required: true,
-        },
-        {
-          name: 'onComplete',
-          type: '() => void',
-          description: 'Called when the tour completes (advancing past the final step), after onDismiss(\'complete\').',
         },
         {
           name: 'hasBackdrop',

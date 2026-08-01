@@ -90,15 +90,11 @@ export interface TourProps {
   children?: ReactNode;
   /**
    * Called when the tour is dismissed, with the reason. Fires for every exit,
-   * including completing the last step (`'complete'`). The consumer flips
-   * `isActive` to false in response.
+   * including completing the last step (`source === 'complete'`). The consumer
+   * flips `isActive` to false in response, and can branch on the source to tell
+   * a successful finish apart from an early skip/backdrop/escape.
    */
   onDismiss: (source: TourDismissSource) => void;
-  /**
-   * Called when the tour completes (advancing past the final step), after
-   * `onDismiss('complete')`.
-   */
-  onComplete?: () => void;
   /**
    * Show a dimmed background behind the active step.
    * @default false
@@ -138,7 +134,6 @@ export function Tour({
   isActive,
   children,
   onDismiss,
-  onComplete,
   hasBackdrop = false,
   isStepCountShown = false,
   handleRef,
@@ -167,16 +162,18 @@ export function Tour({
   const stepCount = stepIds.length;
 
   const onNext = useCallback(() => {
-    setActiveStepIndex(prev => {
-      if (prev < stepCount - 1) {
-        return prev + 1;
-      }
-      // Past the last step → complete.
-      onDismiss('complete');
-      onComplete?.();
-      return prev;
-    });
-  }, [stepCount, onDismiss, onComplete]);
+    // Runs from a click/imperative call (never during render), so branch on the
+    // current index directly rather than inside a state updater — calling
+    // onDismiss from within setState triggers a "setState while rendering"
+    // warning.
+    if (activeStepIndex < stepCount - 1) {
+      setActiveStepIndex(activeStepIndex + 1);
+      return;
+    }
+    // Past the last step → complete. onDismiss carries the reason so a
+    // consumer can branch on 'complete' vs an early exit.
+    onDismiss('complete');
+  }, [activeStepIndex, stepCount, onDismiss]);
 
   const onPrevious = useCallback(() => {
     setActiveStepIndex(prev => (prev > 0 ? prev - 1 : prev));
