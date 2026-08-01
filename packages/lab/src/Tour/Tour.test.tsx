@@ -11,9 +11,9 @@
  */
 
 import {describe, it, expect, vi, beforeAll} from 'vitest';
-import {render, screen, fireEvent, act} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import {useRef, useState} from 'react';
-import {Tour, type TourHandle} from './Tour';
+import {Tour} from './Tour';
 import {TourStep} from './TourStep';
 import {useTour} from './useTour';
 
@@ -35,12 +35,10 @@ beforeAll(() => {
 function TwoStepTour({
   hasBackdrop = false,
   isStepCountShown = false,
-  handleRef,
   onDismiss,
 }: {
   hasBackdrop?: boolean;
   isStepCountShown?: boolean;
-  handleRef?: React.Ref<TourHandle>;
   onDismiss?: (source: string) => void;
 }) {
   const [isActive, setIsActive] = useState(true);
@@ -58,7 +56,6 @@ function TwoStepTour({
         isActive={isActive}
         hasBackdrop={hasBackdrop}
         isStepCountShown={isStepCountShown}
-        handleRef={handleRef}
         data-testid="tour-backdrop"
         onDismiss={source => {
           onDismiss?.(source);
@@ -145,16 +142,6 @@ describe('Tour', () => {
     render(<TwoStepTour hasBackdrop onDismiss={onDismiss} />);
     fireEvent.click(screen.getByTestId('tour-backdrop'));
     expect(onDismiss).toHaveBeenCalledWith('backdrop');
-  });
-
-  it('exposes next/previous via the imperative handle', () => {
-    const ref = {current: null as TourHandle | null};
-    render(<TwoStepTour handleRef={ref} />);
-    expect(screen.getByText('First')).toBeInTheDocument();
-    act(() => ref.current?.next());
-    expect(screen.getByText('Second')).toBeInTheDocument();
-    act(() => ref.current?.previous());
-    expect(screen.getByText('First')).toBeInTheDocument();
   });
 
   it('renders nothing when isActive is false', () => {

@@ -5,7 +5,7 @@
 /**
  * @file Tour.tsx
  * @input Uses React state/refs, TourContext, OverlayScrim tokens
- * @output Exports Tour controller component, TourProps, TourHandle
+ * @output Exports Tour controller component and TourProps
  * @position Lab experiment (facebook/astryx#4239); controller consumed by index.ts
  *
  * Tour is the controller for a product-tour / NUX walkthrough. It renders no
@@ -32,7 +32,6 @@
 import {
   useCallback,
   useEffect,
-  useImperativeHandle,
   useMemo,
   useState,
   type ReactNode,
@@ -67,15 +66,6 @@ const styles = stylex.create({
   },
 });
 
-/**
- * Imperative control surface for a Tour, mirroring the next/previous the steps
- * expose — for driving the tour from outside the step UI (e.g. a debug panel).
- */
-export interface TourHandle {
-  next: () => void;
-  previous: () => void;
-}
-
 export interface TourProps {
   /**
    * Whether the tour is running. When false, nothing renders and step state
@@ -105,8 +95,6 @@ export interface TourProps {
    * @default false
    */
   isStepCountShown?: boolean;
-  /** Imperative handle exposing next/previous. */
-  handleRef?: React.Ref<TourHandle>;
   /** Test id applied to the backdrop element when present. */
   'data-testid'?: string;
 }
@@ -136,7 +124,6 @@ export function Tour({
   onDismiss,
   hasBackdrop = false,
   isStepCountShown = false,
-  handleRef,
   'data-testid': testId,
 }: TourProps) {
   // Steps register on mount; insertion order (document order) defines the
@@ -178,11 +165,6 @@ export function Tour({
   const onPrevious = useCallback(() => {
     setActiveStepIndex(prev => (prev > 0 ? prev - 1 : prev));
   }, []);
-
-  useImperativeHandle(handleRef, () => ({next: onNext, previous: onPrevious}), [
-    onNext,
-    onPrevious,
-  ]);
 
   const activeStepId = isActive ? (stepIds[activeStepIndex] ?? null) : null;
 

@@ -41,7 +41,6 @@ export {BottomSheet, type BottomSheetProps} from './BottomSheet';
 export {
   Tour,
   type TourProps,
-  type TourHandle,
   TourStep,
   type TourStepProps,
   useTour,

@@ -12,7 +12,7 @@
  */
 
 export {Tour} from './Tour';
-export type {TourProps, TourHandle} from './Tour';
+export type {TourProps} from './Tour';
 
 export {TourStep} from './TourStep';
 export type {TourStepProps} from './TourStep';

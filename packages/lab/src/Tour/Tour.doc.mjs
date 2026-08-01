@@ -49,11 +49,6 @@ export const docs = {
           description: 'Show the step count ("2 of 5") in each step.',
           default: 'false',
         },
-        {
-          name: 'handleRef',
-          type: 'Ref<TourHandle>',
-          description: 'Imperative handle exposing next() / previous() for driving the tour from outside the step UI.',
-        },
       ],
     },
     {
