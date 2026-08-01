@@ -144,6 +144,30 @@ describe('Tour', () => {
     expect(onDismiss).toHaveBeenCalledWith('backdrop');
   });
 
+  it('spotlights the active step target and follows the step', () => {
+    render(<TwoStepTour hasBackdrop />);
+    const targetA = screen.getByText('Target A');
+    const targetB = screen.getByText('Target B');
+    // First step: A is spotlit, B is not.
+    expect(targetA.className).not.toBe('');
+    const spotlitOnA = targetA.className;
+    expect(targetB.className).toBe('');
+    // Advance: the spotlight moves off A and onto B.
+    fireEvent.click(screen.getByText('Next'));
+    expect(targetA.className).toBe('');
+    expect(targetB.className).toBe(spotlitOnA);
+  });
+
+  it('clears the spotlight from the target when the tour ends', () => {
+    render(<TwoStepTour hasBackdrop />);
+    const targetA = screen.getByText('Target A');
+    expect(targetA.className).not.toBe('');
+    fireEvent.click(screen.getByText('Next')); // → last step
+    fireEvent.click(screen.getByText('Done')); // → complete, tour off
+    expect(targetA.className).toBe('');
+    expect(screen.getByText('Target B').className).toBe('');
+  });
+
   it('renders nothing when isActive is false', () => {
     function Inactive() {
       const aRef = useRef<HTMLButtonElement>(null);

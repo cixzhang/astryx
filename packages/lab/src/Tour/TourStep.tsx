@@ -33,7 +33,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {Heading} from '@astryxdesign/core/Heading';
 import {VStack, HStack} from '@astryxdesign/core/Layout';
-import {spacingVars} from '@astryxdesign/core/theme/tokens.stylex';
+import {colorVars, spacingVars} from '@astryxdesign/core/theme/tokens.stylex';
 import {TourContext} from './TourContext';
 
 const styles = stylex.create({
@@ -47,6 +47,21 @@ const styles = stylex.create({
   footer: {
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  // Applied imperatively to the active step's target so the real element lifts
+  // ABOVE the Tour backdrop and gains a focus-style ring — the spotlight the
+  // callout points at. Without it the backdrop dims the target too, so nothing
+  // reads as highlighted. A true cutout mask remains a follow-up.
+  spotlight: {
+    // z-index needs a positioned element; relative adds no offset, so no
+    // layout shift.
+    position: 'relative',
+    // Above the backdrop (zIndex 1 in Tour). The callout stays above both via
+    // the browser's top layer, so the callout > target > backdrop order holds.
+    zIndex: 2,
+    // Accent ring with a surface-colored gap, matching the focus-visible
+    // outline used across the system. Follows the target's own border-radius.
+    boxShadow: `0 0 0 2px ${colorVars['--color-background-surface']}, 0 0 0 4px ${colorVars['--color-accent']}`,
   },
 });
 
@@ -91,6 +106,7 @@ export function TourStep({
 }: TourStepProps) {
   const tour = useContext(TourContext);
   const id = useId();
+  const isActiveStep = tour != null && tour.activeStepId === id;
 
   // Register with the controller on mount so the tour learns this step (and
   // its position among siblings). Unregister on unmount.
@@ -101,8 +117,29 @@ export function TourStep({
     return tour.registerStep(id);
   }, [tour, id]);
 
+  // Spotlight the target while this step is active: lift the real element
+  // above the backdrop and ring it. The class is applied imperatively because
+  // the target is owned by the consumer, not rendered here. StyleX atomic
+  // classes are space-joined onto the element and removed on cleanup, so the
+  // target's own classes are preserved.
+  useEffect(() => {
+    const el = targetRef.current;
+    if (el == null || !isActiveStep) {
+      return;
+    }
+    const spotlightClass = stylex.props(styles.spotlight).className ?? '';
+    const added = spotlightClass.split(' ').filter(Boolean);
+    if (added.length === 0) {
+      return;
+    }
+    el.classList.add(...added);
+    return () => {
+      el.classList.remove(...added);
+    };
+  }, [targetRef, isActiveStep]);
+
   // Outside a <Tour>, or when this isn't the active step, render nothing.
-  if (tour == null || tour.activeStepId !== id) {
+  if (tour == null || !isActiveStep) {
     return null;
   }
 
