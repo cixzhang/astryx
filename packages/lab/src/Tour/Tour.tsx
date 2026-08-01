@@ -16,9 +16,9 @@
  * sync with the markup).
  *
  * The behavior (a controller plus spotlight feature steps, an `isActive`
- * switch, dismiss-with-reason, and step progress) is derived from prior art in
- * an internal design system; the composition here is Astryx-native — steps
- * anchor via Popover and dim via an OverlayScrim-style backdrop.
+ * switch, dismiss-with-reason, and step progress) is composed from Astryx
+ * primitives — steps anchor via Popover and dim via an OverlayScrim-style
+ * backdrop.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/lab/src/Tour/TourStep.tsx
@@ -29,13 +29,7 @@
  * - /packages/lab/src/Tour/index.ts (exports if types change)
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import {useCallback, useEffect, useMemo, useState, type ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {
   colorVars,
