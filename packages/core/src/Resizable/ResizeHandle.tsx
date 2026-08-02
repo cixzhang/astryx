@@ -30,6 +30,7 @@ import {
   radiusVars,
   spacingVars,
 } from '../theme/tokens.stylex';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
 import {mergeProps, mergeRefs, rtlStyles} from '../utils';
 import type {ResizableProps} from './useResizable';
 import {themeProps} from '../utils/themeProps';
@@ -90,14 +91,6 @@ const styles = stylex.create({
     transitionProperty: 'background-color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
-    outline: {
-      default: 'none',
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: null,
-      ':focus-visible': spacingVars['--spacing-0-5'],
-    },
   },
   // Overlay mode — absolutely positioned inside the parent panel
   // instead of being a sibling in flex flow. Used when the handle
@@ -538,7 +531,7 @@ export function ResizeHandle({
       data-resizing={isDragging || undefined}
       {...mergeProps(
         themeProps('resize-handle'),
-        stylex.props(
+        focusOutlineProps.focusVisible(
           styles.handle,
           isOverlay && styles.overlay,
           isOverlay &&

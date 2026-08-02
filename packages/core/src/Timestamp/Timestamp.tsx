@@ -24,7 +24,8 @@ import {mergeProps, mergeRefs} from '../utils';
 import {useDevWarning} from '../hooks/useDevWarning';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
-import {colorVars, spacingVars} from '../theme/tokens.stylex';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {spacingVars} from '../theme/tokens.stylex';
 import {formatInstant} from './formatInstant';
 import {formatTooltipLines} from './tooltipEntries';
 import type {TimestampTooltipEntry} from './tooltipEntries';
@@ -156,16 +157,7 @@ const styles = stylex.create({
   },
   // Visible focus ring for the tooltip tab stop, matching the repo-wide
   // focus-visible outline treatment (see Token, Thumbnail).
-  focusable: {
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
-  },
+  focusable: {},
   // Label/value pairs for a multi-entry tooltip. The label column is sized to
   // its content, so when no entry carries a label it collapses to zero width
   // and the values sit exactly where a plain list of lines would.
@@ -457,7 +449,10 @@ export function Timestamp({
         // gratuitous tab stops otherwise.
         tabIndex={showTooltip ? 0 : undefined}
         data-testid={testId}
-        {...stylex.props(styles.time, showTooltip && styles.focusable)}>
+        {...focusOutlineProps.focusVisible(
+          styles.time,
+          showTooltip && styles.focusable,
+        )}>
         {displayText}
       </time>
     </Text>

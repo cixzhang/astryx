@@ -30,6 +30,7 @@ import {
   fontWeightVars,
   typeScaleVars,
 } from '../theme/tokens.stylex';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
 import {usePopover} from '../Popover/usePopover';
 import {useListFocus} from '../hooks/useListFocus';
 import {useTabListContext} from './TabListContext';
@@ -90,14 +91,6 @@ const styles = stylex.create({
     transitionProperty: 'color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
   },
   triggerSelected: {
     color: colorVars['--color-text-primary'],
@@ -196,10 +189,6 @@ const styles = stylex.create({
       ':hover': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
-    },
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
     },
   },
   menuItemSelected: {
@@ -352,7 +341,7 @@ export function TabMenu({
         onClick={handleToggle}
         {...mergeProps(
           themeProps('tab-menu'),
-          stylex.props(
+          focusOutlineProps.focusVisible(
             styles.trigger,
             sizeStyles[size],
             hasSelectedOption && styles.triggerSelected,
@@ -421,7 +410,7 @@ export function TabMenu({
                 }}
                 {...mergeProps(
                   themeProps('tab-menu-item'),
-                  stylex.props(
+                  focusOutlineProps.focusVisible(
                     styles.menuItem,
                     isSelected && styles.menuItemSelected,
                   ),
