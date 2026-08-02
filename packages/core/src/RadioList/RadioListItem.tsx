@@ -21,16 +21,11 @@
 import React, {use, useId, type ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import type {BaseProps} from '../BaseProps';
-import {
-  colorVars,
-  spacingVars,
-  durationVars,
-  easeVars,
-  borderVars,
-} from '../theme/tokens.stylex';
+import {colorVars, spacingVars} from '../theme/tokens.stylex';
 import {RadioListContext} from './RadioList';
 import {mergeProps} from '../utils';
 import {radioScope} from './radio.markers.stylex';
+import {useControlIcon} from '../Icon';
 import {Item} from '../Item';
 import {themeProps} from '../utils/themeProps';
 
@@ -63,40 +58,9 @@ const styles = stylex.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: borderVars['--border-width'],
-    borderStyle: 'solid',
-    borderRadius: '50%',
-    transitionProperty: 'background-color, border-color',
-    transitionDuration: durationVars['--duration-fast'],
-    transitionTimingFunction: easeVars['--ease-standard'],
-    boxSizing: 'border-box',
-  },
-  radioUnchecked: {
-    borderColor: {
-      default: colorVars['--color-border-emphasized'],
-      [stylex.when.ancestor(':hover', radioScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-border-emphasized']}, ${colorVars['--color-tint-hover']} 20%)`,
-      },
-    },
-    backgroundColor: {
-      default: colorVars['--color-background-surface'],
-      [stylex.when.ancestor(':hover', radioScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-background-surface']}, ${colorVars['--color-tint-hover']} 5%)`,
-      },
-    },
-  },
-  radioChecked: {
-    borderColor: {
-      default: colorVars['--color-accent'],
-      [stylex.when.ancestor(':hover', radioScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
-      },
-    },
-    backgroundColor: {
-      default: colorVars['--color-accent'],
-      [stylex.when.ancestor(':hover', radioScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
-      },
+    color: {
+      default: colorVars['--color-on-accent'],
+      '@media (forced-colors: active)': 'CanvasText',
     },
   },
   radioWrapperFocus: {
@@ -113,20 +77,6 @@ const styles = stylex.create({
   radioDisabled: {
     opacity: 0.5,
     borderColor: colorVars['--color-border'],
-  },
-  radioDisabledUnchecked: {
-    backgroundColor: colorVars['--color-background-muted'],
-  },
-  innerDot: {
-    borderRadius: '50%',
-    backgroundColor: {
-      default: colorVars['--color-on-accent'],
-      // Forced colors (Windows High Contrast) strips painted backgrounds,
-      // which would make the selected dot invisible — checked and unchecked
-      // radios would look identical. CanvasText keeps the dot perceivable on
-      // the Canvas circle fill (WCAG 1.4.11).
-      '@media (forced-colors: active)': 'CanvasText',
-    },
   },
   labelDisabled: {
     color: colorVars['--color-text-disabled'],
@@ -153,17 +103,6 @@ const radioSizeStyles = stylex.create({
   md: {
     width: 24,
     height: 24,
-  },
-});
-
-const dotSizeStyles = stylex.create({
-  sm: {
-    width: 8,
-    height: 8,
-  },
-  md: {
-    width: 10,
-    height: 10,
   },
 });
 
@@ -248,6 +187,7 @@ export function RadioListItem({
     context.hasDisabledMessage && !isItemDisabled;
   const isChecked = context.value === value;
   const size = context.size;
+  const RadioControlIcon = useControlIcon('radio');
 
   const radioCircle = (
     <div
@@ -293,19 +233,14 @@ export function RadioListItem({
           stylex.props(
             styles.radio,
             radioSizeStyles[size],
-            isChecked ? styles.radioChecked : styles.radioUnchecked,
             isDisabled && styles.radioDisabled,
-            isDisabled && !isChecked && styles.radioDisabledUnchecked,
           ),
         )}>
-        {isChecked && (
-          <div
-            {...mergeProps(
-              themeProps('radio-dot', {size}),
-              stylex.props(styles.innerDot, dotSizeStyles[size]),
-            )}
-          />
-        )}
+        <RadioControlIcon
+          state={isChecked ? 'checked' : 'unchecked'}
+          size={size}
+          isDisabled={isDisabled}
+        />
       </div>
     </div>
   );

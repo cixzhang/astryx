@@ -3,6 +3,7 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react';
 import {CheckboxInput} from '@astryxdesign/core/CheckboxInput';
+import {Theme, defineTheme} from '@astryxdesign/core/theme';
 import {
   BellIcon,
   EnvelopeIcon,
@@ -493,4 +494,39 @@ export const DisabledWithMessage: Story = {
     isDisabled: true,
     disabledMessage: 'Terms are managed by your administrator',
   },
+};
+
+const formControlIconTheme = defineTheme({
+  name: 'form-control-icon-demo',
+  controlIcons: {
+    checkbox: ({state, size}) => (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: size === 'sm' ? 20 : 24,
+          height: size === 'sm' ? 20 : 24,
+          border: '1px solid currentColor',
+          borderRadius: 6,
+          color: '#7c3aed',
+        }}>
+        {state === 'checked' ? '★' : state === 'indeterminate' ? '–' : ''}
+      </span>
+    ),
+  },
+});
+
+export const ThemedStateGlyphs: Story = {
+  render: () => (
+    <Theme theme={formControlIconTheme} mode="light">
+      <div style={{display: 'grid', gap: 12}}>
+        <CheckboxInput label="Custom checked glyph" value={true} />
+        <CheckboxInput
+          label="Custom indeterminate glyph"
+          value="indeterminate"
+        />
+      </div>
+    </Theme>
+  ),
 };

@@ -653,14 +653,14 @@ describe('RadioList', () => {
 // compiled output includes the forced-colors rule; visual behavior needs
 // manual verification under Windows High Contrast.
 describe('forced colors (WCAG 1.4.11)', () => {
-  it('compiles a forced-colors fill so the selected dot survives Windows High Contrast', () => {
+  it('compiles a forced-colors color so the selected dot survives Windows High Contrast', () => {
     render(
       <RadioList label="Preference" value="a" onChange={() => {}}>
         <RadioListItem label="Option A" value="a" />
       </RadioList>,
     );
-    // The painted inner dot would be stripped to Canvas (invisible), making
+    // The radio glyph would be stripped to Canvas (invisible), making
     // checked and unchecked radios identical; CanvasText keeps it perceivable.
-    expect(getForcedColorsRules()).toContain('background-color: canvastext;');
+    expect(getForcedColorsRules()).toContain('color: canvastext;');
   });
 });

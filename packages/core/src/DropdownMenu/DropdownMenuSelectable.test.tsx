@@ -78,7 +78,7 @@ describe('DropdownMenuCheckboxItem', () => {
     expect(onChangeSpy).toHaveBeenCalledWith(true);
   });
 
-  it('keeps the composed checkbox decorative (row is the only announced control)', async () => {
+  it('keeps the checkbox glyph decorative (row is the only announced control)', async () => {
     const user = userEvent.setup();
     render(
       <DropdownMenu button={{label: 'View'}}>
@@ -92,21 +92,14 @@ describe('DropdownMenuCheckboxItem', () => {
       screen.getAllByRole('menuitemcheckbox', {hidden: true}),
     ).toHaveLength(1);
 
-    // The composed CheckboxInput is present in the DOM but sits inside an
-    // `aria-hidden` + `inert` subtree: it contributes nothing to the row's
-    // accessible name and its native <input> is out of the tab order and the
-    // accessibility tree, so it is not a second announced/focusable control.
-    // (Browsers enforce inert; jsdom does not model its a11y removal, so this
-    // asserts the aria-hidden/inert boundary directly rather than via role.)
     const row = screen.getByRole('menuitemcheckbox', {
       name: /Show archived/,
       hidden: true,
     });
-    const input = row.querySelector('input[type="checkbox"]');
-    expect(input).not.toBeNull();
-    const marker = input?.closest('[inert]');
-    expect(marker).not.toBeNull();
+    const marker = row.querySelector('.astryx-dropdown-menu-checkbox');
+    expect(marker).toBeInTheDocument();
     expect(marker).toHaveAttribute('aria-hidden', 'true');
+    expect(row.querySelector('input[type="checkbox"]')).toBeNull();
   });
 
   it('does not toggle when disabled', async () => {
@@ -177,19 +170,20 @@ describe('DropdownMenuRadioGroup / RadioItem', () => {
       name: 'Newest',
       hidden: true,
     });
-    const dot = checked.querySelector('.astryx-dropdown-menu-radio-dot');
-    expect(dot).toBeInTheDocument();
-    // Mirrors the radio container's visual props/states for consistent theming.
-    expect(dot).toHaveAttribute('data-size', 'md');
-    expect(dot).toHaveAttribute('data-checked', 'checked');
-    // The unchecked radio has no dot, so no dot slot either.
+    const checkedControl = checked.querySelector('.astryx-dropdown-menu-radio');
+    expect(checkedControl).toBeInTheDocument();
+    expect(checkedControl).toHaveAttribute('data-size', 'md');
+    expect(checkedControl).toHaveAttribute('data-checked', 'checked');
+
     const unchecked = screen.getByRole('menuitemradio', {
       name: 'Oldest',
       hidden: true,
     });
-    expect(
-      unchecked.querySelector('.astryx-dropdown-menu-radio-dot'),
-    ).not.toBeInTheDocument();
+    const uncheckedControl = unchecked.querySelector(
+      '.astryx-dropdown-menu-radio',
+    );
+    expect(uncheckedControl).toBeInTheDocument();
+    expect(uncheckedControl).not.toHaveAttribute('data-checked');
   });
 
   it('calls onChange with the selected value', async () => {

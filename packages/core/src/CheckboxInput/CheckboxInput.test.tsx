@@ -582,13 +582,13 @@ describe('CheckboxInput', () => {
 // compiled output includes the forced-colors rule; visual behavior needs
 // manual verification under Windows High Contrast.
 describe('forced colors (WCAG 1.4.11)', () => {
-  it('compiles a forced-colors fill so the indeterminate mark survives Windows High Contrast', () => {
+  it('compiles a forced-colors color so the indeterminate mark survives Windows High Contrast', () => {
     render(
       <CheckboxInput label="All" value="indeterminate" onChange={() => {}} />,
     );
-    // The painted indeterminate bar would be stripped to Canvas (invisible);
+    // The indeterminate glyph would be stripped to Canvas (invisible);
     // CanvasText keeps it perceivable.
-    expect(getForcedColorsRules()).toContain('background-color: canvastext;');
+    expect(getForcedColorsRules()).toContain('color: canvastext;');
   });
 
   it('compiles a forced-colors color so the checkmark survives Windows High Contrast', () => {

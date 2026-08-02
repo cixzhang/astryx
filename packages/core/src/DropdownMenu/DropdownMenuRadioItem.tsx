@@ -23,17 +23,11 @@
 
 import {useCallback, type PointerEvent, type ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
-import {renderIconSlot, type IconType} from '../Icon';
+import {renderIconSlot, useControlIcon, type IconType} from '../Icon';
 import {Item} from '../Item';
 import {useDropdownMenuContext} from './DropdownMenuContext';
 import {focusMenuItemOnHover} from './menuItemHover';
-import {
-  colorVars,
-  spacingVars,
-  durationVars,
-  easeVars,
-  borderVars,
-} from '../theme/tokens.stylex';
+import {colorVars, spacingVars} from '../theme/tokens.stylex';
 import {mergeProps, themeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {useDropdownMenuRadioGroupContext} from './DropdownMenuContext';
@@ -61,16 +55,6 @@ const styles = stylex.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    boxSizing: 'border-box',
-    borderWidth: borderVars['--border-width'],
-    borderStyle: 'solid',
-    borderRadius: '50%',
-    transitionProperty: 'background-color, border-color',
-    transitionDuration: {
-      default: durationVars['--duration-fast'],
-      '@media (prefers-reduced-motion: reduce)': '0s',
-    },
-    transitionTimingFunction: easeVars['--ease-standard'],
     order: {
       default: 0,
       '@media (pointer: coarse)': 1,
@@ -80,28 +64,11 @@ const styles = stylex.create({
       '@media (pointer: coarse)': 'auto',
     },
   },
-  unchecked: {
-    borderColor: colorVars['--color-border-emphasized'],
-    backgroundColor: colorVars['--color-background-surface'],
-  },
-  checked: {
-    borderColor: colorVars['--color-accent'],
-    backgroundColor: colorVars['--color-accent'],
-  },
-  dot: {
-    borderRadius: '50%',
-    backgroundColor: colorVars['--color-on-accent'],
-  },
 });
 
 const circleSizeStyles = stylex.create({
   sm: {width: 18, height: 18},
   md: {width: 22, height: 22},
-});
-
-const dotSizeStyles = stylex.create({
-  sm: {width: 6, height: 6},
-  md: {width: 8, height: 8},
 });
 
 export interface DropdownMenuRadioItemProps extends Omit<
@@ -173,6 +140,7 @@ export function DropdownMenuRadioItem({
   const menuSize = menuCtx?.menuSize ?? 'md';
   const controlSize = menuSize === 'sm' ? 'sm' : 'md';
   const isChecked = groupCtx.value === value;
+  const RadioControlIcon = useControlIcon('radio');
 
   const handleClick = useCallback(() => {
     if (isDisabled) {
@@ -205,24 +173,13 @@ export function DropdownMenuRadioItem({
               checked: isChecked ? 'checked' : null,
               disabled: isDisabled ? 'disabled' : null,
             }),
-            stylex.props(
-              styles.circle,
-              circleSizeStyles[controlSize],
-              isChecked ? styles.checked : styles.unchecked,
-            ),
+            stylex.props(styles.circle, circleSizeStyles[controlSize]),
           )}>
-          {isChecked && (
-            <span
-              {...mergeProps(
-                themeProps('dropdown-menu-radio-dot', {
-                  size: controlSize,
-                  checked: 'checked',
-                  disabled: isDisabled ? 'disabled' : null,
-                }),
-                stylex.props(styles.dot, dotSizeStyles[controlSize]),
-              )}
-            />
-          )}
+          <RadioControlIcon
+            state={isChecked ? 'checked' : 'unchecked'}
+            size={controlSize}
+            isDisabled={isDisabled}
+          />
         </span>
       }
       startContent={

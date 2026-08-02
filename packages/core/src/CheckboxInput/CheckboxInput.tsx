@@ -30,19 +30,15 @@ import * as stylex from '@stylexjs/stylex';
 import {
   colorVars,
   spacingVars,
-  radiusVars,
-  durationVars,
-  easeVars,
   typographyVars,
   typeScaleVars,
   fontWeightVars,
-  borderVars,
 } from '../theme/tokens.stylex';
 import type {BaseProps} from '../BaseProps';
 import type {SizeValue} from '../utils/types';
 import {FieldLabel} from '../Field/FieldLabel';
 import {FieldStatus} from '../FieldStatus/FieldStatus';
-import type {IconType} from '../Icon';
+import {useControlIcon, type IconType} from '../Icon';
 import type {InputStatus} from '../Field/types';
 import {Spinner} from '../Spinner';
 import {useTooltip} from '../Tooltip';
@@ -83,15 +79,10 @@ const styles = stylex.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: borderVars['--border-width'],
-    borderStyle: 'solid',
-    borderRadius: radiusVars['--radius-inner'],
-    transitionProperty: 'background-color, border-color',
-    transitionDuration: {
-      default: durationVars['--duration-fast'],
-      '@media (prefers-reduced-motion: reduce)': '0s',
+    color: {
+      default: colorVars['--color-on-accent'],
+      '@media (forced-colors: active)': 'CanvasText',
     },
-    transitionTimingFunction: easeVars['--ease-standard'],
   },
   checkboxFocus: {
     outline: {
@@ -104,39 +95,16 @@ const styles = stylex.create({
       [stylex.when.ancestor(':has(:focus-visible)', checkboxScope)]: '2px',
     },
   },
-  // State-dependent colors with ancestor hover behavior
   checkboxUnchecked: {
     // Foreground for the inherit-shade loading spinner (reads currentColor):
     // brand accent on the light surface fill.
     color: colorVars['--color-accent'],
-    borderColor: {
-      default: colorVars['--color-border-emphasized'],
-      [stylex.when.ancestor(':hover', checkboxScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-border-emphasized']}, ${colorVars['--color-tint-hover']} 20%)`,
-      },
-    },
-    backgroundColor: {
-      default: colorVars['--color-background-surface'],
-      [stylex.when.ancestor(':hover', checkboxScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-background-surface']}, ${colorVars['--color-tint-hover']} 5%)`,
-      },
-    },
   },
   checkboxChecked: {
-    // Foreground for the inherit-shade loading spinner (reads currentColor):
-    // on-accent color against the accent fill.
-    color: colorVars['--color-on-accent'],
-    borderColor: {
-      default: colorVars['--color-accent'],
-      [stylex.when.ancestor(':hover', checkboxScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
-      },
-    },
-    backgroundColor: {
-      default: colorVars['--color-accent'],
-      [stylex.when.ancestor(':hover', checkboxScope)]: {
-        '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
-      },
+    // Foreground for the inherit-shade loading spinner and registry glyphs.
+    color: {
+      default: colorVars['--color-on-accent'],
+      '@media (forced-colors: active)': 'CanvasText',
     },
   },
   checkboxDisabled: {
@@ -147,44 +115,6 @@ const styles = stylex.create({
         '@media (hover: hover)': colorVars['--color-border'],
       },
     },
-  },
-  checkboxDisabledUnchecked: {
-    backgroundColor: {
-      default: colorVars['--color-background-muted'],
-      [stylex.when.ancestor(':hover', checkboxScope)]: {
-        '@media (hover: hover)': colorVars['--color-background-muted'],
-      },
-    },
-  },
-  checkmark: {
-    display: 'none',
-    color: {
-      default: colorVars['--color-on-accent'],
-      // Forced colors (Windows High Contrast) does not reliably force an SVG
-      // stroke painted with currentColor, so the check stays the same white as
-      // the flattened (Canvas) box fill — a white check on a white box.
-      // CanvasText keeps it perceivable on the Canvas box, matching the
-      // indeterminate mark (WCAG 1.4.11).
-      '@media (forced-colors: active)': 'CanvasText',
-    },
-  },
-  checkmarkVisible: {
-    display: 'block',
-  },
-  indeterminateMark: {
-    display: 'none',
-    backgroundColor: {
-      default: colorVars['--color-on-accent'],
-      // Forced colors (Windows High Contrast) strips painted backgrounds,
-      // which would make the indeterminate bar invisible; CanvasText keeps it
-      // perceivable on the Canvas box fill (WCAG 1.4.11). The checkmark carries
-      // the matching CanvasText treatment on its own style.
-      '@media (forced-colors: active)': 'CanvasText',
-    },
-    borderRadius: radiusVars['--radius-full'],
-  },
-  indeterminateMarkVisible: {
-    display: 'block',
   },
   labelWrapper: {
     display: 'flex',
@@ -219,28 +149,6 @@ const checkboxSizeStyles = stylex.create({
   md: {
     width: 24,
     height: 24,
-  },
-});
-
-const checkmarkSizeStyles = stylex.create({
-  sm: {
-    width: 12,
-    height: 12,
-  },
-  md: {
-    width: 14,
-    height: 14,
-  },
-});
-
-const indeterminateSizeStyles = stylex.create({
-  sm: {
-    width: 10,
-    height: 2,
-  },
-  md: {
-    width: 12,
-    height: 2,
   },
 });
 
@@ -443,6 +351,8 @@ export function CheckboxInput({
     isEnabled: showsDisabledMessage,
   });
 
+  const CheckboxControlIcon = useControlIcon('checkbox');
+
   const isIndeterminate = optimisticValue === 'indeterminate';
   const isChecked = optimisticValue === true;
   const isCheckedOrIndeterminate = isChecked || isIndeterminate;
@@ -567,39 +477,22 @@ export function CheckboxInput({
                   ? styles.checkboxChecked
                   : styles.checkboxUnchecked,
                 isDisabled && styles.checkboxDisabled,
-                isDisabled &&
-                  !isCheckedOrIndeterminate &&
-                  styles.checkboxDisabledUnchecked,
               ),
             )}>
             {isBusy ? (
               <Spinner size="sm" shade="inherit" />
             ) : (
-              <>
-                <svg
-                  viewBox="0 0 10 10"
-                  {...stylex.props(
-                    styles.checkmark,
-                    checkmarkSizeStyles[size],
-                    isChecked && styles.checkmarkVisible,
-                  )}>
-                  <path
-                    d="M8.5 2.5L4 7.5L1.5 5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <div
-                  {...stylex.props(
-                    styles.indeterminateMark,
-                    indeterminateSizeStyles[size],
-                    isIndeterminate && styles.indeterminateMarkVisible,
-                  )}
-                />
-              </>
+              <CheckboxControlIcon
+                state={
+                  isIndeterminate
+                    ? 'indeterminate'
+                    : isChecked
+                      ? 'checked'
+                      : 'unchecked'
+                }
+                size={size}
+                isDisabled={isDisabled}
+              />
             )}
           </div>
         </div>
