@@ -14,7 +14,7 @@ export const docs = {
       name: 'Tour',
       displayName: 'Tour',
       description:
-        'Controller for a guided tour. Coordinates the active step among its TourStep children, exposes advance / retreat / complete / dismiss, and optionally dims the background. Controlled via isActive — the consumer owns "has this user seen the tour?".',
+        'Controller for a guided tour. Coordinates the active step among its TourStep children, exposes advance / retreat / complete / dismiss, and optionally dims the page around the active step (spotlight cutout). Controlled via isActive — the consumer owns "has this user seen the tour?".',
       props: [
         {
           name: 'isActive',
@@ -40,7 +40,8 @@ export const docs = {
         {
           name: 'hasBackdrop',
           type: 'boolean',
-          description: 'Show a dimmed background behind the active step.',
+          description:
+            'Dim the page around the active step as a spotlight cutout — the target stays lit while everything else darkens. Use for modal-style steps that demand focus; leave off for a lightweight coachmark that only rings the target.',
           default: 'false',
         },
         {
@@ -55,7 +56,7 @@ export const docs = {
       name: 'TourStep',
       displayName: 'Tour Step',
       description:
-        'A single spotlight step. Highlights a target element and renders a callout anchored to it (via the core Popover), with a heading, body, optional step progress, and back / next / close controls. Registers with the parent Tour on mount and renders its callout only while active.',
+        'A single spotlight step. Highlights a target element with a ring drawn as a separate overlay (the target is never restyled) and renders a callout anchored to it (via the core Popover), with a heading, body, optional step progress, and back / next / close controls. Registers with the parent Tour on mount and renders its callout only while active.',
       props: [
         {
           name: 'targetRef',

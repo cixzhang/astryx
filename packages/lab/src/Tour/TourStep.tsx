@@ -17,6 +17,11 @@
  * dismiss semantics come from the existing layer system rather than a bespoke
  * implementation.
  *
+ * The highlight is drawn as a separate, non-interactive overlay tracking the
+ * target's box — the consumer's element is never restyled, so there is no
+ * cascade fight with the target's own styles. Dimming is an opt-in spotlight
+ * cutout (dims around the target, not over it) rather than a flat scrim.
+ *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/lab/src/Tour/Tour.tsx
  * - /packages/lab/src/Tour/TourContext.ts
@@ -25,7 +30,8 @@
  * - /packages/lab/src/Tour/index.ts (exports if types change)
  */
 
-import {useContext, useEffect, useId, type ReactNode} from 'react';
+import {useContext, useEffect, useId, useState, type ReactNode} from 'react';
+import {createPortal} from 'react-dom';
 import * as stylex from '@stylexjs/stylex';
 import {Popover} from '@astryxdesign/core/Popover';
 import type {LayerPlacement} from '@astryxdesign/core/Layer';
@@ -33,8 +39,24 @@ import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {Heading} from '@astryxdesign/core/Heading';
 import {VStack, HStack} from '@astryxdesign/core/Layout';
-import {colorVars, spacingVars} from '@astryxdesign/core/theme/tokens.stylex';
+import {
+  colorVars,
+  spacingVars,
+  durationVars,
+  easeVars,
+} from '@astryxdesign/core/theme/tokens.stylex';
 import {TourContext} from './TourContext';
+
+// Gap between the target's edge and the highlight ring, in px.
+const HIGHLIGHT_PADDING = 4;
+
+interface TargetRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  radius: string;
+}
 
 const styles = stylex.create({
   content: {
@@ -48,20 +70,37 @@ const styles = stylex.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  // Applied imperatively to the active step's target so the real element lifts
-  // ABOVE the Tour backdrop and gains a focus-style ring — the spotlight the
-  // callout points at. Without it the backdrop dims the target too, so nothing
-  // reads as highlighted. A true cutout mask remains a follow-up.
-  spotlight: {
-    // z-index needs a positioned element; relative adds no offset, so no
-    // layout shift.
-    position: 'relative',
-    // Above the backdrop (zIndex 1 in Tour). The callout stays above both via
-    // the browser's top layer, so the callout > target > backdrop order holds.
+  // A fixed overlay box sized to the target, drawn OVER it without touching the
+  // consumer's element (so no cascade fight with the target's own styles).
+  // Non-interactive: clicks pass through to the target and page beneath.
+  highlight: {
+    position: 'fixed',
+    pointerEvents: 'none',
+    // Above the page and the backdrop catcher; the callout (native top layer)
+    // stays above this, so callout > highlight > catcher > page holds.
     zIndex: 2,
-    // Accent ring with a surface-colored gap, matching the focus-visible
-    // outline used across the system. Follows the target's own border-radius.
+    transitionProperty: 'top, left, width, height',
+    transitionDuration: durationVars['--duration-fast'],
+    transitionTimingFunction: easeVars['--ease-standard'],
+  },
+  // The accent ring with a surface-colored gap — mirrors the focus-visible
+  // outline used across the system.
+  ring: {
     boxShadow: `0 0 0 2px ${colorVars['--color-background-surface']}, 0 0 0 4px ${colorVars['--color-accent']}`,
+  },
+  // Spotlight cutout: a huge box-shadow spread dims the whole viewport EXCEPT
+  // this box, so the target reads as lit rather than covered. This is the only
+  // dimming affordance — used when the step opts into a backdrop.
+  cutout: {
+    boxShadow: `0 0 0 9999px ${colorVars['--color-overlay']}`,
+  },
+  // Full-viewport transparent click target beneath the highlight to catch
+  // backdrop clicks (the highlight itself is click-through). Rendered only when
+  // the step dims; the visible dim comes from the cutout, not this element.
+  backdropCatcher: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 1,
   },
 });
 
@@ -108,6 +147,10 @@ export function TourStep({
   const id = useId();
   const isActiveStep = tour != null && tour.activeStepId === id;
 
+  // The active target's viewport box, tracked so the highlight overlay can sit
+  // exactly over it. null until measured (or when inactive).
+  const [rect, setRect] = useState<TargetRect | null>(null);
+
   // Register with the controller on mount so the tour learns this step (and
   // its position among siblings). Unregister on unmount.
   useEffect(() => {
@@ -117,24 +160,31 @@ export function TourStep({
     return tour.registerStep(id);
   }, [tour, id]);
 
-  // Spotlight the target while this step is active: lift the real element
-  // above the backdrop and ring it. The class is applied imperatively because
-  // the target is owned by the consumer, not rendered here. StyleX atomic
-  // classes are space-joined onto the element and removed on cleanup, so the
-  // target's own classes are preserved.
+  // Track the target's box while this step is active. Re-measure on
+  // scroll/resize so the highlight stays glued to the target.
   useEffect(() => {
     const el = targetRef.current;
     if (el == null || !isActiveStep) {
+      setRect(null);
       return;
     }
-    const spotlightClass = stylex.props(styles.spotlight).className ?? '';
-    const added = spotlightClass.split(' ').filter(Boolean);
-    if (added.length === 0) {
-      return;
-    }
-    el.classList.add(...added);
+    const measure = () => {
+      const box = el.getBoundingClientRect();
+      setRect({
+        top: box.top,
+        left: box.left,
+        width: box.width,
+        height: box.height,
+        radius: getComputedStyle(el).borderRadius || '0px',
+      });
+    };
+    measure();
+    window.addEventListener('scroll', measure, true);
+    window.addEventListener('resize', measure);
     return () => {
-      el.classList.remove(...added);
+      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', measure);
+      setRect(null);
     };
   }, [targetRef, isActiveStep]);
 
@@ -147,6 +197,7 @@ export function TourStep({
     activeStepIndex,
     stepCount,
     isStepCountShown,
+    hasBackdrop,
     onNext,
     onPrevious,
     onDismiss,
@@ -189,27 +240,69 @@ export function TourStep({
     </div>
   );
 
+  // The highlight overlay: a non-interactive box sized to the target, drawn in
+  // a body portal so page overflow/stacking contexts can't clip or bury it.
+  // Ring always; the dim cutout only when the step opts into a backdrop. When
+  // dimming, a sibling catches backdrop clicks (the overlay itself stays
+  // click-through so the target underneath remains reachable).
+  const highlight =
+    rect != null && typeof document !== 'undefined'
+      ? createPortal(
+          <>
+            {hasBackdrop && (
+              <div
+                data-testid="tour-backdrop"
+                aria-hidden="true"
+                onClick={() => onDismiss('backdrop')}
+                {...stylex.props(styles.backdropCatcher)}
+              />
+            )}
+            <div
+              data-testid="tour-highlight"
+              aria-hidden="true"
+              {...stylex.props(
+                styles.highlight,
+                styles.ring,
+                hasBackdrop && styles.cutout,
+              )}
+              style={{
+                top: rect.top - HIGHLIGHT_PADDING,
+                left: rect.left - HIGHLIGHT_PADDING,
+                width: rect.width + HIGHLIGHT_PADDING * 2,
+                height: rect.height + HIGHLIGHT_PADDING * 2,
+                borderRadius: rect.radius,
+              }}
+            />
+          </>,
+          document.body,
+        )
+      : null;
+
   return (
-    <Popover
-      // Popover types anchorRef as RefObject<HTMLElement>; TourStep accepts a
-      // nullable ref for ergonomics (useRef<HTMLButtonElement>(null)). Popover
-      // guards a null `.current` internally, so this widening is safe.
-      anchorRef={targetRef as React.RefObject<HTMLElement>}
-      isOpen
-      onOpenChange={open => {
-        // Popover reports close from light-dismiss (backdrop) or Escape. Route
-        // it to the tour as a dismissal so the whole tour ends, not just this
-        // step's popover. Escape and outside-click both surface here.
-        if (!open) {
-          onDismiss('close');
-        }
-      }}
-      placement={placement}
-      label={typeof heading === 'string' ? heading : 'Tour step'}
-      hasCloseButton
-      closeButtonLabel="Close tour"
-      content={content}
-    />
+    <>
+      {highlight}
+      <Popover
+        // Popover types anchorRef as RefObject<HTMLElement>; TourStep accepts a
+        // nullable ref for ergonomics (useRef<HTMLButtonElement>(null)). Popover
+        // guards a null `.current` internally, so this widening is safe.
+        anchorRef={targetRef as React.RefObject<HTMLElement>}
+        isOpen
+        onOpenChange={open => {
+          // Popover reports close from light-dismiss (backdrop) or Escape.
+          // Route it to the tour as a dismissal so the whole tour ends, not
+          // just this step's popover. Escape and outside-click both surface
+          // here.
+          if (!open) {
+            onDismiss('close');
+          }
+        }}
+        placement={placement}
+        label={typeof heading === 'string' ? heading : 'Tour step'}
+        hasCloseButton
+        closeButtonLabel="Close tour"
+        content={content}
+      />
+    </>
   );
 }
 

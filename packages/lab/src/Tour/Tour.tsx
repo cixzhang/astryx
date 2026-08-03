@@ -4,7 +4,7 @@
 
 /**
  * @file Tour.tsx
- * @input Uses React state/refs, TourContext, OverlayScrim tokens
+ * @input Uses React state/refs, TourContext
  * @output Exports Tour controller component and TourProps
  * @position Lab experiment (facebook/astryx#4239); controller consumed by index.ts
  *
@@ -17,8 +17,8 @@
  *
  * The behavior (a controller plus spotlight feature steps, an `isActive`
  * switch, dismiss-with-reason, and step progress) is composed from Astryx
- * primitives — steps anchor via Popover and dim via an OverlayScrim-style
- * backdrop.
+ * primitives. Each step anchors its callout via Popover and draws its own
+ * highlight/backdrop (see TourStep) — the controller owns no chrome.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/lab/src/Tour/TourStep.tsx
@@ -30,35 +30,11 @@
  */
 
 import {useCallback, useEffect, useMemo, useState, type ReactNode} from 'react';
-import * as stylex from '@stylexjs/stylex';
-import {
-  colorVars,
-  durationVars,
-  easeVars,
-} from '@astryxdesign/core/theme/tokens.stylex';
 import {
   TourContext,
   type TourDismissSource,
   type TourContextValue,
 } from './TourContext';
-
-const styles = stylex.create({
-  // Dimmed background behind the active step. Fixed to the viewport and below
-  // the step callout (Popover renders in the top layer above this). Non-
-  // interactive except to catch a backdrop click; the active step's target
-  // stays visible because the callout points at it — a true cutout/spotlight
-  // is a follow-up (see doc "Deferred").
-  backdrop: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: colorVars['--color-overlay'],
-    // Below the top-layer Popover; above page content.
-    zIndex: 1,
-    transitionProperty: 'opacity',
-    transitionDuration: durationVars['--duration-fast'],
-    transitionTimingFunction: easeVars['--ease-standard'],
-  },
-});
 
 export interface TourProps {
   /**
@@ -80,7 +56,10 @@ export interface TourProps {
    */
   onDismiss: (source: TourDismissSource) => void;
   /**
-   * Show a dimmed background behind the active step.
+   * Dim the page around the active step's target (a spotlight cutout — the
+   * target stays lit, everything else darkens). Use for modal-style steps that
+   * demand focus; leave off for a lightweight coachmark that only rings the
+   * target.
    * @default false
    */
   hasBackdrop?: boolean;
@@ -89,8 +68,6 @@ export interface TourProps {
    * @default false
    */
   isStepCountShown?: boolean;
-  /** Test id applied to the backdrop element when present. */
-  'data-testid'?: string;
 }
 
 /**
@@ -118,7 +95,6 @@ export function Tour({
   onDismiss,
   hasBackdrop = false,
   isStepCountShown = false,
-  'data-testid': testId,
 }: TourProps) {
   // Steps register on mount; insertion order (document order) defines the
   // sequence. A plain array keeps registration order deterministic.
@@ -188,17 +164,7 @@ export function Tour({
   );
 
   return (
-    <TourContext.Provider value={contextValue}>
-      {isActive && hasBackdrop && activeStepId != null && (
-        <div
-          data-testid={testId}
-          aria-hidden="true"
-          onClick={() => onDismiss('backdrop')}
-          {...stylex.props(styles.backdrop)}
-        />
-      )}
-      {children}
-    </TourContext.Provider>
+    <TourContext.Provider value={contextValue}>{children}</TourContext.Provider>
   );
 }
 

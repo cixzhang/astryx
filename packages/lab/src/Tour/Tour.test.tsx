@@ -56,7 +56,6 @@ function TwoStepTour({
         isActive={isActive}
         hasBackdrop={hasBackdrop}
         isStepCountShown={isStepCountShown}
-        data-testid="tour-backdrop"
         onDismiss={source => {
           onDismiss?.(source);
           if (source !== 'skip') {
@@ -130,10 +129,14 @@ describe('Tour', () => {
     expect(screen.queryByText('1 of 2')).not.toBeInTheDocument();
   });
 
-  it('renders a backdrop only when hasBackdrop is set', () => {
+  it('renders a highlight overlay for the active step; backdrop only when set', () => {
     const {rerender} = render(<TwoStepTour />);
+    // Highlight always present for the active step.
+    expect(screen.getByTestId('tour-highlight')).toBeInTheDocument();
+    // No dim without hasBackdrop — a plain coachmark rings the target only.
     expect(screen.queryByTestId('tour-backdrop')).not.toBeInTheDocument();
     rerender(<TwoStepTour hasBackdrop />);
+    expect(screen.getByTestId('tour-highlight')).toBeInTheDocument();
     expect(screen.getByTestId('tour-backdrop')).toBeInTheDocument();
   });
 
@@ -144,28 +147,23 @@ describe('Tour', () => {
     expect(onDismiss).toHaveBeenCalledWith('backdrop');
   });
 
-  it('spotlights the active step target and follows the step', () => {
+  it('does not restyle the target element (highlight is a separate overlay)', () => {
     render(<TwoStepTour hasBackdrop />);
-    const targetA = screen.getByText('Target A');
-    const targetB = screen.getByText('Target B');
-    // First step: A is spotlit, B is not.
-    expect(targetA.className).not.toBe('');
-    const spotlitOnA = targetA.className;
-    expect(targetB.className).toBe('');
-    // Advance: the spotlight moves off A and onto B.
-    fireEvent.click(screen.getByText('Next'));
-    expect(targetA.className).toBe('');
-    expect(targetB.className).toBe(spotlitOnA);
+    // The consumer's targets keep their own classes untouched — the ring is
+    // drawn by the overlay, not by mutating the target (which loses the
+    // cascade to the target's own styles).
+    expect(screen.getByText('Target A').className).toBe('');
+    expect(screen.getByText('Target B').className).toBe('');
   });
 
-  it('clears the spotlight from the target when the tour ends', () => {
+  it('moves the highlight across steps and clears it when the tour ends', () => {
     render(<TwoStepTour hasBackdrop />);
-    const targetA = screen.getByText('Target A');
-    expect(targetA.className).not.toBe('');
+    expect(screen.getByTestId('tour-highlight')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Next')); // → last step
+    expect(screen.getByTestId('tour-highlight')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Done')); // → complete, tour off
-    expect(targetA.className).toBe('');
-    expect(screen.getByText('Target B').className).toBe('');
+    expect(screen.queryByTestId('tour-highlight')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tour-backdrop')).not.toBeInTheDocument();
   });
 
   it('renders nothing when isActive is false', () => {
