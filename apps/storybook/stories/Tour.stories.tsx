@@ -7,6 +7,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
 import {HStack, VStack} from '@astryxdesign/core/Stack';
 import {Text} from '@astryxdesign/core/Text';
+import {Theme, defineTheme} from '@astryxdesign/core/theme';
 
 const meta: Meta<typeof Tour> = {
   title: 'Lab/Tour',
@@ -88,6 +89,49 @@ export const WithoutBackdrop: Story = {
           </TourStep>
         </Tour>
       </VStack>
+    );
+  },
+};
+
+// A scoped theme with a vivid magenta accent. Because the highlight is promoted
+// into the top layer IN PLACE (not portaled out of the tree), it stays inside
+// this <Theme> subtree and the ring inherits the scoped accent — verifying the
+// tour is themeable, not just under the root theme.
+const magentaTheme = defineTheme({
+  name: 'tour-magenta-demo',
+  tokens: {
+    '--color-accent': ['#D6006E', '#FF4FA3'],
+  },
+});
+
+export const ScopedTheme: Story = {
+  name: 'Themed ring (scoped theme)',
+  render: () => {
+    const [isActive, setIsActive] = useState(false);
+    const targetRef = useRef<HTMLButtonElement>(null);
+
+    return (
+      <Theme theme={magentaTheme} mode="light">
+        <VStack gap={4}>
+          <Heading level={3}>Scoped theme</Heading>
+          <Text type="body">
+            This subtree uses a scoped theme with a magenta accent. The
+            highlight ring picks it up because the overlay is promoted in place,
+            inside the Theme — not portaled to the body.
+          </Text>
+          <Button ref={targetRef} variant="secondary" label="New feature" />
+          <Button label="Highlight it" onClick={() => setIsActive(true)} />
+
+          <Tour
+            isActive={isActive}
+            hasBackdrop
+            onDismiss={() => setIsActive(false)}>
+            <TourStep targetRef={targetRef} heading="Themed highlight">
+              The ring uses this theme&apos;s accent color.
+            </TourStep>
+          </Tour>
+        </VStack>
+      </Theme>
     );
   },
 };

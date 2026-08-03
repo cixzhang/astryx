@@ -22,8 +22,11 @@
  * target's own styles. That overlay is promoted into the browser TOP LAYER
  * (via the popover API, like the rest of the layer system) so it sits above
  * page content without any hardcoded z-index; the callout is promoted after
- * it, so the callout stays above the highlight. Dimming is an opt-in spotlight
- * cutout (dims around the target, not over it) rather than a flat scrim.
+ * it, so the callout stays above the highlight. Because it is promoted in
+ * place (not portaled out of the tree), it stays inside the consumer's Theme
+ * subtree and inherits theme tokens — including a scoped/nested theme's accent
+ * for the ring. Dimming is an opt-in spotlight cutout (dims around the target,
+ * not over it) rather than a flat scrim.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/lab/src/Tour/Tour.tsx
@@ -42,7 +45,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {createPortal} from 'react-dom';
 import * as stylex from '@stylexjs/stylex';
 import {Popover} from '@astryxdesign/core/Popover';
 import type {LayerPlacement} from '@astryxdesign/core/Layer';
@@ -144,9 +146,11 @@ const calloutGapStyles = {
 
 /**
  * The highlight overlay: a top-layer box sized to the target, plus an optional
- * spotlight-cutout dim. Rendered before the callout so the callout promotes on
- * top of it; promoted once (never re-promoted) so that ordering holds across
- * re-measures.
+ * spotlight-cutout dim. Rendered inline (not portaled) so it stays inside the
+ * consumer's Theme subtree and inherits theme tokens — the popover API promotes
+ * it into the top layer in place. Rendered before the callout so the callout
+ * promotes on top of it; promoted once (never re-promoted) so that ordering
+ * holds across re-measures.
  */
 function TourHighlight({
   rect,
@@ -172,11 +176,7 @@ function TourHighlight({
     };
   }, []);
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  return createPortal(
+  return (
     <div
       ref={ref}
       popover="manual"
@@ -206,8 +206,7 @@ function TourHighlight({
             : undefined
         }
       />
-    </div>,
-    document.body,
+    </div>
   );
 }
 
