@@ -17,9 +17,12 @@
  * dismiss semantics come from the existing layer system rather than a bespoke
  * implementation.
  *
- * The highlight is drawn as a separate, non-interactive overlay tracking the
- * target's box — the consumer's element is never restyled, so there is no
- * cascade fight with the target's own styles. Dimming is an opt-in spotlight
+ * The highlight is drawn as a separate overlay tracking the target's box — the
+ * consumer's element is never restyled, so there is no cascade fight with the
+ * target's own styles. That overlay is promoted into the browser TOP LAYER
+ * (via the popover API, like the rest of the layer system) so it sits above
+ * page content without any hardcoded z-index; the callout is promoted after
+ * it, so the callout stays above the highlight. Dimming is an opt-in spotlight
  * cutout (dims around the target, not over it) rather than a flat scrim.
  *
  * SYNC: When modified, update these files to stay in sync:
@@ -30,7 +33,15 @@
  * - /packages/lab/src/Tour/index.ts (exports if types change)
  */
 
-import {useContext, useEffect, useId, useState, type ReactNode} from 'react';
+import {
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {createPortal} from 'react-dom';
 import * as stylex from '@stylexjs/stylex';
 import {Popover} from '@astryxdesign/core/Popover';
@@ -46,6 +57,11 @@ import {
   easeVars,
 } from '@astryxdesign/core/theme/tokens.stylex';
 import {TourContext} from './TourContext';
+
+// Client-only layout effect (SSR renders no overlay, so this only runs on the
+// client). Kept local since core does not export its isomorphic variant.
+const useClientLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 // Gap between the target's edge and the highlight ring, in px.
 const HIGHLIGHT_PADDING = 4;
@@ -70,39 +86,130 @@ const styles = stylex.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  // A fixed overlay box sized to the target, drawn OVER it without touching the
-  // consumer's element (so no cascade fight with the target's own styles).
-  // Non-interactive: clicks pass through to the target and page beneath.
-  highlight: {
+  // Extra clearance between the target and the callout, so the highlight ring
+  // (which extends a few px past the target) is never covered by the callout.
+  // Placement-aware: the margin goes on the side of the callout that faces the
+  // target. Adds to Popover's own small anchor gap.
+  calloutGapBelow: {marginBlockStart: spacingVars['--spacing-2']},
+  calloutGapAbove: {marginBlockEnd: spacingVars['--spacing-2']},
+  calloutGapStart: {marginInlineEnd: spacingVars['--spacing-2']},
+  calloutGapEnd: {marginInlineStart: spacingVars['--spacing-2']},
+  // Full-viewport overlay root, promoted into the browser top layer so it sits
+  // above all page content with NO z-index. UA popover styles are neutralized
+  // so it fills the viewport. Click-through by default (coachmark); interactive
+  // only when it dims (to catch backdrop clicks).
+  overlayRoot: {
     position: 'fixed',
+    inset: 0,
+    margin: 0,
+    padding: 0,
+    borderWidth: 0,
+    borderStyle: 'none',
+    backgroundColor: 'transparent',
+    overflow: 'visible',
     pointerEvents: 'none',
-    // Above the page and the backdrop catcher; the callout (native top layer)
-    // stays above this, so callout > highlight > catcher > page holds.
-    zIndex: 2,
+  },
+  overlayInteractive: {
+    pointerEvents: 'auto',
+  },
+  // The highlight box, sized to the target. Non-interactive so clicks reach the
+  // target (coachmark) or the overlay root (dimmed). The accent ring with a
+  // surface-colored gap mirrors the focus-visible outline used across the
+  // system.
+  highlight: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    boxShadow: `0 0 0 2px ${colorVars['--color-background-surface']}, 0 0 0 4px ${colorVars['--color-accent']}`,
     transitionProperty: 'top, left, width, height',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
   },
-  // The accent ring with a surface-colored gap — mirrors the focus-visible
-  // outline used across the system.
-  ring: {
-    boxShadow: `0 0 0 2px ${colorVars['--color-background-surface']}, 0 0 0 4px ${colorVars['--color-accent']}`,
-  },
   // Spotlight cutout: a huge box-shadow spread dims the whole viewport EXCEPT
-  // this box, so the target reads as lit rather than covered. This is the only
-  // dimming affordance — used when the step opts into a backdrop.
+  // this box, so the target reads as lit rather than covered. Layered after the
+  // ring so both shadows show. Only applied when the step opts into a backdrop.
   cutout: {
-    boxShadow: `0 0 0 9999px ${colorVars['--color-overlay']}`,
+    boxShadow: `0 0 0 2px ${colorVars['--color-background-surface']}, 0 0 0 4px ${colorVars['--color-accent']}, 0 0 0 9999px ${colorVars['--color-overlay']}`,
   },
-  // Full-viewport transparent click target beneath the highlight to catch
-  // backdrop clicks (the highlight itself is click-through). Rendered only when
-  // the step dims; the visible dim comes from the cutout, not this element.
-  backdropCatcher: {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 1,
+  hidden: {
+    opacity: 0,
   },
 });
+
+const calloutGapStyles = {
+  below: styles.calloutGapBelow,
+  above: styles.calloutGapAbove,
+  start: styles.calloutGapStart,
+  end: styles.calloutGapEnd,
+} as const;
+
+/**
+ * The highlight overlay: a top-layer box sized to the target, plus an optional
+ * spotlight-cutout dim. Rendered before the callout so the callout promotes on
+ * top of it; promoted once (never re-promoted) so that ordering holds across
+ * re-measures.
+ */
+function TourHighlight({
+  rect,
+  hasBackdrop,
+  onBackdropClick,
+}: {
+  rect: TargetRect | null;
+  hasBackdrop: boolean;
+  onBackdropClick: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useClientLayoutEffect(() => {
+    const el = ref.current;
+    if (el == null || typeof el.showPopover !== 'function') {
+      return;
+    }
+    el.showPopover();
+    return () => {
+      if (el.isConnected && typeof el.hidePopover === 'function') {
+        el.hidePopover();
+      }
+    };
+  }, []);
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      ref={ref}
+      popover="manual"
+      data-testid={hasBackdrop ? 'tour-backdrop' : undefined}
+      aria-hidden="true"
+      onClick={hasBackdrop ? onBackdropClick : undefined}
+      {...stylex.props(
+        styles.overlayRoot,
+        hasBackdrop && styles.overlayInteractive,
+      )}>
+      <div
+        data-testid="tour-highlight"
+        {...stylex.props(
+          styles.highlight,
+          hasBackdrop && styles.cutout,
+          rect == null && styles.hidden,
+        )}
+        style={
+          rect != null
+            ? {
+                top: rect.top - HIGHLIGHT_PADDING,
+                left: rect.left - HIGHLIGHT_PADDING,
+                width: rect.width + HIGHLIGHT_PADDING * 2,
+                height: rect.height + HIGHLIGHT_PADDING * 2,
+                borderRadius: rect.radius,
+              }
+            : undefined
+        }
+      />
+    </div>,
+    document.body,
+  );
+}
 
 export interface TourStepProps {
   /**
@@ -240,47 +347,15 @@ export function TourStep({
     </div>
   );
 
-  // The highlight overlay: a non-interactive box sized to the target, drawn in
-  // a body portal so page overflow/stacking contexts can't clip or bury it.
-  // Ring always; the dim cutout only when the step opts into a backdrop. When
-  // dimming, a sibling catches backdrop clicks (the overlay itself stays
-  // click-through so the target underneath remains reachable).
-  const highlight =
-    rect != null && typeof document !== 'undefined'
-      ? createPortal(
-          <>
-            {hasBackdrop && (
-              <div
-                data-testid="tour-backdrop"
-                aria-hidden="true"
-                onClick={() => onDismiss('backdrop')}
-                {...stylex.props(styles.backdropCatcher)}
-              />
-            )}
-            <div
-              data-testid="tour-highlight"
-              aria-hidden="true"
-              {...stylex.props(
-                styles.highlight,
-                styles.ring,
-                hasBackdrop && styles.cutout,
-              )}
-              style={{
-                top: rect.top - HIGHLIGHT_PADDING,
-                left: rect.left - HIGHLIGHT_PADDING,
-                width: rect.width + HIGHLIGHT_PADDING * 2,
-                height: rect.height + HIGHLIGHT_PADDING * 2,
-                borderRadius: rect.radius,
-              }}
-            />
-          </>,
-          document.body,
-        )
-      : null;
-
   return (
     <>
-      {highlight}
+      {/* Rendered before the callout so the callout promotes above it in the
+          top layer (callout > highlight > page). */}
+      <TourHighlight
+        rect={rect}
+        hasBackdrop={hasBackdrop}
+        onBackdropClick={() => onDismiss('backdrop')}
+      />
       <Popover
         // Popover types anchorRef as RefObject<HTMLElement>; TourStep accepts a
         // nullable ref for ergonomics (useRef<HTMLButtonElement>(null)). Popover
@@ -297,6 +372,13 @@ export function TourStep({
           }
         }}
         placement={placement}
+        // Size the callout to its content instead of matching the target's
+        // width (Popover's default minWidth: anchor-size(width) makes it span a
+        // wide target); the content's own maxWidth caps it.
+        width="fit-content"
+        // Push the callout clear of the highlight ring so the ring is never
+        // covered (placement-aware; adds to Popover's own anchor gap).
+        xstyle={calloutGapStyles[placement]}
         label={typeof heading === 'string' ? heading : 'Tour step'}
         hasCloseButton
         closeButtonLabel="Close tour"
