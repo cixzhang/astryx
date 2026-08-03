@@ -79,8 +79,15 @@ export const docs = {
         {
           name: 'placement',
           type: "'above' | 'below' | 'start' | 'end'",
-          description: 'Where the callout sits relative to the target.',
+          description: 'Which side of the target the callout sits on.',
           default: "'below'",
+        },
+        {
+          name: 'alignment',
+          type: "'start' | 'center' | 'end'",
+          description:
+            'How the callout aligns along the placement side (e.g. with placement="below": start left-aligns under the target, center centers, end right-aligns).',
+          default: "'start'",
         },
       ],
     },

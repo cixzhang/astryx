@@ -47,7 +47,7 @@ import {
 } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {Popover} from '@astryxdesign/core/Popover';
-import type {LayerPlacement} from '@astryxdesign/core/Layer';
+import type {LayerAlignment, LayerPlacement} from '@astryxdesign/core/Layer';
 import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {Heading} from '@astryxdesign/core/Heading';
@@ -223,10 +223,16 @@ export interface TourStepProps {
   /** Step body content. */
   children?: ReactNode;
   /**
-   * Where the callout sits relative to the target.
+   * Which side of the target the callout sits on.
    * @default 'below'
    */
   placement?: LayerPlacement;
+  /**
+   * How the callout aligns along the placement side — e.g. with `placement="below"`,
+   * `start` left-aligns it under the target, `center` centers it, `end` right-aligns it.
+   * @default 'start'
+   */
+  alignment?: LayerAlignment;
   /** Test id applied to the callout content. */
   'data-testid'?: string;
 }
@@ -247,6 +253,7 @@ export function TourStep({
   heading,
   children,
   placement = 'below',
+  alignment = 'start',
   'data-testid': testId,
 }: TourStepProps) {
   const tour = useContext(TourContext);
@@ -371,6 +378,7 @@ export function TourStep({
           }
         }}
         placement={placement}
+        alignment={alignment}
         // Size the callout to its content instead of matching the target's
         // width (Popover's default minWidth: anchor-size(width) makes it span a
         // wide target); the content's own maxWidth caps it.

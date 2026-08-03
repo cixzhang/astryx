@@ -3,6 +3,7 @@
 import type {Meta, StoryObj} from '@storybook/react';
 import {useRef, useState} from 'react';
 import {Tour, TourStep} from '@astryxdesign/lab';
+import type {LayerAlignment, LayerPlacement} from '@astryxdesign/core/Layer';
 import {Button} from '@astryxdesign/core/Button';
 import {Heading} from '@astryxdesign/core/Heading';
 import {HStack, VStack} from '@astryxdesign/core/Stack';
@@ -132,6 +133,58 @@ export const ScopedTheme: Story = {
           </Tour>
         </VStack>
       </Theme>
+    );
+  },
+};
+
+// Interactive placement + alignment. Use the Controls panel to move the callout
+// to any side of the centered target and align it start / center / end along
+// that side. Args here drive the TourStep (not the Tour controller), so this
+// story is typed against its own arg shape.
+interface PlacementArgs {
+  placement: LayerPlacement;
+  alignment: LayerAlignment;
+}
+
+export const Placement: StoryObj<PlacementArgs> = {
+  name: 'Placement & alignment',
+  argTypes: {
+    placement: {
+      control: 'select',
+      options: ['above', 'below', 'start', 'end'],
+      description: 'Which side of the target the callout sits on',
+    },
+    alignment: {
+      control: 'select',
+      options: ['start', 'center', 'end'],
+      description: 'How the callout aligns along the placement side',
+    },
+  },
+  args: {
+    placement: 'below',
+    alignment: 'center',
+  },
+  render: ({placement, alignment}: PlacementArgs) => {
+    const [isActive, setIsActive] = useState(true);
+    const targetRef = useRef<HTMLButtonElement>(null);
+
+    return (
+      <VStack gap={4} align="center" justify="center" style={{minHeight: 460}}>
+        <Button ref={targetRef} variant="secondary" label="Target" />
+        {!isActive && (
+          <Button label="Show step" onClick={() => setIsActive(true)} />
+        )}
+        <Tour isActive={isActive} onDismiss={() => setIsActive(false)}>
+          <TourStep
+            targetRef={targetRef}
+            heading="Positioned callout"
+            placement={placement}
+            alignment={alignment}>
+            placement=&quot;{placement}&quot; · alignment=&quot;{alignment}
+            &quot;
+          </TourStep>
+        </Tour>
+      </VStack>
     );
   },
 };
