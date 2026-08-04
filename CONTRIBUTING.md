@@ -331,14 +331,13 @@ These are not free-form. `parseDoc` validates each at load, and a **drift harnes
 node packages/cli/clients/cli/bin/astryx.mjs --help
 
 # Validate every colocated doc parses + mirrors its source of truth
-pnpm -F @astryxdesign/cli test              # includes the drift + golden suites
+pnpm -F @astryxdesign/cli test              # includes the drift suite
 pnpm -F @astryxdesign/cli typecheck:authoring
 
-# The golden harness freezes every observable CLI surface (help, manifest,
-# command output, error paths, exit codes). After an intended output change,
-# refresh it and review the diff:
-pnpm -F @astryxdesign/cli golden            # regenerate the baseline
-pnpm -F @astryxdesign/cli golden:check      # CI gate: fails on any un-refreshed drift
+# Keep the generated CLI README tables (commands, error codes, response types)
+# in sync with the manifest + EnumDocs. After an intended change, refresh + review:
+pnpm -F @astryxdesign/cli readme            # regenerate the tables
+pnpm -F @astryxdesign/cli readme:check      # CI gate: fails on any un-refreshed drift
 ```
 
 ## Testing
