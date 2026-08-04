@@ -42,23 +42,30 @@ export function defineCommand(parent, doc, {fn, action} = {}) {
     (fn?.params ?? []).find(p => p.name === name)?.description ?? '';
 
   for (const arg of doc.args ?? []) {
-    const argument = cmd.registeredArguments?.find(a => a.name() === arg.name);
-    const desc = arg.description ?? paramDesc(arg.param);
-    if (argument && desc) argument.description = desc;
+    // Only set an arg description when the doc gives one explicitly. Commander
+    // renders an "Arguments:" help section only for described args; inheriting
+    // the FunctionDoc param description here would add that section where the
+    // current CLI has none. (Docsite/`astryx docs` read the arg's `param` for
+    // its description instead.)
+    if (arg.description) {
+      const argument = cmd.registeredArguments?.find(a => a.name() === arg.name);
+      if (argument) argument.description = arg.description;
+    }
   }
 
   for (const o of doc.options ?? []) {
     const desc = o.description ?? (o.param ? paramDesc(o.param) : '');
     const option = cmd.createOption(o.flag, desc);
-    if (o.choices) option.choices(o.choices);
     if (o.default != null) option.default(o.default);
     cmd.addOption(option);
   }
 
-  if (doc.examples?.length) {
-    const lines = doc.examples.map(e => `  ${e.cli}`).join('\n');
-    cmd.addHelpText('after', `\nExamples:\n${lines}`);
-  }
+  // `choices` and `examples` are doc metadata surfaced by `astryx docs` and the
+  // doc site; they are intentionally NOT injected into `--help` here. Choices
+  // stay described in the option text (Commander `.choices()` would also change
+  // validation from the api layer's ERR_INVALID_ARGUMENT), and the current CLI
+  // help carries no per-command examples epilog. Keeping both out preserves the
+  // exact `--help`/manifest surface as registrations migrate to this converter.
 
   if (action) cmd.action(/** @type {(...args: any[]) => void | Promise<void>} */ (action));
   return cmd;
