@@ -27,7 +27,7 @@
 export function defineCommand(parent, doc, {fn, action} = {}) {
   // The command token is the last path segment ("theme build" -> "build"),
   // since subcommands are added to their group command, not the program.
-  const token = doc.name.split(' ').pop();
+  const token = doc.name.split(' ').pop() ?? doc.name;
   const argSpec = (doc.args ?? [])
     .map(a => {
       const inner = a.variadic ? `${a.name}...` : a.name;
@@ -60,6 +60,6 @@ export function defineCommand(parent, doc, {fn, action} = {}) {
     cmd.addHelpText('after', `\nExamples:\n${lines}`);
   }
 
-  if (action) cmd.action(action);
+  if (action) cmd.action(/** @type {(...args: any[]) => void | Promise<void>} */ (action));
   return cmd;
 }
