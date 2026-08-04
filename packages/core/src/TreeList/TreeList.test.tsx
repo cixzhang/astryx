@@ -650,14 +650,16 @@ describe('TreeList', () => {
   // ===========================================================================
 
   describe('row gap lever', () => {
-    it('defaults the row gap to 0 so existing layouts are unchanged', () => {
-      // The lever is published on the tree-list root; its default is 0px so
-      // rows stay contiguous unless a theme opts into a gap.
+    it('defaults the row gap to a subtle 2px separation', () => {
+      // The lever is published on the tree-list root; its default is
+      // --spacing-0-5 (2px) so rows have a light separation out of the box. A
+      // theme can widen or close it via the tree-list target. jsdom does not
+      // resolve token vars, so the declared value is the --spacing-0-5 token.
       render(<TreeList items={simpleItems} data-testid="tree" />);
       const root = screen.getByTestId('tree');
       expect(
         getComputedStyle(root).getPropertyValue('--tree-list-row-gap').trim(),
-      ).toBe('0px');
+      ).toBe('var(--spacing-0-5)');
     });
 
     it('lets a theme open a row gap via the tree-list target', () => {

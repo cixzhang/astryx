@@ -32,7 +32,7 @@ export const docs = {
     ],
     vars: [
       {name: '--tree-list-indent', description: 'Per-level indentation step. Each nesting level indents its rows by this distance, and the guide lines follow it so they stay aligned. Set it on the `tree-list` target to retune the metric (e.g. `var(--spacing-5)` for a wider indent).', default: 'var(--spacing-4)'},
-      {name: '--tree-list-row-gap', description: 'Vertical gap between adjacent rows. Default `0px` keeps rows contiguous; set it on the `tree-list` target to open a gap. The connector guides span the gap automatically (the line stays continuous) and do not overhang the last row, so no guide-height tuning is needed.', default: '0px'},
+      {name: '--tree-list-row-gap', description: 'Vertical gap between adjacent rows. Default `2px` (var(--spacing-0-5)) gives a subtle separation; set it on the `tree-list` target to widen or close the gap. The connector guides span the gap automatically (the line stays continuous) and do not overhang the last row, so no guide-height tuning is needed.', default: 'var(--spacing-0-5)'},
     ],
   },
   components: [
@@ -111,7 +111,7 @@ export const docsZh = {
     ],
     vars: [
       {name: '--tree-list-indent', description: '每级缩进步长。每个嵌套层级的行按此距离缩进，引导线随之对齐。在 `tree-list` 目标上设置以调整该度量（例如用 `var(--spacing-5)` 获得更宽的缩进）。', default: 'var(--spacing-4)'},
-      {name: '--tree-list-row-gap', description: '相邻行之间的垂直间距。默认 `0px` 使各行相连；在 `tree-list` 目标上设置以拉开间距。连接引导线会自动跨越该间距（线保持连续）且不会超出最后一行，因此无需调整引导线高度。', default: '0px'},
+      {name: '--tree-list-row-gap', description: '相邻行之间的垂直间距。默认 `2px`（var(--spacing-0-5)）提供细微的分隔；在 `tree-list` 目标上设置以加宽或关闭间距。连接引导线会自动跨越该间距（线保持连续）且不会超出最后一行，因此无需调整引导线高度。', default: 'var(--spacing-0-5)'},
     ],
   },
   components: [
