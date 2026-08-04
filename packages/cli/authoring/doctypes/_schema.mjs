@@ -106,7 +106,11 @@ const SchemaFieldSchema =
       z
         .object({
           name: z.string().min(1, 'field name is required'),
-          type: z.string().min(1, 'field type is required'),
+          // `{error}` covers a missing (undefined) type; `.min(1)` covers an
+          // empty string — both give the same author-friendly message.
+          type: z
+            .string({error: 'field type is required'})
+            .min(1, 'field type is required'),
           description: z.string(),
           required: z.boolean().optional(),
           default: z.string().optional(),
