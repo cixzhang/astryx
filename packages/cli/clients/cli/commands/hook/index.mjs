@@ -16,9 +16,12 @@ import {getCliInvocation} from '../../../../foundation/env/package-manager.mjs';
 import {jsonOut} from '../../../../foundation/response/json.mjs';
 import {emit, section, text, list, records, code} from '../../formatters/index.mjs';
 import {cliError} from '../../lib/cli-error.mjs';
+import {defineCommand} from '../../lib/define-command.mjs';
 import {ERROR_CODES} from '../../../../foundation/response/error-codes.mjs';
 import {hook as hookApi} from '../../../../api/hook/hook.mjs';
 import {findRelatedBlocks} from '../../../../api/template/template.mjs';
+import {doc as hookCommand} from '../hook.doc.mjs';
+import {doc as hookFn} from '../../../../api/hook/hook.doc.mjs';
 
 /**
  * The api layer's hook() widens its return to `{type: string, data: unknown}`,
@@ -34,13 +37,9 @@ import {findRelatedBlocks} from '../../../../api/template/template.mjs';
 
 /** @param {import('commander').Command} program */
 export function registerHook(program) {
-  program
-    .command('hook [name]')
-    .description('List hooks or print hook docs')
-    .option('--list', 'List all hooks grouped by category')
-    .option('--category <category>', 'List hooks in a specific category')
-    .option('--params', 'Print only the parameters table')
-    .action(
+  defineCommand(program, hookCommand, {
+    fn: hookFn,
+    action:
       /**
        * @param {string|undefined} name
        * @param {{list?: boolean, category?: string, params?: boolean}} options
@@ -176,7 +175,8 @@ export function registerHook(program) {
           break;
         }
       }
-    });
+    },
+  });
 }
 
 // Re-export lib functions for external consumers

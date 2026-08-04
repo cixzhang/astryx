@@ -13,6 +13,9 @@
 import {runChecks} from '../../../api/doctor/doctor.mjs';
 import {jsonOut} from '../../../foundation/response/json.mjs';
 import {emit, section, records, text} from '../formatters/index.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as doctorCommand} from './doctor.doc.mjs';
+import {doc as doctorFn} from '../../../api/doctor/doctor.doc.mjs';
 
 /** Status -> ASCII token (plain, matching the rest of the CLI). */
 const STATUS = {
@@ -63,16 +66,9 @@ function printHuman(report) {
  * @param {import('commander').Command} program
  */
 export function registerDoctor(program) {
-  program
-    .command('doctor')
-    .description('Diagnose your XDS setup and report problems with fixes')
-    .addHelpText(
-      'after',
-      '\nExit code:\n' +
-        '  0  no failures (warnings are allowed) — safe as a CI gate\n' +
-        '  1  one or more checks failed\n',
-    )
-    .action(async () => {
+  defineCommand(program, doctorCommand, {
+    fn: doctorFn,
+    action: async () => {
       const json = program.opts().json || false;
       const report = await runChecks();
       const hasFailure = report.summary.fail > 0;
@@ -87,5 +83,11 @@ export function registerDoctor(program) {
       if (hasFailure) {
         process.exitCode = 1;
       }
-    });
+    },
+  }).addHelpText(
+    'after',
+    '\nExit code:\n' +
+      '  0  no failures (warnings are allowed) — safe as a CI gate\n' +
+      '  1  one or more checks failed\n',
+  );
 }

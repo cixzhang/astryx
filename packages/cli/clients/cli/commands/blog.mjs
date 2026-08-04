@@ -19,15 +19,17 @@ import {jsonOut} from '../../../foundation/response/json.mjs';
 import {emit, section, text, record, records, code} from '../formatters/index.mjs';
 import {cliError} from '../lib/cli-error.mjs';
 import {blog as blogApi} from '../../../api/blog/blog.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as blogCommand} from './blog.doc.mjs';
+import {doc as blogFn} from '../../../api/blog/blog.doc.mjs';
 
 /**
  * @param {import('commander').Command} program
  */
 export function registerBlog(program) {
-  program
-    .command('blog [slug]')
-    .description('Read the Astryx blog from the published feed')
-    .action(async (/** @type {string | undefined} */ slug) => {
+  defineCommand(program, blogCommand, {
+    fn: blogFn,
+    action: async (/** @type {string | undefined} */ slug) => {
       const run = getRunPrefix();
       /** @type {import('../../../api/blog/blog.type.mjs').BlogListResponse | import('../../../api/blog/blog.type.mjs').BlogDetailResponse} */
       let result;
@@ -68,5 +70,6 @@ export function registerBlog(program) {
         // (code() so article typography/spacing isn't ASCII-normalized).
         emit(record({feed: result.data.feedUrl}), code(result.data.text));
       }
-    });
+    },
+  });
 }

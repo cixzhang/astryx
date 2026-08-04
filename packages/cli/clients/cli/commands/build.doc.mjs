@@ -14,7 +14,7 @@ export const doc = {
   displayName: 'astryx build',
   namespace: 'cli',
   summary:
-    'Build a page: a composition kit for an idea, or the workflow playbook (no args).',
+    'Build a page: composition kit for an idea, or the workflow playbook (no args)',
   description:
     'The assemble-a-page entry point. With no query it returns the how-to-build-a-page ' +
     'playbook; with a query it groups the unified search hits into a composition kit — ' +
@@ -26,12 +26,16 @@ export const doc = {
       flag: '--type <domain>',
       param: 'options.type',
       choices: ['component', 'hook', 'template'],
+      description: 'Filter the kit to one domain (component|hook|template)',
     },
-    {flag: '--limit <n>', param: 'options.limit', default: '60'},
+    {
+      flag: '--limit <n>',
+      param: 'options.limit',
+      description: 'Max candidates to draw from (default 60)',
+    },
     {
       flag: '--verbose',
-      description:
-        'Include import paths and the match reason (text output only).',
+      description: 'Verbose output (include import paths and match reason)',
     },
   ],
   examples: [

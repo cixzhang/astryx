@@ -32,7 +32,9 @@ export interface CommandOptionDoc {
   /** Override/explicit description (required when cliOnly). */
   description?: string;
   choices?: string[];
-  default?: string;
+  /** Default value applied via Commander `.default()` (shown in --help). A
+   *  boolean flag defaults to `false`; a repeatable value flag to `string[]`. */
+  default?: string | boolean | string[];
   /** True for CLI-only flags with no function param. */
   cliOnly?: boolean;
 }

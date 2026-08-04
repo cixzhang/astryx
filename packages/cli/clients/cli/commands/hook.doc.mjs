@@ -13,16 +13,28 @@ export const doc = {
   name: 'hook',
   displayName: 'astryx hook',
   namespace: 'cli',
-  summary: 'List hooks, or print a hook doc.',
+  summary: 'List hooks or print hook docs',
   description:
     'Resolves a hook by name and prints its authored doc, or lists the catalog grouped ' +
     'by category. The --params flag narrows a single hook to just its parameters table.',
   fn: 'hook',
   args: [{name: 'name', param: 'name', required: false}],
   options: [
-    {flag: '--list', param: 'options.list'},
-    {flag: '--category <category>', param: 'options.category'},
-    {flag: '--params', param: 'options.params'},
+    {
+      flag: '--list',
+      param: 'options.list',
+      description: 'List all hooks grouped by category',
+    },
+    {
+      flag: '--category <category>',
+      param: 'options.category',
+      description: 'List hooks in a specific category',
+    },
+    {
+      flag: '--params',
+      param: 'options.params',
+      description: 'Print only the parameters table',
+    },
   ],
   examples: [
     {label: 'Browse the catalog', cli: 'astryx hook --list'},

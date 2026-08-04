@@ -16,7 +16,10 @@ import {getCliInvocation} from '../../../foundation/env/package-manager.mjs';
 import {jsonOut} from '../../../foundation/response/json.mjs';
 import {emit, section, records, text, code} from '../formatters/index.mjs';
 import {cliError} from '../lib/cli-error.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
 import {docs as docsApi} from '../../../api/docs/docs.mjs';
+import {doc as docsCommand} from './docs.doc.mjs';
+import {doc as docsFn} from '../../../api/docs/docs.doc.mjs';
 
 // ─── Formatting ──────────────────────────────────────────────────────────────
 
@@ -133,10 +136,9 @@ function formatReferenceFull(docs, detail) {
  * @param {import('commander').Command} program
  */
 export function registerDocs(program) {
-  program
-    .command('docs [topic] [section]')
-    .description('Print reference docs')
-    .action(async (/** @type {string | undefined} */ topic, /** @type {string | undefined} */ sectionName) => {
+  defineCommand(program, docsCommand, {
+    fn: docsFn,
+    action: async (/** @type {string | undefined} */ topic, /** @type {string | undefined} */ sectionName) => {
       const run = getCliInvocation();
       const lang = program.opts().lang || null;
       const zh = program.opts().zh || false;
@@ -184,5 +186,6 @@ export function registerDocs(program) {
           break;
         }
       }
-    });
+    },
+  });
 }

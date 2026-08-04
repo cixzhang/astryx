@@ -14,7 +14,7 @@ export const doc = {
   name: 'layout expand',
   displayName: 'astryx layout expand',
   namespace: 'cli',
-  summary: 'Expand a layout expression into validated XDS TSX.',
+  summary: 'Expand a layout expression into validated XDS TSX',
   description:
     'Parses and validates a compressed XLE/XLO expression, then expands it into ' +
     'ready-to-use XDS TSX — routing children into slots, scaffolding typed useState for ' +
@@ -25,19 +25,25 @@ export const doc = {
     {name: 'path', param: 'options.targetPath', required: false},
   ],
   options: [
-    {
-      flag: '--file <file>',
-      description:
-        'Read the expression from a file instead of the positional argument.',
-    },
+    {flag: '--file <file>', description: 'Read the expression from a file'},
     {
       flag: '--form <form>',
       param: 'options.form',
       choices: ['compact', 'outline', 'auto'],
       default: 'auto',
+      description: 'Input surface: compact, outline, or auto',
     },
-    {flag: '--name <name>', param: 'options.name', default: 'GeneratedLayout'},
-    {flag: '--loose', param: 'options.loose'},
+    {
+      flag: '--name <name>',
+      param: 'options.name',
+      default: 'GeneratedLayout',
+      description: 'Generated component name (PascalCase)',
+    },
+    {
+      flag: '--loose',
+      param: 'options.loose',
+      description: 'Downgrade unknown {block} hints to TODO placeholders',
+    },
   ],
   examples: [
     {

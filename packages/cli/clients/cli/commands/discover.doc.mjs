@@ -14,14 +14,20 @@ export const doc = {
   name: 'discover',
   displayName: 'astryx discover',
   namespace: 'cli',
-  summary: 'Discover external packages and components.',
+  summary: 'Discover external packages and components',
   description:
     'Explores components contributed by configured external packages and integrations. ' +
     'With no query it lists those packages; an @scope/name query browses one package; ' +
     'an @scope/name/Component path or a free-text term resolves to a component doc.',
   fn: 'discover',
   args: [{name: 'query', param: 'query', required: false}],
-  options: [{flag: '--components', param: 'options.components'}],
+  options: [
+    {
+      flag: '--components',
+      param: 'options.components',
+      description: 'List components only',
+    },
+  ],
   examples: [
     {label: 'List packages', cli: 'astryx discover --json'},
     {label: 'Browse a package', cli: 'astryx discover @acme/ui'},

@@ -10,6 +10,10 @@
  * AstryxError → cliError. Watch mode (a human-interactive, long-running loop)
  * stays here because it re-invokes `theme build` as a child process.
  *
+ * The command surface (group + subcommand descriptions, args, flags) is sourced
+ * from the colocated CommandDocs via `defineCommand`; this file supplies only
+ * the actions (and the group's unknown-subcommand guard).
+ *
  * Usage:
  *   astryx theme build ./src/themes/ocean.ts
  *   astryx theme build ./src/themes/ocean.ts --out ./dist/ocean.css
@@ -28,6 +32,14 @@ import {ERROR_CODES} from '../../../foundation/response/error-codes.mjs';
 import {themeAdd} from '../../../api/theme/add/add.mjs';
 import {themeList} from '../../../api/theme/list/list.mjs';
 import {themeBuild, importSpecifier} from '../../../api/theme/build/build.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as themeGroup} from './theme.doc.mjs';
+import {doc as themeBuildCommand} from './theme-build.doc.mjs';
+import {doc as themeListCommand} from './theme-list.doc.mjs';
+import {doc as themeAddCommand} from './theme-add.doc.mjs';
+import {doc as themeBuildFn} from '../../../api/theme/themeBuild.doc.mjs';
+import {doc as themeListFn} from '../../../api/theme/themeList.doc.mjs';
+import {doc as themeAddFn} from '../../../api/theme/themeAdd.doc.mjs';
 
 /**
  * Path to this CLI's real entry (clients/cli/bin/astryx.mjs), resolved from
@@ -161,121 +173,106 @@ function printThemeList(themes) {
  * @param {import('commander').Command} program
  */
 export function registerTheme(program) {
-  const theme = program
-    .command('theme')
-    .description('Theme tools — build, export, and manage themes')
-    .action(
-      (
-        /** @type {unknown} */ options,
-        /** @type {import('commander').Command} */ cmd,
-      ) => {
-        // Parent group has no default behaviour. If the user passed an
-        // unknown subcommand (e.g. `astryx theme bogus`), Commander hands it to
-        // us as a positional in cmd.args — exit 1 with a clear error.
-        const extras = (cmd && cmd.args) || [];
-        if (extras.length > 0) {
-          const unknown = String(extras[0]);
-          const known = (theme.commands || []).map(c => c.name());
-          const suggestions = known.map(name => ({
-            name,
-            reason: 'available subcommand',
-          }));
-          cliError(`unknown subcommand 'theme ${unknown}'`, {
-            suggestions,
-            code: ERROR_CODES.ERR_UNKNOWN_SUBCOMMAND,
-          });
-          return;
-        }
-        // Bare `astryx theme` — show the subcommand list. Exit 0 (help is success).
-        theme.help();
-      },
-    );
+  const theme = defineCommand(program, themeGroup, {
+    action: (
+      /** @type {unknown} */ options,
+      /** @type {import('commander').Command} */ cmd,
+    ) => {
+      // Parent group has no default behaviour. If the user passed an
+      // unknown subcommand (e.g. `astryx theme bogus`), Commander hands it to
+      // us as a positional in cmd.args — exit 1 with a clear error.
+      const extras = (cmd && cmd.args) || [];
+      if (extras.length > 0) {
+        const unknown = String(extras[0]);
+        const known = (theme.commands || []).map(c => c.name());
+        const suggestions = known.map(name => ({
+          name,
+          reason: 'available subcommand',
+        }));
+        cliError(`unknown subcommand 'theme ${unknown}'`, {
+          suggestions,
+          code: ERROR_CODES.ERR_UNKNOWN_SUBCOMMAND,
+        });
+        return;
+      }
+      // Bare `astryx theme` — show the subcommand list. Exit 0 (help is success).
+      theme.help();
+    },
+  });
 
-  theme
-    .command('build <file>')
-    .description('Compile a defineTheme file to CSS + JS')
-    .option('-o, --out <path>', 'Output CSS file path')
-    .option(
-      '-w, --watch',
-      'Rebuild automatically when the theme file changes (Ctrl-C to stop)',
-    )
-    .option(
-      '-c, --check',
-      'Verify the committed outputs match the source without writing; exit non-zero if stale',
-    )
-    .action(
-      async (
-        /** @type {string} */ file,
-        /** @type {{out?: string, watch?: boolean, check?: boolean}} */ options,
-      ) => {
-        const filePath = path.resolve(process.cwd(), file);
-        const json = program.opts().json || false;
+  defineCommand(theme, themeBuildCommand, {
+    fn: themeBuildFn,
+    action: async (
+      /** @type {string} */ file,
+      /** @type {{out?: string, watch?: boolean, check?: boolean}} */ options,
+    ) => {
+      const filePath = path.resolve(process.cwd(), file);
+      const json = program.opts().json || false;
 
-        if (!fs.existsSync(filePath)) {
-          cliError(`File not found: ${filePath}`, {
-            code: ERROR_CODES.ERR_FILE_NOT_FOUND,
-          });
-          return;
-        }
+      if (!fs.existsSync(filePath)) {
+        cliError(`File not found: ${filePath}`, {
+          code: ERROR_CODES.ERR_FILE_NOT_FOUND,
+        });
+        return;
+      }
 
-        // --check and --watch are mutually exclusive: check is a one-shot,
-        // exit-coded verification; watch is a long-running rebuild loop.
-        if (options.check && options.watch) {
-          cliError('--check cannot be combined with --watch', {
+      // --check and --watch are mutually exclusive: check is a one-shot,
+      // exit-coded verification; watch is a long-running rebuild loop.
+      if (options.check && options.watch) {
+        cliError('--check cannot be combined with --watch', {
+          code: ERROR_CODES.ERR_THEME_INVALID,
+        });
+        return;
+      }
+
+      // Watch mode: run an initial build, then rebuild on every change to the
+      // theme file. Watch is a human-interactive, long-running mode — it is not
+      // supported in --json (machine) mode, which expects a single envelope.
+      if (options.watch) {
+        if (json) {
+          cliError('--watch is not supported with --json', {
             code: ERROR_CODES.ERR_THEME_INVALID,
           });
           return;
         }
+        await runThemeBuildWatch(file, filePath, options);
+        return;
+      }
 
-        // Watch mode: run an initial build, then rebuild on every change to the
-        // theme file. Watch is a human-interactive, long-running mode — it is not
-        // supported in --json (machine) mode, which expects a single envelope.
-        if (options.watch) {
-          if (json) {
-            cliError('--watch is not supported with --json', {
-              code: ERROR_CODES.ERR_THEME_INVALID,
-            });
-            return;
-          }
-          await runThemeBuildWatch(file, filePath, options);
-          return;
+      // Non-watch: delegate to the API compiler. Enable human output unless in
+      // --json mode (log → stdout via humanLog, warn/error → stderr). The
+      // "Building theme from" line, the ✓/warning lines, and the install
+      // instructions are all emitted from inside themeBuild via the shared logger.
+      logger.setSilent(json);
+      try {
+        const result = await themeBuild(
+          file,
+          {out: options.out, check: options.check},
+          {cwd: process.cwd()},
+        );
+        if (json && result) jsonOut(result);
+        // In --check mode a stale/missing output is a failure: exit non-zero
+        // (after emitting the receipt) so CI can gate on it. The receipt is
+        // already printed above (shared logger or --json envelope).
+        if (
+          options.check &&
+          result &&
+          result.type === 'theme.build.check' &&
+          !result.data.upToDate
+        ) {
+          process.exitCode = 1;
         }
+      } catch (e) {
+        const err =
+          /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
+        cliError(err.message, {suggestions: err.suggestions, code: err.code});
+      }
+    },
+  });
 
-        // Non-watch: delegate to the API compiler. Enable human output unless in
-        // --json mode (log → stdout via humanLog, warn/error → stderr). The
-        // "Building theme from" line, the ✓/warning lines, and the install
-        // instructions are all emitted from inside themeBuild via the shared logger.
-        logger.setSilent(json);
-        try {
-          const result = await themeBuild(
-            file,
-            {out: options.out, check: options.check},
-            {cwd: process.cwd()},
-          );
-          if (json && result) jsonOut(result);
-          // In --check mode a stale/missing output is a failure: exit non-zero
-          // (after emitting the receipt) so CI can gate on it. The receipt is
-          // already printed above (shared logger or --json envelope).
-          if (
-            options.check &&
-            result &&
-            result.type === 'theme.build.check' &&
-            !result.data.upToDate
-          ) {
-            process.exitCode = 1;
-          }
-        } catch (e) {
-          const err =
-            /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
-          cliError(err.message, {suggestions: err.suggestions, code: err.code});
-        }
-      },
-    );
-
-  theme
-    .command('list')
-    .description('List themes available to add')
-    .action(async () => {
+  defineCommand(theme, themeListCommand, {
+    fn: themeListFn,
+    action: async () => {
       const json = program.opts().json || false;
       /** @type {import('../../../api/theme/theme.type.mjs').ThemeListResponse} */
       let result;
@@ -294,73 +291,70 @@ export function registerTheme(program) {
       if (json) return jsonOut(result);
 
       printThemeList(result.data);
-    });
+    },
+  });
 
-  theme
-    .command('add [slug] [path]')
-    .description('Scaffold a theme into your project as editable source')
-    .option('-f, --overwrite', 'Overwrite existing files without prompting')
-    .option('--list', 'List available themes')
-    .action(
-      async (
-        /** @type {string | undefined} */ slug,
-        /** @type {string | undefined} */ targetPath,
-        /** @type {{list?: boolean, overwrite?: boolean}} */ options,
-      ) => {
-        const json = program.opts().json || false;
+  defineCommand(theme, themeAddCommand, {
+    fn: themeAddFn,
+    action: async (
+      /** @type {string | undefined} */ slug,
+      /** @type {string | undefined} */ targetPath,
+      /** @type {{list?: boolean, overwrite?: boolean}} */ options,
+    ) => {
+      const json = program.opts().json || false;
 
-        // The CLI is non-interactive: never prompt to confirm an overwrite.
-        // Existing files require an explicit --overwrite; otherwise themeAdd's
-        // ERR_FILE_EXISTS guard rejects the write. `--list` (or a bare `theme add`
-        // with no slug) is the list affordance — route it to the list leaf.
-        /** @type {import('../../../api/theme/theme.type.mjs').ThemeListResponse | import('../../../api/theme/theme.type.mjs').ThemeAddResponse} */
-        let result;
-        try {
-          result =
-            options.list || !slug
-              ? themeList()
-              : await themeAdd(slug, {
-                  targetPath,
-                  overwrite: options.overwrite,
-                  cwd: process.cwd(),
-                });
-        } catch (e) {
-          const err =
-            /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
-          cliError(err.message, {
-            suggestions: err.suggestions || [],
-            code: err.code,
-          });
-          return;
-        }
+      // The CLI is non-interactive: never prompt to confirm an overwrite.
+      // Existing files require an explicit --overwrite; otherwise themeAdd's
+      // ERR_FILE_EXISTS guard rejects the write. `--list` (or a bare `theme add`
+      // with no slug) is the list affordance — route it to the list leaf.
+      /** @type {import('../../../api/theme/theme.type.mjs').ThemeListResponse | import('../../../api/theme/theme.type.mjs').ThemeAddResponse} */
+      let result;
+      try {
+        result =
+          options.list || !slug
+            ? themeList()
+            : await themeAdd(slug, {
+                targetPath,
+                overwrite: options.overwrite,
+                cwd: process.cwd(),
+              });
+      } catch (e) {
+        const err =
+          /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
+        cliError(err.message, {
+          suggestions: err.suggestions || [],
+          code: err.code,
+        });
+        return;
+      }
 
-        if (json) return jsonOut(result);
+      if (json) return jsonOut(result);
 
-        if (result.type === 'theme.list') {
-          printThemeList(result.data);
-          return;
-        }
+      if (result.type === 'theme.list') {
+        printThemeList(result.data);
+        return;
+      }
 
-        // theme.add — print where files landed + how to use the theme.
-        const {displayName, outputDir, entry, exportName, files} = result.data;
-        const entryModule = importSpecifier(
-          outputDir,
-          entry.replace(/\.tsx?$/, ''),
-        );
-        emit(
-          text(`[ok] Added ${displayName} theme to ${outputDir}/`),
-          list(files.map(f => `${outputDir}/${f}`)),
-          text(
-            'Use it in your app (import path is relative to a file in src/ — adjust if yours lives elsewhere):',
-          ),
-          code(
-            `import { ${exportName} } from '${entryModule}';\n\n` +
-              `<Theme theme={${exportName}}>\n  <App />\n</Theme>`,
-          ),
-          text(
-            `This is your copy of the ${displayName} theme — edit ${entry} to make it your own.`,
-          ),
-        );
-      },
-    );
+      // theme.add — print where files landed + how to use the theme.
+      const {displayName, outputDir, entry, exportName, files} = result.data;
+      const entryModule = importSpecifier(
+        outputDir,
+        entry.replace(/\.tsx?$/, ''),
+      );
+      emit(
+        text(`[ok] Added ${displayName} theme to ${outputDir}/`),
+        list(files.map(f => `${outputDir}/${f}`)),
+        text(
+          'Use it in your app (import path is relative to a file in src/ — adjust if yours lives elsewhere):',
+        ),
+        code(
+          `import { ${exportName} } from '${entryModule}';\n\n` +
+            `<Theme theme={${exportName}}>\n  <App />\n</Theme>`,
+        ),
+        text(
+          `This is your copy of the ${displayName} theme — edit ${entry} to make it your own.`,
+        ),
+      );
+    },
+  });
 }

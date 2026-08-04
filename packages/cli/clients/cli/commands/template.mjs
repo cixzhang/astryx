@@ -14,6 +14,9 @@ import {template as templateApi} from '../../../api/template/template.mjs';
 import {Project} from '../../../foundation/config/project.mjs';
 import {warnOnIntegrationIssues} from '../../../foundation/integrations/integration-warnings.mjs';
 import {getCliInvocation} from '../../../foundation/env/package-manager.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as templateCommand} from './template.doc.mjs';
+import {doc as templateFn} from '../../../api/template/template.doc.mjs';
 
 export {discoverTemplates, listTemplates} from '../../../api/template/template.mjs';
 
@@ -46,15 +49,9 @@ export {discoverTemplates, listTemplates} from '../../../api/template/template.m
  * @param {import('commander').Command} program
  */
 export function registerTemplate(program) {
-  program
-    .command('template [name] [path]')
-    .description('Inject a page or block template')
-    .option('--list', 'List available templates')
-    .option('--type <type>', 'Filter by template type: page or block')
-    .option('--package <pkg>', 'Narrow to templates from a specific package')
-    .option('--skeleton', 'Show layout skeleton with spatial annotations (padding, gap, nesting)')
-    .option('-f, --overwrite', 'Overwrite existing files without prompting')
-    .action(
+  defineCommand(program, templateCommand, {
+    fn: templateFn,
+    action:
       /**
        * @param {string | undefined} name
        * @param {string | undefined} targetPath
@@ -183,7 +180,8 @@ export function registerTemplate(program) {
           break;
         }
       }
-    });
+    },
+  });
 }
 
 /**

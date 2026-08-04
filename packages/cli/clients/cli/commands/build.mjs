@@ -16,7 +16,10 @@ import {getCliInvocation, formatCliCommand} from '../../../foundation/env/packag
 import {jsonOut} from '../../../foundation/response/json.mjs';
 import {emit, section, text, record, records, ARROW} from '../formatters/index.mjs';
 import {cliError} from '../lib/cli-error.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
 import {build as buildApi} from '../../../api/build/build.mjs';
+import {doc as buildCommand} from './build.doc.mjs';
+import {doc as buildFn} from '../../../api/build/build.doc.mjs';
 
 /**
  * Emit the build playbook (shown when `build` is run with no query).
@@ -66,13 +69,9 @@ function printPlaybook(run) {
  * @param {import('commander').Command} program
  */
 export function registerBuild(program) {
-  program
-    .command('build [query]')
-    .description('Build a page: composition kit for an idea, or the workflow playbook (no args)')
-    .option('--type <domain>', 'Filter the kit to one domain (component|hook|template)')
-    .option('--limit <n>', 'Max candidates to draw from (default 60)')
-    .option('--verbose', 'Verbose output (include import paths and match reason)')
-    .action(async (/** @type {string | undefined} */ query, /** @type {{type?: import('../../../api/search/search.type.mjs').SearchDomain, limit?: string, verbose?: boolean}} */ options) => {
+  defineCommand(program, buildCommand, {
+    fn: buildFn,
+    action: async (/** @type {string | undefined} */ query, /** @type {{type?: import('../../../api/search/search.type.mjs').SearchDomain, limit?: string, verbose?: boolean}} */ options) => {
       const run = getCliInvocation();
       const json = program.opts().json || false;
 
@@ -195,5 +194,6 @@ export function registerBuild(program) {
       );
 
       emit(...out);
-    });
+    },
+  });
 }

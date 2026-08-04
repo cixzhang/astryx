@@ -169,7 +169,9 @@ export const CommandDocKindSchema = z
             param: z.string().optional(),
             description: z.string().optional(),
             choices: z.array(z.string()).optional(),
-            default: z.string().optional(),
+            default: z
+              .union([z.string(), z.boolean(), z.array(z.string())])
+              .optional(),
             cliOnly: z.boolean().optional(),
           })
           .passthrough(),

@@ -16,10 +16,13 @@
 
 import {jsonOut} from '../../../foundation/response/json.mjs';
 import {emit, section, text, records} from '../formatters/index.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
 import {
   validateIntegration,
   summarizeIssues,
 } from '../../../api/integration/validate-integration.mjs';
+import {doc as validateIntegrationCommand} from './validate-integration.doc.mjs';
+import {doc as validateIntegrationFn} from '../../../api/integration/validateIntegration.doc.mjs';
 
 /**
  * Render a validation result for humans.
@@ -58,21 +61,9 @@ const NO_MANIFEST_GUIDANCE =
  * @param {import('commander').Command} program
  */
 export function registerValidateIntegration(program) {
-  program
-    .command('validate-integration [package]')
-    .description(
-      'Validate an Astryx integration package (manifest + contributions)',
-    )
-    .addHelpText(
-      'after',
-      '\nWith no argument, validates the integration package rooted at the\n' +
-        'current directory. Pass a package name to validate an installed\n' +
-        'integration resolved from ./node_modules.\n\n' +
-        'Exit code:\n' +
-        '  0  no error issues (warnings are allowed) — safe as a CI gate\n' +
-        '  1  one or more error issues\n',
-    )
-    .action(async pkg => {
+  defineCommand(program, validateIntegrationCommand, {
+    fn: validateIntegrationFn,
+    action: async pkg => {
       const json = program.opts().json || false;
 
       const result = await validateIntegration(pkg);
@@ -90,5 +81,14 @@ export function registerValidateIntegration(program) {
       if (errors > 0) {
         process.exitCode = 1;
       }
-    });
+    },
+  }).addHelpText(
+    'after',
+    '\nWith no argument, validates the integration package rooted at the\n' +
+      'current directory. Pass a package name to validate an installed\n' +
+      'integration resolved from ./node_modules.\n\n' +
+      'Exit code:\n' +
+      '  0  no error issues (warnings are allowed) — safe as a CI gate\n' +
+      '  1  one or more error issues\n',
+  );
 }

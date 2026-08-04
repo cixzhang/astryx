@@ -13,7 +13,7 @@ export const doc = {
   name: 'blog',
   displayName: 'astryx blog',
   namespace: 'cli',
-  summary: 'Read the Astryx blog from the published feed.',
+  summary: 'Read the Astryx blog from the published feed',
   description:
     'Reads the design-system blog over its published RSS feed (never the source ' +
     "files). With no slug it lists every post; with a slug it reads that post's " +

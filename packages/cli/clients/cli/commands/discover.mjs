@@ -16,6 +16,9 @@ import {emit, section, text, record, records, list, code} from '../formatters/in
 import {cliError} from '../lib/cli-error.mjs';
 import {discover as discoverApi} from '../../../api/discover/discover.mjs';
 import {getCliInvocation} from '../../../foundation/env/package-manager.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as discoverCommand} from './discover.doc.mjs';
+import {doc as discoverFn} from '../../../api/discover/discover.doc.mjs';
 
 // Max components to list inline per package before summarizing with "+N more".
 const MAX_COMPONENTS_SHOWN = 10;
@@ -24,11 +27,9 @@ const MAX_COMPONENTS_SHOWN = 10;
  * @param {import('commander').Command} program
  */
 export function registerDiscover(program) {
-  program
-    .command('discover [query]')
-    .description('Discover external packages and components')
-    .option('--components', 'List components only')
-    .action(
+  defineCommand(program, discoverCommand, {
+    fn: discoverFn,
+    action:
       /**
        * @param {string | undefined} query
        * @param {{components?: boolean}} options
@@ -133,5 +134,6 @@ export function registerDiscover(program) {
           break;
         }
       }
-    });
+    },
+  });
 }

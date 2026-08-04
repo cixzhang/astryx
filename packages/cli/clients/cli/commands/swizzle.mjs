@@ -15,19 +15,17 @@ import {emit, section, list, text, WARN} from '../formatters/index.mjs';
 import {cliError} from '../lib/cli-error.mjs';
 import {getCliInvocation} from '../../../foundation/env/package-manager.mjs';
 import {swizzle as swizzleApi} from '../../../api/swizzle/swizzle.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as swizzleCommand} from './swizzle.doc.mjs';
+import {doc as swizzleFn} from '../../../api/swizzle/swizzle.doc.mjs';
 
 /**
  * @param {import('commander').Command} program
  */
 export function registerSwizzle(program) {
-  program
-    .command('swizzle [component]')
-    .description('Copy component source for customization')
-    .option('--output <dir>', 'Output directory', './components/astryx')
-    .option('--package <pkg>', 'Scope to a specific owning package')
-    .option('--list', 'List available components')
-    .option('-f, --overwrite', 'Overwrite existing files without prompting')
-    .action(async (/** @type {string | undefined} */ component, /** @type {{output: string, package?: string, list?: boolean, overwrite?: boolean}} */ options) => {
+  defineCommand(program, swizzleCommand, {
+    fn: swizzleFn,
+    action: async (/** @type {string | undefined} */ component, /** @type {{output: string, package?: string, list?: boolean, overwrite?: boolean}} */ options) => {
       const json = program.opts().json || false;
       const run = getCliInvocation();
 
@@ -109,5 +107,6 @@ export function registerSwizzle(program) {
       }
 
       emit(...out);
-    });
+    },
+  });
 }

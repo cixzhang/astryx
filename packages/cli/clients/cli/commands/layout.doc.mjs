@@ -13,7 +13,7 @@ export const doc = {
   name: 'layout',
   displayName: 'astryx layout',
   namespace: 'cli',
-  summary: 'Generate XDS layouts from compressed expressions (XLE/XLO).',
+  summary: 'Generate XDS layouts from compressed expressions (XLE/XLO)',
   description:
     'The layout command group. Running astryx layout with no subcommand prints the ' +
     'subcommand list; the work happens in the subcommands — expand an expression into ' +

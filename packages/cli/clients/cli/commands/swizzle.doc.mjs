@@ -13,7 +13,7 @@ export const doc = {
   name: 'swizzle',
   displayName: 'astryx swizzle',
   namespace: 'cli',
-  summary: 'Copy component source for customization.',
+  summary: 'Copy component source for customization',
   description:
     "Ejects a component's source from the resolved @astryxdesign/core (or its owning " +
     'integration) into your project for deep customization, rewriting imports that ' +
@@ -25,10 +25,23 @@ export const doc = {
       flag: '--output <dir>',
       param: 'options.output',
       default: './components/astryx',
+      description: 'Output directory',
     },
-    {flag: '--package <pkg>', param: 'options.package'},
-    {flag: '--list', param: 'options.list'},
-    {flag: '-f, --overwrite', param: 'options.overwrite'},
+    {
+      flag: '--package <pkg>',
+      param: 'options.package',
+      description: 'Scope to a specific owning package',
+    },
+    {
+      flag: '--list',
+      param: 'options.list',
+      description: 'List available components',
+    },
+    {
+      flag: '-f, --overwrite',
+      param: 'options.overwrite',
+      description: 'Overwrite existing files without prompting',
+    },
   ],
   examples: [
     {label: 'List swizzlable components', cli: 'astryx swizzle --list'},

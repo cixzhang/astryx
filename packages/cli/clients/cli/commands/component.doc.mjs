@@ -14,7 +14,7 @@ export const doc = {
   name: 'component',
   displayName: 'astryx component',
   namespace: 'cli',
-  summary: 'List components, or print a component doc.',
+  summary: 'List components or print component docs',
   description:
     'Resolves a component by name across core and integration packages and prints ' +
     'its authored doc, or lists the catalog grouped by category. Boolean flags narrow ' +
@@ -22,13 +22,41 @@ export const doc = {
   fn: 'component',
   args: [{name: 'name', param: 'name', required: false}],
   options: [
-    {flag: '--list', param: 'options.list'},
-    {flag: '--category <category>', param: 'options.category'},
-    {flag: '--props', param: 'options.props'},
-    {flag: '--source', param: 'options.source'},
-    {flag: '--showcase', param: 'options.showcase'},
-    {flag: '--blocks', param: 'options.blocks'},
-    {flag: '--package <name>', param: 'options.package'},
+    {
+      flag: '--list',
+      param: 'options.list',
+      description: 'List all components grouped by category',
+    },
+    {
+      flag: '--category <category>',
+      param: 'options.category',
+      description: 'List components in a specific category',
+    },
+    {
+      flag: '--props',
+      param: 'options.props',
+      description: 'Print only the props table',
+    },
+    {
+      flag: '--source',
+      param: 'options.source',
+      description: 'Print component source code',
+    },
+    {
+      flag: '--showcase',
+      param: 'options.showcase',
+      description: 'Print showcase source code',
+    },
+    {
+      flag: '--blocks',
+      param: 'options.blocks',
+      description: 'List example blocks: showcase, examples, and related',
+    },
+    {
+      flag: '--package <name>',
+      param: 'options.package',
+      description: 'Scope lookup to an external package (e.g. @acme/xds-widgets)',
+    },
   ],
   examples: [
     {label: 'Browse the catalog', cli: 'astryx component --list'},
