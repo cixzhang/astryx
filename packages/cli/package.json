@@ -85,6 +85,8 @@
     "typecheck:strict": "tsc --project tsconfig.strict.json",
     "typecheck:authoring": "tsc --project tsconfig.authoring-contract.json",
     "sync:api-types": "node scripts/sync-api-types.mjs",
+    "readme": "node scripts/generate-cli-readme.mjs",
+    "readme:check": "node scripts/generate-cli-readme.mjs --check",
     "prepack": "pnpm sync:api-types"
   },
   "dependencies": {
