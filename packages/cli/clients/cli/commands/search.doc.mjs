@@ -13,7 +13,7 @@ export const doc = {
   name: 'search',
   displayName: 'astryx search',
   namespace: 'cli',
-  summary: 'Search components, hooks, docs, and templates in one ranked list.',
+  summary: 'Search components, hooks, docs, and templates in one ranked list',
   description:
     'Terminal front-end to search() — prints one ranked, greppable list across ' +
     'every content domain, each row carrying a follow-up command to act on it.',
@@ -24,12 +24,16 @@ export const doc = {
       flag: '--type <domain>',
       param: 'options.type',
       choices: ['component', 'hook', 'doc', 'template'],
+      description: 'Filter to one domain (component|hook|doc|template)',
     },
-    {flag: '--limit <n>', param: 'options.limit', default: '20'},
+    {
+      flag: '--limit <n>',
+      param: 'options.limit',
+      description: 'Max number of results (default 20)',
+    },
     {
       flag: '--verbose',
-      description:
-        'Include import paths and the match reason (text output only).',
+      description: 'Verbose output (include import paths and match reason)',
     },
   ],
   examples: [
