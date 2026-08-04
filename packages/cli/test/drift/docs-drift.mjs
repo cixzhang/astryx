@@ -84,8 +84,11 @@ export async function runDrift() {
   // Command drift: fn resolves, params resolve, name is real.
   const manifest = getManifest();
   const manifestNames = new Set();
+  /** @type {Map<string, any>} */
+  const manifestByName = new Map();
   const walkCmd = (/** @type {any} */ c) => {
     manifestNames.add(c.name);
+    manifestByName.set(c.name, c);
     (c.subcommands || []).forEach(walkCmd);
   };
   manifest.commands.forEach(walkCmd);
@@ -114,6 +117,48 @@ export async function runDrift() {
             );
       }
     }
+  }
+
+  // Command structure drift: doc args/options/subcommands mirror the live CLI.
+  const argKey = (/** @type {any} */ a) =>
+    `${a.name}:${a.required ? 'req' : 'opt'}${a.variadic ? ':var' : ''}`;
+  for (const {file, doc} of of('command')) {
+    const mc = manifestByName.get(doc.name);
+    if (!mc) continue;
+    const docArgs = (doc.args || []).map(argKey);
+    const mArgs = (mc.arguments || []).map(argKey);
+    if (JSON.stringify(docArgs) !== JSON.stringify(mArgs))
+      errors.push(
+        `${file}: args ${JSON.stringify(docArgs)} != manifest ${JSON.stringify(mArgs)}`,
+      );
+    const docFlags = new Set(
+      (doc.options || []).map((/** @type {any} */ o) => o.flag),
+    );
+    const mFlags = new Set(
+      (mc.options || []).map((/** @type {any} */ o) => o.flag),
+    );
+    for (const f of mFlags)
+      if (!docFlags.has(f))
+        errors.push(
+          `${file}: option "${f}" is in the CLI but missing from the doc`,
+        );
+    for (const f of docFlags)
+      if (!mFlags.has(f))
+        errors.push(`${file}: option "${f}" is in the doc but not the CLI`);
+    const docSubs = new Set(doc.subcommands || []);
+    const mSubs = new Set(
+      (mc.subcommands || []).map((/** @type {any} */ s) =>
+        s.name.split(' ').pop(),
+      ),
+    );
+    for (const s of mSubs)
+      if (!docSubs.has(s))
+        errors.push(
+          `${file}: subcommand "${s}" is in the CLI but missing from the doc`,
+        );
+    for (const s of docSubs)
+      if (!mSubs.has(s))
+        errors.push(`${file}: subcommand "${s}" is in the doc but not the CLI`);
   }
 
   // Enum drift: error-codes == ERROR_CODES; response-types == manifest set.
