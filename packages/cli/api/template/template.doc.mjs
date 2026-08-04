@@ -75,6 +75,13 @@ export const doc = {
       default: 'false',
     },
     {
+      name: 'options.transforms',
+      type: 'boolean',
+      description:
+        'Apply configured integration template transforms. Set false (CLI --no-transforms) to emit the original, unaltered template.',
+      default: 'true',
+    },
+    {
       name: 'options.cwd',
       type: 'string',
       description:

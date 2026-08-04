@@ -34,6 +34,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {findPresentFiles, loadModuleWithParser} from '../fs/module-loader.mjs';
 import {parseConfig} from '../../authoring/config/parse.mjs';
+import {parseTemplateTransform} from '../../authoring/template-transform/parse.mjs';
 import {loadIntegrations} from '../integrations/integrations.mjs';
 import {
   CORE_PACKAGE,
@@ -503,6 +504,50 @@ export class Project {
       );
 
       return {core, integration};
+    });
+  }
+
+  /**
+   * Integration-contributed template transforms, in config order. Each
+   * integration that declares a `templateTransform` module has it loaded +
+   * validated (via parseTemplateTransform) once and returned tagged with its
+   * owning package. A broken integration is skipped (issue collected) rather
+   * than failing the whole resolution — same skip+warn policy as the other
+   * discovery methods. Memoized per instance.
+   *
+   * @returns {Promise<Array<{package: string, transform: import('../../authoring/template-transform/type').AstryxTemplateTransform}>>}
+   */
+  async templateTransforms() {
+    return this.#memo('templateTransforms', async () => {
+      /** @type {Array<{package: string, transform: import('../../authoring/template-transform/type').AstryxTemplateTransform}>} */
+      const out = [];
+
+      for (const integration of this.#loadedIntegrations) {
+        await this.#collectIssues(integration);
+        const pkg = this.#pkgLabel(integration);
+        const hadError = this.#issues.some(
+          i => i.package === pkg && i.severity === 'error',
+        );
+        if (hadError) continue;
+        const file = integration?.templateTransform;
+        if (!file) continue;
+        try {
+          const transform = await loadModuleWithParser(
+            file,
+            parseTemplateTransform,
+            {label: `Integration "${pkg}" template transform`},
+          );
+          out.push({package: pkg, transform});
+        } catch (err) {
+          this.#pushIssue(pkg, {
+            code: 'invalid_template_transform',
+            severity: 'error',
+            message: errorMessage(err),
+          });
+        }
+      }
+
+      return out;
     });
   }
 

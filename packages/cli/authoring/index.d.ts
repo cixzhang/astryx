@@ -34,6 +34,7 @@ export type {EnumDoc} from './doctypes/types'; //         error-codes.doc.mjs (v
 export type {AstryxConfig} from './config/type'; //       astryx.config.{ts,mjs}
 export type {AstryxIntegration} from './integration/type'; // astryx.integration.{ts,mjs}
 export type {AstryxCodemod, AstryxConfigCodemod} from './codemod/type'; // codemods/*
+export type {AstryxTemplateTransform} from './template-transform/type'; // templateTransform module
 
 // ═══════════════════════════════════════════════════════════════════════
 // PARSERS — the CLI's load boundary (types come from each parser's JSDoc).
@@ -51,6 +52,7 @@ export {parseLegacyDoc} from './doctypes/legacy.mjs';
 export {parseConfig} from './config/parse.mjs';
 export {parseIntegration} from './integration/parse.mjs';
 export {parseCodemod} from './codemod/parse.mjs';
+export {parseTemplateTransform} from './template-transform/parse.mjs';
 
 // ═══════════════════════════════════════════════════════════════════════
 // FIELD & SUB-TYPES — the building blocks of the docs above. Import these
@@ -106,3 +108,11 @@ export type {
   AstryxCodemodApi,
   AstryxCodemodTransform,
 } from './codemod/type';
+export type {
+  // template-transform
+  TemplateWrap,
+  TemplateWrapPropValue,
+  StaticProps,
+  TemplateTransformScope,
+  AstryxTemplateContext,
+} from './template-transform/type';

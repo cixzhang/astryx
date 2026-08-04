@@ -18,6 +18,8 @@
 import {discoverAll, pkgOf} from './_adapter.mjs';
 import {AstryxError} from '../error.mjs';
 import {ERROR_CODES} from '../../foundation/response/error-codes.mjs';
+import {Project} from '../../foundation/config/project.mjs';
+import {isTransformApplicable} from './transform/apply.mjs';
 import {templateList} from './list/list.mjs';
 import {templateShow} from './show/show.mjs';
 import {templateSkeleton} from './skeleton/skeleton.mjs';
@@ -60,6 +62,9 @@ export {
  * @param {'page'|'block'} [options.type] - Filter list views / narrow lookups by template kind.
  * @param {string} [options.package] - Narrow lookups to a specific package (id-only matches across packages are ambiguous).
  * @param {string} [options.cwd]
+ * @param {boolean} [options.transforms] - Apply integration template transforms (default true). Pass false (CLI `--no-transforms`) to emit the original, unaltered template.
+ * @param {(message: string) => void} [options.onWarn] - Sink for non-fatal warnings (e.g. a template transform that was skipped). Callers suppress this in --json mode.
+ * @param {(alterations: import('./transform/apply.mjs').TemplateAlteration[]) => void} [options.onAlter] - Called when an integration transform altered the emitted template, so the CLI can surface a notice. Suppressed in --json mode.
  * @returns {Promise<{type: string, data: unknown}>}
  */
 export async function template(name, options = {}) {
@@ -72,6 +77,9 @@ export async function template(name, options = {}) {
     type,
     package: packageFilter,
     cwd = process.cwd(),
+    transforms = true,
+    onWarn,
+    onAlter,
   } = options;
   const templates = await discoverAll(cwd);
 
@@ -109,9 +117,76 @@ export async function template(name, options = {}) {
     return templateSkeleton(match, templates);
   }
 
+  // Resolve integration template transforms for the emit leaves (show/copy).
+  // This is the only place jscodeshift may be loaded, and only when a transform
+  // actually applies to this template. `--no-transforms` (transforms: false)
+  // skips resolution entirely and emits the original template.
+  const transformCtx = await resolveTransformContext(match, {
+    cwd,
+    onWarn,
+    onAlter,
+    skip: transforms === false,
+  });
+
   if (show || !targetPath) {
-    return templateShow(match);
+    return templateShow(match, transformCtx);
   }
 
-  return templateCopy(match, {targetPath, cwd, overwrite});
+  return templateCopy(match, {targetPath, cwd, overwrite, transformCtx});
+}
+
+/**
+ * Lazily load jscodeshift's default export; returns null if unavailable (never
+ * throws). jscodeshift is a CLI dependency so this normally resolves, but the
+ * template command must never break if it is somehow absent.
+ * @returns {Promise<import('../../authoring/codemod/type').JscodeshiftFactory | null>}
+ */
+async function loadJscodeshift() {
+  try {
+    return /** @type {any} */ ((await import('jscodeshift')).default);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve the integration template transforms applicable to `match`, loading
+ * jscodeshift only when at least one applies. Never throws — a broken config, no
+ * applicable transforms, or a missing jscodeshift each degrade to an empty
+ * context so `template` still emits the untransformed source.
+ *
+ * @param {import('./_adapter.mjs').DiscoveredTemplate} match
+ * @param {{cwd: string, onWarn?: (message: string) => void, onAlter?: (alterations: import('./transform/apply.mjs').TemplateAlteration[]) => void, skip?: boolean}} ctx
+ * @returns {Promise<import('./transform/apply.mjs').TemplateTransformContext>}
+ */
+async function resolveTransformContext(match, {cwd, onWarn, onAlter, skip = false}) {
+  const template = {
+    type: match.type,
+    id: match.dirName,
+    package: pkgOf(match),
+  };
+  /** @type {import('./transform/apply.mjs').TemplateTransformContext} */
+  const empty = {transforms: [], jscodeshift: null, template, onWarn, onAlter};
+  if (skip) return empty;
+
+  let all;
+  try {
+    const project = await Project.load(cwd);
+    all = await project.templateTransforms();
+  } catch {
+    return empty;
+  }
+
+  const applicable = (all ?? []).filter(t => isTransformApplicable(t, template));
+  if (applicable.length === 0) return empty;
+
+  const jscodeshift = await loadJscodeshift();
+  if (!jscodeshift) {
+    onWarn?.(
+      `Skipping ${applicable.length} template transform${applicable.length === 1 ? '' : 's'}: jscodeshift is not installed.`,
+    );
+    return empty;
+  }
+
+  return {transforms: applicable, jscodeshift, template, onWarn, onAlter};
 }

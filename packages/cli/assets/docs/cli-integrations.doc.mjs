@@ -53,7 +53,7 @@ export const docs = {
         {
           type: 'code',
           lang: 'typescript',
-          code: "// astryx.integration.ts\nexport default {\n  components: './components',\n  templates: './templates',\n  codemods: './codemods',\n  issuesUrl: 'https://github.com/acme/widgets/issues',\n};",
+          code: "// astryx.integration.ts\nexport default {\n  components: './components',\n  templates: './templates',\n  codemods: './codemods',\n  templateTransform: './astryx/template-transform.ts',\n  issuesUrl: 'https://github.com/acme/widgets/issues',\n};",
         },
         {
           type: 'prose',
@@ -110,6 +110,50 @@ export const docs = {
       ],
     },
     {
+      title: 'Template Transforms',
+      category: 'guide',
+      content: [
+        {
+          type: 'prose',
+          text: 'A template transform reshapes the templates the CLI emits — including core (OSS) templates — as a pure output-layer. It never edits any template on disk; it only rewrites the source the CLI shows (`astryx template <id>`) or scaffolds (`astryx template <id> <path>`). Point the integration file\'s `templateTransform` field at a module that default-exports the transform. This is how a wrapper design system can make every template come out wrapped in its shell without the core templates knowing it exists.',
+        },
+        {
+          type: 'prose',
+          text: 'v1 exposes a single, footgun-resistant operation: `wrap`. You name the wrapper component and the module it comes from; the CLI wraps the page\'s returned JSX and adds the matching import as one unit (so a wrap can never emit an un-imported component), and it is idempotent (re-emitting never double-wraps).',
+        },
+        {
+          type: 'code',
+          lang: 'typescript',
+          code: "// astryx/template-transform.ts\nimport type {AstryxTemplateTransform} from '@astryxdesign/cli/authoring';\nimport type {AppFrameProps} from '@acme/widgets';\n\n// Parameterize with the wrapper's props for a fully type-safe `wrap.props`.\nexport default {\n  description: 'Wraps pages in the Acme app shell so they inherit theming.',\n  wrap: {\n    component: 'AppFrame',\n    from: '@acme/widgets',\n    props: {surface: 'internal'},\n  },\n} satisfies AstryxTemplateTransform<AppFrameProps>;",
+        },
+        {
+          type: 'prose',
+          text: 'To wrap in more than one component, pass a stack listed OUTERMOST FIRST. Each wrapper auto-imports itself and can set its own props; the whole stack is applied idempotently.',
+        },
+        {
+          type: 'code',
+          lang: 'typescript',
+          code: "// <Provider><AppFrame>…</AppFrame></Provider>\nexport default {\n  wrap: [\n    {component: 'Provider', from: '@acme/widgets'},\n    {component: 'AppFrame', from: '@acme/widgets', props: {surface: 'internal'}},\n  ],\n} satisfies AstryxTemplateTransform;",
+        },
+        {
+          type: 'prose',
+          text: 'Wrapper `props` may be primitives (`string`/`number`/`boolean`) or JSON-shaped objects/arrays — e.g. `props: {options: {analytics: true, tags: [\'a\', \'b\']}}` renders `options={{analytics: true, tags: [\'a\', \'b\']}}`. They must be statically serializable; functions, `ReactNode`, and references to imported values are intentionally out of scope (a future programmatic escape hatch is the place for those). When you parameterize with the wrapper\'s props type, only its statically-renderable props are offered and typos are compile errors.',
+        },
+        {
+          type: 'prose',
+          text: 'Scope with `appliesTo`: `types` (default `[\'page\']`; add `\'block\'` for blocks), `include` / `exclude` (template-id globs, where `*` is a wildcard, e.g. `include: [\'dashboard\', \'marketing/*\']` or `exclude: [\'blank\']`), and `packages` (only templates owned by these packages, e.g. `[\'@astryxdesign/core\']` to touch only the built-in OSS templates). A transform never rewrites its own package\'s templates.',
+        },
+        {
+          type: 'prose',
+          text: 'Alterations are surfaced loudly, not silently. When a transform changes a template, the CLI prints a prominent notice to stderr — naming the integration(s), what they wrapped, and your `description` — and points the user to `--no-transforms` to emit the ORIGINAL, unaltered template. The emitted source itself stays clean (no injected comments), and `--json` reports the applied packages via `transformedBy`. Always provide a `description` so that notice can explain what you change and why.',
+        },
+        {
+          type: 'prose',
+          text: 'Transforms are validated at the load boundary and dry-run by `astryx validate-integration`; at runtime a broken transform is skipped with a warning rather than breaking the command.',
+        },
+      ],
+    },
+    {
       title: 'Codemods',
       category: 'guide',
       content: [
@@ -124,7 +168,7 @@ export const docs = {
         },
         {
           type: 'prose',
-          text: 'All authoring types are exported from `@astryxdesign/cli/authoring`: `ComponentDoc`, `HookDoc`, and `ReferenceDoc` for docs, `TemplateDoc` for templates, and `AstryxConfig`, `AstryxIntegration`, and `AstryxCodemod` for the project files. Consumers can also run their own post-codemod hooks, such as a reinstall or rebuild, via `hooks.postCodemod` in their `astryx.config`.',
+          text: 'All authoring types are exported from `@astryxdesign/cli/authoring`: `ComponentDoc`, `HookDoc`, and `ReferenceDoc` for docs, `TemplateDoc` for templates, `AstryxTemplateTransform` for template transforms, and `AstryxConfig`, `AstryxIntegration`, and `AstryxCodemod` for the project files. Consumers can also run their own post-codemod hooks, such as a reinstall or rebuild, via `hooks.postCodemod` in their `astryx.config`.',
         },
       ],
     },

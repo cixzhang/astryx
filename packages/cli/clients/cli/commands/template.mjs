@@ -7,7 +7,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import {jsonOut} from '../../../foundation/response/json.mjs';
-import {emit, section, text, records, code} from '../formatters/index.mjs';
+import {emit, section, text, record, records, code} from '../formatters/index.mjs';
 import {cliError} from '../lib/cli-error.mjs';
 import {ERROR_CODES} from '../../../foundation/response/error-codes.mjs';
 import {template as templateApi} from '../../../api/template/template.mjs';
@@ -55,7 +55,7 @@ export function registerTemplate(program) {
       /**
        * @param {string | undefined} name
        * @param {string | undefined} targetPath
-       * @param {{list?: boolean, type?: string, package?: string, skeleton?: boolean, overwrite?: boolean}} options
+       * @param {{list?: boolean, type?: string, package?: string, skeleton?: boolean, overwrite?: boolean, transforms?: boolean}} options
        */
       async (name, targetPath, options) => {
       const json = program.opts().json || false;
@@ -108,6 +108,17 @@ export function registerTemplate(program) {
             targetPath,
             overwrite: options.overwrite,
             cwd: process.cwd(),
+            // commander maps `--no-transforms` to `transforms: false`.
+            transforms: options.transforms,
+            // Non-fatal transform warnings go to stderr; never in --json mode
+            // (stdout stays a clean envelope).
+            onWarn: json ? undefined : msg => console.error(msg),
+            // When an integration reshaped the template, print a prominent
+            // stderr notice. The emitted source itself stays clean.
+            onAlter: json
+              ? undefined
+              : alterations =>
+                  printAlterationNotice(alterations, {name, targetPath, run}),
           })
         );
       } catch (e) {
@@ -231,4 +242,56 @@ async function detectTemplateCollision(name, targetPath) {
   }
 
   return fs.existsSync(dest) ? dest : null;
+}
+
+/**
+ * Print a stderr notice that one or more integrations reshaped the emitted
+ * template — what changed, why, and how to opt out. Rendered through the shared
+ * formatter blocks so it matches the rest of the CLI (plain ASCII), but sent to
+ * stderr via console.error so it never touches the piped source on stdout.
+ * Suppressed in --json mode by the caller (which passes no onAlter).
+ *
+ * @param {import('../../../api/template/transform/apply.mjs').TemplateAlteration[]} alterations
+ * @param {{name?: string, targetPath?: string, run: string}} ctx
+ */
+function printAlterationNotice(alterations, {name, targetPath, run}) {
+  const cmd = `${run} template ${[name, targetPath].filter(Boolean).join(' ')} --no-transforms`;
+  /** @param {string} block @returns {string} indent each line by two spaces */
+  const indent = block =>
+    block
+      .split('\n')
+      .map(line => (line ? `  ${line}` : line))
+      .join('\n');
+
+  // Common case: one integration. A single aligned block (the CLI's record
+  // style) — `original` is just another row, so there's no dangling command
+  // line and no blank lines inside the notice.
+  if (alterations.length === 1) {
+    const a = alterations[0];
+    const block = record(
+      {wraps: a.wrappers.join(' > '), why: a.description, original: cmd},
+      {fields: ['wraps', 'why', 'original']},
+    );
+    console.error(
+      `\n${a.package} adapted this template (installed integration):\n` +
+        indent(block.toString()),
+    );
+    return;
+  }
+
+  // Multiple integrations: one aligned block each, then the shared escape hatch.
+  const pkgs = alterations.map(a => a.package).join(', ');
+  const blocks = records(
+    alterations.map(a => ({
+      integration: a.package,
+      wraps: a.wrappers.join(' > '),
+      why: a.description,
+    })),
+    {fields: ['integration', 'wraps', 'why']},
+  );
+  console.error(
+    `\nInstalled integrations adapted this template (${pkgs}):\n` +
+      indent(blocks.toString()) +
+      `\n\noriginal: ${cmd}`,
+  );
 }

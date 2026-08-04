@@ -33,6 +33,8 @@ import {
 import {discoverIntegrationCodemods} from '../../assets/codemods/integration-discovery.mjs';
 import {discoverIntegrationTemplatesForOne} from '../template/template.mjs';
 import * as componentDiscovery from '../../foundation/discovery/component-discovery.mjs';
+import {loadModuleWithParser} from '../../foundation/fs/module-loader.mjs';
+import {parseTemplateTransform} from '../../authoring/template-transform/parse.mjs';
 
 /**
  * @typedef {import('../../foundation/integrations/issue').AstryxIntegrationIssue} Issue
@@ -159,6 +161,37 @@ async function checkComponents(integration, issues) {
 }
 
 /**
+ * Validate the integration's template transform. The declared module must exist
+ * and load + validate against the template-transform schema. A missing file is a
+ * `missing_template_transform` error; a load/parse failure is
+ * `invalid_template_transform`.
+ * @param {import('./validate-integration.type.mjs').LoadedIntegration} integration loaded-integration-shaped object
+ * @param {Issue[]} issues
+ */
+async function checkTemplateTransform(integration, issues) {
+  const file = integration.templateTransform;
+  if (!file) return;
+  if (!fs.existsSync(file)) {
+    issues.push(
+      error(
+        'missing_template_transform',
+        `Declared templateTransform module does not exist on disk: ${file}`,
+      ),
+    );
+    return;
+  }
+  try {
+    await loadModuleWithParser(file, parseTemplateTransform, {
+      label: 'template transform',
+    });
+  } catch (err) {
+    issues.push(
+      error('invalid_template_transform', /** @type {any} */ (err).message),
+    );
+  }
+}
+
+/**
  * Run every contribution validator against a loaded-integration-shaped object.
  * @param {import('./validate-integration.type.mjs').LoadedIntegration} integration
  * @param {Issue[]} issues
@@ -167,6 +200,7 @@ async function runContributionChecks(integration, issues) {
   await checkCodemods(integration, issues);
   await checkTemplates(integration, issues);
   await checkComponents(integration, issues);
+  await checkTemplateTransform(integration, issues);
 }
 
 /**
@@ -283,6 +317,10 @@ async function validateAtPackageDir(packageDir, identity) {
     components: resolveRoot(manifest.components),
     templates: resolveRoot(manifest.templates),
     codemods: resolveRoot(manifest.codemods),
+    templateTransform: resolveRoot(
+      manifest.templateTransform,
+      'templateTransform module',
+    ),
     issuesUrl: manifest.issuesUrl,
     __spec: identity.name,
     __packageDir: packageDir,

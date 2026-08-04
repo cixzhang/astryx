@@ -48,6 +48,12 @@ export const doc = {
       param: 'options.overwrite',
       description: 'Overwrite existing files without prompting',
     },
+    {
+      flag: '--no-transforms',
+      param: 'options.transforms',
+      description:
+        'Emit the original template, skipping any integration template transforms',
+    },
   ],
   examples: [
     {label: 'List templates', cli: 'astryx template --json'},

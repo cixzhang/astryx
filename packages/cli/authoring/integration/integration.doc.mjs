@@ -15,7 +15,8 @@ export const doc = {
   description:
     'The astryx.integration.* manifest that sits beside an integration ' +
     "package's package.json. Points the CLI at the package's components, " +
-    'templates, and codemods, and where to file issues. Every field is optional.',
+    'templates, codemods, and an optional template transform, and where to ' +
+    'file issues. Every field is optional.',
   appliesTo: 'astryx.integration.{ts,mjs,js}',
   fields: [
     {
@@ -39,6 +40,16 @@ export const doc = {
       example: "'./codemods'",
     },
     {
+      name: 'templateTransform',
+      type: 'string',
+      description:
+        'Relative path to a template-transform module (resolved to absolute). ' +
+        'Its default export (an AstryxTemplateTransform) reshapes the templates ' +
+        'the CLI emits — e.g. wrapping every page in the design system shell — ' +
+        'as a pure output-layer that never edits the on-disk templates.',
+      example: "'./astryx/template-transform.ts'",
+    },
+    {
       name: 'issuesUrl',
       type: 'string',
       description: 'Where to file issues/feedback for this integration.',
@@ -52,6 +63,7 @@ export const doc = {
   components: './src/components',
   templates: './src/templates',
   codemods: './codemods',
+  templateTransform: './astryx/template-transform.ts',
   issuesUrl: 'https://github.com/acme/widgets/issues',
 };`,
     },

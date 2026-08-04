@@ -46,6 +46,7 @@
  * @property {'page' | 'block'} data.type
  * @property {string[]} data.components
  * @property {string} data.source
+ * @property {string[]} [data.transformedBy] - Integration packages whose template transform reshaped the emitted source (present only when at least one applied).
  */
 
 /**
@@ -68,6 +69,7 @@
  * @property {string} data.outputDir
  * @property {string} data.fileName
  * @property {number} data.filesCopied
+ * @property {string[]} [data.transformedBy] - Integration packages whose template transform reshaped the scaffolded source (present only when at least one applied).
  */
 
 /**

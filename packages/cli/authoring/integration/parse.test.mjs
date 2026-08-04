@@ -31,6 +31,12 @@ describe('parseIntegration (load boundary)', () => {
     ).not.toThrow();
   });
 
+  it('accepts a templateTransform path', () => {
+    expect(
+      parseIntegration({templateTransform: './astryx/template-transform.mjs'}),
+    ).toEqual({templateTransform: './astryx/template-transform.mjs'});
+  });
+
   it('rejects unknown keys (strict)', () => {
     expect(reason({name: '@acme/widgets'})).toContain('Unrecognized key');
   });
