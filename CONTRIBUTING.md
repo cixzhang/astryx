@@ -294,6 +294,53 @@ export * from './MyComponent';
 > committed automatically when changes land on `main`. If you need to verify your
 > component will be included, run `pnpm sync:exports:check`.
 
+## Working on the `astryx` CLI
+
+The CLI (`packages/cli/`) is layered so behavior, presentation, and contracts stay separable:
+
+- **`clients/cli/`** — the Commander program and per-command handlers. A handler is a _thin wrapper_: parse flags → call the matching `api/` function → render (JSON via `jsonOut`, or text via the formatter kit in `clients/cli/formatters/`).
+- **`api/`** — the programmatic API (`@astryxdesign/cli/api`). Each command maps to `api/<name>/`, whose functions return a typed `{ type, data }` envelope. This is the behavior source of truth, so `astryx --json` and the imported function return identical data.
+- **`authoring/`** — the pure data contracts (`@astryxdesign/cli/authoring`): the TypeScript types you author objects against (config, integration, codemod, and the doc-types) plus the sealed zod parsers the CLI runs at the load boundary.
+- **`foundation/`** — cross-cutting infra: the `{ type, data }` JSON contract, the stable `ERROR_CODES`, discovery, and path-safety.
+
+### The CLI documents itself
+
+Every CLI surface has a colocated, typed `.doc.mjs` next to what it describes, annotated with a `@type` from `@astryxdesign/cli/authoring`:
+
+| Surface                                                                                 | Doc-type                                             | Lives next to                                              |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| An API function (a hook or an `api/` export)                                            | `FunctionDoc`                                        | `api/<name>/<fn>.doc.mjs`                                  |
+| A CLI command                                                                           | `CommandDoc` (references its `FunctionDoc` via `fn`) | `clients/cli/commands/<name>.doc.mjs`                      |
+| An authored object (config, integration, codemod, the doc-types, the response envelope) | `SchemaDoc`                                          | beside the schema (`authoring/**`, `foundation/response/`) |
+| A closed vocabulary (error codes, response types)                                       | `EnumDoc`                                            | `foundation/response/`                                     |
+| A long-form topic (tokens, principles, theming, …)                                      | `ReferenceDoc`                                       | `assets/docs/<topic>.doc.mjs`                              |
+
+These are not free-form. `parseDoc` validates each at load, and a **drift harness** (`packages/cli/test/drift/`) enforces that they mirror their source of truth: every `CommandDoc`'s `fn`/args/options match the live CLI, and the `EnumDoc`s equal `ERROR_CODES` / the manifest's response-type set exactly. A doc that drifts fails CI.
+
+### Adding a command
+
+1. Add the behavior under `api/<name>/` with a colocated `<name>.type.mjs` (the `Options` + `{ type, data }` response typedefs — the shape source of truth).
+2. Register the command in `clients/cli/index.mjs` and write its thin handler in `clients/cli/commands/<name>.mjs`.
+3. Author its docs: a `FunctionDoc` (`api/<name>/<name>.doc.mjs`) and a `CommandDoc` (`clients/cli/commands/<name>.doc.mjs`) — copy the `search` docs as a template.
+4. Run the checks below; the drift harness will flag any mismatch between the docs and the command.
+
+### Testing the CLI
+
+```bash
+# Run the CLI locally (no build needed)
+node packages/cli/clients/cli/bin/astryx.mjs --help
+
+# Validate every colocated doc parses + mirrors its source of truth
+pnpm -F @astryxdesign/cli test              # includes the drift + golden suites
+pnpm -F @astryxdesign/cli typecheck:authoring
+
+# The golden harness freezes every observable CLI surface (help, manifest,
+# command output, error paths, exit codes). After an intended output change,
+# refresh it and review the diff:
+pnpm -F @astryxdesign/cli golden            # regenerate the baseline
+pnpm -F @astryxdesign/cli golden:check      # CI gate: fails on any un-refreshed drift
+```
+
 ## Testing
 
 ### Run Tests
