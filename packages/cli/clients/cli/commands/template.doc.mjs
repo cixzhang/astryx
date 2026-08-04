@@ -14,7 +14,7 @@ export const doc = {
   name: 'template',
   displayName: 'astryx template',
   namespace: 'cli',
-  summary: 'Inject a page or block template.',
+  summary: 'Inject a page or block template',
   description:
     'One entry point for the template family: with no name it lists the discovered ' +
     'templates; with a name it shows the source or a layout skeleton, or scaffolds it ' +
@@ -25,11 +25,29 @@ export const doc = {
     {name: 'path', param: 'options.targetPath', required: false},
   ],
   options: [
-    {flag: '--list', param: 'options.list'},
-    {flag: '--type <type>', param: 'options.type', choices: ['page', 'block']},
-    {flag: '--package <pkg>', param: 'options.package'},
-    {flag: '--skeleton', param: 'options.skeleton'},
-    {flag: '-f, --overwrite', param: 'options.overwrite'},
+    {flag: '--list', param: 'options.list', description: 'List available templates'},
+    {
+      flag: '--type <type>',
+      param: 'options.type',
+      choices: ['page', 'block'],
+      description: 'Filter by template type: page or block',
+    },
+    {
+      flag: '--package <pkg>',
+      param: 'options.package',
+      description: 'Narrow to templates from a specific package',
+    },
+    {
+      flag: '--skeleton',
+      param: 'options.skeleton',
+      description:
+        'Show layout skeleton with spatial annotations (padding, gap, nesting)',
+    },
+    {
+      flag: '-f, --overwrite',
+      param: 'options.overwrite',
+      description: 'Overwrite existing files without prompting',
+    },
   ],
   examples: [
     {label: 'List templates', cli: 'astryx template --json'},

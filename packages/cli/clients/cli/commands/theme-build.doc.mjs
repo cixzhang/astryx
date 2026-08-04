@@ -14,7 +14,7 @@ export const doc = {
   name: 'theme build',
   displayName: 'astryx theme build',
   namespace: 'cli',
-  summary: 'Compile a defineTheme file to CSS + JS.',
+  summary: 'Compile a defineTheme file to CSS + JS',
   description:
     'Compiles a file that calls defineTheme() into a scoped CSS file, a JS module, and ' +
     'type declarations — the exact CSS the <Theme> runtime emits. With --check it writes ' +
@@ -22,13 +22,17 @@ export const doc = {
   fn: 'themeBuild',
   args: [{name: 'file', param: 'file', required: true}],
   options: [
-    {flag: '-o, --out <path>', param: 'options.out'},
+    {flag: '-o, --out <path>', param: 'options.out', description: 'Output CSS file path'},
     {
       flag: '-w, --watch',
-      description:
-        'Rebuild automatically when the theme file changes (Ctrl-C to stop).',
+      description: 'Rebuild automatically when the theme file changes (Ctrl-C to stop)',
     },
-    {flag: '-c, --check', param: 'options.check'},
+    {
+      flag: '-c, --check',
+      param: 'options.check',
+      description:
+        'Verify the committed outputs match the source without writing; exit non-zero if stale',
+    },
   ],
   examples: [
     {

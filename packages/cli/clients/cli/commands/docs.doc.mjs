@@ -13,7 +13,7 @@ export const doc = {
   name: 'docs',
   displayName: 'astryx docs',
   namespace: 'cli',
-  summary: 'Print reference docs.',
+  summary: 'Print reference docs',
   description:
     'Reads the reference docs: with no topic it lists every topic; a topic prints that ' +
     'full doc; a topic plus a section returns the first section whose title contains the ' +

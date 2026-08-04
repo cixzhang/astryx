@@ -14,7 +14,7 @@ export const doc = {
   name: 'validate-integration',
   displayName: 'astryx validate-integration',
   namespace: 'cli',
-  summary: 'Validate an Astryx integration package (manifest + contributions).',
+  summary: 'Validate an Astryx integration package (manifest + contributions)',
   description:
     'Validates ONE integration at a time — the local package rooted at cwd, or an ' +
     'installed package resolved by name — schema-checking its manifest, verifying each ' +

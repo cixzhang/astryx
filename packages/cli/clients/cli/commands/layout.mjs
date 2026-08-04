@@ -10,6 +10,10 @@
  *
  * The expression argument may also come from --file or stdin (`-`),
  * which is how multi-line outline (XLO) input usually arrives.
+ *
+ * The command surface (group + subcommand descriptions, args, flags) is sourced
+ * from the colocated CommandDocs via `defineCommand`; this file supplies only the
+ * actions.
  */
 
 import * as fs from 'node:fs';
@@ -19,6 +23,14 @@ import {emit, section, text, list, record, code, WARN} from '../formatters/index
 import {cliError} from '../lib/cli-error.mjs';
 import {ERROR_CODES} from '../../../foundation/response/error-codes.mjs';
 import {layoutExpand, layoutCheck, layoutGrammar} from '../../../api/layout/layout.mjs';
+import {defineCommand} from '../lib/define-command.mjs';
+import {doc as layoutGroup} from './layout.doc.mjs';
+import {doc as layoutExpandCommand} from './layout-expand.doc.mjs';
+import {doc as layoutCheckCommand} from './layout-check.doc.mjs';
+import {doc as layoutGrammarCommand} from './layout-grammar.doc.mjs';
+import {doc as layoutExpandFn} from '../../../api/layout/layoutExpand.doc.mjs';
+import {doc as layoutCheckFn} from '../../../api/layout/layoutCheck.doc.mjs';
+import {doc as layoutGrammarFn} from '../../../api/layout/layoutGrammar.doc.mjs';
 
 /**
  * The api layer's @returns for these functions widen the `type` discriminator
@@ -99,18 +111,11 @@ async function readExpression(expr, options = {}) {
  * @param {import('commander').Command} program
  */
 export function registerLayout(program) {
-  const layoutCmd = program
-    .command('layout')
-    .description('Generate XDS layouts from compressed expressions (XLE/XLO)');
+  const layoutCmd = defineCommand(program, layoutGroup);
 
-  layoutCmd
-    .command('expand [expression] [path]')
-    .description('Expand a layout expression into validated XDS TSX')
-    .option('--file <file>', 'Read the expression from a file')
-    .option('--form <form>', 'Input surface: compact, outline, or auto', 'auto')
-    .option('--name <name>', 'Generated component name (PascalCase)', 'GeneratedLayout')
-    .option('--loose', 'Downgrade unknown {block} hints to TODO placeholders')
-    .action(async (/** @type {string} */ expression, /** @type {string} */ targetPath, /** @type {LayoutExpandOptions} */ options) => {
+  defineCommand(layoutCmd, layoutExpandCommand, {
+    fn: layoutExpandFn,
+    action: async (/** @type {string} */ expression, /** @type {string} */ targetPath, /** @type {LayoutExpandOptions} */ options) => {
       const json = program.opts().json || false;
       const source = await readExpression(expression, options);
       if (!source || source.trim() === '') {
@@ -161,15 +166,12 @@ export function registerLayout(program) {
         out.push(code(result.data.code));
       }
       emit(...out);
-    });
+    },
+  });
 
-  layoutCmd
-    .command('check [expression]')
-    .description('Validate a layout expression and echo canonical compact/outline forms')
-    .option('--file <file>', 'Read the expression from a file')
-    .option('--form <form>', 'Input surface: compact, outline, or auto', 'auto')
-    .option('--loose', 'Downgrade unknown {block} hints to TODO placeholders')
-    .action(async (/** @type {string} */ expression, /** @type {LayoutCheckOptions} */ options) => {
+  defineCommand(layoutCmd, layoutCheckCommand, {
+    fn: layoutCheckFn,
+    action: async (/** @type {string} */ expression, /** @type {LayoutCheckOptions} */ options) => {
       const json = program.opts().json || false;
       const source = await readExpression(expression, options);
       if (!source || source.trim() === '') {
@@ -223,12 +225,12 @@ export function registerLayout(program) {
       // The canonical compact/outline surfaces are preformatted — emit verbatim.
       out.push(section('compact'), code(compact), section('outline'), code(outline));
       emit(...out);
-    });
+    },
+  });
 
-  layoutCmd
-    .command('grammar')
-    .description('Print the XLE/XLO cheatsheet (alias table generated from this branch)')
-    .action(async () => {
+  defineCommand(layoutCmd, layoutGrammarCommand, {
+    fn: layoutGrammarFn,
+    action: async () => {
       const json = program.opts().json || false;
       /** @type {LayoutGrammarResponse} */
       let result;
@@ -242,5 +244,6 @@ export function registerLayout(program) {
       if (json) return jsonOut(result);
       // The cheatsheet is a preformatted document — emit verbatim.
       emit(code(result.data.text));
-    });
+    },
+  });
 }

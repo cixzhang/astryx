@@ -15,7 +15,7 @@ export const doc = {
   displayName: 'astryx layout check',
   namespace: 'cli',
   summary:
-    'Validate a layout expression and echo canonical compact/outline forms.',
+    'Validate a layout expression and echo canonical compact/outline forms',
   description:
     'Parses and validates a compressed XLE/XLO expression without generating any TSX, and ' +
     'echoes it back in both canonical surfaces (compact and outline). An invalid but ' +
@@ -23,18 +23,19 @@ export const doc = {
   fn: 'layoutCheck',
   args: [{name: 'expression', param: 'expression', required: false}],
   options: [
-    {
-      flag: '--file <file>',
-      description:
-        'Read the expression from a file instead of the positional argument.',
-    },
+    {flag: '--file <file>', description: 'Read the expression from a file'},
     {
       flag: '--form <form>',
       param: 'options.form',
       choices: ['compact', 'outline', 'auto'],
       default: 'auto',
+      description: 'Input surface: compact, outline, or auto',
     },
-    {flag: '--loose', param: 'options.loose'},
+    {
+      flag: '--loose',
+      param: 'options.loose',
+      description: 'Downgrade unknown {block} hints to TODO placeholders',
+    },
   ],
   examples: [
     {

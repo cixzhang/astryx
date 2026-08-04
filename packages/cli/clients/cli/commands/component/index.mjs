@@ -22,11 +22,14 @@ import {getCliInvocation} from '../../../../foundation/env/package-manager.mjs';
 import {jsonOut} from '../../../../foundation/response/json.mjs';
 import {emit, section, text, list, record, records, code} from '../../formatters/index.mjs';
 import {cliError} from '../../lib/cli-error.mjs';
+import {defineCommand} from '../../lib/define-command.mjs';
 import {ERROR_CODES} from '../../../../foundation/response/error-codes.mjs';
 import {component as componentApi} from '../../../../api/component/component.mjs';
 import {findRelatedBlocks} from '../../../../api/template/template.mjs';
 import {Project} from '../../../../foundation/config/project.mjs';
 import {warnOnIntegrationIssues} from '../../../../foundation/integrations/integration-warnings.mjs';
+import {doc as componentCommand} from '../component.doc.mjs';
+import {doc as componentFn} from '../../../../api/component/component.doc.mjs';
 
 /**
  * The api layer's component() widens its return to `{type: string, data: unknown}`,
@@ -47,17 +50,9 @@ import {warnOnIntegrationIssues} from '../../../../foundation/integrations/integ
  * @param {import('commander').Command} program
  */
 export function registerComponent(program) {
-  program
-    .command('component [name]')
-    .description('List components or print component docs')
-    .option('--list', 'List all components grouped by category')
-    .option('--category <category>', 'List components in a specific category')
-    .option('--props', 'Print only the props table')
-    .option('--source', 'Print component source code')
-    .option('--showcase', 'Print showcase source code')
-    .option('--blocks', 'List example blocks: showcase, examples, and related')
-    .option('--package <name>', 'Scope lookup to an external package (e.g. @acme/xds-widgets)')
-    .action(async (/** @type {string | undefined} */ name, /** @type {{list?: boolean, category?: string, props?: boolean, source?: boolean, showcase?: boolean, blocks?: boolean, package?: string}} */ options) => {
+  defineCommand(program, componentCommand, {
+    fn: componentFn,
+    action: async (/** @type {string | undefined} */ name, /** @type {{list?: boolean, category?: string, props?: boolean, source?: boolean, showcase?: boolean, blocks?: boolean, package?: string}} */ options) => {
       const run = getCliInvocation();
       const zh = program.opts().zh || false;
       const dense = program.opts().dense || false;
@@ -258,7 +253,8 @@ export function registerComponent(program) {
           break;
         }
       }
-    });
+    },
+  });
 }
 
 

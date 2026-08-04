@@ -13,7 +13,7 @@ export const doc = {
   name: 'theme',
   displayName: 'astryx theme',
   namespace: 'cli',
-  summary: 'Theme tools — build, export, and manage themes.',
+  summary: 'Theme tools — build, export, and manage themes',
   description:
     'The theme command group. Running astryx theme with no subcommand prints the ' +
     'subcommand list; the work happens in the subcommands — compile a theme (build), ' +

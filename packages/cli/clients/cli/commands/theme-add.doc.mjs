@@ -14,7 +14,7 @@ export const doc = {
   name: 'theme add',
   displayName: 'astryx theme add',
   namespace: 'cli',
-  summary: 'Scaffold a theme into your project as editable source.',
+  summary: 'Scaffold a theme into your project as editable source',
   description:
     "Copies a bundled theme's source into your project so you own it — no theme package " +
     'needed. Writes are staged then renamed, rolling back on failure. Running it with no ' +
@@ -25,11 +25,12 @@ export const doc = {
     {name: 'path', param: 'options.targetPath', required: false},
   ],
   options: [
-    {flag: '-f, --overwrite', param: 'options.overwrite'},
     {
-      flag: '--list',
-      description: 'List the bundled themes instead of scaffolding.',
+      flag: '-f, --overwrite',
+      param: 'options.overwrite',
+      description: 'Overwrite existing files without prompting',
     },
+    {flag: '--list', description: 'List available themes'},
   ],
   examples: [
     {label: 'Scaffold a theme', cli: 'astryx theme add matcha'},

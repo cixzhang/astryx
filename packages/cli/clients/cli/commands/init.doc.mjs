@@ -13,7 +13,7 @@ export const doc = {
   name: 'init',
   displayName: 'astryx init',
   namespace: 'cli',
-  summary: 'Initialize the design system in your project.',
+  summary: 'Initialize the design system in your project',
   description:
     'Non-interactive project setup (no prompts, so it behaves the same for humans, ' +
     'agents, and CI). By default it installs the AGENTS.md/CLAUDE.md agent-docs and ' +
@@ -21,15 +21,34 @@ export const doc = {
     'guidance and can scaffold a starter template.',
   fn: 'init',
   options: [
-    {flag: '--features <list>', param: 'options.features'},
-    {flag: '--all', param: 'options.all'},
-    {flag: '--remove-agents', param: 'options.removeAgents'},
+    {
+      flag: '--features <list>',
+      param: 'options.features',
+      description:
+        'Comma-separated features to install (agents, theme, template)',
+    },
+    {
+      flag: '--all',
+      param: 'options.all',
+      description: 'Install all features, no prompts',
+    },
+    {
+      flag: '--remove-agents',
+      param: 'options.removeAgents',
+      description: 'Remove AI agent docs from all agent doc files',
+    },
     {
       flag: '--agent <tool>',
       param: 'options.agent',
       choices: ['claude', 'cursor', 'codex', 'hermes', 'all'],
+      description:
+        'Target AI tool for agent docs: claude, cursor, codex, hermes, all',
     },
-    {flag: '--agent-docs-path <path...>', param: 'options.agentDocsPath'},
+    {
+      flag: '--agent-docs-path <path...>',
+      param: 'options.agentDocsPath',
+      description: 'Explicit file path(s) for agent docs',
+    },
   ],
   examples: [
     {label: 'Default setup', cli: 'astryx init'},
