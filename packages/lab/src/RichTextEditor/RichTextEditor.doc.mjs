@@ -168,7 +168,7 @@ export const docs = {
       {
         guidance: true,
         description:
-          'Links: the toolbar Link button (on by default; disable with hasLink={false}) and Cmd/Ctrl+K toggle a link on the selection via Lexical TOGGLE_LINK_COMMAND. It prompts for a URL with window.prompt by default; pass promptForUrl to plug in a custom prompt (e.g. an Astryx Dialog or floating popover). Entered URLs are sanitized (only http/https/mailto/tel are written; javascript:/data: are rejected). Links open in a new tab by default — target=_blank and rel=noopener noreferrer are written into the link node data (so they serialize and round-trip), not patched onto the DOM; set linkOpensInNewTab={false} for same-tab links. Pressing the button while a link is selected removes it.',
+          'Links: the toolbar Link button (on by default; disable with hasLink={false}) and Cmd/Ctrl+K toggle a link on the selection via Lexical TOGGLE_LINK_COMMAND. It prompts for a URL with window.prompt by default; pass promptForUrl to plug in a custom prompt (e.g. an Astryx Dialog or floating popover). Entered URLs are sanitized (only http/https/mailto/tel are written; javascript:/data: are rejected). Links open in a new tab by default: target=_blank and rel=noopener noreferrer are written into the link node data (so they serialize and round-trip), not patched onto the DOM; set linkOpensInNewTab={false} for same-tab links. Pressing the button while a link is selected removes it.',
       },
       {
         guidance: true,
@@ -178,7 +178,7 @@ export const docs = {
       {
         guidance: true,
         description:
-          "The toolbar's glyphs are themeable. Each control resolves its icon from the core icon registry under a stable richtext:* key (see RICHTEXT_ICON_KEYS), falling back to a bundled inline SVG. A theme can restyle any glyph without forking the toolbar: registerIcons({'richtext:bold': <MyBoldIcon />}) from @astryxdesign/core/Icon. registerIcons now accepts arbitrary extension keys, and getExtendedIcon(key, fallback) resolves them — the same pattern any library can use to make its own icons theme-overridable.",
+          "The toolbar's glyphs are themeable. Each control resolves its icon from the core icon registry under a stable richtext:* key (see RICHTEXT_ICON_KEYS), falling back to a bundled inline SVG. A theme can restyle any glyph without forking the toolbar: registerIcons({'richtext:bold': <MyBoldIcon />}) from @astryxdesign/core/Icon. registerIcons now accepts arbitrary extension keys, and getExtendedIcon(key, fallback) resolves them; the same pattern any library can use to make its own icons theme-overridable.",
       },
       {
         guidance: false,
