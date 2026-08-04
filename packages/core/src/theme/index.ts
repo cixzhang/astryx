@@ -139,6 +139,11 @@ export type {
   ComponentIconMap,
   ComponentIconSlotMap,
   ComponentIconSlotName,
+  ControlIconMap,
+  ControlIconName,
+  ControlIconRenderArgs,
+  ControlIconRegistry,
+  ControlIconRenderer,
 } from '../Icon';
 export {
   resolveThemeToken,

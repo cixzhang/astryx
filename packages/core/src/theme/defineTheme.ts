@@ -30,6 +30,7 @@
  * ```
  */
 
+import type {ControlIconRegistry} from '../Icon/controlIcons';
 import type {ComponentIconMap, IconRegistry} from '../Icon/globalIconRegistry';
 import type {TypographyConfig, FontWeight} from './types';
 import {
@@ -282,6 +283,8 @@ export interface DefineThemeInput {
   components?: ComponentStyleMap;
   /** Icon registry — maps semantic icon names to React nodes */
   icons?: Partial<IconRegistry>;
+  /** Stateful control icon renderers for checkbox/radio visuals. */
+  controlIcons?: ControlIconRegistry;
   /**
    * Component icon slot mappings — maps component-specific purposes to global
    * semantic icon names. Use `null` to intentionally render no icon.
@@ -336,6 +339,8 @@ export interface DefinedTheme {
   components?: ComponentStyleMap;
   /** Icon registry */
   icons?: Partial<IconRegistry>;
+  /** Stateful control icon renderers for checkbox/radio visuals. */
+  controlIcons?: ControlIconRegistry;
   /** Component icon slot mappings */
   componentIcons?: ComponentIconMap;
   /** Whether this theme has been pre-compiled by theme build CLI */
@@ -632,6 +637,11 @@ export function defineTheme(input: DefineThemeInput): DefinedTheme {
       ? {...base.icons, ...input.icons}
       : (input.icons ?? base?.icons);
 
+  const controlIcons =
+    input.controlIcons && base?.controlIcons
+      ? {...base.controlIcons, ...input.controlIcons}
+      : (input.controlIcons ?? base?.controlIcons);
+
   // 6. Merge component icon mappings — input mappings override base mappings.
   // `null` is an intentional override meaning “render no icon”.
   const componentIcons =
@@ -644,6 +654,7 @@ export function defineTheme(input: DefineThemeInput): DefinedTheme {
     tokens,
     components,
     icons,
+    controlIcons,
     componentIcons,
     __inputTokens: input.tokens,
     __onDark,

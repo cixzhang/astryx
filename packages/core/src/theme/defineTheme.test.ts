@@ -1071,6 +1071,20 @@ describe('defineTheme extends', () => {
     });
   });
 
+  it('preserves and merges control icon renderers', () => {
+    const checkbox = () => 'checkbox';
+    const radio = () => 'radio';
+    const base = defineTheme({name: 'base', controlIcons: {checkbox}});
+    const child = defineTheme({
+      name: 'child',
+      extends: base,
+      controlIcons: {radio},
+    });
+
+    expect(child.controlIcons?.checkbox).toBe(checkbox);
+    expect(child.controlIcons?.radio).toBe(radio);
+  });
+
   it('preserves component icon mappings', () => {
     const theme = defineTheme({
       name: 'icons',

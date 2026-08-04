@@ -13,6 +13,7 @@
 
 export {Icon, renderIconSlot} from './Icon';
 export {useIcon} from './useIcon';
+export {useControlIcon} from './useControlIcon';
 export type {IconProps, IconColor, IconSize, IconType} from './Icon';
 
 // Global registry (RSC-compatible, no 'use client')
@@ -25,6 +26,7 @@ export {
   getComponentIconName,
   resetIcons,
 } from './globalIconRegistry';
+export {getControlIcon} from './controlIconRegistry';
 export type {
   IconName,
   ExtendedIconName,
@@ -34,3 +36,15 @@ export type {
   ComponentIconSlotName,
   ComponentIconMap,
 } from './globalIconRegistry';
+
+export {
+  defaultCheckboxControlIcon,
+  defaultRadioControlIcon,
+} from './controlIcons';
+export type {
+  ControlIconMap,
+  ControlIconName,
+  ControlIconRenderArgs,
+  ControlIconRegistry,
+  ControlIconRenderer,
+} from './controlIcons';
