@@ -164,6 +164,47 @@ export const docsDense = {
   category: 'Data Input',
   description:
     'Field+dialog-popover shell for rich custom selectors. Content gets value/onChange/close/state; content owns semantics. Use focus hooks and evaluate custom content against WCAG 2.2.',
+  usage: {
+    description:
+      'Use when a selection needs richer custom content than a Selector row. One component: it owns field, trigger, popover, focus restore, and changeAction; the render prop owns the selector-specific accessible structure.',
+    bestPractices: [
+      {
+        guidance: true,
+        description:
+          'Compose content from the right accessible structure: RadioList for a simple choice, Calendar/date inputs for dates, TreeList or a searchable list for hierarchy, a custom grid for 2D arrow navigation.',
+      },
+      {
+        guidance: true,
+        description:
+          'Use the onChange helper from children; it calls both onChange and changeAction and updates optimistic busy state.',
+      },
+      {
+        guidance: true,
+        description:
+          'Call close() from custom content when a selection should dismiss the popup. Keep it open for multi-step or freeform flows.',
+      },
+      {
+        guidance: true,
+        description:
+          'Use Astryx focus hooks: useGridFocus for 2D grids, useTreeFocus via TreeList for hierarchies, useListFocus for custom linear collections.',
+      },
+      {
+        guidance: true,
+        description:
+          'Evaluate custom content against WCAG 2.2: keyboard operation, focus visible/not obscured, names and roles, labels/instructions, target size, and contrast.',
+      },
+      {
+        guidance: false,
+        description:
+          'Do not rebuild trigger ARIA, popover focus management, or changeAction handling in product code.',
+      },
+      {
+        guidance: false,
+        description:
+          'Do not use ComplexSelector for a plain single-column text list; use Selector instead.',
+      },
+    ],
+  },
   propDescriptions: {
     label: 'Accessible field label.',
     value: 'Controlled value.',
