@@ -60,7 +60,7 @@ export const docs = {
       name: 'marks',
       type: 'ReadonlyArray<{value: number; label: string}>',
       description:
-        'Fixed target marks drawn on the track at values in the same 0..max scale as value (e.g. a goal line). They stay visible whether progress is below or past them. Each mark requires a label — it is the mark\'s accessible name and the text revealed via a tooltip on hover/focus. Ignored when indeterminate.',
+        'Fixed target marks drawn on the track at values in the same 0..max scale as value (e.g. a goal line). They stay visible whether progress is below or past them. Each mark requires a label: it is the mark\'s accessible name and the text revealed via a tooltip on hover/focus. Ignored when indeterminate.',
     },
     {
       name: 'isDisabled',
