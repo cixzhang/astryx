@@ -673,7 +673,7 @@ describe('TreeList', () => {
           },
         },
       });
-      const css = generateThemeCSSFlat(theme);
+      const css = generateThemeTestCSS(theme);
       expect(css).toContain('.astryx-tree-list {');
       expect(css).toContain('--tree-list-row-gap: var(--spacing-1)');
     });
