@@ -623,21 +623,16 @@ export const NumericSizes: Story = {
   ),
 };
 
-// A theme can re-scope the fallback initials' typography per size tier via the
-// Avatar-scoped derived vars — a smaller-per-size type scale, regular weight,
-// and a muted secondary-text color — without forking the component. The
-// fallback background is a direct theme target (the `astryx-avatar-fallback`
-// class), so a themed wash is set on the `avatar-fallback` component key. The
-// default row is unchanged (size × 0.4, medium weight, neutral fill); only the
-// themed row opts in.
+// A theme can re-scope the fallback initials' typography without forking the
+// component: the per-size font-size scale is set on the `avatar` size tiers
+// (the size class lives on the root), while weight, text color, and the wash
+// background are set on the `avatar-fallback` child target. The default row is
+// unchanged (size × 0.4, medium weight, neutral fill); only the themed row
+// opts in.
 const fallbackScaleTheme = defineTheme({
   name: 'avatar-fallback-scale',
   components: {
     avatar: {
-      base: {
-        fontWeight: 'var(--font-weight-normal)',
-        color: 'var(--color-text-secondary)',
-      },
       'size:xsm': {fontSize: '8px'},
       'size:sm': {fontSize: '9px'},
       'size:md': {fontSize: '13px'},
@@ -646,6 +641,8 @@ const fallbackScaleTheme = defineTheme({
     },
     'avatar-fallback': {
       base: {
+        fontWeight: 'var(--font-weight-normal)',
+        color: 'var(--color-text-secondary)',
         backgroundColor: 'var(--color-accent-muted)',
       },
     },

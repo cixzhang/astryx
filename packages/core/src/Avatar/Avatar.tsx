@@ -136,15 +136,16 @@ const styles = stylex.create({
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    // Fallback surface (initials + default icon). The background is themed
-    // directly via the stable `.astryx-avatar-fallback` class target; the
-    // initials weight/color still read Avatar-scoped internal vars so a theme
-    // can re-scope them without forking. Defaults reproduce today's exact
-    // output. See Avatar.doc.mjs theming (targets + derivedVarRegistry).
+    // Fallback surface (initials + default icon). Background, text color, and
+    // weight are themed directly via the stable `.astryx-avatar-fallback` class
+    // target, so the defaults here are plain tokens. Font size is the exception:
+    // it's a per-size inline value, so it reads the Avatar-scoped
+    // `--_avatar-fallback-font-size` var (set on the root's size class) — the
+    // only seam that can reach an inline style. See Avatar.doc.mjs theming.
     backgroundColor: colorVars['--color-neutral'],
-    color: `var(--_avatar-fallback-color, ${colorVars['--color-text-secondary']})`,
+    color: colorVars['--color-text-secondary'],
     fontFamily: typographyVars['--font-family-body'],
-    fontWeight: `var(--_avatar-fallback-font-weight, ${fontWeightVars['--font-weight-medium']})`,
+    fontWeight: fontWeightVars['--font-weight-medium'],
     textTransform: 'uppercase',
   },
   status: {

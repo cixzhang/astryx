@@ -385,36 +385,15 @@ describe('derived var expansion', () => {
     expect(rule).toContain('--_button-radius: 8px');
   });
 
-  it('emits internal vars for avatar fallback typography (base)', () => {
+  it('emits direct rules for avatar fallback background, color, and weight', () => {
     const theme = defineTheme({
-      name: 'test-derived-avatar',
-      components: {
-        avatar: {
-          base: {
-            fontWeight: 'var(--font-weight-normal)',
-            color: 'var(--color-text-secondary)',
-          },
-        },
-      },
-    });
-    const rules = generateThemeRules(theme);
-    const rule = rules.find(r => r.includes('.astryx-avatar'));
-    expect(rule).toBeDefined();
-    expect(rule).toContain(
-      '--_avatar-fallback-font-weight: var(--font-weight-normal)',
-    );
-    expect(rule).toContain(
-      '--_avatar-fallback-color: var(--color-text-secondary)',
-    );
-  });
-
-  it('emits a direct background rule for the avatar fallback target', () => {
-    const theme = defineTheme({
-      name: 'test-avatar-fallback-bg',
+      name: 'test-avatar-fallback',
       components: {
         'avatar-fallback': {
           base: {
             backgroundColor: 'var(--color-accent-muted)',
+            color: 'var(--color-text-secondary)',
+            fontWeight: 'var(--font-weight-normal)',
           },
         },
       },
@@ -423,8 +402,12 @@ describe('derived var expansion', () => {
     const rule = rules.find(r => r.includes('.astryx-avatar-fallback'));
     expect(rule).toBeDefined();
     expect(rule).toContain('background-color: var(--color-accent-muted)');
-    // The fallback background is a direct class target, not a derived var.
+    expect(rule).toContain('color: var(--color-text-secondary)');
+    expect(rule).toContain('font-weight: var(--font-weight-normal)');
+    // These are direct class targets now, not internal derived vars.
     expect(rule).not.toContain('--_avatar-fallback-background');
+    expect(rule).not.toContain('--_avatar-fallback-color');
+    expect(rule).not.toContain('--_avatar-fallback-font-weight');
   });
 
   it('emits a per-size fallback font-size for avatar (size:sm)', () => {

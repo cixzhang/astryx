@@ -35,13 +35,9 @@ export const docs = {
     ],
     vars: [
       {name: '--_avatar-fallback-font-size', description: 'Initials font size; default is proportional to the avatar size (size × 0.4). Override per size tier (e.g. size:sm) for a custom type scale.', default: 'calc(avatar-size × 0.4)', private: true},
-      {name: '--_avatar-fallback-font-weight', description: 'Initials font weight', default: 'var(--font-weight-medium)', private: true},
-      {name: '--_avatar-fallback-color', description: 'Fallback text and default-icon color', default: 'var(--color-text-secondary)', private: true},
     ],
     derived: [
       {property: 'fontSize', vars: ['--_avatar-fallback-font-size']},
-      {property: 'fontWeight', vars: ['--_avatar-fallback-font-weight']},
-      {property: 'color', vars: ['--_avatar-fallback-color']},
     ],
   },
   description: 'Displays a user avatar with image, initials fallback, and optional status indicator.',
