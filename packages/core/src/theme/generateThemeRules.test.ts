@@ -410,19 +410,21 @@ describe('derived var expansion', () => {
     expect(rule).not.toContain('--_avatar-fallback-font-weight');
   });
 
-  it('emits a per-size fallback font-size for avatar (size:sm)', () => {
+  it('emits a direct per-size font-size rule for the avatar fallback target', () => {
     const theme = defineTheme({
-      name: 'test-derived-avatar-size',
+      name: 'test-avatar-fallback-size',
       components: {
-        avatar: {
+        'avatar-fallback': {
           'size:sm': {fontSize: '9px'},
         },
       },
     });
     const rules = generateThemeRules(theme);
-    const rule = rules.find(r => r.includes('.astryx-avatar.sm'));
+    const rule = rules.find(r => r.includes('.astryx-avatar-fallback.sm'));
     expect(rule).toBeDefined();
-    expect(rule).toContain('--_avatar-fallback-font-size: 9px');
+    expect(rule).toContain('font-size: 9px');
+    // Direct class target now — no internal derived var.
+    expect(rule).not.toContain('--_avatar-fallback-font-size');
   });
 
   it('does not emit derived vars for components without registry entries', () => {

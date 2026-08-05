@@ -136,12 +136,11 @@ const styles = stylex.create({
     justifyContent: 'center',
     width: '100%',
     height: '100%',
-    // Fallback surface (initials + default icon). Background, text color, and
-    // weight are themed directly via the stable `.astryx-avatar-fallback` class
-    // target, so the defaults here are plain tokens. Font size is the exception:
-    // it's a per-size inline value, so it reads the Avatar-scoped
-    // `--_avatar-fallback-font-size` var (set on the root's size class) — the
-    // only seam that can reach an inline style. See Avatar.doc.mjs theming.
+    // Fallback surface (initials + default icon). Background, text color,
+    // weight, and per-size font size are all themed directly via the stable
+    // `.astryx-avatar-fallback` class target (font size through its size
+    // variant, `.astryx-avatar-fallback.<size>`), so the defaults here are
+    // plain values with no internal-var seam. See Avatar.doc.mjs theming.
     backgroundColor: colorVars['--color-neutral'],
     color: colorVars['--color-text-secondary'],
     fontFamily: typographyVars['--font-family-body'],
@@ -207,13 +206,12 @@ const dynamicStyles = stylex.create({
     width: size,
     height: size,
   }),
-  // Initials font size defaults to the proportional `size × ratio` scale but is
-  // reachable via the `--_avatar-fallback-font-size` derived var, so a theme can
-  // set a per-size type scale (e.g. `components.avatar['size:sm']`).
+  // Initials font size defaults to the proportional `size × ratio` scale. It's
+  // a StyleX dynamic style, so the value lands via a class (not an inline
+  // property) — a theme's `.astryx-avatar-fallback.<size>` rule in the theme
+  // layer overrides it per size tier, no internal var needed.
   fontSize: (size: number) => ({
-    fontSize: `var(--_avatar-fallback-font-size, ${
-      size * INITIALS_FONT_SIZE_RATIO
-    }px)`,
+    fontSize: `${size * INITIALS_FONT_SIZE_RATIO}px`,
   }),
   statusPosition: (size: number) => ({
     bottom: size * CIRCLE_EDGE_OFFSET_RATIO,
@@ -552,7 +550,7 @@ export function Avatar({
         {showInitials && (
           <div
             {...mergeProps(
-              themeProps('avatar-fallback'),
+              themeProps('avatar-fallback', {size: resolvedSize}),
               stylex.props(
                 styles.fallback,
                 dynamicStyles.fontSize(numericSize),
@@ -564,7 +562,7 @@ export function Avatar({
         {showIcon && (
           <div
             {...mergeProps(
-              themeProps('avatar-fallback'),
+              themeProps('avatar-fallback', {size: resolvedSize}),
               stylex.props(styles.fallback),
             )}>
             <DefaultIcon size={numericSize} />

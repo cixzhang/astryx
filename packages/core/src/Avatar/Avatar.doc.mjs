@@ -29,15 +29,9 @@ export const docs = {
   theming: {
     targets: [
       {className: 'astryx-avatar', visualProps: ['size']},
-      {className: 'astryx-avatar-fallback'},
+      {className: 'astryx-avatar-fallback', visualProps: ['size']},
       {className: 'astryx-avatar-status-dot', visualProps: ['variant']},
       {className: 'astryx-avatar-status-dot-glyph', visualProps: ['shape']},
-    ],
-    vars: [
-      {name: '--_avatar-fallback-font-size', description: 'Initials font size; default is proportional to the avatar size (size × 0.4). Override per size tier (e.g. size:sm) for a custom type scale.', default: 'calc(avatar-size × 0.4)', private: true},
-    ],
-    derived: [
-      {property: 'fontSize', vars: ['--_avatar-fallback-font-size']},
     ],
   },
   description: 'Displays a user avatar with image, initials fallback, and optional status indicator.',

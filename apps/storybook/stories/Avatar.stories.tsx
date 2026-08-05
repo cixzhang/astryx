@@ -624,27 +624,24 @@ export const NumericSizes: Story = {
 };
 
 // A theme can re-scope the fallback initials' typography without forking the
-// component: the per-size font-size scale is set on the `avatar` size tiers
-// (the size class lives on the root), while weight, text color, and the wash
-// background are set on the `avatar-fallback` child target. The default row is
-// unchanged (size × 0.4, medium weight, neutral fill); only the themed row
-// opts in.
+// component: weight, text color, the wash background, and the per-size
+// font-size scale are all set on the `avatar-fallback` child target (font size
+// through its size tiers). The default row is unchanged (size × 0.4, medium
+// weight, neutral fill); only the themed row opts in.
 const fallbackScaleTheme = defineTheme({
   name: 'avatar-fallback-scale',
   components: {
-    avatar: {
-      'size:xsm': {fontSize: '8px'},
-      'size:sm': {fontSize: '9px'},
-      'size:md': {fontSize: '13px'},
-      'size:lg': {fontSize: '16px'},
-      'size:xl': {fontSize: '40px'},
-    },
     'avatar-fallback': {
       base: {
         fontWeight: 'var(--font-weight-normal)',
         color: 'var(--color-text-secondary)',
         backgroundColor: 'var(--color-accent-muted)',
       },
+      'size:xsm': {fontSize: '8px'},
+      'size:sm': {fontSize: '9px'},
+      'size:md': {fontSize: '13px'},
+      'size:lg': {fontSize: '16px'},
+      'size:xl': {fontSize: '40px'},
     },
   },
 });
