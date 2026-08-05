@@ -214,7 +214,7 @@ export function formatInstant(
       return `${pad(w.hour)}:${pad(w.minute)}:${pad(w.second)}`;
     }
 
-    case 'system_unix':
+    case 'unix_seconds':
       // Unix time in whole seconds since the epoch. The epoch is an absolute
       // instant, so this is zone-independent — `timeZone` is intentionally
       // ignored (a wall-clock zone can't change how many seconds have elapsed).

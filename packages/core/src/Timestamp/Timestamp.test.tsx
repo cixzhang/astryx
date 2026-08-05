@@ -343,22 +343,22 @@ describe('Timestamp', () => {
     expect(el.textContent).toMatch(/\d{2}:\d{2}:\d{2}/);
   });
 
-  it('renders system_unix format as whole epoch seconds (zone-independent)', () => {
+  it('renders unix_seconds format as whole epoch seconds (zone-independent)', () => {
     // 2026-02-19T17:00:00Z is 1771520400 seconds since the epoch. The value is
     // absolute, so it is the same regardless of the viewer's zone.
     render(
       <Timestamp
         value="2026-02-19T17:00:00Z"
-        format="system_unix"
+        format="unix_seconds"
         data-testid="ts"
       />,
     );
     expect(screen.getByTestId('ts').textContent).toBe('1771520400');
   });
 
-  it('renders system_unix from a Unix-seconds value input unchanged', () => {
+  it('renders unix_seconds from a Unix-seconds value input unchanged', () => {
     render(
-      <Timestamp value={1771520400} format="system_unix" data-testid="ts" />,
+      <Timestamp value={1771520400} format="unix_seconds" data-testid="ts" />,
     );
     expect(screen.getByTestId('ts').textContent).toBe('1771520400');
   });

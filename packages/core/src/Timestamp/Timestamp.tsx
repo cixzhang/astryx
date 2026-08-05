@@ -53,7 +53,7 @@ export type TimestampFormat =
   | 'system_date'
   | 'system_date_time'
   | 'system_time'
-  | 'system_unix';
+  | 'unix_seconds';
 
 export interface TimestampProps extends BaseProps<HTMLTimeElement> {
   /** Ref forwarded to the root `<time>` element. */
@@ -75,7 +75,7 @@ export interface TimestampProps extends BaseProps<HTMLTimeElement> {
    * - `'system_date'`: "2025-03-21"
    * - `'system_date_time'`: "2025-03-21 14:51:53"
    * - `'system_time'`: "14:51:53"
-   * - `'system_unix'`: "1742565113" — Unix time in whole seconds since the
+   * - `'unix_seconds'`: "1742565113" — Unix time in whole seconds since the
    *   epoch. Absolute (zone-independent), so it ignores any tooltip time zone.
    * @default 'auto'
    */
