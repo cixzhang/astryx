@@ -119,6 +119,29 @@ describe('Pagination', () => {
       ).toBeInTheDocument();
     });
 
+    it('gives the prev/next carets a hover tooltip matching their accessible name', () => {
+      // The carets are icon-only, so sighted users need a visible label on
+      // hover, not just the accessible name. The tooltip reuses the same
+      // localized string, so it is reachable via aria-describedby.
+      render(<Pagination page={3} onChange={() => {}} totalPages={5} />);
+      const prev = screen.getByRole('button', {name: 'Go to previous page'});
+      const next = screen.getByRole('button', {name: 'Go to next page'});
+      const tooltips = screen.getAllByRole('tooltip', {hidden: true});
+      const tooltipIds = new Set(tooltips.map(el => el.id));
+      expect(
+        prev
+          .getAttribute('aria-describedby')
+          ?.split(' ')
+          .some(id => tooltipIds.has(id)),
+      ).toBe(true);
+      expect(
+        next
+          .getAttribute('aria-describedby')
+          ?.split(' ')
+          .some(id => tooltipIds.has(id)),
+      ).toBe(true);
+    });
+
     it('renders with data-testid', () => {
       render(
         <Pagination

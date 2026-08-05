@@ -808,6 +808,7 @@ export function Pagination({
         {showFirstLast && (
           <Button
             label={firstLabel}
+            tooltip={isDisabled || !hasPrevious ? undefined : firstLabel}
             variant="ghost"
             size={buttonSize}
             icon={
@@ -823,6 +824,7 @@ export function Pagination({
 
         <Button
           label={previousLabel}
+          tooltip={isDisabled || !hasPrevious ? undefined : previousLabel}
           variant="ghost"
           size={buttonSize}
           icon={
@@ -839,6 +841,7 @@ export function Pagination({
 
         <Button
           label={nextLabel}
+          tooltip={isDisabled || !hasNext ? undefined : nextLabel}
           variant="ghost"
           size={buttonSize}
           icon={
@@ -854,6 +857,7 @@ export function Pagination({
         {showFirstLast && (
           <Button
             label={lastLabel}
+            tooltip={isDisabled || !hasNext ? undefined : lastLabel}
             variant="ghost"
             size={buttonSize}
             icon={
