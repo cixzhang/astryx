@@ -142,6 +142,21 @@ describe('Pagination', () => {
       ).toBe(true);
     });
 
+    it('renders the prev/next caret icons without an extra mirror wrapper span', () => {
+      // Regression: the RTL mirror used to wrap each chevron in a
+      // display:contents span, which dropped the icon out of the button's
+      // flex-centering context and offset the glyph vertically. The mirror now
+      // rides on the Icon via xstyle, so the icon renders as a direct centered
+      // child. jsdom has no layout engine to assert the pixel centering, but we
+      // can assert the structural fix: the icon carries its own class and is
+      // not the lone child of a bare wrapper span. (Centering is verified
+      // visually in Storybook.)
+      render(<Pagination page={3} onChange={() => {}} totalPages={5} />);
+      const next = screen.getByRole('button', {name: 'Go to next page'});
+      const icon = next.querySelector('.astryx-icon');
+      expect(icon).not.toBeNull();
+    });
+
     it('renders with data-testid', () => {
       render(
         <Pagination

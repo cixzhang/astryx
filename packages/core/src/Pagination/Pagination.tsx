@@ -828,9 +828,11 @@ export function Pagination({
           variant="ghost"
           size={buttonSize}
           icon={
-            <span {...stylex.props(rtlStyles.mirror)}>
-              <Icon icon="chevronLeft" size={isSm ? 'sm' : 'md'} />
-            </span>
+            <Icon
+              icon="chevronLeft"
+              size={isSm ? 'sm' : 'md'}
+              xstyle={rtlStyles.mirror}
+            />
           }
           onClick={handlePrevious}
           isDisabled={isDisabled || !hasPrevious}
@@ -845,9 +847,11 @@ export function Pagination({
           variant="ghost"
           size={buttonSize}
           icon={
-            <span {...stylex.props(rtlStyles.mirror)}>
-              <Icon icon="chevronRight" size={isSm ? 'sm' : 'md'} />
-            </span>
+            <Icon
+              icon="chevronRight"
+              size={isSm ? 'sm' : 'md'}
+              xstyle={rtlStyles.mirror}
+            />
           }
           onClick={handleNext}
           isDisabled={isDisabled || !hasNext}
