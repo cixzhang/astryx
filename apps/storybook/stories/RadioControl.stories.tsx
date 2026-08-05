@@ -45,13 +45,18 @@ export default meta;
 type Story = StoryObj<typeof RadioControl>;
 
 export const Default: Story = {
+  // A single radio can't normally be un-selected by clicking it (native radio
+  // behavior — you deselect by choosing another in the group; see
+  // ControlledGroup). To make this standalone demo interactive, we toggle on
+  // pointer/keyboard activation via onClick so you can flip it on and off.
   render: args => {
     const [checked, setChecked] = useState(args.checked ?? false);
     return (
       <RadioControl
         {...args}
         checked={checked}
-        onChange={() => setChecked(c => !c)}
+        onChange={() => setChecked(true)}
+        onClick={() => setChecked(c => !c)}
       />
     );
   },
