@@ -50,6 +50,20 @@ describe('Avatar', () => {
     expect(style).toMatch(/var\(--_avatar-fallback-font-size,\s*9\.6\d*px\)/);
   });
 
+  it('marks the fallback surface with the stable theming class (initials and icon)', () => {
+    // The background is themed directly on `.astryx-avatar-fallback`, so both
+    // the initials and the default-icon fallback must carry the class.
+    const {rerender} = render(<Avatar name="Ada Lovelace" />);
+    expect(screen.getByText('AL').className).toContain(
+      'astryx-avatar-fallback',
+    );
+
+    rerender(<Avatar />);
+    const icon = document.querySelector('.astryx-avatar-fallback');
+    expect(icon).not.toBeNull();
+    expect(icon?.querySelector('svg')).not.toBeNull();
+  });
+
   it('retries a new src after a previous src failed to load', () => {
     const {rerender} = render(
       <Avatar name="Ada" src="https://example.com/broken.jpg" />,

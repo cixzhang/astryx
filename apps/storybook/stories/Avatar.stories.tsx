@@ -348,10 +348,26 @@ export const StatusWithSizes: Story = {
     <div {...stylex.props(styles.storyWrapper)}>
       <h4 {...stylex.props(styles.heading)}>Status with Different Sizes</h4>
       <div {...stylex.props(styles.row)}>
-        <Avatar name="AB" size="md" status={<AvatarStatusDot label="Online" />} />
-        <Avatar name="CD" size="lg" status={<AvatarStatusDot label="Online" />} />
-        <Avatar name="EF" size="xl" status={<AvatarStatusDot label="Online" />} />
-        <Avatar name="GH" size={72} status={<AvatarStatusDot label="Online" />} />
+        <Avatar
+          name="AB"
+          size="md"
+          status={<AvatarStatusDot label="Online" />}
+        />
+        <Avatar
+          name="CD"
+          size="lg"
+          status={<AvatarStatusDot label="Online" />}
+        />
+        <Avatar
+          name="EF"
+          size="xl"
+          status={<AvatarStatusDot label="Online" />}
+        />
+        <Avatar
+          name="GH"
+          size={72}
+          status={<AvatarStatusDot label="Online" />}
+        />
       </div>
     </div>
   ),
@@ -609,9 +625,11 @@ export const NumericSizes: Story = {
 
 // A theme can re-scope the fallback initials' typography per size tier via the
 // Avatar-scoped derived vars — a smaller-per-size type scale, regular weight,
-// and a muted secondary-text color on an accent wash fill — without forking the
-// component. The default row is unchanged (size × 0.4, medium weight, neutral
-// fill); only the themed row opts in.
+// and a muted secondary-text color — without forking the component. The
+// fallback background is a direct theme target (the `astryx-avatar-fallback`
+// class), so a themed wash is set on the `avatar-fallback` component key. The
+// default row is unchanged (size × 0.4, medium weight, neutral fill); only the
+// themed row opts in.
 const fallbackScaleTheme = defineTheme({
   name: 'avatar-fallback-scale',
   components: {
@@ -619,13 +637,17 @@ const fallbackScaleTheme = defineTheme({
       base: {
         fontWeight: 'var(--font-weight-normal)',
         color: 'var(--color-text-secondary)',
-        backgroundColor: 'var(--color-accent-muted)',
       },
       'size:xsm': {fontSize: '8px'},
       'size:sm': {fontSize: '9px'},
       'size:md': {fontSize: '13px'},
       'size:lg': {fontSize: '16px'},
       'size:xl': {fontSize: '40px'},
+    },
+    'avatar-fallback': {
+      base: {
+        backgroundColor: 'var(--color-accent-muted)',
+      },
     },
   },
 });
@@ -653,6 +675,48 @@ export const ThemedFallbackScale: Story = {
           <Avatar name="SM" size="md" />
           <Avatar name="MD" size="lg" />
           <Avatar name="LG" size="xl" />
+        </div>
+      </Theme>
+    </div>
+  ),
+};
+
+// The fallback surface (initials AND the default person icon) is a direct theme
+// target via the stable `astryx-avatar-fallback` class. Setting a background on
+// the `avatar-fallback` component key paints the wash on the element that
+// actually renders it — no per-component override needed. Both fallback kinds
+// pick up the same themed background.
+const fallbackBackgroundTheme = defineTheme({
+  name: 'avatar-fallback-background',
+  components: {
+    'avatar-fallback': {
+      base: {
+        backgroundColor: 'var(--color-accent-muted)',
+        color: 'var(--color-text-accent)',
+      },
+    },
+  },
+});
+
+export const ThemedFallbackBackground: Story = {
+  name: 'Themed Fallback Background',
+  render: () => (
+    <div {...stylex.props(styles.storyWrapper)}>
+      <h4 {...stylex.props(styles.heading)}>Default fallback background</h4>
+      <div {...stylex.props(styles.row)}>
+        <Avatar name="Ada Lovelace" size="lg" />
+        <Avatar name="Grace Hopper" size="lg" />
+        <Avatar size="lg" />
+      </div>
+
+      <h4 {...stylex.props(styles.heading)}>
+        Themed fallback background (accent wash on initials and icon)
+      </h4>
+      <Theme theme={fallbackBackgroundTheme} mode="light">
+        <div {...stylex.props(styles.row)}>
+          <Avatar name="Ada Lovelace" size="lg" />
+          <Avatar name="Grace Hopper" size="lg" />
+          <Avatar size="lg" />
         </div>
       </Theme>
     </div>

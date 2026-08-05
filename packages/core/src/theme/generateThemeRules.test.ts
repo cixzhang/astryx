@@ -393,7 +393,6 @@ describe('derived var expansion', () => {
           base: {
             fontWeight: 'var(--font-weight-normal)',
             color: 'var(--color-text-secondary)',
-            backgroundColor: 'var(--color-accent-muted)',
           },
         },
       },
@@ -407,9 +406,25 @@ describe('derived var expansion', () => {
     expect(rule).toContain(
       '--_avatar-fallback-color: var(--color-text-secondary)',
     );
-    expect(rule).toContain(
-      '--_avatar-fallback-background: var(--color-accent-muted)',
-    );
+  });
+
+  it('emits a direct background rule for the avatar fallback target', () => {
+    const theme = defineTheme({
+      name: 'test-avatar-fallback-bg',
+      components: {
+        'avatar-fallback': {
+          base: {
+            backgroundColor: 'var(--color-accent-muted)',
+          },
+        },
+      },
+    });
+    const rules = generateThemeRules(theme);
+    const rule = rules.find(r => r.includes('.astryx-avatar-fallback'));
+    expect(rule).toBeDefined();
+    expect(rule).toContain('background-color: var(--color-accent-muted)');
+    // The fallback background is a direct class target, not a derived var.
+    expect(rule).not.toContain('--_avatar-fallback-background');
   });
 
   it('emits a per-size fallback font-size for avatar (size:sm)', () => {
