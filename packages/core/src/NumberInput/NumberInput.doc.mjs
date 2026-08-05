@@ -1,6 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 
 export const docs = {
   name: 'NumberInput',
@@ -146,6 +146,12 @@ export const docs = {
       description: 'HTML autocomplete attribute.',
     },
     {
+      name: 'width',
+      type: 'SizeValue',
+      description:
+        'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.',
+    },
+    {
       name: 'hasAutoFocus',
       type: 'boolean',
       description: 'Whether to focus the input on mount.',
@@ -186,12 +192,11 @@ export const docs = {
       {name: 'Description', required: false, description: 'Additional description text below the label.'},
       {name: 'Icon', required: false, description: 'An optional icon within the input.'},
       {name: 'Placeholder', required: false, description: 'Placeholder text shown when the input is empty.'},
-      {name: 'Spinner', required: false, description: 'Increment and decrement controls for the value.'},
     ],
   },
 };
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 export const docsZh = {
   name: 'NumberInput',
   displayName: 'Number Input',
@@ -373,12 +378,11 @@ export const docsZh = {
       {name: 'Description', required: false, description: 'Additional description text below the label.'},
       {name: 'Icon', required: false, description: 'An optional icon within the input.'},
       {name: 'Placeholder', required: false, description: 'Placeholder text shown when the input is empty.'},
-      {name: 'Spinner', required: false, description: 'Increment and decrement controls for the value.'},
     ],
   },
 };
 
-/** @type {import('../docs-types').TranslationDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentTranslationDoc} */
 export const docsDense = {
   description: 'Number input component for collecting numeric user input w/ validation.',
   usage: {
@@ -396,7 +400,6 @@ export const docsDense = {
       {name: 'Description', required: false, description: 'Additional description text below the label.'},
       {name: 'Icon', required: false, description: 'An optional icon within the input.'},
       {name: 'Placeholder', required: false, description: 'Placeholder text shown when the input is empty.'},
-      {name: 'Spinner', required: false, description: 'Increment and decrement controls for the value.'},
     ],
   },
   propDescriptions: {

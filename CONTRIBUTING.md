@@ -294,6 +294,29 @@ export * from './MyComponent';
 > committed automatically when changes land on `main`. If you need to verify your
 > component will be included, run `pnpm sync:exports:check`.
 
+## Accessibility Checklist
+
+Every new component — and any change to an interactive one — must clear the
+**[Accessibility Checklist](https://github.com/facebook/astryx/wiki/Accessibility-Checklist)**
+(wiki) before review. The checklist lives on the wiki so accessibility
+experts can refine it without a code PR; reviewers block on it (see the
+blocking criteria in `.github/copilot-instructions.md`), and it is a hard
+requirement for a lab → core promotion (see `packages/lab/README.md`).
+
+Two repo-side rules worth restating here:
+
+- Compose the shared primitives — `VisuallyHidden`, `useAnnounce`,
+  `useFocusTrap`, and the focus hooks (`useListFocus`, `useGridFocus`,
+  `useTreeFocus`) — rather than hand-rolling equivalents. They implement the
+  WAI-ARIA APG patterns and are tested once; a bespoke reimplementation of
+  one is a review reject.
+- CI is the enforcement layer, not a replacement for the checklist: the
+  `pr-a11y` workflow runs an axe audit on every PR, a weekly workflow scans
+  the full component surface, and the `useAnnounce` lint rule rejects
+  hand-wired `aria-live` regions. axe only catches static, DOM-level issues —
+  keyboard behavior, focus management, and announcement timing are exactly
+  what the checklist and the component's unit tests cover.
+
 ## Testing
 
 ### Run Tests
@@ -324,6 +347,42 @@ src/Button/
 ├── Button.tsx
 └── Button.test.tsx   # Tests live here
 ```
+
+### Accessibility audits
+
+PRs that touch components run an axe-core audit (the `pr-a11y` CI job) over
+the Storybook stories of the changed components. The job **fails** when it
+finds a violation that is not listed in the checked-in baseline,
+`.github/a11y-baseline.json`. Violations are keyed
+`Component::Story::rule-id`, so unrelated markup churn does not invalidate
+baseline entries.
+
+To reproduce and fix a failure locally:
+
+```bash
+# One-time setup
+pnpm storybook:build
+npx playwright install chromium
+
+# Audit specific components against the baseline (what CI does)
+pnpm a11y:audit -- --components Button,Dialog
+```
+
+Fix the violation whenever possible. If it is a known, intentional exception,
+add it to the baseline (scoped to the affected components, and expect
+reviewers to ask why):
+
+```bash
+pnpm a11y:baseline -- --components Button,Dialog
+```
+
+When the audit reports baseline entries as "resolved", delete them from
+`.github/a11y-baseline.json` — the baseline should only shrink over time.
+
+> **Scope caveat:** axe-core automates only a subset of WCAG (roughly a
+> third of the success criteria). A green `pr-a11y` job does not mean a
+> component is accessible — keyboard flows, focus order, screen-reader
+> semantics, and contrast in context still need manual checks.
 
 ## Versioning & Releases
 

@@ -1,6 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 
 export const docs = {
   name: 'Icon',
@@ -55,6 +55,7 @@ export const docs = {
     description: 'Icons are small visual symbols that represent actions, objects, or concepts. They improve scannability and reinforce meaning alongside text. Supports both direct SVG components and semantic icon names that adapt to the active theme.',
     bestPractices: [
       { guidance: true, description: 'Use semantic icon names when available; they adapt to theme changes automatically.' },
+      { guidance: true, description: "Libraries can augment the icon map with their own keys: registerIcons({'richtext:bold': <MyIcon />}) accepts arbitrary extension keys (not just the built-in IconName set). Resolve them with getExtendedIcon(key, fallback), which prefers a theme-registered icon and falls back to a bundled default — the seam that makes library-shipped icons theme-overridable." },
       { guidance: true, description: 'Pair icons with text labels for accessibility; icon-only elements need an accessible label.' },
       { guidance: true, description: 'For a meaningful standalone icon (no adjacent text), give it an accessible name via the `label` prop: it sets role="img" + aria-label and unhides the icon.' },
       { guidance: true, description: 'Use color tokens for icon colors, not hardcoded hex values.' },
@@ -68,7 +69,7 @@ export const docs = {
   },
 };
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 export const docsZh = {
   name: 'Icon',
   displayName: 'Icon',
@@ -124,7 +125,7 @@ export const docsZh = {
   },
 };
 
-/** @type {import('../docs-types').TranslationDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentTranslationDoc} */
 export const docsDense = {
   description:
     'Renders icons w/ Astryx design system colors + sizes. Supports direct SVG icon components + semantic icon names that adapt to active theme.',

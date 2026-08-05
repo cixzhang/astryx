@@ -13,7 +13,7 @@
  * - /packages/core/src/DateRangeInput/DateRangeInput.test.tsx (tests for new/changed behavior)
  * - /packages/core/src/DateRangeInput/index.ts (exports if types change)
  * - /apps/storybook/stories/DateRangeInput.stories.tsx (storybook stories)
- * - /packages/cli/templates/blocks/components/DateRangeInput/ (showcase blocks)
+ * - /packages/cli/assets/templates/blocks/components/DateRangeInput/ (showcase blocks)
  */
 
 import {useId, useCallback, useMemo, useOptimistic, useTransition} from 'react';
@@ -577,7 +577,14 @@ export function DateRangeInput({
             styles.iconButton,
             isEffectivelyDisabled && styles.iconButtonDisabled,
           )}>
-          <Icon icon="calendar" size="sm" color="secondary" />
+          <Icon
+            icon="calendar"
+            size="sm"
+            color="secondary"
+            {...themeProps('date-range-input-toggle-icon', {
+              state: popover.isOpen ? 'expanded' : 'collapsed',
+            })}
+          />
         </button>
         <button
           ref={ref}
@@ -610,7 +617,12 @@ export function DateRangeInput({
             onClick={handleClear}
             aria-label={t('@astryx.dateInput.clear', {label})}
             {...stylex.props(styles.iconButton)}>
-            <Icon icon="close" size="sm" color="secondary" />
+            <Icon
+              icon="close"
+              size="sm"
+              color="secondary"
+              {...themeProps('date-range-input-clear-icon')}
+            />
           </button>
         )}
         {isBusy && <Spinner size="sm" />}

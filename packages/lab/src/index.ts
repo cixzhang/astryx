@@ -13,7 +13,6 @@
  */
 
 // Code components — syntax highlighting domain
-export {CodeBlock, type CodeBlockProps} from './CodeBlock';
 export {CodeEditor, type CodeEditorProps} from './CodeEditor';
 export {
   tokenize,
@@ -35,7 +34,7 @@ export * from './Chat';
 // Drawer — experimental overlay panel
 export {Drawer, type DrawerProps} from './Drawer';
 
-// BottomSheet — mobile touch sheet built on the Drawer <dialog> engine
+// BottomSheet — mobile touch sheet on a native modal <dialog>
 export {BottomSheet, type BottomSheetProps} from './BottomSheet';
 
 // Stat — experimental KPI/metric display
@@ -246,4 +245,18 @@ export {
   RichTextView,
   type RichTextViewProps,
   sharedEditorTheme,
+  markdownToEditorStateJSON,
+  editorStateJSONToMarkdown,
+  type MarkdownSerializerOptions,
+  RichTextEditorToolbar,
+  type RichTextEditorToolbarProps,
+  RICHTEXT_ICON_KEYS,
+  RichTextEditorAutoLinkPlugin,
+  type RichTextEditorAutoLinkPluginProps,
+  DEFAULT_LINK_MATCHERS,
+  NEW_TAB_LINK_ATTRIBUTES,
+  sanitizeUrl,
+  validateUrl,
+  URL_MATCHER,
+  EMAIL_MATCHER,
 } from './RichTextEditor';

@@ -20,9 +20,16 @@ import {
 import userEvent from '@testing-library/user-event';
 import {Selector} from './Selector';
 import {SelectorOption} from './SelectorOption';
+import {Icon} from '../Icon';
 import {InputGroup, InputGroupText} from '../InputGroup';
 import {__resetLiveRegionsForTest} from '../hooks/useAnnounce';
+import {defineTheme} from '../theme/defineTheme';
+import {generateThemeCSS} from '../theme/generateThemeRules';
 
+function generateThemeTestCSS(theme: Parameters<typeof generateThemeCSS>[0]) {
+  const {prose, component} = generateThemeCSS(theme);
+  return [prose, component].filter(Boolean).join('\n\n');
+}
 function politeRegion(): HTMLElement | null {
   return document.querySelector('[data-astryx-live-region="polite"]');
 }
@@ -610,6 +617,28 @@ describe('Selector', () => {
       expect(within(listbox).getByText('No results found')).toBeInTheDocument();
     });
 
+    it('empty-state message is not exposed as a listbox child', async () => {
+      const user = userEvent.setup();
+      render(
+        <Selector
+          label="Fruit"
+          options={OPTIONS}
+          value="Apple"
+          onChange={() => {}}
+          hasSearch
+        />,
+      );
+      await user.click(screen.getByRole('button', {name: 'Fruit'}));
+      await user.type(screen.getByRole('combobox', h), 'xyz');
+
+      // role="listbox" only permits option/group children — the visual
+      // empty-state message must be presentational (it is announced through
+      // the result-count live region instead).
+      const listbox = screen.getByRole('listbox', h);
+      const empty = within(listbox).getByText('No results found');
+      expect(empty).toHaveAttribute('role', 'presentation');
+    });
+
     it('calls onChange when selecting a filtered option', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn();
@@ -832,15 +861,9 @@ describe('Selector', () => {
           'Blueberry',
         ]);
         await user.keyboard('{ArrowDown}');
-        expect(search).toHaveAttribute(
-          'aria-activedescendant',
-          options[0].id,
-        );
+        expect(search).toHaveAttribute('aria-activedescendant', options[0].id);
         await user.keyboard('{ArrowDown}');
-        expect(search).toHaveAttribute(
-          'aria-activedescendant',
-          options[1].id,
-        );
+        expect(search).toHaveAttribute('aria-activedescendant', options[1].id);
       });
 
       it('shows the empty state when no group has a match', async () => {
@@ -1193,11 +1216,14 @@ describe('Selector', () => {
   });
 });
 
-
 describe('Selector statusVariant forwarding', () => {
   it('defaults to attached (status renders with data-variant="attached")', () => {
     const {container} = render(
-      <Selector label="Fruit" options={['Apple', 'Banana']} status={{type: 'error', message: 'Required'}} />,
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        status={{type: 'error', message: 'Required'}}
+      />,
     );
     expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
       'data-variant',
@@ -1207,11 +1233,410 @@ describe('Selector statusVariant forwarding', () => {
 
   it('forwards statusVariant="detached" to the underlying Field status', () => {
     const {container} = render(
-      <Selector label="Fruit" options={['Apple', 'Banana']} status={{type: 'error', message: 'Required'}} statusVariant="detached" />,
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        status={{type: 'error', message: 'Required'}}
+        statusVariant="detached"
+      />,
     );
     expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
       'data-variant',
       'detached',
     );
+  });
+
+  it('keeps the on-field status icon for the attached variant', () => {
+    const {container} = render(
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        status={{type: 'error', message: 'Required'}}
+      />,
+    );
+    // Attached: the status glyph replaces the chevron indicator on the field.
+    expect(
+      container.querySelector('.astryx-selector-indicator-icon'),
+    ).toBeNull();
+  });
+
+  it('suppresses the on-field status icon for the detached variant', () => {
+    const {container} = render(
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        status={{type: 'error', message: 'Required'}}
+        statusVariant="detached"
+      />,
+    );
+    // Detached: the message box below carries its own leading icon, so the
+    // field keeps its chevron indicator rather than duplicating the glyph.
+    expect(
+      container.querySelector('.astryx-selector-indicator-icon'),
+    ).not.toBeNull();
+  });
+
+  it('detaches attached status by default for the ghost variant', () => {
+    const {container} = render(
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        variant="ghost"
+        status={{type: 'error', message: 'Required'}}
+      />,
+    );
+    expect(container.querySelector('.astryx-selector')).toHaveAttribute(
+      'data-variant',
+      'ghost',
+    );
+    expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
+      'data-variant',
+      'detached',
+    );
+  });
+
+  it('uses a status tooltip for ghost selectors when requested', () => {
+    const {container} = render(
+      <Selector
+        label="Fruit"
+        options={['Apple', 'Banana']}
+        variant="ghost"
+        status={{type: 'warning', message: 'Visible to all users'}}
+        statusVariant="tooltip"
+      />,
+    );
+    expect(container.querySelector('.astryx-field-status')).toBeNull();
+    const statusButton = screen.getByRole('button', {
+      name: /warning details/i,
+    });
+    const tooltip = screen.getByRole('tooltip', h);
+    expect(tooltip).toHaveTextContent('Visible to all users');
+    expect(statusButton.getAttribute('aria-describedby')).toContain(tooltip.id);
+    expect(
+      screen.getByRole('combobox').getAttribute('aria-describedby'),
+    ).toContain(tooltip.id);
+  });
+});
+
+describe('Selector clear icon theme target', () => {
+  // Resolve the clear glyph span (the astryx-icon element inside the clear
+  // button), independent of the theme target class.
+  const getClearIcon = (): HTMLElement => {
+    const button = screen.getByRole('button', {name: 'Clear Fruit'});
+    const icon = button.querySelector('.astryx-icon');
+    if (icon == null) {
+      throw new Error('clear icon not found');
+    }
+    return icon as HTMLElement;
+  };
+
+  it('renders the astryx-selector-clear-icon target on the clear glyph', () => {
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Banana"
+        onChange={() => {}}
+        hasClear
+      />,
+    );
+    // The stable theme target lands on the icon element itself (not the
+    // button), so a theme can restyle just this glyph (color, size, hover)
+    // via `defineTheme` — a button-level target could not reach the icon's
+    // own color/size.
+    const icon = getClearIcon();
+    expect(icon).toHaveClass('astryx-selector-clear-icon');
+    expect(icon).toHaveClass('astryx-icon');
+  });
+
+  it('keeps the clear button functional alongside the target', () => {
+    const onChange = vi.fn();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Banana"
+        onChange={onChange}
+        hasClear
+      />,
+    );
+    const clear = screen.getByRole('button', {name: 'Clear Fruit'});
+    expect(clear.tagName).toBe('BUTTON');
+    fireEvent.click(clear);
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('renders the default icon (secondary color, sm size) byte-identically', () => {
+    // Pixel-identical default guard: the clear glyph must carry the exact same
+    // StyleX color/size classes as a standalone secondary/sm icon. The added
+    // target class is purely additive — it changes nothing until a theme
+    // targets it.
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Banana"
+        onChange={() => {}}
+        hasClear
+      />,
+    );
+    const icon = getClearIcon();
+
+    const {container: refContainer} = render(
+      <Icon icon="close" size="sm" color="secondary" />,
+    );
+    const refIcon = refContainer.querySelector('.astryx-icon') as HTMLElement;
+
+    const styleClasses = (el: HTMLElement) =>
+      el.className
+        .split(' ')
+        .filter(c => c !== 'astryx-selector-clear-icon')
+        .sort();
+
+    expect(styleClasses(icon)).toEqual(styleClasses(refIcon));
+  });
+
+  it('exposes selector-clear-icon so a theme reaches the icon color, size, and hover', () => {
+    // jsdom cannot resolve the @layer cascade, so the DOM-class assertion above
+    // (target lands on the icon element) plus this generation assertion (the
+    // theme emits same-element icon rules in @layer astryx-theme) together
+    // prove the seam: a same-element theme rule wins over the icon's own
+    // base-layer color/size.
+    const theme = defineTheme({
+      name: 'selector-clear-icon-test',
+      components: {
+        'selector-clear-icon': {
+          base: {
+            width: '12px',
+            height: '12px',
+            fontSize: '12px',
+            color: 'var(--color-icon-secondary)',
+            ':hover': {color: 'var(--color-icon-primary)'},
+          },
+        },
+      },
+    });
+    const css = generateThemeTestCSS(theme);
+    expect(css).toContain('.astryx-selector-clear-icon {');
+    expect(css).toContain('width: 12px');
+    expect(css).toContain('height: 12px');
+    expect(css).toContain('.astryx-selector-clear-icon:hover {');
+    expect(css).toContain('color: var(--color-icon-primary)');
+  });
+});
+
+describe('Selector indicator (chevron) icon theme target', () => {
+  const getIndicatorIcon = (container: HTMLElement): HTMLElement => {
+    // The chevron is the only glyph carrying the indicator target class.
+    const icon = container.querySelector('.astryx-selector-indicator-icon');
+    if (icon == null) {
+      throw new Error('indicator icon not found');
+    }
+    return icon as HTMLElement;
+  };
+
+  it('renders the astryx-selector-indicator-icon target on the chevron glyph', () => {
+    const {container} = render(
+      <Selector label="Fruit" options={OPTIONS} onChange={() => {}} />,
+    );
+    // The stable theme target lands on the icon element itself (not the trigger
+    // button), so a theme can restyle just this glyph (color, size, hover) —
+    // and each open/closed state — via `defineTheme`. A button-level target
+    // could not reach the icon's own color/size.
+    const icon = getIndicatorIcon(container);
+    expect(icon).toHaveClass('astryx-selector-indicator-icon');
+    expect(icon).toHaveClass('astryx-icon');
+    // Open/closed state is reflected so a theme can target each state alone.
+    expect(icon).toHaveAttribute('data-state', 'collapsed');
+  });
+
+  it('reflects the expanded state on the chevron when the popover is open', async () => {
+    const user = userEvent.setup();
+    const {container} = render(
+      <Selector label="Fruit" options={OPTIONS} onChange={() => {}} />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await waitFor(() => {
+      expect(getIndicatorIcon(container)).toHaveAttribute(
+        'data-state',
+        'expanded',
+      );
+    });
+  });
+
+  it('renders the default icon (inherit color, sm size) byte-identically', () => {
+    // Pixel-identical default guard: the chevron glyph must carry the exact
+    // same StyleX color/size classes as a standalone inherit/sm icon. The added
+    // target class + data-state are purely additive — they change nothing until
+    // a theme targets them.
+    const {container} = render(
+      <Selector label="Fruit" options={OPTIONS} onChange={() => {}} />,
+    );
+    const icon = getIndicatorIcon(container);
+
+    const {container: refContainer} = render(
+      <Icon icon="chevronDown" size="sm" color="inherit" />,
+    );
+    const refIcon = refContainer.querySelector('.astryx-icon') as HTMLElement;
+
+    // Exclude the additive theme-target classes (the stable target + its
+    // reflected state class) so only the StyleX color/size classes remain.
+    const themeTargetClasses = new Set([
+      'astryx-selector-indicator-icon',
+      'collapsed',
+      'expanded',
+    ]);
+    const styleClasses = (el: HTMLElement) =>
+      el.className
+        .split(' ')
+        .filter(c => !themeTargetClasses.has(c))
+        .sort();
+
+    expect(styleClasses(icon)).toEqual(styleClasses(refIcon));
+  });
+
+  it('exposes selector-indicator-icon so a theme reaches the icon size and per-state color', () => {
+    // jsdom cannot resolve the @layer cascade, so the DOM-class assertions
+    // above (target lands on the icon element) plus this generation assertion
+    // (the theme emits same-element icon rules in @layer astryx-theme) together
+    // prove the seam: a same-element theme rule wins over the icon's own
+    // base-layer color/size.
+    const theme = defineTheme({
+      name: 'selector-indicator-icon-test',
+      components: {
+        'selector-indicator-icon': {
+          base: {width: '14px', height: '14px', fontSize: '14px'},
+          'state:expanded': {color: 'var(--color-icon-primary)'},
+        },
+      },
+    });
+    const css = generateThemeTestCSS(theme);
+    expect(css).toContain('.astryx-selector-indicator-icon {');
+    expect(css).toContain('width: 14px');
+    expect(css).toContain('height: 14px');
+    expect(css).toContain('.astryx-selector-indicator-icon.expanded');
+    expect(css).toContain('color: var(--color-icon-primary)');
+  });
+});
+
+describe('Selector search affordances', () => {
+  it('renders a decorative (aria-hidden) magnifier icon whenever hasSearch is on', async () => {
+    const user = userEvent.setup();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Apple"
+        onChange={() => {}}
+        hasSearch
+      />,
+    );
+    await user.click(screen.getByRole('button', {name: 'Fruit'}));
+    const search = screen.getByRole('combobox', {hidden: true});
+    // The search field is a TextInput; the magnifier is its startIcon, so it
+    // sits inside the input container as a sibling of the <input>.
+    const container = search.parentElement;
+    const magnifier = container?.querySelector('.astryx-icon');
+    expect(magnifier).toBeTruthy();
+    // Decorative: the icon is hidden from assistive tech and carries no name.
+    expect(magnifier?.getAttribute('aria-hidden')).toBe('true');
+    expect(magnifier?.getAttribute('aria-label')).toBeNull();
+  });
+
+  it('renders the clear button once a query is typed and clears + refocuses on click', async () => {
+    const user = userEvent.setup();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Apple"
+        onChange={() => {}}
+        hasSearch
+      />,
+    );
+    await user.click(screen.getByRole('button', {name: 'Fruit'}));
+    const search = screen.getByRole('combobox', {hidden: true});
+    await user.type(search, 'ap');
+    expect(search).toHaveValue('ap');
+
+    // The clear button is TextInput's built-in hasClear affordance; its name is
+    // derived from the field label ("Search options").
+    const clear = screen.getByRole('button', {
+      name: 'Clear Search options',
+      hidden: true,
+    });
+
+    await user.click(clear);
+    expect(search).toHaveValue('');
+    expect(search).toHaveFocus();
+  });
+
+  it('does not render the clear button when the query is empty', async () => {
+    const user = userEvent.setup();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Apple"
+        onChange={() => {}}
+        hasSearch
+      />,
+    );
+    await user.click(screen.getByRole('button', {name: 'Fruit'}));
+    expect(
+      screen.queryByRole('button', {
+        name: 'Clear Search options',
+        hidden: true,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the combobox contract on the input, not the affordances', async () => {
+    const user = userEvent.setup();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Apple"
+        onChange={() => {}}
+        hasSearch
+      />,
+    );
+    await user.click(screen.getByRole('button', {name: 'Fruit'}));
+    // Exactly one combobox — the input. The magnifier and clear button are not
+    // part of the combobox contract.
+    const comboboxes = screen.getAllByRole('combobox', {hidden: true});
+    expect(comboboxes).toHaveLength(1);
+    expect(comboboxes[0].tagName).toBe('INPUT');
+    expect(comboboxes[0]).toHaveAttribute('aria-autocomplete', 'list');
+  });
+
+  it('tabs from the search input to the clear button (keeping the popup open) when a query is showing it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Selector
+        label="Fruit"
+        options={OPTIONS}
+        value="Apple"
+        onChange={() => {}}
+        hasSearch
+      />,
+    );
+    await user.click(screen.getByRole('button', {name: 'Fruit'}));
+    const trigger = screen.getByRole('button', {name: 'Fruit'});
+    const search = screen.getByRole('combobox', {hidden: true});
+    await user.type(search, 'ap');
+    expect(search).toHaveFocus();
+
+    // Forward-tab lands on the clear (✕) button and the popup stays open, so
+    // the affordance is keyboard-reachable rather than being skipped when the
+    // input's Tab dismisses the popup.
+    await user.tab();
+    const clear = screen.getByRole('button', {
+      name: 'Clear Search options',
+      hidden: true,
+    });
+    expect(clear).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 });

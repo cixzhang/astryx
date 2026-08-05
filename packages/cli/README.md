@@ -461,20 +461,15 @@ The CLI reads an optional `astryx.config.{ts,mjs,js}` from your project root
 CLI runs on defaults.
 
 ```typescript
-import {createConfig} from '@astryxdesign/core/config';
-
-export default createConfig({
+export default {
   integrations: ['@acme/astryx-widgets'],
   issuesUrl: 'https://github.com/your-org/your-repo/issues',
-});
+};
 ```
 
-`createConfig` is a type-preserving helper: it returns its argument unchanged
-and exists only to give the config file editor autocomplete and type-checking. A
-plain `export default {}` object works identically. It's exported from
-`@astryxdesign/core` (not the CLI) so your config file gets type feedback
-without depending on the CLI; the same helper is re-exported from
-`@astryxdesign/cli/config` for back-compat.
+There is no factory: write a plain object. For editor autocomplete and
+type-checking, annotate it with the `AstryxConfig` type exported from
+`@astryxdesign/cli/authoring`.
 
 | Field                         | Type                           | Purpose                                                                                         |
 | ----------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------- |
@@ -486,6 +481,30 @@ without depending on the CLI; the same helper is re-exported from
 The config is validated against a strict schema when the CLI loads it, so an
 unknown field is a hard error rather than a silent no-op. `astryx doctor`
 reports whether the config loads cleanly.
+
+## Core codemod authoring
+
+Core codemods live under `packages/cli/assets/codemods/transforms/`. Released
+codemods are grouped by the target package version (`v0.3.0`, `v0.3.1`, ...),
+which is the version that first contains the breaking change.
+
+Do not guess that version in ordinary feature PRs. Add new codemods to
+`packages/cli/assets/codemods/transforms/next/` instead:
+
+- put transform modules and tests in `transforms/next/`;
+- maintain `transforms/next/index.mjs` with the run order for the staged
+  transforms;
+- leave `transforms/next/README.md` in place; it documents the staging area and
+  is never promoted.
+
+During the Version Packages PR, `pnpm version-packages` runs
+`scripts/promote-codemod-next.mjs` after `changeset version`. The script copies
+all staged entries except the README into `transforms/v<new-core-version>/`,
+registers that version in `packages/cli/assets/codemods/registry.mjs`, and clears
+the promoted files from `next`.
+
+This mirrors Changesets: feature PRs stage migration work without knowing the
+future release number; the release PR assigns the exact version.
 
 ## Integrations
 
@@ -514,14 +533,12 @@ manifest points at where each kind of contribution lives; identity (name,
 version) comes from `package.json`, not the manifest.
 
 ```typescript
-import {createIntegration} from '@astryxdesign/core/authoring';
-
-export default createIntegration({
+export default {
   components: './components',
   templates: './templates',
   codemods: './codemods',
   issuesUrl: 'https://github.com/acme/widgets/issues',
-});
+};
 ```
 
 | Field        | Type     | Purpose                                                               |
@@ -531,10 +548,9 @@ export default createIntegration({
 | `codemods`   | `string` | Directory holding upgrade codemods run by `astryx upgrade`.           |
 | `issuesUrl`  | `string` | Where "report an issue" links for this package's contributions point. |
 
-Every field is optional; declare only the roots the package ships.
-`createIntegration` is a type-preserving helper (editor autocomplete and
-type-checking); it lives in `@astryxdesign/core/authoring` and is re-exported
-from `@astryxdesign/cli/integration` for back-compat.
+Every field is optional; declare only the roots the package ships. There is no
+factory: write a plain object, and annotate it with the `AstryxIntegration` type
+from `@astryxdesign/cli/authoring` for editor autocomplete and type-checking.
 
 ### How it works
 

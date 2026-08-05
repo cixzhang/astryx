@@ -13,7 +13,7 @@
  * - /packages/core/src/Lightbox/Lightbox.test.tsx (tests for new/changed behavior)
  * - /packages/core/src/Lightbox/index.ts (exports if types change)
  * - /apps/storybook/stories/Lightbox.stories.tsx (storybook stories)
- * - /packages/cli/templates/blocks/components/Lightbox/ (showcase blocks)
+ * - /packages/cli/assets/templates/blocks/components/Lightbox/ (showcase blocks)
  */
 
 import {
@@ -91,8 +91,8 @@ export interface LightboxProps extends BaseProps<HTMLDialogElement> {
    */
   onIndexChange?: (index: number) => void;
   /**
-   * Enable zoom on double-click (images only).
-   * When zoomed, drag to pan.
+   * Enable zoom on double-click, or Enter/Space/`+`/`-` via keyboard
+   * (images only). When zoomed, drag or use arrow keys to pan.
    * @default false
    */
   hasZoom?: boolean;
@@ -156,6 +156,16 @@ const styles = stylex.create({
     cursor: {
       default: 'zoom-in',
       '@media (hover: hover)': 'zoom-in',
+    },
+  },
+  zoomTarget: {
+    outline: {
+      default: 'none',
+      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
+    },
+    outlineOffset: {
+      default: '0',
+      ':focus-visible': '2px',
     },
   },
   imageWrapperZoomed: {
@@ -235,11 +245,27 @@ const dynamicStyles = stylex.create({
 });
 
 /**
+ * Pan distance (px) per arrow-key press while zoomed. Offsets move the
+ * viewport in the arrow's direction — pressing ArrowRight reveals content to
+ * the right, so the image itself shifts left (negative x), matching how
+ * scrolling and pointer-drag panning feel.
+ */
+const KEYBOARD_PAN_STEP = 50;
+const KEYBOARD_PAN_OFFSETS: Record<string, [number, number]> = {
+  ArrowLeft: [KEYBOARD_PAN_STEP, 0],
+  ArrowRight: [-KEYBOARD_PAN_STEP, 0],
+  ArrowUp: [0, KEYBOARD_PAN_STEP],
+  ArrowDown: [0, -KEYBOARD_PAN_STEP],
+};
+
+/**
  * A fullscreen overlay for viewing images at full resolution.
  *
  * Supports single image and gallery modes. In gallery mode, provides
  * prev/next navigation via buttons and arrow keys. Optionally supports
- * zoom (double-click to toggle 2x) and pan (drag when zoomed).
+ * zoom (double-click, Enter/Space on the image, or `+`/`-` to toggle 2x)
+ * and pan (drag or arrow keys when zoomed; arrows navigate the gallery
+ * when not zoomed).
  *
  * Uses the native `<dialog>` element with `showModal()` for focus
  * trapping and top-layer placement. Dismiss via Escape, close button,
@@ -285,6 +311,7 @@ export function Lightbox({
 }: LightboxProps) {
   const t = useTranslator();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const triggerElementRef = useRef<Element | null>(null);
 
@@ -390,10 +417,19 @@ export function Lightbox({
     [handleClose],
   );
 
-  // Backdrop click
+  // Backdrop click. The layout container fills the whole transparent dialog,
+  // so clicks on the visual backdrop (the dark area around the media) land on
+  // the container, never on the dialog element itself — treat both as the
+  // backdrop. A pan drag that ends over the backdrop still fires a click on
+  // the common ancestor; ignore it so releasing a drag doesn't dismiss.
+  const didDragRef = useRef(false);
   const handleBackdropClick = useCallback(
     (e: ReactMouseEvent<HTMLDialogElement>) => {
-      if (e.target === e.currentTarget) {
+      if (didDragRef.current) {
+        didDragRef.current = false;
+        return;
+      }
+      if (e.target === e.currentTarget || e.target === containerRef.current) {
         handleClose();
       }
     },
@@ -413,9 +449,52 @@ export function Lightbox({
     }
   }, [canNext, index, setIndex]);
 
-  // Keyboard navigation
+  // Zoom: double-click, Enter/Space on the image, or +/- keys toggle 1x ↔ 2x.
+  // Zoom changes are silent to assistive tech (only the transform changes), so
+  // mirror them in the polite live region, including a hint that arrow keys
+  // pan while zoomed.
+  const applyZoom = useCallback(
+    (next: number) => {
+      if (!hasZoom || isVideo || next === zoom) {
+        return;
+      }
+      setZoom(next);
+      setPan({x: 0, y: 0});
+      announce(
+        next > 1
+          ? t('@astryx.lightbox.zoomedIn')
+          : t('@astryx.lightbox.zoomedOut'),
+      );
+    },
+    [hasZoom, isVideo, zoom, announce, t],
+  );
+
+  const handleDoubleClick = useCallback(() => {
+    applyZoom(zoom === 1 ? 2 : 1);
+  }, [applyZoom, zoom]);
+
+  // Keyboard navigation. While zoomed, arrows pan the image (matching common
+  // lightbox conventions); when not zoomed they navigate the gallery.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (hasZoom && !isVideo) {
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          applyZoom(2);
+          return;
+        }
+        if (e.key === '-') {
+          e.preventDefault();
+          applyZoom(1);
+          return;
+        }
+        if (zoom > 1 && KEYBOARD_PAN_OFFSETS[e.key] !== undefined) {
+          e.preventDefault();
+          const [dx, dy] = KEYBOARD_PAN_OFFSETS[e.key];
+          setPan(prev => ({x: prev.x + dx, y: prev.y + dy}));
+          return;
+        }
+      }
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         goToPrev();
@@ -424,22 +503,19 @@ export function Lightbox({
         goToNext();
       }
     },
-    [goToPrev, goToNext],
+    [hasZoom, isVideo, zoom, applyZoom, goToPrev, goToNext],
   );
 
-  // Zoom: double-click toggles 1x ↔ 2x
-  const handleDoubleClick = useCallback(() => {
-    if (!hasZoom) {
-      return;
-    }
-    if (zoom === 1) {
-      setZoom(2);
-      setPan({x: 0, y: 0});
-    } else {
-      setZoom(1);
-      setPan({x: 0, y: 0});
-    }
-  }, [hasZoom, zoom]);
+  // Enter/Space on the focused image wrapper (role="button") toggles zoom.
+  const handleImageKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleDoubleClick();
+      }
+    },
+    [handleDoubleClick],
+  );
 
   // Pan: mouse drag when zoomed
   const handlePointerDown = useCallback(
@@ -448,6 +524,7 @@ export function Lightbox({
         return;
       }
       setIsDragging(true);
+      didDragRef.current = false;
       dragStartRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -464,6 +541,7 @@ export function Lightbox({
     }
 
     const handlePointerMove = (e: PointerEvent) => {
+      didDragRef.current = true;
       const dx = e.clientX - dragStartRef.current.x;
       const dy = e.clientY - dragStartRef.current.y;
       setPan({
@@ -485,6 +563,7 @@ export function Lightbox({
   }, [isDragging]);
 
   const isZoomed = zoom > 1;
+  const isZoomTarget = hasZoom && !isVideo;
   const imageTransform =
     zoom === 1
       ? null
@@ -514,7 +593,7 @@ export function Lightbox({
         style,
       )}
       {...props}>
-      <div {...stylex.props(styles.container)}>
+      <div ref={containerRef} {...stylex.props(styles.container)}>
         {/* Close button */}
         <div {...stylex.props(styles.closeButton)}>
           <IconButton
@@ -550,13 +629,21 @@ export function Lightbox({
         <div {...stylex.props(styles.mediaGroup)}>
           <div
             ref={imageWrapperRef}
+            // The wrapper is a keyboard-operable zoom toggle when zoom is
+            // enabled: Enter/Space toggles, aria-pressed reflects state.
+            role={isZoomTarget ? 'button' : undefined}
+            tabIndex={isZoomTarget ? 0 : undefined}
+            aria-pressed={isZoomTarget ? isZoomed : undefined}
+            aria-label={isZoomTarget ? t('@astryx.lightbox.zoom') : undefined}
             {...stylex.props(
               styles.imageWrapper,
+              isZoomTarget && styles.zoomTarget,
               !isVideo && hasZoom && !isZoomed && styles.imageWrapperZoomable,
               !isVideo && isZoomed && styles.imageWrapperZoomed,
               !isVideo && isDragging && styles.imageWrapperDragging,
             )}
             onDoubleClick={isVideo ? undefined : handleDoubleClick}
+            onKeyDown={isZoomTarget ? handleImageKeyDown : undefined}
             onPointerDown={isVideo ? undefined : handlePointerDown}>
             {isVideo ? (
               <video

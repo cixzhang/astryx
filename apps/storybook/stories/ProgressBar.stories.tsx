@@ -77,31 +77,11 @@ export const Variants: Story = {
         gap: '16px',
         width: '300px',
       }}>
-      <ProgressBar
-        value={60}
-        label="Accent"
-        variant="accent"
-        hasValueLabel
-      />
-      <ProgressBar
-        value={80}
-        label="Success"
-        variant="success"
-        hasValueLabel
-      />
-      <ProgressBar
-        value={50}
-        label="Warning"
-        variant="warning"
-        hasValueLabel
-      />
+      <ProgressBar value={60} label="Accent" variant="accent" hasValueLabel />
+      <ProgressBar value={80} label="Success" variant="success" hasValueLabel />
+      <ProgressBar value={50} label="Warning" variant="warning" hasValueLabel />
       <ProgressBar value={92} label="Error" variant="error" hasValueLabel />
-      <ProgressBar
-        value={35}
-        label="Neutral"
-        variant="neutral"
-        hasValueLabel
-      />
+      <ProgressBar value={35} label="Neutral" variant="neutral" hasValueLabel />
     </div>
   ),
 };
@@ -211,6 +191,68 @@ export const IndeterminateVariants: Story = {
       <ProgressBar isIndeterminate label="Warning" variant="warning" />
       <ProgressBar isIndeterminate label="Error" variant="error" />
       <ProgressBar isIndeterminate label="Neutral" variant="neutral" />
+    </div>
+  ),
+};
+
+export const WithTargetMark: Story = {
+  args: {
+    value: 45,
+    label: 'Fundraiser',
+    hasValueLabel: true,
+    marks: [{value: 80, label: 'Goal'}],
+  },
+};
+
+export const WithMultipleMarks: Story = {
+  args: {
+    value: 55,
+    label: 'Quarterly milestones',
+    hasValueLabel: true,
+    marks: [
+      {value: 25, label: 'Q1 target'},
+      {value: 50, label: 'Q2 target'},
+      {value: 80, label: 'Stretch goal'},
+    ],
+  },
+};
+
+export const ProgressPastMark: Story = {
+  args: {
+    value: 92,
+    label: 'Budget used',
+    hasValueLabel: true,
+    variant: 'warning',
+    marks: [{value: 75, label: 'Budget cap'}],
+  },
+};
+
+export const ThemedMarks: Story = {
+  // Marks are themeable directly via the `progressbar-mark` target: a theme sets
+  // `backgroundColor`, `width`, and `height` on it with `defineTheme` — no
+  // dedicated CSS vars needed. A taller height overhangs the bar symmetrically
+  // above and below. Here we set the properties via a scoped style block so the
+  // effect is visible without a full theme.
+  render: () => (
+    <div style={{width: '320px'}}>
+      <style>{`
+        .themed-marks-demo .astryx-progressbar-mark {
+          background-color: red;
+          width: 3px;
+          height: 14px;
+        }
+      `}</style>
+      <div className="themed-marks-demo">
+        <ProgressBar
+          value={55}
+          label="Themed target marks"
+          hasValueLabel
+          marks={[
+            {value: 25, label: 'Lower bound'},
+            {value: 80, label: 'Upper bound'},
+          ]}
+        />
+      </div>
     </div>
   ),
 };

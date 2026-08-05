@@ -1,6 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 
 export const docs = {
   name: 'ProgressBar',
@@ -57,6 +57,12 @@ export const docs = {
       default: 'false',
     },
     {
+      name: 'marks',
+      type: 'ReadonlyArray<{value: number; label: string}>',
+      description:
+        'Fixed target marks drawn on the track at values in the same 0..max scale as value (e.g. a goal line). They stay visible whether progress is below or past them. Each mark requires a label — it is the mark\'s accessible name and the text revealed via a tooltip on hover/focus. Ignored when indeterminate.',
+    },
+    {
       name: 'isDisabled',
       type: 'boolean',
       description: 'Visually disabled state: grays out the fill and text. Use for canceled or inactive operations.',
@@ -74,6 +80,7 @@ export const docs = {
       {className: 'astryx-progressbar', visualProps: ['variant']},
       {className: 'astryx-progressbar-fill', visualProps: ['variant']},
       {className: 'astryx-progressbar-track'},
+      {className: 'astryx-progressbar-mark'},
     ],
   },
   usage: {
@@ -90,7 +97,7 @@ export const docs = {
   },
 };
 
-/** @type {import('../docs-types').ComponentDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 export const docsZh = {
   name: 'ProgressBar',
   displayName: 'Progress Bar',
@@ -144,6 +151,12 @@ export const docsZh = {
       default: 'false',
     },
     {
+      name: 'marks',
+      type: 'ReadonlyArray<{value: number; label: string}>',
+      description:
+        '在轨道上按与 value 相同的 0..max 刻度绘制的固定目标标记（例如目标线）。无论进度低于还是超过它们都保持可见。每个标记都必须提供 label——它既是标记的无障碍名称，也是悬停/聚焦时通过工具提示显示的文本。不确定模式下忽略。',
+    },
+    {
       name: 'isDisabled',
       type: 'boolean',
       description: '视觉禁用状态——使填充条和文本变灰。用于已取消或不活跃的操作。',
@@ -161,6 +174,7 @@ export const docsZh = {
       {className: 'astryx-progressbar', visualProps: ['variant']},
       {className: 'astryx-progressbar-fill', visualProps: ['variant']},
       {className: 'astryx-progressbar-track'},
+      {className: 'astryx-progressbar-mark'},
     ],
   },
   usage: {
@@ -177,7 +191,7 @@ export const docsZh = {
   },
 };
 
-/** @type {import('../docs-types').TranslationDoc} */
+/** @type {import('@astryxdesign/cli/authoring').ComponentTranslationDoc} */
 export const docsDense = {
   description:
     'Progress bar for displaying determinate or indeterminate progress.',
@@ -202,6 +216,7 @@ export const docsDense = {
     formatValueLabel: 'Custom value label formatter; defaults to percentage string.',
     variant: 'Semantic color variant.',
     isIndeterminate: 'Animated loading indicator for unknown progress.',
+    marks: 'Fixed target marks ({value, label?}) drawn on the track in the 0..max scale; stay visible past the fill. A label reveals a tooltip on hover/focus. Ignored when indeterminate.',
     isDisabled: 'Visually disabled: grays out fill and text.',
     xstyle: 'StyleX styles for layout customization. Must be stylex.create() value.',
   },
