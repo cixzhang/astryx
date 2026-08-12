@@ -157,7 +157,7 @@ function PopoverInModalExample() {
                   content={
                     <VStack gap={2}>
                       <Text type="body">Popover content</Text>
-                      <Text type="caption">Escape closes just this.</Text>
+                      <Text type="supporting">Escape closes just this.</Text>
                     </VStack>
                   }>
                   <Button label="Open popover" variant="primary" />
