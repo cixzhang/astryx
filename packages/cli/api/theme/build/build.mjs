@@ -660,7 +660,13 @@ async function extractThemeDefinition(filePath) {
 function extractThemeDefinitionLegacy(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
 
-  const defineMatch = content.match(/defineTheme\s*\(\s*({[\s\S]*?})\s*\)/);
+  // Both arguments, with an optional trailing comma. Without the second group
+  // a `defineTheme(theme, conditions)` call either fails to match at all or
+  // captures both objects and evals them as a comma expression — yielding the
+  // conditions map as the theme.
+  const defineMatch = content.match(
+    /defineTheme\s*\(\s*({[\s\S]*?})\s*,?\s*\)/,
+  );
   if (!defineMatch) {
     const defaultMatch = content.match(/export\s+default\s+({[\s\S]*?});/);
     if (!defaultMatch) {
@@ -681,7 +687,14 @@ function extractThemeDefinitionLegacy(filePath) {
   );
 
   try {
-    return eval(`(${objStr})`);
+    // Eval as an array so a two-argument call keeps both objects. A bare
+    // `eval('(' + objStr + ')')` on `{theme}, {conditions}` is a comma
+    // expression: it silently discards the theme and returns the conditions.
+    const args = /** @type {any[]} */ (eval(`([${objStr}])`));
+    const [themeArg, conditionsArg] = args;
+    return conditionsArg
+      ? {...themeArg, conditions: conditionsArg}
+      : themeArg;
   } catch (e) {
     const err = /** @type {Error} */ (e);
     throw new Error(
@@ -1090,31 +1103,54 @@ export async function themeBuild(
   let resolvedTheme;
   {
     // jiti returns an already-resolved theme; legacy eval returns raw input.
-    // `mobile` is an input-only key (defineTheme resolves it into
-    // `__conditional`), so its presence means this is still raw input.
+    // `mobile`/`conditions` are input-only keys (defineTheme resolves them
+    // into `__conditional`), so their presence means this is still raw input.
     const isAlreadyResolved =
       !themeDef.typography &&
       !themeDef.motion &&
       !themeDef.radius &&
-      !themeDef.mobile;
+      !themeDef.mobile &&
+      !themeDef.conditions;
     if (isAlreadyResolved) {
       resolvedTheme = themeDef;
     } else {
-      resolvedTheme = _defineTheme({
-        name: themeDef.name,
-        typography: themeDef.typography,
-        motion: themeDef.motion,
-        radius: themeDef.radius,
-        tokens: themeDef.tokens,
-        components: themeDef.components,
-        breakpoints: themeDef.breakpoints,
-        mobile: themeDef.mobile,
-      });
+      resolvedTheme = _defineTheme(
+        {
+          name: themeDef.name,
+          typography: themeDef.typography,
+          motion: themeDef.motion,
+          radius: themeDef.radius,
+          tokens: themeDef.tokens,
+          components: themeDef.components,
+          breakpoints: themeDef.breakpoints,
+          mobile: themeDef.mobile,
+        },
+        // A theme file exporting a plain object has no second call argument to
+        // carry, so it declares conditions under a `conditions` key instead.
+        themeDef.conditions,
+      );
     }
     const scopeSelector = themeScopeStart(themeDef.name);
     const scopeTo = THEME_SCOPE_TO;
 
     const {component, prose} = _generateThemeRulesSplit(resolvedTheme);
+    // Conditional layers, resolved up front: the color-scheme guard below has
+    // to see them. A light-dark() value reachable only through a condition
+    // needs the guard just as much as one on the base theme — without it
+    // light-dark() resolves to its light arm forever.
+    const conditional = _generateConditionalCSS
+      ? _generateConditionalCSS(resolvedTheme)
+      : {prose: '', component: ''};
+    const usesLightDark = /** @param {string} s */ s =>
+      s.includes('light-dark(');
+    const needsColorScheme =
+      component.some(usesLightDark) ||
+      usesLightDark(conditional.component) ||
+      usesLightDark(conditional.prose);
+    // #3658: also emit attribute-specific rules so <Theme mode> can override color-scheme
+    const colorSchemeDecl = needsColorScheme
+      ? '  :root { color-scheme: light dark; }\n  html[data-theme="light"] { color-scheme: light; }\n  html[data-theme="dark"] { color-scheme: dark; }\n\n'
+      : '';
     const cssParts = [];
     // Prose element defaults always ship — the `<Theme>` runtime
     // (generateThemeCSS) always emits them, so the build must too, or the
@@ -1129,10 +1165,6 @@ export async function themeBuild(
     if (component.length > 0) {
       const componentInner = component.join('\n\n');
       const componentScope = `@scope (${scopeSelector}) to (${scopeTo}) {\n${componentInner}\n}`;
-      // #3658: also emit attribute-specific rules so <Theme mode> can override color-scheme
-      const colorSchemeDecl = componentScope.includes('light-dark(')
-        ? '  :root { color-scheme: light dark; }\n  html[data-theme="light"] { color-scheme: light; }\n  html[data-theme="dark"] { color-scheme: dark; }\n\n'
-        : '';
       cssParts.push(
         `@layer astryx-theme {\n${colorSchemeDecl}${componentScope}\n}`,
       );
@@ -1144,17 +1176,14 @@ export async function themeBuild(
         cssParts.push(`@layer astryx-theme {\n${onMediaCss}\n}`);
       }
     }
-    // Conditional layers (mobile). Emitted last within each layer so a
-    // matching condition wins on source order — a media query adds no
-    // specificity. Nothing is emitted when the theme declares no conditions.
-    if (_generateConditionalCSS) {
-      const conditional = _generateConditionalCSS(resolvedTheme);
-      if (conditional.prose) {
-        cssParts.push(`@layer reset {\n${conditional.prose}\n}`);
-      }
-      if (conditional.component) {
-        cssParts.push(`@layer astryx-theme {\n${conditional.component}\n}`);
-      }
+    // Conditional layers. Emitted last within each layer so a matching
+    // condition wins on source order — a media query adds no specificity.
+    // Nothing is emitted when the theme declares no conditions.
+    if (conditional.prose) {
+      cssParts.push(`@layer reset {\n${conditional.prose}\n}`);
+    }
+    if (conditional.component) {
+      cssParts.push(`@layer astryx-theme {\n${conditional.component}\n}`);
     }
     if (cssParts.length === 0) {
       logger.log('No overrides found — nothing to build.');

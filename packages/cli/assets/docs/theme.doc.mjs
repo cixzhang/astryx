@@ -223,25 +223,35 @@ const myTheme = defineTheme({
       content: [
         {
           type: 'prose',
-          text: 'A theme can vary by named condition. `mobile` means narrow AND touch — it compiles to `@media (max-width: 756px) and (pointer: coarse)`, so a desktop user dragging their window narrow does not get mobile values. Set `breakpoints.mobile` to move the width; the coarse-pointer requirement always applies.',
+          text: 'Conditions live in `defineTheme`\'s **second argument**, not in the theme object — so the theme\'s key set stays closed while the conditions you can express stay open. A key is either a blessed alias (`mobile`, `print`) or any raw CSS media query; each value is a partial theme with the same axes as the main input. `mobile` means narrow AND touch — it expands to `@media (max-width: 756px) and (pointer: coarse)`, so a desktop user dragging their window narrow does not get mobile values. An alias is pure sugar for its query: write the query yourself to move the breakpoint.',
         },
         {
           type: 'code',
           lang: 'tsx',
-          label: 'A mobile condition',
-          code: `import {defineTheme} from '@astryxdesign/core/theme';
+          label: 'Conditions as a second argument',
+          code: `import {defineTheme, mobileMediaQuery} from '@astryxdesign/core/theme';
 
-const myTheme = defineTheme({
-  name: 'my-theme',
-  typography: { scale: { base: 14, ratio: 1.2 } },
-  breakpoints: { mobile: 640 },   // optional; defaults to 756
-  mobile: {
-    // A partial theme: same axes as the top level, each one independent.
-    typography: { scale: { base: 16, ratio: 1.2 } },
-    tokens: { '--spacing-4': '12px' },
-    components: { button: { base: { minHeight: '44px' } } },
+const myTheme = defineTheme(
+  {
+    name: 'my-theme',
+    typography: { scale: { base: 14, ratio: 1.2 } },
   },
-});`,
+  {
+    // A partial theme: same axes as the main input, each one independent.
+    mobile: {
+      typography: { scale: { base: 16, ratio: 1.2 } },
+      tokens: { '--spacing-4': '12px' },
+      components: { button: { base: { minHeight: '44px' } } },
+    },
+    print: { tokens: { '--color-accent': '#000' } },
+    '(prefers-reduced-motion: reduce)': {
+      motion: { fast: 0, medium: 0, slow: 0, ratio: 1 },
+    },
+    // A custom breakpoint is just a query — keep the coarse-pointer half
+    // by expanding the alias.
+    [mobileMediaQuery(640)]: { tokens: { '--spacing-4': '10px' } },
+  },
+);`,
         },
         {
           type: 'table',
@@ -249,7 +259,11 @@ const myTheme = defineTheme({
           rows: [
             [
               'Opt-in',
-              'Omit `mobile` (or pass null) and no conditional CSS is emitted at all — no empty media block, no default mobile treatment.',
+              'Omit the second argument (or pass null) and no conditional CSS is emitted at all — no empty media block, no default treatment.',
+            ],
+            [
+              'Keys',
+              'A blessed alias (`mobile`, `print`) or a raw media query. Aliases are sugar: `mobile` and its expansion emit identical CSS.',
             ],
             [
               'Axes are independent',
@@ -257,11 +271,15 @@ const myTheme = defineTheme({
             ],
             [
               'Precedence',
-              'Where the condition matches, its values win over the base theme; where it does not, the base theme is untouched. Inside the block, explicit `tokens` beat scale-generated values.',
+              'Where a condition matches, its values win over the base theme; where it does not, the base theme is untouched. Inside the block, explicit `tokens` beat scale-generated values.',
+            ],
+            [
+              'Two matching conditions',
+              'A media query adds no specificity, so conditions are emitted in the order you wrote them and the LATER key wins. Order narrow-to-broad accordingly.',
             ],
             [
               'Both modes',
-              'Runtime `<Theme>` injection and `astryx theme build` emit the same conditional CSS.',
+              'Runtime `<Theme>` injection and `astryx theme build` emit the same conditional CSS. A theme file exporting a plain object declares conditions under a `conditions` key.',
             ],
           ],
         },

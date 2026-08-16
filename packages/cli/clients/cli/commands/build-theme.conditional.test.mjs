@@ -1,7 +1,7 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 /**
- * @file Conditional theme layer (`mobile`) through `astryx theme build`.
+ * @file Conditional theme layers through `astryx theme build`.
  *
  * The conditional layer has to work in BOTH distribution modes. The runtime
  * side is covered by core's colocated `conditionalTheme.test.ts`; this suite
@@ -10,8 +10,9 @@
  * condition still builds with no conditional CSS at all.
  *
  * It also pins the resolution path: a theme file exporting a plain object
- * (rather than a `defineTheme()` result) still gets its `mobile` key resolved,
- * which the build's "already resolved?" heuristic has to account for.
+ * (rather than a `defineTheme()` result) has no second call argument to carry,
+ * so it declares conditions under a `conditions` key — which the build's
+ * "already resolved?" heuristic has to account for.
  *
  * Building requires a compiled @astryxdesign/core (there is no in-CLI fallback
  * generator), so the suite builds core once in beforeAll via the shared
@@ -72,7 +73,7 @@ describe('theme build — conditional layer', () => {
       `{
         name: 'cond-mobile',
         tokens: {'--spacing-4': '16px'},
-        mobile: {tokens: {'--spacing-4': '12px'}},
+        conditions: {mobile: {tokens: {'--spacing-4': '12px'}}},
       }`,
     );
 
@@ -93,19 +94,44 @@ describe('theme build — conditional layer', () => {
     );
   }, 120_000);
 
-  it('honors a configured breakpoint', async () => {
+  it('honors a raw media query key, including a custom breakpoint', async () => {
     const css = await buildTheme(
       tmpDir,
       'cond-bp',
       `{
         name: 'cond-bp',
-        breakpoints: {mobile: 640},
-        mobile: {tokens: {'--spacing-4': '12px'}},
+        conditions: {
+          '(max-width: 640px) and (pointer: coarse)': {
+            tokens: {'--spacing-4': '12px'},
+          },
+          '(prefers-reduced-motion: reduce)': {
+            tokens: {'--duration-fast': '0ms'},
+          },
+        },
       }`,
     );
 
     expect(css).toContain('@media (max-width: 640px) and (pointer: coarse)');
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).not.toContain('756px');
+  }, 120_000);
+
+  it('emits the color-scheme guard for light-dark() reached only through a condition', async () => {
+    const css = await buildTheme(
+      tmpDir,
+      'cond-ld',
+      `{
+        name: 'cond-ld',
+        tokens: {'--spacing-4': '16px'},
+        conditions: {
+          mobile: {tokens: {'--color-accent': ['#0050B3', '#7FB8FF']}},
+        },
+      }`,
+    );
+
+    expect(css).toContain('light-dark(#0050B3, #7FB8FF)');
+    // Without the guard light-dark() resolves to its light arm forever.
+    expect(css).toContain(':root { color-scheme: light dark; }');
   }, 120_000);
 
   it('emits no conditional CSS for a theme that declares no condition', async () => {

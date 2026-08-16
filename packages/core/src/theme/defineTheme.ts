@@ -40,9 +40,10 @@ import {
 } from './onMediaTokens';
 import {
   resolveConditionalThemes,
+  mobileMediaQuery,
   type ConditionalThemeOverrides,
   type ResolvedConditionalTheme,
-  type ThemeBreakpoints,
+  type ThemeConditions,
 } from './conditionalTheme';
 import {
   buildFontFamilyTokens,
@@ -345,51 +346,14 @@ export interface DefineThemeInput {
    */
   onLight?: OnMediaOverrides;
   /**
-   * Breakpoints for the named conditions (see `mobile`).
-   *
-   * `mobile` defaults to **756px**; set it here to move the cutoff. The width
-   * is only half of the `mobile` condition — a coarse pointer is always
-   * required as well, so a narrow desktop window never matches regardless of
-   * the number.
-   *
-   * @example
-   * ```
-   * defineTheme({
-   *   name: 'acme',
-   *   breakpoints: {mobile: 640},
-   *   mobile: {tokens: {'--spacing-4': '12px'}},
-   * });
-   * ```
+   * @deprecated Conditions moved to `defineTheme`'s second argument:
+   * `defineTheme(theme, {mobile: {...}})`. Kept only so themes written against
+   * the earlier flat form keep building; the second argument always wins.
    */
-  breakpoints?: ThemeBreakpoints;
+  breakpoints?: {mobile?: number};
   /**
-   * Overrides that apply only on **mobile** — narrow *and* touch. Compiles to
-   * `@media (max-width: <breakpoints.mobile ?? 756>px) and (pointer: coarse)`,
-   * so a desktop user dragging their window narrow does not get them.
-   *
-   * The value is a partial theme: the same axes as the top-level input
-   * (`typography`, `color`, `radius`, `motion`, `tokens`, `components`). Each
-   * axis is independent — only the axes you set generate CSS.
-   *
-   * **Opt-in.** Omit it (or pass `null`) and no mobile CSS is generated at
-   * all: no empty media block, no default mobile treatment.
-   *
-   * **Precedence.** Where the condition matches, its values win over the base
-   * theme's for the same token or component rule; where it does not match, the
-   * base theme is untouched. Within the block the same order as the base theme
-   * applies: explicit `tokens` beat values generated from a scale.
-   *
-   * @example
-   * ```
-   * defineTheme({
-   *   name: 'acme',
-   *   typography: {scale: {base: 14, ratio: 1.2}},
-   *   mobile: {
-   *     typography: {scale: {base: 16, ratio: 1.2}},
-   *     tokens: {'--spacing-4': '12px'},
-   *   },
-   * });
-   * ```
+   * @deprecated Conditions moved to `defineTheme`'s second argument:
+   * `defineTheme(theme, {mobile: {...}})`.
    */
   mobile?: ConditionalThemeOverrides | null;
 }
@@ -488,8 +452,29 @@ function resolveTokenValue(value: TokenValue): string {
  * When `typography.scale` is provided, it generates typography token overrides
  * that are merged into the token map. Explicit `tokens` entries take
  * precedence over generated values.
+ *
+ * @param input The theme itself. Its key set is closed — every axis it accepts
+ *   is a property of the theme, not of a context the theme applies in.
+ * @param conditions Optional map of conditions to the theme values that apply
+ *   under them. Keys are blessed aliases (`mobile`, `print`) or raw CSS media
+ *   queries; each value is theme-shaped. Where two conditions both match, the
+ *   one written later wins.
+ *
+ * @example
+ * ```ts
+ * defineTheme(
+ *   {name: 'acme', typography: {scale: {base: 14, ratio: 1.2}}},
+ *   {
+ *     mobile: {typography: {scale: {base: 16, ratio: 1.2}}},
+ *     '(prefers-reduced-motion: reduce)': {motion: {fast: 0, medium: 0}},
+ *   },
+ * );
+ * ```
  */
-export function defineTheme(input: DefineThemeInput): DefinedTheme {
+export function defineTheme(
+  input: DefineThemeInput,
+  conditions?: ThemeConditions | null,
+): DefinedTheme {
   const tokens: Record<string, string> = {};
 
   // 0. Pre-seed from base theme when `extends` is provided (lowest precedence)
@@ -575,9 +560,19 @@ export function defineTheme(input: DefineThemeInput): DefinedTheme {
   const __onDark = resolveOnMedia('dark', input.onDark);
   const __onLight = resolveOnMedia('light', input.onLight);
 
-  // 4a. Resolve conditional layers (mobile). Undefined when none are declared,
-  // so a theme that does not opt in carries no conditional data at all.
-  const __conditional = resolveConditionalThemes(input);
+  // 4a. Resolve conditional layers. Undefined when none are declared, so a
+  // theme that does not opt in carries no conditional data at all.
+  //
+  // The deprecated root keys are read only when no second argument is given,
+  // so the flat form keeps building while it is being migrated away from.
+  // Delete this fallback and the root keys together — nothing else reads them.
+  const legacyConditions: ThemeConditions | undefined =
+    input.mobile != null
+      ? {[mobileMediaQuery(input.breakpoints?.mobile)]: input.mobile}
+      : undefined;
+  const __conditional = resolveConditionalThemes(
+    conditions ?? legacyConditions,
+  );
 
   // 5. Merge icons — input icons override base icons
   const icons =
@@ -626,10 +621,14 @@ export {
 
 export {
   DEFAULT_MOBILE_BREAKPOINT,
+  CONDITION_ALIASES,
   mobileMediaQuery,
+  resolveConditionQuery,
+  type ConditionAlias,
+  type ConditionKey,
   type ConditionalThemeOverrides,
   type ResolvedConditionalTheme,
-  type ThemeBreakpoints,
+  type ThemeConditions,
 } from './conditionalTheme';
 
 // =============================================================================

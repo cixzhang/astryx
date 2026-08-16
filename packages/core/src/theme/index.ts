@@ -46,12 +46,19 @@ export type {
   StyleOverrides,
 } from './defineTheme';
 
-// Conditional theme layers (mobile)
-export {DEFAULT_MOBILE_BREAKPOINT, mobileMediaQuery} from './conditionalTheme';
+// Conditional theme layers — defineTheme's second argument
+export {
+  DEFAULT_MOBILE_BREAKPOINT,
+  CONDITION_ALIASES,
+  mobileMediaQuery,
+  resolveConditionQuery,
+} from './conditionalTheme';
 export type {
+  ConditionAlias,
+  ConditionKey,
   ConditionalThemeOverrides,
   ResolvedConditionalTheme,
-  ThemeBreakpoints,
+  ThemeConditions,
 } from './conditionalTheme';
 
 export type {
