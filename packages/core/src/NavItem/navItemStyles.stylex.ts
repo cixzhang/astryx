@@ -38,7 +38,7 @@ import {
  *
  * @example
  * ```
- * import {navItemStyles} from '@astryxdesign/core/navItemStyles';
+ * import {navItemStyles} from '../NavItem/navItemStyles.stylex';
  *
  * const styles = stylex.create({
  *   indented: { paddingInlineStart: spacingVars['--spacing-6'] },

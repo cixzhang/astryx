@@ -217,13 +217,14 @@ export default function App() {
                 theme provider.
               </Text>
               <CodeBlock
-                code={`import { ThemeProvider } from '@astryxdesign/core/Theme';
+                code={`import { Theme } from '@astryxdesign/core/theme';
+import { neutralTheme } from '@astryxdesign/theme-neutral';
 
 export default function App({ children }) {
   return (
-    <ThemeProvider theme="default">
+    <Theme theme={neutralTheme}>
       {children}
-    </ThemeProvider>
+    </Theme>
   );
 }`}
                 language="tsx"
