@@ -45,11 +45,8 @@ import {expandTypeScale, generateTypeScaleComponents} from './expandTypeScale';
 import {expandMotionScale, type MotionScaleConfig} from './expandMotionScale';
 import {expandRadiusScale, type RadiusScaleConfig} from './expandRadiusScale';
 import {expandColorScale, type ColorScaleConfig} from './expandColorScale';
-import {
-  buildFontFamilyTokens,
-  buildTypeScaleConfig,
-  deepMergeComponents,
-} from './themeAxes';
+import {buildFontFamilyTokens, buildTypeScaleConfig} from './themeAxes';
+import {deepMergeComponents} from './mergeComponents';
 
 // =============================================================================
 // Aliases

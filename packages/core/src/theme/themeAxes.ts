@@ -13,7 +13,6 @@
  * implementation, no drift between the two.
  */
 
-import type {ComponentStyleMap} from './defineTheme';
 import type {TypographyConfig, FontWeight} from './types';
 import type {TypeScaleConfig} from './expandTypeScale';
 
@@ -132,47 +131,4 @@ export function buildFontFamilyTokens(
   }
 
   return tokens;
-}
-
-/**
- * Deep-merge two component style maps.
- * Properties in `overrides` take precedence over `base`.
- * This allows typeScale-generated rules to be overridden by explicit components.
- */
-export function deepMergeComponents(
-  base?: ComponentStyleMap,
-  overrides?: ComponentStyleMap,
-): ComponentStyleMap | undefined {
-  if (!base && !overrides) {
-    return undefined;
-  }
-  if (!base) {
-    return overrides;
-  }
-  if (!overrides) {
-    return base;
-  }
-
-  const result: ComponentStyleMap = {};
-
-  // Start with all base entries
-  for (const [component, rules] of Object.entries(base)) {
-    result[component] = {...rules};
-  }
-
-  // Merge overrides on top
-  for (const [component, rules] of Object.entries(overrides)) {
-    if (!result[component]) {
-      result[component] = {...rules};
-    } else {
-      for (const [key, styles] of Object.entries(rules)) {
-        result[component][key] = {
-          ...result[component][key],
-          ...styles,
-        };
-      }
-    }
-  }
-
-  return result;
 }
