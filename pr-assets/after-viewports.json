@@ -1,0 +1,32 @@
+{
+  "320": {
+    "titleW": 228,
+    "titleLines": 1,
+    "bannerH": 188,
+    "docScrollW": 320
+  },
+  "375": {
+    "titleW": 283,
+    "titleLines": 1,
+    "bannerH": 152,
+    "docScrollW": 375
+  },
+  "480": {
+    "titleW": 388,
+    "titleLines": 1,
+    "bannerH": 152,
+    "docScrollW": 480
+  },
+  "768": {
+    "titleW": 243,
+    "titleLines": 1,
+    "bannerH": 84,
+    "docScrollW": 768
+  },
+  "1280": {
+    "titleW": 755,
+    "titleLines": 1,
+    "bannerH": 64,
+    "docScrollW": 1280
+  }
+}

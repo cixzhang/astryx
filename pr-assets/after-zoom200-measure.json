@@ -1,0 +1,72 @@
+{
+  "A": {
+    "bannerH": 136,
+    "titleW": 820,
+    "titleLines": 1,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "B": {
+    "bannerH": 368,
+    "titleW": 280,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "C": {
+    "bannerH": 264,
+    "titleW": 252,
+    "titleLines": 2,
+    "endAreaWrapped": false,
+    "overflowX": 0
+  },
+  "D": {
+    "bannerH": 136,
+    "titleW": 280,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "E": {
+    "bannerH": 212,
+    "titleW": 440,
+    "titleLines": 1,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "F": {
+    "bannerH": 368,
+    "titleW": 280,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "G": {
+    "bannerH": 368,
+    "titleW": 280,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "H": {
+    "bannerH": 260,
+    "titleW": 248,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "I": {
+    "bannerH": 136,
+    "titleW": 280,
+    "titleLines": 2,
+    "endAreaWrapped": true,
+    "overflowX": 0
+  },
+  "J": {
+    "bannerH": 168,
+    "titleW": 280,
+    "titleLines": 1,
+    "endAreaWrapped": true,
+    "overflowX": 308
+  }
+}
