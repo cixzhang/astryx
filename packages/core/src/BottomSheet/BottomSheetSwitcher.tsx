@@ -44,6 +44,7 @@ import type {BaseProps} from '../BaseProps';
 import type {DialogPurpose} from '../Dialog';
 import {colorVars, durationVars, easeVars} from '../theme/tokens.stylex';
 import {useFocusTrap, useScrollLock} from '../hooks';
+import {LayerDepthProvider} from '../Layer/LayerDepthContext';
 import {useLayerDismissal} from '../Layer/useLayerDismissal';
 import {composeEventHandlers, mergeProps, mergeRefs} from '../utils';
 import {
@@ -606,7 +607,7 @@ export function BottomSheetSwitcher({
         {...(activeSheetPurpose === 'required'
           ? {role: 'alertdialog'}
           : undefined)}>
-        {children}
+        <LayerDepthProvider>{children}</LayerDepthProvider>
       </dialog>
     </BottomSheetSwitcherContext>
   );
