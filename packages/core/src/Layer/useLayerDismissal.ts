@@ -40,7 +40,9 @@ export interface UseLayerDismissalOptions {
    */
   onDismiss: () => void;
   /**
-   * What this layer does with an Escape press that reaches it.
+   * What this layer does with an Escape press that reaches it. `'ignore'` opts
+   * the layer out of the stack entirely, which is how a conditionally
+   * dismissible layer expresses itself — a hook cannot be called conditionally.
    * @default 'close'
    */
   escapeBehavior?: LayerEscapeBehavior;
@@ -56,34 +58,6 @@ export interface UseLayerDismissalOptions {
    * the DOM by a frame; the stack skips layers that answer `false`.
    */
   isPresent?: () => boolean;
-  /**
-   * Whether this layer takes part in the shared stack at all. When `false` the
-   * layer is invisible to dismissal: a press flows past it to the layer below,
-   * exactly as if it were not open.
-   *
-   * This is the opt-out, and it is deliberately separate from `escapeBehavior:
-   * 'block'` — `'block'` is a layer that is present and swallows the press;
-   * this is a layer that is not there at all. Reach for it when:
-   *
-   * - **The consumer owns the keyboard contract.** A controlled overlay whose
-   *   visibility is driven by a prop: the app decides when it closes, and the
-   *   system silently closing it would fight the state the app is holding.
-   * - **The layer is not really an overlay.** `Dialog`'s inline rendering mode
-   *   puts dialog content in normal flow with nothing layered over anything.
-   * - **Escape means something else inside it.** A layer hosting an editor or a
-   *   nested widget with its own Escape semantics. Prefer letting that content
-   *   claim the press (`stopPropagation`/`preventDefault`, which the stack
-   *   honors) — opting the whole layer out is the blunt version, and gives up
-   *   dismissal even when focus is nowhere near the widget.
-   * - **Something else already sequences it.** A layer whose dismissal is
-   *   driven by an animation or gesture controller that must run the teardown.
-   *
-   * Layers that are never Escape-dismissible (toasts) should simply not call
-   * this hook.
-   *
-   * @default true
-   */
-  isEnabled?: boolean;
 }
 
 export interface UseLayerDismissalReturn {
@@ -125,7 +99,6 @@ export function useLayerDismissal(
     escapeBehavior = 'close',
     getContainer,
     isPresent,
-    isEnabled = true,
   } = options;
 
   const depth = useLayerDepth();
@@ -144,7 +117,7 @@ export function useLayerDismissal(
     isPresentRef.current = isPresent;
   });
 
-  const isRegistered = isActive && isEnabled;
+  const isRegistered = isActive && escapeBehavior !== 'ignore';
 
   useEffect(() => {
     if (!isRegistered) {

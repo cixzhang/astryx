@@ -479,14 +479,12 @@ export function Dialog({
   // popover opened inside this one) from closing two layers on one press.
   //
   // A `required` dialog registers as `block`: it must not be dismissed, and the
-  // press must not fall through and dismiss a layer behind it either.
-  //
-  // Inline mode opts out — it renders dialog content in normal flow, with
+  // press must not fall through and dismiss a layer behind it either. Inline
+  // mode `ignore`s the stack — it renders dialog content in normal flow, with
   // nothing layered over anything.
   const {isTopmost} = useLayerDismissal({
     isActive: isOpen,
-    isEnabled: !isInline,
-    escapeBehavior: allowEscape ? 'close' : 'block',
+    escapeBehavior: isInline ? 'ignore' : allowEscape ? 'close' : 'block',
     onDismiss: () => {
       onOpenChange(false);
     },

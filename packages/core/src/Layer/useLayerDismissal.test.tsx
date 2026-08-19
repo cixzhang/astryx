@@ -27,14 +27,12 @@ afterEach(() => {
 function Layer({
   onDismiss,
   behavior = 'close',
-  isEnabled = true,
   isActive = true,
   isPresent,
   children,
 }: {
   onDismiss: () => void;
   behavior?: LayerEscapeBehavior;
-  isEnabled?: boolean;
   isActive?: boolean;
   isPresent?: () => boolean;
   children?: React.ReactNode;
@@ -44,7 +42,6 @@ function Layer({
     isActive,
     onDismiss,
     escapeBehavior: behavior,
-    isEnabled,
     isPresent,
     getContainer: () => containerRef.current,
   });
@@ -206,12 +203,12 @@ describe('useLayerDismissal', () => {
   });
 
   describe('opting out', () => {
-    it('skips a disabled layer entirely, so the press reaches the one below', () => {
+    it('skips an ignored layer entirely, so the press reaches the one below', () => {
       const below = vi.fn();
       const optedOut = vi.fn();
       render(
         <Layer onDismiss={below}>
-          <Layer onDismiss={optedOut} isEnabled={false} />
+          <Layer onDismiss={optedOut} behavior="ignore" />
         </Layer>,
       );
 

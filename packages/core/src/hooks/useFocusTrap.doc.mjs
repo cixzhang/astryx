@@ -36,6 +36,11 @@ export const docs = {
       type: '() => void',
       description: 'Focuses the first focusable element inside the container.',
     },
+    {
+      name: 'isTopmost',
+      type: '() => boolean',
+      description: 'Whether this trap is the top-most layer. Use it to gate dismissal channels the shared stack does not model yet (outside press, swipe).',
+    },
   ],
   usage: {
     description:
@@ -65,6 +70,7 @@ export const docsDense = {
   returnDescriptions: {
     containerRef: 'ref to attach to container element that should trap focus.',
     focusFirst: 'focuses first focusable element inside container.',
+    isTopmost: 'whether this trap is the top-most layer; gate non-Escape dismissal channels on it.',
   },
   usage: {
     description:

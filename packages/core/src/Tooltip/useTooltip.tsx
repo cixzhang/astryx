@@ -476,7 +476,7 @@ export function useTooltip(options: TooltipOptions = {}): TooltipReturn {
         return layer.isOpen;
       }
     },
-    isEnabled: isOpen === undefined,
+    escapeBehavior: isOpen === undefined ? 'close' : 'ignore',
     onDismiss: () => {
       clearTimeouts();
       layer.hide();

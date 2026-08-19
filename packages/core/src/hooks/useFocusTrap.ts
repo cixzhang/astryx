@@ -140,6 +140,14 @@ export interface UseFocusTrapReturn<T extends HTMLElement = HTMLElement> {
    * Focus the first focusable element in the container.
    */
   focusFirst: () => void;
+
+  /**
+   * Whether this trap is the top-most layer. Escape is already routed for you;
+   * this is for dismissal channels the stack does not model yet (outside press,
+   * swipe) so every channel agrees on who is on top. Always `false` for a trap
+   * with no `onEscape`, which takes no part in the stack.
+   */
+  isTopmost: () => boolean;
 }
 
 /**
@@ -188,9 +196,9 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   // a modal inside a modal all peel off one at a time. A trap with no
   // `onEscape` is not dismissible and stays off the stack, so a press flows
   // past it to whatever is underneath.
-  useLayerDismissal({
+  const {isTopmost} = useLayerDismissal({
     isActive,
-    isEnabled: onEscape != null,
+    escapeBehavior: onEscape != null ? 'close' : 'ignore',
     onDismiss: () => {
       onEscape?.();
     },
@@ -371,5 +379,6 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   return {
     containerRef,
     focusFirst,
+    isTopmost,
   };
 }
