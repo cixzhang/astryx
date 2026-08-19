@@ -1,0 +1,1291 @@
+[
+  {
+    "id": "dialog-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "inner",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alert-dialog-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "alertdialog",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "context-menu-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tooltip-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hover-card-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "group"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "drawer-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "inner drawer",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bottom-sheet-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "inner sheet",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "command-palette-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "Command palette",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "popover-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropdown-menu-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "selector-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "multi-selector-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "complex-selector-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "typeahead-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lightbox-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "Grey rectangle",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "Grey rectangle"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mobile-nav-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "Navigation",
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "Navigation"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "info-tip-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "controlled-tooltip-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "controlled-hover-card-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications",
+          "group"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "group"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "group"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "required-dialog-in-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer",
+          "required"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer",
+          "required"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [
+          "outer",
+          "required"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "popover-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropdown-menu-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "selector-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "multi-selector-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "complex-selector-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "typeahead-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "popover"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tooltip-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hover-card-standalone",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [],
+        "popovers": [
+          "Notifications",
+          "group"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "switcher-alone-non-modal",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "switcher-alone-modal",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "switcher-with-tooltip",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications",
+          "tooltip"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dialog-in-switcher",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "inner",
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "switcher-over-dialog",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "open inner",
+        "dialogs": [
+          "outer",
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 1",
+        "dialogs": [
+          "outer"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "escape 2",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "switcher-swipe-dismiss",
+    "errors": [],
+    "steps": [
+      {
+        "after": "open outer",
+        "dialogs": [
+          "switcher"
+        ],
+        "popovers": [
+          "Notifications"
+        ]
+      },
+      {
+        "after": "swipe down",
+        "dialogs": [],
+        "popovers": [
+          "Notifications"
+        ]
+      }
+    ]
+  }
+]
