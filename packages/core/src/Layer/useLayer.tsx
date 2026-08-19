@@ -29,6 +29,8 @@ import {createPortal} from 'react-dom';
 import {addAnchorName, removeAnchorName} from './anchorName';
 import {LayerDepthProvider} from './LayerDepthContext';
 import {resolveLayerPortalTarget} from './layerHost';
+import {useLayerDismissal} from './useLayerDismissal';
+import type {LayerEscapeBehavior} from './layerStack';
 import {typeScaleVars, typographyVars} from '../theme/tokens.stylex';
 
 const styles = stylex.create({
@@ -222,6 +224,24 @@ interface BaseLayerOptions {
    * @default false
    */
   lightDismiss?: boolean;
+
+  /**
+   * What this layer does with an Escape press that reaches it, via the shared
+   * dismissal stack. Opt in with `'close'` and the hook registers the layer,
+   * answers presence from its own element, and hides itself when the stack
+   * routes a press here.
+   *
+   * Defaults to `'ignore'` — unlike `useLayerDismissal`, whose default is
+   * `'close'`. A bare `useLayer` is a positioning primitive and many of its
+   * callers (Carousel, Tokenizer, chart tips) are not Escape-dismissible.
+   */
+  escapeBehavior?: LayerEscapeBehavior;
+
+  /**
+   * Extra teardown to run when the stack dismisses this layer, before it
+   * hides. Only reached when `escapeBehavior` is `'close'`.
+   */
+  onDismiss?: () => void;
 }
 
 /**
@@ -290,6 +310,12 @@ export interface ContextLayerReturn {
   isPresent: () => boolean;
 
   /**
+   * Whether this layer is currently top-most on the shared dismissal stack.
+   * Always `false` for a layer that did not opt in with `escapeBehavior`.
+   */
+  isTopmost: () => boolean;
+
+  /**
    * Unique ID for aria-describedby
    */
   id: string;
@@ -330,6 +356,12 @@ export interface FixedLayerReturn {
    * element at call time. See the note on `ContextLayerReturn.isPresent`.
    */
   isPresent: () => boolean;
+
+  /**
+   * Whether this layer is currently top-most on the shared dismissal stack.
+   * Always `false` for a layer that did not opt in with `escapeBehavior`.
+   */
+  isTopmost: () => boolean;
 
   /**
    * Unique ID for aria-describedby
@@ -473,7 +505,14 @@ export function useLayer(options: FixedLayerOptions): FixedLayerReturn;
 export function useLayer(
   options: ContextLayerOptions | FixedLayerOptions,
 ): ContextLayerReturn | FixedLayerReturn {
-  const {mode, onShow, onHide, lightDismiss = false} = options;
+  const {
+    mode,
+    onShow,
+    onHide,
+    lightDismiss = false,
+    escapeBehavior = 'ignore',
+    onDismiss,
+  } = options;
   const lazyMount = mode === 'context' ? (options.lazyMount ?? false) : false;
   const id = useId();
   const anchorId = `--astryx-layer-${id.replace(/:/g, '')}`;
@@ -628,6 +667,20 @@ export function useLayer(
       return isOpenRef.current;
     }
   }, []);
+
+  // Join the shared dismissal stack when the caller opted in. Registered for
+  // the hook's lifetime and answering presence from the element above, so a
+  // press arriving in the frame between showPopover() and the state update
+  // still finds this layer.
+  const {isTopmost} = useLayerDismissal({
+    isActive: true,
+    escapeBehavior,
+    isPresent,
+    onDismiss: () => {
+      onDismiss?.();
+      hide();
+    },
+  });
 
   // Ref for trigger element (context mode only)
   const ref: RefCallback<HTMLElement> | undefined =
@@ -900,6 +953,7 @@ export function useLayer(
       hide,
       isOpen,
       isPresent,
+      isTopmost,
       id,
       render: renderContext,
     };
@@ -911,6 +965,7 @@ export function useLayer(
     hide,
     isOpen,
     isPresent,
+    isTopmost,
     id,
     render: renderFixed,
   };

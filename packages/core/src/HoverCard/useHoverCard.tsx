@@ -27,7 +27,6 @@ import {
   type LayerPlacement,
 } from '../Layer/useLayer';
 import {layerAnimations} from '../Layer/layerAnimations.stylex';
-import {useLayerDismissal} from '../Layer/useLayerDismissal';
 import {
   colorVars,
   shadowVars,
@@ -249,15 +248,6 @@ export function useHoverCard(options: HoverCardOptions = {}): HoverCardReturn {
     onHide,
   } = options;
 
-  const layer = useLayer({
-    mode: 'context',
-    lazyMount: true,
-    onShow,
-    onHide,
-  });
-
-  const popoverXstyle = styles.container;
-
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -276,6 +266,27 @@ export function useHoverCard(options: HoverCardOptions = {}): HoverCardReturn {
       hideTimeoutRef.current = null;
     }
   }, []);
+
+  // Escape dismissal (WCAG 1.4.13) rides on the layer itself: a visible card is
+  // the top-most layer, so it takes the press and consumes it.
+  //
+  // This replaces a keydown listener on the TRIGGER that called
+  // stopPropagation() on any Escape while the trigger merely had focus — open
+  // card or not — so focusing a HoverCard trigger inside a Dialog silently ate
+  // the press that should have closed the Dialog.
+  const layer = useLayer({
+    mode: 'context',
+    lazyMount: true,
+    onShow,
+    onHide,
+    escapeBehavior: 'close',
+    onDismiss: () => {
+      isEscapeDismissingRef.current = true;
+      clearTimeouts();
+    },
+  });
+
+  const popoverXstyle = styles.container;
 
   // Schedule show with delay (suppressed when isOpen is false)
   const scheduleShow = useCallback(() => {
@@ -339,28 +350,6 @@ export function useHoverCard(options: HoverCardOptions = {}): HoverCardReturn {
     },
     [layer.id, scheduleHide],
   );
-
-  // Escape dismissal (WCAG 1.4.13) goes through the shared layer stack: a
-  // visible card is the top-most layer, so it takes the press and consumes it.
-  //
-  // This replaces a keydown listener on the TRIGGER that called
-  // stopPropagation() on any Escape while the trigger merely had focus — open
-  // card or not — so focusing a HoverCard trigger inside a Dialog silently ate
-  // the press that should have closed the Dialog. Presence is now answered from
-  // the DOM, so a closed card never claims a press.
-  useLayerDismissal({
-    // Registered for the hook's lifetime rather than gated on `layer.isOpen`:
-    // that state can lag a frame behind the DOM, so a press arriving right
-    // after the layer appears would find nothing registered. Presence answers
-    // from the layer's own element instead.
-    isActive: true,
-    isPresent: layer.isPresent,
-    onDismiss: () => {
-      isEscapeDismissingRef.current = true;
-      clearTimeouts();
-      layer.hide();
-    },
-  });
 
   // Interaction ref that handles event listeners only
   const interactionRef: RefCallback<HTMLElement> = useCallback(

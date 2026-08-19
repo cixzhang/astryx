@@ -27,7 +27,6 @@ import {
   type LayerPlacement,
 } from '../Layer/useLayer';
 import {layerAnimations} from '../Layer/layerAnimations.stylex';
-import {useLayerDismissal} from '../Layer/useLayerDismissal';
 import {themeProps} from '../utils/themeProps';
 import {
   colorVars,
@@ -249,14 +248,6 @@ export function useTooltip(options: TooltipOptions = {}): TooltipReturn {
     onHide,
   } = options;
 
-  const layer = useLayer({
-    mode: 'context',
-    onShow,
-    onHide,
-  });
-
-  const popoverXstyle = styles.container;
-
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -272,6 +263,20 @@ export function useTooltip(options: TooltipOptions = {}): TooltipReturn {
       hideTimeoutRef.current = null;
     }
   }, []);
+
+  // Escape dismissal (WCAG 1.4.13) rides on the layer itself: a visible tip is
+  // the top-most layer, so it takes the press and consumes it — Escape hides
+  // the tip and leaves the dialog underneath open. A controlled tooltip
+  // ignores the stack, since the consumer owns its visibility.
+  const layer = useLayer({
+    mode: 'context',
+    onShow,
+    onHide,
+    escapeBehavior: isOpen === undefined ? 'close' : 'ignore',
+    onDismiss: clearTimeouts,
+  });
+
+  const popoverXstyle = styles.container;
 
   // Schedule show with delay (suppressed when isOpen is false)
   const scheduleShow = useCallback(() => {
@@ -440,31 +445,6 @@ export function useTooltip(options: TooltipOptions = {}): TooltipReturn {
       layer.hide();
     }
   }, [isOpen, clearTimeouts, layer]);
-
-  // Dismiss on Escape (WCAG 1.4.13 — dismissible) through the shared layer
-  // stack. A visible tip is the top-most layer, so it takes the press and
-  // consumes it: Escape hides the tip and leaves the dialog underneath open.
-  // The user presses Escape again to close that. Consuming (rather than also
-  // dismissing what is beneath) keeps one rule with no per-component
-  // exceptions, and the failure mode is one extra keystroke instead of a
-  // dialog closing under someone who only wanted the tip gone.
-  //
-  // A controlled tooltip ignores the stack entirely: its visibility is the
-  // consumer's state, and the system closing it behind their back would fight
-  // the value they are holding.
-  useLayerDismissal({
-    // Registered for the hook's lifetime rather than gated on `layer.isOpen`:
-    // that state can lag a frame behind the DOM, so a press arriving right
-    // after the layer appears would find nothing registered. Presence answers
-    // from the layer's own element instead.
-    isActive: true,
-    isPresent: layer.isPresent,
-    escapeBehavior: isOpen === undefined ? 'close' : 'ignore',
-    onDismiss: () => {
-      clearTimeouts();
-      layer.hide();
-    },
-  });
 
   // Render function that wraps layer.render with tooltip styling
   const renderTooltip = useCallback(
