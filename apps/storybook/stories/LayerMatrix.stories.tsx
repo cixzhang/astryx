@@ -417,6 +417,27 @@ export const InfoTipInDialog: Story = {
   ),
 };
 
+/** Controlled hover layers: the consumer owns visibility, so Escape should not fight them. */
+export const ControlledTooltipInDialog: Story = {
+  render: () => (
+    <OuterDialog>
+      <Tooltip content="A controlled tip" isOpen>
+        <Button label="Trigger" data-testid="open-inner" />
+      </Tooltip>
+    </OuterDialog>
+  ),
+};
+
+export const ControlledHoverCardInDialog: Story = {
+  render: () => (
+    <OuterDialog>
+      <HoverCard content={<Text type="body">Card body</Text>} isOpen>
+        <Button label="Trigger" data-testid="open-inner" />
+      </HoverCard>
+    </OuterDialog>
+  ),
+};
+
 export const RequiredDialogInDialog: Story = {
   render: function Render() {
     const [isOpen, setIsOpen] = useState(false);

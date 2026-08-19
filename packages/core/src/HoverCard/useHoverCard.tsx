@@ -273,13 +273,16 @@ export function useHoverCard(options: HoverCardOptions = {}): HoverCardReturn {
   // This replaces a keydown listener on the TRIGGER that called
   // stopPropagation() on any Escape while the trigger merely had focus — open
   // card or not — so focusing a HoverCard trigger inside a Dialog silently ate
-  // the press that should have closed the Dialog.
+  // the press that should have closed the Dialog. A controlled card ignores the
+  // stack for the same reason a controlled tooltip does: the consumer owns the
+  // visibility, so hiding it would be undone on the next render and the press
+  // would be eaten for nothing.
   const layer = useLayer({
     mode: 'context',
     lazyMount: true,
     onShow,
     onHide,
-    escapeBehavior: 'close',
+    escapeBehavior: isOpen === undefined ? 'close' : 'ignore',
     onDismiss: () => {
       isEscapeDismissingRef.current = true;
       clearTimeouts();

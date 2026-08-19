@@ -56,6 +56,8 @@ const cases = [
   {id: 'lightbox-in-dialog', outer: 'dialog', open: 'click'},
   {id: 'mobile-nav-in-dialog', outer: 'dialog', open: 'click'},
   {id: 'info-tip-in-dialog', outer: 'dialog', open: 'hover', hoverSel: `${HOST} button`},
+  {id: 'controlled-tooltip-in-dialog', outer: 'dialog'},
+  {id: 'controlled-hover-card-in-dialog', outer: 'dialog'},
   {id: 'required-dialog-in-dialog', outer: 'dialog', open: 'click'},
 
   // Group B — standalone, nothing underneath.

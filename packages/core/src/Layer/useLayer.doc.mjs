@@ -49,6 +49,19 @@ export const docs = {
         'Context mode only. Wait until show() to resolve the inline/portal position and mount content; hide unmounts the content while the inert marker remains.',
       default: 'false',
     },
+    {
+      name: 'escapeBehavior',
+      type: "'close' | 'block' | 'ignore'",
+      description:
+        "What this layer does with an Escape press routed to it by the shared dismissal stack. 'close' opts in: the hook registers the layer, answers presence from its own element, and hides itself when the press reaches it. 'block' consumes the press without dismissing. Defaults to 'ignore' — a bare useLayer is a positioning primitive and takes no part in dismissal.",
+      default: "'ignore'",
+    },
+    {
+      name: 'onDismiss',
+      type: '() => void',
+      description:
+        "Extra teardown run before the layer hides itself on an Escape dismissal. Only reached when escapeBehavior is 'close'.",
+    },
   ],
   returns: [
     {
@@ -75,6 +88,18 @@ export const docs = {
       name: 'isOpen',
       type: 'boolean',
       description: 'Whether the layer is currently open.',
+    },
+    {
+      name: 'isPresent',
+      type: '() => boolean',
+      description:
+        'Whether the layer is really on screen right now, read from its own element. Unlike isOpen (React state, which can lag the DOM by a frame), this is safe to call from a live event handler.',
+    },
+    {
+      name: 'isTopmost',
+      type: '() => boolean',
+      description:
+        'Whether this layer is top-most on the shared dismissal stack. Always false unless the layer opted in with escapeBehavior.',
     },
     {
       name: 'id',
@@ -132,6 +157,9 @@ export const docsDense = {
     lightDismiss: 'whether native outside-click light-dismiss is enabled.',
     lazyMount:
       'context only: defer position resolution/content mounting until show; unmount on hide.',
+    escapeBehavior:
+      "shared-stack Escape policy: 'close' registers + self-hides, 'block' consumes without dismissing, 'ignore' (default) stays off the stack.",
+    onDismiss: 'extra teardown before self-hide on Escape dismissal.',
   },
   returnDescriptions: {
     ref: 'trigger ref for context mode; undefined in fixed mode.',
@@ -139,6 +167,9 @@ export const docsDense = {
     show: 'show layer.',
     hide: 'hide layer.',
     isOpen: 'whether layer is open.',
+    isPresent:
+      'whether layer is really on screen, read from its own element; safe inside live event handlers where isOpen can lag.',
+    isTopmost: 'whether layer is top-most on the shared dismissal stack.',
     id: 'unique ARIA id.',
     render:
       'renders popover element; pass placement/alignment or x/y. Placement/alignment logical: mapped to self-* position-area keywords resolved against the popover\'s inherited direction (RTL mirrors in pure CSS). `positioning: "custom"` (context mode) = author position styles yourself via `style`; keeps popover behavior + position-anchor wiring, derives nothing (incl. RTL mirroring, which becomes yours). `offset` (context mode) = clearance from the anchor as a CSS length (number = px), applied to both edges of the placement axis so it survives a flip; layers are flush by default. Context mode begins with an inert `<template>` marker for stable SSR/hydration, then keeps the final layer inline at a safe JSX position or portals it to the nearest safe ancestor; CSS custom properties keep inheriting from that host while direction and writing mode are preserved from the JSX position. `lazyMount` waits for show and unmounts content on hide while the marker remains. The Popover API top layer escapes clipping/stacking wherever it is hosted. Viewport overflow: flips to opposite side; centered layers also slide along the alignment axis (span fallbacks).',
