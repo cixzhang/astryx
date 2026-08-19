@@ -449,33 +449,16 @@ export function useTooltip(options: TooltipOptions = {}): TooltipReturn {
   // exceptions, and the failure mode is one extra keystroke instead of a
   // dialog closing under someone who only wanted the tip gone.
   //
-  // A controlled tooltip opts out of the stack entirely: its visibility is the
+  // A controlled tooltip ignores the stack entirely: its visibility is the
   // consumer's state, and the system closing it behind their back would fight
   // the value they are holding.
   useLayerDismissal({
     // Registered for the hook's lifetime rather than gated on `layer.isOpen`:
-    // that state can lag a frame behind the DOM, so a press arriving right after
-    // the layer appears would find nothing registered. Because this layer
-    // CONSUMES the press, a stale registration would be worse than a missed one
-    // — it would silently eat Escapes meant for the dialog underneath — so
-    // presence is answered from the DOM at press time instead of from state.
+    // that state can lag a frame behind the DOM, so a press arriving right
+    // after the layer appears would find nothing registered. Presence answers
+    // from the layer's own element instead.
     isActive: true,
-    isPresent: () => {
-      const el =
-        typeof document === 'undefined'
-          ? null
-          : document.getElementById(layer.id);
-      if (el == null) {
-        return false;
-      }
-      try {
-        return el.matches(':popover-open');
-      } catch {
-        // Browsers without the Popover API (and some test environments) cannot
-        // answer the selector; fall back to the hook's own state.
-        return layer.isOpen;
-      }
-    },
+    isPresent: layer.isPresent,
     escapeBehavior: isOpen === undefined ? 'close' : 'ignore',
     onDismiss: () => {
       clearTimeouts();

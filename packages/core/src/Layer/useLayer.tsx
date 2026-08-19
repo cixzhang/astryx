@@ -27,6 +27,7 @@ import * as stylex from '@stylexjs/stylex';
 import type {StyleXStyles} from '@stylexjs/stylex';
 import {createPortal} from 'react-dom';
 import {addAnchorName, removeAnchorName} from './anchorName';
+import {LayerDepthProvider} from './LayerDepthContext';
 import {resolveLayerPortalTarget} from './layerHost';
 import {typeScaleVars, typographyVars} from '../theme/tokens.stylex';
 
@@ -278,6 +279,17 @@ export interface ContextLayerReturn {
   isOpen: boolean;
 
   /**
+   * Whether the layer is really on screen right now, read from the layer's own
+   * element at call time.
+   *
+   * Not the same question as `isOpen`: that is React state and can lag the DOM
+   * by a frame, because `show()` opens the popover imperatively and schedules
+   * the state update. Anything answering a live event — an Escape press, an
+   * outside press — has to ask this one.
+   */
+  isPresent: () => boolean;
+
+  /**
    * Unique ID for aria-describedby
    */
   id: string;
@@ -312,6 +324,12 @@ export interface FixedLayerReturn {
    * Whether the layer is currently open
    */
   isOpen: boolean;
+
+  /**
+   * Whether the layer is really on screen right now, read from the layer's own
+   * element at call time. See the note on `ContextLayerReturn.isPresent`.
+   */
+  isPresent: () => boolean;
 
   /**
    * Unique ID for aria-describedby
@@ -591,6 +609,26 @@ export function useLayer(
     clearContextMount();
   }, [onHide, clearContextMount]);
 
+  // Read presence from the layer's OWN element rather than from `isOpen`:
+  // `show()` calls showPopover() imperatively and only then schedules the state
+  // update, so during that gap state says closed while the layer is on screen.
+  // Answering from the element closes the gap and needs no document lookup —
+  // the ref is null on the server and before mount, which reads as "not
+  // present", the right answer in both cases.
+  const isPresent = useCallback((): boolean => {
+    const el = popoverRef.current;
+    if (el == null) {
+      return false;
+    }
+    try {
+      return el.matches(':popover-open');
+    } catch {
+      // Browsers without the Popover API (and some test environments) cannot
+      // answer the selector; fall back to the hook's own synchronous flag.
+      return isOpenRef.current;
+    }
+  }, []);
+
   // Ref for trigger element (context mode only)
   const ref: RefCallback<HTMLElement> | undefined =
     mode === 'context'
@@ -795,7 +833,7 @@ export function useLayer(
           }}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}>
-          {children}
+          <LayerDepthProvider>{children}</LayerDepthProvider>
         </Container>
       );
 
@@ -847,7 +885,7 @@ export function useLayer(
           popover={lightDismiss ? 'auto' : 'manual'}
           className={combinedClassName}
           style={{...stylexResult.style, ...positionStyle, ...extraStyle}}>
-          {children}
+          <LayerDepthProvider>{children}</LayerDepthProvider>
         </div>
       );
     },
@@ -861,6 +899,7 @@ export function useLayer(
       show,
       hide,
       isOpen,
+      isPresent,
       id,
       render: renderContext,
     };
@@ -871,6 +910,7 @@ export function useLayer(
     show,
     hide,
     isOpen,
+    isPresent,
     id,
     render: renderFixed,
   };
