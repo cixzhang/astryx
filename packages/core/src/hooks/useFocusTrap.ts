@@ -25,10 +25,12 @@ import {useLayerDismissal} from '../Layer/useLayerDismissal';
 /**
  * Whether any layer is currently registered on the shared dismissal stack.
  *
- * @deprecated The focus trap no longer owns Escape coordination — every overlay
- *   family shares one stack (`useLayerDismissal`), which routes each press to
- *   the top-most layer. A layer that needs to know whether it is on top should
- *   ask its own `isTopmost()` rather than whether anything at all is open.
+ * @deprecated The name no longer describes what this returns. The focus trap
+ *   stopped owning Escape coordination — every overlay family shares one stack
+ *   (`useLayerDismissal`), which routes each press to the top-most layer — so
+ *   this now answers "is ANY layer present", not "is a focus trap above me".
+ *   A layer that needs to know whether it is on top should ask its own
+ *   `isTopmost()`; `useFocusTrap` returns one too.
  */
 export function hasActiveFocusTrapEscape(): boolean {
   return hasOpenLayer();

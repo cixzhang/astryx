@@ -35,7 +35,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type SyntheticEvent,
@@ -44,12 +43,8 @@ import * as stylex from '@stylexjs/stylex';
 import type {BaseProps} from '../BaseProps';
 import type {DialogPurpose} from '../Dialog';
 import {colorVars, durationVars, easeVars} from '../theme/tokens.stylex';
-import {
-  hasActiveFocusTrapEscape,
-  isImeKeyEvent,
-  useFocusTrap,
-  useScrollLock,
-} from '../hooks';
+import {useFocusTrap, useScrollLock} from '../hooks';
+import {useLayerDismissal} from '../Layer/useLayerDismissal';
 import {composeEventHandlers, mergeProps, mergeRefs} from '../utils';
 import {
   BottomSheetSwitcherContext,
@@ -277,6 +272,15 @@ export function BottomSheetSwitcher({
   const {containerRef} = useFocusTrap<HTMLDialogElement>({
     isActive: isModal,
     onEscape: dismissOnEscape,
+  });
+  // A non-modal flow has no focus trap, so it joins the shared dismissal stack
+  // directly. Without this the switcher was invisible to the stack: an Escape
+  // over an open non-modal flow dismissed whatever was registered underneath it.
+  useLayerDismissal({
+    isActive: isFlowVisible && !isModal,
+    escapeBehavior: allowsEscapeDismiss ? 'close' : 'block',
+    onDismiss: dismissOnEscape,
+    getContainer: () => dialogRef.current,
   });
   useScrollLock(isModal);
 
@@ -563,23 +567,6 @@ export function BottomSheetSwitcher({
     },
     [dismissOnEscape],
   );
-  const handleKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLDialogElement>) => {
-      // Modal Escape is owned by useFocusTrap so nested traps can win. A
-      // non-modal switcher has no outer trap, so retain local dismissal while
-      // deferring to an active nested layer and ignoring IME cancellation.
-      if (
-        !isModal &&
-        event.key === 'Escape' &&
-        !isImeKeyEvent(event.nativeEvent) &&
-        !hasActiveFocusTrapEscape()
-      ) {
-        event.preventDefault();
-        dismissOnEscape();
-      }
-    },
-    [dismissOnEscape, isModal],
-  );
   const handleClick = useCallback(
     (event: ReactMouseEvent<HTMLDialogElement>) => {
       if (hasScrim && event.target === event.currentTarget) {
@@ -615,7 +602,7 @@ export function BottomSheetSwitcher({
         aria-modal={isModal ? 'true' : undefined}
         onCancel={composeEventHandlers(onCancel, handleCancel)}
         onClick={composeEventHandlers(onClick, handleClick)}
-        onKeyDown={composeEventHandlers(onKeyDown, handleKeyDown)}
+        onKeyDown={onKeyDown}
         {...(activeSheetPurpose === 'required'
           ? {role: 'alertdialog'}
           : undefined)}>
