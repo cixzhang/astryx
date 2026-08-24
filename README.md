@@ -11,6 +11,8 @@ baseline for the before.
 | `shots/custom__shown.png` | a product surface drawn through `renderToast` |
 | `shots/custom__empty.png` | the viewport with nothing in it |
 
+`shots/stuck__no-dismiss.png` — an error toast under a renderer with no close, ten seconds after Escape and F6. `shots/control__builtin-card.png` — the same toast, Astryx's card.
+
 The exit-transition comparison is a timeline, not a frame: a screenshot costs
 longer than the 150ms transition, so any shot of it lands after it. Numbers are
 in the review.
