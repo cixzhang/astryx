@@ -1,0 +1,7 @@
+CSS-driven geometry (no JS):
+  --spinner-diameter:14px --spinner-rail-width:3px  ->  strokeWidth=3px circumference=43.699 (pi*d=43.982)  OK
+  --spinner-diameter:28px --spinner-rail-width:6px  ->  strokeWidth=6px circumference=87.398 (pi*d=87.965)  OK
+  --spinner-diameter:40px --spinner-rail-width:4px  ->  strokeWidth=4px circumference=124.854 (pi*d=125.664)  OK
+
+painted arc, measured from pixels:
+  d14  ink 608  mass 320.15  rMax 15.81  (expect rMax ~ 17)

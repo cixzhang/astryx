@@ -1,0 +1,178 @@
+{
+  "reads_canvas": {
+    "1": {
+      "spinnerGCS": 4,
+      "totalGCS": 306,
+      "recalcs": 19,
+      "layouts": 6,
+      "nodesPerSpinner": 1,
+      "child": "CANVAS"
+    },
+    "8": {
+      "spinnerGCS": 32,
+      "totalGCS": 334,
+      "recalcs": 22,
+      "layouts": 6,
+      "nodesPerSpinner": 1,
+      "child": "CANVAS"
+    },
+    "20": {
+      "spinnerGCS": 80,
+      "totalGCS": 382,
+      "recalcs": 30,
+      "layouts": 6,
+      "nodesPerSpinner": 1,
+      "child": "CANVAS"
+    },
+    "38": {
+      "spinnerGCS": 152,
+      "totalGCS": 454,
+      "recalcs": 34,
+      "layouts": 6,
+      "nodesPerSpinner": 1,
+      "child": "CANVAS"
+    }
+  },
+  "reads_svg": {
+    "1": {
+      "spinnerGCS": 5,
+      "totalGCS": 307,
+      "recalcs": 20,
+      "layouts": 6,
+      "nodesPerSpinner": 3,
+      "child": "svg"
+    },
+    "8": {
+      "spinnerGCS": 40,
+      "totalGCS": 342,
+      "recalcs": 19,
+      "layouts": 6,
+      "nodesPerSpinner": 3,
+      "child": "svg"
+    },
+    "20": {
+      "spinnerGCS": 100,
+      "totalGCS": 402,
+      "recalcs": 19,
+      "layouts": 6,
+      "nodesPerSpinner": 3,
+      "child": "svg"
+    },
+    "38": {
+      "spinnerGCS": 190,
+      "totalGCS": 492,
+      "recalcs": 19,
+      "layouts": 6,
+      "nodesPerSpinner": 3,
+      "child": "svg"
+    }
+  },
+  "rotate_canvas": [
+    {
+      "recalcsDelta": 23,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 0.94,
+      "taskMsDelta": 14.24
+    },
+    {
+      "recalcsDelta": 19,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 1.89,
+      "taskMsDelta": 11.56
+    },
+    {
+      "recalcsDelta": 22,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 0.75,
+      "taskMsDelta": 9.34
+    }
+  ],
+  "rotate_svg": [
+    {
+      "recalcsDelta": 18,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 1.44,
+      "taskMsDelta": 17.78
+    },
+    {
+      "recalcsDelta": 21,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 3.05,
+      "taskMsDelta": 24.42
+    },
+    {
+      "recalcsDelta": 23,
+      "layoutsDelta": 0,
+      "scriptMsDelta": 0.8,
+      "taskMsDelta": 10.22
+    }
+  ],
+  "phase": {
+    "canvas": {
+      "angles": [
+        112.87,
+        290.14,
+        95.87,
+        273.02
+      ],
+      "maxSeparationDeg": 177.27
+    },
+    "svg": {
+      "angles": [
+        231.2,
+        231.2,
+        231.2,
+        231.2
+      ],
+      "maxSeparationDeg": 0
+    }
+  },
+  "recolour_canvas": {
+    "before": "178,208,246",
+    "after": "178,208,246",
+    "followed": false
+  },
+  "recolour_svg": {
+    "before": "178,208,246",
+    "after": "243,186,207",
+    "followed": true
+  },
+  "layers_canvas": [
+    {
+      "size": "20x20",
+      "reasons": [
+        "ActiveTransformAnimation",
+        "WillChangeTransform",
+        "BackfaceVisibilityHidden"
+      ]
+    },
+    {
+      "size": "20x20",
+      "reasons": [
+        "Canvas"
+      ]
+    },
+    {
+      "size": "32x32",
+      "reasons": [
+        "Overlap"
+      ]
+    }
+  ],
+  "layers_svg": [
+    {
+      "size": "20x20",
+      "reasons": [
+        "ActiveTransformAnimation",
+        "WillChangeTransform",
+        "BackfaceVisibilityHidden"
+      ]
+    },
+    {
+      "size": "32x32",
+      "reasons": [
+        "Overlap"
+      ]
+    }
+  ]
+}

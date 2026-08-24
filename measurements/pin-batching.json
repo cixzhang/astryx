@@ -1,0 +1,38 @@
+{
+  "unbatched": {
+    "1": {
+      "recalcs": 18,
+      "layouts": 6
+    },
+    "8": {
+      "recalcs": 24,
+      "layouts": 5
+    },
+    "20": {
+      "recalcs": 36,
+      "layouts": 5
+    },
+    "38": {
+      "recalcs": 53,
+      "layouts": 6
+    }
+  },
+  "batched": {
+    "1": {
+      "recalcs": 19,
+      "layouts": 6
+    },
+    "8": {
+      "recalcs": 16,
+      "layouts": 5
+    },
+    "20": {
+      "recalcs": 19,
+      "layouts": 6
+    },
+    "38": {
+      "recalcs": 19,
+      "layouts": 5
+    }
+  }
+}

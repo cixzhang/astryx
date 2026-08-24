@@ -1,0 +1,222 @@
+{
+  "rows": [
+    {
+      "cpuThrottle": 1,
+      "run": 0,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          125.68,
+          291.4,
+          109.84,
+          274.27
+        ],
+        "maxSeparationDeg": 178.44
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          21.39,
+          22.67,
+          23.92,
+          22.68
+        ],
+        "maxSeparationDeg": 2.54
+      }
+    },
+    {
+      "cpuThrottle": 1,
+      "run": 1,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          125.5,
+          290.4,
+          96.12,
+          273.27
+        ],
+        "maxSeparationDeg": 177.15
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          25.73,
+          24.89,
+          24.94,
+          24.97
+        ],
+        "maxSeparationDeg": 0.84
+      }
+    },
+    {
+      "cpuThrottle": 1,
+      "run": 2,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          114.32,
+          280.01,
+          97.18,
+          274.33
+        ],
+        "maxSeparationDeg": 177.17
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          18,
+          5.31,
+          6.32,
+          6.35
+        ],
+        "maxSeparationDeg": 12.68
+      }
+    },
+    {
+      "cpuThrottle": 4,
+      "run": 0,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          103.68,
+          279.94,
+          97.09,
+          274.24
+        ],
+        "maxSeparationDeg": 177.15
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          183.02,
+          206.02,
+          206.05,
+          206.01
+        ],
+        "maxSeparationDeg": 23.03
+      }
+    },
+    {
+      "cpuThrottle": 4,
+      "run": 1,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          114.65,
+          291.36,
+          108.51,
+          274.23
+        ],
+        "maxSeparationDeg": 177.15
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          205.09,
+          228.48,
+          228.72,
+          228.7
+        ],
+        "maxSeparationDeg": 23.62
+      }
+    },
+    {
+      "cpuThrottle": 4,
+      "run": 2,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          102.59,
+          291.24,
+          107.86,
+          273.82
+        ],
+        "maxSeparationDeg": 176.62
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          21.33,
+          90.05,
+          89.48,
+          90.53
+        ],
+        "maxSeparationDeg": 69.2
+      }
+    },
+    {
+      "cpuThrottle": 10,
+      "run": 0,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          181.57,
+          359.98,
+          165.54,
+          273.45
+        ],
+        "maxSeparationDeg": 178.41
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          37.7,
+          142.75,
+          153.88,
+          95.44
+        ],
+        "maxSeparationDeg": 116.18
+      }
+    },
+    {
+      "cpuThrottle": 10,
+      "run": 1,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          148.01,
+          314.24,
+          108.27,
+          263.08
+        ],
+        "maxSeparationDeg": 166.22
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          74.71,
+          154.4,
+          176.36,
+          176.96
+        ],
+        "maxSeparationDeg": 102.25
+      }
+    },
+    {
+      "cpuThrottle": 10,
+      "run": 2,
+      "canvas": {
+        "n": 4,
+        "angles": [
+          137.14,
+          315.34,
+          120.02,
+          285.74
+        ],
+        "maxSeparationDeg": 178.2
+      },
+      "svg": {
+        "n": 4,
+        "angles": [
+          359.45,
+          102.02,
+          102.33,
+          102.31
+        ],
+        "maxSeparationDeg": 102.87
+      }
+    }
+  ],
+  "worstSvg": 116.18,
+  "worstCanvas": 178.44
+}

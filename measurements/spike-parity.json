@@ -1,0 +1,1402 @@
+[
+  {
+    "dpr": 1,
+    "size": "sm",
+    "canvas": {
+      "cx": 31.767,
+      "cy": 29.297,
+      "inkMass": 36.05,
+      "inkPx": 85,
+      "solidPx": 15,
+      "partialPx": 70,
+      "centroidR": 1.9012,
+      "centroidTheta": -21.697,
+      "softEdgeRatio": 0.824,
+      "rMin": 2.5,
+      "rMax": 5.48,
+      "width": 60,
+      "height": 60
+    },
+    "svg3": {
+      "cx": 31.763,
+      "cy": 29.342,
+      "inkMass": 36.32,
+      "inkPx": 85,
+      "solidPx": 15,
+      "partialPx": 70,
+      "centroidR": 1.8816,
+      "centroidTheta": -20.464,
+      "softEdgeRatio": 0.824,
+      "rMin": 2.53,
+      "rMax": 5.44,
+      "width": 60,
+      "height": 60
+    },
+    "svg2": {
+      "cx": 31.764,
+      "cy": 29.342,
+      "inkMass": 36.31,
+      "inkPx": 85,
+      "solidPx": 15,
+      "partialPx": 70,
+      "centroidR": 1.8832,
+      "centroidTheta": -20.465,
+      "softEdgeRatio": 0.824,
+      "rMin": 2.53,
+      "rMax": 5.44,
+      "width": 60,
+      "height": 60
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "md",
+    "canvas": {
+      "cx": 32.41,
+      "cy": 28.913,
+      "inkMass": 78.98,
+      "inkPx": 169,
+      "solidPx": 40,
+      "partialPx": 129,
+      "centroidR": 2.6436,
+      "centroidTheta": -24.289,
+      "softEdgeRatio": 0.763,
+      "rMin": 3.12,
+      "rMax": 7.87,
+      "width": 60,
+      "height": 60
+    },
+    "svg3": {
+      "cx": 32.399,
+      "cy": 28.911,
+      "inkMass": 78.97,
+      "inkPx": 169,
+      "solidPx": 40,
+      "partialPx": 129,
+      "centroidR": 2.6347,
+      "centroidTheta": -24.422,
+      "softEdgeRatio": 0.763,
+      "rMin": 3.13,
+      "rMax": 7.87,
+      "width": 60,
+      "height": 60
+    },
+    "svg2": {
+      "cx": 32.906,
+      "cy": 29.443,
+      "inkMass": 78.48,
+      "inkPx": 169,
+      "solidPx": 42,
+      "partialPx": 127,
+      "centroidR": 2.959,
+      "centroidTheta": -10.846,
+      "softEdgeRatio": 0.751,
+      "rMin": 3.24,
+      "rMax": 7.73,
+      "width": 60,
+      "height": 60
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "lg",
+    "canvas": {
+      "cx": 33.082,
+      "cy": 28.762,
+      "inkMass": 101.48,
+      "inkPx": 217,
+      "solidPx": 53,
+      "partialPx": 164,
+      "centroidR": 3.3219,
+      "centroidTheta": -21.885,
+      "softEdgeRatio": 0.756,
+      "rMin": 4.1,
+      "rMax": 9.45,
+      "width": 60,
+      "height": 60
+    },
+    "svg3": {
+      "cx": 33.128,
+      "cy": 28.801,
+      "inkMass": 102.25,
+      "inkPx": 219,
+      "solidPx": 55,
+      "partialPx": 164,
+      "centroidR": 3.3503,
+      "centroidTheta": -20.975,
+      "softEdgeRatio": 0.749,
+      "rMin": 4.08,
+      "rMax": 9.5,
+      "width": 60,
+      "height": 60
+    },
+    "svg2": {
+      "cx": 33.623,
+      "cy": 29.302,
+      "inkMass": 101.38,
+      "inkPx": 222,
+      "solidPx": 55,
+      "partialPx": 167,
+      "centroidR": 3.6899,
+      "centroidTheta": -10.904,
+      "softEdgeRatio": 0.752,
+      "rMin": 4.28,
+      "rMax": 9.72,
+      "width": 60,
+      "height": 60
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "xl",
+    "canvas": {
+      "cx": 34.801,
+      "cy": 28.004,
+      "inkMass": 207.13,
+      "inkPx": 417,
+      "solidPx": 118,
+      "partialPx": 299,
+      "centroidR": 5.1991,
+      "centroidTheta": -22.58,
+      "softEdgeRatio": 0.717,
+      "rMin": 6.87,
+      "rMax": 14.9,
+      "width": 60,
+      "height": 60
+    },
+    "svg3": {
+      "cx": 34.818,
+      "cy": 28.064,
+      "inkMass": 208.1,
+      "inkPx": 418,
+      "solidPx": 120,
+      "partialPx": 298,
+      "centroidR": 5.1928,
+      "centroidTheta": -21.893,
+      "softEdgeRatio": 0.713,
+      "rMin": 6.86,
+      "rMax": 14.96,
+      "width": 60,
+      "height": 60
+    },
+    "svg2": {
+      "cx": 34.819,
+      "cy": 28.063,
+      "inkMass": 208.09,
+      "inkPx": 418,
+      "solidPx": 120,
+      "partialPx": 298,
+      "centroidR": 5.1937,
+      "centroidTheta": -21.897,
+      "softEdgeRatio": 0.713,
+      "rMin": 6.86,
+      "rMax": 14.96,
+      "width": 60,
+      "height": 60
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "sm",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 1.169,
+        "maxResidDeg": 1.887,
+        "massSpread": 0.63
+      },
+      "svg3": {
+        "meanResidDeg": 1.157,
+        "maxResidDeg": 1.717,
+        "massSpread": 0.63
+      },
+      "svg2": {
+        "meanResidDeg": 0.297,
+        "maxResidDeg": 0.649,
+        "massSpread": 0.62
+      }
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "md",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.902,
+        "maxResidDeg": 1.203,
+        "massSpread": 0.85
+      },
+      "svg3": {
+        "meanResidDeg": 0.914,
+        "maxResidDeg": 1.218,
+        "massSpread": 0.85
+      },
+      "svg2": {
+        "meanResidDeg": 13.284,
+        "maxResidDeg": 28.394,
+        "massSpread": 1
+      }
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "lg",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.527,
+        "maxResidDeg": 0.729,
+        "massSpread": 1.49
+      },
+      "svg3": {
+        "meanResidDeg": 0.525,
+        "maxResidDeg": 0.761,
+        "massSpread": 1.42
+      },
+      "svg2": {
+        "meanResidDeg": 10.47,
+        "maxResidDeg": 22.01,
+        "massSpread": 1.57
+      }
+    }
+  },
+  {
+    "dpr": 1,
+    "size": "xl",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.344,
+        "maxResidDeg": 0.461,
+        "massSpread": 1.12
+      },
+      "svg3": {
+        "meanResidDeg": 0.336,
+        "maxResidDeg": 0.461,
+        "massSpread": 1.1
+      },
+      "svg2": {
+        "meanResidDeg": 0.085,
+        "maxResidDeg": 0.196,
+        "massSpread": 1.27
+      }
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "sm",
+    "canvas": {
+      "cx": 39.711,
+      "cy": 36.583,
+      "inkMass": 58.22,
+      "inkPx": 171,
+      "solidPx": 17,
+      "partialPx": 154,
+      "centroidR": 2.393,
+      "centroidTheta": -22.522,
+      "softEdgeRatio": 0.901,
+      "rMin": 2.75,
+      "rMax": 6.54,
+      "width": 75,
+      "height": 75
+    },
+    "svg3": {
+      "cx": 39.668,
+      "cy": 36.719,
+      "inkMass": 59.4,
+      "inkPx": 165,
+      "solidPx": 19,
+      "partialPx": 146,
+      "centroidR": 2.3039,
+      "centroidTheta": -19.806,
+      "softEdgeRatio": 0.885,
+      "rMin": 2.84,
+      "rMax": 7.02,
+      "width": 75,
+      "height": 75
+    },
+    "svg2": {
+      "cx": 39.697,
+      "cy": 36.728,
+      "inkMass": 59.89,
+      "inkPx": 126,
+      "solidPx": 26,
+      "partialPx": 100,
+      "centroidR": 2.3284,
+      "centroidTheta": -19.361,
+      "softEdgeRatio": 0.794,
+      "rMin": 2.81,
+      "rMax": 7.01,
+      "width": 75,
+      "height": 75
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "md",
+    "canvas": {
+      "cx": 40.535,
+      "cy": 36.306,
+      "inkMass": 123.61,
+      "inkPx": 274,
+      "solidPx": 60,
+      "partialPx": 214,
+      "centroidR": 3.2619,
+      "centroidTheta": -21.474,
+      "softEdgeRatio": 0.781,
+      "rMin": 3.47,
+      "rMax": 9.69,
+      "width": 75,
+      "height": 75
+    },
+    "svg3": {
+      "cx": 40.507,
+      "cy": 36.371,
+      "inkMass": 126.7,
+      "inkPx": 253,
+      "solidPx": 72,
+      "partialPx": 181,
+      "centroidR": 3.2116,
+      "centroidTheta": -20.586,
+      "softEdgeRatio": 0.715,
+      "rMin": 3.53,
+      "rMax": 9.96,
+      "width": 75,
+      "height": 75
+    },
+    "svg2": {
+      "cx": 41.161,
+      "cy": 36.968,
+      "inkMass": 127.81,
+      "inkPx": 308,
+      "solidPx": 53,
+      "partialPx": 255,
+      "centroidR": 3.6994,
+      "centroidTheta": -8.272,
+      "softEdgeRatio": 0.828,
+      "rMin": 3.65,
+      "rMax": 9.67,
+      "width": 75,
+      "height": 75
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "lg",
+    "canvas": {
+      "cx": 41.378,
+      "cy": 35.927,
+      "inkMass": 158.53,
+      "inkPx": 392,
+      "solidPx": 67,
+      "partialPx": 325,
+      "centroidR": 4.1847,
+      "centroidTheta": -22.075,
+      "softEdgeRatio": 0.829,
+      "rMin": 5.14,
+      "rMax": 11.75,
+      "width": 75,
+      "height": 75
+    },
+    "svg3": {
+      "cx": 41.397,
+      "cy": 35.983,
+      "inkMass": 159.46,
+      "inkPx": 392,
+      "solidPx": 68,
+      "partialPx": 324,
+      "centroidR": 4.1821,
+      "centroidTheta": -21.273,
+      "softEdgeRatio": 0.827,
+      "rMin": 5.13,
+      "rMax": 12.23,
+      "width": 75,
+      "height": 75
+    },
+    "svg2": {
+      "cx": 41.973,
+      "cy": 36.611,
+      "inkMass": 162.86,
+      "inkPx": 334,
+      "solidPx": 90,
+      "partialPx": 244,
+      "centroidR": 4.5605,
+      "centroidTheta": -11.243,
+      "softEdgeRatio": 0.731,
+      "rMin": 5.42,
+      "rMax": 11.98,
+      "width": 75,
+      "height": 75
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "xl",
+    "canvas": {
+      "cx": 43.499,
+      "cy": 34.94,
+      "inkMass": 328.36,
+      "inkPx": 713,
+      "solidPx": 177,
+      "partialPx": 536,
+      "centroidR": 6.5228,
+      "centroidTheta": -23.11,
+      "softEdgeRatio": 0.752,
+      "rMin": 8.36,
+      "rMax": 18.56,
+      "width": 75,
+      "height": 75
+    },
+    "svg3": {
+      "cx": 43.467,
+      "cy": 35.102,
+      "inkMass": 331.4,
+      "inkPx": 652,
+      "solidPx": 190,
+      "partialPx": 462,
+      "centroidR": 6.4307,
+      "centroidTheta": -21.892,
+      "softEdgeRatio": 0.709,
+      "rMin": 8.8,
+      "rMax": 18.77,
+      "width": 75,
+      "height": 75
+    },
+    "svg2": {
+      "cx": 43.48,
+      "cy": 35.106,
+      "inkMass": 330.38,
+      "inkPx": 760,
+      "solidPx": 161,
+      "partialPx": 599,
+      "centroidR": 6.4411,
+      "centroidTheta": -21.821,
+      "softEdgeRatio": 0.788,
+      "rMin": 8.79,
+      "rMax": 18.76,
+      "width": 75,
+      "height": 75
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "sm",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 5.928,
+        "maxResidDeg": 7.231,
+        "massSpread": 4.1
+      },
+      "svg3": {
+        "meanResidDeg": 0.669,
+        "maxResidDeg": 1.037,
+        "massSpread": 1.11
+      },
+      "svg2": {
+        "meanResidDeg": 0.256,
+        "maxResidDeg": 0.836,
+        "massSpread": 0.73
+      }
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "md",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.494,
+        "maxResidDeg": 0.692,
+        "massSpread": 0.61
+      },
+      "svg3": {
+        "meanResidDeg": 0.544,
+        "maxResidDeg": 0.777,
+        "massSpread": 0.55
+      },
+      "svg2": {
+        "meanResidDeg": 13.273,
+        "maxResidDeg": 28.425,
+        "massSpread": 0.64
+      }
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "lg",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.425,
+        "maxResidDeg": 0.589,
+        "massSpread": 0.87
+      },
+      "svg3": {
+        "meanResidDeg": 0.402,
+        "maxResidDeg": 0.558,
+        "massSpread": 0.91
+      },
+      "svg2": {
+        "meanResidDeg": 10.558,
+        "maxResidDeg": 22.257,
+        "massSpread": 1.81
+      }
+    }
+  },
+  {
+    "dpr": 1.25,
+    "size": "xl",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.264,
+        "maxResidDeg": 0.384,
+        "massSpread": 2.11
+      },
+      "svg3": {
+        "meanResidDeg": 0.288,
+        "maxResidDeg": 0.442,
+        "massSpread": 1.43
+      },
+      "svg2": {
+        "meanResidDeg": 0.092,
+        "maxResidDeg": 0.208,
+        "massSpread": 2.12
+      }
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "sm",
+    "canvas": {
+      "cx": 47.613,
+      "cy": 44.001,
+      "inkMass": 84.95,
+      "inkPx": 217,
+      "solidPx": 33,
+      "partialPx": 184,
+      "centroidR": 2.7976,
+      "centroidTheta": -20.927,
+      "softEdgeRatio": 0.848,
+      "rMin": 3.82,
+      "rMax": 8.45,
+      "width": 90,
+      "height": 90
+    },
+    "svg3": {
+      "cx": 47.59,
+      "cy": 44.011,
+      "inkMass": 83.27,
+      "inkPx": 227,
+      "solidPx": 27,
+      "partialPx": 200,
+      "centroidR": 2.7727,
+      "centroidTheta": -20.892,
+      "softEdgeRatio": 0.881,
+      "rMin": 3.28,
+      "rMax": 8.12,
+      "width": 90,
+      "height": 90
+    },
+    "svg2": {
+      "cx": 47.634,
+      "cy": 44.034,
+      "inkMass": 84.55,
+      "inkPx": 181,
+      "solidPx": 45,
+      "partialPx": 136,
+      "centroidR": 2.8054,
+      "centroidTheta": -20.14,
+      "softEdgeRatio": 0.751,
+      "rMin": 3.25,
+      "rMax": 8.16,
+      "width": 90,
+      "height": 90
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "md",
+    "canvas": {
+      "cx": 48.587,
+      "cy": 43.54,
+      "inkMass": 182.22,
+      "inkPx": 359,
+      "solidPx": 108,
+      "partialPx": 251,
+      "centroidR": 3.873,
+      "centroidTheta": -22.144,
+      "softEdgeRatio": 0.699,
+      "rMin": 4.41,
+      "rMax": 11.77,
+      "width": 90,
+      "height": 90
+    },
+    "svg3": {
+      "cx": 48.597,
+      "cy": 43.574,
+      "inkMass": 182.8,
+      "inkPx": 359,
+      "solidPx": 110,
+      "partialPx": 249,
+      "centroidR": 3.8691,
+      "centroidTheta": -21.63,
+      "softEdgeRatio": 0.694,
+      "rMin": 4.42,
+      "rMax": 11.98,
+      "width": 90,
+      "height": 90
+    },
+    "svg2": {
+      "cx": 49.347,
+      "cy": 44.328,
+      "inkMass": 182.66,
+      "inkPx": 359,
+      "solidPx": 109,
+      "partialPx": 250,
+      "centroidR": 4.3985,
+      "centroidTheta": -8.782,
+      "softEdgeRatio": 0.696,
+      "rMin": 4.54,
+      "rMax": 11.92,
+      "width": 90,
+      "height": 90
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "lg",
+    "canvas": {
+      "cx": 49.642,
+      "cy": 43.116,
+      "inkMass": 229.71,
+      "inkPx": 450,
+      "solidPx": 126,
+      "partialPx": 324,
+      "centroidR": 5.01,
+      "centroidTheta": -22.09,
+      "softEdgeRatio": 0.72,
+      "rMin": 6.42,
+      "rMax": 14.61,
+      "width": 90,
+      "height": 90
+    },
+    "svg3": {
+      "cx": 49.644,
+      "cy": 43.13,
+      "inkMass": 230.05,
+      "inkPx": 449,
+      "solidPx": 127,
+      "partialPx": 322,
+      "centroidR": 5.0066,
+      "centroidTheta": -21.938,
+      "softEdgeRatio": 0.717,
+      "rMin": 6.42,
+      "rMax": 14.6,
+      "width": 90,
+      "height": 90
+    },
+    "svg2": {
+      "cx": 50.394,
+      "cy": 43.88,
+      "inkMass": 230.14,
+      "inkPx": 461,
+      "solidPx": 133,
+      "partialPx": 328,
+      "centroidR": 5.5092,
+      "centroidTheta": -11.732,
+      "softEdgeRatio": 0.711,
+      "rMin": 6.26,
+      "rMax": 14.62,
+      "width": 90,
+      "height": 90
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "xl",
+    "canvas": {
+      "cx": 52.181,
+      "cy": 42.008,
+      "inkMass": 468.19,
+      "inkPx": 914,
+      "solidPx": 286,
+      "partialPx": 628,
+      "centroidR": 7.7796,
+      "centroidTheta": -22.619,
+      "softEdgeRatio": 0.687,
+      "rMin": 10.35,
+      "rMax": 22.27,
+      "width": 90,
+      "height": 90
+    },
+    "svg3": {
+      "cx": 52.206,
+      "cy": 42.083,
+      "inkMass": 470.01,
+      "inkPx": 914,
+      "solidPx": 290,
+      "partialPx": 624,
+      "centroidR": 7.7744,
+      "centroidTheta": -22.038,
+      "softEdgeRatio": 0.683,
+      "rMin": 10.36,
+      "rMax": 22.35,
+      "width": 90,
+      "height": 90
+    },
+    "svg2": {
+      "cx": 52.205,
+      "cy": 42.08,
+      "inkMass": 469.98,
+      "inkPx": 914,
+      "solidPx": 289,
+      "partialPx": 625,
+      "centroidR": 7.7743,
+      "centroidTheta": -22.06,
+      "softEdgeRatio": 0.684,
+      "rMin": 10.36,
+      "rMax": 22.35,
+      "width": 90,
+      "height": 90
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "sm",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.605,
+        "maxResidDeg": 0.771,
+        "massSpread": 1.5
+      },
+      "svg3": {
+        "meanResidDeg": 0.676,
+        "maxResidDeg": 0.91,
+        "massSpread": 0.61
+      },
+      "svg2": {
+        "meanResidDeg": 0.313,
+        "maxResidDeg": 0.68,
+        "massSpread": 1.11
+      }
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "md",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.45,
+        "maxResidDeg": 0.652,
+        "massSpread": 1.37
+      },
+      "svg3": {
+        "meanResidDeg": 0.437,
+        "maxResidDeg": 0.637,
+        "massSpread": 1.38
+      },
+      "svg2": {
+        "meanResidDeg": 13.346,
+        "maxResidDeg": 28.56,
+        "massSpread": 1.23
+      }
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "lg",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.335,
+        "maxResidDeg": 0.501,
+        "massSpread": 1.32
+      },
+      "svg3": {
+        "meanResidDeg": 0.338,
+        "maxResidDeg": 0.51,
+        "massSpread": 1.28
+      },
+      "svg2": {
+        "meanResidDeg": 10.518,
+        "maxResidDeg": 22.179,
+        "massSpread": 1.99
+      }
+    }
+  },
+  {
+    "dpr": 1.5,
+    "size": "xl",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.29,
+        "maxResidDeg": 0.415,
+        "massSpread": 1.89
+      },
+      "svg3": {
+        "meanResidDeg": 0.292,
+        "maxResidDeg": 0.427,
+        "massSpread": 1.83
+      },
+      "svg2": {
+        "meanResidDeg": 0.179,
+        "maxResidDeg": 0.335,
+        "massSpread": 2.35
+      }
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "sm",
+    "canvas": {
+      "cx": 55.529,
+      "cy": 51.236,
+      "inkMass": 120.57,
+      "inkPx": 263,
+      "solidPx": 57,
+      "partialPx": 206,
+      "centroidR": 3.2819,
+      "centroidTheta": -22.653,
+      "softEdgeRatio": 0.783,
+      "rMin": 3.98,
+      "rMax": 9.73,
+      "width": 105,
+      "height": 105
+    },
+    "svg3": {
+      "cx": 55.562,
+      "cy": 51.335,
+      "inkMass": 114.35,
+      "inkPx": 283,
+      "solidPx": 47,
+      "partialPx": 236,
+      "centroidR": 3.2759,
+      "centroidTheta": -20.84,
+      "softEdgeRatio": 0.834,
+      "rMin": 3.94,
+      "rMax": 9.72,
+      "width": 105,
+      "height": 105
+    },
+    "svg2": {
+      "cx": 55.535,
+      "cy": 51.34,
+      "inkMass": 115.36,
+      "inkPx": 235,
+      "solidPx": 64,
+      "partialPx": 171,
+      "centroidR": 3.2487,
+      "centroidTheta": -20.916,
+      "softEdgeRatio": 0.728,
+      "rMin": 3.97,
+      "rMax": 9.72,
+      "width": 105,
+      "height": 105
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "md",
+    "canvas": {
+      "cx": 56.714,
+      "cy": 50.774,
+      "inkMass": 245.65,
+      "inkPx": 529,
+      "solidPx": 135,
+      "partialPx": 394,
+      "centroidR": 4.5533,
+      "centroidTheta": -22.273,
+      "softEdgeRatio": 0.745,
+      "rMin": 4.95,
+      "rMax": 13.76,
+      "width": 105,
+      "height": 105
+    },
+    "svg3": {
+      "cx": 56.686,
+      "cy": 50.862,
+      "inkMass": 249.05,
+      "inkPx": 488,
+      "solidPx": 155,
+      "partialPx": 333,
+      "centroidR": 4.495,
+      "centroidTheta": -21.374,
+      "softEdgeRatio": 0.682,
+      "rMin": 5.08,
+      "rMax": 13.91,
+      "width": 105,
+      "height": 105
+    },
+    "svg2": {
+      "cx": 57.573,
+      "cy": 51.656,
+      "inkMass": 250.31,
+      "inkPx": 552,
+      "solidPx": 121,
+      "partialPx": 431,
+      "centroidR": 5.1428,
+      "centroidTheta": -9.441,
+      "softEdgeRatio": 0.781,
+      "rMin": 5.04,
+      "rMax": 13.76,
+      "width": 105,
+      "height": 105
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "lg",
+    "canvas": {
+      "cx": 57.898,
+      "cy": 50.246,
+      "inkMass": 309.87,
+      "inkPx": 701,
+      "solidPx": 154,
+      "partialPx": 547,
+      "centroidR": 5.8501,
+      "centroidTheta": -22.663,
+      "softEdgeRatio": 0.78,
+      "rMin": 7.59,
+      "rMax": 17.19,
+      "width": 105,
+      "height": 105
+    },
+    "svg3": {
+      "cx": 57.913,
+      "cy": 50.301,
+      "inkMass": 311,
+      "inkPx": 701,
+      "solidPx": 155,
+      "partialPx": 546,
+      "centroidR": 5.8422,
+      "centroidTheta": -22.11,
+      "softEdgeRatio": 0.779,
+      "rMin": 7.59,
+      "rMax": 17.14,
+      "width": 105,
+      "height": 105
+    },
+    "svg2": {
+      "cx": 58.776,
+      "cy": 51.112,
+      "inkMass": 310.3,
+      "inkPx": 601,
+      "solidPx": 188,
+      "partialPx": 413,
+      "centroidR": 6.4277,
+      "centroidTheta": -12.471,
+      "softEdgeRatio": 0.687,
+      "rMin": 7.21,
+      "rMax": 17.36,
+      "width": 105,
+      "height": 105
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "xl",
+    "canvas": {
+      "cx": 60.835,
+      "cy": 48.946,
+      "inkMass": 636.69,
+      "inkPx": 1287,
+      "solidPx": 369,
+      "partialPx": 918,
+      "centroidR": 9.0614,
+      "centroidTheta": -23.093,
+      "softEdgeRatio": 0.713,
+      "rMin": 11.92,
+      "rMax": 26.04,
+      "width": 105,
+      "height": 105
+    },
+    "svg3": {
+      "cx": 60.822,
+      "cy": 49.076,
+      "inkMass": 641.13,
+      "inkPx": 1222,
+      "solidPx": 396,
+      "partialPx": 826,
+      "centroidR": 8.9988,
+      "centroidTheta": -22.367,
+      "softEdgeRatio": 0.676,
+      "rMin": 12.05,
+      "rMax": 26.27,
+      "width": 105,
+      "height": 105
+    },
+    "svg2": {
+      "cx": 60.861,
+      "cy": 49.078,
+      "inkMass": 641.61,
+      "inkPx": 1363,
+      "solidPx": 347,
+      "partialPx": 1016,
+      "centroidR": 9.0341,
+      "centroidTheta": -22.257,
+      "softEdgeRatio": 0.745,
+      "rMin": 12.01,
+      "rMax": 26.26,
+      "width": 105,
+      "height": 105
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "sm",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.914,
+        "maxResidDeg": 1.24,
+        "massSpread": 2.95
+      },
+      "svg3": {
+        "meanResidDeg": 0.559,
+        "maxResidDeg": 0.786,
+        "massSpread": 0.55
+      },
+      "svg2": {
+        "meanResidDeg": 0.254,
+        "maxResidDeg": 0.598,
+        "massSpread": 1.2
+      }
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "md",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.429,
+        "maxResidDeg": 0.579,
+        "massSpread": 1.28
+      },
+      "svg3": {
+        "meanResidDeg": 0.42,
+        "maxResidDeg": 0.524,
+        "massSpread": 1.11
+      },
+      "svg2": {
+        "meanResidDeg": 13.407,
+        "maxResidDeg": 28.429,
+        "massSpread": 1.11
+      }
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "lg",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.315,
+        "maxResidDeg": 0.445,
+        "massSpread": 0.47
+      },
+      "svg3": {
+        "meanResidDeg": 0.329,
+        "maxResidDeg": 0.48,
+        "massSpread": 0.4
+      },
+      "svg2": {
+        "meanResidDeg": 10.577,
+        "maxResidDeg": 22.28,
+        "massSpread": 1.53
+      }
+    }
+  },
+  {
+    "dpr": 1.75,
+    "size": "xl",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.229,
+        "maxResidDeg": 0.294,
+        "massSpread": 2.24
+      },
+      "svg3": {
+        "meanResidDeg": 0.198,
+        "maxResidDeg": 0.27,
+        "massSpread": 1.99
+      },
+      "svg2": {
+        "meanResidDeg": 0.113,
+        "maxResidDeg": 0.175,
+        "massSpread": 1.44
+      }
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "sm",
+    "canvas": {
+      "cx": 63.436,
+      "cy": 58.649,
+      "inkMass": 152.73,
+      "inkPx": 310,
+      "solidPx": 88,
+      "partialPx": 222,
+      "centroidR": 3.6923,
+      "centroidTheta": -21.47,
+      "softEdgeRatio": 0.716,
+      "rMin": 4.39,
+      "rMax": 10.89,
+      "width": 120,
+      "height": 120
+    },
+    "svg3": {
+      "cx": 63.434,
+      "cy": 58.657,
+      "inkMass": 152.91,
+      "inkPx": 310,
+      "solidPx": 88,
+      "partialPx": 222,
+      "centroidR": 3.687,
+      "centroidTheta": -21.363,
+      "softEdgeRatio": 0.716,
+      "rMin": 4.4,
+      "rMax": 10.89,
+      "width": 120,
+      "height": 120
+    },
+    "svg2": {
+      "cx": 63.437,
+      "cy": 58.656,
+      "inkMass": 152.89,
+      "inkPx": 309,
+      "solidPx": 88,
+      "partialPx": 221,
+      "centroidR": 3.6903,
+      "centroidTheta": -21.366,
+      "softEdgeRatio": 0.715,
+      "rMin": 4.4,
+      "rMax": 10.89,
+      "width": 120,
+      "height": 120
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "md",
+    "canvas": {
+      "cx": 64.774,
+      "cy": 58.009,
+      "inkMass": 319.93,
+      "inkPx": 608,
+      "solidPx": 202,
+      "partialPx": 406,
+      "centroidR": 5.1723,
+      "centroidTheta": -22.644,
+      "softEdgeRatio": 0.668,
+      "rMin": 5.89,
+      "rMax": 15.81,
+      "width": 120,
+      "height": 120
+    },
+    "svg3": {
+      "cx": 64.79,
+      "cy": 58.069,
+      "inkMass": 321.26,
+      "inkPx": 608,
+      "solidPx": 205,
+      "partialPx": 403,
+      "centroidR": 5.1643,
+      "centroidTheta": -21.961,
+      "softEdgeRatio": 0.663,
+      "rMin": 5.91,
+      "rMax": 15.92,
+      "width": 120,
+      "height": 120
+    },
+    "svg2": {
+      "cx": 65.79,
+      "cy": 59.069,
+      "inkMass": 321.25,
+      "inkPx": 608,
+      "solidPx": 205,
+      "partialPx": 403,
+      "centroidR": 5.8645,
+      "centroidTheta": -9.138,
+      "softEdgeRatio": 0.663,
+      "rMin": 5.91,
+      "rMax": 15.92,
+      "width": 120,
+      "height": 120
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "lg",
+    "canvas": {
+      "cx": 66.143,
+      "cy": 57.474,
+      "inkMass": 403.22,
+      "inkPx": 773,
+      "solidPx": 247,
+      "partialPx": 526,
+      "centroidR": 6.6423,
+      "centroidTheta": -22.347,
+      "softEdgeRatio": 0.68,
+      "rMin": 8.36,
+      "rMax": 19.53,
+      "width": 120,
+      "height": 120
+    },
+    "svg3": {
+      "cx": 66.15,
+      "cy": 57.517,
+      "inkMass": 404.23,
+      "inkPx": 773,
+      "solidPx": 247,
+      "partialPx": 526,
+      "centroidR": 6.6327,
+      "centroidTheta": -21.982,
+      "softEdgeRatio": 0.68,
+      "rMin": 8.38,
+      "rMax": 19.57,
+      "width": 120,
+      "height": 120
+    },
+    "svg2": {
+      "cx": 67.151,
+      "cy": 58.517,
+      "inkMass": 404.22,
+      "inkPx": 773,
+      "solidPx": 247,
+      "partialPx": 526,
+      "centroidR": 7.3031,
+      "centroidTheta": -11.714,
+      "softEdgeRatio": 0.68,
+      "rMin": 8.38,
+      "rMax": 19.57,
+      "width": 120,
+      "height": 120
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "xl",
+    "canvas": {
+      "cx": 69.497,
+      "cy": 56.081,
+      "inkMass": 837.16,
+      "inkPx": 1566,
+      "solidPx": 532,
+      "partialPx": 1034,
+      "centroidR": 10.274,
+      "centroidTheta": -22.425,
+      "softEdgeRatio": 0.66,
+      "rMin": 13.79,
+      "rMax": 29.93,
+      "width": 120,
+      "height": 120
+    },
+    "svg3": {
+      "cx": 69.497,
+      "cy": 56.088,
+      "inkMass": 837.47,
+      "inkPx": 1565,
+      "solidPx": 532,
+      "partialPx": 1033,
+      "centroidR": 10.2717,
+      "centroidTheta": -22.39,
+      "softEdgeRatio": 0.66,
+      "rMin": 13.79,
+      "rMax": 29.93,
+      "width": 120,
+      "height": 120
+    },
+    "svg2": {
+      "cx": 69.498,
+      "cy": 56.086,
+      "inkMass": 837.47,
+      "inkPx": 1565,
+      "solidPx": 532,
+      "partialPx": 1033,
+      "centroidR": 10.2729,
+      "centroidTheta": -22.398,
+      "softEdgeRatio": 0.66,
+      "rMin": 13.79,
+      "rMax": 29.93,
+      "width": 120,
+      "height": 120
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "sm",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.448,
+        "maxResidDeg": 0.61,
+        "massSpread": 1.13
+      },
+      "svg3": {
+        "meanResidDeg": 0.452,
+        "maxResidDeg": 0.618,
+        "massSpread": 1.15
+      },
+      "svg2": {
+        "meanResidDeg": 0.167,
+        "maxResidDeg": 0.386,
+        "massSpread": 1.43
+      }
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "md",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.365,
+        "maxResidDeg": 0.472,
+        "massSpread": 1.08
+      },
+      "svg3": {
+        "meanResidDeg": 0.371,
+        "maxResidDeg": 0.493,
+        "massSpread": 1.06
+      },
+      "svg2": {
+        "meanResidDeg": 13.451,
+        "maxResidDeg": 28.582,
+        "massSpread": 1.56
+      }
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "lg",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.305,
+        "maxResidDeg": 0.434,
+        "massSpread": 1.65
+      },
+      "svg3": {
+        "meanResidDeg": 0.309,
+        "maxResidDeg": 0.428,
+        "massSpread": 1.63
+      },
+      "svg2": {
+        "meanResidDeg": 10.648,
+        "maxResidDeg": 22.35,
+        "massSpread": 1.84
+      }
+    }
+  },
+  {
+    "dpr": 2,
+    "size": "xl",
+    "rotation": {
+      "canvas": {
+        "meanResidDeg": 0.181,
+        "maxResidDeg": 0.248,
+        "massSpread": 3.11
+      },
+      "svg3": {
+        "meanResidDeg": 0.184,
+        "maxResidDeg": 0.248,
+        "massSpread": 3.08
+      },
+      "svg2": {
+        "meanResidDeg": 0.091,
+        "maxResidDeg": 0.145,
+        "massSpread": 2.3
+      }
+    }
+  }
+]
