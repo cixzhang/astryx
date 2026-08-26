@@ -1,0 +1,79 @@
+{
+  "label": "after",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-5559",
+    "expectedSha": "ed494011716ed9d8013de5acbfe2b4336ebff563",
+    "observedSha": "ed494011716ed9d8013de5acbfe2b4336ebff563"
+  },
+  "expected": {
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 400,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "clipped": true,
+      "openTooltips": 1,
+      "tooltipText": "This is a very long label that will certainly be truncated inside a narrow container",
+      "describedBy": "This is a very long label that will certainly be truncated inside a narrow container"
+    },
+    "runningAnimations": 0
+  },
+  "observed": {
+    "storyExpected": "zzreview-5559--text-plain",
+    "storyObserved": "zzreview-5559--text-plain",
+    "routeObserved": "/iframe.html",
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 400,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 29,
+      "y": 29,
+      "width": 274,
+      "height": 20,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "clipped": true,
+      "openTooltips": 1,
+      "tooltipText": "This is a very long label that will certainly be truncated inside a narrow container",
+      "describedBy": "This is a very long label that will certainly be truncated inside a narrow container"
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-5559/after__hovered-truncated-text.png",
+    "bytes": 12067
+  }
+}
