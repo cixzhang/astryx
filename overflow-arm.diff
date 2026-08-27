@@ -1,0 +1,28 @@
+diff --git a/apps/storybook/stories/InputGroup.stories.tsx b/apps/storybook/stories/InputGroup.stories.tsx
+index 302eb5a8260..206df631ee5 100644
+--- a/apps/storybook/stories/InputGroup.stories.tsx
++++ b/apps/storybook/stories/InputGroup.stories.tsx
+@@ -169,7 +169,14 @@ export const WithTypeahead: Story = {
+ 
+ export const WithTokenizer: Story = {
+   render: args => {
+-    const [value, setValue] = useState<SearchableItem[]>([fruits[0]]);
++    const [value, setValue] = useState<SearchableItem[]>([
++      {id: 'r1', label: 'Strawberry'},
++      {id: 'r2', label: 'Blackcurrant'},
++      {id: 'r3', label: 'Passionfruit'},
++      {id: 'r4', label: 'Pomegranate'},
++      {id: 'r5', label: 'Dragonfruit'},
++      {id: 'r6', label: 'Watermelon'},
++    ]);
+     return (
+       <InputGroup {...args}>
+         <InputGroupText>Tags</InputGroupText>
+@@ -180,7 +187,6 @@ export const WithTokenizer: Story = {
+           value={value}
+           onChange={setValue}
+           placeholder="Add fruits..."
+-          maxEntries={3}
+           hasEntriesOnFocus
+         />
+       </InputGroup>

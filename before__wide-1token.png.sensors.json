@@ -1,0 +1,84 @@
+{
+  "label": "before: grouped Tokenizer, one token, 560px",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-4405-6d90946-3pm",
+    "expectedSha": "7f7460f3ad6f79b74f8c15bde2dbe80190aef738",
+    "observedSha": "7f7460f3ad6f79b74f8c15bde2dbe80190aef738"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "viewport": {
+      "width": 560,
+      "height": 300,
+      "dpr": 1
+    },
+    "state": {
+      "fields": 2,
+      "fieldLabels": 2,
+      "tokens": 1
+    }
+  },
+  "observed": {
+    "storyExpected": "core-inputgroup--with-tokenizer",
+    "storyObserved": "core-inputgroup--with-tokenizer",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 560,
+      "height": 300,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 64,
+      "width": 528,
+      "height": 32,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "fields": 2,
+      "fieldLabels": 2,
+      "tokens": 1
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-4405/shots/before__wide-1token.png",
+    "bytes": 6740
+  }
+}

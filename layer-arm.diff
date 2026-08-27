@@ -1,0 +1,12 @@
+diff --git a/apps/storybook/stories/InputGroup.stories.tsx b/apps/storybook/stories/InputGroup.stories.tsx
+index 302eb5a8260..68462661e04 100644
+--- a/apps/storybook/stories/InputGroup.stories.tsx
++++ b/apps/storybook/stories/InputGroup.stories.tsx
+@@ -180,6 +180,7 @@ export const WithTokenizer: Story = {
+           value={value}
+           onChange={setValue}
+           placeholder="Add fruits..."
++          tokenOverflowBehavior="unfocusedLayer"
+           maxEntries={3}
+           hasEntriesOnFocus
+         />

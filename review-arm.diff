@@ -1,0 +1,69 @@
+diff --git a/apps/storybook/stories/InputGroup.stories.tsx b/apps/storybook/stories/InputGroup.stories.tsx
+index 302eb5a8260..1f79b3f3d99 100644
+--- a/apps/storybook/stories/InputGroup.stories.tsx
++++ b/apps/storybook/stories/InputGroup.stories.tsx
+@@ -510,3 +510,64 @@ export const AllVariations: Story = {
+     );
+   },
+ };
++
++// REVIEW-ONLY ARM (#4405): the grouped Tokenizer past its own guidance —
++// six long selections, default tokenOverflowBehavior. Not part of the PR.
++export const ReviewTokenizerOverflow: Story = {
++  render: args => {
++    const many: SearchableItem[] = [
++      {id: 'a', label: 'Strawberry'},
++      {id: 'b', label: 'Blackcurrant'},
++      {id: 'c', label: 'Passionfruit'},
++      {id: 'd', label: 'Pomegranate'},
++      {id: 'e', label: 'Dragonfruit'},
++      {id: 'f', label: 'Watermelon'},
++    ];
++    const [value, setValue] = useState<SearchableItem[]>(many);
++    return (
++      <InputGroup {...args}>
++        <InputGroupText>Tags</InputGroupText>
++        <Tokenizer
++          label="Selections"
++          isLabelHidden
++          searchSource={fruitSource}
++          value={value}
++          onChange={setValue}
++          placeholder="Add fruits..."
++        />
++      </InputGroup>
++    );
++  },
++  args: {label: 'Favorite fruits', description: 'Pick up to three fruits'},
++};
++
++// Same six selections, but with the summarizing behaviour the PR's own docs
++// recommend for a grouped multi-value control.
++export const ReviewTokenizerSummarized: Story = {
++  render: args => {
++    const many: SearchableItem[] = [
++      {id: 'a', label: 'Strawberry'},
++      {id: 'b', label: 'Blackcurrant'},
++      {id: 'c', label: 'Passionfruit'},
++      {id: 'd', label: 'Pomegranate'},
++      {id: 'e', label: 'Dragonfruit'},
++      {id: 'f', label: 'Watermelon'},
++    ];
++    const [value, setValue] = useState<SearchableItem[]>(many);
++    return (
++      <InputGroup {...args}>
++        <InputGroupText>Tags</InputGroupText>
++        <Tokenizer
++          label="Selections"
++          isLabelHidden
++          searchSource={fruitSource}
++          value={value}
++          onChange={setValue}
++          placeholder="Add fruits..."
++          tokenOverflowBehavior="unfocusedInline"
++        />
++      </InputGroup>
++    );
++  },
++  args: {label: 'Favorite fruits', description: 'Pick up to three fruits'},
++};
