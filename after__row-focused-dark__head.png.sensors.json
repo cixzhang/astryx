@@ -1,0 +1,72 @@
+{
+  "label": "after__row-focused-dark__head",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-4690-c88f6579-2pm",
+    "expectedSha": "c88f65799985124624b7ffa3ae4415264f9edeee",
+    "observedSha": "c88f65799985124624b7ffa3ae4415264f9edeee"
+  },
+  "expected": {
+    "globals": {
+      "colorMode": "dark"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 420,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": "focused=Platform ring=2px solid focusVisible=true"
+  },
+  "observed": {
+    "storyExpected": "core-tabletree--default",
+    "storyObserved": "core-tabletree--default",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "colorMode": "dark"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 420,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 16,
+      "width": 1068,
+      "height": 242,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": "focused=Platform ring=2px solid focusVisible=true"
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/shots/pr4690-2pm/after__row-focused-dark__head.png",
+    "bytes": 22116
+  }
+}

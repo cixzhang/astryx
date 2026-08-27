@@ -1,0 +1,68 @@
+{
+  "label": "before__at-rest__main",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/main",
+    "expectedSha": "2458b03b35a45512b996b0c2c764d9530a36a052",
+    "observedSha": "2458b03b35a45512b996b0c2c764d9530a36a052"
+  },
+  "expected": {
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": "Engineering | Platform | Product Engineering | Design | Operations"
+  },
+  "observed": {
+    "storyExpected": "core-tabletree--default",
+    "storyObserved": "core-tabletree--default",
+    "routeObserved": "/iframe.html",
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 16,
+      "width": 1068,
+      "height": 242,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": "Engineering | Platform | Product Engineering | Design | Operations"
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/shots/pr4690-2pm/before__at-rest__main.png",
+    "bytes": 22949
+  }
+}
