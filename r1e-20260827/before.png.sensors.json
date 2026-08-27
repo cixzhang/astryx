@@ -1,0 +1,86 @@
+{
+  "label": "before — th-TH date consistency",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-pr-5303-r1e-1787835892",
+    "expectedSha": "1ab138127940281553bfea743df9e0ddf2a1404b",
+    "observedSha": "1ab138127940281553bfea743df9e0ddf2a1404b"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1200,
+      "height": 900,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "sectionLabel": "th-TH date examples",
+      "fieldLabel": "Selected date",
+      "selectedDay": "22"
+    },
+    "runningAnimations": 0,
+    "surfaceClass": "light"
+  },
+  "observed": {
+    "storyExpected": "review-pr-5303--date-consistency",
+    "storyObserved": "review-pr-5303--date-consistency",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
+    "surfaceClass": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1200,
+      "height": 900,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 16,
+      "width": 520,
+      "height": 445,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "sectionLabel": "th-TH date examples",
+      "fieldLabel": "Selected date",
+      "selectedDay": "22"
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-5303/shots/date-consistency-before.png",
+    "bytes": 28697
+  }
+}

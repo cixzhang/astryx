@@ -1,0 +1,41 @@
+diff --git a/packages/core/src/Timestamp/formatInstant.ts b/packages/core/src/Timestamp/formatInstant.ts
+index f0ba7df3222..1a40316e614 100644
+--- a/packages/core/src/Timestamp/formatInstant.ts
++++ b/packages/core/src/Timestamp/formatInstant.ts
+@@ -182,28 +182,24 @@ export function formatInstant(
+         ...FULL_OPTIONS,
+         timeZoneName: timeZoneNameStyle,
+         ...zone,
+-        calendar: 'gregory',
+       }).format(date);
+ 
+     case 'date':
+       return new Intl.DateTimeFormat(locale, {
+         ...SHARED_DATE_FORMAT_OPTIONS.date,
+         ...zone,
+-        calendar: 'gregory',
+       }).format(date);
+ 
+     case 'date_long':
+       return new Intl.DateTimeFormat(locale, {
+         ...SHARED_DATE_FORMAT_OPTIONS.date_long,
+         ...zone,
+-        calendar: 'gregory',
+       }).format(date);
+ 
+     case 'date_weekday':
+       return new Intl.DateTimeFormat(locale, {
+         ...SHARED_DATE_FORMAT_OPTIONS.date_weekday,
+         ...zone,
+-        calendar: 'gregory',
+       }).format(date);
+ 
+     case 'date_time':
+@@ -211,7 +207,6 @@ export function formatInstant(
+         ...DATE_TIME_OPTIONS,
+         ...zoneName,
+         ...zone,
+-        calendar: 'gregory',
+       }).format(date);
+ 
+     case 'time':
