@@ -1,0 +1,84 @@
+diff --git a/apps/storybook/stories/ChatSpeechReviewProbe.stories.tsx b/apps/storybook/stories/ChatSpeechReviewProbe.stories.tsx
+new file mode 100644
+index 00000000000..abee5a5be7f
+--- /dev/null
++++ b/apps/storybook/stories/ChatSpeechReviewProbe.stories.tsx
+@@ -0,0 +1,78 @@
++import {useMemo, useState} from 'react';
++import type {Meta, StoryObj} from '@storybook/react';
++import {ChatSpeechButton, useChatSpeech} from '@astryxdesign/core/Chat';
++import type {UseChatSpeechReturn} from '@astryxdesign/core/Chat';
++
++function SharedControllerHarness() {
++  const [isSpeaking, setIsSpeaking] = useState(false);
++  const [events, setEvents] = useState<string[]>([]);
++  const speech = useMemo<UseChatSpeechReturn>(
++    () => ({
++      isSupported: true,
++      isSpeaking,
++      isPaused: false,
++      voices: [],
++      speak: text => {
++        setEvents(value => [...value, `speak:${text}`]);
++        setIsSpeaking(true);
++      },
++      stop: () => {
++        setEvents(value => [...value, 'stop']);
++        setIsSpeaking(false);
++      },
++      pause: () => {},
++      resume: () => {},
++    }),
++    [isSpeaking],
++  );
++  return (
++    <div>
++      <p id="hint">Choose a message</p>
++      <div style={{display: 'flex', gap: 8}}>
++        <ChatSpeechButton
++          speech={speech}
++          text="First"
++          aria-describedby="hint"
++          data-testid="first-wrapper"
++        />
++        <ChatSpeechButton speech={speech} text="Second" />
++      </div>
++      <output data-testid="events">{events.join('|')}</output>
++    </div>
++  );
++}
++
++const meta = {
++  title: 'Core/ChatSpeechReviewProbe',
++  component: SharedControllerHarness,
++  parameters: {layout: 'centered'},
++} satisfies Meta<typeof SharedControllerHarness>;
++export default meta;
++type Story = StoryObj<typeof meta>;
++export const SharedController: Story = {};
++
++function NativeLifecycleHarness() {
++  const [mounted, setMounted] = useState(true);
++  return (
++    <div>
++      <button type="button" data-testid="unmount" onClick={() => setMounted(false)}>Unmount speech owner</button>
++      {mounted ? <NativeSpeechOwner /> : <output data-testid="unmounted">unmounted</output>}
++    </div>
++  );
++}
++
++function NativeSpeechOwner() {
++  const speech = useChatSpeech();
++  const text = 'This deliberately long sentence keeps the speech synthesizer active while the review drives pause, resume, stop, restart, and unmount behavior in Chromium. '.repeat(8);
++  return (
++    <div>
++      <button type="button" data-testid="start" onClick={() => speech.speak(text)}>Start</button>
++      <button type="button" data-testid="pause" onClick={speech.pause}>Pause</button>
++      <button type="button" data-testid="resume" onClick={speech.resume}>Resume</button>
++      <button type="button" data-testid="stop" onClick={speech.stop}>Stop</button>
++      <output data-testid="state" data-supported={speech.isSupported} data-speaking={speech.isSpeaking} data-paused={speech.isPaused}>{`${speech.isSpeaking}/${speech.isPaused}`}</output>
++    </div>
++  );
++}
++
++export const ActualLifecycle: Story = {render: () => <NativeLifecycleHarness />};
