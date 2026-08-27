@@ -1,0 +1,175 @@
+{
+  "label": "Toast theming specimens — dark",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/pr-5458-toast-theme",
+    "expectedSha": "0ca75baa1ef79ca9c966756eb789612bd72bab6f",
+    "observedSha": "0ca75baa1ef79ca9c966756eb789612bd72bab6f"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 620,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 4,
+    "state": [
+      {
+        "type": "error",
+        "theme": "neutral",
+        "media": "off",
+        "background": "rgb(227, 25, 59)",
+        "color": "rgb(250, 250, 250)",
+        "radius": "12px",
+        "paddingInline": "16px",
+        "font": "Figtree",
+        "contrast": 4.5,
+        "text": "Could not reach the server."
+      },
+      {
+        "type": "info",
+        "theme": "neutral",
+        "media": "light",
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(23, 23, 23)",
+        "radius": "12px",
+        "paddingInline": "16px",
+        "font": "Figtree",
+        "contrast": 17.9,
+        "text": "Your changes have been saved."
+      },
+      {
+        "type": "error",
+        "theme": "toast-brand-demo",
+        "media": "off",
+        "background": "rgb(92, 10, 24)",
+        "color": "rgb(250, 250, 250)",
+        "radius": "9999px",
+        "paddingInline": "24px",
+        "font": "ui-monospace",
+        "contrast": 13.3,
+        "text": "Could not reach the server."
+      },
+      {
+        "type": "info",
+        "theme": "toast-brand-demo",
+        "media": "light",
+        "background": "rgb(255, 244, 214)",
+        "color": "rgb(23, 23, 23)",
+        "radius": "9999px",
+        "paddingInline": "24px",
+        "font": "ui-monospace",
+        "contrast": 16.4,
+        "text": "Your changes have been saved."
+      }
+    ],
+    "runningAnimations": 0
+  },
+  "observed": {
+    "storyExpected": "core-toast--themed-toast",
+    "storyObserved": "core-toast--themed-toast",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
+    "surfaceClass": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 1100,
+      "height": 620,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 4,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 44,
+      "width": 400,
+      "height": 52,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": [
+      {
+        "type": "error",
+        "theme": "neutral",
+        "media": "off",
+        "background": "rgb(227, 25, 59)",
+        "color": "rgb(250, 250, 250)",
+        "radius": "12px",
+        "paddingInline": "16px",
+        "font": "Figtree",
+        "contrast": 4.5,
+        "text": "Could not reach the server."
+      },
+      {
+        "type": "info",
+        "theme": "neutral",
+        "media": "light",
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(23, 23, 23)",
+        "radius": "12px",
+        "paddingInline": "16px",
+        "font": "Figtree",
+        "contrast": 17.9,
+        "text": "Your changes have been saved."
+      },
+      {
+        "type": "error",
+        "theme": "toast-brand-demo",
+        "media": "off",
+        "background": "rgb(92, 10, 24)",
+        "color": "rgb(250, 250, 250)",
+        "radius": "9999px",
+        "paddingInline": "24px",
+        "font": "ui-monospace",
+        "contrast": 13.3,
+        "text": "Could not reach the server."
+      },
+      {
+        "type": "info",
+        "theme": "toast-brand-demo",
+        "media": "light",
+        "background": "rgb(255, 244, 214)",
+        "color": "rgb(23, 23, 23)",
+        "radius": "9999px",
+        "paddingInline": "24px",
+        "font": "ui-monospace",
+        "contrast": 16.4,
+        "text": "Your changes have been saved."
+      }
+    ]
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/worktrees/pr-5458-toast-theme/.pr5458-shots/Toast__themed-toast__dark.png",
+    "bytes": 27909
+  }
+}
