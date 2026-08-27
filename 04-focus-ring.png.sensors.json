@@ -1,0 +1,68 @@
+{
+  "label": "preview trigger focused by keyboard; ring drawn on the frame",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-4158-a4e2b81d-2pm",
+    "expectedSha": "58906ddc74162818c14c737b7232fd6f88af4f3b",
+    "observedSha": "58906ddc74162818c14c737b7232fd6f88af4f3b"
+  },
+  "expected": {
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": "busy=no skeleton=0 img=1 placeholder=0 trigger=1 dialog=0 focusRing=solid"
+  },
+  "observed": {
+    "storyExpected": "lab-image--with-preview",
+    "storyObserved": "lab-image--with-preview",
+    "routeObserved": "/iframe.html",
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 130,
+      "y": 80,
+      "width": 640,
+      "height": 360,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": "busy=no skeleton=0 img=1 placeholder=0 trigger=1 dialog=0 focusRing=solid"
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/review-4158-shots/04-focus-ring.png",
+    "bytes": 11143
+  }
+}

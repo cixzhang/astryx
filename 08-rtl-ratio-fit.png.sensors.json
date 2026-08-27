@@ -1,0 +1,72 @@
+{
+  "label": "cover / contain / full radius in RTL",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/review-4158-a4e2b81d-2pm",
+    "expectedSha": "58906ddc74162818c14c737b7232fd6f88af4f3b",
+    "observedSha": "58906ddc74162818c14c737b7232fd6f88af4f3b"
+  },
+  "expected": {
+    "globals": {
+      "direction": "rtl"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "rtl",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 3,
+    "state": "busy=no skeleton=0 img=1 placeholder=0 trigger=0 dialog=0 focusRing=none"
+  },
+  "observed": {
+    "storyExpected": "lab-image--ratio-and-fit",
+    "storyObserved": "lab-image--ratio-and-fit",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "direction": "rtl"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "rtl",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 3,
+    "visible": true,
+    "box": {
+      "x": 572.671875,
+      "y": 148.765625,
+      "width": 197.328125,
+      "height": 197.328125,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": "busy=no skeleton=0 img=1 placeholder=0 trigger=0 dialog=0 focusRing=none"
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/review-4158-shots/08-rtl-ratio-fit.png",
+    "bytes": 19757
+  }
+}
