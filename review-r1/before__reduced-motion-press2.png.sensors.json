@@ -1,47 +1,38 @@
 {
-  "label": "Carousel__swatches__overflow__light",
+  "label": "before-reduced",
   "identity": "story",
   "build": {
-    "root": "/Users/cindyxz/astryx/worktrees/night-watch-component-audit/Carousel/2026-08-27",
-    "expectedSha": "38db8bed309a061e6442528796b38d52743a0a9b",
-    "observedSha": "38db8bed309a061e6442528796b38d52743a0a9b"
+    "root": "/Users/cindyxz/astryx/worktrees/main",
+    "expectedSha": "7e6b73b4870",
+    "observedSha": "7e6b73b48700105b5ea992d417507fd5c9e4de2f"
   },
   "expected": {
-    "globals": {
-      "colorMode": "light",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
-      "reducedMotion": false,
+      "reducedMotion": true,
       "coarsePointer": false,
       "hover": true
     },
     "targetCount": 1,
     "state": {
-      "slides": 12,
-      "pos": "start",
-      "overflow": true,
-      "btns": "Scroll left:disabled|Scroll right:enabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": false,
+      "focusOwner": "button:Scroll right"
     }
   },
   "observed": {
     "storyExpected": "core-carousel--color-swatches",
     "storyObserved": "core-carousel--color-swatches",
     "routeObserved": "/iframe.html",
-    "globals": {
-      "colorMode": "light",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
     "colorMode": "light",
     "surfaceColor": "rgba(0, 0, 0, 0)",
@@ -49,13 +40,13 @@
     "surfaceClass": "unknown",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
-      "reducedMotion": false,
+      "reducedMotion": true,
       "coarsePointer": false,
       "hover": true
     },
@@ -72,15 +63,12 @@
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "slides": 12,
-      "pos": "start",
-      "overflow": true,
-      "btns": "Scroll left:disabled|Scroll right:enabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": false,
+      "focusOwner": "button:Scroll right"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-carousel-20260827/shots-after/Carousel__swatches__overflow__light.png",
-    "bytes": 5586
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-5601/shots/before__reduced-motion-press2.png",
+    "bytes": 8539
   }
 }

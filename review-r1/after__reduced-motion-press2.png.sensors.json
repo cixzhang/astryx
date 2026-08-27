@@ -1,47 +1,38 @@
 {
-  "label": "Carousel__cards__snap-rest__light",
+  "label": "after-reduced",
   "identity": "story",
   "build": {
-    "root": "/Users/cindyxz/astryx/worktrees/night-watch-component-audit/Carousel/2026-08-27",
+    "root": "/Users/cindyxz/astryx/worktrees/pr-5601-review",
     "expectedSha": "38db8bed309a061e6442528796b38d52743a0a9b",
     "observedSha": "38db8bed309a061e6442528796b38d52743a0a9b"
   },
   "expected": {
-    "globals": {
-      "colorMode": "light",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
-      "reducedMotion": false,
+      "reducedMotion": true,
       "coarsePointer": false,
       "hover": true
     },
     "targetCount": 1,
     "state": {
-      "slides": 6,
-      "pos": "start",
-      "overflow": true,
-      "btns": "Scroll left:disabled|Scroll right:enabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": false,
+      "focusOwner": "scroller"
     }
   },
   "observed": {
-    "storyExpected": "core-carousel--cards",
-    "storyObserved": "core-carousel--cards",
+    "storyExpected": "core-carousel--color-swatches",
+    "storyObserved": "core-carousel--color-swatches",
     "routeObserved": "/iframe.html",
-    "globals": {
-      "colorMode": "light",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
     "colorMode": "light",
     "surfaceColor": "rgba(0, 0, 0, 0)",
@@ -49,13 +40,13 @@
     "surfaceClass": "unknown",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
-      "reducedMotion": false,
+      "reducedMotion": true,
       "coarsePointer": false,
       "hover": true
     },
@@ -64,23 +55,20 @@
     "box": {
       "x": 40,
       "y": 65.140625,
-      "width": 500,
-      "height": 85.140625,
+      "width": 360,
+      "height": 80,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "slides": 6,
-      "pos": "start",
-      "overflow": true,
-      "btns": "Scroll left:disabled|Scroll right:enabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": false,
+      "focusOwner": "scroller"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-carousel-20260827/shots-after/Carousel__cards__snap-rest__light.png",
-    "bytes": 10159
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-5601/shots/after__reduced-motion-press2.png",
+    "bytes": 7550
   }
 }

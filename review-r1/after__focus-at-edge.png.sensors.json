@@ -1,22 +1,19 @@
 {
-  "label": "Carousel__fewItems__no-overflow__dark",
+  "label": "after",
   "identity": "story",
   "build": {
-    "root": "/Users/cindyxz/astryx/worktrees/night-watch-component-audit/Carousel/2026-08-27",
+    "root": "/Users/cindyxz/astryx/worktrees/pr-5601-review",
     "expectedSha": "38db8bed309a061e6442528796b38d52743a0a9b",
     "observedSha": "38db8bed309a061e6442528796b38d52743a0a9b"
   },
   "expected": {
-    "globals": {
-      "colorMode": "dark",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
-    "colorMode": "dark",
+    "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
@@ -27,30 +24,24 @@
     },
     "targetCount": 1,
     "state": {
-      "slides": 3,
-      "pos": "start",
-      "overflow": false,
-      "btns": "Scroll left:disabled|Scroll right:disabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": true,
+      "focusOwner": "scroller"
     }
   },
   "observed": {
-    "storyExpected": "core-carousel--few-items",
-    "storyObserved": "core-carousel--few-items",
+    "storyExpected": "core-carousel--default",
+    "storyObserved": "core-carousel--default",
     "routeObserved": "/iframe.html",
-    "globals": {
-      "colorMode": "dark",
-      "astryxTheme": "neutral"
-    },
+    "globals": {},
     "themeAttr": "neutral",
-    "colorMode": "dark",
+    "colorMode": "light",
     "surfaceColor": "rgba(0, 0, 0, 0)",
     "surfaceLuminance": null,
     "surfaceClass": "unknown",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 460,
+      "width": 620,
+      "height": 300,
       "dpr": 1
     },
     "media": {
@@ -72,15 +63,12 @@
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "slides": 3,
-      "pos": "start",
-      "overflow": false,
-      "btns": "Scroll left:disabled|Scroll right:disabled",
-      "focus": "BODY"
+      "trailingButtonDisabled": true,
+      "focusOwner": "scroller"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-carousel-20260827/shots-after/Carousel__fewItems__no-overflow__dark.png",
-    "bytes": 29906
+    "path": "/Users/cindyxz/astryx/review-artifacts/pr-5601/shots/after__focus-at-edge.png",
+    "bytes": 52653
   }
 }

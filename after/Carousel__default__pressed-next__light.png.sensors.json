@@ -3,8 +3,8 @@
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-component-audit/Carousel/2026-08-27",
-    "expectedSha": "8ecff838275e5160c839c9959c5c11c705784d55",
-    "observedSha": "8ecff838275e5160c839c9959c5c11c705784d55"
+    "expectedSha": "38db8bed309a061e6442528796b38d52743a0a9b",
+    "observedSha": "38db8bed309a061e6442528796b38d52743a0a9b"
   },
   "expected": {
     "globals": {
