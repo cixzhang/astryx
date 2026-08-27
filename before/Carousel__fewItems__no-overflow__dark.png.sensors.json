@@ -1,0 +1,86 @@
+{
+  "label": "Carousel__fewItems__no-overflow__dark",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/night-watch-component-audit/Carousel/2026-08-27",
+    "expectedSha": "8ecff838275e5160c839c9959c5c11c705784d55",
+    "observedSha": "8ecff838275e5160c839c9959c5c11c705784d55"
+  },
+  "expected": {
+    "globals": {
+      "colorMode": "dark",
+      "astryxTheme": "neutral"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 460,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "slides": 3,
+      "pos": "start",
+      "overflow": false,
+      "btns": "Scroll left:disabled|Scroll right:disabled",
+      "focus": "BODY"
+    }
+  },
+  "observed": {
+    "storyExpected": "core-carousel--few-items",
+    "storyObserved": "core-carousel--few-items",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "colorMode": "dark",
+      "astryxTheme": "neutral"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 460,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 40,
+      "y": 65.140625,
+      "width": 400,
+      "height": 64,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "slides": 3,
+      "pos": "start",
+      "overflow": false,
+      "btns": "Scroll left:disabled|Scroll right:disabled",
+      "focus": "BODY"
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/nw-carousel-20260827/shots-before-v2/Carousel__fewItems__no-overflow__dark.png",
+    "bytes": 29906
+  }
+}
