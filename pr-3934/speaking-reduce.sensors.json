@@ -1,0 +1,84 @@
+{
+  "build": {
+    "expectedSha": "3364f381ccd86803c6d8d7c90206d5e04906399d",
+    "observedSha": "3364f381ccd86803c6d8d7c90206d5e04906399d"
+  },
+  "expected": {
+    "colorMode": "light",
+    "direction": "ltr",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": true
+    },
+    "runningAnimations": 4,
+    "state": {
+      "animationsRunning": 4,
+      "names": [
+        "Stop reading"
+      ],
+      "pressed": [
+        "true"
+      ]
+    },
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 400,
+      "width": 900
+    }
+  },
+  "identity": "story",
+  "image": {
+    "bytes": 2273,
+    "file": "speaking-reduce.png"
+  },
+  "label": "speaking-reduce",
+  "observed": {
+    "box": {
+      "height": 32,
+      "insideViewport": true,
+      "width": 32,
+      "x": 190,
+      "y": 181
+    },
+    "colorMode": "light",
+    "direction": "ltr",
+    "fonts": "loaded",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": true
+    },
+    "routeObserved": "/iframe.html",
+    "runningAnimations": 4,
+    "state": {
+      "animationsRunning": 4,
+      "names": [
+        "Stop reading"
+      ],
+      "pressed": [
+        "true"
+      ]
+    },
+    "storyExpected": "core-chatspeech--speaking",
+    "storyObserved": "core-chatspeech--speaking",
+    "storybookError": null,
+    "surfaceClass": "unknown",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 400,
+      "width": 900
+    },
+    "visible": true
+  }
+}

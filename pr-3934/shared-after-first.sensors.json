@@ -1,0 +1,87 @@
+{
+  "build": {
+    "expectedSha": "3364f381ccd86803c6d8d7c90206d5e04906399d",
+    "observedSha": "3364f381ccd86803c6d8d7c90206d5e04906399d"
+  },
+  "expected": {
+    "colorMode": "light",
+    "direction": "ltr",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": false
+    },
+    "state": {
+      "events": "speak:First",
+      "names": [
+        "Stop reading",
+        "Stop reading"
+      ],
+      "pressed": [
+        "true",
+        "true"
+      ]
+    },
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 400,
+      "width": 900
+    }
+  },
+  "identity": "story",
+  "image": {
+    "bytes": 4374,
+    "file": "shared-after-first.png"
+  },
+  "label": "shared-after-first",
+  "observed": {
+    "box": {
+      "height": 38,
+      "insideViewport": true,
+      "width": 143.265625,
+      "x": 378.375,
+      "y": 181
+    },
+    "colorMode": "light",
+    "direction": "ltr",
+    "fonts": "loaded",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": false
+    },
+    "routeObserved": "/iframe.html",
+    "runningAnimations": 8,
+    "state": {
+      "events": "speak:First",
+      "names": [
+        "Stop reading",
+        "Stop reading"
+      ],
+      "pressed": [
+        "true",
+        "true"
+      ]
+    },
+    "storyExpected": "core-chatspeechreviewprobe--shared-controller",
+    "storyObserved": "core-chatspeechreviewprobe--shared-controller",
+    "storybookError": null,
+    "surfaceClass": "unknown",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 400,
+      "width": 900
+    },
+    "visible": true
+  }
+}
