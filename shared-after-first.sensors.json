@@ -1,0 +1,90 @@
+{
+  "label": "shared-controller-after-first",
+  "identity": "story",
+  "build": {
+    "expectedSha": "98c48c502080f68f551e7b8685bd9521ae32ccdf",
+    "observedSha": "98c48c502080f68f551e7b8685bd9521ae32ccdf"
+  },
+  "expected": {
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 400,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 2,
+    "state": {
+      "labels": [
+        "Stop reading",
+        "Stop reading"
+      ],
+      "pressed": [
+        "true",
+        "true"
+      ],
+      "events": "speak:First",
+      "focus": 0
+    },
+    "runningAnimations": 8
+  },
+  "observed": {
+    "storyExpected": "core-chatspeechreviewprobe--shared-controller",
+    "storyObserved": "core-chatspeechreviewprobe--shared-controller",
+    "routeObserved": "/iframe.html",
+    "globals": {},
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 400,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 2,
+    "visible": true,
+    "box": {
+      "x": 388.859375,
+      "y": 182,
+      "width": 32,
+      "height": 32,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 8,
+    "storybookError": null,
+    "state": {
+      "labels": [
+        "Stop reading",
+        "Stop reading"
+      ],
+      "pressed": [
+        "true",
+        "true"
+      ],
+      "events": "speak:First",
+      "focus": 0
+    }
+  },
+  "image": {
+    "bytes": 6727,
+    "file": "shared-after-first.png"
+  }
+}
