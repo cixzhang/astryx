@@ -18,13 +18,24 @@
  * good". Quality judgements belong to the human review stage.
  */
 
+import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 
 const LAB_SRC = 'packages/lab/src';
 const STORIES_DIR = 'apps/storybook/stories';
 const CI_WORKFLOW = '.github/workflows/ci.yml';
+const SCOPE_ACTION = '.github/actions/affected-scope/action.yml';
 const RTL_AUDIT = 'apps/storybook/rtl-audit/rtl-audit.mjs';
+const require = createRequire(import.meta.url);
+const EXPECTED_SCOPE_CONSUMERS = [
+  'ci.check-components',
+  'ci.pr-a11y',
+  'ci.pr-rtl',
+  'pr-comment.visual',
+  'lab-readiness',
+];
 
 /** Read a repo-relative file, or null when it does not exist. */
 function read(repoRoot, relPath) {
@@ -94,14 +105,146 @@ function a11yComponentFromTitle(title) {
   return componentPart.replace(/^XDS/i, '').toLowerCase();
 }
 
+function hasYamlKey(content, key) {
+  return new RegExp(`^  ${key}:`, 'm').test(content);
+}
+
+function affectedScopeActionContract(repoRoot) {
+  const action = read(repoRoot, SCOPE_ACTION);
+  if (!action) return null;
+  const requiredInputs = ['changed-files', 'analysis-file'];
+  const requiredOutputs = [
+    'affected_components',
+    'affected_core_components',
+    'affected_deferred_reasons',
+    'a11y_deferred',
+    'has_components',
+    'json',
+    'rtl_deferred',
+  ];
+  const main = action.match(/^  main: ['"]?([^'"\n]+)['"]?$/m)?.[1];
+  if (
+    requiredInputs.some(input => !hasYamlKey(action, input)) ||
+    requiredOutputs.some(output => !hasYamlKey(action, output)) ||
+    !/^  using: node20$/m.test(action) ||
+    main !== 'index.mjs' ||
+    /\n\s+(?:-\s+)?run:/.test(action)
+  ) {
+    return null;
+  }
+  const entry = read(repoRoot, path.join(path.dirname(SCOPE_ACTION), main));
+  if (
+    !entry ||
+    !entry.includes('../../scripts/lib/affected-scope.js') ||
+    !entry.includes('classifyAffectedDependencies')
+  ) {
+    return null;
+  }
+  return {inputs: requiredInputs, outputs: requiredOutputs, main};
+}
+
+function workflowJob(content, jobName) {
+  const start = content.indexOf(`  ${jobName}:`);
+  if (start === -1) return '';
+  const rest = content.slice(start + 1);
+  const next = rest.search(/\n  [A-Za-z0-9_-]+:\n/);
+  return next === -1
+    ? content.slice(start)
+    : content.slice(start, start + 1 + next);
+}
+
+function affectedScopeWorkflowContract(repoRoot) {
+  const ci = read(repoRoot, CI_WORKFLOW);
+  if (!ci || !affectedScopeActionContract(repoRoot)) return null;
+  const consumers = [
+    [
+      'check-components',
+      'changed-files: ${{ steps.files.outputs.changed_files }}',
+    ],
+    ['pr-a11y', 'analysis-file: analysis.json'],
+    ['pr-visual', 'analysis-file: analysis.json'],
+    ['pr-rtl', 'analysis-file: analysis.json'],
+  ];
+  for (const [job, input] of consumers) {
+    const block = workflowJob(ci, job);
+    if (
+      !block.includes('uses: ./.github/actions/affected-scope') ||
+      !block.includes(input) ||
+      /node .*affected-scope\.js/.test(block) ||
+      /jq -r .*newComponents.*modifiedComponents/.test(block) ||
+      /jq -r .*affectedScope\.components/.test(block)
+    ) {
+      return null;
+    }
+  }
+  return {jobs: consumers.map(([job]) => job)};
+}
+
+function loadAffectedScopeContract(repoRoot) {
+  const helperRel = '.github/scripts/lib/affected-scope.js';
+  const helper = path.join(repoRoot, helperRel);
+  if (!exists(repoRoot, helperRel)) return null;
+  try {
+    delete require.cache[require.resolve(helper)];
+    const mod = require(helper);
+    if (
+      mod.SCHEMA_VERSION !== 1 ||
+      typeof mod.classifyAffectedDependencies !== 'function' ||
+      typeof mod.componentRoots !== 'function' ||
+      !Array.isArray(mod.CONSUMERS) ||
+      EXPECTED_SCOPE_CONSUMERS.some(
+        consumer => !mod.CONSUMERS.includes(consumer),
+      )
+    ) {
+      return null;
+    }
+    const roots = mod.componentRoots();
+    if (!Array.isArray(roots) || roots.some(root => typeof root !== 'string')) {
+      return null;
+    }
+    const stdout = execFileSync(process.execPath, [helper, 'component-roots'], {
+      encoding: 'utf8',
+    }).trim();
+    if (stdout !== roots.join(' ')) return null;
+    const sample = mod.classifyAffectedDependencies([
+      'packages/core/src/Button/Button.tsx',
+    ]);
+    if (
+      sample?.schemaVersion !== 1 ||
+      !Array.isArray(sample.consumers) ||
+      EXPECTED_SCOPE_CONSUMERS.some(
+        consumer => !sample.consumers.includes(consumer),
+      ) ||
+      !Array.isArray(sample.componentRoots) ||
+      !Array.isArray(sample.components) ||
+      typeof sample.visual?.deferToMain !== 'boolean' ||
+      typeof sample.a11y?.deferToMain !== 'boolean' ||
+      typeof sample.rtl?.deferToMain !== 'boolean'
+    ) {
+      return null;
+    }
+    return {module: mod, roots};
+  } catch {
+    return null;
+  }
+}
+
 /** Roots the ci.yml `check-components` gate diffs against. */
 function ciComponentRoots(repoRoot) {
   const ci = read(repoRoot, CI_WORKFLOW);
   if (!ci) return [];
-  const pathspec = ci.match(/git diff --name-only [^\n]*?\.\.\.HEAD --([^|\n]+)/);
+  if (/uses:\s+\.\/.github\/actions\/affected-scope/.test(ci)) {
+    if (!affectedScopeWorkflowContract(repoRoot)) return [];
+    return loadAffectedScopeContract(repoRoot)?.roots ?? [];
+  }
+  const pathspec = ci.match(
+    /git diff --name-only [^\n]*?\.\.\.HEAD --([^|\n]+)/,
+  );
   if (pathspec) return pathspec[1].trim().split(/\s+/).filter(Boolean);
   const filtered = ci.match(/grep -E ['"]\^packages\/\(([^)]+)\)\/src\/['"]/);
-  return filtered ? filtered[1].split('|').map(name => `packages/${name}/src/`) : [];
+  return filtered
+    ? filtered[1].split('|').map(name => `packages/${name}/src/`)
+    : [];
 }
 
 /** Story-id prefixes the RTL auto-discovery sweep covers. */
@@ -128,7 +271,11 @@ function importedPackages(source) {
       specifiers
         .filter(s => !s.startsWith('.') && !s.startsWith('node:'))
         // Scoped packages keep two segments, everything else keeps one.
-        .map(s => (s.startsWith('@') ? s.split('/').slice(0, 2).join('/') : s.split('/')[0])),
+        .map(s =>
+          s.startsWith('@')
+            ? s.split('/').slice(0, 2).join('/')
+            : s.split('/')[0],
+        ),
     ),
   ];
 }
@@ -232,13 +379,13 @@ export function deriveChecks(repoRoot, candidate) {
       const ariaLiveLine = lineOf(source, /aria-live/);
       if (ariaLiveLine && !/useAnnounce/.test(source)) {
         failures.push('hand-rolls a live region instead of useAnnounce');
-        evidence.push(
-          ev('Ad hoc aria-live node.', p.source, ariaLiveLine),
-        );
+        evidence.push(ev('Ad hoc aria-live node.', p.source, ariaLiveLine));
       }
       const undeclared = undeclaredDependencies(repoRoot, source);
       if (undeclared.length > 0) {
-        failures.push(`imports undeclared package(s): ${undeclared.join(', ')}`);
+        failures.push(
+          `imports undeclared package(s): ${undeclared.join(', ')}`,
+        );
         evidence.push(
           ev(
             `Not listed in the lab package's dependencies or peerDependencies, so a consumer installing @astryxdesign/lab would not get ${undeclared.join(', ')}.`,
@@ -324,7 +471,9 @@ export function deriveChecks(repoRoot, candidate) {
       const hexLine = lineOf(source, /:\s*'#[0-9a-fA-F]{3,8}'/);
       if (hexLine) {
         failures.push('hardcoded hex color');
-        evidence.push(ev('Raw hex instead of a color token.', p.source, hexLine));
+        evidence.push(
+          ev('Raw hex instead of a color token.', p.source, hexLine),
+        );
       }
     }
     add(
@@ -350,7 +499,9 @@ export function deriveChecks(repoRoot, candidate) {
     // finding. What matters is that the glyph does not arrive from an
     // undeclared package, which systemIntegration already asserts.
     if (source && /from ['"]lucide-react['"]/.test(source)) {
-      failures.push('imports icons from lucide-react rather than defining them locally');
+      failures.push(
+        'imports icons from lucide-react rather than defining them locally',
+      );
     }
     add(
       'reuseNaming',
@@ -446,7 +597,9 @@ export function deriveChecks(repoRoot, candidate) {
     // reviewer can see it (a story) and somewhere regression-proof (a test).
     const missing = [];
     for (const state of candidate.stateProps) {
-      const inStories = stories ? new RegExp(`\\b${state}\\b`).test(stories) : false;
+      const inStories = stories
+        ? new RegExp(`\\b${state}\\b`).test(stories)
+        : false;
       const inTests = test ? new RegExp(`\\b${state}\\b`).test(test) : false;
       if (!inStories || !inTests) {
         missing.push(
@@ -480,7 +633,10 @@ export function deriveChecks(repoRoot, candidate) {
   {
     const failures = [];
     const evidence = [];
-    if (!test || !/\bkeyboard\b|\bArrow|\bTab\b|\bEnter\b|\bEscape\b/i.test(test)) {
+    if (
+      !test ||
+      !/\bkeyboard\b|\bArrow|\bTab\b|\bEnter\b|\bEscape\b/i.test(test)
+    ) {
       failures.push('no keyboard interaction tests');
     }
     const prefixes = rtlAuditedPrefixes(repoRoot);
@@ -522,9 +678,7 @@ export function deriveChecks(repoRoot, candidate) {
     if (/\bEmptyState\b/.test(source) || /\w*[eE]mptyText\??:/.test(source)) {
       expected.push('empty');
     }
-    const missing = expected.filter(
-      kind => !new RegExp(kind, 'i').test(names),
-    );
+    const missing = expected.filter(kind => !new RegExp(kind, 'i').test(names));
     add(
       'edgeCases',
       verdict(missing),
@@ -535,7 +689,10 @@ export function deriveChecks(repoRoot, candidate) {
           : `No dedicated story for: ${missing.join(', ')}.`,
       [
         ev(`Story names: ${names || 'none'}.`, p.stories),
-        ev(`Edge cases the prop surface implies: ${expected.join(', ') || 'none'}.`, p.source),
+        ev(
+          `Edge cases the prop surface implies: ${expected.join(', ') || 'none'}.`,
+          p.source,
+        ),
       ],
     );
   }
@@ -543,7 +700,12 @@ export function deriveChecks(repoRoot, candidate) {
   {
     // Story completeness is the roll-up of the three story-shaped checks — it
     // passes only when the matrix a reviewer needs is actually reviewable.
-    const dependencies = ['stories', 'visualThemes', 'edgeCases', 'stateCoverage'];
+    const dependencies = [
+      'stories',
+      'visualThemes',
+      'edgeCases',
+      'stateCoverage',
+    ];
     const unmet = dependencies.filter(key => results[key]?.state !== 'passed');
     add(
       'storyCompleteness',
@@ -561,7 +723,10 @@ export function deriveChecks(repoRoot, candidate) {
 /** Exported for tests. */
 export const _internal = {
   a11yComponentFromTitle,
+  affectedScopeActionContract,
+  affectedScopeWorkflowContract,
   ciComponentRoots,
+  loadAffectedScopeContract,
   rtlAuditedPrefixes,
   storyExports,
   storyTitles,

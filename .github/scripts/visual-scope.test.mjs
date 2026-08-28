@@ -63,15 +63,38 @@ describe('classifyVisualScope', () => {
     ]);
   });
 
-  it('skips component metadata-only files as non-rendering changes', () => {
+  it('skips type-only component metadata as non-rendering changes', () => {
     const result = classifyVisualScope(
-      [
-        'packages/core/src/Button/index.ts',
-        'packages/core/src/Button/types.ts',
-      ],
+      ['packages/core/src/Button/types.ts'],
       root,
     );
     expect(result.hasStableVisual).toBe(false);
+  });
+
+  it('maps component source to exact a11y scope', () => {
+    const result = classifyVisualScope(
+      ['packages/lab/src/Drawer/Drawer.tsx'],
+      root,
+    );
+    expect(result).toMatchObject({
+      hasA11yComponents: true,
+      broadA11yScope: false,
+      a11yComponents: [{packageName: '@astryxdesign/lab', component: 'Drawer'}],
+    });
+  });
+
+  it('maps a nested component barrel to exact a11y scope', () => {
+    const result = classifyVisualScope(
+      ['packages/core/src/Button/index.ts'],
+      root,
+    );
+    expect(result).toMatchObject({
+      hasA11yComponents: true,
+      broadA11yScope: false,
+      a11yComponents: [
+        {packageName: '@astryxdesign/core', component: 'Button'},
+      ],
+    });
   });
 
   it('marks shared Core infrastructure as broad stable scope', () => {
@@ -83,6 +106,8 @@ describe('classifyVisualScope', () => {
       hasStableVisual: true,
       broadStableVisual: true,
       stableComponents: [],
+      broadA11yScope: true,
+      visualDeferredReasons: ['shared-theme-token-infrastructure'],
     });
   });
 
@@ -105,11 +130,12 @@ describe('classifyVisualScope', () => {
     expect(result).toMatchObject({
       hasStableVisual: true,
       broadStableVisual: true,
+      broadA11yScope: true,
       stableThemes: ['neutral'],
     });
   });
 
-  it('ignores build-only metadata in a stable theme package', () => {
+  it('defers build-only metadata in a stable theme package as ambiguous dependency input', () => {
     const result = classifyVisualScope(
       [
         'packages/themes/neutral/package.json',
@@ -127,10 +153,13 @@ describe('classifyVisualScope', () => {
       },
     );
     expect(result).toMatchObject({
-      hasStableVisual: false,
+      hasStableVisual: true,
+      broadStableVisual: true,
       stableComponents: [],
       stableThemes: [],
     });
+    expect(result.visualDeferredReasons).toContain('lockfile-ambiguity');
+    expect(result.visualDeferredReasons).toContain('package-manifest');
   });
 
   it('keeps a base-stable theme in scope when the PR marks it private', () => {
@@ -148,6 +177,7 @@ describe('classifyVisualScope', () => {
     expect(result).toMatchObject({
       hasStableVisual: true,
       broadStableVisual: true,
+      broadA11yScope: true,
       stableThemes: ['neutral'],
     });
   });
@@ -232,6 +262,110 @@ describe('classifyVisualScope', () => {
       {'apps/storybook/stories/Button.stories.tsx': 'export const Demo = {};'},
     );
     expect(result.hasStableVisual).toBe(false);
+  });
+
+  it.each([
+    ['apps/storybook/.storybook/preview.tsx', 'storybook-config'],
+    ['apps/storybook/public/demo.woff2', 'storybook-static-asset'],
+    ['.github/actions/setup/action.yml', 'browser-version-input'],
+    ['.nvmrc', 'browser-version-input'],
+    [
+      'packages/core/src/utils/parseStyleKey.ts',
+      'shared-theme-token-infrastructure',
+    ],
+    ['pnpm-lock.yaml', 'lockfile-ambiguity'],
+    ['pnpm-workspace.yaml', 'lockfile-ambiguity'],
+    ['apps/storybook/rtl-audit/targets.json', 'rtl-harness-input'],
+    [
+      'packages/core/src/runtime/portal.ts',
+      'shared-core-runtime-infrastructure',
+    ],
+    [
+      'packages/core/src/focus/FocusScope.ts',
+      'shared-core-runtime-infrastructure',
+    ],
+    [
+      'packages/core/src/utils/focusReturn.ts',
+      'shared-core-runtime-infrastructure',
+    ],
+    [
+      'packages/core/src/hooks/useFocusTrap.ts',
+      'shared-core-runtime-infrastructure',
+    ],
+  ])(
+    'defers global or uncertain input %s to protected main',
+    (file, reason) => {
+      const result = classifyVisualScope([file], root);
+      expect(result).toMatchObject({
+        hasStableVisual: true,
+        broadStableVisual: true,
+        hasA11yComponents: false,
+        broadA11yScope: true,
+      });
+      expect(result.visualDeferredReasons).toContain(reason);
+      expect(result.a11yDeferredReasons).toContain(reason);
+    },
+  );
+
+  it.each([
+    'packages/core/src/i18n/getMessage.ts',
+    'packages/core/src/naming.ts',
+  ])(
+    'cross-checks shared unowned Core infrastructure as broad visual scope: %s',
+    file => {
+      const result = classifyVisualScope([file], root);
+
+      expect(result).toMatchObject({
+        hasA11yComponents: false,
+        broadA11yScope: true,
+        hasStableVisual: true,
+        exactStableVisual: false,
+        broadStableVisual: true,
+        stableComponents: [],
+      });
+      expect(result.visualDeferredReasons).toContain(
+        'shared-core-runtime-infrastructure',
+      );
+    },
+  );
+
+  it('keeps exact component scope when another input defers broadly', () => {
+    const result = classifyVisualScope(
+      ['packages/core/src/Button/Button.tsx', '.nvmrc'],
+      root,
+    );
+    expect(result).toMatchObject({
+      hasA11yComponents: true,
+      broadA11yScope: true,
+      hasStableVisual: true,
+      exactStableVisual: true,
+      broadStableVisual: true,
+      stableComponents: ['Button'],
+    });
+  });
+
+  it('writes mixed-scope outputs that keep exact component checks', () => {
+    const output = path.join(root, 'github-output-mixed');
+    execFileSync(process.execPath, [SCRIPT, '--github-output', output], {
+      input: 'packages/core/src/Button/Button.tsx\n.nvmrc\n',
+    });
+    const values = fs.readFileSync(output, 'utf8');
+    expect(values).toContain('has_stable_visual=true');
+    expect(values).toContain('stable_visual_deferred=true');
+    expect(values).not.toContain('has_components=');
+    expect(values).not.toContain('a11y_deferred=');
+  });
+
+  it('writes PR-capture outputs that skip deferred broad scopes', () => {
+    const output = path.join(root, 'github-output');
+    execFileSync(process.execPath, [SCRIPT, '--github-output', output], {
+      input: 'pnpm-lock.yaml\n',
+    });
+    const values = fs.readFileSync(output, 'utf8');
+    expect(values).toContain('has_stable_visual=false');
+    expect(values).toContain('stable_visual_deferred=true');
+    expect(values).not.toContain('has_components=');
+    expect(values).not.toContain('a11y_deferred=');
   });
 
   it('does not hardcode package names — any canaryOnly package is excluded', () => {

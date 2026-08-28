@@ -766,8 +766,13 @@ function storySourcePaths(story, storybookDir) {
 
 function trustedPlan() {
   const scope = readTrustedScope();
-  if (scope.broadStableVisual)
+  if (
+    scope.broadStableVisual &&
+    scope.stableComponents.length === 0 &&
+    scope.stableStoryFiles.length === 0
+  ) {
     fail('broad stable scope must be deferred instead of captured');
+  }
   const storybookDir = path.resolve(flag('storybook-dir'));
   const output = path.resolve(flag('output'));
   const allIndexed = readStoryIndex(storybookDir, [], REPO_ROOT);

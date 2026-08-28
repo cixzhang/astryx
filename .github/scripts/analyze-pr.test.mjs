@@ -53,37 +53,72 @@ function buildFixture() {
   const upstream = path.join(base, 'upstream');
   const clone = path.join(base, 'clone');
 
-  fs.mkdirSync(path.join(upstream, 'packages/core/src/Card'), {recursive: true});
-  fs.mkdirSync(path.join(upstream, 'packages/core/src/Button'), {recursive: true});
-  fs.mkdirSync(path.join(upstream, 'packages/core/src/Line'), {recursive: true});
-  fs.mkdirSync(path.join(upstream, 'packages/themes/neutral/src'), {recursive: true});
-  fs.mkdirSync(path.join(upstream, 'packages/themes/probe/src'), {recursive: true});
+  fs.mkdirSync(path.join(upstream, 'packages/core/src/Card'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(upstream, 'packages/core/src/Button'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(upstream, 'packages/core/src/Line'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(upstream, 'packages/themes/neutral/src'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(upstream, 'packages/themes/probe/src'), {
+    recursive: true,
+  });
 
   git(upstream, ['init', '-q', '-b', 'main']);
   git(upstream, ['config', 'user.email', 'test@test.co']);
   git(upstream, ['config', 'user.name', 'Test']);
   fs.writeFileSync(path.join(upstream, 'package.json'), '{}');
-  fs.writeFileSync(path.join(upstream, 'packages/core/src/Card/index.ts'), 'export {}\n');
-  fs.writeFileSync(path.join(upstream, 'packages/core/src/Button/index.ts'), 'export {}\n');
-  fs.writeFileSync(path.join(upstream, 'packages/core/src/Line/index.ts'), 'export {}\n');
+  fs.writeFileSync(
+    path.join(upstream, 'packages/core/src/Card/index.ts'),
+    'export {}\n',
+  );
+  fs.writeFileSync(
+    path.join(upstream, 'packages/core/src/Card/Card.tsx'),
+    'export const Card = () => null;\n',
+  );
+  fs.writeFileSync(
+    path.join(upstream, 'packages/core/src/Button/index.ts'),
+    'export {}\n',
+  );
+  fs.writeFileSync(
+    path.join(upstream, 'packages/core/src/Line/index.ts'),
+    'export {}\n',
+  );
   fs.writeFileSync(
     path.join(upstream, 'packages/themes/neutral/package.json'),
     JSON.stringify({name: '@astryxdesign/theme-neutral', private: false}),
   );
-  fs.writeFileSync(path.join(upstream, 'packages/themes/neutral/src/theme.ts'), 'export {}\n');
+  fs.writeFileSync(
+    path.join(upstream, 'packages/themes/neutral/src/theme.ts'),
+    'export {}\n',
+  );
   fs.writeFileSync(
     path.join(upstream, 'packages/themes/probe/package.json'),
     JSON.stringify({name: '@astryxdesign/theme-probe', private: true}),
   );
-  fs.writeFileSync(path.join(upstream, 'packages/themes/probe/src/theme.ts'), 'export {}\n');
+  fs.writeFileSync(
+    path.join(upstream, 'packages/themes/probe/src/theme.ts'),
+    'export {}\n',
+  );
   git(upstream, ['add', '-A']);
   git(upstream, ['commit', '-qm', 'branch point']);
   const branchPoint = git(upstream, ['rev-parse', 'HEAD']);
 
   // 60 churn commits on main so the branch point is beyond any small depth.
   for (let i = 1; i <= 60; i++) {
-    fs.appendFileSync(path.join(upstream, 'packages/core/src/Button/index.ts'), `b${i}\n`);
-    fs.appendFileSync(path.join(upstream, 'packages/core/src/Line/index.ts'), `l${i}\n`);
+    fs.appendFileSync(
+      path.join(upstream, 'packages/core/src/Button/index.ts'),
+      `b${i}\n`,
+    );
+    fs.appendFileSync(
+      path.join(upstream, 'packages/core/src/Line/index.ts'),
+      `l${i}\n`,
+    );
     git(upstream, ['add', '-A']);
     git(upstream, ['commit', '-qm', `churn ${i}`]);
   }
@@ -91,16 +126,30 @@ function buildFixture() {
   // Feature branch off the branch point, touching only Card.
   git(upstream, ['branch', 'feature', branchPoint]);
   git(upstream, ['checkout', '-q', 'feature']);
-  fs.appendFileSync(path.join(upstream, 'packages/core/src/Card/index.ts'), 'export const Card = {}\n');
-  fs.appendFileSync(path.join(upstream, 'packages/themes/neutral/src/theme.ts'), 'export const changed = true\n');
-  fs.appendFileSync(path.join(upstream, 'packages/themes/probe/src/theme.ts'), 'export const changed = true\n');
+  fs.appendFileSync(
+    path.join(upstream, 'packages/core/src/Card/Card.tsx'),
+    'export const touched = true;\n',
+  );
+  fs.appendFileSync(
+    path.join(upstream, 'packages/themes/neutral/src/theme.ts'),
+    'export const changed = true\n',
+  );
+  fs.appendFileSync(
+    path.join(upstream, 'packages/themes/probe/src/theme.ts'),
+    'export const changed = true\n',
+  );
   git(upstream, ['add', '-A']);
   git(upstream, ['commit', '-qm', 'touch Card only']);
 
   // Shallow single-branch clone of the feature branch.
   git(null, [
-    'clone', '-q', '--depth=5', '--single-branch', '--branch=feature',
-    `file://${upstream}`, clone,
+    'clone',
+    '-q',
+    '--depth=5',
+    '--single-branch',
+    '--branch=feature',
+    `file://${upstream}`,
+    clone,
   ]);
 
   return {base, clone, branchPoint};
@@ -116,7 +165,15 @@ describe('analyze-pr shallow-clone recovery', () => {
 
       const stdout = execFileSync(
         process.execPath,
-        [SCRIPT, '--base', 'origin/main', '--head', 'HEAD', '--output', 'analysis.json'],
+        [
+          SCRIPT,
+          '--base',
+          'origin/main',
+          '--head',
+          'HEAD',
+          '--output',
+          'analysis.json',
+        ],
         {cwd: clone, encoding: 'utf8'},
       );
       const analysis = JSON.parse(
@@ -129,6 +186,14 @@ describe('analyze-pr shallow-clone recovery', () => {
       expect(analysis.modifiedComponents).toEqual(['Card']);
       expect(analysis.changedPackages).toEqual(['@astryxdesign/core']);
       expect(analysis.changedStableThemes).toEqual(['neutral']);
+      expect(analysis.affectedScope.components).toContainEqual({
+        packageName: '@astryxdesign/core',
+        component: 'Card',
+      });
+      expect(analysis.affectedScope.visual).toMatchObject({
+        deferToMain: true,
+        reasons: ['stable-theme-package'],
+      });
     } finally {
       fs.rmSync(base, {recursive: true, force: true});
     }

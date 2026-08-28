@@ -2,7 +2,8 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 /**
- * @file Classify changed files by release channel for visual CI.
+ * @file Classify changed files by release channel and affected dependency scope
+ *       for PR visual/a11y CI.
  *
  * @input  newline-separated paths on stdin (normally a base...head git diff)
  * @output JSON, and optionally GitHub outputs
@@ -19,6 +20,7 @@
  */
 
 import fs from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -26,6 +28,9 @@ const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../..',
 );
+const {classifyAffectedDependencies, componentSource} = createRequire(
+  import.meta.url,
+)('./lib/affected-scope.js');
 
 /** @param {string} file */
 function readJSON(file) {
@@ -70,6 +75,7 @@ export function classifyVisualScope(
   fileSnapshots = {},
 ) {
   const paths = files.map(file => file.trim()).filter(Boolean);
+  const affected = classifyAffectedDependencies(paths);
   const stableCoreFiles = paths.filter(isRuntimeCoreFile);
   const stableStoryFiles = paths
     .filter(file => STORY_FILE.test(file))
@@ -80,12 +86,17 @@ export function classifyVisualScope(
   const stableThemes = new Set();
   const stableComponents = new Set();
   const canaryPackages = new Set();
+  const visualDeferredReasons = new Set(affected.visual.reasons);
+  const a11yDeferredReasons = new Set(affected.a11y.reasons);
   let broadStableVisual = false;
+  for (const component of affected.components) {
+    if (component.packageName === '@astryxdesign/core') {
+      stableComponents.add(component.component);
+    }
+  }
 
   for (const file of stableCoreFiles) {
-    const match = file.match(/^packages\/core\/src\/([^/]+)\//);
-    if (match && /^[A-Z]/.test(match[1])) stableComponents.add(match[1]);
-    else broadStableVisual = true;
+    if (!componentSource(file)) broadStableVisual = true;
   }
 
   for (const file of paths) {
@@ -134,6 +145,8 @@ export function classifyVisualScope(
       releaseChannelChanged
     ) {
       stableThemes.add(themeMatch[1]);
+      visualDeferredReasons.add('stable-theme-package');
+      a11yDeferredReasons.add('stable-theme-package');
       continue;
     }
     if (headPkg?.astryx?.canaryOnly === true) {
@@ -141,17 +154,26 @@ export function classifyVisualScope(
     }
   }
 
+  const exactStableVisual =
+    stableComponents.size > 0 || stableStoryFiles.length > 0;
+  const broadVisual =
+    broadStableVisual || stableThemes.size > 0 || affected.visual.deferToMain;
+
   return {
-    hasStableVisual:
-      stableCoreFiles.length > 0 ||
-      stableThemes.size > 0 ||
-      stableStoryFiles.length > 0,
-    broadStableVisual: broadStableVisual || stableThemes.size > 0,
+    hasStableVisual: exactStableVisual || broadVisual,
+    exactStableVisual,
+    broadStableVisual: broadVisual,
     stableComponents: [...stableComponents].sort(),
     stableCoreFiles,
     stableThemes: [...stableThemes].sort(),
     stableStoryFiles: stableStoryFiles.sort(),
     canaryPackages: [...canaryPackages].sort(),
+    affectedDependencies: affected,
+    hasA11yComponents: affected.components.length > 0,
+    a11yComponents: affected.components,
+    broadA11yScope: affected.a11y.deferToMain || stableThemes.size > 0,
+    visualDeferredReasons: [...visualDeferredReasons].sort(),
+    a11yDeferredReasons: [...a11yDeferredReasons].sort(),
   };
 }
 
@@ -184,7 +206,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         `stable_themes=${outputValue(result.stableThemes)}`,
         `stable_story_files=${outputValue(result.stableStoryFiles)}`,
         `canary_packages=${outputValue(result.canaryPackages)}`,
-        `has_stable_visual=${result.hasStableVisual}`,
+        `visual_deferred_reasons=${outputValue(result.visualDeferredReasons)}`,
+        `a11y_deferred_reasons=${outputValue(result.a11yDeferredReasons)}`,
+        `has_stable_visual=${result.exactStableVisual}`,
+        `stable_visual_deferred=${result.broadStableVisual}`,
       ].join('\n') + '\n',
     );
   }

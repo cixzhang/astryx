@@ -41,7 +41,10 @@ let root;
 function scaffold(overrides = {}) {
   const files = {
     '.github/workflows/ci.yml':
-      'CHANGED=$(git diff --name-only origin/main...HEAD -- packages/core/src/ packages/lab/src/ | grep -v x)\n',
+      '  check-components:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          changed-files: ${{ steps.files.outputs.changed_files }}\n' +
+      '  pr-a11y:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n' +
+      '  pr-visual:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n' +
+      '  pr-rtl:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n',
     'apps/storybook/rtl-audit/rtl-audit.mjs':
       "const AUDITED_STORY_PREFIXES = ['core-', 'lab-'];\n",
     'packages/lab/package.json': JSON.stringify({
@@ -73,6 +76,58 @@ function scaffold(overrides = {}) {
     fs.mkdirSync(path.dirname(abs), {recursive: true});
     fs.writeFileSync(abs, contents);
   }
+  writeScopeHelper(root);
+  writeScopeAction(root);
+}
+
+function writeScopeHelper(repoRoot, body = null) {
+  const helper = path.join(repoRoot, '.github/scripts/lib/affected-scope.js');
+  fs.mkdirSync(path.dirname(helper), {recursive: true});
+  fs.writeFileSync(
+    helper,
+    body ??
+      `const roots = ['packages/core/src/', 'packages/lab/src/'];
+const consumers = ['ci.check-components', 'ci.pr-a11y', 'ci.pr-rtl', 'pr-comment.visual', 'lab-readiness'];
+function componentRoots() { return roots; }
+function classifyAffectedDependencies(files = []) { return {schemaVersion: 1, consumers, componentRoots: roots, components: files.includes('packages/core/src/Button/Button.tsx') ? [{packageName: '@astryxdesign/core', component: 'Button'}] : [], visual: {deferToMain: false, reasons: []}, a11y: {deferToMain: false, reasons: []}, rtl: {deferToMain: false, reasons: []}}; }
+if (require.main === module && process.argv[2] === 'component-roots') process.stdout.write(roots.join(' ') + '\\n');
+module.exports = {SCHEMA_VERSION: 1, CONSUMERS: consumers, componentRoots, classifyAffectedDependencies};
+`,
+  );
+  return helper;
+}
+
+function writeScopeAction(repoRoot, body = null, entry = null) {
+  const action = path.join(
+    repoRoot,
+    '.github/actions/affected-scope/action.yml',
+  );
+  fs.mkdirSync(path.dirname(action), {recursive: true});
+  fs.writeFileSync(
+    action,
+    body ??
+      `inputs:
+  changed-files:
+  analysis-file:
+outputs:
+  affected_components:
+  affected_core_components:
+  affected_deferred_reasons:
+  a11y_deferred:
+  has_components:
+  json:
+  rtl_deferred:
+runs:
+  using: node20
+  main: index.mjs
+`,
+  );
+  fs.writeFileSync(
+    path.join(path.dirname(action), 'index.mjs'),
+    entry ??
+      'const {classifyAffectedDependencies} = ../../scripts/lib/affected-scope.js;\nclassifyAffectedDependencies([]);\n',
+  );
+  return action;
 }
 
 beforeAll(() => {
@@ -99,7 +154,9 @@ describe('automated derivation', () => {
     });
     const derived = deriveChecks(root, candidate);
     expect(derived.accessibilityContracts.state).not.toBe('passed');
-    expect(derived.accessibilityContracts.note).toMatch(/excludes packages\/lab/);
+    expect(derived.accessibilityContracts.note).toMatch(
+      /excludes packages\/lab/,
+    );
   });
 
   it('fails the keyboard check when the RTL sweep stops covering lab', () => {
@@ -119,7 +176,9 @@ describe('automated derivation', () => {
     });
     const derived = deriveChecks(root, candidate);
     expect(derived.accessibilityContracts.state).not.toBe('passed');
-    expect(derived.accessibilityContracts.note).toMatch(/resolves to the analyzer/);
+    expect(derived.accessibilityContracts.note).toMatch(
+      /resolves to the analyzer/,
+    );
   });
 
   it('requires an advertised state to appear in both a story and a test', () => {
@@ -215,7 +274,9 @@ describe('automated derivation', () => {
         "import {scaleLinear} from 'd3-scale';\n" +
         'export function Widget() { return <Text>{String(scaleLinear)}</Text>; }\n',
     });
-    expect(deriveChecks(root, candidate).systemIntegration.state).toBe('passed');
+    expect(deriveChecks(root, candidate).systemIntegration.state).toBe(
+      'passed',
+    );
   });
 
   it('accepts inline type modifiers in the barrel', () => {
@@ -343,11 +404,170 @@ describe('report shape', () => {
 });
 
 describe('CI wiring parsers', () => {
+  const goodWorkflow = () =>
+    '  check-components:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          changed-files: ${{ steps.files.outputs.changed_files }}\n' +
+    '  pr-a11y:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n' +
+    '  pr-visual:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n' +
+    '  pr-rtl:\n    steps:\n      - uses: ./.github/actions/affected-scope\n        with:\n          analysis-file: analysis.json\n';
+
   it('reads the component roots out of the real ci.yml', () => {
     const repoRoot = path.resolve(import.meta.dirname, '..', '..');
     const roots = _internal.ciComponentRoots(repoRoot);
     expect(roots).toContain('packages/core/src/');
     expect(roots).toContain('packages/lab/src/');
+  });
+
+  it('matches the shared affected-scope consumer inventory', () => {
+    const repoRoot = path.resolve(import.meta.dirname, '..', '..');
+    const contract = _internal.loadAffectedScopeContract(repoRoot);
+    expect(contract.module.CONSUMERS).toEqual([
+      'ci.check-components',
+      'ci.pr-a11y',
+      'ci.pr-rtl',
+      'pr-comment.visual',
+      'lab-readiness',
+    ]);
+    expect(_internal.affectedScopeWorkflowContract(repoRoot).jobs).toEqual([
+      'check-components',
+      'pr-a11y',
+      'pr-visual',
+      'pr-rtl',
+    ]);
+  });
+
+  it('parses legacy pathspec and shared action component scope syntax', () => {
+    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-roots-'));
+    try {
+      const ci = path.join(scratch, '.github/workflows/ci.yml');
+      fs.mkdirSync(path.dirname(ci), {recursive: true});
+      fs.writeFileSync(
+        ci,
+        'CHANGED=$(git diff --name-only origin/main...HEAD -- packages/core/src/ packages/lab/src/ | grep -v x)\n',
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([
+        'packages/core/src/',
+        'packages/lab/src/',
+      ]);
+
+      writeScopeHelper(scratch);
+      writeScopeAction(scratch);
+      fs.writeFileSync(ci, goodWorkflow());
+      expect(_internal.ciComponentRoots(scratch)).toEqual([
+        'packages/core/src/',
+        'packages/lab/src/',
+      ]);
+    } finally {
+      fs.rmSync(scratch, {recursive: true, force: true});
+    }
+  });
+
+  it('fails closed when the shared scope helper is missing, malformed, or throws', () => {
+    const scratch = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'ci-roots-bad-helper-'),
+    );
+    try {
+      const ci = path.join(scratch, '.github/workflows/ci.yml');
+      fs.mkdirSync(path.dirname(ci), {recursive: true});
+      fs.writeFileSync(ci, goodWorkflow());
+      writeScopeAction(scratch);
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeHelper(scratch, 'module.exports = {SCHEMA_VERSION: 1};\n');
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeHelper(scratch, 'throw new Error("boom");\n');
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+    } finally {
+      fs.rmSync(scratch, {recursive: true, force: true});
+    }
+  });
+
+  it('observes executable helper roots instead of a parallel workflow string', () => {
+    const scratch = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'ci-roots-altered-helper-'),
+    );
+    try {
+      const ci = path.join(scratch, '.github/workflows/ci.yml');
+      fs.mkdirSync(path.dirname(ci), {recursive: true});
+      fs.writeFileSync(ci, goodWorkflow());
+      writeScopeAction(scratch);
+      writeScopeHelper(
+        scratch,
+        `const roots = ['packages/core/src/'];
+const consumers = ['ci.check-components', 'ci.pr-a11y', 'ci.pr-rtl', 'pr-comment.visual', 'lab-readiness'];
+function componentRoots() { return roots; }
+function classifyAffectedDependencies(files = []) { return {schemaVersion: 1, consumers, componentRoots: roots, components: files.includes('packages/core/src/Button/Button.tsx') ? [{packageName: '@astryxdesign/core', component: 'Button'}] : [], visual: {deferToMain: false, reasons: []}, a11y: {deferToMain: false, reasons: []}, rtl: {deferToMain: false, reasons: []}}; }
+if (require.main === module && process.argv[2] === 'component-roots') process.stdout.write(roots.join(' ') + '\\n');
+module.exports = {SCHEMA_VERSION: 1, CONSUMERS: consumers, componentRoots, classifyAffectedDependencies};
+`,
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([
+        'packages/core/src/',
+      ]);
+    } finally {
+      fs.rmSync(scratch, {recursive: true, force: true});
+    }
+  });
+
+  it('rejects wrong action path, missing inputs, missing outputs, and shadow commands', () => {
+    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-action-drift-'));
+    try {
+      const ci = path.join(scratch, '.github/workflows/ci.yml');
+      fs.mkdirSync(path.dirname(ci), {recursive: true});
+      writeScopeHelper(scratch);
+      writeScopeAction(scratch);
+      fs.writeFileSync(ci, goodWorkflow());
+      expect(_internal.ciComponentRoots(scratch)).toEqual([
+        'packages/core/src/',
+        'packages/lab/src/',
+      ]);
+
+      fs.writeFileSync(
+        ci,
+        goodWorkflow().replace(
+          'uses: ./.github/actions/affected-scope',
+          'uses: ./.github/actions/wrong-scope',
+        ),
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      fs.writeFileSync(ci, goodWorkflow());
+      writeScopeAction(
+        scratch,
+        'inputs:\n  changed-files:\noutputs:\n  affected_components:\nruns:\n  using: composite\n  steps: []\n',
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeAction(
+        scratch,
+        'inputs:\n  changed-files:\n  analysis-file:\noutputs:\n  affected_components:\n  affected_core_components:\n  affected_deferred_reasons:\n  a11y_deferred:\n  has_components:\n  json:\n  rtl_deferred:\nruns:\n  using: node16\n  main: index.mjs\n',
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeAction(
+        scratch,
+        'inputs:\n  changed-files:\n  analysis-file:\noutputs:\n  affected_components:\n  affected_core_components:\n  affected_deferred_reasons:\n  a11y_deferred:\n  has_components:\n  json:\n  rtl_deferred:\nruns:\n  using: node20\n  main: wrong.js\n',
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeAction(
+        scratch,
+        'inputs:\n  changed-files:\n  analysis-file:\noutputs:\n  affected_components:\n  affected_core_components:\n  affected_deferred_reasons:\n  a11y_deferred:\n  has_components:\n  json:\n  rtl_deferred:\nruns:\n  using: node20\n  main: index.mjs\n  steps:\n    - run: echo bad\n',
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+
+      writeScopeAction(scratch);
+      fs.writeFileSync(
+        ci,
+        goodWorkflow().replace(
+          '  pr-a11y:\n',
+          '      - run: node .github/scripts/lib/affected-scope.js component-roots\n  pr-a11y:\n',
+        ),
+      );
+      expect(_internal.ciComponentRoots(scratch)).toEqual([]);
+    } finally {
+      fs.rmSync(scratch, {recursive: true, force: true});
+    }
   });
 
   it('reads the audited story prefixes out of the real rtl-audit', () => {

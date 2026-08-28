@@ -84,44 +84,57 @@ jobs:
     permissions:
       contents: read
     outputs:
-      has_components: ${{ steps.check.outputs.has_components }}
+      has_components: ${{ steps.files.outputs.has_components || steps.affected.outputs.has_components }}
       # Stable visual scope is separate from component scope: Core and the
       # non-private shipped themes participate; canaryOnly packages do not.
-      has_stable_visual: ${{ steps.check.outputs.has_stable_visual }}
+      has_stable_visual: ${{ steps.files.outputs.has_stable_visual || steps.visual.outputs.has_stable_visual }}
+      stable_visual_deferred: ${{ steps.files.outputs.stable_visual_deferred || steps.visual.outputs.stable_visual_deferred }}
+      a11y_deferred: ${{ steps.files.outputs.a11y_deferred || steps.affected.outputs.a11y_deferred }}
+      rtl_deferred: ${{ steps.files.outputs.a11y_deferred || steps.affected.outputs.rtl_deferred }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           # Depth 50 (same as check-scope) so the three-dot diff below can find
-          # a merge base. With the default depth of 1 the diff fails with
-          # "no merge base", the error is swallowed by the pipeline, and
-          # has_components silently becomes false — skipping pr-a11y entirely.
+          # a merge base. If it still cannot, PR-scoped checks defer to protected
+          # main instead of guessing a component set or sweeping everything.
           fetch-depth: 50
 
       - name: Fetch base branch
         run: git fetch origin ${{ github.base_ref }} --depth=50
 
-      - name: Check for component changes
-        id: check
+      - name: Resolve changed files
+        id: files
         run: |
           if ! git merge-base HEAD origin/${{ github.base_ref }} >/dev/null 2>&1; then
-            echo "::warning::No merge base between HEAD and origin/${{ github.base_ref }} (clone too shallow) — assuming components changed so pr-a11y still runs"
-            echo "has_components=true" >> "$GITHUB_OUTPUT"
-            # Fail closed for the stable lane too: without a merge base we do
-            # not know whether a stable package changed.
-            echo "has_stable_visual=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::No merge base between HEAD and origin/${{ github.base_ref }} (clone too shallow) — deferring PR-scoped a11y and visual review to protected main"
+            echo "has_components=false" >> "$GITHUB_OUTPUT"
+            echo "a11y_deferred=true" >> "$GITHUB_OUTPUT"
+            echo "has_stable_visual=false" >> "$GITHUB_OUTPUT"
+            echo "stable_visual_deferred=true" >> "$GITHUB_OUTPUT"
+            echo "deferred=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          CHANGED=$(printf '%s\n' "$FILES" | grep -E '^packages/(core|lab)/src/' | grep -v -E '(hooks|theme|utils|i18n|__tests__)/' | head -1 || true)
-          echo "has_components=$( [ -n "$CHANGED" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          {
+            echo 'changed_files<<EOF'
+            printf '%s\n' "$FILES"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
-          # One classifier owns the release-channel rule. It reads each
-          # package's `astryx.canaryOnly` metadata rather than hard-coding
-          # today's Lab/charts/richtext/vega list.
-          printf '%s\n' "$FILES" \
+      - name: Classify affected scope
+        id: affected
+        if: steps.files.outputs.deferred != 'true'
+        uses: ./.github/actions/affected-scope
+        with:
+          changed-files: ${{ steps.files.outputs.changed_files }}
+
+      - name: Classify stable visual scope
+        id: visual
+        if: steps.files.outputs.deferred != 'true'
+        run: |
+          printf '%s\n' '${{ steps.files.outputs.changed_files }}' \
             | node .github/scripts/visual-scope.mjs --github-output "$GITHUB_OUTPUT"
-
   # Run tests (parallel with build)
   test:
     needs: [check-scope]
@@ -463,6 +476,12 @@ jobs:
         with:
           name: pr-analysis
 
+      - name: Classify affected scope
+        id: affected
+        uses: ./.github/actions/affected-scope
+        with:
+          analysis-file: analysis.json
+
       - name: Download Storybook artifact
         uses: actions/download-artifact@v8
         with:
@@ -477,7 +496,11 @@ jobs:
       # audits" for the baseline workflow.
       - name: Run accessibility audit
         run: |
-          COMPONENTS=$(cat analysis.json | jq -r '(.newComponents + .modifiedComponents) | join(",")')
+          COMPONENTS="${{ steps.affected.outputs.affected_components }}"
+          if [ -z "$COMPONENTS" ]; then
+            echo "No exact affected components from affectedScope — skipping accessibility audit."
+            exit 0
+          fi
           node .github/scripts/accessibility-audit.js \
             --storybook-dir apps/storybook/dist \
             --output a11y-report.json \
@@ -565,19 +588,13 @@ jobs:
       - name: Verify guest fixture contrast
         run: pnpm -F @astryxdesign/vibe-tests fixtures:contrast
 
-  # Stable-package visual regression. Core components get every story in
-  # every shipped theme that styles them; a changed shipped theme gets its
-  # relevant matrix. Packages marked `astryx.canaryOnly` (Lab, charts,
-  # richtext, vega) do not compare pixels and do not own a baseline.
+  # Stable-package visual regression. Core component changes get their Theme
+  # Sheet in Neutral and Probe; stable-visual story changes opt into Neutral.
+  # Shared, theme-wide, browser, asset, or lockfile inputs defer to protected
+  # main rather than expanding an ordinary PR into a global visual review.
   #
-  # Deeper than the daily gate where it looks: the release gate shoots ONE
-  # representative story per component, this shoots EVERY story of the touched
-  # component in EVERY theme that styles it.
-  #
-  # SKIPS ITSELF WHEN A PR IS TOO BROAD (--max-shots). A token or shared-hook
-  # change puts hundreds of diffs in front of a reviewer who cannot judge them
-  # one by one, and a per-PR check is the wrong instrument for that change —
-  # the daily gate reviews it against the whole baseline instead. The skip
+  # The trusted workflow_run publisher builds the plan before enforcing the
+  # review budget: >24 warns, >40 defers cleanly to protected main. The skip
   # states its reason in the PR comment rather than vanishing.
   #
   # SOFT / NON-BLOCKING (continue-on-error) while the suite earns trust: the
@@ -604,6 +621,12 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: pr-analysis
+
+      - name: Classify affected scope
+        id: affected
+        uses: ./.github/actions/affected-scope
+        with:
+          analysis-file: analysis.json
 
       - name: Download Storybook artifact
         uses: actions/download-artifact@v8
@@ -652,24 +675,15 @@ jobs:
           set -eu
           # Component names are not globally unique, so filter by the package
           # recorded in componentStats — never infer stability from a name.
-          COMPONENTS=$(jq -r '. as $root | [(.newComponents + .modifiedComponents)[] | select($root.componentStats[.].package == "@astryxdesign/core")] | unique | join(",")' analysis.json)
-          THEMES=$(jq -r '(.changedStableThemes // []) | join(",")' analysis.json)
+          COMPONENTS="${{ steps.affected.outputs.affected_core_components }}"
+          THEMES=""
 
-          if [ -n "$COMPONENTS" ] && [ -n "$THEMES" ]; then
-            TIERS="component,theme-matrix"
-            SCOPE_ARGS=(--components "$COMPONENTS" --themes "$THEMES")
-          elif [ -n "$COMPONENTS" ]; then
+          if [ -n "$COMPONENTS" ]; then
             TIERS="component"
             SCOPE_ARGS=(--components "$COMPONENTS" --no-scout)
-          elif [ -n "$THEMES" ]; then
-            TIERS="theme-matrix"
-            SCOPE_ARGS=(--themes "$THEMES")
           else
-            # Shared Core theming/tokens/hooks are stable but broad. Let the
-            # gate plan the full stable surface and decline visibly at the shot
-            # budget; the daily stable gate owns the exhaustive comparison.
-            TIERS="surface,theme-matrix,probe"
-            SCOPE_ARGS=()
+            echo "No exact stable Core components from affected scope — skipping visual capture."
+            exit 0
           fi
 
           echo "Stable Core components: ${COMPONENTS:-none}"
@@ -736,6 +750,12 @@ jobs:
         with:
           name: pr-analysis
 
+      - name: Classify affected scope
+        id: affected
+        uses: ./.github/actions/affected-scope
+        with:
+          analysis-file: analysis.json
+
       - name: Download Storybook artifact
         uses: actions/download-artifact@v8
         with:
@@ -751,9 +771,9 @@ jobs:
       - name: Run RTL audit
         id: rtl
         run: |
-          COMPONENTS=$(jq -r '(.newComponents + .modifiedComponents) | join(",")' analysis.json)
+          COMPONENTS="${{ steps.affected.outputs.affected_components }}"
           if [ -z "$COMPONENTS" ]; then
-            echo "No component changes resolved from analysis.json — skipping RTL audit."
+            echo "No exact affected components from affectedScope — skipping RTL audit."
             echo "ran=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

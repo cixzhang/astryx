@@ -25,10 +25,14 @@ function runComment(analysis) {
   try {
     const analysisFile = path.join(dir, 'analysis.json');
     fs.writeFileSync(analysisFile, JSON.stringify(analysis));
-    return execFileSync(process.execPath, [SCRIPT, '--analysis', analysisFile], {
-      cwd: dir,
-      encoding: 'utf8',
-    });
+    return execFileSync(
+      process.execPath,
+      [SCRIPT, '--analysis', analysisFile],
+      {
+        cwd: dir,
+        encoding: 'utf8',
+      },
+    );
   } finally {
     fs.rmSync(dir, {recursive: true, force: true});
   }
@@ -53,6 +57,19 @@ describe('generate-pr-comment diffMode caveat', () => {
   it('does not caveat an exact three-dot analysis', () => {
     const stdout = runComment({...baseAnalysis, diffMode: 'three-dot'});
     expect(stdout).not.toContain('Approximate analysis');
+  });
+
+  it('reports a11y deferral for global affected inputs', () => {
+    const stdout = runComment({
+      ...baseAnalysis,
+      affectedScope: {
+        a11y: {deferToMain: true, reasons: ['lockfile-ambiguity']},
+      },
+    });
+
+    expect(stdout).toContain('Accessibility Audit');
+    expect(stdout).toContain('Deferred to protected main/nightly coverage');
+    expect(stdout).toContain('lockfile-ambiguity');
   });
 
   it('treats a missing diffMode (older analysis.json) as exact', () => {

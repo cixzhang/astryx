@@ -155,8 +155,8 @@ describe('visual acceptance workflow concurrency', () => {
       value.indexOf('      - name: Publish immutable visual evidence'),
     );
 
-    expect(download).toContain("steps.scope.outputs.broad != 'true'");
-    expect(capture).toContain("steps.scope.outputs.broad != 'true'");
+    expect(download).toContain("steps.scope.outputs.exact == 'true'");
+    expect(capture).toContain("steps.scope.outputs.exact == 'true'");
     expect(capture).toContain('trusted-plan');
     expect(capture).toContain('"$SHOTS" -gt 24');
     expect(capture).toContain('"$SHOTS" -gt 40');
@@ -168,16 +168,102 @@ describe('visual acceptance workflow concurrency', () => {
       capture.indexOf('npx playwright install chromium'),
     );
     expect(defer).toContain("steps.scope.outputs.broad == 'true'");
+    expect(defer).toContain("steps.scope.outputs.exact != 'true'");
     expect(defer).toContain('visual-acceptance.mjs trusted-defer');
     expect(defer).toContain('--run-attempt "$RUN_ATTEMPT"');
     expect(defer).not.toContain('playwright');
     expect(defer).not.toContain('gate.mjs capture');
-    expect(derive).toContain("steps.scope.outputs.broad != 'true'");
+    expect(derive).toContain("steps.scope.outputs.exact == 'true'");
     expect(derive).toContain("steps.plan.outputs.deferred != 'true'");
+    expect(value).toContain(
+      "core.setOutput('exact', String(scope.exactStableVisual))",
+    );
     expect(resolve).toContain('test -f trusted-visual/evidence.json');
     expect(resolve).toContain(
       'path=pr/${PR_NUMBER}/visual/${HEAD_SHA}/${RUN_ID}/${RUN_ATTEMPT}',
     );
+  });
+
+  it('uses affected dependency tracing for PR a11y scope instead of broad sweeps', () => {
+    const value = workflow('ci.yml');
+    const check = value.slice(
+      value.indexOf('  check-components:'),
+      value.indexOf('  # Run tests'),
+    );
+    const prA11y = value.slice(
+      value.indexOf('  pr-a11y:'),
+      value.indexOf('  # The layer order'),
+    );
+
+    expect(check).toContain(
+      'a11y_deferred: ${{ steps.files.outputs.a11y_deferred || steps.affected.outputs.a11y_deferred }}',
+    );
+    expect(check).toContain('uses: ./.github/actions/affected-scope');
+    expect(check).toContain(
+      'changed-files: ${{ steps.files.outputs.changed_files }}',
+    );
+    expect(check).toContain('visual-scope.mjs --github-output');
+    expect(check).toContain('has_components=false');
+    expect(check).toContain('has_stable_visual=false');
+    expect(check).toContain('stable_visual_deferred=true');
+    expect(check).toContain('a11y_deferred=true');
+    expect(check).toContain(
+      'deferring PR-scoped a11y and visual review to protected main',
+    );
+    expect(check).not.toContain(
+      'assuming components changed so pr-a11y still runs',
+    );
+    expect(prA11y).toContain(
+      "needs.check-components.outputs.has_components == 'true'",
+    );
+  });
+
+  it('routes every PR-scope consumer through the shared affected-scope action', () => {
+    const ci = workflow('ci.yml');
+    const action = fs.readFileSync(
+      path.join(ROOT, '.github/actions/affected-scope/action.yml'),
+      'utf8',
+    );
+    const check = ci.slice(
+      ci.indexOf('  check-components:'),
+      ci.indexOf('  # Run tests'),
+    );
+    const prA11y = ci.slice(
+      ci.indexOf('  pr-a11y:'),
+      ci.indexOf('  # The layer order'),
+    );
+    const prVisual = ci.slice(
+      ci.indexOf('  pr-visual:'),
+      ci.indexOf('  # RTL semantic audit'),
+    );
+    const prRtl = ci.slice(
+      ci.indexOf('  pr-rtl:'),
+      ci.indexOf('      - name: Write scorecard summary'),
+    );
+
+    for (const block of [check, prA11y, prVisual, prRtl]) {
+      expect(block).toContain('uses: ./.github/actions/affected-scope');
+      expect(block).not.toContain('node .github/scripts/lib/affected-scope.js');
+      expect(block).not.toContain('.newComponents + .modifiedComponents');
+      expect(block).not.toContain("jq -r '[.affectedScope.components");
+    }
+    expect(check).toContain(
+      'changed-files: ${{ steps.files.outputs.changed_files }}',
+    );
+    for (const block of [prA11y, prVisual, prRtl]) {
+      expect(block).toContain('analysis-file: analysis.json');
+      expect(block).toContain('steps.affected.outputs.affected_');
+    }
+    expect(action).toContain('inputs:');
+    expect(action).toContain('changed-files:');
+    expect(action).toContain('analysis-file:');
+    expect(action).toContain('outputs:');
+    expect(action).toContain('affected_components:');
+    expect(action).toContain('affected_core_components:');
+    expect(action).toContain('rtl_deferred:');
+    expect(action).toContain('using: node20');
+    expect(action).toContain('main: index.mjs');
+    expect(action).not.toContain('run:');
   });
 
   it('uses the documented collaborator permission response shape', () => {

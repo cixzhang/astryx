@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-
 /**
  * @description Generates and posts PR comment with analysis results
  * @input --analysis <file> --a11y <file> --visual <file> --storybook-url <url> --run-url <url>
@@ -9,14 +8,14 @@
  */
 
 const fs = require('node:fs');
-const { buildA11ySection } = require('./lib/a11y-format');
-const { buildVisualSection } = require('./lib/visual-format');
+const {buildA11ySection} = require('./lib/a11y-format');
+const {buildVisualSection} = require('./lib/visual-format');
 // Report-file strings render as literal inline text, report numbers as
 // numbers — the comment's structure comes only from this file's literals.
-const { inline, num } = require('./lib/report-text');
+const {inline, num} = require('./lib/report-text');
 
 const args = process.argv.slice(2);
-const getArg = (name) => {
+const getArg = name => {
   const idx = args.indexOf(`--${name}`);
   return idx !== -1 ? args[idx + 1] : null;
 };
@@ -30,8 +29,13 @@ const storybookUrl = getArg('storybook-url') || '';
 const sandboxUrl = getArg('sandbox-url') || '';
 
 // Read analysis results
-let analysis = { newComponents: [], modifiedComponents: [], componentStats: {}, totalBundle: {} };
-let a11yReport = { components: {} };
+let analysis = {
+  newComponents: [],
+  modifiedComponents: [],
+  componentStats: {},
+  totalBundle: {},
+};
+let a11yReport = {components: {}};
 try {
   analysis = JSON.parse(fs.readFileSync(analysisFile, 'utf8'));
 } catch (e) {
@@ -55,7 +59,10 @@ function getStorybookLink(storybookBaseUrl, storyTitle) {
   // prefix. Story ids only ever contain [a-z0-9_-]; the title came from a
   // report file, so drop anything outside that alphabet before it lands in
   // the href.
-  const storyPath = title.toLowerCase().replace(/\//g, '-').replace(/[^a-z0-9_-]/g, '');
+  const storyPath = title
+    .toLowerCase()
+    .replace(/\//g, '-')
+    .replace(/[^a-z0-9_-]/g, '');
   return `${storybookBaseUrl}?path=/docs/${storyPath}--docs`;
 }
 
@@ -72,7 +79,9 @@ if (analysis.newComponents && analysis.newComponents.length > 0) {
     const stats = analysis.componentStats[comp] || {};
     const sbLink = getStorybookLink(storybookUrl, stats.storyTitle);
     const sbBadge = sbLink ? ` · ${extLink('View in Storybook', sbLink)}` : '';
-    const pkgBadge = stats.package ? ` <sub>(${inline(stats.package)})</sub>` : '';
+    const pkgBadge = stats.package
+      ? ` <sub>(${inline(stats.package)})</sub>`
+      : '';
     componentSection += `<details>\n<summary><strong>${inline(comp)}</strong>${pkgBadge}${sbBadge}</summary>\n\n`;
     componentSection += `| Metric | Value |\n|--------|-------|\n`;
     componentSection += `| Bundle Size (ESM) | ${inline(stats.esmSize) || 'N/A'} |\n`;
@@ -100,18 +109,26 @@ if (analysis.modifiedComponents && analysis.modifiedComponents.length > 0) {
     const newExports = analysis.newExports || [];
     const compExports = stats.exports || [];
     const newInComp = compExports.filter(e => newExports.includes(e));
-    const newBadge = newInComp.length > 0 ? ` · 🆕 ${newInComp.map(inline).join(', ')}` : '';
-    const pkgBadge = stats.package ? ` <sub>(${inline(stats.package)})</sub>` : '';
+    const newBadge =
+      newInComp.length > 0 ? ` · 🆕 ${newInComp.map(inline).join(', ')}` : '';
+    const pkgBadge = stats.package
+      ? ` <sub>(${inline(stats.package)})</sub>`
+      : '';
 
     componentSection += `<details>\n<summary><strong>${inline(comp)}</strong>${pkgBadge}${sbBadge}${newBadge}</summary>\n\n`;
     componentSection += `| Metric | Before | After | Delta |\n|--------|--------|-------|-------|\n`;
 
-    const esmDelta = Number.isFinite(Number(stats.esmBytes)) && Number.isFinite(Number(baseStats.esmBytes))
-      ? (Number(stats.esmBytes) - Number(baseStats.esmBytes))
-      : null;
-    const esmDeltaStr = esmDelta !== null
-      ? (esmDelta > 0 ? `+${esmDelta}B` : `${esmDelta}B`)
-      : 'N/A';
+    const esmDelta =
+      Number.isFinite(Number(stats.esmBytes)) &&
+      Number.isFinite(Number(baseStats.esmBytes))
+        ? Number(stats.esmBytes) - Number(baseStats.esmBytes)
+        : null;
+    const esmDeltaStr =
+      esmDelta !== null
+        ? esmDelta > 0
+          ? `+${esmDelta}B`
+          : `${esmDelta}B`
+        : 'N/A';
 
     componentSection += `| Bundle Size (ESM) | ${inline(baseStats.esmSize) || 'N/A'} | ${inline(stats.esmSize) || 'N/A'} | ${esmDeltaStr} |\n`;
     componentSection += `| Lines of Code | ${inline(baseStats.linesOfCode) || 'N/A'} | ${inline(stats.linesOfCode) || 'N/A'} | - |\n`;
@@ -120,8 +137,15 @@ if (analysis.modifiedComponents && analysis.modifiedComponents.length > 0) {
   }
 }
 
-// Build accessibility section using shared module
-const a11ySection = buildA11ySection(a11yReport);
+// Build accessibility section using shared module. Global or uncertain inputs
+// defer to protected main rather than expanding an ordinary PR audit.
+const a11yDeferred = analysis.affectedScope?.a11y?.deferToMain === true;
+const a11yReasons = (analysis.affectedScope?.a11y?.reasons || [])
+  .map(inline)
+  .join(', ');
+const a11ySection = a11yDeferred
+  ? `### Accessibility Audit\n\n**Status:** Deferred to protected main/nightly coverage${a11yReasons ? ` (${a11yReasons})` : ''}.\n\n`
+  : buildA11ySection(a11yReport);
 
 // Visual regression is optional: the pr-visual job is skipped when no
 // components changed, and absent entirely on older runs.
@@ -147,7 +171,7 @@ const bundlePackages =
   analysis.bundlePackages && analysis.bundlePackages.length > 0
     ? analysis.bundlePackages
     : analysis.totalBundle
-      ? [{ package: '@astryxdesign/core', ...analysis.totalBundle }]
+      ? [{package: '@astryxdesign/core', ...analysis.totalBundle}]
       : [];
 
 if (bundlePackages.length > 0) {
@@ -163,7 +187,8 @@ if (bundlePackages.length > 0) {
 
 if (analysis.bundleDelta) {
   const delta = num(analysis.bundleDelta);
-  const direction = delta > 0 ? 'increased' : delta < 0 ? 'decreased' : 'unchanged';
+  const direction =
+    delta > 0 ? 'increased' : delta < 0 ? 'decreased' : 'unchanged';
   bundleSection += `**Bundle size ${direction}:** ${delta > 0 ? '+' : ''}${delta} bytes\n\n`;
 }
 
@@ -194,7 +219,8 @@ let footerLinks = [];
 if (storybookUrl) footerLinks.push(extLink('Storybook', storybookUrl));
 if (sandboxUrl) footerLinks.push(extLink('Sandbox', sandboxUrl));
 if (runUrl) footerLinks.push(extLink('View full report', runUrl));
-const footerLinksStr = footerLinks.length > 0 ? ` | ${footerLinks.join(' | ')}` : '';
+const footerLinksStr =
+  footerLinks.length > 0 ? ` | ${footerLinks.join(' | ')}` : '';
 
 // A one-line caveat shown when the analysis fell back to the approximate
 // two-dot diff. The file list may include base-only churn and, worse, may

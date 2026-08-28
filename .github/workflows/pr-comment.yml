@@ -257,6 +257,7 @@ jobs:
             const scope = JSON.parse(result.stdout);
             fs.writeFileSync('trusted-scope.json', JSON.stringify(scope));
             core.setOutput('stable', String(scope.hasStableVisual));
+            core.setOutput('exact', String(scope.exactStableVisual));
             core.setOutput('broad', String(scope.broadStableVisual));
 
       - name: Download analysis artifact from the CI run
@@ -282,8 +283,7 @@ jobs:
       - name: Download Storybook for trusted visual capture
         if: >-
           steps.identity.outputs.valid == 'true' &&
-          steps.scope.outputs.stable == 'true' &&
-          steps.scope.outputs.broad != 'true'
+          steps.scope.outputs.exact == 'true'
         uses: actions/download-artifact@v8
         with:
           pattern: storybook-*
@@ -321,8 +321,7 @@ jobs:
         id: plan
         if: >-
           steps.identity.outputs.valid == 'true' &&
-          steps.scope.outputs.stable == 'true' &&
-          steps.scope.outputs.broad != 'true'
+          steps.scope.outputs.exact == 'true'
         env:
           ASTRYX_VISUAL_SHA: ${{ steps.identity.outputs.head_sha }}
           ASTRYX_VISUAL_RUN_ID: ${{ steps.identity.outputs.run_id }}
@@ -370,7 +369,8 @@ jobs:
         if: >-
           steps.identity.outputs.valid == 'true' &&
           steps.scope.outputs.stable == 'true' &&
-          steps.scope.outputs.broad == 'true'
+          steps.scope.outputs.broad == 'true' &&
+          steps.scope.outputs.exact != 'true'
         env:
           PR_NUMBER: ${{ steps.identity.outputs.pr_number }}
           HEAD_SHA: ${{ steps.identity.outputs.head_sha }}
@@ -395,8 +395,7 @@ jobs:
       - name: Derive trusted visual evidence and report
         if: >-
           steps.identity.outputs.valid == 'true' &&
-          steps.scope.outputs.stable == 'true' &&
-          steps.scope.outputs.broad != 'true' &&
+          steps.scope.outputs.exact == 'true' &&
           steps.plan.outputs.deferred != 'true'
         env:
           PR_NUMBER: ${{ steps.identity.outputs.pr_number }}

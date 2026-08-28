@@ -1,0 +1,34 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+
+name: Affected scope
+description: Resolve exact affected components and broad/deferred PR-check inputs.
+
+inputs:
+  changed-files:
+    description: Newline-separated changed paths. Ignored when analysis-file is set.
+    required: false
+    default: ''
+  analysis-file:
+    description: analysis.json file containing changedFiles.
+    required: false
+    default: ''
+
+outputs:
+  affected_components:
+    description: Comma-separated exact affected component names.
+  affected_core_components:
+    description: Comma-separated exact affected Core component names.
+  affected_deferred_reasons:
+    description: Comma-separated broad/deferred reason keys.
+  a11y_deferred:
+    description: Whether a11y also needs protected main/full coverage.
+  has_components:
+    description: Whether exact affected components exist.
+  rtl_deferred:
+    description: Whether RTL also needs protected main/full coverage.
+  json:
+    description: Path to the canonical affected-scope JSON file.
+
+runs:
+  using: node20
+  main: index.mjs
