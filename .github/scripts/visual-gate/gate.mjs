@@ -36,12 +36,13 @@ import {
   validateReleasePlan,
 } from './lib/compare.mjs';
 import {
+  accountBaseline,
   buildPlan,
   createReleasePlan,
   readStoryIndex,
   readThemeCatalog,
-  stableBaseline,
   storiesInPackages,
+  summarizeBaselineAccounting,
   withBaselineCoverage,
   withThemeMetadata,
 } from './lib/plan.mjs';
@@ -97,6 +98,7 @@ if (
   (flag('tiers') ||
     flag('story-packages') ||
     flag('observations') ||
+    flag('max-shots') ||
     has('no-scout') ||
     planFile ||
     components.length ||
@@ -206,11 +208,13 @@ async function plan() {
     matrixThemes,
     probeTheme: config.probeTheme,
   });
+  let baselineAccount = null;
   if (releaseMode) {
     const {manifest} = readBaseline(baselineDir);
+    baselineAccount = accountBaseline(manifest, indexedStories, themeCatalog, REPO_ROOT);
     shots = withBaselineCoverage(shots, {
       stories,
-      baselineManifest: stableBaseline(manifest, indexedStories, themeCatalog),
+      baselineManifest: baselineAccount.manifest,
       themes: themeCatalog,
     });
   }
@@ -221,7 +225,7 @@ async function plan() {
     ? shots.filter(shot => only.some(fragment => shot.storyId.includes(fragment)))
     : shots;
   if (!sample || sample >= filtered.length) {
-    return {shots: filtered, stories: indexedStories};
+    return {shots: filtered, stories: indexedStories, baselineAccount};
   }
   const step = filtered.length / sample;
   return {
@@ -230,6 +234,7 @@ async function plan() {
       (_, index) => filtered[Math.floor(index * step)],
     ),
     stories: indexedStories,
+    baselineAccount,
   };
 }
 
@@ -260,6 +265,7 @@ async function runCapture(shots, releasePlan = null) {
       stableVisual: planned.stableVisual,
       themePackageName: planned.themePackageName,
       stableThemeVisual: planned.stableThemeVisual,
+      membershipSource: 'accepted-capture',
     });
   }
   manifest.context = {
@@ -295,8 +301,11 @@ function stageReportImages({reportDir, keys, currentDir, baselinePath}) {
 }
 
 async function check() {
-  const {shots, stories} = await plan();
+  const {shots, stories, baselineAccount} = await plan();
   const releasePlan = releaseMode ? createReleasePlan(shots) : null;
+  const baselineAccounting = releaseMode
+    ? summarizeBaselineAccounting(baselineAccount, shots)
+    : null;
   const ineligible = releaseMode
     ? shots.filter(shot => !shot.stableVisual || !shot.stableThemeVisual)
     : [];
@@ -346,20 +355,27 @@ async function check() {
   }
 
   process.stderr.write(`Visual gate: ${shots.length} shots (${tiers.join(', ')})\n`);
-  const {manifest, failures} = await runCapture(shots, releasePlan);
+  const {manifest, failures: captureFailures} = await runCapture(shots, releasePlan);
+  let failures = [
+    ...captureFailures,
+    ...(baselineAccounting?.unclassifiedKeys ?? []).map(key => ({
+      key,
+      error: 'Baseline membership is unclassified.',
+    })),
+  ];
 
   const {manifest: rawBaseline, exists} = readBaseline(baselineDir);
-  const baselineManifest = releaseMode
-    ? stableBaseline(rawBaseline, stories, themeCatalog)
-    : rawBaseline;
+  const baselineManifest = releaseMode ? baselineAccount.manifest : rawBaseline;
   const blocker = exists ? incomparable(baselineManifest, manifest) : null;
   if (blocker) {
-    process.stderr.write(`::error::Baseline is not comparable — ${blocker}\n`);
-    return EXIT.crashed;
+    failures.push({key: 'baseline', error: blocker});
   }
 
   const reportDir = path.join(outDir, 'report');
-  const comparison = await (releaseMode ? compareReleaseCaptures : compareCaptures)({
+  const compare = releaseMode ? compareReleaseCaptures : compareCaptures;
+  let comparison;
+  try {
+    comparison = await compare({
     baselineDir: path.join(baselineDir, 'shots'),
     currentDir: path.join(outDir, 'shots'),
     baselineManifest,
@@ -367,8 +383,24 @@ async function check() {
     diffDir: path.join(reportDir, 'diff'),
     threshold: config.threshold,
     maxDiffPixels: config.maxDiffPixels,
-    failures,
-  });
+      failures,
+    });
+  } catch (error) {
+    if (!releaseMode) throw error;
+    failures = [
+      ...failures,
+      {key: 'release-plan', error: String(error?.message ?? error)},
+    ];
+    comparison = await compareCaptures({
+      baselineDir: path.join(baselineDir, 'shots'),
+      currentDir: path.join(outDir, 'shots'),
+      baselineManifest,
+      currentManifest: manifest,
+      diffDir: path.join(reportDir, 'diff'),
+      threshold: config.threshold,
+      maxDiffPixels: config.maxDiffPixels,
+    });
+  }
 
   const [targets, themeOverrides] = await Promise.all([
     loadThemingTargets(REPO_ROOT),
@@ -390,7 +422,8 @@ async function check() {
       ...manifest.context,
       tiers,
       baselineExists: exists,
-        components,
+      components,
+      ...(baselineAccounting ? {baselineAccounting} : {}),
     },
   });
 
@@ -439,6 +472,20 @@ function summarize(verdict, baselineExists) {
     `| ${verdict.counts.total} | ${verdict.counts.changed} | ${verdict.counts.added} | ${verdict.counts.removed} | ${verdict.counts.failed} |`,
     '',
   );
+  const accounting = verdict.context?.baselineAccounting;
+  if (accounting) {
+    lines.push(
+      `Baseline accounting: ${accounting.plannedCurrentStable} planned stable · ${accounting.intentionallyExcluded} intentionally excluded · ${accounting.preservedLegacy} preserved legacy · ${accounting.unclassified} unclassified`,
+      '',
+    );
+    if (accounting.unclassifiedKeys) {
+      lines.push(
+        'Unclassified baseline keys:',
+        ...accounting.unclassifiedKeys.map(key => `- \`${key}\``),
+        '',
+      );
+    }
+  }
   if (verdict.changes.length > 0) {
     lines.push('### Changed', '', '| shot | theme | mode | diff px | why it is in the plan |', '|---|---|---|---|---|');
     for (const change of verdict.changes.slice(0, 40)) {
@@ -678,10 +725,16 @@ async function main() {
           throw new Error('Refusing to prune without the capture’s canonical release plan.');
         }
       }
+      const baselineManifest = {
+        ...currentManifest,
+        context: currentManifest.context
+          ? {...currentManifest.context, releasePlan: undefined}
+          : null,
+      };
       const result = accept({
         baselineDir,
         captureDir: outDir,
-        currentManifest,
+        currentManifest: baselineManifest,
         keys,
         reason: flag('reason') ?? '',
         actor: flag('actor') ?? process.env.GITHUB_ACTOR ?? process.env.USER ?? 'unknown',

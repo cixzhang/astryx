@@ -82,6 +82,21 @@ export function packageFromComponentPath(componentPath) {
   return [...names][0];
 }
 
+function eligible(manifest) {
+  return manifest.private !== true && manifest.astryx?.canaryOnly !== true;
+}
+
+function titlePackage(title, catalog, candidates = null) {
+  const parts = String(title ?? '').split('/').filter(Boolean);
+  const wanted = [];
+  if (parts[0]) wanted.push(`@astryxdesign/${parts[0].toLowerCase()}`);
+  if (parts.at(-1)?.endsWith(' Theme')) {
+    const slug = parts.at(-1).slice(0, -6).trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+    wanted.unshift(`@astryxdesign/theme-${slug}`);
+  }
+  return wanted.find(name => catalog.has(name) && (!candidates || candidates.includes(name))) ?? null;
+}
+
 function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
   const fromComponent = packageFromComponentPath(entry.componentPath);
   let names = fromComponent ? [fromComponent] : [];
@@ -94,17 +109,21 @@ function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
     const text = fs.readFileSync(source, 'utf8');
     names = [...new Set([...text.matchAll(/(?:from\s+|import\s*)['"](@astryxdesign\/[^/'"]+)/g)].map(match => match[1]))].sort();
   }
-  if (names.length === 0) throw new Error(`Story ${entry.id} imports no workspace package.`);
-  const manifests = names.map(name => {
-    const manifest = catalog.get(name);
-    if (!manifest) throw new Error(`Story ${entry.id} names unknown package ${name}.`);
-    return manifest;
-  });
-  const unstable = manifests.find(manifest => manifest.private === true || manifest.astryx?.canaryOnly === true);
+  const titleOwner = titlePackage(entry.title, catalog, names);
+  const themeOwner = titlePackage(entry.title, catalog);
+  const owner =
+    fromComponent ??
+    (themeOwner?.startsWith('@astryxdesign/theme-') ? themeOwner : null) ??
+    titleOwner ??
+    (names.length === 1 ? names[0] : null);
+  if (!owner) throw new Error(`Story ${entry.id} has ambiguous package ownership: ${names.join(', ')}.`);
+  for (const name of new Set([...names, owner])) {
+    if (!catalog.has(name)) throw new Error(`Story ${entry.id} names unknown package ${name}.`);
+  }
   return {
-    packageNames: names,
-    packageName: (unstable ?? manifests[0]).name,
-    stableVisual: unstable == null,
+    packageNames: names.length ? names : [owner],
+    packageName: owner,
+    stableVisual: eligible(catalog.get(owner)),
   };
 }
 
@@ -133,29 +152,102 @@ export function withThemeMetadata(shots, themes) {
   });
 }
 
-export function stableBaseline(manifest, stories, themes) {
+function baselinePackage(shot, repoRoot, catalog) {
+  if (shot.packageName && catalog.has(shot.packageName)) {
+    return {packageName: shot.packageName, source: 'stored-package'};
+  }
+  const component = String(shot.component ?? '').trim();
+  if (component) {
+    const owners = [...catalog.keys()].filter(name => {
+      if (!name.startsWith('@astryxdesign/') || name.includes('/theme-')) return false;
+      const leaf = name.slice('@astryxdesign/'.length);
+      return fs.existsSync(path.join(repoRoot, 'packages', leaf, 'src', component));
+    });
+    if (owners.length === 1) return {packageName: owners[0], source: 'stored-component'};
+  }
+  const fromTitle = titlePackage(shot.title, catalog);
+  return fromTitle ? {packageName: fromTitle, source: 'stored-title'} : null;
+}
+
+export function accountBaseline(manifest, stories, themes, repoRoot) {
+  const catalog = readPackageCatalog(repoRoot);
   const byId = new Map(stories.map(story => [story.id, story]));
-  return {
-    ...manifest,
-    shots: Object.fromEntries(Object.entries(manifest.shots ?? {}).flatMap(([key, shot]) => {
-      const story = typeof shot.stableVisual === 'boolean' ? shot : byId.get(shot.storyId);
-      const theme = typeof shot.stableThemeVisual === 'boolean'
-        ? {packageName: shot.themePackageName, stableVisual: shot.stableThemeVisual}
-        : themes[shot.theme];
-      if (!story || !theme) {
-        throw new Error(`Legacy baseline shot ${key} cannot be classified; normalize it before reporting removals.`);
-      }
-      if (!story.stableVisual || !theme.stableVisual) return [];
-      return [[key, {
-        ...shot,
-        packageName: story.packageName,
-        packageNames: story.packageNames ?? [story.packageName],
-        stableVisual: true,
-        themePackageName: theme.packageName,
-        stableThemeVisual: true,
-      }]];
-    })),
+  const stable = {};
+  const categories = {
+    currentStable: [],
+    intentionallyExcluded: [],
+    preservedLegacy: [],
+    unclassified: [],
   };
+  for (const [key, shot] of Object.entries(manifest.shots ?? {})) {
+    const currentStory = byId.get(shot.storyId);
+    const owner = shot.packageName && catalog.has(shot.packageName)
+      ? {
+          packageName: shot.packageName,
+          source: shot.membershipSource ?? 'stored-package',
+        }
+      : currentStory
+        ? {packageName: currentStory.packageName, source: 'current-story'}
+        : baselinePackage(shot, repoRoot, catalog);
+    const storedTheme = shot.themePackageName
+      ? catalog.get(shot.themePackageName)
+      : null;
+    const theme = storedTheme
+      ? {
+          packageName: storedTheme.name,
+          stableVisual: eligible(storedTheme),
+        }
+      : themes[shot.theme];
+    if (!owner || !catalog.has(owner.packageName) || !theme) {
+      categories.unclassified.push(key);
+      continue;
+    }
+    const state = eligible(catalog.get(owner.packageName)) && theme.stableVisual
+      ? 'stable'
+      : 'ineligible';
+    if (state === 'ineligible') {
+      categories.intentionallyExcluded.push(key);
+      continue;
+    }
+    const story = byId.get(shot.storyId);
+    const value = {
+      ...shot,
+      packageName: owner.packageName,
+      packageNames: story?.packageNames ?? [owner.packageName],
+      stableVisual: true,
+      themePackageName: theme.packageName,
+      stableThemeVisual: true,
+      membershipSource: owner.source,
+    };
+    stable[key] = value;
+    (story ? categories.currentStable : categories.preservedLegacy).push(key);
+  }
+  for (const values of Object.values(categories)) values.sort();
+  const total = Object.keys(manifest.shots ?? {}).length;
+  const classified = Object.values(categories).reduce((sum, values) => sum + values.length, 0);
+  if (classified !== total) throw new Error(`Baseline accounting overlap: ${classified} states for ${total} keys.`);
+  return {manifest: {...manifest, shots: stable}, categories, total};
+}
+
+export function summarizeBaselineAccounting(account, releaseShots) {
+  const planned = new Set(releaseShots.map(shot => shot.key));
+  const missing = account.categories.currentStable.filter(key => !planned.has(key));
+  const unclassified = [...new Set([...account.categories.unclassified, ...missing])].sort();
+  const plannedCurrentStable = account.categories.currentStable.length - missing.length;
+  const counts = {
+    total: account.total,
+    plannedCurrentStable,
+    intentionallyExcluded: account.categories.intentionallyExcluded.length,
+    preservedLegacy: account.categories.preservedLegacy.length,
+    unclassified: unclassified.length,
+  };
+  const sum = counts.plannedCurrentStable + counts.intentionallyExcluded + counts.preservedLegacy + counts.unclassified;
+  if (sum !== counts.total) throw new Error(`Baseline accounting overlap: ${sum} states for ${counts.total} keys.`);
+  return {...counts, ...(unclassified.length ? {unclassifiedKeys: unclassified} : {})};
+}
+
+export function stableBaseline(manifest, stories, themes, repoRoot) {
+  return accountBaseline(manifest, stories, themes, repoRoot).manifest;
 }
 
 export function withBaselineCoverage(plan, {stories, baselineManifest, themes}) {

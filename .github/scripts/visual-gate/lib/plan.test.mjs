@@ -7,12 +7,15 @@ import * as path from 'node:path';
 import {describe, expect, it} from 'vitest';
 
 import {
+  accountBaseline,
   buildPlan,
   createReleasePlan,
   readStoryIndex,
+  readThemeCatalog,
   representativeStories,
   shotKey,
   storiesInPackages,
+  summarizeBaselineAccounting,
   uncoveredTargets,
 } from './plan.mjs';
 
@@ -155,6 +158,7 @@ describe('readStoryIndex package metadata', () => {
       ['packages/charts', {name: '@astryxdesign/charts', private: true, astryx: {canaryOnly: true}}],
       ['packages/lab', {name: '@astryxdesign/lab', private: true, astryx: {canaryOnly: true}}],
       ['packages/themes/neutral', {name: '@astryxdesign/theme-neutral', private: false}],
+      ['packages/themes/probe', {name: '@astryxdesign/theme-probe', private: true}],
     ]) {
       fs.mkdirSync(path.join(root, dir), {recursive: true});
       fs.writeFileSync(path.join(root, dir, 'package.json'), JSON.stringify(manifest));
@@ -165,11 +169,15 @@ describe('readStoryIndex package metadata', () => {
     fs.mkdirSync(dist);
     fs.writeFileSync(path.join(storybook, 'stories/Composite.stories.tsx'), "import {Table} from '@astryxdesign/core/Table';");
     fs.writeFileSync(path.join(storybook, 'stories/Lab.stories.tsx'), "import {Thing} from '@astryxdesign/lab'; import {Button} from '@astryxdesign/core/Button';");
+    fs.writeFileSync(path.join(storybook, 'stories/CoreMixed.stories.tsx'), "import {Thing} from '@astryxdesign/lab'; import {Layer} from '@astryxdesign/core/Layer';");
+    fs.writeFileSync(path.join(storybook, 'stories/Probe.stories.tsx'), "import {Button} from '@astryxdesign/core/Button';");
     fs.writeFileSync(path.join(dist, 'index.json'), JSON.stringify({entries: {
       core: {type: 'story', id: 'core-button--default', title: 'Core/Button', name: 'Default', componentPath: '../../packages/core/src/Button/index.ts', importPath: './stories/Button.stories.tsx'},
       composite: {type: 'story', id: 'core-composite--default', title: 'Core/Composite', name: 'Default', importPath: './stories/Composite.stories.tsx'},
       charts: {type: 'story', id: 'charts-bar--default', title: 'Charts/Bar', name: 'Default', componentPath: '@astryxdesign/charts/Bar', importPath: './stories/Bar.stories.tsx'},
       lab: {type: 'story', id: 'lab-thing--default', title: 'Lab/Thing', name: 'Default', importPath: './stories/Lab.stories.tsx'},
+      mixed: {type: 'story', id: 'core-layer--default', title: 'Core/Layer', name: 'Default', importPath: './stories/CoreMixed.stories.tsx'},
+      probe: {type: 'story', id: 'core-probe--default', title: 'Core/Themes/Probe Theme', name: 'Default', importPath: './stories/Probe.stories.tsx'},
       skipped: {type: 'story', id: 'core-skip--default', title: 'Core/Skip', name: 'Default', tags: ['no-visual']},
     }}));
     return {root, dist};
@@ -183,7 +191,145 @@ describe('readStoryIndex package metadata', () => {
       expect(indexed.find(value => value.id === 'core-composite--default')).toMatchObject({packageNames: ['@astryxdesign/core'], stableVisual: true});
       expect(indexed.find(value => value.id === 'charts-bar--default')).toMatchObject({packageName: '@astryxdesign/charts', stableVisual: false});
       expect(indexed.find(value => value.id === 'lab-thing--default')).toMatchObject({packageName: '@astryxdesign/lab', stableVisual: false});
+      expect(indexed.find(value => value.id === 'core-layer--default')).toMatchObject({packageName: '@astryxdesign/core', stableVisual: true});
+      expect(indexed.find(value => value.id === 'core-probe--default')).toMatchObject({packageName: '@astryxdesign/theme-probe', stableVisual: false});
       expect(indexed.some(value => value.id === 'core-skip--default')).toBe(false);
+    } finally {
+      fs.rmSync(root, {recursive: true, force: true});
+    }
+  });
+
+  it('accounts for a live-shaped 974-key baseline without dropping legacy keys', () => {
+    const {root} = fixture();
+    for (const [dir, manifest] of [
+      ['packages/vega', {name: '@astryxdesign/vega', private: true, astryx: {canaryOnly: true}}],
+      ['packages/richtext', {name: '@astryxdesign/richtext', private: true, astryx: {canaryOnly: true}}],
+    ]) {
+      fs.mkdirSync(path.join(root, dir), {recursive: true});
+      fs.writeFileSync(path.join(root, dir, 'package.json'), JSON.stringify(manifest));
+    }
+    const baselineShots = {};
+    const current = [];
+    for (let index = 0; index < 882; index += 1) {
+      const storyId = `core-story-${index}`;
+      const key = `${storyId}__neutral-light`;
+      baselineShots[key] = {
+        storyId,
+        title: `Core/Story ${index}`,
+        component: `Story${index}`,
+        theme: 'neutral',
+        mode: 'light',
+      };
+      current.push({
+        id: storyId,
+        packageName: '@astryxdesign/core',
+        packageNames: ['@astryxdesign/core'],
+        stableVisual: true,
+      });
+    }
+    const excluded = [
+      ['Charts', 28],
+      ['Lab', 60],
+      ['Richtext', 2],
+      ['Vega', 2],
+    ];
+    for (const [title, count] of excluded) {
+      for (let index = 0; index < count; index += 1) {
+        const storyId = `${title.toLowerCase()}-story-${index}`;
+        baselineShots[`${storyId}__neutral-light`] = {
+          storyId,
+          title: `${title}/Story ${index}`,
+          component: `Story${index}`,
+          theme: 'neutral',
+          mode: 'light',
+        };
+      }
+    }
+    try {
+      const account = accountBaseline(
+        {shots: baselineShots},
+        current,
+        readThemeCatalog(root),
+        root,
+      );
+      const summary = summarizeBaselineAccounting(
+        account,
+        current.map(story => ({key: `${story.id}__neutral-light`})),
+      );
+      expect(summary).toEqual({
+        total: 974,
+        plannedCurrentStable: 882,
+        intentionallyExcluded: 92,
+        preservedLegacy: 0,
+        unclassified: 0,
+      });
+      expect(Object.keys(account.manifest.shots)).toHaveLength(882);
+    } finally {
+      fs.rmSync(root, {recursive: true, force: true});
+    }
+  });
+
+  it('preserves a deleted accepted story as a release decision', () => {
+    const {root} = fixture();
+    try {
+      const account = accountBaseline(
+        {
+          shots: {
+            'core-gone--default__neutral-light': {
+              storyId: 'core-gone--default',
+              title: 'Core/Gone',
+              component: 'Gone',
+              theme: 'neutral',
+              mode: 'light',
+            },
+          },
+        },
+        [],
+        readThemeCatalog(root),
+        root,
+      );
+      expect(summarizeBaselineAccounting(account, [])).toEqual({
+        total: 1,
+        plannedCurrentStable: 0,
+        intentionallyExcluded: 0,
+        preservedLegacy: 1,
+        unclassified: 0,
+      });
+      expect(account.manifest.shots).toHaveProperty(
+        'core-gone--default__neutral-light',
+      );
+    } finally {
+      fs.rmSync(root, {recursive: true, force: true});
+    }
+  });
+
+  it('reports exact unclassified legacy keys without dropping them silently', () => {
+    const {root} = fixture();
+    try {
+      const account = accountBaseline(
+        {
+          shots: {
+            'unknown--default__neutral-light': {
+              storyId: 'unknown--default',
+              title: 'Unknown/Thing',
+              component: 'Missing',
+              theme: 'neutral',
+              mode: 'light',
+            },
+          },
+        },
+        [],
+        readThemeCatalog(root),
+        root,
+      );
+      expect(summarizeBaselineAccounting(account, [])).toEqual({
+        total: 1,
+        plannedCurrentStable: 0,
+        intentionallyExcluded: 0,
+        preservedLegacy: 0,
+        unclassified: 1,
+        unclassifiedKeys: ['unknown--default__neutral-light'],
+      });
     } finally {
       fs.rmSync(root, {recursive: true, force: true});
     }

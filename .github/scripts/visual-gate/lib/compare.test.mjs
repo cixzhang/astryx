@@ -130,19 +130,31 @@ describe('compareCaptures', () => {
     })).rejects.toThrow(/exactly cover/);
   });
 
-  it('rejects release capture failures before removal comparison', async () => {
+  it('returns an incomplete comparison for capture failures without removals', async () => {
     const current = manifest({a: {sha256: 'a'}});
     current.context = {releasePlan: createReleasePlan([{key: 'a'}])};
-    await expect(compareReleaseCaptures({
+    const failures = [{key: 'a', error: 'capture failed'}];
+    const comparison = await compareReleaseCaptures({
       baselineDir: path.join(root, 'baseline'),
       currentDir: path.join(root, 'current'),
-      baselineManifest: manifest({}),
+      baselineManifest: manifest({gone: {sha256: 'old'}}),
       currentManifest: current,
       diffDir: path.join(root, 'diff'),
       threshold: 0.1,
       maxDiffPixels: 0,
-      failures: [{key: 'a', error: 'capture failed'}],
-    })).rejects.toThrow(/1 failure/);
+      failures,
+    });
+    expect(comparison.removed).toEqual([]);
+    expect(
+      buildVerdict({
+        comparison,
+        currentManifest: current,
+        baselineManifest: manifest({}),
+        targeting: {},
+        failures,
+        context: current.context,
+      }).status,
+    ).toBe('failed');
   });
 
   it('prunes only enumerated reviewed removal keys', () => {
@@ -166,6 +178,7 @@ describe('compareCaptures', () => {
     const accepted = JSON.parse(fs.readFileSync(path.join(baselineDir, 'manifest.json'), 'utf8'));
     expect(accepted.shots.b).toBeUndefined();
     expect(accepted.shots.c).toBeDefined();
+    expect(accepted.context?.releasePlan).toBeUndefined();
     expect(fs.existsSync(path.join(baselineDir, 'shots/c.png'))).toBe(true);
   });
 

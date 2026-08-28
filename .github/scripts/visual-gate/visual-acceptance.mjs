@@ -611,7 +611,9 @@ function readTrustedBaseline(stories = null) {
   const raw = readJSON(
     path.join(path.resolve(flag('baseline')), 'manifest.json'),
   );
-  const baseline = stories ? stableBaseline(raw, stories, themeCatalog) : raw;
+  const baseline = stories
+    ? stableBaseline(raw, stories, themeCatalog, REPO_ROOT)
+    : raw;
   if (
     !baseline?.shots ||
     typeof baseline.shots !== 'object' ||

@@ -161,6 +161,9 @@ export async function compareCaptures({
 }
 
 export async function compareReleaseCaptures(options) {
+  if (options.failures?.length) {
+    return compareCaptures(options);
+  }
   validateReleasePlan(
     options.currentManifest.context?.releasePlan,
     options.currentManifest,
