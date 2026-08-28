@@ -50,9 +50,16 @@ import {READ_TARGETS, emptyAccumulator, fold} from './lib/probe-reach.mjs';
 import {AXES, PROBE_TOKENS, READ_AXES} from './lib/probe-axes.mjs';
 import {renderReport} from './lib/report.mjs';
 import {accept, incomparable, readBaseline} from './lib/baseline.mjs';
-import {loadConfig, loadThemeOverrides, loadThemingTargets} from './lib/sources.mjs';
+import {
+  loadConfig,
+  loadThemeOverrides,
+  loadThemingTargets,
+} from './lib/sources.mjs';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const REPO_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../..',
+);
 
 const EXIT = {clean: 0, crashed: 1, changed: 2};
 const RELEASE_TIERS = ['surface', 'theme-matrix'];
@@ -68,13 +75,17 @@ const captureIdentity = () => ({
   sha: process.env.ASTRYX_VISUAL_SHA ?? process.env.GITHUB_SHA ?? null,
   runId: process.env.ASTRYX_VISUAL_RUN_ID ?? process.env.GITHUB_RUN_ID ?? null,
   runAttempt:
-    process.env.ASTRYX_VISUAL_RUN_ATTEMPT ?? process.env.GITHUB_RUN_ATTEMPT ?? null,
+    process.env.ASTRYX_VISUAL_RUN_ATTEMPT ??
+    process.env.GITHUB_RUN_ATTEMPT ??
+    null,
 });
 
 const config = loadConfig(REPO_ROOT);
 const releaseMode = command === 'release';
 const themeCatalog = readThemeCatalog(REPO_ROOT);
-const storybookDir = path.resolve(flag('storybook-dir') ?? 'apps/storybook/dist');
+const storybookDir = path.resolve(
+  flag('storybook-dir') ?? 'apps/storybook/dist',
+);
 const baselineDir = path.resolve(flag('baseline') ?? '.visual-baseline');
 let outDir = path.resolve(flag('out') ?? '.visual-run');
 const tiers = releaseMode
@@ -88,7 +99,9 @@ const components = (flag('components') ?? '').split(',').filter(Boolean);
 /** For the `theme-matrix` tier: only these shipped themes changed. */
 const matrixThemes = (flag('themes') ?? '').split(',').filter(Boolean);
 const maxShots = flag('max-shots') ? Number(flag('max-shots')) : Infinity;
-const storyPackages = (flag('story-packages') ?? config.stableStoryPackages.join(','))
+const storyPackages = (
+  flag('story-packages') ?? config.stableStoryPackages.join(',')
+)
   .split(',')
   .filter(Boolean);
 /** A trusted, exact shot list used only to recapture an accepted merged result. */
@@ -106,13 +119,21 @@ if (
     only.length ||
     sample)
 ) {
-  throw new Error('The stable release plan is internal and cannot be scoped by CLI flags.');
+  throw new Error(
+    'The stable release plan is internal and cannot be scoped by CLI flags.',
+  );
 }
 
 function readExactPlan(file) {
-  const shots = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));
+  const value = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));
+  const shots = Array.isArray(value) ? value : value?.shots;
+  const expectedRemoved = Array.isArray(value)
+    ? []
+    : (value?.expectedRemoved ?? value?.expectedRemovals ?? []);
   if (!Array.isArray(shots) || shots.length > 5000) {
-    throw new Error('Exact visual plan must contain at most 5000 trusted shots.');
+    throw new Error(
+      'Exact visual plan must contain at most 5000 trusted shots.',
+    );
   }
   const keys = new Set();
   for (const shot of shots) {
@@ -125,12 +146,34 @@ function readExactPlan(file) {
       !['light', 'dark'].includes(shot.mode) ||
       !Array.isArray(shot.reasons)
     ) {
-      throw new Error(`Exact visual plan contains an invalid shot: ${JSON.stringify(shot)}`);
+      throw new Error(
+        `Exact visual plan contains an invalid shot: ${JSON.stringify(shot)}`,
+      );
     }
-    if (keys.has(shot.key)) throw new Error(`Exact visual plan repeats ${shot.key}.`);
+    if (keys.has(shot.key))
+      throw new Error(`Exact visual plan repeats ${shot.key}.`);
     keys.add(shot.key);
   }
-  return shots;
+  const removalKeys = new Set();
+  for (const removal of expectedRemoved) {
+    if (
+      !/^[A-Za-z0-9._-]{1,240}$/.test(removal?.key ?? '') ||
+      typeof removal.storyId !== 'string' ||
+      !removal.storyId ||
+      typeof removal.theme !== 'string' ||
+      !removal.theme ||
+      !['light', 'dark'].includes(removal.mode)
+    ) {
+      throw new Error(
+        `Exact visual plan contains an invalid expected removal: ${JSON.stringify(removal)}`,
+      );
+    }
+    if (keys.has(removal.key) || removalKeys.has(removal.key)) {
+      throw new Error(`Exact visual plan repeats ${removal.key}.`);
+    }
+    removalKeys.add(removal.key);
+  }
+  return {shots, expectedRemoved};
 }
 
 /**
@@ -144,19 +187,27 @@ function readExactPlan(file) {
  * @returns {string[]}
  */
 function storiesToScout(stories, targets, themeOverrides) {
-  const overridden = new Set(Object.values(themeOverrides).flatMap(keys => Object.keys(keys)));
-  const components = new Set(
-    targets.filter(target => overridden.has(target.key)).map(target => target.component),
+  const overridden = new Set(
+    Object.values(themeOverrides).flatMap(keys => Object.keys(keys)),
   );
-  return stories.filter(story => components.has(story.component)).map(story => story.id);
+  const components = new Set(
+    targets
+      .filter(target => overridden.has(target.key))
+      .map(target => target.component),
+  );
+  return stories
+    .filter(story => components.has(story.component))
+    .map(story => story.id);
 }
 
 /** @returns {Promise<{shots: import('./lib/plan.mjs').Shot[], stories: ReturnType<typeof readStoryIndex>}>} */
 async function plan() {
   if (planFile) {
+    const exact = readExactPlan(planFile);
     return {
-      shots: withThemeMetadata(readExactPlan(planFile), themeCatalog),
+      shots: withThemeMetadata(exact.shots, themeCatalog),
       stories: [],
+      expectedRemoved: exact.expectedRemoved,
     };
   }
   const [targets, allThemeOverrides] = await Promise.all([
@@ -178,7 +229,10 @@ async function plan() {
   const stories = storiesInPackages(indexedStories, storyPackages);
 
   let observations;
-  if (!has('no-scout') && (tiers.includes('theme-matrix') || tiers.includes('probe'))) {
+  if (
+    !has('no-scout') &&
+    (tiers.includes('theme-matrix') || tiers.includes('probe'))
+  ) {
     const cachePath = flag('observations');
     if (cachePath && fs.existsSync(cachePath)) {
       observations = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
@@ -186,14 +240,17 @@ async function plan() {
       const storyIds = tiers.includes('probe')
         ? stories.map(story => story.id)
         : storiesToScout(stories, targets, themeOverrides);
-      process.stderr.write(`Scouting ${storyIds.length} stories for theming targets…\n`);
+      process.stderr.write(
+        `Scouting ${storyIds.length} stories for theming targets…\n`,
+      );
       observations = await scout({
         storyIds,
         storybookDir,
         theme: config.defaultTheme,
         viewport: config.viewport,
       });
-      if (cachePath) fs.writeFileSync(cachePath, `${JSON.stringify(observations)}\n`);
+      if (cachePath)
+        fs.writeFileSync(cachePath, `${JSON.stringify(observations)}\n`);
     }
   }
 
@@ -211,7 +268,12 @@ async function plan() {
   let baselineAccount = null;
   if (releaseMode) {
     const {manifest} = readBaseline(baselineDir);
-    baselineAccount = accountBaseline(manifest, indexedStories, themeCatalog, REPO_ROOT);
+    baselineAccount = accountBaseline(
+      manifest,
+      indexedStories,
+      themeCatalog,
+      REPO_ROOT,
+    );
     shots = withBaselineCoverage(shots, {
       stories,
       baselineManifest: baselineAccount.manifest,
@@ -222,7 +284,9 @@ async function plan() {
   // A sample is for trying the rig out, never for a gate run: it is taken
   // evenly across the plan so it spans components rather than the first few.
   const filtered = only.length
-    ? shots.filter(shot => only.some(fragment => shot.storyId.includes(fragment)))
+    ? shots.filter(shot =>
+        only.some(fragment => shot.storyId.includes(fragment)),
+      )
     : shots;
   if (!sample || sample >= filtered.length) {
     return {shots: filtered, stories: indexedStories, baselineAccount};
@@ -238,7 +302,7 @@ async function plan() {
   };
 }
 
-async function runCapture(shots, releasePlan = null) {
+async function runCapture(shots, releasePlan = null, extraContext = {}) {
   fs.rmSync(outDir, {recursive: true, force: true});
   fs.mkdirSync(outDir, {recursive: true});
   let last = 0;
@@ -278,6 +342,9 @@ async function runCapture(shots, releasePlan = null) {
     baseSha: process.env.ASTRYX_PR_BASE_SHA ?? null,
     ref: process.env.GITHUB_REF ?? null,
     ...(releasePlan ? {releasePlan} : {}),
+    ...(extraContext.expectedRemoved?.length
+      ? {expectedRemoved: extraContext.expectedRemoved}
+      : {}),
   };
   fs.writeFileSync(
     path.join(outDir, 'manifest.json'),
@@ -295,7 +362,8 @@ function stageReportImages({reportDir, keys, currentDir, baselinePath}) {
     fs.mkdirSync(path.join(reportDir, name), {recursive: true});
     for (const key of keys) {
       const from = path.join(source, `${key}.png`);
-      if (fs.existsSync(from)) fs.copyFileSync(from, path.join(reportDir, name, `${key}.png`));
+      if (fs.existsSync(from))
+        fs.copyFileSync(from, path.join(reportDir, name, `${key}.png`));
     }
   }
 }
@@ -311,7 +379,10 @@ async function check() {
     : [];
   if (ineligible.length) {
     throw new Error(
-      `Canonical stable release plan contains ${ineligible.length} ineligible shot(s): ${ineligible.slice(0, 5).map(shot => shot.key).join(', ')}`,
+      `Canonical stable release plan contains ${ineligible.length} ineligible shot(s): ${ineligible
+        .slice(0, 5)
+        .map(shot => shot.key)
+        .join(', ')}`,
     );
   }
 
@@ -333,7 +404,14 @@ async function check() {
         components,
         ...(releasePlan ? {releasePlan} : {}),
       },
-      counts: {total: shots.length, unchanged: 0, changed: 0, added: 0, removed: 0, failed: 0},
+      counts: {
+        total: shots.length,
+        unchanged: 0,
+        changed: 0,
+        added: 0,
+        removed: 0,
+        failed: 0,
+      },
       components,
       changes: [],
       added: [],
@@ -341,10 +419,14 @@ async function check() {
       failures: [],
     };
     fs.mkdirSync(outDir, {recursive: true});
-    fs.writeFileSync(path.join(outDir, 'verdict.json'), `${JSON.stringify(verdict, null, 2)}\n`);
+    fs.writeFileSync(
+      path.join(outDir, 'verdict.json'),
+      `${JSON.stringify(verdict, null, 2)}\n`,
+    );
     const summary = `## Visual gate: skipped\n\n${verdict.reason}\n`;
     process.stdout.write(summary);
-    if (flag('summary-output')) fs.writeFileSync(flag('summary-output'), summary);
+    if (flag('summary-output'))
+      fs.writeFileSync(flag('summary-output'), summary);
     if (process.env.GITHUB_OUTPUT) {
       fs.appendFileSync(
         process.env.GITHUB_OUTPUT,
@@ -354,8 +436,13 @@ async function check() {
     return EXIT.clean;
   }
 
-  process.stderr.write(`Visual gate: ${shots.length} shots (${tiers.join(', ')})\n`);
-  const {manifest, failures: captureFailures} = await runCapture(shots, releasePlan);
+  process.stderr.write(
+    `Visual gate: ${shots.length} shots (${tiers.join(', ')})\n`,
+  );
+  const {manifest, failures: captureFailures} = await runCapture(
+    shots,
+    releasePlan,
+  );
   let failures = [
     ...captureFailures,
     ...(baselineAccounting?.unclassifiedKeys ?? []).map(key => ({
@@ -376,13 +463,13 @@ async function check() {
   let comparison;
   try {
     comparison = await compare({
-    baselineDir: path.join(baselineDir, 'shots'),
-    currentDir: path.join(outDir, 'shots'),
-    baselineManifest,
-    currentManifest: manifest,
-    diffDir: path.join(reportDir, 'diff'),
-    threshold: config.threshold,
-    maxDiffPixels: config.maxDiffPixels,
+      baselineDir: path.join(baselineDir, 'shots'),
+      currentDir: path.join(outDir, 'shots'),
+      baselineManifest,
+      currentManifest: manifest,
+      diffDir: path.join(reportDir, 'diff'),
+      threshold: config.threshold,
+      maxDiffPixels: config.maxDiffPixels,
       failures,
     });
   } catch (error) {
@@ -464,7 +551,10 @@ async function check() {
 function summarize(verdict, baselineExists) {
   const lines = [`## Visual gate: ${verdict.status}`, ''];
   if (!baselineExists) {
-    lines.push('No baseline existed — this run establishes one. Nothing was compared.', '');
+    lines.push(
+      'No baseline existed — this run establishes one. Nothing was compared.',
+      '',
+    );
   }
   lines.push(
     `| shots | changed | added | removed | failed |`,
@@ -487,13 +577,19 @@ function summarize(verdict, baselineExists) {
     }
   }
   if (verdict.changes.length > 0) {
-    lines.push('### Changed', '', '| shot | theme | mode | diff px | why it is in the plan |', '|---|---|---|---|---|');
+    lines.push(
+      '### Changed',
+      '',
+      '| shot | theme | mode | diff px | why it is in the plan |',
+      '|---|---|---|---|---|',
+    );
     for (const change of verdict.changes.slice(0, 40)) {
       lines.push(
         `| \`${change.key}\` | ${change.theme} | ${change.mode} | ${change.diffPixels} | ${(change.reasons ?? []).join(', ')} |`,
       );
     }
-    if (verdict.changes.length > 40) lines.push(`| … | | | | ${verdict.changes.length - 40} more |`);
+    if (verdict.changes.length > 40)
+      lines.push(`| … | | | | ${verdict.changes.length - 40} more |`);
     lines.push('');
   }
   const unexercised = verdict.targeting?.unexercisedOverrides ?? [];
@@ -503,7 +599,10 @@ function summarize(verdict, baselineExists) {
       '',
       ...unexercised
         .slice(0, 25)
-        .map(finding => `- \`${finding.theme}\` → \`${finding.key}${finding.selector ? `.${finding.selector}` : ''}\``),
+        .map(
+          finding =>
+            `- \`${finding.theme}\` → \`${finding.key}${finding.selector ? `.${finding.selector}` : ''}\``,
+        ),
       '',
     );
   }
@@ -526,15 +625,19 @@ async function main() {
         }
       }
       process.stdout.write(`${shots.length} shots\n`);
-      for (const [reason, count] of Object.entries(byReason).sort((a, b) => b[1] - a[1])) {
+      for (const [reason, count] of Object.entries(byReason).sort(
+        (a, b) => b[1] - a[1],
+      )) {
         process.stdout.write(`  ${String(count).padStart(5)}  ${reason}\n`);
       }
       return EXIT.clean;
     }
     case 'capture': {
-      const {shots} = await plan();
-      const {failures} = await runCapture(shots);
-      process.stdout.write(`Captured ${shots.length - failures.length}/${shots.length} into ${outDir}\n`);
+      const {shots, expectedRemoved} = await plan();
+      const {failures} = await runCapture(shots, null, {expectedRemoved});
+      process.stdout.write(
+        `Captured ${shots.length - failures.length}/${shots.length} into ${outDir}\n`,
+      );
       return failures.length > 0 ? EXIT.crashed : EXIT.clean;
     }
     case 'check':
@@ -555,7 +658,9 @@ async function main() {
         ['*'],
       );
       const subject = only.length
-        ? stories.filter(story => only.some(f => story.storyId ?? story.id.includes(f)))
+        ? stories.filter(story =>
+            only.some(f => story.storyId ?? story.id.includes(f)),
+          )
         : stories;
       const server = await serveDirectory(storybookDir);
       const origin = `http://127.0.0.1:${server.port}`;
@@ -584,10 +689,12 @@ async function main() {
           // accumulate across the walk.
           const axes = await page.evaluate(READ_AXES);
           for (const [name, value] of Object.entries(axes.tokens)) {
-            if (value && value === PROBE_TOKENS[name]) axisHits.tokens.add(name);
+            if (value && value === PROBE_TOKENS[name])
+              axisHits.tokens.add(name);
           }
           for (const kind of Object.keys(axes.swaps)) axisHits[kind]?.add(kind);
-          if (/AstryxProbeFace/.test(axes.fontFamily)) axisHits.fonts.add('body');
+          if (/AstryxProbeFace/.test(axes.fontFamily))
+            axisHits.fonts.add('body');
           for (const color of axes.syntax) {
             if (/^rgb\(/.test(color)) axisHits.syntax.add(color);
           }
@@ -595,14 +702,18 @@ async function main() {
           // A story that will not render contributes no readings; the visual
           // tier reports it as a capture failure.
         }
-        if (++done % 100 === 0) process.stderr.write(`  read ${done}/${subject.length}\n`);
+        if (++done % 100 === 0)
+          process.stderr.write(`  read ${done}/${subject.length}\n`);
       }
       await browser.close();
       await server.close();
 
       const declared = (await loadThemingTargets(REPO_ROOT)).map(t => t.key);
       const unseen = [...new Set(declared)].filter(
-        key => !acc.verified.has(key) && !acc.failures.has(key) && !acc.shadowed.has(key),
+        key =>
+          !acc.verified.has(key) &&
+          !acc.failures.has(key) &&
+          !acc.shadowed.has(key),
       );
       // An axis with nothing rendering it is UNVERIFIABLE, not passing — the
       // difference is the whole point, and reporting it as green is how a
@@ -613,7 +724,11 @@ async function main() {
           missed: acc.failures.size,
           ...AXES.components,
         },
-        tokens: {verified: axisHits.tokens.size, of: Object.keys(PROBE_TOKENS).length, ...AXES.tokens},
+        tokens: {
+          verified: axisHits.tokens.size,
+          of: Object.keys(PROBE_TOKENS).length,
+          ...AXES.tokens,
+        },
         icons: {verified: axisHits.icon.size > 0, ...AXES.icons},
         indicators: {verified: axisHits.indicator.size > 0, ...AXES.indicators},
         fonts: {verified: axisHits.fonts.size > 0, ...AXES.fonts},
@@ -630,7 +745,10 @@ async function main() {
         neverRendered: unseen.sort(),
       };
       fs.mkdirSync(outDir, {recursive: true});
-      fs.writeFileSync(path.join(outDir, 'reach.json'), `${JSON.stringify(out, null, 2)}\n`);
+      fs.writeFileSync(
+        path.join(outDir, 'reach.json'),
+        `${JSON.stringify(out, null, 2)}\n`,
+      );
 
       process.stdout.write('theme axes:\n');
       for (const [name, info] of Object.entries(axisReport)) {
@@ -680,7 +798,9 @@ async function main() {
       const unstable = [...seen.entries()]
         .filter(([, hashes]) => hashes.size > 1)
         .map(([key]) => key);
-      const stories = [...new Set(unstable.map(key => key.split('__')[0]))].sort();
+      const stories = [
+        ...new Set(unstable.map(key => key.split('__')[0])),
+      ].sort();
       process.stdout.write(
         `${unstable.length} unstable shot(s) across ${passes} passes, in ${stories.length} stor${stories.length === 1 ? 'y' : 'ies'}\n`,
       );
@@ -695,7 +815,9 @@ async function main() {
     case 'accept': {
       const manifestPath = path.join(outDir, 'manifest.json');
       if (!fs.existsSync(manifestPath)) {
-        throw new Error(`No capture at ${outDir} — run check or capture first.`);
+        throw new Error(
+          `No capture at ${outDir} — run check or capture first.`,
+        );
       }
       const currentManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
       const verdictPath = path.join(outDir, 'verdict.json');
@@ -707,12 +829,16 @@ async function main() {
         !requested || requested === 'all'
           ? Object.keys(currentManifest.shots)
           : requested.split(',').filter(Boolean);
-      if (new Set(named).size !== named.length) throw new Error('accept repeats a shot key.');
+      if (new Set(named).size !== named.length)
+        throw new Error('accept repeats a shot key.');
       const removed = new Set(verdict?.removed ?? []);
       const prune = has('prune') ? named.filter(key => removed.has(key)) : [];
       const keys = named.filter(key => currentManifest.shots[key]);
-      const unknown = named.filter(key => !currentManifest.shots[key] && !removed.has(key));
-      if (unknown.length) throw new Error(`accept names unknown shot(s): ${unknown.join(', ')}`);
+      const unknown = named.filter(
+        key => !currentManifest.shots[key] && !removed.has(key),
+      );
+      if (unknown.length)
+        throw new Error(`accept names unknown shot(s): ${unknown.join(', ')}`);
       if (prune.length) {
         if (verdict?.status === 'failed') {
           throw new Error('Refusing to prune from a failed visual verdict.');
@@ -721,8 +847,12 @@ async function main() {
           currentManifest.context?.releasePlan,
           currentManifest,
         );
-        if (JSON.stringify(verdict?.context?.releasePlan) !== JSON.stringify(plan)) {
-          throw new Error('Refusing to prune without the capture’s canonical release plan.');
+        if (
+          JSON.stringify(verdict?.context?.releasePlan) !== JSON.stringify(plan)
+        ) {
+          throw new Error(
+            'Refusing to prune without the capture’s canonical release plan.',
+          );
         }
       }
       const baselineManifest = {
@@ -737,7 +867,11 @@ async function main() {
         currentManifest: baselineManifest,
         keys,
         reason: flag('reason') ?? '',
-        actor: flag('actor') ?? process.env.GITHUB_ACTOR ?? process.env.USER ?? 'unknown',
+        actor:
+          flag('actor') ??
+          process.env.GITHUB_ACTOR ??
+          process.env.USER ??
+          'unknown',
         runId: process.env.GITHUB_RUN_ID ?? null,
         prune,
       });

@@ -21,13 +21,15 @@ find it:
   builder sees.
 - **`Theme Sheet` comes second** — every themeable target of that component, in
   every variant and state its `.doc.mjs` declares, on one page. It is the
-  reference for theme authors and the surface the visual gate photographs under
-  the probe theme, which is how a theming target is proven to still reach the
-  pixels. A component whose sheet is missing a target has a target nothing can
-  verify.
+  reference for theme authors and the required compact PR visual surface: changed
+  stable components are photographed here in Neutral and Probe, light and dark.
+  A component whose sheet is missing a target has a target nothing can verify.
 - **Hooks and theme-level features are not components** and do not sit beside
   them. Icon and indicator registries, `MediaTheme`, `CodeTheme` and the like
   live under `Themes/`.
+
+- **`stable-visual` is opt-in.** Add this tag only to extra stories that must
+  run in PR visual coverage; they are photographed in Neutral, light and dark.
 
 ### A Theme Sheet must not pin its own theme
 

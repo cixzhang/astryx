@@ -157,12 +157,23 @@ describe('visual acceptance workflow concurrency', () => {
 
     expect(download).toContain("steps.scope.outputs.broad != 'true'");
     expect(capture).toContain("steps.scope.outputs.broad != 'true'");
+    expect(capture).toContain('trusted-plan');
+    expect(capture).toContain('"$SHOTS" -gt 24');
+    expect(capture).toContain('"$SHOTS" -gt 40');
+    expect(capture).toContain('--plan-file trusted-plan.json');
+    expect(capture.indexOf('trusted-plan')).toBeLessThan(
+      capture.indexOf('"$SHOTS" -gt 40'),
+    );
+    expect(capture.indexOf('"$SHOTS" -gt 40')).toBeLessThan(
+      capture.indexOf('npx playwright install chromium'),
+    );
     expect(defer).toContain("steps.scope.outputs.broad == 'true'");
     expect(defer).toContain('visual-acceptance.mjs trusted-defer');
     expect(defer).toContain('--run-attempt "$RUN_ATTEMPT"');
     expect(defer).not.toContain('playwright');
     expect(defer).not.toContain('gate.mjs capture');
     expect(derive).toContain("steps.scope.outputs.broad != 'true'");
+    expect(derive).toContain("steps.plan.outputs.deferred != 'true'");
     expect(resolve).toContain('test -f trusted-visual/evidence.json');
     expect(resolve).toContain(
       'path=pr/${PR_NUMBER}/visual/${HEAD_SHA}/${RUN_ID}/${RUN_ATTEMPT}',

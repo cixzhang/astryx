@@ -140,13 +140,34 @@ if (
   fail('trusted capture identity mismatch');
 }
 
+const expectedRemoved =
+  manifest.context?.expectedRemoved ?? manifest.context?.expectedRemovals ?? [];
+if (!Array.isArray(expectedRemoved) || expectedRemoved.length > MAX_SHOTS) {
+  fail('trusted expected removal list is invalid');
+}
+for (const removal of expectedRemoved) {
+  if (
+    !KEY.test(removal?.key ?? '') ||
+    typeof removal.storyId !== 'string' ||
+    !removal.storyId ||
+    typeof removal.theme !== 'string' ||
+    !NAME.test(removal.theme) ||
+    !['light', 'dark'].includes(removal.mode)
+  ) {
+    fail(`expected removal metadata is invalid for ${JSON.stringify(removal)}`);
+  }
+}
+
 const rawBaselineManifest = readJSON(path.join(baseline, 'manifest.json'));
 const capturedKeys = new Set(Object.keys(manifest.shots));
+const expectedRemovalKeys = new Set(
+  expectedRemoved.map(removal => removal.key),
+);
 const baselineManifest = {
   ...rawBaselineManifest,
   shots: Object.fromEntries(
-    Object.entries(rawBaselineManifest.shots ?? {}).filter(([key]) =>
-      capturedKeys.has(key),
+    Object.entries(rawBaselineManifest.shots ?? {}).filter(
+      ([key]) => capturedKeys.has(key) || expectedRemovalKeys.has(key),
     ),
   ),
 };
@@ -156,6 +177,14 @@ if (blocker) fail(`baseline is not comparable: ${blocker}`);
 const entries = Object.entries(manifest.shots);
 if (entries.length > MAX_SHOTS)
   fail(`trusted capture exceeds ${MAX_SHOTS} shots`);
+function isAllowedPrTheme(shot, metadata) {
+  return (
+    metadata?.stableVisual === true ||
+    (shot?.theme === config.probeTheme &&
+      metadata?.packageName === shot.themePackageName)
+  );
+}
+
 for (const [key, shot] of entries) {
   const themeMetadata = themeCatalog[shot?.theme];
   if (
@@ -168,9 +197,9 @@ for (const [key, shot] of entries) {
     !PACKAGE_NAME.test(shot.packageName ?? '') ||
     shot.stableVisual !== true ||
     !PACKAGE_NAME.test(shot.themePackageName ?? '') ||
-    shot.stableThemeVisual !== true ||
+    typeof shot.stableThemeVisual !== 'boolean' ||
     themeMetadata?.packageName !== shot.themePackageName ||
-    themeMetadata?.stableVisual !== true ||
+    !isAllowedPrTheme(shot, themeMetadata) ||
     !['light', 'dark'].includes(shot.mode) ||
     !Array.isArray(shot.reasons) ||
     shotKey(shot) !== key
@@ -220,7 +249,7 @@ for (const [key, shot] of entries) {
   };
 }
 
-if (entries.length === 0) {
+if (entries.length === 0 && expectedRemoved.length === 0) {
   fail('stable visual scope produced no trusted shots');
 }
 
@@ -233,6 +262,7 @@ const comparison = await compareCaptures({
   threshold: config.threshold,
   maxDiffPixels: config.maxDiffPixels,
 });
+comparison.removed = expectedRemoved.map(removal => removal.key);
 
 const verdict = buildVerdict({
   comparison,
@@ -246,6 +276,7 @@ const verdict = buildVerdict({
   failures: [],
   context: {...manifest.context, trustedScope: scope},
 });
+verdict.counts.total += expectedRemoved.length;
 
 const beforeSha256 = {};
 for (const change of verdict.changes) {

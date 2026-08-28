@@ -63,6 +63,17 @@ describe('classifyVisualScope', () => {
     ]);
   });
 
+  it('skips component metadata-only files as non-rendering changes', () => {
+    const result = classifyVisualScope(
+      [
+        'packages/core/src/Button/index.ts',
+        'packages/core/src/Button/types.ts',
+      ],
+      root,
+    );
+    expect(result.hasStableVisual).toBe(false);
+  });
+
   it('marks shared Core infrastructure as broad stable scope', () => {
     const result = classifyVisualScope(
       ['packages/core/src/theme/Theme.tsx'],
@@ -93,6 +104,7 @@ describe('classifyVisualScope', () => {
     );
     expect(result).toMatchObject({
       hasStableVisual: true,
+      broadStableVisual: true,
       stableThemes: ['neutral'],
     });
   });
@@ -135,6 +147,7 @@ describe('classifyVisualScope', () => {
     );
     expect(result).toMatchObject({
       hasStableVisual: true,
+      broadStableVisual: true,
       stableThemes: ['neutral'],
     });
   });
@@ -193,6 +206,32 @@ describe('classifyVisualScope', () => {
         {input: 'packages/lab/src/Drawer/Drawer.tsx\n'},
       ),
     ).toThrow();
+  });
+
+  it('includes changed stable-visual stories by trusted head content', () => {
+    const result = classifyVisualScope(
+      ['apps/storybook/stories/Button.stories.tsx'],
+      root,
+      {},
+      {
+        'apps/storybook/stories/Button.stories.tsx':
+          "export const Focused = { tags: ['stable-visual'] };",
+      },
+    );
+    expect(result).toMatchObject({
+      hasStableVisual: true,
+      stableStoryFiles: ['apps/storybook/stories/Button.stories.tsx'],
+    });
+  });
+
+  it('skips changed stories without the stable-visual tag', () => {
+    const result = classifyVisualScope(
+      ['apps/storybook/stories/Button.stories.tsx'],
+      root,
+      {},
+      {'apps/storybook/stories/Button.stories.tsx': 'export const Demo = {};'},
+    );
+    expect(result.hasStableVisual).toBe(false);
   });
 
   it('does not hardcode package names — any canaryOnly package is excluded', () => {
