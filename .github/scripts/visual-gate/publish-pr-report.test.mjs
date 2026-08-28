@@ -323,13 +323,115 @@ describe('trusted PR visual publisher', () => {
     const other = 'core-card--default__neutral-light';
     writeBaseline({
       [KEY]: {shot: SHOT, bytes: png()},
-      [other]: {shot: {...SHOT, storyId: 'core-card--default', component: 'Card'}, bytes: png()},
+      [other]: {
+        shot: {...SHOT, storyId: 'core-card--default', component: 'Card'},
+        bytes: png(),
+      },
     });
     run();
     const verdict = JSON.parse(
       fs.readFileSync(path.join(output, 'verdict.json'), 'utf8'),
     );
     expect(verdict.removed).toEqual([]);
+  });
+
+  it('allows the private Probe theme only as PR visual evidence', () => {
+    const key = 'core-button--theme-sheet__probe-light';
+    const shot = {
+      ...SHOT,
+      key,
+      storyId: 'core-button--theme-sheet',
+      name: 'Theme Sheet',
+      theme: 'probe',
+      themePackageName: '@astryxdesign/theme-probe',
+      stableThemeVisual: false,
+    };
+    writeBaseline({[key]: {shot, bytes: png()}});
+    writeCapture({[key]: {shot, bytes: png()}});
+    run();
+    expect(
+      JSON.parse(fs.readFileSync(path.join(output, 'verdict.json'), 'utf8')),
+    ).toMatchObject({status: 'pass', counts: {total: 1}});
+  });
+
+  it('derives before-only removal evidence from trusted expected removals', () => {
+    const removed = 'core-button--deleted-story__neutral-light';
+    const shot = {
+      ...SHOT,
+      key: removed,
+      storyId: 'core-button--deleted-story',
+      name: 'Deleted Story',
+      sourcePath: 'stories/Button.stories.tsx',
+    };
+    writeBaseline({[removed]: {shot, bytes: png()}});
+    writeCapture(
+      {},
+      {
+        context: {
+          sha: 'b'.repeat(40),
+          headSha: HEAD,
+          baseSha: 'c'.repeat(40),
+          runId: RUN,
+          runAttempt: '1',
+          expectedRemovals: [shot],
+        },
+      },
+    );
+    run();
+    const evidence = JSON.parse(
+      fs.readFileSync(path.join(output, 'evidence.json'), 'utf8'),
+    );
+    expect(evidence).toMatchObject({
+      verdict: {status: 'changed', removed: [removed], counts: {total: 1}},
+      deltas: [{key: removed, kind: 'removed', shot: null}],
+    });
+    expect(fs.existsSync(path.join(output, 'before', `${removed}.png`))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(output, 'after', `${removed}.png`))).toBe(
+      false,
+    );
+  });
+
+  it('mixes current shots with expected removals without reporting unrelated baseline keys', () => {
+    const removed = 'core-button--deleted-story__neutral-light';
+    const unrelated = 'core-button--unrelated-story__neutral-light';
+    writeBaseline({
+      [KEY]: {shot: SHOT, bytes: png()},
+      [removed]: {
+        shot: {...SHOT, key: removed, storyId: 'core-button--deleted-story'},
+        bytes: png(),
+      },
+      [unrelated]: {
+        shot: {
+          ...SHOT,
+          key: unrelated,
+          storyId: 'core-button--unrelated-story',
+        },
+        bytes: png(),
+      },
+    });
+    writeCapture(
+      {[KEY]: {shot: SHOT, bytes: png()}},
+      {
+        context: {
+          sha: 'b'.repeat(40),
+          headSha: HEAD,
+          baseSha: 'c'.repeat(40),
+          runId: RUN,
+          runAttempt: '1',
+          expectedRemovals: [
+            {...SHOT, key: removed, storyId: 'core-button--deleted-story'},
+          ],
+        },
+      },
+    );
+    run();
+    const verdict = JSON.parse(
+      fs.readFileSync(path.join(output, 'verdict.json'), 'utf8'),
+    );
+    expect(verdict.removed).toEqual([removed]);
+    expect(verdict.removed).not.toContain(unrelated);
   });
 
   it('rejects a trusted capture that claims another run', () => {

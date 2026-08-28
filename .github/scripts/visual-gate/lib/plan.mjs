@@ -41,16 +41,26 @@ import * as path from 'node:path';
 export const MODES = ['light', 'dark'];
 
 /** Story names preferred as a component's representative, most preferred first. */
-const REPRESENTATIVE_NAMES = ['Default', 'Basic', 'Primary', 'Overview', 'Example'];
+const REPRESENTATIVE_NAMES = [
+  'Default',
+  'Basic',
+  'Primary',
+  'Overview',
+  'Example',
+];
 
 /** A story carrying this tag is never captured (see visual-gate.config.json for the reasoned list). */
 export const SKIP_TAG = 'no-visual';
-
+export const STABLE_VISUAL_TAG = 'stable-visual';
+export const THEME_SHEET_NAME = 'Theme Sheet';
 
 /** Workspace package manifests are the only package eligibility source. */
 export function readPackageCatalog(repoRoot) {
   const files = [];
-  for (const parent of [path.join(repoRoot, 'packages'), path.join(repoRoot, 'packages/themes')]) {
+  for (const parent of [
+    path.join(repoRoot, 'packages'),
+    path.join(repoRoot, 'packages/themes'),
+  ]) {
     if (!fs.existsSync(parent)) continue;
     for (const entry of fs.readdirSync(parent, {withFileTypes: true})) {
       if (!entry.isDirectory()) continue;
@@ -58,27 +68,35 @@ export function readPackageCatalog(repoRoot) {
       if (fs.existsSync(file)) files.push(file);
     }
   }
-  return new Map(files.map(file => {
-    const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-    return [manifest.name, manifest];
-  }));
+  return new Map(
+    files.map(file => {
+      const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+      return [manifest.name, manifest];
+    }),
+  );
 }
 
 export function packageFromComponentPath(componentPath) {
   if (!componentPath) return null;
   const normalized = componentPath.replaceAll('\\', '/');
   const names = new Set();
-  for (const match of normalized.matchAll(/(?:^|\/)node_modules\/(@[^/]+\/[^/]+|[^/]+)(?=\/|$)/g)) {
+  for (const match of normalized.matchAll(
+    /(?:^|\/)node_modules\/(@[^/]+\/[^/]+|[^/]+)(?=\/|$)/g,
+  )) {
     names.add(match[1]);
   }
-  for (const match of normalized.matchAll(/(?:^|\/)packages\/(themes\/[^/]+|[^/]+)(?=\/|$)/g)) {
+  for (const match of normalized.matchAll(
+    /(?:^|\/)packages\/(themes\/[^/]+|[^/]+)(?=\/|$)/g,
+  )) {
     const [group, leaf] = match[1].split('/');
     names.add(leaf ? `@astryxdesign/theme-${leaf}` : `@astryxdesign/${group}`);
   }
   const bare = normalized.match(/^(@[^/]+\/[^/]+)(?:\/.*)?$/);
   if (bare) names.add(bare[1]);
-  if (names.size > 1) throw new Error(`Ambiguous Storybook componentPath: ${componentPath}`);
-  if (names.size === 0) throw new Error(`Unsupported Storybook componentPath: ${componentPath}`);
+  if (names.size > 1)
+    throw new Error(`Ambiguous Storybook componentPath: ${componentPath}`);
+  if (names.size === 0)
+    throw new Error(`Unsupported Storybook componentPath: ${componentPath}`);
   return [...names][0];
 }
 
@@ -87,14 +105,25 @@ function eligible(manifest) {
 }
 
 function titlePackage(title, catalog, candidates = null) {
-  const parts = String(title ?? '').split('/').filter(Boolean);
+  const parts = String(title ?? '')
+    .split('/')
+    .filter(Boolean);
   const wanted = [];
   if (parts[0]) wanted.push(`@astryxdesign/${parts[0].toLowerCase()}`);
   if (parts.at(-1)?.endsWith(' Theme')) {
-    const slug = parts.at(-1).slice(0, -6).trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+    const slug = parts
+      .at(-1)
+      .slice(0, -6)
+      .trim()
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/g, '-');
     wanted.unshift(`@astryxdesign/theme-${slug}`);
   }
-  return wanted.find(name => catalog.has(name) && (!candidates || candidates.includes(name))) ?? null;
+  return (
+    wanted.find(
+      name => catalog.has(name) && (!candidates || candidates.includes(name)),
+    ) ?? null
+  );
 }
 
 function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
@@ -102,12 +131,21 @@ function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
   let names = fromComponent ? [fromComponent] : [];
   if (!fromComponent) {
     const relative = entry.importPath?.replace(/^\.\//, '');
-    const source = relative && path.resolve(path.dirname(storybookDir), relative);
+    const source =
+      relative && path.resolve(path.dirname(storybookDir), relative);
     if (!source || !fs.existsSync(source)) {
       throw new Error(`Story ${entry.id} has no resolvable package metadata.`);
     }
     const text = fs.readFileSync(source, 'utf8');
-    names = [...new Set([...text.matchAll(/(?:from\s+|import\s*)['"](@astryxdesign\/[^/'"]+)/g)].map(match => match[1]))].sort();
+    names = [
+      ...new Set(
+        [
+          ...text.matchAll(
+            /(?:from\s+|import\s*)['"](@astryxdesign\/[^/'"]+)/g,
+          ),
+        ].map(match => match[1]),
+      ),
+    ].sort();
   }
   const titleOwner = titlePackage(entry.title, catalog, names);
   const themeOwner = titlePackage(entry.title, catalog);
@@ -116,9 +154,13 @@ function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
     (themeOwner?.startsWith('@astryxdesign/theme-') ? themeOwner : null) ??
     titleOwner ??
     (names.length === 1 ? names[0] : null);
-  if (!owner) throw new Error(`Story ${entry.id} has ambiguous package ownership: ${names.join(', ')}.`);
+  if (!owner)
+    throw new Error(
+      `Story ${entry.id} has ambiguous package ownership: ${names.join(', ')}.`,
+    );
   for (const name of new Set([...names, owner])) {
-    if (!catalog.has(name)) throw new Error(`Story ${entry.id} names unknown package ${name}.`);
+    if (!catalog.has(name))
+      throw new Error(`Story ${entry.id} names unknown package ${name}.`);
   }
   return {
     packageNames: names.length ? names : [owner],
@@ -138,7 +180,8 @@ export function readThemeCatalog(repoRoot) {
     if (!manifest) continue;
     themes[entry.name] = {
       packageName: manifest.name,
-      stableVisual: manifest.private !== true && manifest.astryx?.canaryOnly !== true,
+      stableVisual:
+        manifest.private !== true && manifest.astryx?.canaryOnly !== true,
     };
   }
   return themes;
@@ -147,8 +190,13 @@ export function readThemeCatalog(repoRoot) {
 export function withThemeMetadata(shots, themes) {
   return shots.map(shot => {
     const theme = themes[shot.theme];
-    if (!theme) throw new Error(`Shot ${shot.key} names unknown theme ${shot.theme}.`);
-    return {...shot, themePackageName: theme.packageName, stableThemeVisual: theme.stableVisual};
+    if (!theme)
+      throw new Error(`Shot ${shot.key} names unknown theme ${shot.theme}.`);
+    return {
+      ...shot,
+      themePackageName: theme.packageName,
+      stableThemeVisual: theme.stableVisual,
+    };
   });
 }
 
@@ -159,11 +207,15 @@ function baselinePackage(shot, repoRoot, catalog) {
   const component = String(shot.component ?? '').trim();
   if (component) {
     const owners = [...catalog.keys()].filter(name => {
-      if (!name.startsWith('@astryxdesign/') || name.includes('/theme-')) return false;
+      if (!name.startsWith('@astryxdesign/') || name.includes('/theme-'))
+        return false;
       const leaf = name.slice('@astryxdesign/'.length);
-      return fs.existsSync(path.join(repoRoot, 'packages', leaf, 'src', component));
+      return fs.existsSync(
+        path.join(repoRoot, 'packages', leaf, 'src', component),
+      );
     });
-    if (owners.length === 1) return {packageName: owners[0], source: 'stored-component'};
+    if (owners.length === 1)
+      return {packageName: owners[0], source: 'stored-component'};
   }
   const fromTitle = titlePackage(shot.title, catalog);
   return fromTitle ? {packageName: fromTitle, source: 'stored-title'} : null;
@@ -181,14 +233,15 @@ export function accountBaseline(manifest, stories, themes, repoRoot) {
   };
   for (const [key, shot] of Object.entries(manifest.shots ?? {})) {
     const currentStory = byId.get(shot.storyId);
-    const owner = shot.packageName && catalog.has(shot.packageName)
-      ? {
-          packageName: shot.packageName,
-          source: shot.membershipSource ?? 'stored-package',
-        }
-      : currentStory
-        ? {packageName: currentStory.packageName, source: 'current-story'}
-        : baselinePackage(shot, repoRoot, catalog);
+    const owner =
+      shot.packageName && catalog.has(shot.packageName)
+        ? {
+            packageName: shot.packageName,
+            source: shot.membershipSource ?? 'stored-package',
+          }
+        : currentStory
+          ? {packageName: currentStory.packageName, source: 'current-story'}
+          : baselinePackage(shot, repoRoot, catalog);
     const storedTheme = shot.themePackageName
       ? catalog.get(shot.themePackageName)
       : null;
@@ -202,9 +255,10 @@ export function accountBaseline(manifest, stories, themes, repoRoot) {
       categories.unclassified.push(key);
       continue;
     }
-    const state = eligible(catalog.get(owner.packageName)) && theme.stableVisual
-      ? 'stable'
-      : 'ineligible';
+    const state =
+      eligible(catalog.get(owner.packageName)) && theme.stableVisual
+        ? 'stable'
+        : 'ineligible';
     if (state === 'ineligible') {
       categories.intentionallyExcluded.push(key);
       continue;
@@ -224,16 +278,27 @@ export function accountBaseline(manifest, stories, themes, repoRoot) {
   }
   for (const values of Object.values(categories)) values.sort();
   const total = Object.keys(manifest.shots ?? {}).length;
-  const classified = Object.values(categories).reduce((sum, values) => sum + values.length, 0);
-  if (classified !== total) throw new Error(`Baseline accounting overlap: ${classified} states for ${total} keys.`);
+  const classified = Object.values(categories).reduce(
+    (sum, values) => sum + values.length,
+    0,
+  );
+  if (classified !== total)
+    throw new Error(
+      `Baseline accounting overlap: ${classified} states for ${total} keys.`,
+    );
   return {manifest: {...manifest, shots: stable}, categories, total};
 }
 
 export function summarizeBaselineAccounting(account, releaseShots) {
   const planned = new Set(releaseShots.map(shot => shot.key));
-  const missing = account.categories.currentStable.filter(key => !planned.has(key));
-  const unclassified = [...new Set([...account.categories.unclassified, ...missing])].sort();
-  const plannedCurrentStable = account.categories.currentStable.length - missing.length;
+  const missing = account.categories.currentStable.filter(
+    key => !planned.has(key),
+  );
+  const unclassified = [
+    ...new Set([...account.categories.unclassified, ...missing]),
+  ].sort();
+  const plannedCurrentStable =
+    account.categories.currentStable.length - missing.length;
   const counts = {
     total: account.total,
     plannedCurrentStable,
@@ -241,41 +306,145 @@ export function summarizeBaselineAccounting(account, releaseShots) {
     preservedLegacy: account.categories.preservedLegacy.length,
     unclassified: unclassified.length,
   };
-  const sum = counts.plannedCurrentStable + counts.intentionallyExcluded + counts.preservedLegacy + counts.unclassified;
-  if (sum !== counts.total) throw new Error(`Baseline accounting overlap: ${sum} states for ${counts.total} keys.`);
-  return {...counts, ...(unclassified.length ? {unclassifiedKeys: unclassified} : {})};
+  const sum =
+    counts.plannedCurrentStable +
+    counts.intentionallyExcluded +
+    counts.preservedLegacy +
+    counts.unclassified;
+  if (sum !== counts.total)
+    throw new Error(
+      `Baseline accounting overlap: ${sum} states for ${counts.total} keys.`,
+    );
+  return {
+    ...counts,
+    ...(unclassified.length ? {unclassifiedKeys: unclassified} : {}),
+  };
 }
 
 export function stableBaseline(manifest, stories, themes, repoRoot) {
   return accountBaseline(manifest, stories, themes, repoRoot).manifest;
 }
 
-export function withBaselineCoverage(plan, {stories, baselineManifest, themes}) {
+export function withBaselineCoverage(
+  plan,
+  {stories, baselineManifest, themes},
+) {
   const planned = new Map(plan.map(shot => [shot.key, shot]));
   const byId = new Map(stories.map(story => [story.id, story]));
   for (const [key, baseline] of Object.entries(baselineManifest.shots ?? {})) {
     const story = byId.get(baseline.storyId);
-    if (!story || !themes[baseline.theme] || !MODES.includes(baseline.mode)) continue;
-    const shot = {...toShotBase(story), theme: baseline.theme, mode: baseline.mode};
+    if (!story || !themes[baseline.theme] || !MODES.includes(baseline.mode))
+      continue;
+    const shot = {
+      ...toShotBase(story),
+      theme: baseline.theme,
+      mode: baseline.mode,
+    };
     if (shotKey(shot) !== key) continue;
     const existing = planned.get(key);
-    planned.set(key, existing
-      ? {...existing, reasons: [...new Set([...existing.reasons, 'baseline'])]}
-      : {...shot, key, reasons: ['baseline']});
+    planned.set(
+      key,
+      existing
+        ? {
+            ...existing,
+            reasons: [...new Set([...existing.reasons, 'baseline'])],
+          }
+        : {...shot, key, reasons: ['baseline']},
+    );
   }
   return [...planned.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
 export function createReleasePlan(shots) {
   const keys = shots.map(shot => shot.key).sort();
-  if (new Set(keys).size !== keys.length) throw new Error('Canonical release plan repeats a shot key.');
+  if (new Set(keys).size !== keys.length)
+    throw new Error('Canonical release plan repeats a shot key.');
   return {
     version: 1,
     lane: 'stable-release',
     authority: 'report-removals',
     keys,
-    digest: crypto.createHash('sha256').update(JSON.stringify(keys)).digest('hex'),
+    digest: crypto
+      .createHash('sha256')
+      .update(JSON.stringify(keys))
+      .digest('hex'),
   };
+}
+
+/**
+ * Compact PR visual plan: the required Theme Sheet for touched components, plus
+ * explicitly tagged stable-visual stories. Probe stays a private test fixture;
+ * release planning decides separately which shipped themes own the baseline.
+ *
+ * @param {object} options
+ * @param {ReturnType<typeof readStoryIndex>} options.stories
+ * @param {string[]} options.components
+ * @param {string[]} options.stableStoryIds
+ * @param {string} options.defaultTheme
+ * @param {string} options.probeTheme
+ * @returns {Shot[]}
+ */
+export function buildPrVisualPlan({
+  stories,
+  components = [],
+  stableStoryIds = [],
+  defaultTheme,
+  probeTheme,
+}) {
+  const shots = new Map();
+  const storyIds = new Set(stableStoryIds);
+  const wantedComponents = [...new Set(components)].sort();
+  const byComponent = new Map();
+  for (const story of stories) {
+    if (!byComponent.has(story.component)) byComponent.set(story.component, []);
+    byComponent.get(story.component).push(story);
+  }
+
+  /** @param {ReturnType<typeof readStoryIndex>[number]} story @param {string[]} themes @param {string} reason */
+  const add = (story, themes, reason) => {
+    for (const theme of themes) {
+      for (const mode of MODES) {
+        const shot = {
+          ...toShotBase(story),
+          theme,
+          mode,
+          ...(theme === probeTheme ? {baselinePolicy: 'current-only'} : {}),
+        };
+        const key = shotKey(shot);
+        const existing = shots.get(key);
+        if (existing) {
+          if (!existing.reasons.includes(reason)) existing.reasons.push(reason);
+        } else {
+          shots.set(key, {...shot, key, reasons: [reason]});
+        }
+      }
+    }
+  };
+
+  const missing = [];
+  for (const component of wantedComponents) {
+    const themeSheet = (byComponent.get(component) ?? []).find(
+      story => story.name === THEME_SHEET_NAME,
+    );
+    if (!themeSheet) {
+      missing.push(component);
+      continue;
+    }
+    add(themeSheet, [defaultTheme, probeTheme], 'trusted:theme-sheet');
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing Theme Sheet for stable visual component${missing.length === 1 ? '' : 's'} ${missing.join(', ')}. Add a Storybook story named "Theme Sheet" under Core/<Component>; it is the required compact PR visual contract.`,
+    );
+  }
+
+  for (const story of stories) {
+    if (!storyIds.has(story.id)) continue;
+    if (!(story.tags ?? []).includes(STABLE_VISUAL_TAG)) continue;
+    add(story, [defaultTheme], 'trusted:stable-visual');
+  }
+
+  return [...shots.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
 /**
@@ -288,11 +457,13 @@ export function createReleasePlan(shots) {
  * @property {string} packageName
  * @property {string[]} packageNames
  * @property {boolean} stableVisual
+ * @property {string | null} [sourcePath]
  * @property {string} theme
  * @property {string} themePackageName
  * @property {boolean} stableThemeVisual
  * @property {'light'|'dark'} mode
  * @property {string[]} reasons - why the shot is in the plan
+ * @property {'current-only'} [baselinePolicy] - current evidence that must not become a stable baseline
  */
 
 /**
@@ -331,9 +502,19 @@ export function readStoryIndex(storybookDir, excluded = [], repoRoot) {
       title: entry.title ?? '',
       name: entry.name ?? '',
       component: componentOf(entry),
+      importPath: entry.importPath ?? null,
+      sourcePath: sourcePathFor(entry, storybookDir, repoRoot),
       tags: entry.tags ?? [],
       ...storyPackageNames(entry, storybookDir, repoRoot, catalog),
     }));
+}
+
+function sourcePathFor(entry, storybookDir, repoRoot) {
+  if (!entry.importPath) return null;
+  const raw = entry.importPath.replace(/^\.\//, '');
+  const absolute = path.resolve(path.dirname(storybookDir), raw);
+  const relative = path.relative(repoRoot, absolute).replaceAll(path.sep, '/');
+  return relative.startsWith('..') ? raw.replaceAll('\\', '/') : relative;
 }
 
 /**
@@ -361,8 +542,15 @@ function componentOf(entry) {
  */
 export function storiesInPackages(stories, packages) {
   if (packages.includes('*')) return stories;
-  const wanted = new Set(packages.map(name => name.startsWith('@') ? name : `@astryxdesign/${name.toLowerCase()}`));
-  return stories.filter(story => story.stableVisual && story.packageNames.some(name => wanted.has(name)));
+  const wanted = new Set(
+    packages.map(name =>
+      name.startsWith('@') ? name : `@astryxdesign/${name.toLowerCase()}`,
+    ),
+  );
+  return stories.filter(
+    story =>
+      story.stableVisual && story.packageNames.some(name => wanted.has(name)),
+  );
 }
 
 /**
@@ -377,7 +565,8 @@ export function representativeStories(stories) {
   for (const story of stories) {
     if (!story.component) continue;
     const current = byComponent.get(story.component);
-    if (!current || rank(story.name) < rank(current.name)) byComponent.set(story.component, story);
+    if (!current || rank(story.name) < rank(current.name))
+      byComponent.set(story.component, story);
   }
   return byComponent;
 }
@@ -433,7 +622,9 @@ export function buildPlan({
   };
 
   if (tiers.includes('surface') || tiers.includes('full')) {
-    const subject = tiers.includes('full') ? stories : [...representatives.values()];
+    const subject = tiers.includes('full')
+      ? stories
+      : [...representatives.values()];
     for (const story of subject) {
       for (const mode of MODES) {
         add({...toShotBase(story), theme: defaultTheme, mode}, 'surface');
@@ -442,35 +633,22 @@ export function buildPlan({
   }
 
   if (tiers.includes('component')) {
-    // The PR tier: every story of the named components, in the default theme
-    // and in every theme that styles them. Deeper than `surface` (which shoots
-    // one story per component), and narrow enough to run per PR.
-    const themesByComponent = new Map();
-    for (const target of targets) {
-      for (const [theme, keys] of Object.entries(themeOverrides)) {
-        if (!Object.hasOwn(keys, target.key)) continue;
-        if (!themesByComponent.has(target.component)) {
-          themesByComponent.set(target.component, new Set());
-        }
-        themesByComponent.get(target.component).add(theme);
-      }
-    }
-    for (const story of stories) {
-      if (!components.includes(story.component)) continue;
-      for (const mode of MODES) {
-        add({...toShotBase(story), theme: defaultTheme, mode}, 'component');
-        for (const theme of themesByComponent.get(story.component) ?? []) {
-          if (theme === defaultTheme) continue;
-          add({...toShotBase(story), theme, mode}, `theme:${theme}`);
-        }
-      }
+    for (const shot of buildPrVisualPlan({
+      stories,
+      components,
+      defaultTheme,
+      probeTheme,
+    })) {
+      for (const reason of shot.reasons) add(shot, reason);
     }
   }
 
   if (tiers.includes('theme-matrix')) {
     const matrixOverrides = matrixThemes.length
       ? Object.fromEntries(
-          Object.entries(themeOverrides).filter(([theme]) => matrixThemes.includes(theme)),
+          Object.entries(themeOverrides).filter(([theme]) =>
+            matrixThemes.includes(theme),
+          ),
         )
       : themeOverrides;
     for (const shot of themeMatrix({
@@ -522,7 +700,9 @@ function probeShots({stories, targets, observations, probeTheme}) {
   const wanted = new Set(targets.map(target => target.key));
   const byStory = new Map();
   for (const story of stories) {
-    const rendered = Object.keys(observations[story.id] ?? {}).filter(key => wanted.has(key));
+    const rendered = Object.keys(observations[story.id] ?? {}).filter(key =>
+      wanted.has(key),
+    );
     if (rendered.length > 0) byStory.set(story, new Set(rendered));
   }
 
@@ -542,7 +722,10 @@ function probeShots({stories, targets, observations, probeTheme}) {
     if (!best) break;
     for (const key of byStory.get(best)) uncovered.delete(key);
     for (const mode of MODES) {
-      planned.push({shot: {...toShotBase(best), theme: probeTheme, mode}, reason: 'probe'});
+      planned.push({
+        shot: {...toShotBase(best), theme: probeTheme, mode},
+        reason: 'probe',
+      });
     }
     byStory.delete(best);
   }
@@ -572,13 +755,15 @@ function probeShots({stories, targets, observations, probeTheme}) {
 function themeMatrix({stories, targets, themeOverrides, observations}) {
   const componentsByKey = new Map();
   for (const target of targets) {
-    if (!componentsByKey.has(target.key)) componentsByKey.set(target.key, new Set());
+    if (!componentsByKey.has(target.key))
+      componentsByKey.set(target.key, new Set());
     componentsByKey.get(target.key).add(target.component);
   }
   const representatives = representativeStories(stories);
   const storiesByComponent = new Map();
   for (const story of stories) {
-    if (!storiesByComponent.has(story.component)) storiesByComponent.set(story.component, []);
+    if (!storiesByComponent.has(story.component))
+      storiesByComponent.set(story.component, []);
     storiesByComponent.get(story.component).push(story);
   }
 
@@ -624,7 +809,9 @@ function chooseStories({candidates, fallback, key, selectors, observations}) {
   // `base` and pseudo-class overrides need no particular state — any story
   // rendering the target proves they had something to bind to.
   const wanted = new Set(
-    selectors.filter(selector => selector !== 'base' && !selector.startsWith(':')),
+    selectors.filter(
+      selector => selector !== 'base' && !selector.startsWith(':'),
+    ),
   );
   const chosen = [];
   const covers = story => new Set(observations[story.id]?.[key] ?? []);
@@ -633,7 +820,9 @@ function chooseStories({candidates, fallback, key, selectors, observations}) {
     let best = null;
     let bestCount = 0;
     for (const story of rendering) {
-      const count = [...covers(story)].filter(selector => wanted.has(selector)).length;
+      const count = [...covers(story)].filter(selector =>
+        wanted.has(selector),
+      ).length;
       if (count > bestCount) {
         best = story;
         bestCount = count;
@@ -660,6 +849,7 @@ function toShotBase(story) {
     packageName: story.packageName,
     packageNames: story.packageNames,
     stableVisual: story.stableVisual,
+    sourcePath: story.sourcePath ?? null,
   };
 }
 

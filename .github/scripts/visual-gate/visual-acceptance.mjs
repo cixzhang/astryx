@@ -20,9 +20,9 @@ import {
 } from './authorization.mjs';
 import {canonicalizePng} from './lib/canonical-png.mjs';
 import {
+  buildPrVisualPlan,
   readStoryIndex,
   readThemeCatalog,
-  shotKey,
   stableBaseline,
   storiesInPackages,
   withThemeMetadata,
@@ -46,6 +46,7 @@ const flag = name => {
 const SHA = /^[0-9a-f]{40}$/;
 const KEY = /^[A-Za-z0-9._-]{1,240}$/;
 const NAME = /^[A-Za-z0-9._-]{1,120}$/;
+const REPO_PATH = /^[A-Za-z0-9._/-]{1,240}$/;
 const REPO = 'facebook/astryx';
 
 function fail(message) {
@@ -364,9 +365,6 @@ function accept() {
   if (evidence.verdict.status !== 'changed' || evidence.deltas.length === 0) {
     fail('current visual bundle has no delta to accept');
   }
-  if (evidence.deltas.some(delta => delta.kind === 'removed')) {
-    fail('scoped PR acceptance cannot authorize baseline removals');
-  }
   const manifestFile = path.join(
     pages,
     'visual-gate',
@@ -470,7 +468,7 @@ function state() {
     result = {
       state: 'success',
       reason: 'deferred',
-      description: 'Broad stable scope is deferred to the release gate.',
+      description: 'Stable visual scope is deferred to the release gate.',
     };
   } else {
     let current;
@@ -592,6 +590,15 @@ function validateAcceptance(value, expected = {}) {
   }
 }
 
+function isSafeRepoPath(value) {
+  return (
+    typeof value === 'string' &&
+    REPO_PATH.test(value) &&
+    !value.startsWith('/') &&
+    !value.split('/').includes('..')
+  );
+}
+
 function readTrustedScope() {
   const scope = readJSON(path.resolve(flag('scope')));
   if (
@@ -599,12 +606,14 @@ function readTrustedScope() {
     typeof scope.broadStableVisual !== 'boolean' ||
     !Array.isArray(scope.stableComponents) ||
     !Array.isArray(scope.stableThemes) ||
+    !Array.isArray(scope.stableStoryFiles ?? []) ||
     !scope.stableComponents.every(name => NAME.test(name)) ||
-    !scope.stableThemes.every(name => NAME.test(name))
+    !scope.stableThemes.every(name => NAME.test(name)) ||
+    !(scope.stableStoryFiles ?? []).every(isSafeRepoPath)
   ) {
     fail('trusted visual scope is invalid');
   }
-  return scope;
+  return {...scope, stableStoryFiles: scope.stableStoryFiles ?? []};
 }
 
 function readTrustedBaseline(stories = null) {
@@ -628,11 +637,42 @@ function readTrustedBaseline(stories = null) {
   return {baseline, entries};
 }
 
+function normalizeTrustedPlan(value) {
+  if (Array.isArray(value)) return {shots: value, expectedRemoved: []};
+  return {
+    shots: Array.isArray(value?.shots) ? value.shots : [],
+    expectedRemoved: Array.isArray(value?.expectedRemoved)
+      ? value.expectedRemoved
+      : (value?.expectedRemovals ?? []),
+  };
+}
+
+function readPlanSize() {
+  const planFile = flag('plan-file');
+  if (!planFile) return null;
+  const plan = readJSON(path.resolve(planFile));
+  if (!Array.isArray(plan) || plan.length === 0 || plan.length > 5000) {
+    fail(
+      `trusted visual plan has invalid size ${Array.isArray(plan) ? plan.length : 'unknown'}`,
+    );
+  }
+  return plan.length;
+}
+
 function trustedDefer() {
   const scope = readTrustedScope();
-  if (!scope.broadStableVisual) fail('trusted visual scope is not broad');
+  const planFile = flag('plan-file');
+  const normalizedPlan = planFile
+    ? normalizeTrustedPlan(readJSON(path.resolve(planFile)))
+    : null;
+  const planSize = normalizedPlan
+    ? normalizedPlan.shots.length + normalizedPlan.expectedRemoved.length
+    : null;
+  if (!scope.broadStableVisual && planSize == null) {
+    fail('trusted visual scope is not broad');
+  }
 
-  const {entries} = readTrustedBaseline();
+  const {entries} = planSize == null ? readTrustedBaseline() : {entries: []};
   const output = path.resolve(flag('output'));
   const pr = Number(flag('pr'));
   const head = flag('head') ?? '';
@@ -650,11 +690,14 @@ function trustedDefer() {
     fail('invalid evidence run/attempt');
   }
 
-  const total = entries.length;
+  const total = planSize ?? entries.length;
   const reason =
-    'Broad stable scope is deferred to the daily release gate. ' +
-    `It covers ${total} trusted baseline shot${total === 1 ? '' : 's'} ` +
-    'instead of recapturing them for this PR.';
+    planSize == null
+      ? 'Broad stable scope is deferred to the daily release gate. ' +
+        `It covers ${total} trusted baseline shot${total === 1 ? '' : 's'} ` +
+        'instead of recapturing them for this PR.'
+      : `Trusted PR visual scope has ${total} shots, above the 40-shot human-review cap. ` +
+        'It is deferred to the protected daily release gate instead of truncating the review set.';
   const verdict = {
     version: 1,
     status: 'skipped',
@@ -667,6 +710,9 @@ function trustedDefer() {
       runId: String(runId),
       runAttempt: String(runAttempt),
       trustedScope: scope,
+      ...(normalizedPlan?.expectedRemoved.length
+        ? {expectedRemoved: normalizedPlan.expectedRemoved}
+        : {}),
     },
     counts: {
       total,
@@ -706,8 +752,16 @@ function trustedDefer() {
   writeJSON(path.join(output, 'verdict.json'), verdict);
   fs.writeFileSync(path.join(output, 'index.html'), renderReport(verdict));
   process.stdout.write(
-    `Deferred ${total} trusted baseline shot${total === 1 ? '' : 's'} for PR #${pr}, run ${runId}/${runAttempt}.\n`,
+    `Deferred ${total} trusted visual shot${total === 1 ? '' : 's'} for PR #${pr}, run ${runId}/${runAttempt}.\n`,
   );
+}
+
+function storySourcePaths(story, storybookDir) {
+  if (!story.importPath) return [];
+  const raw = story.importPath.replace(/^\.\//, '').replaceAll('\\', '/');
+  const absolute = path.resolve(path.dirname(storybookDir), raw);
+  const relative = path.relative(REPO_ROOT, absolute).replaceAll(path.sep, '/');
+  return [raw, ...(relative.startsWith('..') ? [] : [relative])];
 }
 
 function trustedPlan() {
@@ -717,84 +771,76 @@ function trustedPlan() {
   const storybookDir = path.resolve(flag('storybook-dir'));
   const output = path.resolve(flag('output'));
   const allIndexed = readStoryIndex(storybookDir, [], REPO_ROOT);
-  const indexed = storiesInPackages(
-    allIndexed,
-    config.stableStoryPackages,
-  );
+  const indexed = storiesInPackages(allIndexed, config.stableStoryPackages);
+  const changedStoryFiles = new Set(scope.stableStoryFiles);
+  const headStoryIds = new Set(indexed.map(story => story.id));
+  const stableStoryIds = indexed
+    .filter(story =>
+      storySourcePaths(story, storybookDir).some(file =>
+        changedStoryFiles.has(file),
+      ),
+    )
+    .map(story => story.id);
   const {entries: baselineEntries} = readTrustedBaseline(allIndexed);
+  const expectedRemoved = baselineEntries
+    .filter(
+      ([, shot]) =>
+        changedStoryFiles.has(shot.sourcePath) &&
+        !headStoryIds.has(shot.storyId),
+    )
+    .map(([key, shot]) => ({...shot, key}));
 
-  const baselineThemes = [
-    ...new Set(baselineEntries.map(([, shot]) => shot.theme)),
-  ].filter(Boolean);
-  const shots = [];
-
-  if (scope.stableComponents.length > 0 || scope.stableThemes.length > 0) {
-    const indexedStories = new Map(indexed.map(story => [story.id, story]));
-    const add = (story, theme) => {
-      for (const mode of ['light', 'dark']) {
-        const shot = {
-          storyId: story.storyId ?? story.id,
-          title: story.title,
-          name: story.name,
-          component: story.component,
-          packageName: story.packageName,
-          packageNames: story.packageNames,
-          stableVisual: story.stableVisual,
-          theme,
-          mode,
-          reasons: ['trusted:pr-scope'],
-        };
-        shots.push({...shot, key: shotKey(shot)});
-      }
-    };
-
-    const componentStories = new Map();
-    for (const story of indexedStories.values()) {
-      if (scope.stableComponents.includes(story.component)) {
-        componentStories.set(story.storyId ?? story.id, story);
-      }
-    }
-    for (const story of componentStories.values()) {
-      for (const theme of baselineThemes) add(story, theme);
-    }
-
-    for (const theme of scope.stableThemes) {
-      const isNew = !baselineThemes.includes(theme);
-      const themeStories = new Map();
-      for (const [, shot] of baselineEntries) {
-        const story = indexedStories.get(shot.storyId) ?? shot;
-        if (isNew || shot.theme === theme) {
-          themeStories.set(shot.storyId, story);
-        }
-      }
-      for (const story of themeStories.values()) add(story, theme);
-    }
-  }
   const unique = withThemeMetadata(
-    [...new Map(shots.map(shot => [shot.key, shot])).values()],
+    buildPrVisualPlan({
+      stories: indexed,
+      components: scope.stableComponents,
+      stableStoryIds,
+      defaultTheme: config.defaultTheme,
+      probeTheme: config.probeTheme,
+    }),
     themeCatalog,
   );
-  if (unique.some(shot => shot.stableThemeVisual !== true)) {
+  if (
+    unique.some(
+      shot =>
+        shot.stableThemeVisual !== true && shot.theme !== config.probeTheme,
+    )
+  ) {
     fail('trusted stable plan includes a private or canary theme');
   }
-  if (unique.length === 0 || unique.length > 5000) {
-    fail(`trusted visual plan has invalid size ${unique.length}`);
+  const planSize = unique.length + expectedRemoved.length;
+  if (planSize === 0 || planSize > 5000) {
+    fail(`trusted visual plan has invalid size ${planSize}`);
   }
-  writeJSON(output, unique);
+  writeJSON(
+    output,
+    expectedRemoved.length > 0 ? {shots: unique, expectedRemoved} : unique,
+  );
   process.stdout.write(
-    `Wrote ${unique.length} trusted PR shot(s) to ${output}.\n`,
+    `Wrote ${unique.length} trusted PR shot(s) and ${expectedRemoved.length} expected removal(s) to ${output}.\n`,
+  );
+}
+
+function isCurrentOnlyEvidence(value) {
+  const shot = value?.shot ?? value;
+  return (
+    shot?.baselinePolicy === 'current-only' || shot?.theme === config.probeTheme
   );
 }
 
 function acceptedStableShots(acceptance) {
-  if (acceptance.keys.some(entry => entry.kind === 'removed')) {
-    fail('scoped PR promotion cannot remove baseline keys');
-  }
   const shots = withThemeMetadata(
-    acceptance.keys.map(entry => ({...entry.shot, key: entry.key})),
+    acceptance.keys
+      .filter(entry => entry.kind !== 'removed')
+      .map(entry => ({...entry.shot, key: entry.key})),
     themeCatalog,
   );
-  if (shots.some(shot => shot.stableThemeVisual !== true)) {
+  if (
+    shots.some(
+      shot =>
+        shot.stableThemeVisual !== true && shot.theme !== config.probeTheme,
+    )
+  ) {
     fail('accepted stable plan includes a private or canary theme');
   }
   return shots;
@@ -858,15 +904,21 @@ function promote() {
 
   const actions = [];
   for (const entry of acceptance.keys) {
+    if (entry.kind === 'removed') continue;
     const baselineFile = path.join(baselineShots, `${entry.key}.png`);
+    const currentOnly = isCurrentOnlyEvidence(entry);
     const currentBefore = fs.existsSync(baselineFile)
       ? shaFile(baselineFile)
       : null;
-    if (currentBefore === entry.afterSha256 && alreadyRecorded) {
-      actions.push({entry, baselineFile, alreadyPromoted: true});
+    if (
+      !currentOnly &&
+      currentBefore === entry.afterSha256 &&
+      alreadyRecorded
+    ) {
+      actions.push({entry, baselineFile, currentOnly, alreadyPromoted: true});
       continue;
     }
-    if (currentBefore !== entry.beforeSha256) {
+    if (!currentOnly && currentBefore !== entry.beforeSha256) {
       fail(
         `baseline conflict for ${entry.key}: expected ${entry.beforeSha256}, found ${currentBefore}`,
       );
@@ -920,19 +972,29 @@ function promote() {
     actions.push({
       entry,
       baselineFile,
+      currentOnly,
       canonicalBytes: canonical.bytes,
       capturedShot: {...capturedShot, sha256: canonicalSha256},
     });
   }
 
-  if (actions.every(action => action.alreadyPromoted)) {
+  const baselineActions = actions.filter(action => !action.currentOnly);
+
+  if (baselineActions.length === 0) {
+    process.stdout.write(
+      `Accepted visual bundle for PR #${acceptance.pr} contained only current evidence; no stable baseline changed.\n`,
+    );
+    return;
+  }
+
+  if (baselineActions.every(action => action.alreadyPromoted)) {
     process.stdout.write(
       `Accepted visual bundle for PR #${acceptance.pr} was already promoted.\n`,
     );
     return;
   }
 
-  for (const action of actions) {
+  for (const action of baselineActions) {
     if (action.alreadyPromoted) continue;
     fs.writeFileSync(action.baselineFile, action.canonicalBytes);
     manifest.shots[action.entry.key] = action.capturedShot;
@@ -952,7 +1014,10 @@ function promote() {
       pr: acceptance.pr,
       headSha: acceptance.headSha,
       mergeSha,
-      promoted: acceptance.keys.map(entry => entry.key),
+      promoted: baselineActions.map(action => action.entry.key),
+      reviewedCurrentOnly: actions
+        .filter(action => action.currentOnly)
+        .map(action => action.entry.key),
       pruned: [],
     },
   ].slice(-200);

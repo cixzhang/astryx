@@ -24,6 +24,22 @@ const HEAD = 'a'.repeat(40);
 const TESTED = 'b'.repeat(40);
 const MERGE = 'c'.repeat(40);
 const KEY = 'core-button--default__neutral-light';
+const PROBE_KEY = 'core-button--theme-sheet__probe-light';
+const PROBE_SHOT = {
+  storyId: 'core-button--theme-sheet',
+  title: 'Core/Button',
+  name: 'Theme Sheet',
+  component: 'Button',
+  packageName: '@astryxdesign/core',
+  packageNames: ['@astryxdesign/core'],
+  stableVisual: true,
+  theme: 'probe',
+  themePackageName: '@astryxdesign/theme-probe',
+  stableThemeVisual: false,
+  mode: 'light',
+  reasons: ['trusted:theme-sheet'],
+  baselinePolicy: 'current-only',
+};
 const SHOT = {
   storyId: 'core-button--default',
   title: 'Core/Button',
@@ -110,7 +126,8 @@ function acceptanceFile(run = 123, attempt = 1) {
 
 function writeBaseline(entries = {[KEY]: png(255)}) {
   const shots = {};
-  for (const [key, bytes] of Object.entries(entries)) {
+  for (const [key, value] of Object.entries(entries)) {
+    const payload = Buffer.isBuffer(value) ? {shot: SHOT, bytes: value} : value;
     const file = path.join(
       pages,
       'visual-gate',
@@ -119,8 +136,14 @@ function writeBaseline(entries = {[KEY]: png(255)}) {
       `${key}.png`,
     );
     fs.mkdirSync(path.dirname(file), {recursive: true});
-    fs.writeFileSync(file, bytes);
-    shots[key] = {...SHOT, key, sha256: digest(bytes), width: 2, height: 2};
+    fs.writeFileSync(file, payload.bytes);
+    shots[key] = {
+      ...payload.shot,
+      key,
+      sha256: digest(payload.bytes),
+      width: 2,
+      height: 2,
+    };
   }
   writeJSON(path.join(pages, 'visual-gate', 'baseline', 'manifest.json'), {
     version: 1,
@@ -493,16 +516,24 @@ describe('visual acceptance', () => {
     );
   });
 
-  it('derives a trusted component plan from baseline themes and the Storybook index', () => {
+  it('derives a compact trusted component plan from the Theme Sheet story', () => {
     const storybook = path.join(root, 'storybook');
     fs.mkdirSync(storybook);
     writeJSON(path.join(storybook, 'index.json'), {
       entries: {
-        button: {
+        default: {
           type: 'story',
           id: 'core-button--default',
           title: 'Core/Button',
           name: 'Default',
+          componentPath: '../../packages/core/src/Button/index.ts',
+          tags: [],
+        },
+        sheet: {
+          type: 'story',
+          id: 'core-button--theme-sheet',
+          title: 'Core/Button',
+          name: 'Theme Sheet',
           componentPath: '../../packages/core/src/Button/index.ts',
           tags: [],
         },
@@ -514,6 +545,7 @@ describe('visual acceptance', () => {
       broadStableVisual: false,
       stableComponents: ['Button'],
       stableThemes: [],
+      stableStoryFiles: [],
     });
     const output = path.join(root, 'trusted-plan.json');
     run('trusted-plan', {
@@ -525,23 +557,38 @@ describe('visual acceptance', () => {
     expect(
       JSON.parse(fs.readFileSync(output, 'utf8')).map(shot => shot.key),
     ).toEqual([
-      'core-button--default__neutral-light',
-      'core-button--default__neutral-dark',
+      'core-button--theme-sheet__neutral-dark',
+      'core-button--theme-sheet__neutral-light',
+      'core-button--theme-sheet__probe-dark',
+      'core-button--theme-sheet__probe-light',
     ]);
   });
 
-  it('plans every baseline story for a newly promoted stable theme', () => {
-    const storybook = path.join(root, 'storybook-new-theme');
+  it('adds changed stable-visual story files in Neutral only', () => {
+    const storybook = path.join(root, 'storybook-stable-story');
     fs.mkdirSync(storybook);
-    writeJSON(path.join(storybook, 'index.json'), {entries: {}});
-    const scope = path.join(root, 'scope-new-theme.json');
+    writeJSON(path.join(storybook, 'index.json'), {
+      entries: {
+        focused: {
+          type: 'story',
+          id: 'core-button--focused-regression',
+          title: 'Core/Button',
+          name: 'Focused Regression',
+          componentPath: '../../packages/core/src/Button/index.ts',
+          importPath: './stories/Button.stories.tsx',
+          tags: ['stable-visual'],
+        },
+      },
+    });
+    const scope = path.join(root, 'scope-stable-story.json');
     writeJSON(scope, {
       hasStableVisual: true,
       broadStableVisual: false,
       stableComponents: [],
-      stableThemes: ['y2k'],
+      stableThemes: [],
+      stableStoryFiles: ['stories/Button.stories.tsx'],
     });
-    const output = path.join(root, 'trusted-theme-plan.json');
+    const output = path.join(root, 'trusted-story-plan.json');
     run('trusted-plan', {
       scope,
       baseline: path.join(pages, 'visual-gate', 'baseline'),
@@ -551,9 +598,164 @@ describe('visual acceptance', () => {
     expect(
       JSON.parse(fs.readFileSync(output, 'utf8')).map(shot => shot.key),
     ).toEqual([
-      'core-button--default__y2k-light',
-      'core-button--default__y2k-dark',
+      'core-button--focused-regression__neutral-dark',
+      'core-button--focused-regression__neutral-light',
     ]);
+  });
+
+  it('proves the PR plan shrinks a #5510-shaped component from hundreds of shots', () => {
+    const storybook = path.join(root, 'storybook-large-component');
+    fs.mkdirSync(storybook);
+    const entries = {
+      sheet: {
+        type: 'story',
+        id: 'core-button--theme-sheet',
+        title: 'Core/Button',
+        name: 'Theme Sheet',
+        componentPath: '../../packages/core/src/Button/index.ts',
+        tags: [],
+      },
+    };
+    for (let index = 0; index < 120; index += 1) {
+      entries[`story-${index}`] = {
+        type: 'story',
+        id: `core-button--case-${index}`,
+        title: 'Core/Button',
+        name: `Case ${index}`,
+        componentPath: '../../packages/core/src/Button/index.ts',
+        tags: [],
+      };
+    }
+    writeJSON(path.join(storybook, 'index.json'), {entries});
+    const scope = path.join(root, 'scope-large-component.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: ['Button'],
+      stableThemes: [],
+      stableStoryFiles: [],
+    });
+    const output = path.join(root, 'trusted-large-plan.json');
+    run('trusted-plan', {
+      scope,
+      baseline: path.join(pages, 'visual-gate', 'baseline'),
+      'storybook-dir': storybook,
+      output,
+    });
+    expect(JSON.parse(fs.readFileSync(output, 'utf8'))).toHaveLength(4);
+  });
+
+  it('plans deleted stable-visual stories as before-only removals without substituting base content', () => {
+    const storybook = path.join(root, 'storybook-deleted-story');
+    fs.mkdirSync(storybook);
+    writeJSON(path.join(storybook, 'index.json'), {entries: {}});
+    const deletedLight = 'core-button--deleted-story__neutral-light';
+    const deletedDark = 'core-button--deleted-story__neutral-dark';
+    writeBaseline({
+      [deletedLight]: {
+        shot: {
+          ...SHOT,
+          key: deletedLight,
+          storyId: 'core-button--deleted-story',
+          name: 'Deleted Story',
+          sourcePath: 'stories/Button.stories.tsx',
+        },
+        bytes: png(),
+      },
+      [deletedDark]: {
+        shot: {
+          ...SHOT,
+          key: deletedDark,
+          storyId: 'core-button--deleted-story',
+          name: 'Deleted Story',
+          sourcePath: 'stories/Button.stories.tsx',
+          mode: 'dark',
+        },
+        bytes: png(),
+      },
+    });
+    const scope = path.join(root, 'scope-deleted-story.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: [],
+      stableThemes: [],
+      stableStoryFiles: ['stories/Button.stories.tsx'],
+    });
+    const output = path.join(root, 'trusted-deleted-plan.json');
+    run('trusted-plan', {
+      scope,
+      baseline: path.join(pages, 'visual-gate', 'baseline'),
+      'storybook-dir': storybook,
+      output,
+    });
+    expect(JSON.parse(fs.readFileSync(output, 'utf8'))).toMatchObject({
+      shots: [],
+      expectedRemoved: [{key: deletedLight}, {key: deletedDark}],
+    });
+  });
+
+  it('plans remaining stable-visual stories and removals from the same changed file only', () => {
+    const storybook = path.join(root, 'storybook-mixed-story');
+    fs.mkdirSync(storybook);
+    writeJSON(path.join(storybook, 'index.json'), {
+      entries: {
+        remaining: {
+          type: 'story',
+          id: 'core-button--remaining-story',
+          title: 'Core/Button',
+          name: 'Remaining Story',
+          componentPath: '../../packages/core/src/Button/index.ts',
+          importPath: './stories/Button.stories.tsx',
+          tags: ['stable-visual'],
+        },
+      },
+    });
+    const deleted = 'core-button--deleted-story__neutral-light';
+    const unrelated = 'core-button--unrelated-story__neutral-light';
+    writeBaseline({
+      [deleted]: {
+        shot: {
+          ...SHOT,
+          key: deleted,
+          storyId: 'core-button--deleted-story',
+          name: 'Deleted Story',
+          sourcePath: 'stories/Button.stories.tsx',
+        },
+        bytes: png(),
+      },
+      [unrelated]: {
+        shot: {
+          ...SHOT,
+          key: unrelated,
+          storyId: 'core-button--unrelated-story',
+          name: 'Unrelated Story',
+          sourcePath: 'stories/Other.stories.tsx',
+        },
+        bytes: png(),
+      },
+    });
+    const scope = path.join(root, 'scope-mixed-story.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: [],
+      stableThemes: [],
+      stableStoryFiles: ['stories/Button.stories.tsx'],
+    });
+    const output = path.join(root, 'trusted-mixed-plan.json');
+    run('trusted-plan', {
+      scope,
+      baseline: path.join(pages, 'visual-gate', 'baseline'),
+      'storybook-dir': storybook,
+      output,
+    });
+    const plan = JSON.parse(fs.readFileSync(output, 'utf8'));
+    expect(plan.shots.map(shot => shot.key)).toEqual([
+      'core-button--remaining-story__neutral-dark',
+      'core-button--remaining-story__neutral-light',
+    ]);
+    expect(plan.expectedRemoved.map(removal => removal.key)).toEqual([deleted]);
   });
 
   it('refuses a trusted capture plan for broad stable infrastructure', () => {
@@ -594,7 +796,7 @@ describe('visual acceptance', () => {
         'run-id': 126,
         'run-attempt': 3,
       }),
-    ).toContain('Deferred 1 trusted baseline shot');
+    ).toContain('Deferred 1 trusted visual shot');
 
     const evidence = JSON.parse(
       fs.readFileSync(path.join(output, 'evidence.json'), 'utf8'),
@@ -634,8 +836,115 @@ describe('visual acceptance', () => {
     expect(JSON.parse(run('state', {pages, pr: 42, head: HEAD}))).toEqual({
       state: 'success',
       reason: 'deferred',
-      description: 'Broad stable scope is deferred to the release gate.',
+      description: 'Stable visual scope is deferred to the release gate.',
     });
+  });
+
+  it('writes trusted skipped evidence for an over-budget compact plan', () => {
+    const scope = path.join(root, 'scope-over-budget.json');
+    const plan = path.join(root, 'over-budget-plan.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: ['Button'],
+      stableThemes: [],
+      stableStoryFiles: [],
+    });
+    writeJSON(
+      plan,
+      Array.from({length: 41}, (_, index) => ({
+        ...SHOT,
+        key: `core-button--case-${index}__neutral-light`,
+        storyId: `core-button--case-${index}`,
+      })),
+    );
+    const output = path.join(pages, 'pr', '42', 'visual', HEAD, '127', '1');
+    expect(
+      run('trusted-defer', {
+        scope,
+        baseline: path.join(pages, 'visual-gate', 'baseline'),
+        'plan-file': plan,
+        output,
+        pr: 42,
+        head: HEAD,
+        base: 'd'.repeat(40),
+        'run-id': 127,
+        'run-attempt': 1,
+      }),
+    ).toContain('Deferred 41 trusted visual shots');
+    const evidence = JSON.parse(
+      fs.readFileSync(path.join(output, 'evidence.json'), 'utf8'),
+    );
+    expect(evidence.verdict).toMatchObject({
+      status: 'skipped',
+      counts: {total: 41},
+    });
+    expect(evidence.verdict.reason).toContain('40-shot human-review cap');
+  });
+
+  it('counts object plans with before-only removals for review budgets', () => {
+    const scope = path.join(root, 'scope-object-budget.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: ['Button'],
+      stableThemes: [],
+      stableStoryFiles: [],
+    });
+    const plan = path.join(root, 'object-budget-plan.json');
+    writeJSON(plan, {
+      shots: Array.from({length: 24}, (_, index) => ({
+        ...SHOT,
+        key: `core-button--case-${index}__neutral-light`,
+        storyId: `core-button--case-${index}`,
+      })),
+      expectedRemoved: [{...SHOT, key: 'core-button--deleted__neutral-light'}],
+    });
+    const output25 = path.join(pages, 'pr', '42', 'visual', HEAD, '131', '1');
+    expect(
+      run('trusted-defer', {
+        scope,
+        baseline: path.join(pages, 'visual-gate', 'baseline'),
+        'plan-file': plan,
+        output: output25,
+        pr: 42,
+        head: HEAD,
+        base: 'd'.repeat(40),
+        'run-id': 131,
+        'run-attempt': 1,
+      }),
+    ).toContain('Deferred 25 trusted visual shots');
+    expect(
+      JSON.parse(fs.readFileSync(path.join(output25, 'evidence.json'), 'utf8'))
+        .verdict.context.expectedRemoved,
+    ).toHaveLength(1);
+
+    writeJSON(plan, {
+      shots: Array.from({length: 40}, (_, index) => ({
+        ...SHOT,
+        key: `core-button--case-${index}__neutral-light`,
+        storyId: `core-button--case-${index}`,
+      })),
+      expectedRemoved: [{...SHOT, key: 'core-button--deleted__neutral-light'}],
+    });
+    const output41 = path.join(pages, 'pr', '42', 'visual', HEAD, '132', '1');
+    expect(
+      run('trusted-defer', {
+        scope,
+        baseline: path.join(pages, 'visual-gate', 'baseline'),
+        'plan-file': plan,
+        output: output41,
+        pr: 42,
+        head: HEAD,
+        base: 'd'.repeat(40),
+        'run-id': 132,
+        'run-attempt': 1,
+      }),
+    ).toContain('Deferred 41 trusted visual shots');
+    expect(
+      JSON.parse(fs.readFileSync(path.join(output41, 'evidence.json'), 'utf8'))
+        .verdict.reason,
+    ).toContain('40-shot human-review cap');
   });
 
   it('refuses trusted deferral for a narrow component scope', () => {
@@ -753,6 +1062,216 @@ describe('visual acceptance', () => {
     expect(JSON.parse(printed)).toEqual([{...SHOT, key: KEY}]);
   });
 
+  it('promotes Neutral while keeping Probe current-only evidence out of the stable baseline', () => {
+    const neutralAfter = png(0, 0, 255);
+    const probeAfter = png(0, 255, 0);
+    const dir = path.join(pages, 'pr', '42', 'visual', HEAD, '128', '1');
+    fs.mkdirSync(path.join(dir, 'after'), {recursive: true});
+    fs.writeFileSync(path.join(dir, 'after', `${KEY}.png`), neutralAfter);
+    fs.writeFileSync(path.join(dir, 'after', `${PROBE_KEY}.png`), probeAfter);
+    writeJSON(path.join(dir, 'evidence.json'), {
+      version: 1,
+      repo: 'facebook/astryx',
+      pr: 42,
+      headSha: HEAD,
+      testedSha: TESTED,
+      baseSha: 'd'.repeat(40),
+      run: {id: 128, attempt: 1},
+      capture: {
+        platform: 'linux-arm64',
+        browser: 'chromium-140.0',
+        viewport: {width: 1280, height: 900},
+      },
+      deltas: [
+        {
+          key: KEY,
+          kind: 'changed',
+          beforeSha256: digest(png(255)),
+          shot: SHOT,
+        },
+        {
+          key: PROBE_KEY,
+          kind: 'added',
+          beforeSha256: null,
+          shot: PROBE_SHOT,
+        },
+      ],
+      verdict: {version: 1, status: 'changed'},
+    });
+    run('accept', acceptanceFlags({'run-id': 128}));
+
+    const plan = path.join(root, 'accepted-neutral-probe-plan.json');
+    run('plan', {acceptance: acceptanceFile(128), output: plan});
+    expect(
+      JSON.parse(fs.readFileSync(plan, 'utf8')).map(shot => shot.key),
+    ).toEqual([KEY, PROBE_KEY]);
+
+    const capture = path.join(root, 'capture-neutral-probe');
+    fs.mkdirSync(path.join(capture, 'shots'), {recursive: true});
+    fs.writeFileSync(path.join(capture, 'shots', `${KEY}.png`), neutralAfter);
+    fs.writeFileSync(
+      path.join(capture, 'shots', `${PROBE_KEY}.png`),
+      probeAfter,
+    );
+    writeJSON(path.join(capture, 'manifest.json'), {
+      version: 1,
+      platform: 'linux-arm64',
+      browser: 'chromium-140.0',
+      viewport: {width: 1280, height: 900},
+      capturedAt: '2026-08-26T22:00:00.000Z',
+      context: {sha: MERGE},
+      shots: {
+        [KEY]: {...SHOT, sha256: digest(neutralAfter), width: 2, height: 2},
+        [PROBE_KEY]: {
+          ...PROBE_SHOT,
+          sha256: digest(probeAfter),
+          width: 2,
+          height: 2,
+        },
+      },
+    });
+
+    run('promote', {
+      pages,
+      acceptance: acceptanceFile(128),
+      capture,
+      'merge-sha': MERGE,
+    });
+    const baselineManifest = JSON.parse(
+      fs.readFileSync(
+        path.join(pages, 'visual-gate', 'baseline', 'manifest.json'),
+        'utf8',
+      ),
+    );
+    expect(baselineManifest.shots[KEY].sha256).toBe(digest(neutralAfter));
+    expect(baselineManifest.shots[PROBE_KEY]).toBeUndefined();
+    expect(
+      fs.existsSync(
+        path.join(
+          pages,
+          'visual-gate',
+          'baseline',
+          'shots',
+          `${PROBE_KEY}.png`,
+        ),
+      ),
+    ).toBe(false);
+    expect(baselineManifest.decisions.at(-1)).toMatchObject({
+      promoted: [KEY],
+      reviewedCurrentOnly: [PROBE_KEY],
+      pruned: [],
+    });
+  });
+
+  it('keeps Probe Theme Sheet shots as current evidence for each new PR plan', () => {
+    const storybook = path.join(root, 'storybook-next-probe');
+    fs.mkdirSync(storybook);
+    writeJSON(path.join(storybook, 'index.json'), {
+      entries: {
+        sheet: {
+          type: 'story',
+          id: 'core-button--theme-sheet',
+          title: 'Core/Button',
+          name: 'Theme Sheet',
+          componentPath: '../../packages/core/src/Button/index.ts',
+          tags: [],
+        },
+      },
+    });
+    const scope = path.join(root, 'scope-next-probe.json');
+    writeJSON(scope, {
+      hasStableVisual: true,
+      broadStableVisual: false,
+      stableComponents: ['Button'],
+      stableThemes: [],
+      stableStoryFiles: [],
+    });
+    const output = path.join(root, 'trusted-next-probe-plan.json');
+    run('trusted-plan', {
+      scope,
+      baseline: path.join(pages, 'visual-gate', 'baseline'),
+      'storybook-dir': storybook,
+      output,
+    });
+    const shots = JSON.parse(fs.readFileSync(output, 'utf8'));
+    expect(
+      shots.filter(shot => shot.theme === 'probe').map(shot => shot.key),
+    ).toEqual([
+      'core-button--theme-sheet__probe-dark',
+      'core-button--theme-sheet__probe-light',
+    ]);
+    expect(shots.filter(shot => shot.theme === 'probe')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({baselinePolicy: 'current-only'}),
+      ]),
+    );
+  });
+
+  it('accepts removed Probe evidence without pruning the stable baseline', () => {
+    const before = png(9);
+    writeBaseline({
+      [KEY]: png(255),
+      [PROBE_KEY]: {shot: PROBE_SHOT, bytes: before},
+    });
+    const dir = path.join(pages, 'pr', '42', 'visual', HEAD, '129', '1');
+    fs.mkdirSync(dir, {recursive: true});
+    writeJSON(path.join(dir, 'evidence.json'), {
+      version: 1,
+      repo: 'facebook/astryx',
+      pr: 42,
+      headSha: HEAD,
+      testedSha: TESTED,
+      baseSha: 'd'.repeat(40),
+      run: {id: 129, attempt: 1},
+      capture: {
+        platform: 'linux-arm64',
+        browser: 'chromium-140.0',
+        viewport: {width: 1280, height: 900},
+      },
+      deltas: [
+        {
+          key: PROBE_KEY,
+          kind: 'removed',
+          beforeSha256: digest(before),
+          shot: null,
+        },
+      ],
+      verdict: {version: 1, status: 'changed'},
+    });
+
+    run('accept', acceptanceFlags({'run-id': 129}));
+    expect(JSON.parse(run('state', {pages, pr: 42, head: HEAD}))).toMatchObject(
+      {
+        state: 'success',
+        reason: 'accepted',
+      },
+    );
+    const capture = path.join(root, 'capture-removed-probe');
+    fs.mkdirSync(path.join(capture, 'shots'), {recursive: true});
+    writeJSON(path.join(capture, 'manifest.json'), {
+      version: 1,
+      platform: 'linux-arm64',
+      browser: 'chromium-140.0',
+      viewport: {width: 1280, height: 900},
+      capturedAt: '2026-08-26T22:00:00.000Z',
+      context: {sha: MERGE},
+      shots: {},
+    });
+    run('promote', {
+      pages,
+      acceptance: acceptanceFile(129),
+      capture,
+      'merge-sha': MERGE,
+    });
+    const manifest = JSON.parse(
+      fs.readFileSync(
+        path.join(pages, 'visual-gate', 'baseline', 'manifest.json'),
+        'utf8',
+      ),
+    );
+    expect(manifest.shots[KEY]).toBeDefined();
+  });
+
   it('promotes only when merged pixels equal the reviewed after image', () => {
     run('accept', acceptanceFlags());
     const after = fs.readFileSync(
@@ -867,13 +1386,37 @@ describe('visual acceptance', () => {
     },
   );
 
-  it('rejects removed PR evidence and preserves the baseline', () => {
+  it('accepts removed PR evidence but promotion never prunes the stable baseline', () => {
     writeEvidence({kind: 'removed', run: 125});
-    expect(fail('accept', acceptanceFlags({'run-id': 125}))).toMatch(
-      /scoped PR acceptance cannot authorize baseline removals/,
+    run('accept', acceptanceFlags({'run-id': 125}));
+    expect(JSON.parse(run('state', {pages, pr: 42, head: HEAD}))).toMatchObject(
+      {
+        state: 'success',
+        reason: 'accepted',
+      },
     );
-    expect(fs.existsSync(acceptanceFile(125))).toBe(false);
-    expect(fs.existsSync(path.join(pages, 'visual-gate', 'baseline', 'shots', `${KEY}.png`))).toBe(true);
+    const capture = path.join(root, 'capture-removed-stable');
+    fs.mkdirSync(path.join(capture, 'shots'), {recursive: true});
+    writeJSON(path.join(capture, 'manifest.json'), {
+      version: 1,
+      platform: 'linux-arm64',
+      browser: 'chromium-140.0',
+      viewport: {width: 1280, height: 900},
+      capturedAt: '2026-08-26T22:00:00.000Z',
+      context: {sha: MERGE},
+      shots: {},
+    });
+    run('promote', {
+      pages,
+      acceptance: acceptanceFile(125),
+      capture,
+      'merge-sha': MERGE,
+    });
+    expect(
+      fs.existsSync(
+        path.join(pages, 'visual-gate', 'baseline', 'shots', `${KEY}.png`),
+      ),
+    ).toBe(true);
   });
 
   it('rejects a merged recapture whose canonical pixels changed', () => {
@@ -965,19 +1508,30 @@ describe('visual acceptance', () => {
     ).toMatch(/baseline conflict/);
   });
 
-  it('records added shots but rejects removed evidence', () => {
+  it('records added and removed evidence shapes', () => {
     const added = 'core-new--default__neutral-light';
     writeEvidence({kind: 'added', key: added, run: 124});
     run('accept', acceptanceFlags({'run-id': 124}));
-    expect(JSON.parse(fs.readFileSync(acceptanceFile(124), 'utf8')).keys[0]).toMatchObject({
+    expect(
+      JSON.parse(fs.readFileSync(acceptanceFile(124), 'utf8')).keys[0],
+    ).toMatchObject({
       key: added,
       kind: 'added',
       beforeSha256: null,
     });
-    fs.rmSync(path.join(pages, 'visual-gate', 'acceptances'), {recursive: true, force: true});
+    fs.rmSync(path.join(pages, 'visual-gate', 'acceptances'), {
+      recursive: true,
+      force: true,
+    });
     writeEvidence({kind: 'removed', run: 125});
-    expect(fail('accept', acceptanceFlags({'comment-id': 1235, 'run-id': 125}))).toMatch(
-      /scoped PR acceptance cannot authorize baseline removals/,
-    );
+    run('accept', acceptanceFlags({'comment-id': 1235, 'run-id': 125}));
+    expect(
+      JSON.parse(fs.readFileSync(acceptanceFile(125), 'utf8')).keys[0],
+    ).toMatchObject({
+      key: KEY,
+      kind: 'removed',
+      afterSha256: null,
+      shot: null,
+    });
   });
 });
