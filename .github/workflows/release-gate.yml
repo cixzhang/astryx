@@ -36,11 +36,6 @@ on:
     # 13:00 UTC = 06:00 PT — two hours before the 08:00 PT cut (see TIMING above).
     - cron: '0 13 * * *'
   workflow_dispatch:
-    inputs:
-      tiers:
-        description: 'Shot tiers: surface, theme-matrix, full'
-        required: false
-        default: 'surface,theme-matrix'
 
 permissions: {}
 
@@ -96,17 +91,22 @@ jobs:
             echo "::notice::No baseline on gh-pages yet — this run establishes one."
           fi
 
-      # Exit 2 means "changed", which is a question for the release cut, not a
-      # broken run. Exit 1 (crashed) still fails the job.
+      # The derived surface/matrix stays representative, but an accepted
+      # stable key is a durable release promise: recapture every still-valid
+      # baseline key until a reviewed removal prunes it. Package filtering is
+      # applied to the baseline too, so legacy canary keys do not block Core.
+      # The gate constructs the canonical stable tiers internally. A caller may
+      # not expand, rename, or narrow the plan that owns removal authority.
+      # Exit 2 means "changed", which is a release decision; only a crash (1)
+      # fails this job mechanically.
       - name: Run the visual gate
         id: gate
         run: |
           set +e
-          node .github/scripts/visual-gate/gate.mjs check \
+          node .github/scripts/visual-gate/gate.mjs release \
             --storybook-dir apps/storybook/dist \
             --baseline .visual-baseline \
             --out .visual-run \
-            --tiers "${{ inputs.tiers || 'surface,theme-matrix' }}" \
             --summary-output visual-summary.md
           code=$?
           cat visual-summary.md >> "$GITHUB_STEP_SUMMARY" || true

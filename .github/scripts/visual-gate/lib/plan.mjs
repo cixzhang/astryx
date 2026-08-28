@@ -33,6 +33,7 @@
  * with the representative-story filter removed.
  */
 
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -45,6 +46,146 @@ const REPRESENTATIVE_NAMES = ['Default', 'Basic', 'Primary', 'Overview', 'Exampl
 /** A story carrying this tag is never captured (see visual-gate.config.json for the reasoned list). */
 export const SKIP_TAG = 'no-visual';
 
+
+/** Workspace package manifests are the only package eligibility source. */
+export function readPackageCatalog(repoRoot) {
+  const files = [];
+  for (const parent of [path.join(repoRoot, 'packages'), path.join(repoRoot, 'packages/themes')]) {
+    if (!fs.existsSync(parent)) continue;
+    for (const entry of fs.readdirSync(parent, {withFileTypes: true})) {
+      if (!entry.isDirectory()) continue;
+      const file = path.join(parent, entry.name, 'package.json');
+      if (fs.existsSync(file)) files.push(file);
+    }
+  }
+  return new Map(files.map(file => {
+    const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return [manifest.name, manifest];
+  }));
+}
+
+export function packageFromComponentPath(componentPath) {
+  if (!componentPath) return null;
+  const normalized = componentPath.replaceAll('\\', '/');
+  const names = new Set();
+  for (const match of normalized.matchAll(/(?:^|\/)node_modules\/(@[^/]+\/[^/]+|[^/]+)(?=\/|$)/g)) {
+    names.add(match[1]);
+  }
+  for (const match of normalized.matchAll(/(?:^|\/)packages\/(themes\/[^/]+|[^/]+)(?=\/|$)/g)) {
+    const [group, leaf] = match[1].split('/');
+    names.add(leaf ? `@astryxdesign/theme-${leaf}` : `@astryxdesign/${group}`);
+  }
+  const bare = normalized.match(/^(@[^/]+\/[^/]+)(?:\/.*)?$/);
+  if (bare) names.add(bare[1]);
+  if (names.size > 1) throw new Error(`Ambiguous Storybook componentPath: ${componentPath}`);
+  if (names.size === 0) throw new Error(`Unsupported Storybook componentPath: ${componentPath}`);
+  return [...names][0];
+}
+
+function storyPackageNames(entry, storybookDir, repoRoot, catalog) {
+  const fromComponent = packageFromComponentPath(entry.componentPath);
+  let names = fromComponent ? [fromComponent] : [];
+  if (!fromComponent) {
+    const relative = entry.importPath?.replace(/^\.\//, '');
+    const source = relative && path.resolve(path.dirname(storybookDir), relative);
+    if (!source || !fs.existsSync(source)) {
+      throw new Error(`Story ${entry.id} has no resolvable package metadata.`);
+    }
+    const text = fs.readFileSync(source, 'utf8');
+    names = [...new Set([...text.matchAll(/(?:from\s+|import\s*)['"](@astryxdesign\/[^/'"]+)/g)].map(match => match[1]))].sort();
+  }
+  if (names.length === 0) throw new Error(`Story ${entry.id} imports no workspace package.`);
+  const manifests = names.map(name => {
+    const manifest = catalog.get(name);
+    if (!manifest) throw new Error(`Story ${entry.id} names unknown package ${name}.`);
+    return manifest;
+  });
+  const unstable = manifests.find(manifest => manifest.private === true || manifest.astryx?.canaryOnly === true);
+  return {
+    packageNames: names,
+    packageName: (unstable ?? manifests[0]).name,
+    stableVisual: unstable == null,
+  };
+}
+
+export function readThemeCatalog(repoRoot) {
+  const catalog = readPackageCatalog(repoRoot);
+  const themes = {};
+  const parent = path.join(repoRoot, 'packages/themes');
+  if (!fs.existsSync(parent)) return themes;
+  for (const entry of fs.readdirSync(parent, {withFileTypes: true})) {
+    if (!entry.isDirectory()) continue;
+    const manifest = catalog.get(`@astryxdesign/theme-${entry.name}`);
+    if (!manifest) continue;
+    themes[entry.name] = {
+      packageName: manifest.name,
+      stableVisual: manifest.private !== true && manifest.astryx?.canaryOnly !== true,
+    };
+  }
+  return themes;
+}
+
+export function withThemeMetadata(shots, themes) {
+  return shots.map(shot => {
+    const theme = themes[shot.theme];
+    if (!theme) throw new Error(`Shot ${shot.key} names unknown theme ${shot.theme}.`);
+    return {...shot, themePackageName: theme.packageName, stableThemeVisual: theme.stableVisual};
+  });
+}
+
+export function stableBaseline(manifest, stories, themes) {
+  const byId = new Map(stories.map(story => [story.id, story]));
+  return {
+    ...manifest,
+    shots: Object.fromEntries(Object.entries(manifest.shots ?? {}).flatMap(([key, shot]) => {
+      const story = typeof shot.stableVisual === 'boolean' ? shot : byId.get(shot.storyId);
+      const theme = typeof shot.stableThemeVisual === 'boolean'
+        ? {packageName: shot.themePackageName, stableVisual: shot.stableThemeVisual}
+        : themes[shot.theme];
+      if (!story || !theme) {
+        throw new Error(`Legacy baseline shot ${key} cannot be classified; normalize it before reporting removals.`);
+      }
+      if (!story.stableVisual || !theme.stableVisual) return [];
+      return [[key, {
+        ...shot,
+        packageName: story.packageName,
+        packageNames: story.packageNames ?? [story.packageName],
+        stableVisual: true,
+        themePackageName: theme.packageName,
+        stableThemeVisual: true,
+      }]];
+    })),
+  };
+}
+
+export function withBaselineCoverage(plan, {stories, baselineManifest, themes}) {
+  const planned = new Map(plan.map(shot => [shot.key, shot]));
+  const byId = new Map(stories.map(story => [story.id, story]));
+  for (const [key, baseline] of Object.entries(baselineManifest.shots ?? {})) {
+    const story = byId.get(baseline.storyId);
+    if (!story || !themes[baseline.theme] || !MODES.includes(baseline.mode)) continue;
+    const shot = {...toShotBase(story), theme: baseline.theme, mode: baseline.mode};
+    if (shotKey(shot) !== key) continue;
+    const existing = planned.get(key);
+    planned.set(key, existing
+      ? {...existing, reasons: [...new Set([...existing.reasons, 'baseline'])]}
+      : {...shot, key, reasons: ['baseline']});
+  }
+  return [...planned.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+export function createReleasePlan(shots) {
+  const keys = shots.map(shot => shot.key).sort();
+  if (new Set(keys).size !== keys.length) throw new Error('Canonical release plan repeats a shot key.');
+  return {
+    version: 1,
+    lane: 'stable-release',
+    authority: 'report-removals',
+    keys,
+    digest: crypto.createHash('sha256').update(JSON.stringify(keys)).digest('hex'),
+  };
+}
+
 /**
  * @typedef {object} Shot
  * @property {string} key - stable identity of the shot; also its file name
@@ -52,7 +193,12 @@ export const SKIP_TAG = 'no-visual';
  * @property {string} title - Storybook title, for the report
  * @property {string} name - story name, for the report
  * @property {string} component - the component this story renders
+ * @property {string} packageName
+ * @property {string[]} packageNames
+ * @property {boolean} stableVisual
  * @property {string} theme
+ * @property {string} themePackageName
+ * @property {boolean} stableThemeVisual
  * @property {'light'|'dark'} mode
  * @property {string[]} reasons - why the shot is in the plan
  */
@@ -70,7 +216,7 @@ export const SKIP_TAG = 'no-visual';
  * @param {Iterable<string>} excluded - story ids (or `prefix*`) excluded by config
  * @returns {Array<{id: string, title: string, name: string, component: string, tags: string[]}>}
  */
-export function readStoryIndex(storybookDir, excluded = []) {
+export function readStoryIndex(storybookDir, excluded = [], repoRoot) {
   const exclusions = [...excluded];
   const isExcluded = id =>
     exclusions.some(rule =>
@@ -83,6 +229,7 @@ export function readStoryIndex(storybookDir, excluded = []) {
     );
   }
   const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+  const catalog = readPackageCatalog(repoRoot);
   return Object.values(index.entries ?? {})
     .filter(entry => entry.type === 'story')
     .filter(entry => !(entry.tags ?? []).includes(SKIP_TAG))
@@ -93,6 +240,7 @@ export function readStoryIndex(storybookDir, excluded = []) {
       name: entry.name ?? '',
       component: componentOf(entry),
       tags: entry.tags ?? [],
+      ...storyPackageNames(entry, storybookDir, repoRoot, catalog),
     }));
 }
 
@@ -121,7 +269,8 @@ function componentOf(entry) {
  */
 export function storiesInPackages(stories, packages) {
   if (packages.includes('*')) return stories;
-  return stories.filter(story => packages.includes(story.title.split('/')[0]));
+  const wanted = new Set(packages.map(name => name.startsWith('@') ? name : `@astryxdesign/${name.toLowerCase()}`));
+  return stories.filter(story => story.stableVisual && story.packageNames.some(name => wanted.has(name)));
 }
 
 /**
@@ -411,7 +560,15 @@ function chooseStories({candidates, fallback, key, selectors, observations}) {
 
 /** @param {ReturnType<typeof readStoryIndex>[number]} story */
 function toShotBase(story) {
-  return {storyId: story.id, title: story.title, name: story.name, component: story.component};
+  return {
+    storyId: story.id,
+    title: story.title,
+    name: story.name,
+    component: story.component,
+    packageName: story.packageName,
+    packageNames: story.packageNames,
+    stableVisual: story.stableVisual,
+  };
 }
 
 /**
