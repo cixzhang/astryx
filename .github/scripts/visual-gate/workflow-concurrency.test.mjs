@@ -423,6 +423,11 @@ describe('visual acceptance workflow concurrency', () => {
 
     expect(deployPreview).toContain('gh-pages-publisher.mjs pr-preview');
     expect(redeployPreview).toContain('gh-pages-publisher.mjs pr-preview');
+    expect(redeployPreview).toContain('uses: actions/checkout@v7');
+    expect(redeployPreview).toContain('ref: main');
+    expect(redeployPreview.indexOf('uses: actions/checkout@v7')).toBeLessThan(
+      redeployPreview.indexOf('gh-pages-publisher.mjs pr-preview'),
+    );
     expect(cleanup).toContain('gh-pages-publisher.mjs cleanup-previews');
     expect(compact).toContain('gh-pages-publisher.mjs compact');
     expect(vibe).toContain('gh-pages-publisher.mjs vibe-screenshots');

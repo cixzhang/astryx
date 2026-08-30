@@ -43,6 +43,11 @@ jobs:
       PR_NUMBER: ${{ github.event.inputs.pr_number }}
 
     steps:
+      - name: Checkout publisher
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
       - name: Locate the PR's CI run
         id: pr-info
         env:
