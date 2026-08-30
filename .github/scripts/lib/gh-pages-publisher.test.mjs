@@ -144,6 +144,10 @@ function fixture() {
   writeFile(path.join(seed, 'sandbox', 'old.html'), 'old sandbox');
   writeFile(path.join(seed, 'assets', 'old.css'), 'old asset');
   writeFile(path.join(seed, 'pr', '123', 'index.html'), 'preview');
+  writeFile(
+    path.join(seed, 'pr', '123', 'visual', 'evidence.json'),
+    'visual evidence',
+  );
   writeFile(path.join(seed, 'pr', '124', 'index.html'), 'closed preview');
   writeFile(
     path.join(seed, 'pr', '123', 'sandbox', 'template-assets', 'old.txt'),
@@ -1084,6 +1088,12 @@ describe('gh-pages publisher', () => {
     ).toBe(false);
     expect(
       fs.readFileSync(
+        path.join(final, 'pr', '123', 'visual', 'evidence.json'),
+        'utf8',
+      ),
+    ).toBe('visual evidence');
+    expect(
+      fs.readFileSync(
         path.join(final, 'reports', 'vibe', 'index.html'),
         'utf8',
       ),
@@ -1107,6 +1117,37 @@ describe('gh-pages publisher', () => {
         ),
       ),
     ).toBe(true);
+  });
+
+  it('rejects Storybook artifacts that collide with trusted visual evidence', async () => {
+    const fx = fixture();
+    const storybook = path.join(fx.root, 'colliding-storybook');
+    const sandbox = path.join(fx.root, 'colliding-sandbox');
+    writeFile(path.join(storybook, 'index.html'), 'new preview');
+    writeFile(
+      path.join(storybook, 'visual', 'evidence.json'),
+      'untrusted evidence',
+    );
+    writeFile(path.join(sandbox, 'index.html'), 'new sandbox');
+
+    await expect(
+      queuedPublish(fx, 940, 'pr-preview/123', () =>
+        publishPrPreview({
+          ...context(fx, 940, 'pr-preview/123'),
+          pr: 123,
+          storybook,
+          sandbox,
+        }),
+      ),
+    ).rejects.toThrow(/reserved visual path/);
+
+    const final = cloneRemote(fx.remote, fx.root);
+    expect(
+      fs.readFileSync(
+        path.join(final, 'pr', '123', 'visual', 'evidence.json'),
+        'utf8',
+      ),
+    ).toBe('visual evidence');
   });
 
   it('cleans stale previews without deleting visual evidence or live previews', async () => {

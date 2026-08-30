@@ -1541,9 +1541,12 @@ export async function publishManualVisualBaseline({
   refuse(`could not push the updated baseline after ${maxAttempts} attempts`);
 }
 
-function removeContents(destination) {
-  fs.rmSync(destination, {recursive: true, force: true});
+function replacePreviewContents(destination) {
   fs.mkdirSync(destination, {recursive: true});
+  for (const entry of fs.readdirSync(destination)) {
+    if (entry === 'visual') continue;
+    fs.rmSync(path.join(destination, entry), {recursive: true, force: true});
+  }
 }
 
 export async function publishPrPreview({
@@ -1571,6 +1574,9 @@ export async function publishPrPreview({
       refuse(`${name} must be a directory`);
     }
   }
+  if (fs.existsSync(path.join(storybookDir, 'visual'))) {
+    refuse('the Storybook artifact contains the reserved visual path');
+  }
   const destinationRel = `pr/${prNumber}`;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const checkout = checkoutPages({
@@ -1583,7 +1589,7 @@ export async function publishPrPreview({
     });
     try {
       const destination = path.join(checkout, destinationRel);
-      removeContents(destination);
+      replacePreviewContents(destination);
       copyContents(storybookDir, destination);
       fs.mkdirSync(path.join(destination, 'sandbox'), {recursive: true});
       for (const entry of fs.readdirSync(sandboxDir, {withFileTypes: true})) {
