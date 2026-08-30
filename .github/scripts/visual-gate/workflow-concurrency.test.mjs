@@ -43,6 +43,24 @@ describe('visual acceptance workflow concurrency', () => {
     );
   });
 
+  it('only advertises previews when the source CI run can deploy them', () => {
+    const value = workflow('pr-comment.yml');
+    const comment = value.slice(
+      value.indexOf('      - name: Generate and post PR comment'),
+      value.indexOf('      - name: Evaluate visual acceptance state'),
+    );
+
+    expect(comment).toContain(
+      'SOURCE_CONCLUSION: ${{ github.event.workflow_run.conclusion }}',
+    );
+    expect(comment).toContain(
+      "const previewAvailable = process.env.SOURCE_CONCLUSION === 'success';",
+    );
+    expect(comment).toContain('...(previewAvailable');
+    expect(comment).toContain("'--storybook-url'");
+    expect(comment).toContain("'--sandbox-url'");
+  });
+
   it('keeps comment authorization read-only until the shared lock is held', () => {
     const value = workflow('visual-acceptance.yml');
     const authorize = value.slice(

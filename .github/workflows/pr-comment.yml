@@ -465,6 +465,7 @@ jobs:
           PR_NUMBER: ${{ steps.identity.outputs.pr_number }}
           HEAD_SHA: ${{ steps.identity.outputs.head_sha }}
           RUN_ID: ${{ steps.identity.outputs.run_id }}
+          SOURCE_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           VISUAL_PUBLISHED: ${{ steps.publish.outputs.published }}
           VISUAL_PATH: ${{ steps.visual.outputs.path }}
         with:
@@ -499,6 +500,7 @@ jobs:
               a11yPath = 'a11y-empty.json';
             }
 
+            const previewAvailable = process.env.SOURCE_CONCLUSION === 'success';
             const args = [
               '.github/scripts/generate-pr-comment.js',
               '--analysis', 'pr-analysis/analysis.json',
@@ -516,8 +518,12 @@ jobs:
                       : []),
                   ]
                 : []),
-              '--storybook-url', `https://facebook.github.io/astryx/pr/${prNumber}/`,
-              '--sandbox-url', `https://facebook.github.io/astryx/pr/${prNumber}/sandbox/`,
+              ...(previewAvailable
+                ? [
+                    '--storybook-url', `https://facebook.github.io/astryx/pr/${prNumber}/`,
+                    '--sandbox-url', `https://facebook.github.io/astryx/pr/${prNumber}/sandbox/`,
+                  ]
+                : []),
               '--run-url', `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`,
               '--pr-number', String(prNumber),
             ];
