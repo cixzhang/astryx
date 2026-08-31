@@ -1,0 +1,91 @@
+{
+  "build": {
+    "expectedSha": "934a85c000d196ee420560b81322c6cfdf0a4424",
+    "observedSha": "934a85c000d196ee420560b81322c6cfdf0a4424"
+  },
+  "contractCheck": {
+    "holds": true,
+    "observed": {
+      "backClipInert": true,
+      "backControlFocusable": false,
+      "frontClipInert": false,
+      "frontControlClickable": true,
+      "frontControlFocusable": true
+    },
+    "violations": []
+  },
+  "expected": {
+    "colorMode": "light",
+    "direction": "ltr",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": false
+    },
+    "runningAnimations": 0,
+    "state": {
+      "backModality": "back modality: nonModal",
+      "backZ": "1000",
+      "frontIsPaintedInFront": true,
+      "frontZ": "1001",
+      "openDialogsInPane": 2
+    },
+    "surfaceClass": "light",
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 640,
+      "width": 1000
+    }
+  },
+  "identity": "story",
+  "image": {
+    "bytes": 10600
+  },
+  "label": "arm 1 \u2014 back drawer nonModal; front panel painted in front",
+  "observed": {
+    "box": {
+      "height": 318,
+      "insideViewport": true,
+      "width": 160,
+      "x": 519,
+      "y": 81
+    },
+    "colorMode": "light",
+    "direction": "ltr",
+    "fonts": "loaded",
+    "globals": {},
+    "media": {
+      "coarsePointer": false,
+      "forcedColors": false,
+      "hover": true,
+      "reducedMotion": false
+    },
+    "routeObserved": "/iframe.html",
+    "runningAnimations": 0,
+    "state": {
+      "backModality": "back modality: nonModal",
+      "backZ": "1000",
+      "frontIsPaintedInFront": true,
+      "frontZ": "1001",
+      "openDialogsInPane": 2
+    },
+    "storyExpected": "probelab-drawerstacking--two-bounded-modals",
+    "storyObserved": "probelab-drawerstacking--two-bounded-modals",
+    "storybookError": null,
+    "surfaceClass": "light",
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
+    "targetCount": 1,
+    "themeAttr": "neutral",
+    "viewport": {
+      "dpr": 1,
+      "height": 640,
+      "width": 1000
+    },
+    "visible": true
+  }
+}
