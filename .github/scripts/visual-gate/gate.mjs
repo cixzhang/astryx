@@ -42,6 +42,7 @@ import {
   buildPlan,
   createReleasePlan,
   exceedsPrVisualShotLimit,
+  existingComponentBaselinePlan,
   readStoryIndex,
   readThemeCatalog,
   resolvePrVisualTotalShotLimit,
@@ -227,17 +228,20 @@ async function plan() {
   }
 
   const componentShotCount = tiers.includes('component')
-    ? buildPlan({
-        stories,
-        targets,
-        themeOverrides,
-        observations,
-        defaultTheme: config.defaultTheme,
-        tiers: ['component'],
-        components,
-        componentThemes,
-        probeTheme: config.probeTheme,
-      }).length
+    ? existingComponentBaselinePlan(
+        buildPlan({
+          stories,
+          targets,
+          themeOverrides,
+          observations,
+          defaultTheme: config.defaultTheme,
+          tiers: ['component'],
+          components,
+          componentThemes,
+          probeTheme: config.probeTheme,
+        }),
+        baselineManifest,
+      ).length
     : 0;
   let shots = buildPlan({
     stories,
@@ -252,6 +256,9 @@ async function plan() {
     themeStories,
     probeTheme: config.probeTheme,
   });
+  if (tiers.includes('component')) {
+    shots = existingComponentBaselinePlan(shots, baselineManifest);
+  }
   let baselineAccount = null;
   if (releaseMode) {
     baselineAccount = accountBaseline(

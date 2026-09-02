@@ -13,6 +13,7 @@ import {
   buildPlan,
   createReleasePlan,
   exceedsPrVisualShotLimit,
+  existingComponentBaselinePlan,
   readStoryIndex,
   readThemeCatalog,
   representativeStories,
@@ -72,6 +73,22 @@ describe('representativeStories', () => {
 
   it('falls back to the first story when no name is conventional', () => {
     expect(representativeStories(stories).get('Badge').id).toBe('core-badge--solid');
+  });
+});
+
+describe('existingComponentBaselinePlan', () => {
+  it('drops only component-selected keys that have no accepted baseline', () => {
+    const plan = [
+      {key: 'component-existing', reasons: ['component']},
+      {key: 'component-new', reasons: ['component', 'theme:y2k']},
+      {key: 'theme-new', reasons: ['component', 'changed-theme:y2k']},
+      {key: 'probe-new', reasons: ['probe']},
+    ];
+    expect(
+      existingComponentBaselinePlan(plan, {
+        shots: {'component-existing': {}},
+      }).map(shot => shot.key),
+    ).toEqual(['component-existing', 'theme-new', 'probe-new']);
   });
 });
 

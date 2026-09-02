@@ -429,6 +429,27 @@ export function componentVisualStories(stories, components) {
     }));
 }
 
+function isComponentScopeReason(reason) {
+  return reason === 'component' || /^theme:[^:]+$/.test(reason);
+}
+
+/**
+ * A component edit may compare an accepted baseline contract, but it may not
+ * create one. Keep independently selected theme/probe shots even when the same
+ * key is also part of the component scope.
+ */
+export function existingComponentBaselinePlan(plan, manifest) {
+  const accepted = new Set(Object.keys(manifest?.shots ?? {}));
+  return plan.filter(shot => {
+    const reasons = shot.reasons ?? [];
+    const componentScoped = reasons.some(isComponentScopeReason);
+    const independentlyScoped = reasons.some(
+      reason => !isComponentScopeReason(reason),
+    );
+    return !componentScoped || independentlyScoped || accepted.has(shot.key);
+  });
+}
+
 /**
  * Themes already represented by the accepted stable baseline. The default
  * theme is always present for a focused component capture.

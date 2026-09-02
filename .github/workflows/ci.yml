@@ -626,11 +626,12 @@ jobs:
       - name: Verify guest fixture contrast
         run: pnpm -F @astryxdesign/vibe-tests fixtures:contrast
 
-  # Stable-package visual regression. Core components get one representative
-  # story in every accepted baseline theme. `visual-baseline` adds default-theme
-  # stories; `visual-theme-matrix` adds all-theme stories. A changed shipped
-  # theme gets its relevant matrix. Packages marked `astryx.canaryOnly` (Lab,
-  # richtext, vega) do not compare pixels and do not own a baseline.
+  # Stable-package visual regression. Core component changes compare only
+  # representative or explicitly tagged story keys already present in the
+  # accepted baseline. A changed shipped theme gets its relevant matrix, but PR
+  # acceptance cannot add or remove baseline keys. Packages marked
+  # `astryx.canaryOnly` (Lab, richtext, vega) do not compare pixels and do not
+  # own a baseline.
   #
   # Deeper than the daily gate only where the component declares it: audit and
   # interaction fixtures stay available to their dedicated checks without

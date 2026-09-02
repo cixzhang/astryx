@@ -72,11 +72,12 @@ Exit codes are the contract: `0` pass, `1` crashed, `2` changed.
 
 `pr-visual` compares only the stable published visual surface:
 
-- Core component change → the representative story in every accepted baseline
-  theme. Additional stories may opt into the default theme with
-  `visual-baseline`, or the same all-theme matrix with `visual-theme-matrix`;
-  all are captured light/dark. Behavioral and audit-only fixtures stay in their
-  dedicated checks without multiplying the pixel baseline.
+- Core component change → the representative story and any explicitly opted-in
+  story, but only for frame keys already present in the accepted baseline.
+  `visual-baseline` opts into the default theme and `visual-theme-matrix` opts
+  into every accepted theme; neither tag lets an ordinary PR create a new
+  baseline key. Behavioral and audit-only fixtures stay in their dedicated
+  checks without multiplying the pixel baseline.
 - Published theme change → every currently accepted visual story rendered in that
   theme. This catches a theme beginning to override a component it did not
   previously target. Theme-only plans are not charged against the focused
@@ -103,8 +104,10 @@ The representative story (`Default`, `Primary`, and similar conventional names)
 is selected automatically and needs no tag. Use `visual-baseline` for an
 additional default-theme contract, `visual-theme-matrix` only when that story
 must be judged in every accepted theme, and no visual tag for behavioral or
-audit-only fixtures. The existing `no-visual` tag excludes an unstable story
-from visual capture entirely.
+audit-only fixtures. Ordinary PRs can update existing contracts but cannot add
+or remove baseline keys; seed or prune coverage through the manual baseline
+workflow. The existing `no-visual` tag excludes an unstable story from visual
+capture entirely.
 
 The daily gate uses the same boundary: `stableStoryPackages` in
 `visual-gate.config.json` is currently `["Core"]`, so Lab/canary stories cannot
