@@ -101,7 +101,9 @@ const maxShots = resolvePrVisualTotalShotLimit({
   components,
   matrixThemes,
   tiers,
-  configuredLimit: config.prVisualShotLimit,
+  configuredLimit: releaseMode
+    ? config.visualPlanSafetyLimit
+    : config.prVisualShotLimit,
   safetyLimit: config.visualPlanSafetyLimit,
 });
 const storyPackages = (flag('story-packages') ?? config.stableStoryPackages.join(','))

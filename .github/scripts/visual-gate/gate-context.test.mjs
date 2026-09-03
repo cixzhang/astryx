@@ -67,6 +67,9 @@ describe('stable release plan authority', () => {
     expect(source).not.toContain('shots = withBaselineCoverage(');
     expect(source).toContain('const baselineManifest = rawBaseline;');
     expect(source).toContain(
+      'configuredLimit: releaseMode\n    ? config.visualPlanSafetyLimit',
+    );
+    expect(source).toContain(
       'readThemeCatalog(REPO_ROOT, config.baselineThemes)',
     );
   });
