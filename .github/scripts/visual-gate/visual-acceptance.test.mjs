@@ -570,10 +570,7 @@ describe('visual acceptance', () => {
     });
     expect(
       JSON.parse(fs.readFileSync(output, 'utf8')).map(shot => shot.key),
-    ).toEqual([
-      'core-button--default__neutral-light',
-      'core-button--default__y2k-light',
-    ]);
+    ).toEqual(['core-button--default__neutral-light']);
   });
 
   it('fails closed when any touched component has no representative story', () => {
@@ -632,7 +629,7 @@ describe('visual acceptance', () => {
     const baseline = JSON.parse(fs.readFileSync(baselineFile, 'utf8'));
     for (let index = 0; index < 61; index += 1) {
       const storyId = `core-button--story-${index}`;
-      for (const theme of ['neutral', 'y2k']) {
+      for (const theme of ['neutral', 'probe']) {
         for (const mode of ['light', 'dark']) {
           const key = `${storyId}__${theme}-${mode}`;
           baseline.shots[key] = {
@@ -641,6 +638,7 @@ describe('visual acceptance', () => {
             storyId,
             name: entries[`story-${index}`].name,
             theme,
+            themePackageName: `@astryxdesign/theme-${theme}`,
             mode,
           };
         }
@@ -720,7 +718,7 @@ describe('visual acceptance', () => {
     expect(new Set(plan.map(shot => shot.theme))).toEqual(new Set(['neutral']));
   });
 
-  it('includes newly targeted components for an existing changed theme', () => {
+  it('limits changed themes to stories in the canonical baseline', () => {
     const storybook = path.join(root, 'storybook-existing-theme');
     fs.mkdirSync(storybook);
     writeJSON(path.join(storybook, 'index.json'), {
@@ -779,8 +777,6 @@ describe('visual acceptance', () => {
     ).toEqual([
       'core-button--default__y2k-light',
       'core-button--default__y2k-dark',
-      'core-card--default__y2k-light',
-      'core-card--default__y2k-dark',
     ]);
   });
 

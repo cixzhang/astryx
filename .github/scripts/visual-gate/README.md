@@ -130,8 +130,10 @@ written by CI, from the pinned runner label.
 
 The gate asks two things, and only one of them is a screenshot.
 
-**Did anything move?** — the shot tiers, compared against an accepted baseline.
-Catches any visual regression, in any theme.
+**Did the canonical visual contract move?** — representative and explicitly
+tagged Core stories in Neutral, plus generated Probe coverage, compared against
+an accepted baseline. Theme-specific design still renders in Storybook, but it
+does not multiply the permanent screenshot baseline.
 
 **Did each theming target's override actually reach the pixels?** — `gate.mjs
 reach`, and no baseline is involved. A pixel diff cannot answer this: when an

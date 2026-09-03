@@ -20,6 +20,7 @@ import {
   resolvePrVisualTotalShotLimit,
   shotKey,
   storiesInPackages,
+  storiesInStorybookGroups,
   summarizeBaselineAccounting,
   uncoveredTargets,
 } from './plan.mjs';
@@ -63,6 +64,29 @@ describe('storiesInPackages', () => {
 
   it('allows an explicit all-packages audit without changing the release default', () => {
     expect(storiesInPackages(mixed, ['*'])).toEqual(mixed);
+  });
+});
+
+describe('storiesInStorybookGroups', () => {
+  it('keeps only canonical title groups even when another group imports Core', () => {
+    const mixed = [
+      ...stories,
+      story({
+        id: 'foundations-button--default',
+        title: 'Foundations/Button',
+        name: 'Default',
+        component: 'Button',
+      }),
+      story({
+        id: 'lab-button--default',
+        title: 'Lab/Button',
+        name: 'Default',
+        component: 'Button',
+      }),
+    ];
+    expect(
+      storiesInStorybookGroups(mixed, ['Core']).map(story => story.id),
+    ).toEqual(stories.map(story => story.id));
   });
 });
 
@@ -208,6 +232,68 @@ describe('buildPlan', () => {
       'core-badge--solid__neutral-light',
       'core-button--default__neutral-dark',
       'core-button--default__neutral-light',
+    ]);
+  });
+
+  it('keeps tagged visual contracts in the neutral surface plan', () => {
+    const tagged = [
+      ...stories,
+      story({
+        id: 'core-button--separator',
+        title: 'Core/Button',
+        name: 'Separator',
+        component: 'Button',
+        tags: ['visual-baseline'],
+      }),
+      story({
+        id: 'core-button--variants',
+        title: 'Core/Button',
+        name: 'Variants',
+        component: 'Button',
+        tags: ['visual-theme-matrix'],
+      }),
+    ];
+    const plan = buildPlan({
+      stories: tagged,
+      targets,
+      themeOverrides,
+      defaultTheme: 'neutral',
+      tiers: ['surface'],
+    });
+    expect(new Set(plan.map(shot => shot.storyId))).toEqual(
+      new Set([
+        'core-button--default',
+        'core-badge--solid',
+        'core-button--separator',
+        'core-button--variants',
+      ]),
+    );
+    expect(new Set(plan.map(shot => shot.theme))).toEqual(new Set(['neutral']));
+  });
+
+  it('keeps matrix-tagged stories in the probe baseline', () => {
+    const tagged = [
+      ...stories,
+      story({
+        id: 'core-button--variants',
+        title: 'Core/Button',
+        name: 'Variants',
+        component: 'Button',
+        tags: ['visual-theme-matrix'],
+      }),
+    ];
+    const plan = buildPlan({
+      stories: tagged,
+      targets,
+      themeOverrides,
+      observations: {},
+      defaultTheme: 'neutral',
+      tiers: ['probe'],
+      probeTheme: 'probe',
+    });
+    expect(plan.map(shot => shot.key)).toEqual([
+      'core-button--variants__probe-dark',
+      'core-button--variants__probe-light',
     ]);
   });
 
@@ -388,6 +474,22 @@ describe('readStoryIndex package metadata', () => {
     }
   });
 
+  it('allows the private probe theme only as an explicit baseline fixture', () => {
+    const {root} = fixture();
+    try {
+      expect(readThemeCatalog(root).probe).toMatchObject({
+        stableVisual: false,
+        coverageFixture: false,
+      });
+      expect(readThemeCatalog(root, ['probe']).probe).toMatchObject({
+        stableVisual: true,
+        coverageFixture: true,
+      });
+    } finally {
+      fs.rmSync(root, {recursive: true, force: true});
+    }
+  });
+
   it('accounts for a live-shaped 974-key baseline without dropping legacy keys', () => {
     const {root} = fixture();
     for (const [dir, manifest] of [
@@ -448,11 +550,49 @@ describe('readStoryIndex package metadata', () => {
       expect(summary).toEqual({
         total: 974,
         plannedCurrentStable: 882,
+        policyExcluded: 0,
         intentionallyExcluded: 92,
         preservedLegacy: 0,
         unclassified: 0,
       });
       expect(Object.keys(account.manifest.shots)).toHaveLength(882);
+    } finally {
+      fs.rmSync(root, {recursive: true, force: true});
+    }
+  });
+
+  it('classifies accepted but noncanonical keys as policy exclusions', () => {
+    const {root} = fixture();
+    try {
+      const account = accountBaseline(
+        {
+          shots: {
+            'core-button--default__neutral-light': {
+              storyId: 'core-button--default',
+              title: 'Core/Button',
+              component: 'Button',
+              theme: 'neutral',
+              mode: 'light',
+            },
+          },
+        },
+        [
+          {
+            id: 'core-button--default',
+            packageName: '@astryxdesign/core',
+            packageNames: ['@astryxdesign/core'],
+            stableVisual: true,
+          },
+        ],
+        readThemeCatalog(root),
+        root,
+      );
+      expect(summarizeBaselineAccounting(account, [])).toMatchObject({
+        total: 1,
+        plannedCurrentStable: 0,
+        policyExcluded: 1,
+        unclassified: 0,
+      });
     } finally {
       fs.rmSync(root, {recursive: true, force: true});
     }
@@ -480,6 +620,7 @@ describe('readStoryIndex package metadata', () => {
       expect(summarizeBaselineAccounting(account, [])).toEqual({
         total: 1,
         plannedCurrentStable: 0,
+        policyExcluded: 0,
         intentionallyExcluded: 0,
         preservedLegacy: 1,
         unclassified: 0,
@@ -514,6 +655,7 @@ describe('readStoryIndex package metadata', () => {
       expect(summarizeBaselineAccounting(account, [])).toEqual({
         total: 1,
         plannedCurrentStable: 0,
+        policyExcluded: 0,
         intentionallyExcluded: 0,
         preservedLegacy: 0,
         unclassified: 1,

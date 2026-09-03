@@ -30,6 +30,7 @@ import {
   shotKey,
   stableBaseline,
   storiesInPackages,
+  storiesInStorybookGroups,
   VISUAL_BASELINE_TAG,
   withThemeMetadata,
 } from './lib/plan.mjs';
@@ -41,7 +42,7 @@ const REPO_ROOT = path.resolve(
   '../../..',
 );
 const config = loadConfig(REPO_ROOT);
-const themeCatalog = readThemeCatalog(REPO_ROOT);
+const themeCatalog = readThemeCatalog(REPO_ROOT, config.baselineThemes);
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -733,9 +734,13 @@ function trustedPlan() {
   const storybookDir = path.resolve(flag('storybook-dir'));
   const output = path.resolve(flag('output'));
   const allIndexed = readStoryIndex(storybookDir, [], REPO_ROOT);
-  const indexed = storiesInPackages(
+  const packageStories = storiesInPackages(
     allIndexed,
     config.stableStoryPackages,
+  );
+  const indexed = storiesInStorybookGroups(
+    packageStories,
+    config.stableStoryGroups,
   );
   const {baseline} = readTrustedBaseline(allIndexed);
   const baselineKeys = new Set(Object.keys(baseline.shots));
