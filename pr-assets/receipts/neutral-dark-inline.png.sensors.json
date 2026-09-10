@@ -3,8 +3,8 @@
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b",
-    "observedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b"
+    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
+    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
   },
   "expected": {
     "globals": {
