@@ -1,0 +1,4 @@
+ARM: CenterHorizontal before/after evidence fixture
+BASE: each capture checks out the exact source commit it records
+DELTA: one untracked Storybook-only story importing the tracked CenterHorizontal module at that checkout
+UNRELATED DELTA: none

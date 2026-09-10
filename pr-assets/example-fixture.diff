@@ -1,0 +1,26 @@
+diff --git a/apps/storybook/stories/CenterAuditEvidence.stories.tsx b/apps/storybook/stories/CenterAuditEvidence.stories.tsx
+new file mode 100644
+index 000000000000..e20871a6bf44
+--- /dev/null
++++ b/apps/storybook/stories/CenterAuditEvidence.stories.tsx
+@@ -0,0 +1,20 @@
++// Copyright (c) Meta Platforms, Inc. and affiliates.
++
++import type {Meta, StoryObj} from '@storybook/react';
++import CenterHorizontal from '../../../packages/cli/assets/templates/blocks/components/Center/CenterHorizontal';
++
++const meta = {
++  title: 'Audit/CenterHorizontalEvidence',
++  component: CenterHorizontal,
++} satisfies Meta<typeof CenterHorizontal>;
++
++export default meta;
++type Story = StoryObj<typeof meta>;
++
++export const Comparison: Story = {
++  render: () => (
++    <div data-audit-example="center-horizontal">
++      <CenterHorizontal />
++    </div>
++  ),
++};

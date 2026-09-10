@@ -1,23 +1,23 @@
 {
-  "label": "neutral-light-narrow",
+  "label": "matcha-light-default",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
-      "astryxTheme": "neutral",
+      "astryxTheme": "matcha",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "neutral",
+    "themeAttr": "matcha",
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 320,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -31,10 +31,10 @@
     "runningAnimations": 0,
     "state": {
       "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true,
-      "noDocumentOverflow": true
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
     }
   },
   "observed": {
@@ -42,19 +42,19 @@
     "storyObserved": "core-center--default",
     "routeObserved": "/iframe.html",
     "globals": {
-      "astryxTheme": "neutral",
+      "astryxTheme": "matcha",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "neutral",
+    "themeAttr": "matcha",
     "colorMode": "light",
-    "surfaceColor": "rgb(241, 241, 241)",
-    "surfaceLuminance": 0.9450980392156862,
+    "surfaceColor": "rgb(240, 240, 224)",
+    "surfaceLuminance": 0.9366462745098039,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 320,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -66,9 +66,9 @@
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 28,
-      "y": 28,
-      "width": 264,
+      "x": 34,
+      "y": 34,
+      "width": 832,
       "height": 200,
       "insideViewport": true
     },
@@ -77,14 +77,14 @@
     "storybookError": null,
     "state": {
       "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true,
-      "noDocumentOverflow": true
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-narrow.png",
-    "bytes": 4751
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/matcha-light-default.png",
+    "bytes": 6842
   }
 }

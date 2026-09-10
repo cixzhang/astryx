@@ -104,11 +104,27 @@
     "afterSha256": "4bb75f14e3987a00d8389e34364ced89805f51f19425ae8a792d1f88d0e043a5"
   },
   {
+    "file": "neutral-light-owned-axis-collision.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "20a5dbf59748b37436158208602d725447665b8902393df957e7f4ec0b975443",
+    "afterSha256": "20a5dbf59748b37436158208602d725447665b8902393df957e7f4ec0b975443"
+  },
+  {
     "file": "neutral-light-rtl-padding-per-edge.png",
     "changedPixels": 0,
     "percent": 0.0,
     "identical": true,
     "beforeSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
     "afterSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b"
+  },
+  {
+    "file": "neutral-light-sizing-constraints.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "a1b1ed944d1f74371cd35d44f6867202ecdc2850a103ae061ee7406ab31d8980",
+    "afterSha256": "a1b1ed944d1f74371cd35d44f6867202ecdc2850a103ae061ee7406ab31d8980"
   }
 ]

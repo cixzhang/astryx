@@ -1,20 +1,20 @@
 {
-  "label": "neutral-dark-ltr-padding-per-edge",
+  "label": "neutral-dark-rtl-padding-per-edge",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
       "astryxTheme": "neutral",
       "colorMode": "dark",
-      "direction": "ltr"
+      "direction": "rtl"
     },
     "themeAttr": "neutral",
     "colorMode": "dark",
-    "direction": "ltr",
+    "direction": "rtl",
     "viewport": {
       "width": 900,
       "height": 800,
@@ -32,9 +32,9 @@
     "state": {
       "axis": "both",
       "paddingTop": "24px",
-      "paddingRight": "24px",
+      "paddingRight": "8px",
       "paddingBottom": "0px",
-      "paddingLeft": "8px",
+      "paddingLeft": "24px",
       "text": "Roomy above, flush below — only the block-end edge moved"
     }
   },
@@ -45,14 +45,14 @@
     "globals": {
       "astryxTheme": "neutral",
       "colorMode": "dark",
-      "direction": "ltr"
+      "direction": "rtl"
     },
     "themeAttr": "neutral",
     "colorMode": "dark",
     "surfaceColor": "rgb(27, 27, 27)",
     "surfaceLuminance": 0.10588235294117647,
     "surfaceClass": "dark",
-    "direction": "ltr",
+    "direction": "rtl",
     "viewport": {
       "width": 900,
       "height": 800,
@@ -79,14 +79,14 @@
     "state": {
       "axis": "both",
       "paddingTop": "24px",
-      "paddingRight": "24px",
+      "paddingRight": "8px",
       "paddingBottom": "0px",
-      "paddingLeft": "8px",
+      "paddingLeft": "24px",
       "text": "Roomy above, flush below — only the block-end edge moved"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-dark-ltr-padding-per-edge.png",
-    "bytes": 12844
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-dark-rtl-padding-per-edge.png",
+    "bytes": 12865
   }
 }

@@ -1,18 +1,18 @@
 {
-  "label": "matcha-light-default",
+  "label": "neutral-light-inline",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
-      "astryxTheme": "matcha",
+      "astryxTheme": "neutral",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "matcha",
+    "themeAttr": "neutral",
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
@@ -31,25 +31,25 @@
     "runningAnimations": 0,
     "state": {
       "axis": "both",
-      "display": "flex",
+      "display": "inline-flex",
       "alignItems": "center",
       "justifyContent": "center",
-      "text": "Centered Content"
+      "childCount": 1
     }
   },
   "observed": {
-    "storyExpected": "core-center--default",
-    "storyObserved": "core-center--default",
+    "storyExpected": "core-center--inline",
+    "storyObserved": "core-center--inline",
     "routeObserved": "/iframe.html",
     "globals": {
-      "astryxTheme": "matcha",
+      "astryxTheme": "neutral",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "matcha",
+    "themeAttr": "neutral",
     "colorMode": "light",
-    "surfaceColor": "rgb(240, 240, 224)",
-    "surfaceLuminance": 0.9366462745098039,
+    "surfaceColor": "rgb(241, 241, 241)",
+    "surfaceLuminance": 0.9450980392156862,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
@@ -66,10 +66,10 @@
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 34,
-      "y": 34,
-      "width": 832,
-      "height": 200,
+      "x": 235.5625,
+      "y": 40,
+      "width": 32,
+      "height": 32,
       "insideViewport": true
     },
     "fonts": "loaded",
@@ -77,14 +77,14 @@
     "storybookError": null,
     "state": {
       "axis": "both",
-      "display": "flex",
+      "display": "inline-flex",
       "alignItems": "center",
       "justifyContent": "center",
-      "text": "Centered Content"
+      "childCount": 1
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/matcha-light-default.png",
-    "bytes": 6842
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-inline.png",
+    "bytes": 9021
   }
 }

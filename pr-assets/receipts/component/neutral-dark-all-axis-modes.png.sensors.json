@@ -1,19 +1,19 @@
 {
-  "label": "neutral-light-all-axis-modes",
+  "label": "neutral-dark-all-axis-modes",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
       "astryxTheme": "neutral",
-      "colorMode": "light",
+      "colorMode": "dark",
       "direction": "ltr"
     },
     "themeAttr": "neutral",
-    "colorMode": "light",
+    "colorMode": "dark",
     "direction": "ltr",
     "viewport": {
       "width": 900,
@@ -27,7 +27,7 @@
       "hover": true
     },
     "targetCount": 3,
-    "surfaceClass": "light",
+    "surfaceClass": "dark",
     "runningAnimations": 0,
     "state": [
       {
@@ -59,14 +59,14 @@
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
-      "colorMode": "light",
+      "colorMode": "dark",
       "direction": "ltr"
     },
     "themeAttr": "neutral",
-    "colorMode": "light",
-    "surfaceColor": "rgb(241, 241, 241)",
-    "surfaceLuminance": 0.9450980392156862,
-    "surfaceClass": "light",
+    "colorMode": "dark",
+    "surfaceColor": "rgb(27, 27, 27)",
+    "surfaceLuminance": 0.10588235294117647,
+    "surfaceClass": "dark",
     "direction": "ltr",
     "viewport": {
       "width": 900,
@@ -116,7 +116,7 @@
     ]
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-all-axis-modes.png",
-    "bytes": 17875
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-dark-all-axis-modes.png",
+    "bytes": 18256
   }
 }

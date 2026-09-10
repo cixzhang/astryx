@@ -1,73 +1,75 @@
 {
-  "label": "neutral-light-coarse",
+  "label": "neutral-light-rtl-padding-per-edge",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
       "astryxTheme": "neutral",
       "colorMode": "light",
-      "direction": "ltr"
+      "direction": "rtl"
     },
     "themeAttr": "neutral",
     "colorMode": "light",
-    "direction": "ltr",
+    "direction": "rtl",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
       "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "paddingTop": "24px",
+      "paddingRight": "8px",
+      "paddingBottom": "0px",
+      "paddingLeft": "24px",
+      "text": "Roomy above, flush below — only the block-end edge moved"
     }
   },
   "observed": {
-    "storyExpected": "core-center--default",
-    "storyObserved": "core-center--default",
+    "storyExpected": "core-center--padding-per-edge",
+    "storyObserved": "core-center--padding-per-edge",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
       "colorMode": "light",
-      "direction": "ltr"
+      "direction": "rtl"
     },
     "themeAttr": "neutral",
     "colorMode": "light",
     "surfaceColor": "rgb(241, 241, 241)",
     "surfaceLuminance": 0.9450980392156862,
     "surfaceClass": "light",
-    "direction": "ltr",
+    "direction": "rtl",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "visible": true,
     "box": {
       "x": 28,
       "y": 28,
-      "width": 356,
+      "width": 844,
       "height": 200,
       "insideViewport": true
     },
@@ -76,13 +78,15 @@
     "storybookError": null,
     "state": {
       "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "paddingTop": "24px",
+      "paddingRight": "8px",
+      "paddingBottom": "0px",
+      "paddingLeft": "24px",
+      "text": "Roomy above, flush below — only the block-end edge moved"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-coarse.png",
-    "bytes": 5017
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-rtl-padding-per-edge.png",
+    "bytes": 12794
   }
 }

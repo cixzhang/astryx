@@ -1,6 +1,12 @@
 {
-  "generatedAt": "2026-09-10T12:43:07.515Z",
+  "generatedAt": "2026-09-10T13:14:44.494Z",
   "dist": "apps/storybook/dist",
+  "selfChecks": {
+    "d8LogicalInline": {
+      "visible": "pass",
+      "hidden": "fail"
+    }
+  },
   "autoDiscovery": {
     "total": 1,
     "applicable": 0,
@@ -269,7 +275,7 @@
           "D8": "pass"
         },
         "notes": [
-          "D8 logical inline edges: logical start/end stay stable and resolved physical sides swap; LTR start/end 8/24px, RTL start/end 8/24px"
+          "D8 logical inline edges: logical start/end stay stable and resolved physical sides swap; LTR 1044x200 start/end 8/24px, RTL 1044x200 start/end 8/24px"
         ],
         "rollup": "RTL-ready"
       }

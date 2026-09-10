@@ -1,0 +1,114 @@
+{
+  "before": {
+    "phase": "baseline-example",
+    "expectedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
+    "measurement": {
+      "centerCount": 0,
+      "centerAxis": null,
+      "headingCount": 1,
+      "cardBox": {
+        "x": 16,
+        "y": 16,
+        "width": 520,
+        "height": 44
+      },
+      "buttonBoxes": [
+        {
+          "x": 360,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 388,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 416,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 444,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 472,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 500,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    }
+  },
+  "after": {
+    "phase": "final-example",
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "measurement": {
+      "centerCount": 1,
+      "centerAxis": "horizontal",
+      "headingCount": 0,
+      "cardBox": {
+        "x": 16,
+        "y": 16,
+        "width": 520,
+        "height": 44
+      },
+      "centerBox": {
+        "x": 24,
+        "y": 24,
+        "width": 504,
+        "height": 28
+      },
+      "buttonBoxes": [
+        {
+          "x": 192,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 220,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 248,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 276,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 304,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "x": 332,
+          "y": 24,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    }
+  }
+}

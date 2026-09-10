@@ -1,10 +1,10 @@
 {
-  "label": "neutral-light-ltr-padding-per-edge",
+  "label": "neutral-light-owned-axis-collision",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
@@ -30,17 +30,16 @@
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "paddingTop": "24px",
-      "paddingRight": "24px",
-      "paddingBottom": "0px",
-      "paddingLeft": "8px",
-      "text": "Roomy above, flush below — only the block-end edge moved"
+      "axis": "horizontal",
+      "display": "flex",
+      "alignItems": "normal",
+      "justifyContent": "center",
+      "text": "Centered Content"
     }
   },
   "observed": {
-    "storyExpected": "core-center--padding-per-edge",
-    "storyObserved": "core-center--padding-per-edge",
+    "storyExpected": "core-center--default",
+    "storyObserved": "core-center--default",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
@@ -77,16 +76,15 @@
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "paddingTop": "24px",
-      "paddingRight": "24px",
-      "paddingBottom": "0px",
-      "paddingLeft": "8px",
-      "text": "Roomy above, flush below — only the block-end edge moved"
+      "axis": "horizontal",
+      "display": "flex",
+      "alignItems": "normal",
+      "justifyContent": "center",
+      "text": "Centered Content"
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-ltr-padding-per-edge.png",
-    "bytes": 12805
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-owned-axis-collision.png",
+    "bytes": 6764
   }
 }

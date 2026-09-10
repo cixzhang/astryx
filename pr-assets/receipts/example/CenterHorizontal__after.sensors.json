@@ -1,10 +1,10 @@
 {
-  "label": "neutral-light-inline",
+  "label": "CenterHorizontal-final-example",
   "identity": "story",
   "build": {
     "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
-    "expectedSha": "20aa790b28021497a19ee929a98d16dd796433cb",
-    "observedSha": "20aa790b28021497a19ee929a98d16dd796433cb"
+    "expectedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28",
+    "observedSha": "c6e1d6b002681513aaf047e13f6dac736bf4ea28"
   },
   "expected": {
     "globals": {
@@ -17,7 +17,7 @@
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 800,
+      "height": 500,
       "dpr": 1
     },
     "media": {
@@ -27,19 +27,23 @@
       "hover": true
     },
     "targetCount": 1,
-    "surfaceClass": "light",
-    "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "display": "inline-flex",
-      "alignItems": "center",
-      "justifyContent": "center",
-      "childCount": 1
-    }
+      "example": "center-horizontal",
+      "controls": [
+        "Bold",
+        "Italic",
+        "Underline",
+        "List",
+        "Link",
+        "Image"
+      ]
+    },
+    "surfaceClass": "light",
+    "runningAnimations": 0
   },
   "observed": {
-    "storyExpected": "core-center--inline",
-    "storyObserved": "core-center--inline",
+    "storyExpected": "audit-centerhorizontalevidence--comparison",
+    "storyObserved": "audit-centerhorizontalevidence--comparison",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
@@ -48,13 +52,13 @@
     },
     "themeAttr": "neutral",
     "colorMode": "light",
-    "surfaceColor": "rgb(241, 241, 241)",
-    "surfaceLuminance": 0.9450980392156862,
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 800,
+      "height": 500,
       "dpr": 1
     },
     "media": {
@@ -66,25 +70,29 @@
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 235.5625,
-      "y": 40,
-      "width": 32,
-      "height": 32,
+      "x": 16,
+      "y": 16,
+      "width": 868,
+      "height": 44,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "display": "inline-flex",
-      "alignItems": "center",
-      "justifyContent": "center",
-      "childCount": 1
+      "example": "center-horizontal",
+      "controls": [
+        "Bold",
+        "Italic",
+        "Underline",
+        "List",
+        "Link",
+        "Image"
+      ]
     }
   },
   "image": {
-    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-light-inline.png",
-    "bytes": 9021
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final-example/example/CenterHorizontal__neutral-light.png",
+    "bytes": 5206
   }
 }
