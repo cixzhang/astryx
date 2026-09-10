@@ -45,7 +45,7 @@
       "afterEvidence": [
         "Axis tests assert the public computed alignment contract",
         "An SSR output test proves the server-safe public seam",
-        "Max-width 480\u2192240 and min-height 80\u2192220 browser counterfactuals fail if either constraint is dropped"
+        "Max-width 480→240 and min-height 80→220 browser counterfactuals fail if either constraint is dropped"
       ]
     },
     {
@@ -71,67 +71,27 @@
     }
   ],
   "approvals": [
-    {
-      "name": "independent-exact-head-review",
-      "state": "pending"
-    },
-    {
-      "name": "component-spec-owner",
-      "state": "pending"
-    },
-    {
-      "name": "human-review",
-      "state": "pending"
-    }
+    {"name": "independent-exact-head-review", "state": "pending"},
+    {"name": "component-spec-owner", "state": "pending"},
+    {"name": "human-review", "state": "pending"}
   ],
   "checks": [
-    {
-      "name": "local-focused",
-      "state": "pass",
-      "assertions": 478
-    },
-    {
-      "name": "local-build",
-      "state": "pass"
-    },
-    {
-      "name": "a11y",
-      "state": "pass",
-      "stories": 10,
-      "violations": 0
-    },
-    {
-      "name": "rtl",
-      "state": "pass",
-      "measured": 1,
-      "gaps": 0
-    },
-    {
-      "name": "exact-head-ci",
-      "state": "pending",
-      "run": null
-    },
-    {
-      "name": "audit-eligibility",
-      "state": "unavailable"
-    }
+    {"name": "local-focused", "state": "pass", "assertions": 478},
+    {"name": "local-build", "state": "pass"},
+    {"name": "a11y", "state": "pass", "stories": 10, "violations": 0},
+    {"name": "rtl", "state": "pass", "measured": 1, "gaps": 0},
+    {"name": "exact-head-ci", "state": "pending", "run": null},
+    {"name": "audit-eligibility", "state": "unavailable"}
   ],
   "evidence": {
-    "componentFrames": {
-      "baseline": 17,
-      "exactHead": 17,
-      "pixelIdentical": 17
-    },
-    "verticalWritingFrames": {
-      "baseline": 2,
-      "exactHead": 2,
-      "pixelIdentical": 2
-    },
+    "componentFrames": {"baseline": 17, "exactHead": 17, "pixelIdentical": 17},
+    "verticalWritingFrames": {"baseline": 2, "exactHead": 2, "pixelIdentical": 2},
     "exampleFrames": {
       "baseline": 1,
-      "exactHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+      "exactHead": 1,
       "intentionalChange": true,
-      "baseHead": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
+      "baseHead": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
+      "exactHeadCommit": "55f51a06c6e1f7780eecb078fa6bf10447579956"
     },
     "receiptPairs": 20,
     "receiptPairsMatchExceptBuild": 20
