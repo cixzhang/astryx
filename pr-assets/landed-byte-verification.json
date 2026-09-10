@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "pr": 6207,
+  "reviewedHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+  "landedCommit": "f069c04f454e52a4944b32d22dee91fb6fc6214c",
+  "paths": [
+    {
+      "path": ".changeset/center-owned-axis.md",
+      "reviewedBlob": "ae0aa0603e7759faaa7275256b91407a2b7858f3",
+      "landedBlob": "ae0aa0603e7759faaa7275256b91407a2b7858f3",
+      "identical": true
+    },
+    {
+      "path": ".github/scripts/rtl-audit-coverage.test.mjs",
+      "reviewedBlob": "4199e35b03f2ef1af3793878d698a8b72a9e0656",
+      "landedBlob": "4199e35b03f2ef1af3793878d698a8b72a9e0656",
+      "identical": true
+    },
+    {
+      "path": "apps/storybook/rtl-audit/README.md",
+      "reviewedBlob": "a2cf633c4558a1a2e481fb16d8d82d8ec6cb7340",
+      "landedBlob": "a2cf633c4558a1a2e481fb16d8d82d8ec6cb7340",
+      "identical": true
+    },
+    {
+      "path": "apps/storybook/rtl-audit/rtl-audit-coverage.mjs",
+      "reviewedBlob": "b8cd4b9914f59dedb8b411399b313a974b43326e",
+      "landedBlob": "b8cd4b9914f59dedb8b411399b313a974b43326e",
+      "identical": true
+    },
+    {
+      "path": "apps/storybook/rtl-audit/rtl-audit.mjs",
+      "reviewedBlob": "e0eb15e665f57965c11eaf6239a9f57e2a65ec72",
+      "landedBlob": "e0eb15e665f57965c11eaf6239a9f57e2a65ec72",
+      "identical": true
+    },
+    {
+      "path": "apps/storybook/rtl-audit/targets.json",
+      "reviewedBlob": "e26028fde021e65c2733b7f1d0b563ef1ebfd2b0",
+      "landedBlob": "e26028fde021e65c2733b7f1d0b563ef1ebfd2b0",
+      "identical": true
+    },
+    {
+      "path": "apps/storybook/stories/Center.stories.tsx",
+      "reviewedBlob": "fdf5834a05145a6ec6ef9abb7c8ea382d5e82fed",
+      "landedBlob": "fdf5834a05145a6ec6ef9abb7c8ea382d5e82fed",
+      "identical": true
+    },
+    {
+      "path": "packages/cli/assets/templates/blocks/components/Center/CenterHorizontal.doc.mjs",
+      "reviewedBlob": "378d09b6fc50c77bfc4076a37bc57f3a8e150a7d",
+      "landedBlob": "378d09b6fc50c77bfc4076a37bc57f3a8e150a7d",
+      "identical": true
+    },
+    {
+      "path": "packages/cli/assets/templates/blocks/components/Center/CenterHorizontal.tsx",
+      "reviewedBlob": "22172ae8786460c0dbe90fa59a6c2760fca1a407",
+      "landedBlob": "22172ae8786460c0dbe90fa59a6c2760fca1a407",
+      "identical": true
+    },
+    {
+      "path": "packages/core/src/Center/Center.doc.mjs",
+      "reviewedBlob": "3b3465e30112d39be87ac1533b597366c9da3aab",
+      "landedBlob": "3b3465e30112d39be87ac1533b597366c9da3aab",
+      "identical": true
+    },
+    {
+      "path": "packages/core/src/Center/Center.spec.md",
+      "reviewedBlob": "33e8185050fb20664cd2068d02108812acdaa099",
+      "landedBlob": "33e8185050fb20664cd2068d02108812acdaa099",
+      "identical": true
+    },
+    {
+      "path": "packages/core/src/Center/Center.test.tsx",
+      "reviewedBlob": "39ad6a7af16e2d3854691b578901085d165b3bc0",
+      "landedBlob": "39ad6a7af16e2d3854691b578901085d165b3bc0",
+      "identical": true
+    },
+    {
+      "path": "packages/core/src/Center/Center.tsx",
+      "reviewedBlob": "4306869e33e74cf09f5e882fbf0198cc59d2e5dc",
+      "landedBlob": "4306869e33e74cf09f5e882fbf0198cc59d2e5dc",
+      "identical": true
+    }
+  ],
+  "allIdentical": true
+}
