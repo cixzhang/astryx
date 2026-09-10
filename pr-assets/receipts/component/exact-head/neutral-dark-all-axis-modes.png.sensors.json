@@ -1,0 +1,122 @@
+{
+  "label": "neutral-dark-all-axis-modes",
+  "identity": "story",
+  "build": {
+    "root": "<worktree>",
+    "expectedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+    "observedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 3,
+    "surfaceClass": "dark",
+    "runningAnimations": 0,
+    "state": [
+      {
+        "axis": "both",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center",
+        "text": "Both Axes"
+      },
+      {
+        "axis": "horizontal",
+        "display": "flex",
+        "alignItems": "normal",
+        "justifyContent": "center",
+        "text": "Horizontal Only"
+      },
+      {
+        "axis": "vertical",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal",
+        "text": "Vertical Only"
+      }
+    ]
+  },
+  "observed": {
+    "storyExpected": "core-center--all-axis-modes",
+    "storyObserved": "core-center--all-axis-modes",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgb(27, 27, 27)",
+    "surfaceLuminance": 0.10588235294117647,
+    "surfaceClass": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 3,
+    "visible": true,
+    "box": {
+      "x": 40,
+      "y": 60,
+      "width": 300,
+      "height": 150,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": [
+      {
+        "axis": "both",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center",
+        "text": "Both Axes"
+      },
+      {
+        "axis": "horizontal",
+        "display": "flex",
+        "alignItems": "normal",
+        "justifyContent": "center",
+        "text": "Horizontal Only"
+      },
+      {
+        "axis": "vertical",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal",
+        "text": "Vertical Only"
+      }
+    ]
+  },
+  "image": {
+    "path": "<evidence>/final/screenshots/neutral-dark-all-axis-modes.png",
+    "bytes": 18256
+  }
+}

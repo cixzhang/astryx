@@ -1,0 +1,4 @@
+ARM: Center vertical-writing evidence fixture
+BASE: each capture checks out the exact source commit it records
+DELTA: one untracked Storybook-only story importing the tracked Center module at that checkout
+UNRELATED DELTA: none

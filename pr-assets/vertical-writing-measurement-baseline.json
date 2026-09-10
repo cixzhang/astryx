@@ -1,0 +1,94 @@
+{
+  "phase": "baseline-vertical-writing",
+  "expectedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
+  "results": [
+    {
+      "mode": "light",
+      "image": "<evidence>/baseline-vertical-writing/vertical-writing/Center__vertical-writing__neutral-light.png",
+      "measurements": [
+        {
+          "axis": "horizontal",
+          "writingMode": "vertical-rl",
+          "root": {
+            "x": 32,
+            "y": 52,
+            "width": 300,
+            "height": 200
+          },
+          "child": {
+            "x": 281,
+            "y": 142,
+            "width": 50,
+            "height": 20
+          },
+          "deltaX": 124,
+          "deltaY": 0,
+          "requiredPhysicalAxisCentered": false
+        },
+        {
+          "axis": "vertical",
+          "writingMode": "vertical-rl",
+          "root": {
+            "x": 348,
+            "y": 52,
+            "width": 300,
+            "height": 200
+          },
+          "child": {
+            "x": 473,
+            "y": 53,
+            "width": 50,
+            "height": 20
+          },
+          "deltaX": 0,
+          "deltaY": -89,
+          "requiredPhysicalAxisCentered": false
+        }
+      ]
+    },
+    {
+      "mode": "dark",
+      "image": "<evidence>/baseline-vertical-writing/vertical-writing/Center__vertical-writing__neutral-dark.png",
+      "measurements": [
+        {
+          "axis": "horizontal",
+          "writingMode": "vertical-rl",
+          "root": {
+            "x": 32,
+            "y": 52,
+            "width": 300,
+            "height": 200
+          },
+          "child": {
+            "x": 281,
+            "y": 142,
+            "width": 50,
+            "height": 20
+          },
+          "deltaX": 124,
+          "deltaY": 0,
+          "requiredPhysicalAxisCentered": false
+        },
+        {
+          "axis": "vertical",
+          "writingMode": "vertical-rl",
+          "root": {
+            "x": 348,
+            "y": 52,
+            "width": 300,
+            "height": 200
+          },
+          "child": {
+            "x": 473,
+            "y": 53,
+            "width": 50,
+            "height": 20
+          },
+          "deltaX": 0,
+          "deltaY": -89,
+          "requiredPhysicalAxisCentered": false
+        }
+      ]
+    }
+  ]
+}

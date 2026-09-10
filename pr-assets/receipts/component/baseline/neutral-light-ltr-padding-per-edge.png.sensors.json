@@ -1,5 +1,5 @@
 {
-  "label": "CenterHorizontal-baseline-example",
+  "label": "neutral-light-ltr-padding-per-edge",
   "identity": "story",
   "build": {
     "root": "<worktree>",
@@ -17,7 +17,7 @@
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -27,23 +27,20 @@
       "hover": true
     },
     "targetCount": 1,
-    "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
-    },
     "surfaceClass": "light",
-    "runningAnimations": 0
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "paddingTop": "24px",
+      "paddingRight": "24px",
+      "paddingBottom": "0px",
+      "paddingLeft": "8px",
+      "text": "Roomy above, flush below \u2014 only the block-end edge moved"
+    }
   },
   "observed": {
-    "storyExpected": "audit-centerhorizontalevidence--comparison",
-    "storyObserved": "audit-centerhorizontalevidence--comparison",
+    "storyExpected": "core-center--padding-per-edge",
+    "storyObserved": "core-center--padding-per-edge",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
@@ -52,13 +49,13 @@
     },
     "themeAttr": "neutral",
     "colorMode": "light",
-    "surfaceColor": "rgb(255, 255, 255)",
-    "surfaceLuminance": 0.9999999999999999,
+    "surfaceColor": "rgb(241, 241, 241)",
+    "surfaceLuminance": 0.9450980392156862,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -70,29 +67,26 @@
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 16,
-      "y": 16,
-      "width": 868,
-      "height": 44,
+      "x": 28,
+      "y": 28,
+      "width": 844,
+      "height": 200,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
+      "axis": "both",
+      "paddingTop": "24px",
+      "paddingRight": "24px",
+      "paddingBottom": "0px",
+      "paddingLeft": "8px",
+      "text": "Roomy above, flush below \u2014 only the block-end edge moved"
     }
   },
   "image": {
-    "path": "<evidence>/baseline-example/example/CenterHorizontal__neutral-light.png",
-    "bytes": 7680
+    "path": "<evidence>/baseline/screenshots/neutral-light-ltr-padding-per-edge.png",
+    "bytes": 12805
   }
 }

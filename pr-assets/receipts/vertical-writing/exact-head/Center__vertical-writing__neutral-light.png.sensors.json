@@ -1,10 +1,10 @@
 {
-  "label": "CenterHorizontal-baseline-example",
+  "label": "Center-vertical-writing-final-vertical-writing-light",
   "identity": "story",
   "build": {
     "root": "<worktree>",
-    "expectedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
-    "observedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
+    "expectedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+    "observedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae"
   },
   "expected": {
     "globals": {
@@ -17,7 +17,7 @@
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 600,
       "dpr": 1
     },
     "media": {
@@ -28,22 +28,26 @@
     },
     "targetCount": 1,
     "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
+      "example": "center-vertical-writing",
+      "cases": [
+        {
+          "axis": "horizontal",
+          "writingMode": "vertical-rl",
+          "childCount": 1
+        },
+        {
+          "axis": "vertical",
+          "writingMode": "vertical-rl",
+          "childCount": 1
+        }
       ]
     },
     "surfaceClass": "light",
     "runningAnimations": 0
   },
   "observed": {
-    "storyExpected": "audit-centerhorizontalevidence--comparison",
-    "storyObserved": "audit-centerhorizontalevidence--comparison",
+    "storyExpected": "audit-centerverticalwritingevidence--comparison",
+    "storyObserved": "audit-centerverticalwritingevidence--comparison",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
@@ -52,13 +56,13 @@
     },
     "themeAttr": "neutral",
     "colorMode": "light",
-    "surfaceColor": "rgb(255, 255, 255)",
-    "surfaceLuminance": 0.9999999999999999,
+    "surfaceColor": "rgb(241, 241, 241)",
+    "surfaceLuminance": 0.9450980392156862,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 600,
       "dpr": 1
     },
     "media": {
@@ -73,26 +77,30 @@
       "x": 16,
       "y": 16,
       "width": 868,
-      "height": 44,
+      "height": 252,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
+      "example": "center-vertical-writing",
+      "cases": [
+        {
+          "axis": "horizontal",
+          "writingMode": "vertical-rl",
+          "childCount": 1
+        },
+        {
+          "axis": "vertical",
+          "writingMode": "vertical-rl",
+          "childCount": 1
+        }
       ]
     }
   },
   "image": {
-    "path": "<evidence>/baseline-example/example/CenterHorizontal__neutral-light.png",
-    "bytes": 7680
+    "path": "<evidence>/final-vertical-writing/vertical-writing/Center__vertical-writing__neutral-light.png",
+    "bytes": 5575
   }
 }

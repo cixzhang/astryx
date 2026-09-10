@@ -1,0 +1,58 @@
+diff --git a/apps/storybook/stories/CenterVerticalWritingEvidence.stories.tsx b/apps/storybook/stories/CenterVerticalWritingEvidence.stories.tsx
+new file mode 100644
+index 000000000000..6289ce9d9c7f
+--- /dev/null
++++ b/apps/storybook/stories/CenterVerticalWritingEvidence.stories.tsx
+@@ -0,0 +1,52 @@
++// Copyright (c) Meta Platforms, Inc. and affiliates.
++
++import type {Meta, StoryObj} from '@storybook/react';
++import {Center} from '@astryxdesign/core/Center';
++import {Section} from '@astryxdesign/core/Section';
++
++const meta = {
++  title: 'Audit/CenterVerticalWritingEvidence',
++} satisfies Meta;
++
++export default meta;
++type Story = StoryObj<typeof meta>;
++
++const childStyle = {
++  width: 50,
++  height: 20,
++  background: 'CanvasText',
++};
++
++export const Comparison: Story = {
++  render: () => (
++    <Section
++      variant="muted"
++      padding={4}
++      data-audit-example="center-vertical-writing">
++      <div style={{display: 'flex', gap: 16}}>
++        <div>
++          <p>axis: horizontal</p>
++          <Center
++            axis="horizontal"
++            width={300}
++            height={200}
++            data-audit-case="horizontal"
++            style={{writingMode: 'vertical-rl', border: '1px solid CanvasText'}}>
++            <div data-audit-child style={childStyle} />
++          </Center>
++        </div>
++        <div>
++          <p>axis: vertical</p>
++          <Center
++            axis="vertical"
++            width={300}
++            height={200}
++            data-audit-case="vertical"
++            style={{writingMode: 'vertical-rl', border: '1px solid CanvasText'}}>
++            <div data-audit-child style={childStyle} />
++          </Center>
++        </div>
++      </div>
++    </Section>
++  ),
++};

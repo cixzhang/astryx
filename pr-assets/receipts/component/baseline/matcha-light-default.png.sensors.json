@@ -1,5 +1,5 @@
 {
-  "label": "CenterHorizontal-baseline-example",
+  "label": "matcha-light-default",
   "identity": "story",
   "build": {
     "root": "<worktree>",
@@ -8,16 +8,16 @@
   },
   "expected": {
     "globals": {
-      "astryxTheme": "neutral",
+      "astryxTheme": "matcha",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "neutral",
+    "themeAttr": "matcha",
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -27,38 +27,34 @@
       "hover": true
     },
     "targetCount": 1,
-    "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
-    },
     "surfaceClass": "light",
-    "runningAnimations": 0
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
+    }
   },
   "observed": {
-    "storyExpected": "audit-centerhorizontalevidence--comparison",
-    "storyObserved": "audit-centerhorizontalevidence--comparison",
+    "storyExpected": "core-center--default",
+    "storyObserved": "core-center--default",
     "routeObserved": "/iframe.html",
     "globals": {
-      "astryxTheme": "neutral",
+      "astryxTheme": "matcha",
       "colorMode": "light",
       "direction": "ltr"
     },
-    "themeAttr": "neutral",
+    "themeAttr": "matcha",
     "colorMode": "light",
-    "surfaceColor": "rgb(255, 255, 255)",
-    "surfaceLuminance": 0.9999999999999999,
+    "surfaceColor": "rgb(240, 240, 224)",
+    "surfaceLuminance": 0.9366462745098039,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
       "width": 900,
-      "height": 500,
+      "height": 800,
       "dpr": 1
     },
     "media": {
@@ -70,29 +66,25 @@
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 16,
-      "y": 16,
-      "width": 868,
-      "height": 44,
+      "x": 34,
+      "y": 34,
+      "width": 832,
+      "height": 200,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
+      "axis": "both",
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
     }
   },
   "image": {
-    "path": "<evidence>/baseline-example/example/CenterHorizontal__neutral-light.png",
-    "bytes": 7680
+    "path": "<evidence>/baseline/screenshots/matcha-light-default.png",
+    "bytes": 6842
   }
 }

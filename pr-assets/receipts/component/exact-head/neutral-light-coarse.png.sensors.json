@@ -1,5 +1,5 @@
 {
-  "label": "CenterHorizontal-final-example",
+  "label": "neutral-light-coarse",
   "identity": "story",
   "build": {
     "root": "<worktree>",
@@ -16,34 +16,29 @@
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 500,
+      "width": 412,
+      "height": 640,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": false,
-      "hover": true
+      "coarsePointer": true,
+      "hover": false
     },
     "targetCount": 1,
-    "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
-    },
     "surfaceClass": "light",
-    "runningAnimations": 0
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "height": "200px",
+      "text": "Centered Content",
+      "fitsViewport": true
+    }
   },
   "observed": {
-    "storyExpected": "audit-centerhorizontalevidence--comparison",
-    "storyObserved": "audit-centerhorizontalevidence--comparison",
+    "storyExpected": "core-center--default",
+    "storyObserved": "core-center--default",
     "routeObserved": "/iframe.html",
     "globals": {
       "astryxTheme": "neutral",
@@ -52,47 +47,42 @@
     },
     "themeAttr": "neutral",
     "colorMode": "light",
-    "surfaceColor": "rgb(255, 255, 255)",
-    "surfaceLuminance": 0.9999999999999999,
+    "surfaceColor": "rgb(241, 241, 241)",
+    "surfaceLuminance": 0.9450980392156862,
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 900,
-      "height": 500,
+      "width": 412,
+      "height": 640,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": false,
-      "hover": true
+      "coarsePointer": true,
+      "hover": false
     },
     "targetCount": 1,
     "visible": true,
     "box": {
-      "x": 16,
-      "y": 16,
-      "width": 868,
-      "height": 44,
+      "x": 28,
+      "y": 28,
+      "width": 356,
+      "height": 200,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "example": "center-horizontal",
-      "controls": [
-        "Bold",
-        "Italic",
-        "Underline",
-        "List",
-        "Link",
-        "Image"
-      ]
+      "axis": "both",
+      "height": "200px",
+      "text": "Centered Content",
+      "fitsViewport": true
     }
   },
   "image": {
-    "path": "<evidence>/final-example/example/CenterHorizontal__neutral-light.png",
-    "bytes": 5206
+    "path": "<evidence>/final/screenshots/neutral-light-coarse.png",
+    "bytes": 5017
   }
 }

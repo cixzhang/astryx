@@ -1,0 +1,879 @@
+{
+  "version": 1,
+  "phase": "final",
+  "expectedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+  "cases": [
+    {
+      "label": "neutral-light-all-axis-modes",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-all-axis-modes.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-all-axis-modes.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--all-axis-modes",
+        "storyObserved": "core-center--all-axis-modes",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 3,
+        "visible": true,
+        "box": {
+          "x": 40,
+          "y": 60,
+          "width": 300,
+          "height": 150,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": [
+          {
+            "axis": "both",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "text": "Both Axes"
+          },
+          {
+            "axis": "horizontal",
+            "display": "flex",
+            "alignItems": "normal",
+            "justifyContent": "center",
+            "text": "Horizontal Only"
+          },
+          {
+            "axis": "vertical",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "normal",
+            "text": "Vertical Only"
+          }
+        ]
+      }
+    },
+    {
+      "label": "neutral-light-inline",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-inline.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-inline.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--inline",
+        "storyObserved": "core-center--inline",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 235.5625,
+          "y": 40,
+          "width": 32,
+          "height": 32,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "display": "inline-flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "childCount": 1
+        }
+      }
+    },
+    {
+      "label": "neutral-light-ltr-padding-per-edge",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-ltr-padding-per-edge.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-ltr-padding-per-edge.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--padding-per-edge",
+        "storyObserved": "core-center--padding-per-edge",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 844,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "paddingTop": "24px",
+          "paddingRight": "24px",
+          "paddingBottom": "0px",
+          "paddingLeft": "8px",
+          "text": "Roomy above, flush below \u2014 only the block-end edge moved"
+        }
+      }
+    },
+    {
+      "label": "neutral-light-rtl-padding-per-edge",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-rtl-padding-per-edge.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-rtl-padding-per-edge.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--padding-per-edge",
+        "storyObserved": "core-center--padding-per-edge",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "rtl"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "rtl",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 844,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "paddingTop": "24px",
+          "paddingRight": "8px",
+          "paddingBottom": "0px",
+          "paddingLeft": "24px",
+          "text": "Roomy above, flush below \u2014 only the block-end edge moved"
+        }
+      }
+    },
+    {
+      "label": "neutral-light-narrow",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-narrow.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-narrow.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 320,
+          "height": 640,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 264,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "height": "200px",
+          "text": "Centered Content",
+          "fitsViewport": true,
+          "noDocumentOverflow": true
+        }
+      }
+    },
+    {
+      "label": "neutral-light-coarse",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-coarse.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-coarse.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 412,
+          "height": 640,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": true,
+          "hover": false
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 356,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "height": "200px",
+          "text": "Centered Content",
+          "fitsViewport": true
+        }
+      }
+    },
+    {
+      "label": "neutral-dark-all-axis-modes",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-all-axis-modes.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-all-axis-modes.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--all-axis-modes",
+        "storyObserved": "core-center--all-axis-modes",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 3,
+        "visible": true,
+        "box": {
+          "x": 40,
+          "y": 60,
+          "width": 300,
+          "height": 150,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": [
+          {
+            "axis": "both",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "text": "Both Axes"
+          },
+          {
+            "axis": "horizontal",
+            "display": "flex",
+            "alignItems": "normal",
+            "justifyContent": "center",
+            "text": "Horizontal Only"
+          },
+          {
+            "axis": "vertical",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "normal",
+            "text": "Vertical Only"
+          }
+        ]
+      }
+    },
+    {
+      "label": "neutral-dark-inline",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-inline.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-inline.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--inline",
+        "storyObserved": "core-center--inline",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 235.5625,
+          "y": 40,
+          "width": 32,
+          "height": 32,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "display": "inline-flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "childCount": 1
+        }
+      }
+    },
+    {
+      "label": "neutral-dark-ltr-padding-per-edge",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-ltr-padding-per-edge.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-ltr-padding-per-edge.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--padding-per-edge",
+        "storyObserved": "core-center--padding-per-edge",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 844,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "paddingTop": "24px",
+          "paddingRight": "24px",
+          "paddingBottom": "0px",
+          "paddingLeft": "8px",
+          "text": "Roomy above, flush below \u2014 only the block-end edge moved"
+        }
+      }
+    },
+    {
+      "label": "neutral-dark-rtl-padding-per-edge",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-rtl-padding-per-edge.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-rtl-padding-per-edge.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--padding-per-edge",
+        "storyObserved": "core-center--padding-per-edge",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "rtl"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "rtl",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 844,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "paddingTop": "24px",
+          "paddingRight": "8px",
+          "paddingBottom": "0px",
+          "paddingLeft": "24px",
+          "text": "Roomy above, flush below \u2014 only the block-end edge moved"
+        }
+      }
+    },
+    {
+      "label": "neutral-dark-narrow",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-narrow.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-narrow.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 320,
+          "height": 640,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 264,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "height": "200px",
+          "text": "Centered Content",
+          "fitsViewport": true,
+          "noDocumentOverflow": true
+        }
+      }
+    },
+    {
+      "label": "neutral-dark-coarse",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-dark-coarse.png",
+      "receipt": "<evidence>/final/screenshots/neutral-dark-coarse.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(27, 27, 27)",
+        "surfaceLuminance": 0.10588235294117647,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 412,
+          "height": 640,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": true,
+          "hover": false
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 356,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "height": "200px",
+          "text": "Centered Content",
+          "fitsViewport": true
+        }
+      }
+    },
+    {
+      "label": "matcha-light-default",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/matcha-light-default.png",
+      "receipt": "<evidence>/final/screenshots/matcha-light-default.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "matcha",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "matcha",
+        "colorMode": "light",
+        "surfaceColor": "rgb(240, 240, 224)",
+        "surfaceLuminance": 0.9366462745098039,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 34,
+          "y": 34,
+          "width": 832,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "display": "flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "text": "Centered Content"
+        }
+      }
+    },
+    {
+      "label": "matcha-dark-default",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/matcha-dark-default.png",
+      "receipt": "<evidence>/final/screenshots/matcha-dark-default.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "matcha",
+          "colorMode": "dark",
+          "direction": "ltr"
+        },
+        "themeAttr": "matcha",
+        "colorMode": "dark",
+        "surfaceColor": "rgb(62, 72, 29)",
+        "surfaceLuminance": 0.2618407843137255,
+        "surfaceClass": "dark",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 34,
+          "y": 34,
+          "width": 832,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "display": "flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "text": "Centered Content"
+        }
+      }
+    },
+    {
+      "label": "neutral-light-owned-axis-collision",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-owned-axis-collision.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-owned-axis-collision.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 844,
+          "height": 200,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "scenario": "owned-axis-collision",
+          "inputAxis": "horizontal",
+          "consumerDataAxis": "vertical",
+          "display": "flex",
+          "text": "Centered Content"
+        }
+      },
+      "measurement": {
+        "reflectedAxis": "horizontal",
+        "alignItems": "normal",
+        "justifyContent": "center"
+      }
+    },
+    {
+      "label": "neutral-light-sizing-constraints",
+      "status": "passed",
+      "image": "<evidence>/final/screenshots/neutral-light-sizing-constraints.png",
+      "receipt": "<evidence>/final/screenshots/neutral-light-sizing-constraints.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 240,
+          "height": 220,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "axis": "both",
+          "width": "240px",
+          "height": "220px",
+          "maxWidth": "240px",
+          "minHeight": "220px",
+          "text": "Centered Content"
+        }
+      }
+    }
+  ]
+}

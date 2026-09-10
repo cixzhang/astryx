@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "component": "Center",
+  "package": "core",
+  "auditMode": "N",
+  "rubricVersion": "1.16.1",
+  "heads": {
+    "repository": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+    "componentContract": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+    "base": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
+  },
+  "score": {
+    "baseline": {
+      "score": 73.3,
+      "grade": "C",
+      "blocks": 2
+    },
+    "final": {
+      "score": 87.0,
+      "grade": "C",
+      "blocks": 1
+    },
+    "sensitivityWithoutOpenBlocks": {
+      "score": 95.0,
+      "grade": "A"
+    }
+  },
+  "inventory": {
+    "closed": true,
+    "rows": 20,
+    "gaps": [
+      "FR2: physical one-axis semantics reverse under vertical writing"
+    ]
+  },
+  "unresolvedGaps": {
+    "objective": [
+      "FR2: physical one-axis semantics reverse under vertical writing"
+    ],
+    "manual": [
+      "FR2 runtime correction is intentionally outside this audit because a safe fix must preserve DOM, flow, server rendering, and caller content writing mode",
+      "exact-head owner approval for the draft observational contract"
+    ]
+  },
+  "remediations": [
+    "P3",
+    "V3",
+    "I17",
+    "X7"
+  ],
+  "approvals": [
+    {
+      "name": "component-spec-owner",
+      "state": "pending"
+    },
+    {
+      "name": "human-review",
+      "state": "pending"
+    }
+  ],
+  "checks": [
+    {
+      "name": "local-focused",
+      "state": "pass"
+    },
+    {
+      "name": "local-build",
+      "state": "pass"
+    },
+    {
+      "name": "exact-head-ci",
+      "state": "pass",
+      "run": 34488977132
+    },
+    {
+      "name": "audit-eligibility",
+      "state": "unavailable"
+    }
+  ],
+  "evidence": {
+    "componentFrames": {
+      "baseline": 16,
+      "exactHead": 16,
+      "pixelIdentical": 16
+    },
+    "verticalWritingFrames": {
+      "baseline": 2,
+      "exactHead": 2,
+      "pixelIdentical": 2
+    },
+    "exampleFrames": {
+      "baseline": 1,
+      "exactHead": 1,
+      "intentionalChange": true
+    },
+    "receiptPairsMatchExceptBuild": 19
+  },
+  "eligibility": {
+    "eligible": false,
+    "reasons": [
+      "spec:AST-029 remains phase: accepted; FR11 activation is absent",
+      "the trusted audit-eligibility check is unavailable",
+      "one inherited FR2 BLOCK remains open",
+      "exact-head owner approval for the draft observational contract is pending"
+    ]
+  }
+}

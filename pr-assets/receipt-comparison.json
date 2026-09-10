@@ -1,0 +1,102 @@
+{
+  "pairs": 19,
+  "matchedExceptBuild": 19,
+  "allMatchExceptBuild": true,
+  "results": [
+    {
+      "kind": "component",
+      "name": "matcha-dark-default.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "matcha-light-default.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-all-axis-modes.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-coarse.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-inline.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-ltr-padding-per-edge.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-narrow.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-dark-rtl-padding-per-edge.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-all-axis-modes.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-coarse.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-inline.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-ltr-padding-per-edge.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-narrow.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-owned-axis-collision.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-rtl-padding-per-edge.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-sizing-constraints.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "vertical-writing",
+      "name": "Center__vertical-writing__neutral-light.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "vertical-writing",
+      "name": "Center__vertical-writing__neutral-dark.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "example",
+      "name": "CenterHorizontal__neutral-light.png.sensors.json",
+      "matchExceptBuild": true
+    }
+  ]
+}
