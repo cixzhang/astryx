@@ -1,10 +1,10 @@
 {
-  "label": "neutral-light-sizing-constraints",
+  "label": "neutral-light-min-height-constraint",
   "identity": "story",
   "build": {
     "root": "<worktree>",
-    "expectedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae",
-    "observedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae"
+    "expectedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+    "observedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956"
   },
   "expected": {
     "globals": {
@@ -30,11 +30,11 @@
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "width": "240px",
-      "height": "220px",
-      "maxWidth": "240px",
-      "minHeight": "220px",
+      "scenario": "min-height-constraint",
+      "inputHeight": 80,
+      "inputMinHeight": 220,
+      "renderedHeight": 220,
+      "constraintApplied": true,
       "text": "Centered Content"
     }
   },
@@ -69,7 +69,7 @@
     "box": {
       "x": 28,
       "y": 28,
-      "width": 240,
+      "width": 300,
       "height": 220,
       "insideViewport": true
     },
@@ -77,16 +77,16 @@
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "width": "240px",
-      "height": "220px",
-      "maxWidth": "240px",
-      "minHeight": "220px",
+      "scenario": "min-height-constraint",
+      "inputHeight": 80,
+      "inputMinHeight": 220,
+      "renderedHeight": 220,
+      "constraintApplied": true,
       "text": "Centered Content"
     }
   },
   "image": {
-    "path": "<evidence>/final/screenshots/neutral-light-sizing-constraints.png",
-    "bytes": 6784
+    "path": "<evidence>/final/screenshots/neutral-light-min-height-constraint.png",
+    "bytes": 6781
   }
 }

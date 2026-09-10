@@ -823,10 +823,10 @@
       }
     },
     {
-      "label": "neutral-light-sizing-constraints",
+      "label": "neutral-light-max-width-constraint",
       "status": "passed",
-      "image": "<evidence>/baseline/screenshots/neutral-light-sizing-constraints.png",
-      "receipt": "<evidence>/baseline/screenshots/neutral-light-sizing-constraints.png.sensors.json",
+      "image": "<evidence>/baseline/screenshots/neutral-light-max-width-constraint.png",
+      "receipt": "<evidence>/baseline/screenshots/neutral-light-max-width-constraint.png.sensors.json",
       "observed": {
         "storyExpected": "core-center--default",
         "storyObserved": "core-center--default",
@@ -859,6 +859,59 @@
           "x": 28,
           "y": 28,
           "width": 240,
+          "height": 120,
+          "insideViewport": true
+        },
+        "fonts": "loaded",
+        "runningAnimations": 0,
+        "storybookError": null,
+        "state": {
+          "scenario": "max-width-constraint",
+          "inputWidth": 480,
+          "inputMaxWidth": 240,
+          "renderedWidth": 240,
+          "constraintApplied": true,
+          "text": "Centered Content"
+        }
+      }
+    },
+    {
+      "label": "neutral-light-min-height-constraint",
+      "status": "passed",
+      "image": "<evidence>/baseline/screenshots/neutral-light-min-height-constraint.png",
+      "receipt": "<evidence>/baseline/screenshots/neutral-light-min-height-constraint.png.sensors.json",
+      "observed": {
+        "storyExpected": "core-center--default",
+        "storyObserved": "core-center--default",
+        "routeObserved": "/iframe.html",
+        "globals": {
+          "astryxTheme": "neutral",
+          "colorMode": "light",
+          "direction": "ltr"
+        },
+        "themeAttr": "neutral",
+        "colorMode": "light",
+        "surfaceColor": "rgb(241, 241, 241)",
+        "surfaceLuminance": 0.9450980392156862,
+        "surfaceClass": "light",
+        "direction": "ltr",
+        "viewport": {
+          "width": 900,
+          "height": 800,
+          "dpr": 1
+        },
+        "media": {
+          "forcedColors": false,
+          "reducedMotion": false,
+          "coarsePointer": false,
+          "hover": true
+        },
+        "targetCount": 1,
+        "visible": true,
+        "box": {
+          "x": 28,
+          "y": 28,
+          "width": 300,
           "height": 220,
           "insideViewport": true
         },
@@ -866,11 +919,11 @@
         "runningAnimations": 0,
         "storybookError": null,
         "state": {
-          "axis": "both",
-          "width": "240px",
-          "height": "220px",
-          "maxWidth": "240px",
-          "minHeight": "220px",
+          "scenario": "min-height-constraint",
+          "inputHeight": 80,
+          "inputMinHeight": 220,
+          "renderedHeight": 220,
+          "constraintApplied": true,
           "text": "Centered Content"
         }
       }

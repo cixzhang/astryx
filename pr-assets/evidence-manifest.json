@@ -1,0 +1,518 @@
+{
+  "schemaVersion": 1,
+  "baseHead": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
+  "exactHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+  "reconciledMain": "ae4ad8375d1ce553cdc889e83c79c9bc6dd5756c",
+  "inventoryRows": 26,
+  "componentFramesPerHead": 17,
+  "verticalWritingFramesPerHead": 2,
+  "exampleFramesPerHead": 1,
+  "receiptPairs": 20,
+  "files": [
+    {
+      "path": "CenterHorizontal__after.png",
+      "sha256": "f71d27a27f177abb96be5f95ddbace931eb908da6b47629862d08a9d8667b8c7",
+      "bytes": 5206
+    },
+    {
+      "path": "CenterHorizontal__before.png",
+      "sha256": "f56a8bb845b8e6164f71145bba346bdafa535ee3fc63ecfed8cf777d6bf0e266",
+      "bytes": 7680
+    },
+    {
+      "path": "Center__baseline-dark.png",
+      "sha256": "a4cf2d16c7b2d0c70ac47c4aac643163ab2567c7ba19e10ff662cd51221bf5e1",
+      "bytes": 62606
+    },
+    {
+      "path": "Center__baseline-light.png",
+      "sha256": "0d562cc53a1869a71d573683fb5fb1cf47ba55165a05eb123e385b92479eecc5",
+      "bytes": 72336
+    },
+    {
+      "path": "Center__exact-head-dark.png",
+      "sha256": "a4cf2d16c7b2d0c70ac47c4aac643163ab2567c7ba19e10ff662cd51221bf5e1",
+      "bytes": 62606
+    },
+    {
+      "path": "Center__exact-head-light.png",
+      "sha256": "0d562cc53a1869a71d573683fb5fb1cf47ba55165a05eb123e385b92479eecc5",
+      "bytes": 72336
+    },
+    {
+      "path": "Center__vertical-writing__baseline-dark.png",
+      "sha256": "8d9a4da4ecaa94237e5f2fe7fe1c9fd94c14ea2fc753ed7849fa2dc30b43933d",
+      "bytes": 5540
+    },
+    {
+      "path": "Center__vertical-writing__baseline-light.png",
+      "sha256": "c52824c504001e6f192b4e0c3794162830fcbb6c722d06f7d95900b54c3f09d9",
+      "bytes": 5575
+    },
+    {
+      "path": "Center__vertical-writing__exact-head-dark.png",
+      "sha256": "8d9a4da4ecaa94237e5f2fe7fe1c9fd94c14ea2fc753ed7849fa2dc30b43933d",
+      "bytes": 5540
+    },
+    {
+      "path": "Center__vertical-writing__exact-head-light.png",
+      "sha256": "c52824c504001e6f192b4e0c3794162830fcbb6c722d06f7d95900b54c3f09d9",
+      "bytes": 5575
+    },
+    {
+      "path": "a11y-report.json",
+      "sha256": "e1e034de0d6f2e8866a8cd2df0566345a8162712d4a7b8018ab6609784a323d9",
+      "bytes": 243
+    },
+    {
+      "path": "audit-eligibility.json",
+      "sha256": "19de4d7d8f3a325040e9c2d37c9a4cccb057cef7d322c68a0d46ab0a38e08865",
+      "bytes": 4403
+    },
+    {
+      "path": "component-matrix-baseline.json",
+      "sha256": "b9629b8a8b292f189a8ae1027c0ef770ee42465425d6b4ebaf5c0a18e7c3ee3e",
+      "bytes": 27261
+    },
+    {
+      "path": "component-matrix-exact-head.json",
+      "sha256": "c1bc676c560f64a95e4d01a6ba2adcfa32186eb867e6344222113f8449b8aa08",
+      "bytes": 27158
+    },
+    {
+      "path": "component-pixel-diff.json",
+      "sha256": "b6018679fe0666a5c5275ea90c616207d63f5ccb45d57559694ba5692db72020",
+      "bytes": 5041
+    },
+    {
+      "path": "evidence-inventory.json",
+      "sha256": "6b22645a887efa42c1e7a911e74cb5607f8163771b2c36f04f6b47e4d8be465e",
+      "bytes": 18110
+    },
+    {
+      "path": "example-arm.txt",
+      "sha256": "be74d8fcf732e90f34a3d7b02ba0a42c71137df4b5ce1aa2b2ffaa0de019fedc",
+      "bytes": 244
+    },
+    {
+      "path": "example-before-after.json",
+      "sha256": "42c7a85615a82cb399f636e2b99b62560798763f64b873ea1b492a118d524c96",
+      "bytes": 2252
+    },
+    {
+      "path": "example-fixture.diff",
+      "sha256": "6154f259b40f8ec2a546c2b2395d628a55b3a3a8df1a934d1617e9f34ade7811",
+      "bytes": 853
+    },
+    {
+      "path": "frames/baseline/matcha-dark-default.png",
+      "sha256": "0b379ddbeeaef5cf056e15cbdcf3d99413a7861a15ee44f6296299f5bba0ff57",
+      "bytes": 6850
+    },
+    {
+      "path": "frames/baseline/matcha-light-default.png",
+      "sha256": "d14cc3a1e2a340eca7358a40fc9d4e5b3d05fbf54b84053d0259e8e25293066a",
+      "bytes": 6842
+    },
+    {
+      "path": "frames/baseline/neutral-dark-all-axis-modes.png",
+      "sha256": "07672ed0aa71fe32fceb1454d99f5e8d770b939308c151f84f0e25857176f378",
+      "bytes": 18256
+    },
+    {
+      "path": "frames/baseline/neutral-dark-coarse.png",
+      "sha256": "53cc879d8de6f08ec85d9387d9982ce3926a2a7efaefeff3043118ef35cf8f9e",
+      "bytes": 5134
+    },
+    {
+      "path": "frames/baseline/neutral-dark-inline.png",
+      "sha256": "0ca7e8be04ca3f189ba6efcc32741c15d52f47b793bfda2942910869d85e501c",
+      "bytes": 9134
+    },
+    {
+      "path": "frames/baseline/neutral-dark-ltr-padding-per-edge.png",
+      "sha256": "259d4c3139342b81aeb4fcd08fa3d6c158f053ce819c983720532d1a878afe42",
+      "bytes": 12844
+    },
+    {
+      "path": "frames/baseline/neutral-dark-narrow.png",
+      "sha256": "e0322ba0406df16521aeddc73ac58a2b4af25cf83cc51cd2895b87ecf25c473c",
+      "bytes": 4859
+    },
+    {
+      "path": "frames/baseline/neutral-dark-rtl-padding-per-edge.png",
+      "sha256": "3e668055dab49c234c11a59bed5bc790c98879b3891f64be0e1a64ffc52bfa32",
+      "bytes": 12865
+    },
+    {
+      "path": "frames/baseline/neutral-light-all-axis-modes.png",
+      "sha256": "c62d7f4a1749f5b9f725da33aefd7ba66cc3720911f37fb8fe074a2046c53abd",
+      "bytes": 17875
+    },
+    {
+      "path": "frames/baseline/neutral-light-coarse.png",
+      "sha256": "79108f4ba54718adbf4c027f3382f197eea0ea481c6c39f0dffc15bf856fbcc2",
+      "bytes": 5017
+    },
+    {
+      "path": "frames/baseline/neutral-light-inline.png",
+      "sha256": "d2d152efe465fa0a28b6b16b2d38ea207d2f4c0ffbb267a18fcc971a991e6635",
+      "bytes": 9021
+    },
+    {
+      "path": "frames/baseline/neutral-light-ltr-padding-per-edge.png",
+      "sha256": "f3c95598c8effb02765cf1618bb8f064b1b9d78c8e8253387700b7b9f70cb40f",
+      "bytes": 12805
+    },
+    {
+      "path": "frames/baseline/neutral-light-max-width-constraint.png",
+      "sha256": "967ee42bacfbe047426b4ea02840bb7b1801d5121143bceb8d50474521438a5e",
+      "bytes": 6784
+    },
+    {
+      "path": "frames/baseline/neutral-light-min-height-constraint.png",
+      "sha256": "dafc3602d2f9ac8c9ed2da13ace5569e856529040e0909a2bd2e2ed831b34186",
+      "bytes": 6781
+    },
+    {
+      "path": "frames/baseline/neutral-light-narrow.png",
+      "sha256": "4bb75f14e3987a00d8389e34364ced89805f51f19425ae8a792d1f88d0e043a5",
+      "bytes": 4751
+    },
+    {
+      "path": "frames/baseline/neutral-light-owned-axis-collision.png",
+      "sha256": "20a5dbf59748b37436158208602d725447665b8902393df957e7f4ec0b975443",
+      "bytes": 6764
+    },
+    {
+      "path": "frames/baseline/neutral-light-rtl-padding-per-edge.png",
+      "sha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
+      "bytes": 12794
+    },
+    {
+      "path": "frames/exact-head/matcha-dark-default.png",
+      "sha256": "0b379ddbeeaef5cf056e15cbdcf3d99413a7861a15ee44f6296299f5bba0ff57",
+      "bytes": 6850
+    },
+    {
+      "path": "frames/exact-head/matcha-light-default.png",
+      "sha256": "d14cc3a1e2a340eca7358a40fc9d4e5b3d05fbf54b84053d0259e8e25293066a",
+      "bytes": 6842
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-all-axis-modes.png",
+      "sha256": "07672ed0aa71fe32fceb1454d99f5e8d770b939308c151f84f0e25857176f378",
+      "bytes": 18256
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-coarse.png",
+      "sha256": "53cc879d8de6f08ec85d9387d9982ce3926a2a7efaefeff3043118ef35cf8f9e",
+      "bytes": 5134
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-inline.png",
+      "sha256": "0ca7e8be04ca3f189ba6efcc32741c15d52f47b793bfda2942910869d85e501c",
+      "bytes": 9134
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-ltr-padding-per-edge.png",
+      "sha256": "259d4c3139342b81aeb4fcd08fa3d6c158f053ce819c983720532d1a878afe42",
+      "bytes": 12844
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-narrow.png",
+      "sha256": "e0322ba0406df16521aeddc73ac58a2b4af25cf83cc51cd2895b87ecf25c473c",
+      "bytes": 4859
+    },
+    {
+      "path": "frames/exact-head/neutral-dark-rtl-padding-per-edge.png",
+      "sha256": "3e668055dab49c234c11a59bed5bc790c98879b3891f64be0e1a64ffc52bfa32",
+      "bytes": 12865
+    },
+    {
+      "path": "frames/exact-head/neutral-light-all-axis-modes.png",
+      "sha256": "c62d7f4a1749f5b9f725da33aefd7ba66cc3720911f37fb8fe074a2046c53abd",
+      "bytes": 17875
+    },
+    {
+      "path": "frames/exact-head/neutral-light-coarse.png",
+      "sha256": "79108f4ba54718adbf4c027f3382f197eea0ea481c6c39f0dffc15bf856fbcc2",
+      "bytes": 5017
+    },
+    {
+      "path": "frames/exact-head/neutral-light-inline.png",
+      "sha256": "d2d152efe465fa0a28b6b16b2d38ea207d2f4c0ffbb267a18fcc971a991e6635",
+      "bytes": 9021
+    },
+    {
+      "path": "frames/exact-head/neutral-light-ltr-padding-per-edge.png",
+      "sha256": "f3c95598c8effb02765cf1618bb8f064b1b9d78c8e8253387700b7b9f70cb40f",
+      "bytes": 12805
+    },
+    {
+      "path": "frames/exact-head/neutral-light-max-width-constraint.png",
+      "sha256": "967ee42bacfbe047426b4ea02840bb7b1801d5121143bceb8d50474521438a5e",
+      "bytes": 6784
+    },
+    {
+      "path": "frames/exact-head/neutral-light-min-height-constraint.png",
+      "sha256": "dafc3602d2f9ac8c9ed2da13ace5569e856529040e0909a2bd2e2ed831b34186",
+      "bytes": 6781
+    },
+    {
+      "path": "frames/exact-head/neutral-light-narrow.png",
+      "sha256": "4bb75f14e3987a00d8389e34364ced89805f51f19425ae8a792d1f88d0e043a5",
+      "bytes": 4751
+    },
+    {
+      "path": "frames/exact-head/neutral-light-owned-axis-collision.png",
+      "sha256": "20a5dbf59748b37436158208602d725447665b8902393df957e7f4ec0b975443",
+      "bytes": 6764
+    },
+    {
+      "path": "frames/exact-head/neutral-light-rtl-padding-per-edge.png",
+      "sha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
+      "bytes": 12794
+    },
+    {
+      "path": "published-center-surface.json",
+      "sha256": "d3cea7403d9d472e68b4b3479c4ae22461f6a02bc23e980bf3c11c73b092c5a3",
+      "bytes": 876
+    },
+    {
+      "path": "receipt-comparison.json",
+      "sha256": "6ade3d73aafdd3da9dcccc625b4f54bf0c4a9cdcf0e9064f1b23f2c3eb5950e0",
+      "bytes": 2806
+    },
+    {
+      "path": "receipts/component/baseline/matcha-dark-default.png.sensors.json",
+      "sha256": "e3da92e2edbb7c463d67590e81b7ac3d61db9f5445ce6638d03055a3994ad205",
+      "bytes": 2056
+    },
+    {
+      "path": "receipts/component/baseline/matcha-light-default.png.sensors.json",
+      "sha256": "45706b139e358f7aa723674c1e263b06336db5ffb72281aafaf4d9ddb6dbfd7d",
+      "bytes": 2067
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-all-axis-modes.png.sensors.json",
+      "sha256": "81769dea95cae8ba04eb6658cdfc8b928d09ad75ed866feaac8e23f6046b125d",
+      "bytes": 2826
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-coarse.png.sensors.json",
+      "sha256": "6f33beda4ffbae3647741734ce8631f7abf60de7e0f03ca0a9348d019f7f17b1",
+      "bytes": 1989
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-inline.png.sensors.json",
+      "sha256": "49f266c3e3c4379688aa73530909d8d62e2a3ca75cc2f2ceec3ce5dc4d469aa9",
+      "bytes": 2055
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-ltr-padding-per-edge.png.sensors.json",
+      "sha256": "91d3b57c18ecacd07c5c744bf6bc6f56bb8033368538625ff52cae17fecb9a8b",
+      "bytes": 2252
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-narrow.png.sensors.json",
+      "sha256": "0d6595d1c202f30eeaf2066a9c281373532ea0a53a9bc528a3782d1cbc6cded1",
+      "bytes": 2057
+    },
+    {
+      "path": "receipts/component/baseline/neutral-dark-rtl-padding-per-edge.png.sensors.json",
+      "sha256": "8a94d8bf33157a2c6d61fa22f0df33e6ad1f8e788f8846c666ef5d4afd34a34f",
+      "bytes": 2252
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-all-axis-modes.png.sensors.json",
+      "sha256": "02388f14bf89e6629e5d7e591e5e58fd7122eb60da5bbced2d3bc72d045adcc8",
+      "bytes": 2836
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-coarse.png.sensors.json",
+      "sha256": "bbbab226ab7844152c47cbd0bfadacb38c4e27940a41ed90ac4f7a552bb872af",
+      "bytes": 1999
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-inline.png.sensors.json",
+      "sha256": "b8669581864c9d3d1452b73d8513a4468a50c34661823974a1c30d3367593bbf",
+      "bytes": 2065
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-ltr-padding-per-edge.png.sensors.json",
+      "sha256": "d08207def3acf7d04aa4921b2202fadb599950ab832ff14f4fbe95ad4bc2d5aa",
+      "bytes": 2262
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-max-width-constraint.png.sensors.json",
+      "sha256": "e40b653bf465322478859676a2419fe3f2d5eba8402811bdde32b28d37acc4d1",
+      "bytes": 2189
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-min-height-constraint.png.sensors.json",
+      "sha256": "3109c69344846105b9dd310ab1806733f9e9eedba0da3d7719e473fd481c2ade",
+      "bytes": 2197
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-narrow.png.sensors.json",
+      "sha256": "5a138125074dd095ad92779b6d1b85294b5ad3d398beb444541c11186ad22a2b",
+      "bytes": 2067
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-owned-axis-collision.png.sensors.json",
+      "sha256": "9964a93728fb4b72c368ce74608a3bff517e498294360ecbb67b40f562d9311f",
+      "bytes": 2153
+    },
+    {
+      "path": "receipts/component/baseline/neutral-light-rtl-padding-per-edge.png.sensors.json",
+      "sha256": "d5e26b9a354d67243a388ecd1a89d8655ad22cf453ce88cc4703aa35581a64f4",
+      "bytes": 2262
+    },
+    {
+      "path": "receipts/component/exact-head/matcha-dark-default.png.sensors.json",
+      "sha256": "be5840f971ce3d6a1655940f186faecf4ecefa9cea1c490ca1c5a71bea08897c",
+      "bytes": 2053
+    },
+    {
+      "path": "receipts/component/exact-head/matcha-light-default.png.sensors.json",
+      "sha256": "cbb820e83fbfc1e32bb8d9ff4e74608d3349e23e9f76d481fd83885104eabc07",
+      "bytes": 2064
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-all-axis-modes.png.sensors.json",
+      "sha256": "3534ddcb513e5d92d9d24c3e53e99754109309008edd2308b44a4faf34384793",
+      "bytes": 2823
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-coarse.png.sensors.json",
+      "sha256": "bcd12398c03c218676070e29500e8bdcca7e5e55cedc518e322ad9e1d8a08978",
+      "bytes": 1986
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-inline.png.sensors.json",
+      "sha256": "820c58d9a7d4b1a74a0c005fe7a328d16de78a12ee584e23f65edcd6155e46d9",
+      "bytes": 2052
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-ltr-padding-per-edge.png.sensors.json",
+      "sha256": "34b0ee364be38dff3b4740afbbc4df5c3282e088d426e919a1cbd6783b922f7a",
+      "bytes": 2249
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-narrow.png.sensors.json",
+      "sha256": "b820cd6328e17304c4a705caff44d4e2c524f10a9419fd57be7b59eb1a842401",
+      "bytes": 2054
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-dark-rtl-padding-per-edge.png.sensors.json",
+      "sha256": "922e21647b71e15743ee2ac62587c1cdbca5e2ec3e76f06e75fced2828341660",
+      "bytes": 2249
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-all-axis-modes.png.sensors.json",
+      "sha256": "9a893c880039a2030e5d3dd803cd5e7f99756763bb658e6fe6624ca1ac1b76f1",
+      "bytes": 2833
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-coarse.png.sensors.json",
+      "sha256": "b39e8386a8dacdd85f622c9485e69087301eeea34d0b2eedfe42e78734932894",
+      "bytes": 1996
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-inline.png.sensors.json",
+      "sha256": "34d286dfd2d7431e7da2523d7d67520730e4d964c89c2defb8586bbdd8a3931e",
+      "bytes": 2062
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-ltr-padding-per-edge.png.sensors.json",
+      "sha256": "9476c9b26434e7c30ebe0233aafcfb581587e5499533471262507631cce10eed",
+      "bytes": 2259
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-max-width-constraint.png.sensors.json",
+      "sha256": "c066b3f68547c6441e9f9706affcf412cb5c591ad1c0d72134801f372cc01c6e",
+      "bytes": 2186
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-min-height-constraint.png.sensors.json",
+      "sha256": "92929464b95e9ade47d8eeef13a5f603c04bdc508ffe663b1aec33a778b4b7f3",
+      "bytes": 2194
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-narrow.png.sensors.json",
+      "sha256": "8668a9f943799507d0850b2158e3294a29025479b49eae3944e4008d16cf5c5d",
+      "bytes": 2064
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-owned-axis-collision.png.sensors.json",
+      "sha256": "fc84a332b1e3a03d920233ba03320389a5f094fc7da30638ecb38851098c9287",
+      "bytes": 2150
+    },
+    {
+      "path": "receipts/component/exact-head/neutral-light-rtl-padding-per-edge.png.sensors.json",
+      "sha256": "d3c16f0dee207018bb611c1b5d9dcf6cadf2ab5642afd554a209e783287f8c76",
+      "bytes": 2259
+    },
+    {
+      "path": "receipts/example/CenterHorizontal__after.sensors.json",
+      "sha256": "1e0ebbefc15eb95f52bda4d8e793bbd9637fe3ee44d592ed7d27997e49804331",
+      "bytes": 2186
+    },
+    {
+      "path": "receipts/example/CenterHorizontal__before.sensors.json",
+      "sha256": "919e8aa7d9ba4dd16a87b9dd52cc987d026b59bdd77aaf631b71dc33d8d96933",
+      "bytes": 2192
+    },
+    {
+      "path": "receipts/vertical-writing/baseline/Center__vertical-writing__neutral-dark.png.sensors.json",
+      "sha256": "69287e03880a3cf66fb78483af8a68a760c75ca1d5fe4ac6568c10818b092de1",
+      "bytes": 2511
+    },
+    {
+      "path": "receipts/vertical-writing/baseline/Center__vertical-writing__neutral-light.png.sensors.json",
+      "sha256": "7bb93963744d646c39c6dcc69aa947e95ac0d2618d8fd770141d867ac70e9cb5",
+      "bytes": 2521
+    },
+    {
+      "path": "receipts/vertical-writing/exact-head/Center__vertical-writing__neutral-dark.png.sensors.json",
+      "sha256": "97750e6d9591887bef5876a58c79d2941ec6b43b6803e99924e51879629dcd95",
+      "bytes": 2505
+    },
+    {
+      "path": "receipts/vertical-writing/exact-head/Center__vertical-writing__neutral-light.png.sensors.json",
+      "sha256": "ee5c9227d6154eec09b4a619aea498c227447b179c6f8be8eb11ccda129059fc",
+      "bytes": 2515
+    },
+    {
+      "path": "rtl-audit-report.json",
+      "sha256": "bbfea675008ce6ebeeb1da75ed26e614c168e6cbf3bf41aeadc7d23b27fdadc5",
+      "bytes": 9816
+    },
+    {
+      "path": "vertical-writing-arm.txt",
+      "sha256": "fa494094dbd35a92cdc448cc6823931e4829b45340ce5cc6cabbdd8e8c309cbb",
+      "bytes": 228
+    },
+    {
+      "path": "vertical-writing-fixture.diff",
+      "sha256": "82f0ac85b563eced5ebe743a4fcdc772155bbd5b6e13cb6010cab838aacca184",
+      "bytes": 1738
+    },
+    {
+      "path": "vertical-writing-measurement-baseline.json",
+      "sha256": "de152d4b3b7cf666d9c4ec03c07d1d5d8da9bc4a7990b1c287f14d3d36c0521d",
+      "bytes": 2259
+    },
+    {
+      "path": "vertical-writing-measurement-exact-head.json",
+      "sha256": "3cf78019897d6a10fa8e0cfc6d1356ff3c6663af7d6abed6814d33849038ec09",
+      "bytes": 2250
+    },
+    {
+      "path": "vertical-writing-pixel-diff.json",
+      "sha256": "2b323a6755667f92d724defc4efce90099e032cd2280f0d94b7f40d2f2e84a4e",
+      "bytes": 456
+    }
+  ]
+}

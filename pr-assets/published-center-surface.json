@@ -1,0 +1,39 @@
+{
+  "package": "@astryxdesign/core",
+  "version": "0.5.4",
+  "exportPath": "./Center",
+  "exportEntry": {
+    "types": "./dist/Center/index.d.ts",
+    "source": "./src/Center/index.ts",
+    "default": "./dist/Center/index.js"
+  },
+  "exportedSymbols": [
+    "Center",
+    "CenterProps",
+    "CenterAxis"
+  ],
+  "declaredAxisValues": [
+    "both",
+    "horizontal",
+    "vertical"
+  ],
+  "declaredProps": [
+    "ref",
+    "axis",
+    "width",
+    "height",
+    "maxWidth",
+    "minHeight",
+    "padding",
+    "paddingInline",
+    "paddingInlineStart",
+    "paddingInlineEnd",
+    "paddingBlock",
+    "paddingBlockStart",
+    "paddingBlockEnd",
+    "isInline",
+    "children"
+  ],
+  "indexDeclarationSha256": "4e89cbcf8dbab92662b7b6de96daa3aa9ba61d5a1f13662bb443a058a6b87496",
+  "componentDeclarationSha256": "309280e2f8fca6f673ba068ad23969408a2401a30f5c72faa0ba27b03c6ad00c"
+}

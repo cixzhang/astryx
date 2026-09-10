@@ -1,10 +1,14 @@
 [
   {
     "mode": "light",
-    "identical": true
+    "identical": true,
+    "beforeSha256": "c52824c504001e6f192b4e0c3794162830fcbb6c722d06f7d95900b54c3f09d9",
+    "afterSha256": "c52824c504001e6f192b4e0c3794162830fcbb6c722d06f7d95900b54c3f09d9"
   },
   {
     "mode": "dark",
-    "identical": true
+    "identical": true,
+    "beforeSha256": "8d9a4da4ecaa94237e5f2fe7fe1c9fd94c14ea2fc753ed7849fa2dc30b43933d",
+    "afterSha256": "8d9a4da4ecaa94237e5f2fe7fe1c9fd94c14ea2fc753ed7849fa2dc30b43933d"
   }
 ]

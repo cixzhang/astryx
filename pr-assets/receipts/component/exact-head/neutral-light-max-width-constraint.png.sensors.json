@@ -1,5 +1,5 @@
 {
-  "label": "neutral-light-coarse",
+  "label": "neutral-light-max-width-constraint",
   "identity": "story",
   "build": {
     "root": "<worktree>",
@@ -16,24 +16,26 @@
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "scenario": "max-width-constraint",
+      "inputWidth": 480,
+      "inputMaxWidth": 240,
+      "renderedWidth": 240,
+      "constraintApplied": true,
+      "text": "Centered Content"
     }
   },
   "observed": {
@@ -52,37 +54,39 @@
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "visible": true,
     "box": {
       "x": 28,
       "y": 28,
-      "width": 356,
-      "height": 200,
+      "width": 240,
+      "height": 120,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "scenario": "max-width-constraint",
+      "inputWidth": 480,
+      "inputMaxWidth": 240,
+      "renderedWidth": 240,
+      "constraintApplied": true,
+      "text": "Centered Content"
     }
   },
   "image": {
-    "path": "<evidence>/final/screenshots/neutral-light-coarse.png",
-    "bytes": 5017
+    "path": "<evidence>/final/screenshots/neutral-light-max-width-constraint.png",
+    "bytes": 6784
   }
 }

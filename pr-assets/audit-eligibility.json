@@ -5,49 +5,76 @@
   "auditMode": "N",
   "rubricVersion": "1.16.2",
   "heads": {
-    "repository": "1153c1013c5788100ea253bf3d0306d55f56fbae",
-    "componentContract": "1153c1013c5788100ea253bf3d0306d55f56fbae",
+    "repository": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+    "componentContract": "55f51a06c6e1f7780eecb078fa6bf10447579956",
     "base": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
-  },
-  "score": {
-    "baseline": {
-      "score": 73.3,
-      "grade": "C",
-      "blocks": 3
-    },
-    "final": {
-      "score": 87.0,
-      "grade": "C",
-      "blocks": 1
-    },
-    "sensitivityWithoutOpenBlocks": {
-      "score": 95.0,
-      "grade": "A"
-    }
   },
   "inventory": {
     "closed": true,
-    "rows": 20,
+    "rows": 26,
+    "receipt": "pr-assets/evidence-inventory.json",
     "gaps": [
-      "FR2: physical one-axis semantics reverse under vertical writing"
+      "B15 / component:Center/FR2: physical one-axis semantics reverse under vertical writing"
     ]
   },
   "unresolvedGaps": {
     "objective": [
-      "FR2: physical one-axis semantics reverse under vertical writing"
+      "B15 / component:Center/FR2: physical one-axis semantics reverse under vertical writing"
     ],
     "manual": [
-      "FR2 runtime correction is intentionally outside this audit because a safe fix must preserve DOM, flow, server rendering, and caller content writing mode",
-      "exact-head owner approval for the draft observational contract"
+      "The FR2 runtime correction is intentionally outside this audit because a safe fix must preserve DOM, flow, server rendering, and caller-content writing mode",
+      "Exact-head owner approval for the draft observational contract"
     ]
   },
   "remediations": [
-    "P3",
-    "V3",
-    "I17",
-    "X7"
+    {
+      "ruleId": "P3",
+      "beforeEvidence": [
+        "Public Center accepted data-axis=vertical while axis=horizontal and rendered the spoofed value"
+      ],
+      "afterEvidence": [
+        "The public-seam regression test passes with data-axis=horizontal",
+        "The receipted collision matrix records the intended input separately and the reflected output changes from vertical at base to horizontal at head"
+      ]
+    },
+    {
+      "ruleId": "V3",
+      "beforeEvidence": [
+        "Axis tests asserted only display:flex and sizing tests asserted only render success"
+      ],
+      "afterEvidence": [
+        "Axis tests assert the public computed alignment contract",
+        "An SSR output test proves the server-safe public seam",
+        "Max-width 480\u2192240 and min-height 80\u2192220 browser counterfactuals fail if either constraint is dropped"
+      ]
+    },
+    {
+      "ruleId": "I17",
+      "beforeEvidence": [
+        "The component RTL audit reported zero measured and one coverage gap"
+      ],
+      "afterEvidence": [
+        "D8 records writing mode, direction, logical start/end, and all four physical edges",
+        "Real Chromium startup checks pass left/right mirroring in horizontal writing and top/bottom mirroring in vertical writing while rejecting a hidden subject",
+        "Center reports one measured component and zero coverage gaps"
+      ]
+    },
+    {
+      "ruleId": "X7",
+      "beforeEvidence": [
+        "CenterHorizontal was attributed to Center but rendered no Center"
+      ],
+      "afterEvidence": [
+        "The example renders Center axis=horizontal around the centered control group",
+        "Exact-base and exact-head receipts and measurement summaries name their matching commits"
+      ]
+    }
   ],
   "approvals": [
+    {
+      "name": "independent-exact-head-review",
+      "state": "pending"
+    },
     {
       "name": "component-spec-owner",
       "state": "pending"
@@ -60,16 +87,29 @@
   "checks": [
     {
       "name": "local-focused",
-      "state": "pass"
+      "state": "pass",
+      "assertions": 478
     },
     {
       "name": "local-build",
       "state": "pass"
     },
     {
-      "name": "exact-head-ci",
+      "name": "a11y",
       "state": "pass",
-      "run": 34488977132
+      "stories": 10,
+      "violations": 0
+    },
+    {
+      "name": "rtl",
+      "state": "pass",
+      "measured": 1,
+      "gaps": 0
+    },
+    {
+      "name": "exact-head-ci",
+      "state": "pending",
+      "run": null
     },
     {
       "name": "audit-eligibility",
@@ -78,9 +118,9 @@
   ],
   "evidence": {
     "componentFrames": {
-      "baseline": 16,
-      "exactHead": 16,
-      "pixelIdentical": 16
+      "baseline": 17,
+      "exactHead": 17,
+      "pixelIdentical": 17
     },
     "verticalWritingFrames": {
       "baseline": 2,
@@ -89,18 +129,21 @@
     },
     "exampleFrames": {
       "baseline": 1,
-      "exactHead": 1,
-      "intentionalChange": true
+      "exactHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+      "intentionalChange": true,
+      "baseHead": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
     },
-    "receiptPairsMatchExceptBuild": 19
+    "receiptPairs": 20,
+    "receiptPairsMatchExceptBuild": 20
   },
   "eligibility": {
     "eligible": false,
     "reasons": [
       "spec:AST-029 remains phase: accepted; FR11 activation is absent",
-      "the trusted audit-eligibility check is unavailable",
-      "one inherited FR2 BLOCK remains open",
-      "exact-head owner approval for the draft observational contract is pending"
+      "The trusted audit-eligibility check is unavailable",
+      "One inherited B15 / component:Center/FR2 BLOCK remains open",
+      "Exact-head independent and owner approval are pending",
+      "Exact-head CI is pending"
     ]
   }
 }

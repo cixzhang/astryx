@@ -96,6 +96,22 @@
     "afterSha256": "f3c95598c8effb02765cf1618bb8f064b1b9d78c8e8253387700b7b9f70cb40f"
   },
   {
+    "file": "neutral-light-max-width-constraint.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "967ee42bacfbe047426b4ea02840bb7b1801d5121143bceb8d50474521438a5e",
+    "afterSha256": "967ee42bacfbe047426b4ea02840bb7b1801d5121143bceb8d50474521438a5e"
+  },
+  {
+    "file": "neutral-light-min-height-constraint.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "dafc3602d2f9ac8c9ed2da13ace5569e856529040e0909a2bd2e2ed831b34186",
+    "afterSha256": "dafc3602d2f9ac8c9ed2da13ace5569e856529040e0909a2bd2e2ed831b34186"
+  },
+  {
     "file": "neutral-light-narrow.png",
     "changedPixels": 0,
     "percent": 0.0,
@@ -118,13 +134,5 @@
     "identical": true,
     "beforeSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
     "afterSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b"
-  },
-  {
-    "file": "neutral-light-sizing-constraints.png",
-    "changedPixels": 0,
-    "percent": 0.0,
-    "identical": true,
-    "beforeSha256": "a1b1ed944d1f74371cd35d44f6867202ecdc2850a103ae061ee7406ab31d8980",
-    "afterSha256": "a1b1ed944d1f74371cd35d44f6867202ecdc2850a103ae061ee7406ab31d8980"
   }
 ]

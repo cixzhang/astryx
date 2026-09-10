@@ -1,6 +1,7 @@
 {
-  "pairs": 19,
-  "matchedExceptBuild": 19,
+  "schemaVersion": 1,
+  "pairs": 20,
+  "matchedExceptBuild": 20,
   "allMatchExceptBuild": true,
   "results": [
     {
@@ -65,6 +66,16 @@
     },
     {
       "kind": "component",
+      "name": "neutral-light-max-width-constraint.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
+      "name": "neutral-light-min-height-constraint.png.sensors.json",
+      "matchExceptBuild": true
+    },
+    {
+      "kind": "component",
       "name": "neutral-light-narrow.png.sensors.json",
       "matchExceptBuild": true
     },
@@ -76,11 +87,6 @@
     {
       "kind": "component",
       "name": "neutral-light-rtl-padding-per-edge.png.sensors.json",
-      "matchExceptBuild": true
-    },
-    {
-      "kind": "component",
-      "name": "neutral-light-sizing-constraints.png.sensors.json",
       "matchExceptBuild": true
     },
     {

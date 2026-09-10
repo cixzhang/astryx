@@ -1,0 +1,626 @@
+{
+  "schemaVersion": 1,
+  "component": "Center",
+  "package": "core",
+  "repositoryHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+  "closed": true,
+  "rows": [
+    {
+      "id": "E01",
+      "publicSurface": "@astryxdesign/core/Center package subpath",
+      "source": [
+        "packages/core/package.json",
+        "packages/core/src/Center/index.ts"
+      ],
+      "existingTests": [
+        "scripts/verify-exports.mjs",
+        "published @astryxdesign/core@0.5.4 export probe"
+      ],
+      "consumerDocs": [
+        "packages/core/src/Center/Center.doc.mjs"
+      ],
+      "renderedEvidence": [
+        "N/A: module reachability is non-rendering; all Center frames import the public subpath"
+      ],
+      "authority": [
+        "architecture:public-component-api/INV1",
+        "architecture:public-component-api/INV9",
+        "architecture:public-component-api/INV12"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E02",
+      "publicSurface": "Center, CenterProps, and CenterAxis exports",
+      "source": [
+        "packages/core/src/Center/index.ts",
+        "packages/core/src/Center/Center.tsx"
+      ],
+      "existingTests": [
+        "published @astryxdesign/core@0.5.4 declaration probe",
+        "core typecheck"
+      ],
+      "consumerDocs": [
+        "packages/core/src/Center/Center.doc.mjs"
+      ],
+      "renderedEvidence": [
+        "N/A: value/type export shape is non-visual"
+      ],
+      "authority": [
+        "architecture:public-component-api/INV1",
+        "architecture:public-component-api/INV12"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E03",
+      "publicSurface": "fixed div root and required children",
+      "source": [
+        "packages/core/src/Center/Center.tsx"
+      ],
+      "existingTests": [
+        "renders as div element",
+        "renders on the server without a client boundary",
+        "renders and centers children"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs anatomy and children prop"
+      ],
+      "renderedEvidence": [
+        "all component frames"
+      ],
+      "authority": [
+        "component:Center/FR1",
+        "component:Center/AV1"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E04",
+      "publicSurface": "axis omitted or both",
+      "source": [
+        "Center.tsx default axis='both'",
+        "styles.alignItemsCenter",
+        "styles.justifyContentCenter"
+      ],
+      "existingTests": [
+        "renders and centers children (both axes by default)"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs axis default",
+        "Center.stories.tsx Default and AllAxisModes"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-all-axis-modes",
+        "matcha-{light,dark}-default"
+      ],
+      "authority": [
+        "family:layout-primitives/FR5",
+        "component:Center/FR2"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E05",
+      "publicSurface": "axis='horizontal' in horizontal writing",
+      "source": [
+        "Center.tsx justifyContentCenter branch"
+      ],
+      "existingTests": [
+        "centers horizontally only"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs axis caveat",
+        "Center.stories.tsx HorizontalOnly and AllAxisModes"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-all-axis-modes"
+      ],
+      "authority": [
+        "family:layout-primitives/FR5",
+        "component:Center/FR2"
+      ],
+      "result": "pass in horizontal writing",
+      "gap": "B15 applies outside horizontal writing; see E07"
+    },
+    {
+      "id": "E06",
+      "publicSurface": "axis='vertical' in horizontal writing",
+      "source": [
+        "Center.tsx alignItemsCenter branch"
+      ],
+      "existingTests": [
+        "centers vertically only"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs axis caveat",
+        "Center.stories.tsx VerticalOnly and AllAxisModes"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-all-axis-modes"
+      ],
+      "authority": [
+        "family:layout-primitives/FR5",
+        "component:Center/FR2"
+      ],
+      "result": "pass in horizontal writing",
+      "gap": "B15 applies outside horizontal writing; see E07"
+    },
+    {
+      "id": "E07",
+      "publicSurface": "single-axis modes under vertical writing",
+      "source": [
+        "Center.tsx maps horizontal to justifyContent and vertical to alignItems"
+      ],
+      "existingTests": [
+        "no unit assertion can establish physical geometry; browser measurement is authoritative"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs and CenterHorizontal.doc.mjs explicit caveat",
+        "component:Center draft FR2"
+      ],
+      "renderedEvidence": [
+        "Center__vertical-writing__{baseline,exact-head}-{light,dark}",
+        "vertical-writing measurement receipts"
+      ],
+      "authority": [
+        "family:layout-primitives/FR5",
+        "component:Center/FR2"
+      ],
+      "result": "BLOCK",
+      "gap": "B15: horizontal centers the vertical physical dimension and vertical centers the horizontal physical dimension under vertical-rl"
+    },
+    {
+      "id": "E08",
+      "publicSurface": "block-level flex display",
+      "source": [
+        "Center.tsx styles.base"
+      ],
+      "existingTests": [
+        "default and one-axis tests assert display:flex"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs",
+        "Center.stories.tsx Default"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-all-axis-modes"
+      ],
+      "authority": [
+        "component:Center/FR1"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E09",
+      "publicSurface": "isInline=true inline-flex display",
+      "source": [
+        "Center.tsx styles.inline branch"
+      ],
+      "existingTests": [
+        "renders as inline-flex when isInline is true"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs isInline",
+        "Center.stories.tsx Inline"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-inline"
+      ],
+      "authority": [
+        "component:Center/FR1"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E10",
+      "publicSurface": "numeric width",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "applies width prop"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs width",
+        "Center.stories.tsx AllAxisModes"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-all-axis-modes records 300px boxes"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass",
+      "gap": "legacy unit assertion is render-only; covered by Chromium geometry"
+    },
+    {
+      "id": "E11",
+      "publicSurface": "CSS-value string width",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "applies both width and height props"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs width",
+        "Center.stories.tsx Default and FullSize"
+      ],
+      "renderedEvidence": [
+        "default frames record width='100%' resolved inside the story surface"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass",
+      "gap": "legacy unit assertion is render-only; covered by Chromium geometry"
+    },
+    {
+      "id": "E12",
+      "publicSurface": "numeric height",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "applies both width and height props"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs height",
+        "Center.stories.tsx Default, VerticalOnly, and AllAxisModes"
+      ],
+      "renderedEvidence": [
+        "default and all-axis frames record the requested 200px and 150px heights"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass",
+      "gap": "legacy unit assertion is render-only; covered by Chromium geometry"
+    },
+    {
+      "id": "E13",
+      "publicSurface": "CSS-value string height",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "applies height prop with 100%"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs height"
+      ],
+      "renderedEvidence": [
+        "N/A: string acceptance is type/source verified; no distinct visual contract beyond resolved box geometry"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass with V4 testing debt",
+      "gap": "height string has only a render-only unit assertion"
+    },
+    {
+      "id": "E14",
+      "publicSurface": "maxWidth constraint",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "source/type coverage; browser counterfactual is the mutation-sensitive check"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs maxWidth"
+      ],
+      "renderedEvidence": [
+        "neutral-light-max-width-constraint: width 480 constrained to 240"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E15",
+      "publicSurface": "minHeight constraint",
+      "source": [
+        "Center.tsx dynamicStyles.sizing"
+      ],
+      "existingTests": [
+        "source/type coverage; browser counterfactual is the mutation-sensitive check"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs minHeight"
+      ],
+      "renderedEvidence": [
+        "neutral-light-min-height-constraint: height 80 raised to 220"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "component:Center/FR3"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E16",
+      "publicSurface": "uniform padding",
+      "source": [
+        "Center.tsx padding fallback chain"
+      ],
+      "existingTests": [
+        "applies a class when padding is set",
+        "leaves default output unchanged when omitted"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs padding",
+        "Center.stories.tsx Padding"
+      ],
+      "renderedEvidence": [
+        "padding-per-edge frames retain uniform padding on non-overridden edges"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "family:layout-primitives/FR3",
+        "component:Center/FR4"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E17",
+      "publicSurface": "paddingInline and paddingBlock axis overrides",
+      "source": [
+        "Center.tsx per-axis padding resolution"
+      ],
+      "existingTests": [
+        "accepts paddingInline and paddingBlock",
+        "axis override class-set equivalence"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs logical axis descriptions"
+      ],
+      "renderedEvidence": [
+        "padding-per-edge frames exercise the fallback chain on unaffected edges"
+      ],
+      "authority": [
+        "family:layout-primitives/FR2",
+        "family:layout-primitives/FR3",
+        "component:Center/FR4"
+      ],
+      "result": "pass",
+      "gap": "some legacy unit assertions are render-only; D8 and browser geometry cover logical resolution"
+    },
+    {
+      "id": "E18",
+      "publicSurface": "four logical edge overrides and precedence",
+      "source": [
+        "Center.tsx paddingInlineStartStyles, paddingInlineEndStyles, paddingBlockStartStyles, paddingBlockEndStyles"
+      ],
+      "existingTests": [
+        "block-start/end precedence",
+        "inline-start/end precedence",
+        "resolves all four edges independently"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs logical edge props",
+        "Center.stories.tsx PaddingPerEdge"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-{ltr,rtl}-padding-per-edge"
+      ],
+      "authority": [
+        "family:layout-primitives/FR2",
+        "family:layout-primitives/FR3",
+        "component:Center/FR4"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E19",
+      "publicSurface": "explicit zero spacing",
+      "source": [
+        "Center.tsx uses nullish checks so zero is retained"
+      ],
+      "existingTests": [
+        "padding={0}",
+        "paddingBlockEnd={0}",
+        "paddingInlineEnd={0}"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs spacing-step unions include 0"
+      ],
+      "renderedEvidence": [
+        "padding-per-edge frames record paddingBottom=0"
+      ],
+      "authority": [
+        "family:layout-primitives/FR1",
+        "family:layout-primitives/FR3",
+        "component:Center/FR4"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E20",
+      "publicSurface": "logical padding under direction and writing-mode changes",
+      "source": [
+        "logical StyleX padding properties",
+        "D8 measureLogicalInlineSubject"
+      ],
+      "existingTests": [
+        "writing-mode-aware classifyLogicalInlinePair tests",
+        "Chromium horizontal and vertical startup self-checks"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs logical padding wording",
+        "rtl-audit README D8"
+      ],
+      "renderedEvidence": [
+        "LTR/RTL padding-per-edge receipts",
+        "D8 report records writingMode and top/right/bottom/left"
+      ],
+      "authority": [
+        "family:layout-primitives/FR2",
+        "component:Center/FR4"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E21",
+      "publicSurface": "BaseProps DOM/ARIA passthrough and ref",
+      "source": [
+        "CenterProps extends BaseProps<HTMLDivElement>",
+        "Center.tsx root composition"
+      ],
+      "existingTests": [
+        "passes through additional props",
+        "forwards ref correctly",
+        "server render"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs accessibility guidance",
+        "component:Center/AR1-AR3"
+      ],
+      "renderedEvidence": [
+        "N/A: ref and neutral ARIA/data passthrough are non-visual; collision output is measured separately"
+      ],
+      "authority": [
+        "architecture:public-component-api/INV5",
+        "architecture:public-component-api/INV8"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E22",
+      "publicSurface": "className, style, and xstyle composition",
+      "source": [
+        "Center.tsx mergeProps and root spread order"
+      ],
+      "existingTests": [
+        "public passthrough tests",
+        "xstyle render-only test"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs xstyle"
+      ],
+      "renderedEvidence": [
+        "Inline and Padding stories apply non-empty xstyle to the Center root"
+      ],
+      "authority": [
+        "architecture:public-component-api/INV5",
+        "architecture:public-component-api/INV6"
+      ],
+      "result": "pass with V4 testing debt",
+      "gap": "the dedicated xstyle unit case passes undefined; real Storybook compositions supply the behavioral evidence"
+    },
+    {
+      "id": "E23",
+      "publicSurface": "center theme target and reflected axis",
+      "source": [
+        "Center.tsx themeProps('center', {axis})"
+      ],
+      "existingTests": [
+        "themingTargets.test.ts",
+        "owned data-axis red-before-green regression"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs theming.targets"
+      ],
+      "renderedEvidence": [
+        "neutral-light-owned-axis-collision plus matrix measurement"
+      ],
+      "authority": [
+        "architecture:component-theming-surface",
+        "architecture:public-component-api/INV5",
+        "component:Center/FR6"
+      ],
+      "result": "pass after P3 remediation",
+      "gap": null
+    },
+    {
+      "id": "E24",
+      "publicSurface": "public CenterHorizontal example",
+      "source": [
+        "packages/cli/assets/templates/blocks/components/Center/CenterHorizontal.tsx"
+      ],
+      "existingTests": [
+        "docsite generation/test",
+        "CLI structure and component-reference checks"
+      ],
+      "consumerDocs": [
+        "CenterHorizontal.doc.mjs"
+      ],
+      "renderedEvidence": [
+        "CenterHorizontal before/after exact-commit pair"
+      ],
+      "authority": [
+        "rubric X7",
+        "component:Center/FR2"
+      ],
+      "result": "pass after example repair",
+      "gap": "single-axis vertical-writing caveat is explicit"
+    },
+    {
+      "id": "E25",
+      "publicSurface": "passive content semantics and reading order",
+      "source": [
+        "Center.tsx renders children unchanged in one div"
+      ],
+      "existingTests": [
+        "children, passthrough, server-render, and axe coverage"
+      ],
+      "consumerDocs": [
+        "Center.doc.mjs accessibility best practice",
+        "component:Center/AR1-AR3"
+      ],
+      "renderedEvidence": [
+        "all frames retain caller content order; component-scoped axe has zero violations"
+      ],
+      "authority": [
+        "component:Center/AR1-AR3",
+        "objective accessibility semantics"
+      ],
+      "result": "pass",
+      "gap": null
+    },
+    {
+      "id": "E26",
+      "publicSurface": "absence of implicit gap, breakpoint, overflow, region, and bleed publication",
+      "source": [
+        "Center.tsx has no such branch or public prop"
+      ],
+      "existingTests": [
+        "source branch inventory",
+        "320px and coarse-pointer browser checks"
+      ],
+      "consumerDocs": [
+        "component:Center/FR5 and FR7",
+        "Center.doc.mjs scope guidance"
+      ],
+      "renderedEvidence": [
+        "neutral-{light,dark}-{narrow,coarse} with no overflow"
+      ],
+      "authority": [
+        "family:layout-primitives/FR4,FR7,FR8",
+        "architecture:container-padding/INV8"
+      ],
+      "result": "pass",
+      "gap": null
+    }
+  ]
+}

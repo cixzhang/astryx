@@ -1,10 +1,10 @@
 {
-  "label": "neutral-light-coarse",
+  "label": "neutral-light-min-height-constraint",
   "identity": "story",
   "build": {
     "root": "<worktree>",
-    "expectedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956",
-    "observedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956"
+    "expectedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
+    "observedSha": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee"
   },
   "expected": {
     "globals": {
@@ -16,24 +16,26 @@
     "colorMode": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "scenario": "min-height-constraint",
+      "inputHeight": 80,
+      "inputMinHeight": 220,
+      "renderedHeight": 220,
+      "constraintApplied": true,
+      "text": "Centered Content"
     }
   },
   "observed": {
@@ -52,37 +54,39 @@
     "surfaceClass": "light",
     "direction": "ltr",
     "viewport": {
-      "width": 412,
-      "height": 640,
+      "width": 900,
+      "height": 800,
       "dpr": 1
     },
     "media": {
       "forcedColors": false,
       "reducedMotion": false,
-      "coarsePointer": true,
-      "hover": false
+      "coarsePointer": false,
+      "hover": true
     },
     "targetCount": 1,
     "visible": true,
     "box": {
       "x": 28,
       "y": 28,
-      "width": 356,
-      "height": 200,
+      "width": 300,
+      "height": 220,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "height": "200px",
-      "text": "Centered Content",
-      "fitsViewport": true
+      "scenario": "min-height-constraint",
+      "inputHeight": 80,
+      "inputMinHeight": 220,
+      "renderedHeight": 220,
+      "constraintApplied": true,
+      "text": "Centered Content"
     }
   },
   "image": {
-    "path": "<evidence>/final/screenshots/neutral-light-coarse.png",
-    "bytes": 5017
+    "path": "<evidence>/baseline/screenshots/neutral-light-min-height-constraint.png",
+    "bytes": 6781
   }
 }

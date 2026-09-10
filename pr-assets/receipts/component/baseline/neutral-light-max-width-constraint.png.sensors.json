@@ -1,5 +1,5 @@
 {
-  "label": "neutral-light-sizing-constraints",
+  "label": "neutral-light-max-width-constraint",
   "identity": "story",
   "build": {
     "root": "<worktree>",
@@ -30,11 +30,11 @@
     "surfaceClass": "light",
     "runningAnimations": 0,
     "state": {
-      "axis": "both",
-      "width": "240px",
-      "height": "220px",
-      "maxWidth": "240px",
-      "minHeight": "220px",
+      "scenario": "max-width-constraint",
+      "inputWidth": 480,
+      "inputMaxWidth": 240,
+      "renderedWidth": 240,
+      "constraintApplied": true,
       "text": "Centered Content"
     }
   },
@@ -70,23 +70,23 @@
       "x": 28,
       "y": 28,
       "width": 240,
-      "height": 220,
+      "height": 120,
       "insideViewport": true
     },
     "fonts": "loaded",
     "runningAnimations": 0,
     "storybookError": null,
     "state": {
-      "axis": "both",
-      "width": "240px",
-      "height": "220px",
-      "maxWidth": "240px",
-      "minHeight": "220px",
+      "scenario": "max-width-constraint",
+      "inputWidth": 480,
+      "inputMaxWidth": 240,
+      "renderedWidth": 240,
+      "constraintApplied": true,
       "text": "Centered Content"
     }
   },
   "image": {
-    "path": "<evidence>/baseline/screenshots/neutral-light-sizing-constraints.png",
+    "path": "<evidence>/baseline/screenshots/neutral-light-max-width-constraint.png",
     "bytes": 6784
   }
 }

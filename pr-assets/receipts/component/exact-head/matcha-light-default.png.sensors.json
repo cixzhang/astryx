@@ -3,8 +3,8 @@
   "identity": "story",
   "build": {
     "root": "<worktree>",
-    "expectedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae",
-    "observedSha": "1153c1013c5788100ea253bf3d0306d55f56fbae"
+    "expectedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+    "observedSha": "55f51a06c6e1f7780eecb078fa6bf10447579956"
   },
   "expected": {
     "globals": {

@@ -1,10 +1,96 @@
 {
-  "generatedAt": "2026-09-10T14:45:33.724Z",
+  "generatedAt": "2026-09-10T15:51:28.158Z",
   "dist": "apps/storybook/dist",
   "selfChecks": {
     "d8LogicalInline": {
-      "visible": "pass",
-      "hidden": "fail"
+      "horizontal": {
+        "ltr": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 40,
+          "direction": "ltr",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 24,
+          "bottom": 12,
+          "left": 8
+        },
+        "rtl": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 40,
+          "direction": "rtl",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 8,
+          "bottom": 12,
+          "left": 24
+        },
+        "result": {
+          "verdict": "pass",
+          "reason": "logical start/end stay stable and resolved left/right sides swap for horizontal-tb"
+        }
+      },
+      "vertical": {
+        "ltr": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 80,
+          "direction": "ltr",
+          "writingMode": "vertical-rl",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 8,
+          "right": 4,
+          "bottom": 24,
+          "left": 12
+        },
+        "rtl": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 80,
+          "direction": "rtl",
+          "writingMode": "vertical-rl",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 24,
+          "right": 4,
+          "bottom": 8,
+          "left": 12
+        },
+        "result": {
+          "verdict": "pass",
+          "reason": "logical start/end stay stable and resolved top/bottom sides swap for vertical-rl"
+        }
+      },
+      "hidden": {
+        "measurement": {
+          "count": 1,
+          "visible": false,
+          "width": 0,
+          "height": 0,
+          "direction": "rtl",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 8,
+          "bottom": 12,
+          "left": 24
+        },
+        "result": {
+          "verdict": "fail",
+          "reason": "logical inline-edge subject is not one visible non-zero box"
+        }
+      }
     }
   },
   "autoDiscovery": {
@@ -275,7 +361,7 @@
           "D8": "pass"
         },
         "notes": [
-          "D8 logical inline edges: logical start/end stay stable and resolved physical sides swap; LTR 1044x200 start/end 8/24px, RTL 1044x200 start/end 8/24px"
+          "D8 logical inline edges: logical start/end stay stable and resolved left/right sides swap for horizontal-tb; writing-mode horizontal-tb; LTR start/end 8/24px T/R/B/L 24/24/0/8px; RTL start/end 8/24px T/R/B/L 24/8/0/24px"
         ],
         "rollup": "RTL-ready"
       }
