@@ -1,0 +1,92 @@
+{
+  "label": "neutral-dark-rtl-padding-per-edge",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
+    "expectedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b",
+    "observedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "rtl"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "rtl",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "surfaceClass": "dark",
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "paddingTop": "24px",
+      "paddingRight": "8px",
+      "paddingBottom": "0px",
+      "paddingLeft": "24px",
+      "text": "Roomy above, flush below — only the block-end edge moved"
+    }
+  },
+  "observed": {
+    "storyExpected": "core-center--padding-per-edge",
+    "storyObserved": "core-center--padding-per-edge",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "rtl"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgb(27, 27, 27)",
+    "surfaceLuminance": 0.10588235294117647,
+    "surfaceClass": "dark",
+    "direction": "rtl",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 28,
+      "y": 28,
+      "width": 844,
+      "height": 200,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "axis": "both",
+      "paddingTop": "24px",
+      "paddingRight": "8px",
+      "paddingBottom": "0px",
+      "paddingLeft": "24px",
+      "text": "Roomy above, flush below — only the block-end edge moved"
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-dark-rtl-padding-per-edge.png",
+    "bytes": 12865
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "label": "matcha-light-default",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
+    "expectedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b",
+    "observedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "matcha",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "matcha",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "surfaceClass": "light",
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
+    }
+  },
+  "observed": {
+    "storyExpected": "core-center--default",
+    "storyObserved": "core-center--default",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "matcha",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "matcha",
+    "colorMode": "light",
+    "surfaceColor": "rgb(240, 240, 224)",
+    "surfaceLuminance": 0.9366462745098039,
+    "surfaceClass": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 34,
+      "y": 34,
+      "width": 832,
+      "height": 200,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "axis": "both",
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "text": "Centered Content"
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/matcha-light-default.png",
+    "bytes": 6842
+  }
+}

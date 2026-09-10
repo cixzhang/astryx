@@ -1,0 +1,114 @@
+[
+  {
+    "file": "matcha-dark-default.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "0b379ddbeeaef5cf056e15cbdcf3d99413a7861a15ee44f6296299f5bba0ff57",
+    "afterSha256": "0b379ddbeeaef5cf056e15cbdcf3d99413a7861a15ee44f6296299f5bba0ff57"
+  },
+  {
+    "file": "matcha-light-default.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "d14cc3a1e2a340eca7358a40fc9d4e5b3d05fbf54b84053d0259e8e25293066a",
+    "afterSha256": "d14cc3a1e2a340eca7358a40fc9d4e5b3d05fbf54b84053d0259e8e25293066a"
+  },
+  {
+    "file": "neutral-dark-all-axis-modes.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "07672ed0aa71fe32fceb1454d99f5e8d770b939308c151f84f0e25857176f378",
+    "afterSha256": "07672ed0aa71fe32fceb1454d99f5e8d770b939308c151f84f0e25857176f378"
+  },
+  {
+    "file": "neutral-dark-coarse.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "53cc879d8de6f08ec85d9387d9982ce3926a2a7efaefeff3043118ef35cf8f9e",
+    "afterSha256": "53cc879d8de6f08ec85d9387d9982ce3926a2a7efaefeff3043118ef35cf8f9e"
+  },
+  {
+    "file": "neutral-dark-inline.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "0ca7e8be04ca3f189ba6efcc32741c15d52f47b793bfda2942910869d85e501c",
+    "afterSha256": "0ca7e8be04ca3f189ba6efcc32741c15d52f47b793bfda2942910869d85e501c"
+  },
+  {
+    "file": "neutral-dark-ltr-padding-per-edge.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "259d4c3139342b81aeb4fcd08fa3d6c158f053ce819c983720532d1a878afe42",
+    "afterSha256": "259d4c3139342b81aeb4fcd08fa3d6c158f053ce819c983720532d1a878afe42"
+  },
+  {
+    "file": "neutral-dark-narrow.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "e0322ba0406df16521aeddc73ac58a2b4af25cf83cc51cd2895b87ecf25c473c",
+    "afterSha256": "e0322ba0406df16521aeddc73ac58a2b4af25cf83cc51cd2895b87ecf25c473c"
+  },
+  {
+    "file": "neutral-dark-rtl-padding-per-edge.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "3e668055dab49c234c11a59bed5bc790c98879b3891f64be0e1a64ffc52bfa32",
+    "afterSha256": "3e668055dab49c234c11a59bed5bc790c98879b3891f64be0e1a64ffc52bfa32"
+  },
+  {
+    "file": "neutral-light-all-axis-modes.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "c62d7f4a1749f5b9f725da33aefd7ba66cc3720911f37fb8fe074a2046c53abd",
+    "afterSha256": "c62d7f4a1749f5b9f725da33aefd7ba66cc3720911f37fb8fe074a2046c53abd"
+  },
+  {
+    "file": "neutral-light-coarse.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "79108f4ba54718adbf4c027f3382f197eea0ea481c6c39f0dffc15bf856fbcc2",
+    "afterSha256": "79108f4ba54718adbf4c027f3382f197eea0ea481c6c39f0dffc15bf856fbcc2"
+  },
+  {
+    "file": "neutral-light-inline.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "d2d152efe465fa0a28b6b16b2d38ea207d2f4c0ffbb267a18fcc971a991e6635",
+    "afterSha256": "d2d152efe465fa0a28b6b16b2d38ea207d2f4c0ffbb267a18fcc971a991e6635"
+  },
+  {
+    "file": "neutral-light-ltr-padding-per-edge.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "f3c95598c8effb02765cf1618bb8f064b1b9d78c8e8253387700b7b9f70cb40f",
+    "afterSha256": "f3c95598c8effb02765cf1618bb8f064b1b9d78c8e8253387700b7b9f70cb40f"
+  },
+  {
+    "file": "neutral-light-narrow.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "4bb75f14e3987a00d8389e34364ced89805f51f19425ae8a792d1f88d0e043a5",
+    "afterSha256": "4bb75f14e3987a00d8389e34364ced89805f51f19425ae8a792d1f88d0e043a5"
+  },
+  {
+    "file": "neutral-light-rtl-padding-per-edge.png",
+    "changedPixels": 0,
+    "percent": 0.0,
+    "identical": true,
+    "beforeSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
+    "afterSha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b"
+  }
+]

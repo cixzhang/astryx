@@ -1,0 +1,298 @@
+{
+  "generatedAt": "2026-09-10T12:43:07.515Z",
+  "dist": "apps/storybook/dist",
+  "autoDiscovery": {
+    "total": 1,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 1,
+    "surprises": [],
+    "results": [
+      {
+        "component": "core/center",
+        "storyId": "core-center--default",
+        "dim": "D1",
+        "verdict": "N-A",
+        "notes": [
+          "no directional icons"
+        ],
+        "icons": 0
+      }
+    ]
+  },
+  "positionalMirror": {
+    "total": 10,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 10,
+    "tolerancePx": 3,
+    "results": [
+      {
+        "component": "core/center",
+        "storyId": "core-center--default",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--horizontal-only",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--vertical-only",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--full-size",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--inline",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--with-icon",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--inside-a-card",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--padding",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--padding-per-edge",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--all-axis-modes",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      }
+    ]
+  },
+  "directionalDecorations": {
+    "total": 10,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 10,
+    "results": [
+      {
+        "component": "core/center",
+        "storyId": "core-center--default",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--horizontal-only",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--vertical-only",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--full-size",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--inline",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--with-icon",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--inside-a-card",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--padding",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--padding-per-edge",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "core/center",
+        "storyId": "core-center--all-axis-modes",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      }
+    ]
+  },
+  "curated": {
+    "results": [
+      {
+        "component": "core/center",
+        "storyId": "core-center--padding-per-edge",
+        "dims": {
+          "D8": "pass"
+        },
+        "notes": [
+          "D8 logical inline edges: logical start/end stay stable and resolved physical sides swap; LTR start/end 8/24px, RTL start/end 8/24px"
+        ],
+        "rollup": "RTL-ready"
+      }
+    ]
+  },
+  "coverage": {
+    "enforced": true,
+    "total": 1,
+    "measured": 1,
+    "verifiedNa": 0,
+    "gaps": 0,
+    "staleVerifiedNa": 0,
+    "results": [
+      {
+        "component": "core/center",
+        "applicable": [
+          {
+            "dimension": "curated",
+            "storyId": "core-center--padding-per-edge"
+          }
+        ],
+        "status": "measured"
+      }
+    ]
+  }
+}

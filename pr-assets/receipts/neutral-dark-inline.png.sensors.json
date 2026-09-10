@@ -1,0 +1,90 @@
+{
+  "label": "neutral-dark-inline",
+  "identity": "story",
+  "build": {
+    "root": "/Users/cindyxz/astryx/worktrees/night-watch-audit-2-20260910",
+    "expectedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b",
+    "observedSha": "1446d8211784c9d6fad61c3b6ae538ce4f4ed02b"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "surfaceClass": "dark",
+    "runningAnimations": 0,
+    "state": {
+      "axis": "both",
+      "display": "inline-flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "childCount": 1
+    }
+  },
+  "observed": {
+    "storyExpected": "core-center--inline",
+    "storyObserved": "core-center--inline",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgb(27, 27, 27)",
+    "surfaceLuminance": 0.10588235294117647,
+    "surfaceClass": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 800,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 235.5625,
+      "y": 40,
+      "width": 32,
+      "height": 32,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "axis": "both",
+      "display": "inline-flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "childCount": 1
+    }
+  },
+  "image": {
+    "path": "/Users/cindyxz/astryx/nw-center-2026-09-10/final/screenshots/neutral-dark-inline.png",
+    "bytes": 9134
+  }
+}
