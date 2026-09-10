@@ -71,9 +71,17 @@
     }
   ],
   "approvals": [
-    {"name": "independent-exact-head-review", "state": "pending"},
-    {"name": "component-spec-owner", "state": "pending"},
-    {"name": "human-review", "state": "pending"}
+    {
+      "name": "independent-exact-head-review",
+      "state": "pass",
+      "evidence": "https://github.com/facebook/astryx/pull/6207#issuecomment-5621768713"
+    },
+    {
+      "name": "component-spec-owner",
+      "state": "pass",
+      "evidence": "https://github.com/facebook/astryx/pull/6207#issuecomment-5621768713"
+    },
+    {"name": "human-reviewed-merge", "state": "pass"}
   ],
   "checks": [
     {"name": "local-focused", "state": "pass", "assertions": 478},
@@ -96,13 +104,19 @@
     "receiptPairs": 20,
     "receiptPairsMatchExceptBuild": 20
   },
+  "postMerge": {
+    "landedCommit": "f069c04f454e52a4944b32d22dee91fb6fc6214c",
+    "reviewedHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+    "allReviewedPathsIdentical": true,
+    "pathCount": 13,
+    "receipt": "pr-assets/landed-byte-verification.json"
+  },
   "eligibility": {
     "eligible": false,
     "reasons": [
       "spec:AST-029 remains phase: accepted; FR11 activation is absent",
       "The trusted audit-eligibility check is unavailable",
-      "One inherited B15 / component:Center/FR2 BLOCK remains open",
-      "Exact-head independent and owner approval are pending"
+      "One inherited B15 / component:Center/FR2 BLOCK remains open"
     ]
   }
 }

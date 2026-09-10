@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
   "baseHead": "5447429bacc4baa6b02f70da73dcdb9bb7d6e8ee",
-  "exactHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
   "reconciledMain": "ae4ad8375d1ce553cdc889e83c79c9bc6dd5756c",
+  "reviewedHead": "55f51a06c6e1f7780eecb078fa6bf10447579956",
+  "landedCommit": "f069c04f454e52a4944b32d22dee91fb6fc6214c",
   "inventoryRows": 26,
   "componentFramesPerHead": 17,
   "verticalWritingFramesPerHead": 2,
@@ -66,8 +67,8 @@
     },
     {
       "path": "audit-eligibility.json",
-      "sha256": "19de4d7d8f3a325040e9c2d37c9a4cccb057cef7d322c68a0d46ab0a38e08865",
-      "bytes": 4403
+      "sha256": "707c0014aa0579c3d66544514bf87fad508c19d2a843da7a160185c50c06d8d3",
+      "bytes": 4568
     },
     {
       "path": "component-matrix-baseline.json",
@@ -273,6 +274,11 @@
       "path": "frames/exact-head/neutral-light-rtl-padding-per-edge.png",
       "sha256": "3db5d2de03aa3b397aa641b4b20a77cbaf328dc5a1d976969fe813af04e5e53b",
       "bytes": 12794
+    },
+    {
+      "path": "landed-byte-verification.json",
+      "sha256": "12738e749b8a5c4ec1155ee1218ac7ae787872e5a99e3bd49ba8f64bff03bd79",
+      "bytes": 3187
     },
     {
       "path": "published-center-surface.json",
