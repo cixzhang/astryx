@@ -80,7 +80,7 @@
     {"name": "local-build", "state": "pass"},
     {"name": "a11y", "state": "pass", "stories": 10, "violations": 0},
     {"name": "rtl", "state": "pass", "measured": 1, "gaps": 0},
-    {"name": "exact-head-ci", "state": "pending", "run": null},
+    {"name": "exact-head-ci", "state": "pass", "run": 34497134946},
     {"name": "audit-eligibility", "state": "unavailable"}
   ],
   "evidence": {
@@ -102,8 +102,7 @@
       "spec:AST-029 remains phase: accepted; FR11 activation is absent",
       "The trusted audit-eligibility check is unavailable",
       "One inherited B15 / component:Center/FR2 BLOCK remains open",
-      "Exact-head independent and owner approval are pending",
-      "Exact-head CI is pending"
+      "Exact-head independent and owner approval are pending"
     ]
   }
 }
