@@ -3,7 +3,7 @@
   "component": "Center",
   "package": "core",
   "auditMode": "N",
-  "rubricVersion": "1.16.1",
+  "rubricVersion": "1.16.2",
   "heads": {
     "repository": "1153c1013c5788100ea253bf3d0306d55f56fbae",
     "componentContract": "1153c1013c5788100ea253bf3d0306d55f56fbae",
