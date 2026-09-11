@@ -204,8 +204,8 @@ but acceptance alone is best effort, not a compatibility promise.
 
 ## Approved deprecated-surface removal window
 
-Version **0.6.0** is the first release authorized to remove the deprecated
-component-theming compatibility surface in this section. Before 0.6.0, every item
+Version **0.7.0** is the first release authorized to remove the deprecated
+component-theming compatibility surface in this section. Before 0.7.0, every item
 below remains a supported compatibility path. Removal is a breaking change under
 `spec:AST-017`: it requires a `[breaking]` Changeset, the exact old-to-new mapping,
 and a usable migration path or instructions.
@@ -236,7 +236,7 @@ The approved target-alias migration is:
 | `statusdot`                   | `status-dot`             |
 | `textarea`                    | `text-area`              |
 
-The same 0.6.0 window covers the compatibility machinery used only to preserve
+The same 0.7.0 window covers the compatibility machinery used only to preserve
 those aliases: the `themeProps(..., {legacyNames})` option,
 `ThemePropsOptions.legacyNames`, `ComponentThemingTarget.deprecatedFor`, and
 filtering or discovery behavior whose only purpose is to include or exclude
@@ -264,8 +264,8 @@ how themes become output, or the design rationale for a component's appearance.
 - Adding or renaming a `themeProps()` target updates its component-spec map,
   `.doc.mjs` public target metadata, compatibility aliases when required,
   generated/CLI discovery, and validation together.
-- Removing the approved deprecated cohort before 0.6.0 violates this record.
-  Removing it in 0.6.0 or later follows `spec:AST-017`, preserves every canonical
+- Removing the approved deprecated cohort before 0.7.0 violates this record.
+  Removing it in 0.7.0 or later follows `spec:AST-017`, preserves every canonical
   target and semantic key, migrates built-in/generated themes first, and supplies
   the exact alias and bare-selector migration evidence named above.
 - Adding consumer anatomy requires a deliberate component-spec mapping to a
@@ -331,7 +331,7 @@ how themes become output, or the design rationale for a component's appearance.
   values whose validity depends on theme enrollment.
 - `spec:AST-017/DEC-1` owns published compatibility classification and migration:
   compatibility-path removal is breaking. This record owns the exact deprecated
-  theming cohort and its approved 0.6.0 removal window.
+  theming cohort and its approved 0.7.0 removal window.
 
 ## Verification
 
@@ -344,7 +344,7 @@ how themes become output, or the design rationale for a component's appearance.
 | INV7, INV8   | Existing property fixtures (partial; gaps below)                                                                   | A declared property is missing evidence, or an unlisted counterpart is treated as implied                                                                                                  |
 | INV9         | API docs and compatibility review                                                                                  | Generic property acceptance is presented as a supported compatibility promise                                                                                                              |
 | INV10, INV11 | Existing registry/public-var/runtime tests (partial; gaps below)                                                   | A public semantic var bypasses admission, or a consumer must write a private var to reach promised behavior                                                                                |
-| INV12, INV13 | Alias/window inventory, package export/runtime tests, migration mapping, and family-owner fixtures                 | An alias disappears before 0.6.0, the approved mapping is incomplete, canonical targets change, legacy metadata survives removal without an owner, or cross-doc ownership remains implicit |
+| INV12, INV13 | Alias/window inventory, package export/runtime tests, migration mapping, and family-owner fixtures                 | An alias disappears before 0.7.0, the approved mapping is incomplete, canonical targets change, legacy metadata survives removal without an owner, or cross-doc ownership remains implicit |
 | INV14        | Component contract, owner review, focused no-match fallback test, and structural `extensibleAxes.test.ts` coverage | An ineligible axis opens, a missing rule changes behavior unpredictably, or the map/reflection/docs wiring drifts                                                                          |
 | INV15        | Shared root/adaptation component-validation fixtures covering finite, open, enrolled, and unresolved domains       | Root and adaptation disagree, a valid open value requires a root style, a rule conditionally enrolls a custom value, or unresolved behavior becomes adaptation-specific                    |
 
