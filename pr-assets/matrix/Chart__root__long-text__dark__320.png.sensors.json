@@ -1,0 +1,98 @@
+{
+  "label": "Chart__root__long-text__dark__320",
+  "identity": "story",
+  "build": {
+    "root": "facebook/astryx",
+    "expectedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+    "observedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 320,
+      "height": 620,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "kind": "long-text",
+      "ariaLabel": "Monthly revenue across every regional sales program and reporting period",
+      "title": "Monthly revenue across every regional sales program and reporting period",
+      "description": "A deliberately expanded description that verifies the chart heading wraps without hiding the plot or creating horizontal scrolling.",
+      "tableRows": 7,
+      "markPaths": 7,
+      "legendItems": 2,
+      "legendPlacement": "bottom",
+      "tooltipVisible": false,
+      "horizontalOverflow": false
+    }
+  },
+  "observed": {
+    "storyExpected": "charts-chart--playground",
+    "storyObserved": "charts-chart--playground",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 320,
+      "height": 620,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 132,
+      "width": 288,
+      "height": 300,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "kind": "long-text",
+      "ariaLabel": "Monthly revenue across every regional sales program and reporting period",
+      "title": "Monthly revenue across every regional sales program and reporting period",
+      "description": "A deliberately expanded description that verifies the chart heading wraps without hiding the plot or creating horizontal scrolling.",
+      "tableRows": 7,
+      "markPaths": 7,
+      "legendItems": 2,
+      "legendPlacement": "bottom",
+      "tooltipVisible": false,
+      "horizontalOverflow": false
+    }
+  },
+  "image": {
+    "path": "pr-assets/matrix/Chart__root__long-text__dark__320.png",
+    "bytes": 21734
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "label": "Chart__auto-palette__rest__dark",
+  "identity": "story",
+  "build": {
+    "root": "facebook/astryx",
+    "expectedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+    "observedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "kind": "auto-palette",
+      "ariaLabel": "Auto palette",
+      "title": "Auto palette",
+      "description": "No colors passed — assigned from the theme's categorical palette",
+      "tableRows": 7,
+      "horizontalOverflow": false,
+      "distinctPaints": 2
+    }
+  },
+  "observed": {
+    "storyExpected": "charts-color--auto-palette",
+    "storyObserved": "charts-color--auto-palette",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "dark",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "dark",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 72,
+      "width": 868,
+      "height": 320,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "kind": "auto-palette",
+      "ariaLabel": "Auto palette",
+      "title": "Auto palette",
+      "description": "No colors passed — assigned from the theme's categorical palette",
+      "tableRows": 7,
+      "horizontalOverflow": false,
+      "distinctPaints": 2
+    }
+  },
+  "image": {
+    "path": "pr-assets/matrix/Chart__auto-palette__rest__dark.png",
+    "bytes": 21827
+  }
+}

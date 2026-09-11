@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "component": "charts/Chart",
+  "rubricVersion": "1.16.2",
+  "base": "41ab6db2a5d193739759ad2ba14b6be21509a2d7",
+  "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "pullRequest": 6247,
+  "before": {
+    "score": 58.1,
+    "grade": "F",
+    "blockers": 11
+  },
+  "after": {
+    "score": 78,
+    "grade": "C",
+    "blockers": 4
+  },
+  "sensitivity": {
+    "score": 90,
+    "grade": "A",
+    "condition": "Fix the four retained BLOCK findings and change nothing else."
+  },
+  "sections": {
+    "accessibility": {
+      "weight": 16,
+      "before": 2.5,
+      "after": 2.5
+    },
+    "theming": {
+      "weight": 14,
+      "before": 3,
+      "after": 5
+    },
+    "publicApi": {
+      "weight": 14,
+      "before": 2,
+      "after": 2.5
+    },
+    "behavior": {
+      "weight": 12,
+      "before": 4,
+      "after": 4.5
+    },
+    "designObjective": {
+      "weight": 6,
+      "before": 4,
+      "after": 5
+    },
+    "designRendered": {
+      "weight": 4,
+      "before": 3,
+      "after": 4
+    },
+    "testing": {
+      "weight": 8,
+      "before": 3,
+      "after": 4
+    },
+    "codeHealth": {
+      "weight": 8,
+      "before": 3,
+      "after": 4
+    },
+    "docs": {
+      "weight": 8,
+      "before": 2,
+      "after": 4.5
+    },
+    "i18nRtl": {
+      "weight": 5,
+      "before": 2.5,
+      "after": 4
+    },
+    "responsiveTouch": {
+      "weight": 5,
+      "before": 4,
+      "after": 5
+    }
+  },
+  "exactHeadEvidence": {
+    "receiptedVisualPairs": 24,
+    "changedVisualPairs": 0,
+    "changedPixels": 0,
+    "packageAxeStories": 34,
+    "axeViolations": 0,
+    "rtlVerdict": "manual package-specific RTL evidence passed",
+    "contrastVerdict": "pass-with-known-systemic-token-gap"
+  }
+}

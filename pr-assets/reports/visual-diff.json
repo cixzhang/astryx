@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "component": "charts/Chart",
+  "baseline": "41ab6db2a5d193739759ad2ba14b6be21509a2d7",
+  "exactHead": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "comparedPairs": 24,
+  "changedPairs": 0,
+  "totalChangedPixels": 0,
+  "pairs": [
+    {
+      "name": "Chart__auto-palette__rest__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__auto-palette__rest__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__hover__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 450000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__hover__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 450000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__rest__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 450000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__rest__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 450000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__rest__light__320-coarse.png",
+      "state": "compared",
+      "width": 320,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 160000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__rest__light__320.png",
+      "state": "compared",
+      "width": 320,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 160000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__bar__rest__light__rtl.png",
+      "state": "compared",
+      "width": 900,
+      "height": 500,
+      "changedPixels": 0,
+      "totalPixels": 450000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__default-name__rest__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__empty__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__empty__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__large__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__large__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-end__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-end__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-off__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-off__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-start__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-start__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-top__dark.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__legend-top__light.png",
+      "state": "compared",
+      "width": 900,
+      "height": 520,
+      "changedPixels": 0,
+      "totalPixels": 468000,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__long-text__dark__320.png",
+      "state": "compared",
+      "width": 320,
+      "height": 620,
+      "changedPixels": 0,
+      "totalPixels": 198400,
+      "changedPercent": 0
+    },
+    {
+      "name": "Chart__root__long-text__light__320.png",
+      "state": "compared",
+      "width": 320,
+      "height": 620,
+      "changedPixels": 0,
+      "totalPixels": 198400,
+      "changedPercent": 0
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "label": "Chart__root__legend-off__light",
+  "identity": "story",
+  "build": {
+    "root": "facebook/astryx",
+    "expectedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+    "observedSha": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "kind": "legend-off",
+      "ariaLabel": "Monthly revenue",
+      "title": "Monthly revenue",
+      "description": null,
+      "tableRows": 7,
+      "markPaths": 7,
+      "legendItems": 0,
+      "legendPlacement": null,
+      "tooltipVisible": false,
+      "horizontalOverflow": false
+    }
+  },
+  "observed": {
+    "storyExpected": "charts-chart--playground",
+    "storyObserved": "charts-chart--playground",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgba(0, 0, 0, 0)",
+    "surfaceLuminance": null,
+    "surfaceClass": "unknown",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 520,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 16,
+      "y": 52,
+      "width": 868,
+      "height": 300,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "kind": "legend-off",
+      "ariaLabel": "Monthly revenue",
+      "title": "Monthly revenue",
+      "description": null,
+      "tableRows": 7,
+      "markPaths": 7,
+      "legendItems": 0,
+      "legendPlacement": null,
+      "tooltipVisible": false,
+      "horizontalOverflow": false
+    }
+  },
+  "image": {
+    "path": "pr-assets/matrix/Chart__root__legend-off__light.png",
+    "bytes": 14342
+  }
+}

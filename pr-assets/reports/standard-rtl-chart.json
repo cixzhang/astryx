@@ -1,0 +1,302 @@
+{
+  "generatedAt": "2026-09-11T11:00:47.105Z",
+  "dist": "apps/storybook/dist",
+  "selfChecks": {
+    "d8LogicalInline": {
+      "horizontal": {
+        "ltr": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 40,
+          "direction": "ltr",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 24,
+          "bottom": 12,
+          "left": 8
+        },
+        "rtl": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 40,
+          "direction": "rtl",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 8,
+          "bottom": 12,
+          "left": 24
+        },
+        "result": {
+          "verdict": "pass",
+          "reason": "logical start/end stay stable and resolved left/right sides swap for horizontal-tb"
+        }
+      },
+      "vertical": {
+        "ltr": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 80,
+          "direction": "ltr",
+          "writingMode": "vertical-rl",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 8,
+          "right": 4,
+          "bottom": 24,
+          "left": 12
+        },
+        "rtl": {
+          "count": 1,
+          "visible": true,
+          "width": 160,
+          "height": 80,
+          "direction": "rtl",
+          "writingMode": "vertical-rl",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 24,
+          "right": 4,
+          "bottom": 8,
+          "left": 12
+        },
+        "result": {
+          "verdict": "pass",
+          "reason": "logical start/end stay stable and resolved top/bottom sides swap for vertical-rl"
+        }
+      },
+      "hidden": {
+        "measurement": {
+          "count": 1,
+          "visible": false,
+          "width": 0,
+          "height": 0,
+          "direction": "rtl",
+          "writingMode": "horizontal-tb",
+          "inlineStart": 8,
+          "inlineEnd": 24,
+          "top": 4,
+          "right": 8,
+          "bottom": 12,
+          "left": 24
+        },
+        "result": {
+          "verdict": "fail",
+          "reason": "logical inline-edge subject is not one visible non-zero box"
+        }
+      }
+    }
+  },
+  "autoDiscovery": {
+    "total": 1,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 1,
+    "surprises": [],
+    "results": [
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--bar-chart",
+        "dim": "D1",
+        "verdict": "N-A",
+        "notes": [
+          "no directional icons"
+        ],
+        "icons": 0
+      }
+    ]
+  },
+  "positionalMirror": {
+    "total": 6,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 6,
+    "tolerancePx": 3,
+    "results": [
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--bar-chart",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--line-chart",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--scatter-plot",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--web-gl-scatter",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--confidence-band",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--heatmap",
+        "dim": "D5-positional",
+        "verdict": "N-A",
+        "notes": [
+          "no logical-anchor + physical-transform candidates in LTR"
+        ],
+        "candidates": 0,
+        "fails": []
+      }
+    ]
+  },
+  "directionalDecorations": {
+    "total": 6,
+    "applicable": 0,
+    "pass": 0,
+    "fail": 0,
+    "na": 6,
+    "results": [
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--bar-chart",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--line-chart",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--scatter-plot",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--web-gl-scatter",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--confidence-band",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      },
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--heatmap",
+        "dim": "D6-decoration",
+        "verdict": "N-A",
+        "notes": [
+          "no contextual directional decorations"
+        ],
+        "decorations": 0,
+        "results": []
+      }
+    ]
+  },
+  "curated": {
+    "results": [
+      {
+        "component": "lab/chart",
+        "storyId": "lab-chart--line-chart",
+        "dims": {
+          "D2": "pass"
+        },
+        "notes": [
+          "D2 prev/next cx: LTR 565<628=true; RTL 631>568=true"
+        ],
+        "rollup": "RTL-ready"
+      }
+    ]
+  },
+  "coverage": {
+    "enforced": true,
+    "total": 1,
+    "measured": 1,
+    "verifiedNa": 0,
+    "gaps": 0,
+    "staleVerifiedNa": 0,
+    "results": [
+      {
+        "component": "lab/chart",
+        "applicable": [
+          {
+            "dimension": "curated",
+            "storyId": "lab-chart--line-chart"
+          }
+        ],
+        "status": "measured"
+      }
+    ]
+  }
+}

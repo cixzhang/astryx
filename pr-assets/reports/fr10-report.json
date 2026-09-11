@@ -1,0 +1,80 @@
+{
+  "$schema": "https://github.com/facebook/astryx/blob/main/docs/specs/AST-029/spec.md#fr10",
+  "reportVersion": 1,
+  "component": "Chart",
+  "package": "charts",
+  "auditMode": "nightly",
+  "rubricVersion": "1.16.2",
+  "repository": {
+    "base": "41ab6db2a5d193739759ad2ba14b6be21509a2d7",
+    "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+    "pullRequest": "https://github.com/facebook/astryx/pull/6247"
+  },
+  "componentContract": {
+    "path": "packages/charts/src/Chart.spec.md",
+    "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+    "authority": "draft",
+    "ownerApproval": "pending"
+  },
+  "inventory": {
+    "closed": true,
+    "rows": 25,
+    "gapsExplicit": true,
+    "evidence": "pr-assets/inventory.md"
+  },
+  "score": {
+    "before": {"score": 58.1, "grade": "F", "blockers": 11},
+    "after": {"score": 78.0, "grade": "C", "blockers": 4},
+    "sensitivity": {"score": 90.0, "grade": "A", "condition": "Fix the four retained BLOCK findings and change nothing else."}
+  },
+  "unresolvedObjectiveGaps": [
+    {"id": "A8", "severity": "BLOCK", "summary": "The pointer tooltip remains hidden after a coarse-pointer tap; precise values have no tap path."},
+    {"id": "C7", "severity": "FIX", "summary": "Each Chart creates its own ResizeObserver instead of using the shared observer."},
+    {"id": "I17/V11", "severity": "FIX", "summary": "The stock RTL filter resolves Chart to lab/Chart and excludes charts-* stories."},
+    {"id": "A14", "severity": "FIX-advisory", "summary": "ChartSwatch legend swatches disappear under forced colors."},
+    {"id": "D11/B14", "severity": "FIX-advisory", "summary": "ChartTooltip uses global z-index 9999 instead of the current layer runtime."},
+    {"id": "V3", "severity": "FIX", "summary": "The root pointer stream lacks a durable integration test."}
+  ],
+  "unresolvedManualGaps": [
+    {"id": "A1/WCAG-1.1.1", "severity": "BLOCK", "summary": "Above the 100-cell cutoff, no equivalent nonvisual data or summary path is guaranteed."},
+    {"id": "P7", "severity": "BLOCK", "summary": "ChartMargin and nested tooltip placement expose physical left/right public values."},
+    {"id": "AST-002/FR18", "severity": "BLOCK", "summary": "SeriesDef exposes and Chart mutates reachable per-chart internal metadata."},
+    {"id": "D13-hover", "severity": "FIX", "summary": "The chart column-hover and tooltip treatments do not yet have a current design owner."},
+    {"id": "D13-empty", "severity": "FIX", "summary": "The empty coordinate-frame representation has no current chart-specific design owner."},
+    {"id": "X19", "severity": "NIT", "summary": "The generated playground cannot synthesize executable SeriesDef factories from plain defaults."}
+  ],
+  "remediations": [
+    {"ids": ["T12", "P1", "P2", "P15"], "summary": "Forward and merge root DOM/style inputs and React 19 ref.", "beforeEvidence": "pr-assets/reports/scorecard.json", "afterEvidence": "packages/charts/src/Chart.test.tsx"},
+    {"ids": ["I2", "I6", "I21"], "summary": "Localize generated chart, list, caption, and legend accessibility text.", "beforeEvidence": "pr-assets/reports/scorecard.json", "afterEvidence": "packages/charts/src/Chart.test.tsx and ChartLegend.test.tsx"},
+    {"ids": ["I8", "D1", "R7"], "summary": "Use logical token spacing and non-scroll clipping.", "beforeEvidence": "pr-assets/Chart__before-after__contact-sheet.png", "afterEvidence": "pr-assets/reports/visual-diff.json"},
+    {"ids": ["X2", "X3", "X4", "X5b", "X7", "X10", "X12", "X14", "X16"], "summary": "Add the observational contract, consumer docs, reusable story, and example block.", "beforeEvidence": "pr-assets/reports/scorecard.json", "afterEvidence": "pr-assets/inventory.md"}
+  ],
+  "evidence": {
+    "visualReceipts": 24,
+    "visualDiff": {"pairs": 24, "changedPairs": 0, "changedPixels": 0},
+    "axe": {"stories": 34, "violations": 0, "pageErrors": 0},
+    "rtl": "manual package-specific pass; stock harness gap recorded",
+    "contrast": "component pass with known unscored palette-token gap",
+    "tdd": "three red-green slices recorded for root passthrough/ref and localized chart/legend labels"
+  },
+  "approvals": {
+    "independentReview": "pending",
+    "componentSpecOwner": "pending"
+  },
+  "checks": {
+    "local": "pass",
+    "github": "pending"
+  },
+  "eligibility": {
+    "eligible": false,
+    "verdict": "manual-review-only",
+    "reasons": [
+      "spec:AST-029 remains phase: accepted; FR11 activation is not shipped.",
+      "The observational component contract remains draft and lacks exact-head owner approval.",
+      "Four BLOCK findings remain.",
+      "Independent review is pending.",
+      "Exact-head GitHub checks are pending.",
+      "The trusted audit-eligibility status is not activated."
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "component": "charts/Chart",
+  "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "rubricVersion": "1.16.2",
+  "rows": [
+    {
+      "state": "rest",
+      "evidence": ["bar/light", "bar/dark", "auto-palette/light", "auto-palette/dark"],
+      "approvedRepresentation": "Rest — base tokens, no interaction",
+      "tokenSignature": "theme data palette plus Text/axis semantic tokens",
+      "verdict": "pass"
+    },
+    {
+      "state": "hover column indicator",
+      "evidence": ["bar/hover/light", "bar/hover/dark"],
+      "approvedRepresentation": "Candidate: Hovered — overlay style",
+      "tokenSignature": "translucent currentColor at 0.06 rather than --color-overlay-hover",
+      "verdict": "needs-review",
+      "reason": "The pointer column is a data-visualization-specific hover treatment with no current component/design owner."
+    },
+    {
+      "state": "hover tooltip",
+      "evidence": ["bar/hover/light", "bar/hover/dark"],
+      "approvedRepresentation": "Candidate: Temporal — overlay style",
+      "tokenSignature": "--color-background-popover plus --shadow-med rather than the catalogue's inverted temporal surface",
+      "verdict": "needs-review",
+      "reason": "ChartTooltip owns this shared visual decision; the audit does not redesign it."
+    },
+    {
+      "state": "empty data",
+      "evidence": ["root/empty/light", "root/empty/dark"],
+      "approvedRepresentation": "No current chart-empty representation",
+      "tokenSignature": "finite 0–1 coordinate frame, grid, axes, and legend",
+      "verdict": "needs-review",
+      "reason": "The stable coordinate frame is functional, but choosing a product-level empty treatment is a human design decision."
+    },
+    {
+      "state": "large data",
+      "evidence": ["root/large/light", "root/large/dark"],
+      "approvedRepresentation": "Rest — base tokens, no interaction",
+      "tokenSignature": "auto-skipped axis labels and theme palette",
+      "verdict": "pass"
+    },
+    {
+      "state": "long text at 320 px",
+      "evidence": ["root/long-text/light/320", "root/long-text/dark/320"],
+      "approvedRepresentation": "Rest — base tokens, no interaction",
+      "tokenSignature": "Text body/supporting roles with wrapped logical layout",
+      "verdict": "pass"
+    },
+    {
+      "state": "legend off/top/bottom/start/end",
+      "evidence": ["root/legend matrix/light", "root/legend matrix/dark"],
+      "approvedRepresentation": "Rest — base tokens, no interaction",
+      "tokenSignature": "logical Stack placement, semantic Text, data swatches",
+      "verdict": "pass"
+    },
+    {
+      "state": "RTL start/end placement",
+      "evidence": ["root/legend-start/rtl", "root/legend-end/rtl"],
+      "approvedRepresentation": "Rest — logical placement",
+      "tokenSignature": "computed direction rtl; start and end mirror exactly once",
+      "verdict": "pass"
+    },
+    {
+      "state": "coarse pointer",
+      "evidence": ["bar/rest/light/320/coarse", "touch probe"],
+      "approvedRepresentation": "Rest — coarse-pointer adaptation",
+      "tokenSignature": "no horizontal overflow; pointer tooltip remains hidden after tap",
+      "verdict": "fail",
+      "finding": "A8 — precise tooltip values are hover/pointer-move only and have no tap path."
+    },
+    {
+      "state": "forced colors",
+      "evidence": ["auto-palette/forced-colors"],
+      "approvedRepresentation": "System-color fallback",
+      "tokenSignature": "series paint remains distinct; ChartSwatch legend swatches disappear",
+      "verdict": "advisory-fail",
+      "finding": "A14 — shared ChartSwatch forced-colors fallback gap; advisory to Chart."
+    }
+  ]
+}

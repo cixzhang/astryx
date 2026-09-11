@@ -1,0 +1,29 @@
+{
+  "build": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "story": "charts-color--auto-palette",
+  "globals": {
+    "astryxTheme": "neutral",
+    "colorMode": "light",
+    "direction": "ltr"
+  },
+  "expectedState": {
+    "kind": "forced-colors",
+    "ariaLabel": "Auto palette",
+    "title": "Auto palette",
+    "description": "No colors passed — assigned from the theme's categorical palette",
+    "tableRows": 7,
+    "horizontalOverflow": false,
+    "distinctPaints": 2
+  },
+  "observedState": {
+    "kind": "forced-colors",
+    "ariaLabel": "Auto palette",
+    "title": "Auto palette",
+    "description": "No colors passed — assigned from the theme's categorical palette",
+    "tableRows": 7,
+    "horizontalOverflow": false,
+    "distinctPaints": 2
+  },
+  "browserErrors": [],
+  "sensorError": "Color mode sensor failed: expected \"light\", observed \"light dark\""
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "component": "charts/Chart",
+  "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "receipts": [
+    {
+      "label": "Chart root legend start light ltr",
+      "state": {
+        "requestedPosition": "start",
+        "direction": "ltr",
+        "logicalPlacement": "start",
+        "legendItems": 2,
+        "titleAtInlineStart": true,
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "label": "Chart root legend end light ltr",
+      "state": {
+        "requestedPosition": "end",
+        "direction": "ltr",
+        "logicalPlacement": "end",
+        "legendItems": 2,
+        "titleAtInlineStart": true,
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "label": "Chart root legend start light rtl",
+      "state": {
+        "requestedPosition": "start",
+        "direction": "rtl",
+        "logicalPlacement": "start",
+        "legendItems": 2,
+        "titleAtInlineStart": true,
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "label": "Chart root legend end light rtl",
+      "state": {
+        "requestedPosition": "end",
+        "direction": "rtl",
+        "logicalPlacement": "end",
+        "legendItems": 2,
+        "titleAtInlineStart": true,
+        "horizontalOverflow": false
+      }
+    }
+  ],
+  "touch": {
+    "media": {
+      "coarsePointer": true,
+      "hover": false
+    },
+    "horizontalOverflow": false,
+    "tooltipVisibleAfterTap": false,
+    "browserErrors": []
+  },
+  "stockHarnessGap": "The repository rtl:audit command currently filters to lab/Chart and excludes charts-* stories.",
+  "verdict": "manual package-specific RTL evidence passed"
+}

@@ -1,0 +1,63 @@
+{
+  "head": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "local": [
+    {
+      "name": "Charts focused tests",
+      "result": "pass",
+      "detail": "10 files, 92 tests"
+    },
+    {
+      "name": "Charts typecheck",
+      "result": "pass"
+    },
+    {
+      "name": "Charts docs typecheck",
+      "result": "pass"
+    },
+    {
+      "name": "Storybook typecheck",
+      "result": "pass"
+    },
+    {
+      "name": "Core/Charts/theme/Vega/Lab/Rich Text builds",
+      "result": "pass"
+    },
+    {
+      "name": "Storybook build",
+      "result": "pass"
+    },
+    {
+      "name": "Docsite generation and tests",
+      "result": "pass",
+      "detail": "34 files, 496 tests"
+    },
+    {
+      "name": "Strict lint",
+      "result": "pass",
+      "detail": "0 errors; 84 pre-existing warnings"
+    },
+    {
+      "name": "Knowledge, sync, changeset, locale, use-client, package-boundary checks",
+      "result": "pass"
+    },
+    {
+      "name": "Package export validation",
+      "result": "pass"
+    },
+    {
+      "name": "Package-specific axe",
+      "result": "pass",
+      "detail": "34 stories, 0 violations, 0 page errors"
+    },
+    {
+      "name": "Package-specific RTL",
+      "result": "pass",
+      "detail": "logical start/end in LTR and RTL; no overflow"
+    },
+    {
+      "name": "Visual diff",
+      "result": "pass",
+      "detail": "24 pairs, 0 changed pixels"
+    }
+  ]
+}

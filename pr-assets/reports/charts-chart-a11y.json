@@ -1,0 +1,248 @@
+{
+  "package": "charts",
+  "component": "Chart",
+  "build": "29efe4a12e97f9b7f7fb85a546ced3ff28cd2f7c",
+  "stories": 34,
+  "violations": 0,
+  "pageErrors": 0,
+  "results": [
+    {
+      "id": "charts-area--gradient",
+      "title": "Charts/Area",
+      "name": "Gradient",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-area--stacked",
+      "title": "Charts/Area",
+      "name": "Stacked",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chrome-axes-grids--playground",
+      "title": "Charts/Chrome/Axes & Grids",
+      "name": "Playground",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-band--confidence-bands",
+      "title": "Charts/Band",
+      "name": "Confidence Bands",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-bar--simple",
+      "title": "Charts/Bar",
+      "name": "Simple",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-bar--stacked",
+      "title": "Charts/Bar",
+      "name": "Stacked",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-bar--grouped",
+      "title": "Charts/Bar",
+      "name": "Grouped",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-bar--grouped-stacked",
+      "title": "Charts/Bar",
+      "name": "Grouped Stacked",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-bar--negative-values",
+      "title": "Charts/Bar",
+      "name": "Negative Values",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-candlestick--basic",
+      "title": "Charts/Candlestick",
+      "name": "Basic",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-candlestick--with-moving-average",
+      "title": "Charts/Candlestick",
+      "name": "With Moving Average",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chart--playground",
+      "title": "Charts/Chart",
+      "name": "Playground",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-color--auto-palette",
+      "title": "Charts/Color",
+      "name": "Auto Palette",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-color--accessor-color",
+      "title": "Charts/Color",
+      "name": "Accessor Color",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-composite--mixed-marks",
+      "title": "Charts/Composite",
+      "name": "Mixed Marks",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-composite--kitchen-sink",
+      "title": "Charts/Composite",
+      "name": "Kitchen Sink",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-dot--scatter",
+      "title": "Charts/Dot",
+      "name": "Scatter",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-dot--dodged",
+      "title": "Charts/Dot",
+      "name": "Dodged",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-error-bar--on-bars",
+      "title": "Charts/Error Bar",
+      "name": "On Bars",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chrome-legend--default",
+      "title": "Charts/Chrome/Legend",
+      "name": "Default",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-line--simple",
+      "title": "Charts/Line",
+      "name": "Simple",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-line--with-dots",
+      "title": "Charts/Line",
+      "name": "With Dots",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-line--multi-series",
+      "title": "Charts/Line",
+      "name": "Multi Series",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-line--curves",
+      "title": "Charts/Line",
+      "name": "Curves",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-reference-line--horizontal",
+      "title": "Charts/Reference Line",
+      "name": "Horizontal",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-reference-line--band",
+      "title": "Charts/Reference Line",
+      "name": "Band",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-reference-line--vertical",
+      "title": "Charts/Reference Line",
+      "name": "Vertical",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chrome-swatch--gallery",
+      "title": "Charts/Chrome/Swatch",
+      "name": "Gallery",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chrome-swatch--playground",
+      "title": "Charts/Chrome/Swatch",
+      "name": "Playground",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-chrome-tooltip--default",
+      "title": "Charts/Chrome/Tooltip",
+      "name": "Default",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-webgl--scatter",
+      "title": "Charts/WebGL",
+      "name": "Scatter — static (high-performance)",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-webgl--interactive-scatter",
+      "title": "Charts/WebGL",
+      "name": "Interactive scatter — hover + tooltip",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-webgl--heatmap",
+      "title": "Charts/WebGL",
+      "name": "Heatmap",
+      "errors": [],
+      "violations": []
+    },
+    {
+      "id": "charts-webgl--streaming",
+      "title": "Charts/WebGL",
+      "name": "Streaming",
+      "errors": [],
+      "violations": []
+    }
+  ]
+}
