@@ -63,7 +63,36 @@
   },
   "checks": {
     "local": "pass",
-    "github": "pending"
+    "github": {
+      "terminal": true,
+      "verdict": "fail",
+      "passed": [
+        "build",
+        "build-sandbox",
+        "build-storybook",
+        "check-components",
+        "check-scope",
+        "dependency-check",
+        "docsite-test",
+        "fixture-contrast",
+        "lint",
+        "pr-a11y",
+        "registry-contract",
+        "smoke-test",
+        "test",
+        "test-node",
+        "test-ui",
+        "theme-layers",
+        "visual-acceptance"
+      ],
+      "failed": [
+        {
+          "name": "pr-rtl",
+          "classification": "retained I17/V11 coverage gap",
+          "detail": "The job filtered Chart and ChartLegend, measured lab/chart, and reported one uncovered component gap; package-specific exact-head RTL receipts pass logical start/end in LTR and RTL."
+        }
+      ]
+    }
   },
   "eligibility": {
     "eligible": false,
@@ -73,7 +102,7 @@
       "The observational component contract remains draft and lacks exact-head owner approval.",
       "Four BLOCK findings remain.",
       "Independent review is pending.",
-      "Exact-head GitHub checks are pending.",
+      "Exact-head GitHub CI is terminal with pr-rtl failed by the retained I17/V11 coverage gap.",
       "The trusted audit-eligibility status is not activated."
     ]
   }

@@ -21,7 +21,8 @@
 - [Package-specific RTL report](./reports/charts-chart-rtl.json)
 - [Stock a11y report](./reports/standard-a11y-chart.json)
 - [Stock RTL report](./reports/standard-rtl-chart.json) — records the current `lab/Chart` routing gap
-- [Local check summary](./reports/checks.json)
+- Exact-head GitHub CI: all terminal; `pr-rtl` is the sole failure and reproduces retained I17/V11 (Chart + ChartLegend resolve to `lab/chart` plus one uncovered component). All other checks passed.
+- [Local and GitHub check summary](./reports/checks.json)
 - [Scorecard](./reports/scorecard.json)
 - [Closed FR5 inventory](./inventory.md)
 - [FR10 exact-head eligibility report](./reports/fr10-report.json)
