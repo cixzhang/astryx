@@ -1,6 +1,8 @@
 # ChartArea Night Watch audit evidence
 
-Rubric **1.16.6** · base `47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825` · exact source head `2b7755541c8d4d81196b4f64ed903c1c74ae51d4`
+Rubric **1.16.6** · [PR #6282](https://github.com/facebook/astryx/pull/6282) · base `47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825` · exact source head `2b7755541c8d4d81196b4f64ed903c1c74ae51d4`
+
+GitHub Actions CI is green on the exact head. The separate `visual-acceptance` status remains pending for the next review stage.
 
 - [Post-fix scorecard](scorecard.json)
 - [Before scorecard](before-scorecard.json)

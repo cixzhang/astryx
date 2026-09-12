@@ -5,6 +5,10 @@
   "package": "lab",
   "mode": "nightly",
   "rubricVersion": "1.16.6",
+  "pullRequest": {
+    "number": 6282,
+    "url": "https://github.com/facebook/astryx/pull/6282"
+  },
   "repository": {
     "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
     "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4"
@@ -61,7 +65,12 @@
       "knowledgeSyncExportsChangesets": "passed",
       "strictLint": "passed: 0 errors, 84 pre-existing warnings"
     },
-    "github": "pending"
+    "github": {
+      "githubActions": "passed",
+      "visualAcceptance": "pending",
+      "reviewRequiredStatus": "success",
+      "specOwnerStatus": "success"
+    }
   },
   "visualEvidence": {
     "beforeFrames": 8,
@@ -78,8 +87,8 @@
       "spec:AST-029 remains phase accepted; FR11 activation is not shipped.",
       "The observational component contract remains draft without exact-head owner approval.",
       "Three pre-existing BLOCK findings remain.",
-      "Independent Review Loop clearance is intentionally delegated to the parent session.",
-      "GitHub CI has not yet completed on the public pull request."
+      "Independent Review Loop clearance is intentionally delegated to the next audit stage.",
+      "All GitHub Actions CI jobs passed; the visual-acceptance status remains pending for that next stage."
     ]
   }
 }
