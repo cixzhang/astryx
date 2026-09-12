@@ -1,25 +1,18 @@
 {
   "schemaVersion": 1,
   "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
-  "previousHead": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
-  "head": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9",
+  "head": "f369c96a3a10620d3df8b4bcd59a8034747f04ac",
   "baseMatchedPairs": 8,
-  "previousHeadMatchedPairs": 14,
+  "finalFrames": 14,
   "changedPairs": 0,
   "changedPixels": 0,
   "semanticEvidence": {
     "story": "lab-chartarea--upper-bound-against-baseline",
-    "hiddenTableHeaders": ["month", "upper95", "mean"],
+    "hiddenTableHeaders": [
+      "month",
+      "upper95",
+      "mean"
+    ],
     "receipt": "after/ChartArea__baseline__neutral-light.png.sensors.json"
-  },
-  "basePairs": [
-    "confidence-neutral-light",
-    "confidence-neutral-dark",
-    "confidence-stone-light",
-    "confidence-neutral-rtl",
-    "confidence-neutral-narrow",
-    "confidence-neutral-touch",
-    "confidence-neutral-forced-colors",
-    "upper-baseline-neutral-light"
-  ]
+  }
 }

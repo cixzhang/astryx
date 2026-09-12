@@ -3,7 +3,7 @@
 - Component: `lab/ChartArea`
 - Rubric: `1.16.6`
 - Repository base: `47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825`
-- Exact source head: `d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9`
+- Exact source head: `f369c96a3a10620d3df8b4bcd59a8034747f04ac`
 - Before score: `57.5 / F`, 5 BLOCKs
 - After score: `70.0 / C`, 3 BLOCKs
 - Visual comparison: 8 base→head pairs and 14 previous-head→new-head pairs, 0 changed pairs, byte-identical PNGs

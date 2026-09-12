@@ -11,11 +11,11 @@
   },
   "repository": {
     "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
-    "head": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9"
+    "head": "f369c96a3a10620d3df8b4bcd59a8034747f04ac"
   },
   "contract": {
     "path": "packages/lab/src/Chart/ChartArea.spec.md",
-    "head": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9",
+    "head": "f369c96a3a10620d3df8b4bcd59a8034747f04ac",
     "authority": "draft",
     "exactHeadOwnerApproval": "pending"
   },
@@ -100,7 +100,7 @@
       "The observational component contract remains draft without exact-head owner approval.",
       "Three pre-existing BLOCK findings remain.",
       "Independent Review Loop found two blockers on the previous head; both are fixed and a fresh exact-head rerun is pending.",
-      "All GitHub Actions CI jobs passed on d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9; review-required and visual-acceptance remain pending."
+      "All GitHub Actions CI jobs passed on f369c96a3a10620d3df8b4bcd59a8034747f04ac; review-required and visual-acceptance remain pending."
     ]
   }
 }
