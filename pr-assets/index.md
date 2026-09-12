@@ -3,10 +3,11 @@
 - Component: `lab/ChartArea`
 - Rubric: `1.16.6`
 - Repository base: `47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825`
-- Exact source head: `2b7755541c8d4d81196b4f64ed903c1c74ae51d4`
+- Exact source head: `d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9`
 - Before score: `57.5 / F`, 5 BLOCKs
 - After score: `70.0 / C`, 3 BLOCKs
-- Visual comparison: 8 matched before/after pairs, 0 changed pairs, byte-identical PNGs
+- Visual comparison: 8 base→head pairs and 14 previous-head→new-head pairs, 0 changed pairs, byte-identical PNGs
+- Review fixes: typed `colors.categorical(1)[0]` examples and active-bound hidden-table headers (`month`, `upper95`, `mean`)
 
 ## Durable reports
 

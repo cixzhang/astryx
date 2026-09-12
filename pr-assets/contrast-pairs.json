@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "stage": "after",
-  "build": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+  "stage": "after-review-fixes",
+  "build": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9",
   "measurements": [
     {
       "label": "confidence-neutral-light",
@@ -250,6 +250,55 @@
     },
     {
       "label": "confidence-neutral-touch",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-neutral-forced-colors",
       "story": "lab-chartadvanced--confidence-intervals",
       "background": "rgb(255, 255, 255)",
       "pairs": [

@@ -11,11 +11,11 @@
   },
   "repository": {
     "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
-    "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4"
+    "head": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9"
   },
   "contract": {
     "path": "packages/lab/src/Chart/ChartArea.spec.md",
-    "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+    "head": "d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9",
     "authority": "draft",
     "exactHeadOwnerApproval": "pending"
   },
@@ -37,6 +37,18 @@
       "kind": "stable-evidence-fixture",
       "before": "Scoped a11y and RTL audits failed because ChartArea had no owned Storybook story.",
       "after": "Three owned stories cover fill, edge stroke, and baseline fallback; scoped axe reports 0 violations and RTL is verified N-A."
+    },
+    {
+      "id": "review-fix-typed-examples",
+      "kind": "consumer-doc-correction",
+      "before": "Both new examples indexed ChartColorsAPI as colors[0], which TypeScript rejects with TS7053.",
+      "after": "Both examples use the established colors.categorical(1)[0] API."
+    },
+    {
+      "id": "review-fix-active-table-series",
+      "kind": "accessibility-fixture-correction",
+      "before": "The upper-plus-baseline story passed lower95 to the parent Chart even though ChartArea did not render that series.",
+      "after": "The fixture derives yKeys from the active bounds; the exact-head hidden table headers are month, upper95, and mean."
     }
   ],
   "unresolvedObjectiveGaps": [
@@ -49,9 +61,9 @@
     {"id": "component:ChartArea/OQ3", "summary": "Owner must choose a contrast-conforming visual representation."}
   ],
   "approvals": {
-    "componentContract": "pending",
-    "independentReview": "not_run_by_request",
-    "reviewRequiredStatus": "pending"
+    "componentContract": "pending-new-head",
+    "independentReview": "blockers-fixed-pending-rerun",
+    "reviewRequiredStatus": "pending-new-head"
   },
   "checks": {
     "local": {
@@ -66,10 +78,10 @@
       "strictLint": "passed: 0 errors, 84 pre-existing warnings"
     },
     "github": {
-      "githubActions": "passed",
-      "visualAcceptance": "pending",
-      "reviewRequiredStatus": "success",
-      "specOwnerStatus": "success"
+      "githubActions": "pending-new-head",
+      "visualAcceptance": "pending-new-head",
+      "reviewRequiredStatus": "pending-new-head",
+      "specOwnerStatus": "pending-new-head"
     }
   },
   "visualEvidence": {
@@ -87,8 +99,8 @@
       "spec:AST-029 remains phase accepted; FR11 activation is not shipped.",
       "The observational component contract remains draft without exact-head owner approval.",
       "Three pre-existing BLOCK findings remain.",
-      "Independent Review Loop clearance is intentionally delegated to the next audit stage.",
-      "All GitHub Actions CI jobs passed; the visual-acceptance status remains pending for that next stage."
+      "Independent Review Loop found two blockers on the previous head; both are fixed and a fresh exact-head rerun is pending.",
+      "GitHub CI and visual acceptance have not yet run on d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9."
     ]
   }
 }
