@@ -108,11 +108,11 @@ export const docs = {
   examples: [
     {
       label: 'Confidence interval',
-      code: '<ChartArea yUpper="upper95" yLower="lower95" color={colors[0]} />',
+      code: '<ChartArea yUpper="upper95" yLower="lower95" color={colors.categorical(1)[0]} />',
     },
     {
       label: 'Bound against a baseline',
-      code: '<ChartArea yUpper="upper95" baseline="mean" color={colors[0]} stroke />',
+      code: '<ChartArea yUpper="upper95" baseline="mean" color={colors.categorical(1)[0]} stroke />',
     },
   ],
 };

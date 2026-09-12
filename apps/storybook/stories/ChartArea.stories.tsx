@@ -19,11 +19,16 @@ const data = [
 ];
 
 function ChartAreaFixture(args: ChartAreaProps) {
+  const yKeys = [
+    args.yUpper ?? args.baseline,
+    args.yLower ?? args.baseline,
+  ].filter((key): key is string => key != null);
+
   return (
     <Chart
       data={data}
       xKey="month"
-      yKeys={['upper95', 'lower95', 'mean']}
+      yKeys={yKeys}
       label="Monthly estimate with confidence interval">
       <ChartGrid horizontal />
       <ChartAxis position="bottom" />
