@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "stage": "after",
+  "build": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+  "measurements": [
+    {
+      "label": "confidence-neutral-light",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-neutral-dark",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(38, 38, 38)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 38,
+            "g": 38,
+            "b": 38,
+            "a": 1
+          },
+          "composite": {
+            "r": 34.300000000000004,
+            "g": 45.5,
+            "b": 56.900000000000006,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.089,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 34.300000000000004,
+            "g": 45.5,
+            "b": 56.900000000000006,
+            "a": 1
+          },
+          "composite": {
+            "r": 27.640000000000004,
+            "g": 59,
+            "b": 90.92000000000002,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.208,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-stone-light",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-neutral-rtl",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-neutral-narrow",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "confidence-neutral-touch",
+      "story": "lab-chartadvanced--confidence-intervals",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.1,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.146,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        },
+        {
+          "pathIndex": 1,
+          "fill": "rgb(1, 113, 227)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 229.6,
+            "g": 240.8,
+            "b": 252.2,
+            "a": 1
+          },
+          "composite": {
+            "r": 183.88,
+            "g": 215.24,
+            "b": 247.16,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.297,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "label": "upper-baseline-neutral-light",
+      "story": "lab-chartadvanced--upper-confidence",
+      "background": "rgb(255, 255, 255)",
+      "pairs": [
+        {
+          "pathIndex": 0,
+          "fill": "rgb(235, 110, 0)",
+          "fillOpacity": 0.2,
+          "backdrop": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 1
+          },
+          "composite": {
+            "r": 251,
+            "g": 226,
+            "b": 204,
+            "a": 1
+          },
+          "contrastAgainstBackdrop": 1.246,
+          "threshold": 3,
+          "applicability": "meaningful confidence-band range graphic",
+          "verdict": "fail"
+        }
+      ]
+    }
+  ]
+}

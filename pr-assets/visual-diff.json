@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
+  "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+  "matchedPairs": 8,
+  "changedPairs": 0,
+  "changedPixels": 0,
+  "pairs": [
+    "confidence-neutral-light",
+    "confidence-neutral-dark",
+    "confidence-stone-light",
+    "confidence-neutral-rtl",
+    "confidence-neutral-narrow",
+    "confidence-neutral-touch",
+    "confidence-neutral-forced-colors",
+    "upper-baseline-neutral-light"
+  ]
+}

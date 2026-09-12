@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "kind": "astryx-night-watch-audit-eligibility",
+  "component": "ChartArea",
+  "package": "lab",
+  "mode": "nightly",
+  "rubricVersion": "1.16.6",
+  "repository": {
+    "base": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
+    "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4"
+  },
+  "contract": {
+    "path": "packages/lab/src/Chart/ChartArea.spec.md",
+    "head": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+    "authority": "draft",
+    "exactHeadOwnerApproval": "pending"
+  },
+  "inventory": {
+    "path": "fr5-inventory.json",
+    "closed": true,
+    "rows": 22,
+    "gaps": ["no-resolved-pair", "baseline-only", "nonnumeric-values", "opacity-default", "composition-and-environment"]
+  },
+  "remediations": [
+    {
+      "id": "docs-contract",
+      "kind": "observational-contract-and-doc-drift",
+      "before": "ChartArea.doc.mjs had an empty description and no props; no component contract existed.",
+      "after": "The draft contract and consumer docs describe verified canary behavior without changing runtime code."
+    },
+    {
+      "id": "browser-fixture",
+      "kind": "stable-evidence-fixture",
+      "before": "Scoped a11y and RTL audits failed because ChartArea had no owned Storybook story.",
+      "after": "Three owned stories cover fill, edge stroke, and baseline fallback; scoped axe reports 0 violations and RTL is verified N-A."
+    }
+  ],
+  "unresolvedObjectiveGaps": [
+    {"id": "WCAG-2.2/1.4.11", "summary": "Meaningful band/backdrop pairs measure 1.09:1-1.30:1 against a 3:1 threshold."},
+    {"id": "CLI-DISCOVERY", "summary": "`astryx component ChartArea --dense` does not discover the in-repo Lab package."}
+  ],
+  "unresolvedManualGaps": [
+    {"id": "AST-002/FR15", "summary": "Owner must decide the valid bound-key type/runtime contract."},
+    {"id": "AST-002/FR10,FR15", "summary": "Owner must decide missing/non-numeric data behavior."},
+    {"id": "component:ChartArea/OQ3", "summary": "Owner must choose a contrast-conforming visual representation."}
+  ],
+  "approvals": {
+    "componentContract": "pending",
+    "independentReview": "not_run_by_request",
+    "reviewRequiredStatus": "pending"
+  },
+  "checks": {
+    "local": {
+      "focusedTests": "passed: 26",
+      "scopedAxe": "passed: 3 stories, 0 violations",
+      "rtlAudit": "passed: verified N-A, 0 coverage gaps",
+      "packageBuilds": "passed",
+      "storybookBuild": "passed",
+      "coreLabStorybookTypechecks": "passed",
+      "docsite": "passed: 498 tests",
+      "knowledgeSyncExportsChangesets": "passed",
+      "strictLint": "passed: 0 errors, 84 pre-existing warnings"
+    },
+    "github": "pending"
+  },
+  "visualEvidence": {
+    "beforeFrames": 8,
+    "afterFrames": 14,
+    "matchedPairs": 8,
+    "changedPairs": 0,
+    "changedPixels": 0,
+    "contrastReport": "contrast-pairs.json"
+  },
+  "eligibility": {
+    "verdict": "manual-review-only",
+    "eligibleForUnattendedMerge": false,
+    "reasons": [
+      "spec:AST-029 remains phase accepted; FR11 activation is not shipped.",
+      "The observational component contract remains draft without exact-head owner approval.",
+      "Three pre-existing BLOCK findings remain.",
+      "Independent Review Loop clearance is intentionally delegated to the parent session.",
+      "GitHub CI has not yet completed on the public pull request."
+    ]
+  }
+}

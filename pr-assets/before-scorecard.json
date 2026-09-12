@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "component": "ChartArea",
+  "package": "lab",
+  "mode": "nightly",
+  "rubricVersion": "1.16.6",
+  "repositoryHead": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
+  "contractHead": null,
+  "score": 57.5,
+  "grade": "F",
+  "sections": {
+    "accessibility": {"state": "limited", "score": 5},
+    "theming": {"state": "limited", "score": 5},
+    "public_api": {"state": "limited", "score": 3},
+    "behavior": {"state": "scored", "score": 3},
+    "design_objective": {"state": "limited", "score": 5},
+    "design_rendered": {"state": "scored", "score": 3},
+    "testing": {"state": "scored", "score": 3},
+    "code_health": {"state": "limited", "score": 5},
+    "docs": {"state": "scored", "score": 2.5},
+    "i18n_rtl": {"state": "limited", "score": 4},
+    "responsive_touch": {"state": "limited", "score": 5}
+  },
+  "blockers": [
+    {"id": "AST-002/FR15", "owner": "public_api", "summary": "Public bound-key combinations can silently render no visible band; the correct type and fallback need owner judgment."},
+    {"id": "AST-002/FR10,FR15", "owner": "behavior", "summary": "Missing or non-numeric bound values are fabricated as zero, which can misrepresent the supplied range; the correct missing-data behavior needs owner judgment."},
+    {"id": "WCAG-2.2/1.4.11", "owner": "design_rendered", "summary": "Meaningful confidence-band fills measure 1.09:1–1.30:1 against their rendered backdrop, below 3:1."},
+    {"id": "V9,V10,I17", "owner": "testing", "summary": "ChartArea has no owned Storybook story, so scoped a11y and RTL audits fail before measuring it."},
+    {"id": "X2", "owner": "docs", "summary": "The canary-exported component has an empty description and no public prop or usage inventory."}
+  ],
+  "distinctDefects": 5,
+  "fixes": 4,
+  "nits": 1,
+  "visualEvidence": "audit-evidence/chartarea-20260912/before",
+  "notes": [
+    "Limited-section weight is redistributed across Behavior, rendered Design, Testing, and Docs.",
+    "The CLI command `astryx component ChartArea --dense` was run and failed because the in-repo Lab package is not discoverable through that command.",
+    "The band contrast finding is retained, not auto-fixed, because changing opacity, stroke defaults, or representation is a public/default/visual decision."
+  ]
+}

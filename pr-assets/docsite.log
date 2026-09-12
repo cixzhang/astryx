@@ -1,0 +1,149 @@
+$ node scripts/check-workspace-build.mjs && pnpm build:theme && node scripts/generate-data.mjs && node scripts/generate-scope.mjs && node scripts/generate-playground-types.mjs && node scripts/copy-vendor.mjs
+$ astryx theme build src/themes/astryxTheme.ts --out src/themes/astryx.css
+
+Next step: run `pnpm exec astryx init` to finish setup and install the Astryx agent prompt.
+
+Building theme from src/themes/astryxTheme.ts...
+
+✓ src/themes/astryx.css
+  18 token overrides, 3 component overrides
+  8.0 KB
+✓ src/themes/astryx.js
+✓ src/themes/astryx.d.ts
+
+Install in your app (paths are relative to a file in src/ — adjust if yours lives elsewhere):
+
+  import { astryxTheme } from './themes/astryx';
+  import './themes/astryx.css';
+
+  <Theme theme={astryxTheme}>
+    <App />
+  </Theme>
+
+Or with a <link> tag:
+
+  import { astryxTheme } from './themes/astryx';
+
+  <link rel="stylesheet" href="./themes/astryx.css" />
+  <Theme theme={astryxTheme}>
+    <App />
+  </Theme>
+
+  note: Font "Figtree Variable" is named by this theme but not loaded — add a <link> or @font-face in your app (recipe: astryx docs typography)
+
+⚠ Theme "astryx" names fonts it does not load: "Figtree Variable"
+  The built CSS only sets font-family — load these in your app, or every
+  browser quietly falls back.
+
+  Google Fonts (add :wght@… axes as your theme's weights require):
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree+Variable&display=swap" />
+
+  Self-hosted (repeat per family and weight):
+
+    @font-face {
+      font-family: "Figtree Variable";
+      src: url('/fonts/figtree-variable.woff2') format('woff2');
+      font-display: swap;
+    }
+
+  Recipe and fallback-stack guidance: astryx docs typography
+
+Docsite content target: canary (reading package docs from .)
+Generating docsite data...
+
+Generating package registry...
+  wrote apps/docsite/src/generated/packageRegistry.ts
+Generating theme registry...
+  wrote apps/docsite/src/generated/themeRegistry.ts
+  wrote apps/docsite/src/generated/themes.css
+Generating component registry...
+  wrote apps/docsite/src/generated/componentRegistry.ts
+  wrote apps/docsite/src/generated/componentPreviewRegistry.ts
+Generating grouped component registry...
+  wrote apps/docsite/src/generated/groupedComponentRegistry.ts
+Generating block registry...
+  wrote apps/docsite/src/generated/blockRegistry.ts
+  wrote apps/docsite/src/generated/package-styles.css
+Generating template registry...
+  wrote apps/docsite/src/generated/templateRegistry.ts
+Generating docs registry...
+  wrote apps/docsite/src/generated/docsRegistry.ts
+Generating blog registry...
+  wrote apps/docsite/src/generated/blogRegistry.ts
+Generating showcase registry...
+  wrote apps/docsite/src/generated/showcaseRegistry.ts
+  copied 178 showcase files (178 unique components)
+Generating example registry...
+  wrote apps/docsite/src/generated/exampleRegistry.ts
+  copied 513 example blocks for 192 components
+  wrote apps/docsite/src/generated/shadcnRegistry.ts
+
+Summary:
+  12 packages
+  270 components
+  649 blocks (178 showcases, 513 examples)
+  52 templates
+  21 doc topics
+  12 blog posts
+  6 themes
+  971 ShadCN registry items (216 components, 54 hooks, 161 showcases, 488 examples, 0 standalone blocks, 52 pages; 0 unpublished components, 0 blocks, and 0 pages skipped)
+Done.
+✓ Generated <worktree>/apps/docsite/src/generated/playground-scope.ts
+  104 components
+  2 themes
+  lucide-react icons + 4 heroicon variants
+Scanning <worktree>/packages/core/dist for .d.ts files...
+Generated heroicon types: 4 variants
+Generated Recharts types: 1 declaration file
+Generated playground-types.json: 604 Astryx type files, 1659KB
+monaco: copied min/vs -> public/monaco/vs
+typescript: copied -> public/vendor/typescript.js
+$ vitest run
+
+ RUN  v4.1.10 <worktree>/apps/docsite
+
+ ✓ src/__tests__/playground-scope.test.ts (13 tests) 23ms
+ ✓ src/__tests__/code-linkifiers.test.ts (39 tests) 16ms
+ ✓ src/__tests__/pageMetadata.test.ts (9 tests) 13ms
+ ✓ src/__tests__/blog.test.ts (33 tests) 132ms
+ ✓ src/__tests__/component-detail-wiring.test.ts (6 tests) 510ms
+     ✓ reaches every module in component-detail/ from a page  476ms
+ ✓ src/__tests__/mcp-server.test.ts (22 tests) 52ms
+ ✓ src/__tests__/playground-format.test.ts (36 tests) 796ms
+     ✓ matches the repo’s own Prettier byte-for-byte  367ms
+ ✓ src/__tests__/search-palette.test.ts (5 tests) 52ms
+ ✓ src/__tests__/sitemap.test.ts (7 tests) 23ms
+ ✓ src/__tests__/component-preview-theme.test.ts (3 tests) 96ms
+ ✓ src/__tests__/changelog-view.test.ts (6 tests) 19ms
+ ✓ src/__tests__/anatomy-helpers.test.ts (7 tests) 9ms
+ ✓ src/__tests__/component-preview-state.test.ts (37 tests) 36ms
+ ✓ src/__tests__/playground-number-control.test.ts (3 tests) 18ms
+ ✓ src/__tests__/component-prop-controls.test.ts (11 tests) 10ms
+ ✓ src/__tests__/theme-concentricity.test.ts (10 tests) 4ms
+ ✓ src/__tests__/theme-helpers.test.ts (3 tests) 18ms
+ ✓ src/__tests__/static-shell.test.ts (4 tests) 20ms
+ ✓ src/__tests__/did-you-mean.test.ts (8 tests) 10ms
+ ✓ src/__tests__/docs-linkify.test.ts (8 tests) 6ms
+ ✓ src/__tests__/theming-helpers.test.ts (23 tests) 7ms
+ ✓ src/__tests__/changelog-linkify.test.ts (19 tests) 9ms
+ ✓ src/__tests__/code-examples.test.ts (4 tests) 4ms
+ ✓ src/__tests__/inline-tokens.test.ts (9 tests) 8ms
+ ✓ src/__tests__/compress.test.ts (4 tests) 9ms
+ ✓ src/__tests__/template-gallery-performance.test.ts (2 tests) 10ms
+ ✓ src/__tests__/component-detail-resolve-elements.test.ts (6 tests) 6ms
+ ✓ src/__tests__/live-number-input.test.ts (3 tests) 3ms
+ ✓ src/__tests__/type-definitions.test.ts (18 tests) 19ms
+ ✓ src/__tests__/component-categories.test.ts (2 tests) 3ms
+ ✓ src/__tests__/playground-preview-channel.test.ts (6 tests) 4ms
+ ✓ src/__tests__/prose-link.test.ts (5 tests) 10ms
+ ✓ src/__tests__/interactive-preview.test.ts (3 tests) 403ms
+ ✓ src/__tests__/data-extraction.test.ts (124 tests) 300ms
+
+ Test Files  34 passed (34)
+      Tests  498 passed (498)
+   Start at  03:54:31
+   Duration  7.22s (transform 20.76s, setup 0ms, import 30.12s, tests 2.66s, environment 1.43s)
+

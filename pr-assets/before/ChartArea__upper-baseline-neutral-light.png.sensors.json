@@ -1,0 +1,101 @@
+{
+  "label": "ChartArea/upper-baseline-neutral-light",
+  "identity": "story",
+  "build": {
+    "root": ".",
+    "expectedSha": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825",
+    "observedSha": "47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 560,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "state": {
+      "pathCount": 1,
+      "fillOpacities": [
+        "0.2"
+      ],
+      "strokeValues": [
+        "none"
+      ],
+      "allPathsNonEmpty": true,
+      "chartRole": "img",
+      "chartLabel": "Chart of upper95, mean by month",
+      "horizontalOverflow": false
+    },
+    "runningAnimations": 0
+  },
+  "observed": {
+    "storyExpected": "lab-chartadvanced--upper-confidence",
+    "storyObserved": "lab-chartadvanced--upper-confidence",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
+    "surfaceClass": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 560,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 1,
+    "visible": true,
+    "box": {
+      "x": 141.80599975585938,
+      "y": 90.9000015258789,
+      "width": 648.387939453125,
+      "height": 113.4000015258789,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "pathCount": 1,
+      "fillOpacities": [
+        "0.2"
+      ],
+      "strokeValues": [
+        "none"
+      ],
+      "allPathsNonEmpty": true,
+      "chartRole": "img",
+      "chartLabel": "Chart of upper95, mean by month",
+      "horizontalOverflow": false
+    }
+  },
+  "image": {
+    "path": "pr-assets/before/ChartArea__upper-baseline-neutral-light.png",
+    "bytes": 17954
+  }
+}

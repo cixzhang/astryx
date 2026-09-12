@@ -1,0 +1,24 @@
+## core typecheck
+$ tsc --project tsconfig.json --noEmit
+## lab typecheck
+$ tsc --project tsconfig.json --noEmit
+## lab docs typecheck
+$ tsc --project tsconfig.docs.json
+## storybook typecheck
+$ tsc --noEmit
+## export checks
+✓ package.json exports are up to date
+✓ @astryxdesign/build
+✓ @astryxdesign/cli
+✓ @astryxdesign/core
+✓ @astryxdesign/theme-butter
+✓ @astryxdesign/theme-chocolate
+✓ @astryxdesign/theme-gothic
+✓ @astryxdesign/theme-matcha
+✓ @astryxdesign/theme-neutral
+✓ @astryxdesign/theme-stone
+✓ @astryxdesign/theme-y2k
+
+10 packages checked.
+32 import and 14 require export target(s) loaded cleanly.
+All package artifacts and exports are valid; probed Node targets load cleanly.

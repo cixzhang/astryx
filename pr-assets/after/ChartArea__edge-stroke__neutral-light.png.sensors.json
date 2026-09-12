@@ -1,0 +1,109 @@
+{
+  "label": "ChartArea/edge-stroke/light",
+  "identity": "story",
+  "build": {
+    "root": ".",
+    "expectedSha": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+    "observedSha": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4"
+  },
+  "expected": {
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 560,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 2,
+    "state": {
+      "pathCount": 2,
+      "fillCount": 1,
+      "strokeCount": 1,
+      "fillOpacities": [
+        "0.2"
+      ],
+      "strokeOpacities": [
+        "0.4"
+      ],
+      "strokeWidths": [
+        "2"
+      ],
+      "chartRole": "img",
+      "chartLabel": "Monthly estimate with confidence interval",
+      "horizontalOverflow": false
+    },
+    "runningAnimations": 0
+  },
+  "observed": {
+    "storyExpected": "lab-chartarea--with-edge-stroke",
+    "storyObserved": "lab-chartarea--with-edge-stroke",
+    "routeObserved": "/iframe.html",
+    "globals": {
+      "astryxTheme": "neutral",
+      "colorMode": "light",
+      "direction": "ltr"
+    },
+    "themeAttr": "neutral",
+    "colorMode": "light",
+    "surfaceColor": "rgb(255, 255, 255)",
+    "surfaceLuminance": 0.9999999999999999,
+    "surfaceClass": "light",
+    "direction": "ltr",
+    "viewport": {
+      "width": 900,
+      "height": 560,
+      "dpr": 1
+    },
+    "media": {
+      "forcedColors": false,
+      "reducedMotion": false,
+      "coarsePointer": false,
+      "hover": true
+    },
+    "targetCount": 2,
+    "visible": true,
+    "box": {
+      "x": 141.80599975585938,
+      "y": 50.900001525878906,
+      "width": 648.387939453125,
+      "height": 151.20001220703125,
+      "insideViewport": true
+    },
+    "fonts": "loaded",
+    "runningAnimations": 0,
+    "storybookError": null,
+    "state": {
+      "pathCount": 2,
+      "fillCount": 1,
+      "strokeCount": 1,
+      "fillOpacities": [
+        "0.2"
+      ],
+      "strokeOpacities": [
+        "0.4"
+      ],
+      "strokeWidths": [
+        "2"
+      ],
+      "chartRole": "img",
+      "chartLabel": "Monthly estimate with confidence interval",
+      "horizontalOverflow": false
+    }
+  },
+  "image": {
+    "path": "pr-assets/after/ChartArea__edge-stroke__neutral-light.png",
+    "bytes": 17464
+  }
+}

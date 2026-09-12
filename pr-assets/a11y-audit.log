@@ -1,0 +1,18 @@
+$ node .github/scripts/accessibility-audit.js --baseline .github/a11y-baseline.json --fail-on-new -- --components ChartArea
+Starting accessibility audit...
+Components to audit: ChartArea
+Found 2204 stories
+Owner route: lab/ChartArea -> lab-chartarea--band, lab-chartarea--with-edge-stroke, lab-chartarea--upper-bound-against-baseline
+Auditing 1 components
+Storybook server running on http://localhost:6007
+✓ Audited: ChartArea / Band - 0 issues
+✓ Audited: ChartArea / With Edge Stroke - 0 issues
+✓ Audited: ChartArea / Upper Bound Against Baseline - 0 issues
+
+Audit complete: 0 total violations found
+Report written to a11y-report.json
+
+=== Accessibility baseline gate ===
+0 new, 0 baselined, 0 resolved, 171 baselined for stories outside this run
+
+No new accessibility violations. Gate passed.

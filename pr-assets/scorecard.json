@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "component": "ChartArea",
+  "package": "lab",
+  "mode": "nightly",
+  "rubricVersion": "1.16.6",
+  "date": "2026-09-12",
+  "commit": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+  "contractHead": "2b7755541c8d4d81196b4f64ed903c1c74ae51d4",
+  "score": 70.0,
+  "grade": "C",
+  "sections": {
+    "accessibility": {"state": "limited", "score": 5},
+    "theming": {"state": "limited", "score": 5},
+    "public_api": {"state": "limited", "score": 3},
+    "behavior": {"state": "scored", "score": 3},
+    "design_objective": {"state": "limited", "score": 5},
+    "design_rendered": {"state": "scored", "score": 3},
+    "testing": {"state": "scored", "score": 4},
+    "code_health": {"state": "limited", "score": 5},
+    "docs": {"state": "scored", "score": 4},
+    "i18n_rtl": {"state": "limited", "score": 5},
+    "responsive_touch": {"state": "limited", "score": 5}
+  },
+  "blockers": [
+    {"id": "AST-002/FR15", "summary": "Public bound-key combinations can silently render no visible band; the correct type and fallback need owner judgment.", "issue": null},
+    {"id": "AST-002/FR10,FR15", "summary": "Missing or non-numeric bound values are fabricated as zero, which can misrepresent the supplied range; the correct missing-data behavior needs owner judgment.", "issue": null},
+    {"id": "WCAG-2.2/1.4.11", "summary": "Meaningful confidence-band fills measure 1.09:1–1.30:1 against their rendered backdrop, below 3:1.", "issue": null}
+  ],
+  "distinct_defects": 3,
+  "fixes": 2,
+  "nits": 0,
+  "sensitivity": "Fix the 3 open BLOCKs and change nothing else -> projected 90.0 / A.",
+  "limitedSections": ["accessibility", "theming", "public_api", "design_objective", "code_health", "i18n_rtl", "responsive_touch"],
+  "evidenceRider": "n/a — Night Watch audit of an existing Lab component, not a promotion",
+  "unverified": [
+    "The draft observational contract has not received exact-head owner approval.",
+    "The CLI cannot currently discover this in-repo Lab component with `astryx component ChartArea --dense`."
+  ]
+}
