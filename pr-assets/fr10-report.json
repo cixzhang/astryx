@@ -79,8 +79,8 @@
     },
     "github": {
       "githubActions": "passed",
-      "visualAcceptance": "pending-new-head",
-      "reviewRequiredStatus": "pending-new-head",
+      "visualAcceptance": "pending-final-review",
+      "reviewRequiredStatus": "pending-final-review",
       "specOwnerStatus": "success"
     }
   },
@@ -99,7 +99,7 @@
       "spec:AST-029 remains phase accepted; FR11 activation is not shipped.",
       "The observational component contract remains draft without exact-head owner approval.",
       "Three pre-existing BLOCK findings remain.",
-      "Independent Review Loop found two blockers on the previous head; both are fixed and a fresh exact-head rerun is pending.",
+      "Independent Review Loop found two blockers on the prior reviewed head; both are fixed and final exact-head re-review is pending.",
       "All GitHub Actions CI jobs passed on f369c96a3a10620d3df8b4bcd59a8034747f04ac; review-required and visual-acceptance remain pending."
     ]
   }
