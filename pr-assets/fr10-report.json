@@ -78,10 +78,10 @@
       "strictLint": "passed: 0 errors, 84 pre-existing warnings"
     },
     "github": {
-      "githubActions": "pending-new-head",
+      "githubActions": "passed",
       "visualAcceptance": "pending-new-head",
       "reviewRequiredStatus": "pending-new-head",
-      "specOwnerStatus": "pending-new-head"
+      "specOwnerStatus": "success"
     }
   },
   "visualEvidence": {
@@ -100,7 +100,7 @@
       "The observational component contract remains draft without exact-head owner approval.",
       "Three pre-existing BLOCK findings remain.",
       "Independent Review Loop found two blockers on the previous head; both are fixed and a fresh exact-head rerun is pending.",
-      "GitHub CI and visual acceptance have not yet run on d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9."
+      "All GitHub Actions CI jobs passed on d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9; review-required and visual-acceptance remain pending."
     ]
   }
 }

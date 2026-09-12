@@ -2,7 +2,7 @@
 
 Rubric **1.16.6** · [PR #6282](https://github.com/facebook/astryx/pull/6282) · base `47ba5526fa93f2bbcb7c0c26ab0a49d86cf37825` · exact source head `d72f0cb76f03ddf83ee445e1dd1c699bcd31f8c9`
 
-Independent review found two blockers on the previous head. Both are fixed; fresh GitHub CI and Review Loop clearance are pending on this exact head.
+Independent review found two blockers on the previous head. Both are fixed; all GitHub Actions CI jobs pass on this exact head, while fresh `review-required` and `visual-acceptance` remain pending.
 
 The copyable examples now use `colors.categorical(1)[0]`. The upper-plus-baseline receipt proves the hidden table headers are exactly `month`, `upper95`, and `mean`.
 
