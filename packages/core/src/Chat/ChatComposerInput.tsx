@@ -795,6 +795,7 @@ export function ChatComposerInput(props: ChatComposerInputProps) {
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         {...triggerMenu.ariaProps}
+        aria-disabled={isDisabled || undefined}
         {...mergeProps(stylex.props(styles.editable), {
           style: {maxHeight: `${maxHeight}px`},
         })}
