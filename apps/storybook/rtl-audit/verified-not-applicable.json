@@ -62,7 +62,7 @@
   },
   {
     "component": "charts/ChartSwatch",
-    "reason": "ChartSwatch is a centered square, line, or dot sample whose mark shape and color identify a data series. Its geometry is symmetric and it owns no directional glyph, placement, order, scroll, drag, overlay, or keyboard behavior."
+    "reason": "ChartSwatch renders a square or line sample whose mark shape and color identify a data series. Its geometry is symmetric and it owns no directional glyph, placement, order, scroll, drag, overlay, or keyboard behavior."
   },
   {
     "component": "charts/ChartTooltip",
