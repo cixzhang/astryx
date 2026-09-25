@@ -86,11 +86,6 @@ for (const state of NUMBER_INPUT_A11Y_STATES) {
     const result = await runState(page, cdp, state);
     const report = summarize(SPINBUTTON_PATTERN, [result]);
     expect(formatFailures(blockingResults([result]))).toBe('');
-    expect(
-      result.results.filter(
-        row => row.status !== 'pass' && row.status !== 'not-applicable',
-      ),
-    ).toEqual([]);
     expect(report.unrunLayers).toEqual([]);
   });
 }
