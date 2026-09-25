@@ -56,6 +56,15 @@ export const NUMBER_INPUT_A11Y_RENDERS: Readonly<
       onChange={() => {}}
     />
   ),
+  invalid: () => (
+    <NumberInput
+      data-a11y-spinbutton-subject
+      label="Quantity"
+      value={5}
+      onChange={() => {}}
+      status={{type: 'error', message: 'Quantity is invalid'}}
+    />
+  ),
   disabled: () => <StatefulNumberInput isDisabled />,
   'disabled-with-message': () => (
     <StatefulNumberInput

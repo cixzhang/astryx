@@ -35,6 +35,7 @@ export const DefaultValue = storyFor('default-value');
 export const BoundedValue = storyFor('bounded-value');
 export const FormattedValue = storyFor('formatted-value');
 export const EmptyValue = storyFor('empty-value');
+export const Invalid = storyFor('invalid');
 export const Disabled = storyFor('disabled');
 export const DisabledWithMessage = storyFor('disabled-with-message');
 export const ReadOnly = storyFor('read-only');

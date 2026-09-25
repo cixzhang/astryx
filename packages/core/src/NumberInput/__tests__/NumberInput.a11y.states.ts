@@ -56,6 +56,12 @@ export const NUMBER_INPUT_A11Y_STATES = [
     storyId: story('empty-value'),
   },
   {
+    id: 'invalid',
+    summary: 'an invalid spinbutton that preserves its shared semantics',
+    facts: facts(),
+    storyId: story('invalid'),
+  },
+  {
     id: 'disabled',
     summary: 'a natively disabled spinbutton outside the tab sequence',
     facts: facts({disabled: true, focusable: false}),
