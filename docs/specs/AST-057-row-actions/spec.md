@@ -50,7 +50,7 @@ review_triggers: [public-api, accessibility, behavior]
 | Behavior                | On a coarse pointer a sideways drag moves the row and uncovers the side's panel. Under `reveal` (default) the row rests open so each action is tappable and a long drag fires the outermost; under `commit` the row slides out and the outermost fires; nothing rests. After an action fires the row springs back, or holds out when the action has `hasRemoval` — one bit the component cannot infer, independent of the model. The component waits for nothing afterwards. A short release springs back under both. A mouse never starts the drag; a mostly vertical drag stays the scroller's; a pointer anywhere outside a resting row closes it. |
 | End-user impact         | A person on a phone gets the flick they expect on a mail row or a settings row, with the row's own look. Nothing changes for anyone else: a mouse, a keyboard, or a screen reader meets the row exactly as today.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Builder impact          | One prop on `Item` (and so on `ListItem`), `swipeActions={{trailing: [{label: 'Archive', icon: <Icon icon={ArchiveIcon} />, onActivate: archive, hasRemoval: true}]}}`; optionally `swipeBehavior`. Every field is known before the gesture begins, so the component paints the panel from data. The group around the rows clips in the inline axis — `List` does it; any other host does it once. The consumer documentation states that a verb reachable only by swipe is unreachable by keyboard.                                                                                                                                                  |
-| Compatibility/readiness | Additive: both props are absent by default; every current row keeps its DOM and paint exactly. Authority: `draft`; `approved_by` is `null`. One owner question is open (OQ1); it is about where the prop lives, not what it does.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Compatibility/readiness | Additive: both props are absent by default; every current row keeps its DOM and paint exactly. Authority: `draft`; `approved_by` is `null`. No owner question is open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Review checks           | Reject a hover-revealed panel; swipe actions on a row with a `listbox`, `menu`, or radio role; a model restricted by host; `commit` with several entries on a side and no warning; a panel exposed to the tree while closed; any element added to `Item` for the panels; `overflow: hidden` on the group where `clip` is meant; a row exit or enter animation introduced under this record; `hasRemoval` read as an obligation, a warning, or a timing rule; a second adaptive media query.                                                                                                                                                           |
 | Governing rules         | [`architecture:interaction-modality`](../../architecture/interaction-modality.md) INV4, INV6, INV7; [`spec:AST-002`](../AST-002/spec.md) FR1, FR4, FR15, FR16, `DEC-1`; [`architecture:public-component-api`](../../architecture/public-component-api.md) INV2, INV3, INV5.                                                                                                                                                                                                                                                                                                                                                                           |
 
@@ -109,9 +109,10 @@ row's own end content is the row's business, not this record's.
   about `Item`'s public surface; `component:Item`, when written, inherits
   these claims rather than re-deciding them. Of `Item`'s seven in-core
   renderers, six carry a `listbox`, `menu`, or radio role and are out of
-  scope; `ListItem` and a bare `Item` in caller markup — which the system's
-  own templates render inside a `BottomSheet` and on a page — are the rows
-  this record serves (OQ1 asks whether that argues for moving the prop).
+  scope; `ListItem` and a bare `Item` in caller markup — which the system's own
+  templates render inside a `BottomSheet` and on a page — are the rows this
+  record serves: two real consumers, one home, and the prop stays on the
+  primitive (DEC-3).
 - [`component:List`](../../../packages/core/src/List/List.spec.md) is
   `current` and owns List's geometry; it gains the inline clip and cites
   this record.
@@ -388,7 +389,7 @@ resting without a default change. Rejected: a boolean `hasFullSwipe` — under `
 ### DEC-3 — The capability is `Item`'s; listbox, menu, and radio rows are out of scope
 
 **Reference:** `spec:AST-057/DEC-3`
-**Decider:** `cixzhang`, `2026-10-03` (direction; record pending)
+**Decider:** `cixzhang`, `2026-10-03`
 
 `Item` owns `swipeActions` and `swipeBehavior`. `ListItem` inherits them
 through its existing passthrough and declares nothing of its own; a bare
@@ -406,10 +407,14 @@ the row is ruled out by the HTML list content model — it would sit between
 `<ul>` and `<li>` — so the gesture has to live where the root lives. Of
 `Item`'s seven in-core renderers, six are the out-of-scope roles; the
 seventh is `ListItem`, and the system's own templates render a bare `Item`
-outside any list, so the capability has two consumers rather than one, which
-is why it stays on the primitive (OQ1 puts the alternative to the owner).
+outside any list, so the capability has two consumers rather than one, which is why it stays
+on the primitive: list rows and standalone rows share one home, and the
+excluded roles are excluded by what they are, not by where the prop lives.
 
-Rejected: deciding scope per model — permitting `commit` where `reveal` is
+Rejected: moving the prop to `ListItem` now that six of `Item`'s seven
+in-core renderers are out of scope — it would put the prop only where it is
+most used and take it from the standalone row, a real consumer the system's
+own templates render. Rejected: deciding scope per model — permitting `commit` where `reveal` is
 forbidden — because it couples a design choice (what the row does when
 swiped) to a structural constraint (what the host may contain), so the same
 prop value behaves differently by host. Rejected: a behavior hook that hosts
@@ -500,15 +505,7 @@ word for the one action a panel exists to offer.
 
 ## Open questions
 
-- **OQ1 — With six of `Item`'s seven in-core renderers out of scope, does the prop stay on `Item` or move to `ListItem`?** (`human-api`)
-
-  On `Item`: one home serves both real consumers — `ListItem` and a bare
-  `Item` in caller markup, which the system's own templates already render in
-  a `BottomSheet` and on a page — and `ListItem` declares nothing. On
-  `ListItem`: the prop sits only where it is most used, and a standalone row
-  loses it. The recommendation is `Item`, because the second consumer is real
-  and the out-of-scope roles are excluded by what they are, not by where the
-  prop lives.
+None.
 
 ## Content boundary
 
