@@ -340,9 +340,7 @@ and paints the panel during the drag from the data.
 
 An object is needed where the component renders the thing; a node works where it only places it (`spec:AST-058` DEC-1 draws the same line from the other side, and its picker-row actions are nodes because the picker only places them in a cell). `Item` paints and animates the panel, so every field is known before the gesture begins; a caller's own node could do neither without registering through a context, which splits the API into nodes that get the behavior and nodes that silently do not. Core already declares a verb as data
 in `DropdownMenu.items` and `MoreMenu.items`, and two independent recall
-probes (3/3 in this record's vibe test,
-`internal/vibe-tests/row-actions-shape-test/RESULTS.md`; 3/3 in
-[#6909](https://github.com/facebook/astryx/pull/6909)) found builders
+probes found builders
 reaching for exactly this array with no prop names given, and none reaching
 for child components or a render prop.
 
@@ -519,9 +517,8 @@ None.
 
 The research that produced this record — the cross-library survey, the
 shapes weighed, and the vibe test's design and scores — is a report, not a
-contract, and lives outside it: the vibe test in
-`internal/vibe-tests/row-actions-shape-test/RESULTS.md`, the rest linked from
-the pull request that introduced the record.
+contract, and lives outside it, linked from the pull request that
+introduced the record.
 
 This record does not duplicate `Item`'s or `List`'s anatomy, prop tables,
 theming targets, or geometry contracts; the modality invariants in
