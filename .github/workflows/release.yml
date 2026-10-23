@@ -287,7 +287,7 @@ jobs:
               NAME=$(node -p "require('./$pkg_dir/package.json').name")
               if grep -Fxq "$NAME" "$PRIVATE_CANARY_PACKAGES"; then
                 PACKAGE_URL=$(node -e "process.stdout.write(new URL(encodeURIComponent(process.argv[1]), 'https://registry.npmjs.org/').href)" "$NAME")
-                HTTP_STATUS=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30 "$PACKAGE_URL")
+                HTTP_STATUS=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30 "$PACKAGE_URL" || true)
                 case "$HTTP_STATUS" in
                   200) ;;
                   404)

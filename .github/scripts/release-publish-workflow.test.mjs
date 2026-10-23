@@ -35,7 +35,11 @@ function writeExecutable(root, name, contents) {
   fs.chmodSync(file, 0o755);
 }
 
-function runCanaryPublish({httpStatus, failingPackage = ''}) {
+function runCanaryPublish({
+  httpStatus,
+  curlExitCode = '0',
+  failingPackage = '',
+}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'astryx-canary-publish-'));
   const publishLog = path.join(root, 'publish.log');
   try {
@@ -56,7 +60,7 @@ function runCanaryPublish({httpStatus, failingPackage = ''}) {
     writeExecutable(
       root,
       'curl',
-      '#!/bin/sh\nprintf %s "$NATIVE_HTTP_STATUS"\n',
+      '#!/bin/sh\nprintf %s "$NATIVE_HTTP_STATUS"\nexit "$CURL_EXIT_CODE"\n',
     );
     writeExecutable(
       root,
@@ -75,6 +79,7 @@ function runCanaryPublish({httpStatus, failingPackage = ''}) {
         encoding: 'utf8',
         env: {
           ...process.env,
+          CURL_EXIT_CODE: curlExitCode,
           FAIL_PACKAGE: failingPackage,
           GITHUB_SHA: 'abcdef1234567890',
           NATIVE_HTTP_STATUS: httpStatus,
@@ -215,6 +220,17 @@ describe('stable and canary publication authority', () => {
       'Registry lookup for @astryxdesign/native returned HTTP 503',
     );
     expect(result.published).not.toContain('publish ./packages/native');
+  });
+
+  it('records a failed registry request and continues later packages', () => {
+    const result = runCanaryPublish({httpStatus: '000', curlExitCode: '28'});
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain(
+      'Registry lookup for @astryxdesign/native returned HTTP 000',
+    );
+    expect(result.published).not.toContain('publish ./packages/native');
+    expect(result.published).toContain('publish ./packages/themes/neutral');
   });
 
   it('still fails when a present package cannot publish', () => {
