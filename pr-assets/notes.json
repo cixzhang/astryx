@@ -1,0 +1,13 @@
+{
+ "phone390.fineHover": false,
+ "phone390.before.afterTap": {
+  "bg": "rgba(0, 0, 0, 0)",
+  "dur": "0s",
+  "ease": "ease"
+ },
+ "phone390.after.afterTap": {
+  "bg": "rgba(0, 0, 0, 0)",
+  "dur": "0s",
+  "ease": "ease"
+ }
+}
