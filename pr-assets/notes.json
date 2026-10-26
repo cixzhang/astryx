@@ -1,0 +1,32 @@
+{
+ "desktop.markers": [
+  {
+   "property": "top, height",
+   "duration": "0.31s, 0.31s"
+  },
+  {
+   "property": "transform",
+   "duration": "0.31s"
+  }
+ ],
+ "phone390.markers": [
+  {
+   "property": "top, height",
+   "duration": "0.31s, 0.31s"
+  },
+  {
+   "property": "transform",
+   "duration": "0.31s"
+  }
+ ],
+ "desktop-rm-delete.markers": [
+  {
+   "property": "top, height",
+   "duration": "0s, 0s"
+  },
+  {
+   "property": "transform",
+   "duration": "0s"
+  }
+ ]
+}
