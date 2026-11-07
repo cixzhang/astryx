@@ -1,0 +1,9 @@
+[package]
+name = "astryx-core"
+description = "Astryx components and systems for GPU and software rendered screens"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-tokens.workspace = true
