@@ -72,3 +72,59 @@ fn another_theme_at_2x() {
     let gallery = Gallery::section(Section::Buttons).with_theme(Theme::GOTHIC, Mode::Dark);
     check(gallery, 2.0, &[], "buttons-gothic-dark@2x.png");
 }
+
+/// Focus at a scroll container's edge and inside a card with no padding.
+struct Edges;
+
+impl astryx_core::App for Edges {
+    type Msg = u8;
+    fn view(&self) -> astryx_core::Element<u8> {
+        use astryx_core::*;
+        VStack::new()
+            .is_scrollable(true)
+            .child(
+                Button::new("Flush with the edge")
+                    .variant(ButtonVariant::Primary)
+                    .on_click(0),
+            )
+            .child(
+                Card::new()
+                    .padding(Space::S0)
+                    .child(Button::new("Flush in a card").on_click(1)),
+            )
+            .children((0..12).map(|i| Text::new(format!("Line {i}"))))
+            .into()
+    }
+    fn update(&mut self, _: u8) -> astryx_core::Command {
+        astryx_core::Command::None
+    }
+}
+
+#[test]
+fn focus_rings_at_edges_are_whole() {
+    for (inputs, name) in [
+        (&[][..], "focus-ring-scroll-edge.png"),
+        (&[Input::Next][..], "focus-ring-card-edge.png"),
+    ] {
+        let mut rt = Runtime::new(Edges);
+        let png = render_png(&mut rt, 240, 160, 2.0, inputs);
+        assert_golden(
+            &png,
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/goldens")
+                .join(name),
+            TOLERANCE,
+        );
+    }
+}
+
+#[test]
+fn header_at_scale_3() {
+    let mut rt = Runtime::new(Gallery::new());
+    let png = render_png(&mut rt, 960, 250, 3.0, &[]);
+    assert_golden(
+        &png,
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens/header@3x.png"),
+        TOLERANCE,
+    );
+}

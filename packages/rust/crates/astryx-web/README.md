@@ -20,7 +20,7 @@ box. `web/index.html` is a minimal host page.
 ## Build, check, measure
 
 ```sh
-scripts/build.sh                # dist/: demo.js, demo_bg.wasm, index.html, fonts/
+scripts/build.sh                # dist/: demo and gallery (wasm, js, html), fonts/
 scripts/size-report.sh          # raw, gzip -9, and brotli sizes
 scripts/browser-check.py        # headless Chromium: pixels, keys, gamepad, AX tree
 scripts/browser-check.py --timing 9   # time to first frame, median of 9 loads
@@ -29,12 +29,14 @@ scripts/browser-check.py --timing 9   # time to first frame, median of 9 loads
 `build.sh` builds with the `web-release` profile and needs `wasm-bindgen-cli`
 at the same version as the `wasm-bindgen` crate and Python fontTools. It uses
 `wasm-opt` when installed. `BASELINE=1` builds with the plain release profile
-and skips `wasm-opt`. `browser-check.py` uses
-only the Python standard library and any headless Chromium; it writes
-screenshots, the AX tree, and `summary.json` to `proof/`.
+and skips `wasm-opt`. Without fontTools it stops with
+an error. `browser-check.py` uses only the Python standard library and any
+headless Chromium; it writes screenshots, the AX trees, and `summary.json` to
+`proof/`.
 
-The demo in `examples/demo.rs` is a fixed `Surface` (a settings panel) that
-paints and reports its tree by hand. It tests the shell without the runtime.
+`examples/demo.rs` is a fixed `Surface` (a settings panel with a text field
+and a link) that the checks drive in detail. `examples/gallery.rs` runs the
+Astryx gallery on the core runtime.
 
 ## What the shell does
 
@@ -46,7 +48,16 @@ paints and reports its tree by hand. It tests the shell without the runtime.
   a gamepad is connected the shell polls it each animation frame but draws only
   when something changed.
 - **Keyboard.** Arrows, Tab and Shift+Tab (`Next`, `Previous`), Enter and Space
-  (`A`), Escape (`B`). Chords with Ctrl, Alt, or Meta stay with the browser.
+  (`A`), Escape (`B`), Backspace, Delete, Home, End. Chords with Ctrl, Alt, or
+  Meta stay with the browser.
+- **Text input.** A focused `TextInput` node's mirror is a real `<input>`.
+  Typed characters, Space, paste, drop, dictation, and on-screen keyboards
+  arrive as `beforeinput` and go to `Surface::text_input`; input-method text
+  commits on `compositionend`. The app owns the value: the shell cancels the
+  browser's own edit and writes the app's value back after each frame.
+- **Links.** `Command::OpenUrl` opens a new tab with `noopener`, for
+  `http`, `https`, `mailto`, and `tel` links only. Browsers allow it during a
+  key press or click, not from a gamepad poll.
 - **Gamepad.** W3C standard mapping: A, B, X, Y, shoulders, triggers, Select,
   Start, d-pad, home (`Menu`), and the left stick with hysteresis. Held
   directions repeat after 400 ms, every 90 ms.
@@ -59,8 +70,8 @@ paints and reports its tree by hand. It tests the shell without the runtime.
   `Options::fonts_url` set, the first frame waits for the Latin subsets of all
   faces (the host page preloads them with the wasm); other subsets load when
   drawn text needs them, only for the faces that text uses, and the next frame
-  re-lays out. Until astryx-raster takes font data at runtime, the renderer
-  draws with its built-in fonts and the loaded data waits in the shell.
+  re-lays out. Each subset is its own font family for the renderer, so it
+  becomes a per-character fallback. The wasm embeds no fonts.
 
 ## Accessibility: the DOM mirror
 
@@ -113,10 +124,13 @@ Checked in headless Chromium unless the note says otherwise.
 | Reduced motion, color scheme, contrast, forced colors | Partial | Reported to the app; the app decides. The mirror stays transparent in forced-colors mode. |
 | Browser find (Ctrl+F) | Partial | Finds mirror text; the highlight lands on the canvas text but the canvas does not scroll or highlight itself. |
 | Status announcements (live regions) | Works | `aria-live` and `aria-atomic` are in the AX tree; not yet heard through a screen reader. |
-| Text entry, IME, autofill, spellcheck | Missing | The contract has no text input; text fields are read-only. |
+| Text entry and IME commit | Works | Typing, Space, Backspace, paste, and IME commit verified. |
+| IME preedit, caret and selection, word editing, password fields | Missing | The contract has no preedit, caret, or password flag; uncommitted IME text does not draw, and the hidden field's caret stays at the end. |
+| Autofill, spellcheck | Missing | Turned off on mirror fields, because the app owns the text. |
 | Text selection and copy | Missing | Canvas text cannot be selected. |
 | Page translation | Missing | Translation changes the mirror, not the pixels. |
 | User font size, text-only zoom | Missing | Canvas text ignores them; page zoom works. |
-| Descriptions, expanded, selected, ranges beyond 0..100, relations | Missing | Not in `A11yNode`. |
+| Descriptions, selected | Works | `aria-description`, `aria-selected`. |
+| Expanded, ranges beyond 0..100, relations | Missing | Not in `A11yNode`. |
 | Pointer and touch input | Missing | Not in the contract yet. A click on the canvas only gives the app keyboard focus. |
 | Per-node language and text direction | Missing | Not in `A11yNode`; the mirror inherits the page. |

@@ -158,8 +158,14 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
         Role::TextInput => {
             d.tag = "input";
             d.attrs.push(("type", "text".into()));
-            // The contract carries no text input, so the field is read-only.
-            d.attrs.push(("readonly", String::new()));
+            // The app draws and owns the text; browser helpers would edit
+            // the hidden field behind its back.
+            d.attrs.push(("autocomplete", "off".into()));
+            d.attrs.push(("autocapitalize", "off".into()));
+            d.attrs.push(("spellcheck", "false".into()));
+            if node.disabled {
+                d.attrs.push(("readonly", String::new()));
+            }
             d.input_value = Some(node.value.clone().unwrap_or_default());
         }
         Role::List => {
@@ -183,6 +189,16 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
     if let Some(label) = &node.label {
         if !(name_from_text && leaf) {
             d.attrs.push(("aria-label", label.clone()));
+        }
+    }
+    if let Some(description) = &node.description {
+        match d
+            .attrs
+            .iter_mut()
+            .find(|(name, _)| *name == "aria-description")
+        {
+            Some((_, existing)) => *existing = format!("{description} {existing}"),
+            None => d.attrs.push(("aria-description", description.clone())),
         }
     }
     if node.disabled {
@@ -231,6 +247,8 @@ pub(crate) struct Mirror {
     /// The element that holds the page tab stop.
     tab_stop: Option<u64>,
     label: Option<String>,
+    /// True while an input method composes text in a mirror field.
+    composing: bool,
 }
 
 impl Mirror {
@@ -258,6 +276,7 @@ impl Mirror {
             last: None,
             tab_stop: None,
             label,
+            composing: false,
         })
     }
 
@@ -311,6 +330,7 @@ impl Mirror {
     /// Updates the DOM to match `tree`. Returns true when anything changed.
     pub(crate) fn sync(&mut self, tree: Option<&A11yNode>) -> bool {
         if tree == self.last.as_ref() {
+            self.restore_inputs();
             return false;
         }
         let mut live = HashSet::new();
@@ -337,7 +357,48 @@ impl Mirror {
             keep
         });
         self.last = tree.cloned();
+        self.restore_inputs();
         true
+    }
+
+    /// Writes the app's values back into mirror fields. The app owns the
+    /// text, so typing reaches it as input and comes back here. An input
+    /// method's uncommitted text stays until it commits.
+    fn restore_inputs(&self) {
+        if self.composing {
+            return;
+        }
+        let active = self.document.active_element();
+        for entry in self.entries.values() {
+            let (Some(value), Some(input)) = (
+                &entry.desc.input_value,
+                entry.el.dyn_ref::<HtmlInputElement>(),
+            ) else {
+                continue;
+            };
+            if input.value() != *value {
+                input.set_value(value);
+                // The app has no caret in the tree yet; keep the browser's at the end.
+                if active.as_ref() == Some(input.as_ref()) {
+                    let end = value.encode_utf16().count() as u32;
+                    let _ = input.set_selection_range(end, end);
+                }
+            }
+        }
+    }
+
+    pub(crate) fn set_composing(&mut self, composing: bool) {
+        self.composing = composing;
+        if !composing {
+            self.restore_inputs();
+        }
+    }
+
+    /// The mirror field `target` is, when it takes typing.
+    pub(crate) fn is_text_field(&self, target: Option<&web_sys::EventTarget>) -> bool {
+        target
+            .and_then(|t| t.dyn_ref::<HtmlInputElement>())
+            .is_some_and(|input| !input.read_only() && self.root.contains(Some(input)))
     }
 
     /// Without focusable nodes, the root takes the tab stop so keys still
@@ -457,13 +518,6 @@ impl Mirror {
                 // re-inserts them right after.
                 el.set_text_content(desc.text.as_deref());
             }
-            if let (Some(value), Some(input)) =
-                (&desc.input_value, el.dyn_ref::<HtmlInputElement>())
-            {
-                if input.value() != *value {
-                    input.set_value(value);
-                }
-            }
             entry.desc = desc;
         }
         let child_origin = (node.bounds.x, node.bounds.y);
@@ -481,6 +535,8 @@ mod tests {
 
     fn node(role: Role) -> A11yNode {
         A11yNode {
+            text_selection: None,
+            secure: false,
             description: None,
             selected: None,
             focusable: false,
@@ -569,13 +625,31 @@ mod tests {
     }
 
     #[test]
-    fn text_input_is_read_only_with_value() {
+    fn text_input_is_editable_unless_disabled() {
         let mut n = node(Role::TextInput);
         n.value = Some("hello".into());
         let d = describe(&n, Some(true));
         assert_eq!(d.tag, "input");
-        assert_eq!(attr(&d, "readonly"), Some(""));
+        assert_eq!(attr(&d, "readonly"), None);
+        assert_eq!(attr(&d, "autocomplete"), Some("off"));
         assert_eq!(d.input_value.as_deref(), Some("hello"));
+        n.disabled = true;
+        assert_eq!(attr(&describe(&n, Some(false)), "readonly"), Some(""));
+    }
+
+    #[test]
+    fn description_joins_a_button_value() {
+        let mut n = node(Role::Button);
+        n.description = Some("Saves your settings".into());
+        assert_eq!(
+            attr(&describe(&n, None), "aria-description"),
+            Some("Saves your settings")
+        );
+        n.value = Some("Unsaved".into());
+        assert_eq!(
+            attr(&describe(&n, None), "aria-description"),
+            Some("Saves your settings Unsaved")
+        );
     }
 
     #[test]

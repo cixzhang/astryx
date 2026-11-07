@@ -4,7 +4,7 @@ use crate::contract::{
     A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Preferences, Rect,
     Surface, TextMeasure,
 };
-use crate::element::{Axis, BuildCx, Element, Node, PopupAction};
+use crate::element::{Axis, BuildCx, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::ThemeChoice;
@@ -77,6 +77,11 @@ pub struct Runtime<A: App> {
     focused_box: Option<Rect>,
     pressed: Option<u64>,
     prefs: Preferences,
+    /// Caret positions of text fields, in characters, by node id.
+    carets: HashMap<u64, usize>,
+    measure_generation: u64,
+    /// A field's value typed since the last rebuild.
+    typed: Option<(u64, String)>,
     /// The control whose popup is open.
     popup: Option<u64>,
     scroll: HashMap<u64, f32>,
@@ -104,6 +109,9 @@ impl<A: App> Runtime<A> {
             focused_box: None,
             pressed: None,
             prefs: Preferences::default(),
+            carets: HashMap::new(),
+            measure_generation: 0,
+            typed: None,
             popup: None,
             scroll: HashMap::new(),
             reveal: false,
@@ -158,6 +166,15 @@ impl<A: App> Runtime<A> {
         cx.end();
         self.animating = cx.animating;
         self.nodes = cx.nodes;
+        self.typed = None;
+        // The app's root may shrink to the window, so a scrolling view inside
+        // it scrolls instead of growing past the bottom edge.
+        if let Some(&first) = self.nodes.first().and_then(|root| root.children.first()) {
+            let min = &mut self.nodes[first as usize].style.min_size.height;
+            if min.is_auto() {
+                *min = taffy::LengthPercentageAuto::length(0.0);
+            }
+        }
         if let Some(id) = self.popup {
             if !self.nodes.iter().any(|n| n.trap) || !self.nodes.iter().any(|n| n.id == id) {
                 self.popup = None;
@@ -241,6 +258,45 @@ impl<A: App> Runtime<A> {
         self.set_focus(nearest);
     }
 
+    /// The painted rect of the focused element.
+    fn focused_rect(&self) -> Option<Rect> {
+        let id = self.focused?;
+        let ix = self.nodes.iter().position(|n| n.id == id)?;
+        self.layout.as_ref()?.rects.get(ix).copied()
+    }
+
+    /// Scrolls the nearest scroll container around the focused element so
+    /// the element is drawn where it was at `old`, then makes sure it is in
+    /// view.
+    fn keep_in_place(&mut self, old: Rect) {
+        let Some(new) = self.focused_rect() else {
+            return;
+        };
+        let Some(stop) = self.stop_index(self.focused) else {
+            return;
+        };
+        let mut ancestor = self.nodes[self.stops[stop].0].parent;
+        while let Some(a) = ancestor {
+            let a = a as usize;
+            if let Some(axis) = self.nodes[a].scroll {
+                let id = self.nodes[a].id;
+                let delta = if axis == Axis::Vertical {
+                    new.y - old.y
+                } else {
+                    new.x - old.x
+                };
+                let layout = self.layout.as_mut().expect("layout");
+                let next = (self.scroll.get(&id).copied().unwrap_or(0.0) + delta)
+                    .clamp(0.0, layout.overflow[a]);
+                self.scroll.insert(id, next);
+                layout.place(&self.nodes, &self.scroll);
+                break;
+            }
+            ancestor = self.nodes[a].parent;
+        }
+        self.reveal = true;
+    }
+
     /// Scrolls every scroll container around the focused element so the
     /// element and its ring are in view.
     fn reveal_focus(&mut self) {
@@ -299,6 +355,7 @@ impl<A: App> Runtime<A> {
             return Command::None;
         }
         let msg = interact.on_activate.clone();
+        let href = interact.href.clone();
         match interact.popup {
             PopupAction::None => {}
             PopupAction::Toggle => {
@@ -311,10 +368,99 @@ impl<A: App> Runtime<A> {
             }
             PopupAction::Close => self.close_popup(),
         }
-        match msg {
+        let command = match msg {
             Some(msg) => self.send(msg),
             None => Command::None,
+        };
+        // A link opens after its press handler, unless the app asked for
+        // something else.
+        match (command, href) {
+            (Command::None, Some(href)) => Command::OpenUrl(href),
+            (command, _) => command,
         }
+    }
+
+    /// The focused text field: its node index and edit binding.
+    fn focused_edit(&self) -> Option<(usize, &Edit<A::Msg>)> {
+        let id = self.focused?;
+        let ix = self.nodes.iter().position(|n| n.id == id)?;
+        let interact = self.nodes[ix].interact.as_ref()?;
+        if interact.disabled {
+            return None;
+        }
+        Some((ix, interact.edit.as_ref()?))
+    }
+
+    /// The focused field's value: the one typed since the last rebuild, or
+    /// the one its view shows.
+    fn field_value(&self, id: u64, edit: &Edit<A::Msg>) -> String {
+        match &self.typed {
+            Some((typed_id, value)) if *typed_id == id => value.clone(),
+            _ => edit.value.clone(),
+        }
+    }
+
+    /// The caret of the focused field, in characters, within its value.
+    fn caret(&self, id: u64, value: &str) -> usize {
+        let len = value.chars().count();
+        self.carets.get(&id).copied().unwrap_or(len).min(len)
+    }
+
+    /// Moves the caret of a focused text field one character. Returns false
+    /// at either end, so the arrow moves focus instead.
+    fn move_caret(&mut self, input: Input) -> bool {
+        let Some((ix, edit)) = self.focused_edit() else {
+            return false;
+        };
+        let id = self.nodes[ix].id;
+        let value = self.field_value(id, edit);
+        let caret = self.caret(id, &value);
+        let len = value.chars().count();
+        let next = match input {
+            Input::Left if caret > 0 => caret - 1,
+            Input::Right if caret < len => caret + 1,
+            Input::Home => 0,
+            Input::End => len,
+            _ => return false,
+        };
+        self.carets.insert(id, next);
+        true
+    }
+
+    /// Where to draw the focused field's caret, and how far its text
+    /// scrolls so the caret stays inside the field.
+    fn caret_paint(&self, text: &dyn TextMeasure) -> Option<paint::Caret> {
+        let (ix, edit) = self.focused_edit()?;
+        let layout = self.layout.as_ref()?;
+        let node = &self.nodes[edit.text_node as usize];
+        let crate::element::Draw::Text(t) = &node.draw else {
+            return None;
+        };
+        let caret = self.caret(self.nodes[ix].id, &edit.value);
+        let prefix: String = if edit.masked {
+            "\u{2022}".repeat(caret)
+        } else {
+            edit.value.chars().take(caret).collect()
+        };
+        let x = text.measure(&prefix, &t.style, None).width;
+        let area = node
+            .parent
+            .map_or(layout.rects[ix], |p| layout.rects[p as usize]);
+        let width = 1.0;
+        let shift = (x + width - area.width).max(0.0);
+        let rect = layout.rects[edit.text_node as usize];
+        let line = (t.style.size * t.style.leading - 0.01).ceil();
+        Some(paint::Caret {
+            text_node: edit.text_node as usize,
+            shift,
+            rect: Rect::new(
+                (rect.x + x - shift).round(),
+                rect.y + (rect.height - line) / 2.0,
+                width,
+                line,
+            ),
+            color: edit.caret,
+        })
     }
 
     /// Closes the open popup and puts focus back on its owner.
@@ -342,6 +488,17 @@ impl<A: App> Surface for Runtime<A> {
                 Some(id) if Some(id) == self.focused => self.activate(id),
                 _ => Command::None,
             },
+            (Input::Left | Input::Right | Input::Home | Input::End, InputPhase::Pressed)
+                if self.move_caret(input) =>
+            {
+                Command::None
+            }
+            (Input::Backspace, InputPhase::Pressed) if self.focused_edit().is_some() => {
+                self.text_input("\u{8}")
+            }
+            (Input::Delete, InputPhase::Pressed) if self.focused_edit().is_some() => {
+                self.text_input("\u{7f}")
+            }
             (
                 Input::Up
                 | Input::Down
@@ -378,8 +535,17 @@ impl<A: App> Surface for Runtime<A> {
         self.repaint = false;
         let size = frame.logical_size();
         let viewport = (size.width, size.height);
+        // Where the focused element is drawn now, so a rebuild that moves
+        // it (a theme with other sizes) can keep it in place.
+        let anchor = self.focused_rect();
         if self.stale || self.app.theme() != self.theme {
             self.rebuild();
+        }
+        // New font faces can change every measurement, so cached sizes go.
+        if text.generation() != self.measure_generation {
+            self.measure_generation = text.generation();
+            self.layout = Some(Layout::new(&self.nodes));
+            self.relayout = true;
         }
         if self.relayout || viewport != self.viewport {
             self.viewport = viewport;
@@ -393,6 +559,9 @@ impl<A: App> Surface for Runtime<A> {
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
             self.settle_focus();
+            if let Some(old) = anchor {
+                self.keep_in_place(old);
+            }
         }
         if std::mem::take(&mut self.reveal) {
             self.reveal_focus();
@@ -403,6 +572,7 @@ impl<A: App> Surface for Runtime<A> {
             focused: self.focused,
             pressed: self.pressed,
             time: self.time,
+            caret: self.caret_paint(text),
         };
         paint::paint(
             &self.nodes,
@@ -410,6 +580,44 @@ impl<A: App> Surface for Runtime<A> {
             &state,
             self.theme.tokens(&self.prefs).color.background_body.into(),
         )
+    }
+
+    fn text_input(&mut self, text: &str) -> Command {
+        self.repaint = true;
+        let Some((ix, edit)) = self.focused_edit() else {
+            return Command::None;
+        };
+        let id = self.nodes[ix].id;
+        let (old, on_change) = (self.field_value(id, edit), edit.on_change.clone());
+        let mut caret = self.caret(id, &old);
+        let mut value: Vec<char> = old.chars().collect();
+        for ch in text.chars() {
+            match ch {
+                // Backspace and Delete arrive as their control characters.
+                '\u{8}' if caret > 0 => {
+                    caret -= 1;
+                    value.remove(caret);
+                }
+                '\u{7f}' if caret < value.len() => {
+                    value.remove(caret);
+                }
+                // A single-line field takes no other control characters.
+                c if c.is_control() => {}
+                c => {
+                    value.insert(caret, c);
+                    caret += 1;
+                }
+            }
+        }
+        let value: String = value.into_iter().collect();
+        self.carets.insert(id, caret);
+        if value == old {
+            return Command::None;
+        }
+        let msg = on_change(value.clone());
+        // Keystrokes before the next frame build on this value.
+        self.typed = Some((id, value));
+        self.send(msg)
     }
 
     fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {

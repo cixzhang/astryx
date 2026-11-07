@@ -14,6 +14,7 @@
 
 pub mod a11y;
 pub mod input;
+pub mod platform;
 
 use std::error::Error;
 use std::ffi::CString;
@@ -32,8 +33,8 @@ use glutin::display::{GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface as GlutinSurface, SwapInterval, WindowSurface};
 use glutin_winit::{DisplayBuilder, GlWindow};
 use winit::application::ApplicationHandler;
-use winit::dpi::LogicalSize;
-use winit::event::{ElementState, WindowEvent};
+use winit::dpi::{LogicalPosition, LogicalSize};
+use winit::event::{ElementState, Ime, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::ModifiersState;
 use winit::raw_window_handle::HasWindowHandle;
@@ -77,7 +78,8 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         proxy,
         gpu: None,
         error: None,
-        shift: false,
+        modifiers: ModifiersState::empty(),
+        text_field: None,
         last_frame: None,
         last_tree: None,
         frames: 0,
@@ -106,7 +108,9 @@ struct Shell<S: Surface> {
     proxy: winit::event_loop::EventLoopProxy<accesskit_winit::Event>,
     gpu: Option<Gpu>,
     error: Option<Box<dyn Error>>,
-    shift: bool,
+    modifiers: ModifiersState,
+    /// Bounds of the focused text field, when one has focus.
+    text_field: Option<astryx_core::Rect>,
     last_frame: Option<Instant>,
     last_tree: Option<Option<A11yNode>>,
     frames: u64,
@@ -192,13 +196,48 @@ impl<S: Surface> Shell<S> {
         })
     }
 
-    fn send(&mut self, event_loop: &ActiveEventLoop, input: Input, phase: InputPhase) {
-        if self.surface.input(input, phase) == Command::Quit {
-            event_loop.exit();
+    fn handle(&mut self, event_loop: &ActiveEventLoop, command: Command) {
+        match command {
+            Command::None => {}
+            Command::Quit => event_loop.exit(),
+            Command::OpenUrl(url) => {
+                if let Err(e) = platform::open_url(&url) {
+                    eprintln!("astryx-desktop: cannot open {url:?}: {e}");
+                }
+            }
         }
         if let Some(gpu) = &self.gpu {
             gpu.window.request_redraw();
         }
+    }
+
+    fn send(&mut self, event_loop: &ActiveEventLoop, input: Input, phase: InputPhase) {
+        let command = self.surface.input(input, phase);
+        self.handle(event_loop, command);
+    }
+
+    fn type_text(&mut self, event_loop: &ActiveEventLoop, text: &str) {
+        let command = self.surface.text_input(text);
+        self.handle(event_loop, command);
+    }
+
+    /// Turns the input method on while a text field has focus and keeps its
+    /// candidate window next to that field.
+    fn update_text_field(&mut self, tree: Option<&A11yNode>) {
+        let field = tree.and_then(find_focused_text_field);
+        if field == self.text_field {
+            return;
+        }
+        if let Some(gpu) = &self.gpu {
+            gpu.window.set_ime_allowed(field.is_some());
+            if let Some(r) = field {
+                gpu.window.set_ime_cursor_area(
+                    LogicalPosition::new(r.x, r.y),
+                    LogicalSize::new(r.width, r.height),
+                );
+            }
+        }
+        self.text_field = field;
     }
 
     fn redraw(&mut self, event_loop: &ActiveEventLoop) {
@@ -239,6 +278,8 @@ impl<S: Surface> Shell<S> {
             return;
         }
         let tree = self.surface.accessibility();
+        self.update_text_field(tree.as_ref());
+        let Some(gpu) = &mut self.gpu else { return };
         if self.last_tree.as_ref() != Some(&tree) {
             let (title, scale) = (self.options.title.clone(), gpu.window.scale_factor());
             gpu.adapter
@@ -309,16 +350,30 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                     gpu.window.request_redraw();
                 }
             }
-            WindowEvent::ModifiersChanged(m) => {
-                self.shift = m.state().contains(ModifiersState::SHIFT)
-            }
+            WindowEvent::ModifiersChanged(m) => self.modifiers = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
-                if let Some(input) = input::key_input(&event.logical_key, self.shift) {
+                if self.text_field.is_some() && input::is_text_key(&event.logical_key) {
+                    if event.state == ElementState::Pressed {
+                        if let Some(text) = input::typed_text(event.text.as_deref(), self.modifiers)
+                        {
+                            self.type_text(event_loop, &text);
+                        }
+                    }
+                    return;
+                }
+                if let Some(input) =
+                    input::key_input(&event.logical_key, self.modifiers.shift_key())
+                {
                     let phase = match event.state {
                         ElementState::Pressed => InputPhase::Pressed,
                         ElementState::Released => InputPhase::Released,
                     };
                     self.send(event_loop, input, phase);
+                }
+            }
+            WindowEvent::Ime(Ime::Commit(text)) => {
+                if !text.is_empty() {
+                    self.type_text(event_loop, &text);
                 }
             }
             WindowEvent::RedrawRequested => self.redraw(event_loop),
@@ -339,12 +394,8 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
             }
             accesskit_winit::WindowEvent::ActionRequested(request) => {
                 if let Some((id, action)) = a11y::action(&request) {
-                    if self.surface.a11y_action(id, action) == Command::Quit {
-                        event_loop.exit();
-                    }
-                    if let Some(gpu) = &self.gpu {
-                        gpu.window.request_redraw();
-                    }
+                    let command = self.surface.a11y_action(id, action);
+                    self.handle(event_loop, command);
                 }
             }
             accesskit_winit::WindowEvent::AccessibilityDeactivated => {}
@@ -384,4 +435,11 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
         }
         event_loop.set_control_flow(ControlFlow::Wait);
     }
+}
+
+fn find_focused_text_field(node: &A11yNode) -> Option<astryx_core::Rect> {
+    if node.focused && node.role == astryx_core::Role::TextInput {
+        return Some(node.bounds);
+    }
+    node.children.iter().find_map(find_focused_text_field)
 }

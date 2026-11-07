@@ -14,8 +14,8 @@ pub(crate) fn tree<Msg>(
 ) -> Option<A11yNode> {
     let root = nodes.first()?;
     let mut out = A11yNode {
-        description: None,
-        selected: None,
+        text_selection: None,
+        secure: false,
         id: root.id,
         role: Role::Group,
         label: None,
@@ -24,6 +24,8 @@ pub(crate) fn tree<Msg>(
         focused: false,
         disabled: false,
         checked: None,
+        description: None,
+        selected: None,
         focusable: false,
         live: None,
         children: Vec::new(),
@@ -53,8 +55,8 @@ fn collect<Msg>(
         }
     };
     let mut a = A11yNode {
-        description: None,
-        selected: None,
+        text_selection: None,
+        secure: false,
         id: node.id,
         role: sem.role,
         label: sem.label.clone(),
@@ -63,6 +65,8 @@ fn collect<Msg>(
         focused: node.interact.is_some() && focused == Some(node.id),
         disabled: sem.disabled,
         checked: sem.checked,
+        description: sem.description.clone(),
+        selected: sem.selected,
         focusable: node.interact.is_some(),
         live: sem.live,
         children: Vec::new(),

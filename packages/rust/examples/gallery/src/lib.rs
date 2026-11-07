@@ -89,7 +89,12 @@ impl Section {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Msg {
     Theme(String),
-    Dark(bool),
+    /// `"light"`, `"dark"`, or `"system"`.
+    Mode(String),
+    /// Moves through `Theme::ALL` by this many steps (R1, L1).
+    ShiftTheme(i32),
+    /// Light, then dark, then system (Select).
+    CycleMode,
     Toggle(usize, bool),
     Pressed(&'static str),
     Pick(String),
@@ -111,6 +116,8 @@ pub struct Gallery {
     pub fruit: Option<String>,
     pub selected_row: usize,
     pub removed: Vec<usize>,
+    /// A shortcut just changed the theme, so the header names it.
+    pub announced: bool,
 }
 
 impl Default for Gallery {
@@ -124,6 +131,7 @@ impl Default for Gallery {
             fruit: Some("apple".into()),
             selected_row: 1,
             removed: Vec::new(),
+            announced: false,
         }
     }
 }
@@ -160,9 +168,6 @@ impl App for Gallery {
             .gap(Space::S6)
             .padding(Space::S6)
             .is_scrollable(true);
-        if self.only.is_none() {
-            page = page.child(self.header());
-        }
         for section in sections {
             page = page.child(
                 VStack::new()
@@ -172,13 +177,42 @@ impl App for Gallery {
                     .child(self.section_body(section)),
             );
         }
-        page.into()
+        if self.only.is_some() {
+            return page.into();
+        }
+        // The header stays put while the sections scroll, so the theme
+        // controls and the shortcut label are always in view.
+        VStack::new()
+            .child(
+                VStack::new()
+                    .padding(Space::S6)
+                    .padding_block_end(Space::S0)
+                    .child(self.header()),
+            )
+            .child(page)
+            .into()
     }
 
     fn update(&mut self, msg: Msg) -> Command {
+        self.announced = matches!(msg, Msg::ShiftTheme(_) | Msg::CycleMode);
         match msg {
             Msg::Theme(name) => self.theme = Theme::by_name(&name).unwrap_or(Theme::ASTRYX),
-            Msg::Dark(on) => self.mode = Some(if on { Mode::Dark } else { Mode::Light }),
+            Msg::Mode(mode) => self.mode = mode_from(&mode),
+            Msg::ShiftTheme(by) => {
+                let n = Theme::ALL.len() as i32;
+                let at = Theme::ALL
+                    .iter()
+                    .position(|t| std::ptr::eq(*t, self.theme))
+                    .unwrap_or(0) as i32;
+                self.theme = Theme::ALL[(at + by).rem_euclid(n) as usize];
+            }
+            Msg::CycleMode => {
+                self.mode = match self.mode {
+                    Some(Mode::Light) => Some(Mode::Dark),
+                    Some(Mode::Dark) => None,
+                    None => Some(Mode::Light),
+                }
+            }
             Msg::Toggle(i, on) => self.switches[i] = on,
             Msg::Pressed(what) => self.last = Some(what),
             Msg::Pick(value) => self.fruit = Some(value),
@@ -196,8 +230,16 @@ impl App for Gallery {
         }
     }
 
+    /// D-pad devices switch themes from anywhere: R1 and L1 step through
+    /// the themes, Select cycles the mode, B clears the last action.
     fn on_input(&self, input: Input) -> Option<Msg> {
-        (input == Input::B).then_some(Msg::Back)
+        match input {
+            Input::R1 => Some(Msg::ShiftTheme(1)),
+            Input::L1 => Some(Msg::ShiftTheme(-1)),
+            Input::Select => Some(Msg::CycleMode),
+            Input::B => Some(Msg::Back),
+            _ => None,
+        }
     }
 }
 
@@ -224,38 +266,56 @@ impl Gallery {
     fn header(&self) -> Element<Msg> {
         let themes: Vec<SelectorOption> = Theme::ALL
             .iter()
-            .map(|t| SelectorOption::new(t.name))
+            .map(|t| SelectorOption::new(t.name).label(capitalize(t.name)))
             .collect();
+        let modes = [("light", "Light"), ("dark", "Dark"), ("system", "System")]
+            .map(|(value, label)| SelectorOption::new(value).label(label));
+        let mut title = VStack::new().gap(Space::S1).child(Heading::new(1, "Astryx gallery")).child(caption(
+            "Arrows and Tab move focus, A activates, B goes back. R1 and L1 change the theme, Select the mode.",
+        ));
+        title = title.child(caption(&format!(
+            "Last action: {}",
+            self.last.unwrap_or("none")
+        )));
+        let mut controls = HStack::new()
+            .gap(Space::S4)
+            .v_align(StackAlign::End)
+            .child(
+                Selector::new("Theme", themes)
+                    .value(self.theme.name)
+                    .on_change(Msg::Theme)
+                    .id("theme"),
+            )
+            .child(
+                Selector::new("Mode", modes)
+                    .value(mode_value(self.mode))
+                    .on_change(Msg::Mode)
+                    .id("mode"),
+            );
+        if self.announced {
+            let mode = match self.mode {
+                Some(Mode::Light) => "light",
+                Some(Mode::Dark) => "dark",
+                None => "system mode",
+            };
+            controls = controls.child(
+                VStack::new().padding_block_end(Space::S1_5).child(
+                    Badge::new(format!("{}, {mode}", capitalize(self.theme.name)))
+                        .variant(BadgeVariant::Info)
+                        .id("announce"),
+                ),
+            );
+        }
         Card::new()
+            .elevation(Elevation::Low)
             .child(
                 HStack::new()
                     .gap(Space::S6)
+                    .h_align(StackJustify::Between)
                     .v_align(StackAlign::End)
                     .wrap(StackWrap::Wrap)
-                    .child(
-                        VStack::new()
-                            .gap(Space::S1)
-                            .child(Heading::new(1, "Astryx gallery"))
-                            .child(caption(match self.last {
-                                Some(_) => "Last action shown below. B clears it.",
-                                None => "Arrows and Tab move focus. A activates. B goes back.",
-                            })),
-                    )
-                    .child(
-                        Selector::new("Theme", themes)
-                            .value(self.theme.name)
-                            .on_change(Msg::Theme)
-                            .id("theme"),
-                    )
-                    .child(
-                        Switch::new("Dark mode", self.mode == Some(Mode::Dark))
-                            .on_change(Msg::Dark)
-                            .id("dark"),
-                    ),
-            )
-            .child(
-                Text::new(format!("Last action: {}", self.last.unwrap_or("none")))
-                    .r#type(TextType::Supporting),
+                    .child(title)
+                    .child(controls),
             )
             .into()
     }
@@ -448,6 +508,22 @@ impl Gallery {
                 .on_remove(Msg::Remove(9)),
         );
         group("Plain, open, remove, loading, disabled", r).into()
+    }
+}
+
+fn mode_from(value: &str) -> Option<Mode> {
+    match value {
+        "light" => Some(Mode::Light),
+        "dark" => Some(Mode::Dark),
+        _ => None,
+    }
+}
+
+fn mode_value(mode: Option<Mode>) -> &'static str {
+    match mode {
+        Some(Mode::Light) => "light",
+        Some(Mode::Dark) => "dark",
+        None => "system",
     }
 }
 

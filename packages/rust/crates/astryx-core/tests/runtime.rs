@@ -500,3 +500,125 @@ impl<T: Into<Element<()>>> El for T {
         self.into()
     }
 }
+
+/// Measures like `FixedMeasure`, but its glyphs grow when a font "loads".
+struct Loading {
+    advance: std::cell::Cell<f32>,
+    generation: std::cell::Cell<u64>,
+}
+
+impl TextMeasure for Loading {
+    fn measure(&self, text: &str, style: &TextStyle, max: Option<f32>) -> Size {
+        testing::FixedMeasure {
+            advance: self.advance.get(),
+        }
+        .measure(text, style, max)
+    }
+    fn generation(&self) -> u64 {
+        self.generation.get()
+    }
+}
+
+#[test]
+fn a_new_measure_generation_relays_out() {
+    let mut rt = runtime(|| HStack::<()>::new().child(Text::new("abcd")).into());
+    let m = Loading {
+        advance: 0.5.into(),
+        generation: 0.into(),
+    };
+    let frame = testing::frame(400, 100);
+    let before = texts(&rt.frame(&frame, &m))[0].0.width;
+    m.advance.set(1.0);
+    assert_eq!(
+        texts(&rt.frame(&frame, &m))[0].0.width,
+        before,
+        "same generation, cached sizes"
+    );
+    m.generation.set(1);
+    assert_eq!(texts(&rt.frame(&frame, &m))[0].0.width, before * 2.0);
+}
+
+/// Each focus ring in `list` with the clip rect active where it is drawn.
+fn rings_with_clips(list: &DisplayList, color: Color) -> Vec<(Rect, Option<Rect>)> {
+    let mut clips: Vec<Rect> = Vec::new();
+    let mut out = Vec::new();
+    for cmd in &list.commands {
+        match cmd {
+            DrawCmd::PushClip { rect, .. } => clips.push(*rect),
+            DrawCmd::PopClip => {
+                clips.pop();
+            }
+            DrawCmd::Rect {
+                rect,
+                fill,
+                stroke: Some((c, w)),
+                ..
+            } if *c == color && fill.a == 0.0 && *w == FOCUS_RING_WIDTH => {
+                out.push((*rect, clips.last().copied()))
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+fn contains(outer: Rect, inner: Rect) -> bool {
+    inner.x >= outer.x - 0.01
+        && inner.y >= outer.y - 0.01
+        && inner.x + inner.width <= outer.x + outer.width + 0.01
+        && inner.y + inner.height <= outer.y + outer.height + 0.01
+}
+
+#[test]
+fn focus_rings_at_scroll_and_card_edges_are_never_clipped() {
+    let accent = Color::from(light().color.accent);
+    // A button flush against a scroll container's top-left edge, and one
+    // flush inside a card with no padding.
+    let mut rt = runtime(|| {
+        VStack::new()
+            .is_scrollable(true)
+            .child(Button::new("Edge").on_click(0))
+            .child(
+                Card::new()
+                    .padding(Space::S0)
+                    .child(Button::new("In card").on_click(1)),
+            )
+            .children((0..20).map(|i| Text::new(format!("line {i}"))))
+            .into()
+    });
+    for stop in 0..2 {
+        let list = draw(&mut rt, 300, 200);
+        let rings = rings_with_clips(&list, accent);
+        assert_eq!(rings.len(), 1, "stop {stop}");
+        let (ring, clip) = rings[0];
+        let clip = clip.expect("the scroll viewport, grown by the ring");
+        assert!(contains(clip, ring), "ring {ring:?} cut by clip {clip:?}");
+        let reach = FOCUS_RING_OFFSET + FOCUS_RING_WIDTH;
+        assert_eq!(
+            clip,
+            Rect::new(-reach, -reach, 300.0 + 2.0 * reach, 200.0 + 2.0 * reach)
+        );
+        // Rings paint after all content: only clip and opacity pops follow.
+        let last = list
+            .commands
+            .iter()
+            .rposition(|c| matches!(c, DrawCmd::Rect { stroke: Some((c, _)), .. } if *c == accent))
+            .unwrap();
+        assert!(list.commands[last + 1..]
+            .iter()
+            .all(|c| matches!(c, DrawCmd::PopClip | DrawCmd::PopOpacity)));
+        tap(&mut rt, Input::Next);
+    }
+}
+
+#[test]
+fn a_disabled_focused_control_dims_its_ring() {
+    let mut rt = runtime(|| Button::new("Off").is_disabled(true).on_click(()).into_el());
+    let list = draw(&mut rt, 200, 100);
+    let ring = list
+        .commands
+        .iter()
+        .position(|c| matches!(c, DrawCmd::Rect { stroke: Some((_, w)), fill, .. } if *w == FOCUS_RING_WIDTH && fill.a == 0.0))
+        .unwrap();
+    assert_eq!(list.commands[ring - 1], DrawCmd::PushOpacity(0.5));
+}

@@ -30,3 +30,7 @@ harness = false
 [[test]]
 name = "window_keys"
 harness = false
+
+[[test]]
+name = "window_text"
+harness = false

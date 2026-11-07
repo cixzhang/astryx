@@ -506,6 +506,10 @@ impl TextMeasure for TextEngine {
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> Size {
         self.layout(text, style, max_width, TextAlign::Start).bounds
     }
+
+    fn generation(&self) -> u64 {
+        TextEngine::generation(self)
+    }
 }
 
 /// Picks the face for each character: the current run's face when it has
@@ -763,9 +767,10 @@ mod tests {
                 height: 24.0
             }
         );
-        let generation = engine.generation();
+        let measurer: &dyn TextMeasure = &engine;
+        let generation = measurer.generation();
         engine.add_fallback_font(REGULAR.to_vec()).unwrap();
-        assert_ne!(engine.generation(), generation);
+        assert_ne!(measurer.generation(), generation);
         let after = engine.measure("Hello", &st, None);
         assert!(after.width > 30.0, "{after:?}");
         assert!(engine.add_fallback_font(vec![1, 2, 3]).is_err());

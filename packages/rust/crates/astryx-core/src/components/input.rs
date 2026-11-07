@@ -9,7 +9,7 @@ use super::text::{text_draw, text_node, type_style};
 use super::{dim, len, len_auto, radii, square, Elevation};
 use crate::contract::{Color, FontFamily, Role};
 use crate::element::{
-    base_props, Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, Node, PopupAction,
+    base_props, Base, BoxDraw, Build, BuildCx, Draw, Edit, Indicator, Interact, Node, PopupAction,
     Semantics,
 };
 use std::rc::Rc;
@@ -87,6 +87,19 @@ fn field_name(f: &FieldParts) -> String {
     } else {
         f.label.clone()
     }
+}
+
+/// What assistive technology reads after a field's name: its description
+/// and its status message.
+fn field_description(f: &FieldParts) -> Option<String> {
+    let parts: Vec<&str> = [
+        f.description.as_deref(),
+        f.status.as_ref().and_then(|s| s.message.as_deref()),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    (!parts.is_empty()).then(|| parts.join(", "))
 }
 
 /// A text field (`TextInput`): label, description, a bordered field, and an
@@ -239,6 +252,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         };
         let mut sem = Semantics::new(Role::TextInput, field_name(f));
         sem.value = Some(shown.clone());
+        sem.description = field_description(f);
         sem.disabled = f.is_disabled;
         let radius = radii(t.radius.element);
         let bw = t.size.border_width;
@@ -285,7 +299,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         .opacity(if f.is_disabled { 0.5 } else { 1.0 });
         node.autofocus = self.has_auto_focus;
         cx.key(self.base.id.as_deref());
-        cx.begin(node);
+        let field_ix = cx.begin(node);
         let body = type_style(t.font.body, FontFamily::Body);
         let mut text = if shown.is_empty() {
             text_node(
@@ -296,11 +310,45 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         } else {
             text_node(shown, body, c.text_primary.into())
         };
-        text_draw(&mut text).max_lines = Some(1);
-        text.style.flex_grow = 1.0;
-        text.style.flex_shrink = 1.0;
-        text.style.min_size.width = len_auto(0.0);
-        cx.leaf(text);
+        let editable = !f.is_disabled && !self.is_read_only;
+        match (&self.on_change, editable) {
+            (Some(on_change), true) => {
+                // An editable value is clipped by its field and scrolls to the
+                // caret, as a native input does, instead of truncating.
+                let mut area = Node::new(Style {
+                    flex_direction: FlexDirection::Row,
+                    flex_grow: 1.0,
+                    flex_shrink: 1.0,
+                    min_size: taffy::Size {
+                        width: len_auto(0.0),
+                        height: taffy::LengthPercentageAuto::auto(),
+                    },
+                    ..Style::default()
+                });
+                area.clip = Some(crate::contract::Radii::default());
+                cx.begin(area);
+                text.style.flex_shrink = 0.0;
+                let text_ix = cx.leaf(text);
+                cx.end();
+                let edit = Edit {
+                    value: self.value.clone(),
+                    on_change: on_change.clone(),
+                    text_node: text_ix,
+                    masked: self.input_type == TextInputType::Password,
+                    caret: c.text_primary.into(),
+                };
+                if let Some(i) = cx.nodes[field_ix as usize].interact.as_mut() {
+                    i.edit = Some(edit);
+                }
+            }
+            _ => {
+                text_draw(&mut text).max_lines = Some(1);
+                text.style.flex_grow = 1.0;
+                text.style.flex_shrink = 1.0;
+                text.style.min_size.width = len_auto(0.0);
+                cx.leaf(text);
+            }
+        }
         // The busy start is announced politely.
         cx.live_region(
             self.is_loading.then_some(super::strings::LOADING),
@@ -561,8 +609,9 @@ impl<Msg: Clone + 'static> Build<Msg> for Selector<Msg> {
             .value
             .as_ref()
             .and_then(|v| self.options.iter().find(|o| &o.value == v));
-        let mut sem = Semantics::new(Role::Button, field_name(f));
+        let mut sem = Semantics::new(Role::ComboBox, field_name(f));
         sem.value = selected.map(|o| o.text().to_string());
+        sem.description = field_description(f);
         sem.disabled = f.is_disabled;
         let radius = radii(t.radius.element);
         let bw = t.size.border_width;
@@ -759,12 +808,8 @@ impl<Msg: Clone + 'static> Menu<Msg> {
             ..BoxDraw::fill(c.background_popover.into(), radius)
         }))
         .sem(Semantics {
-            role: Role::List,
             label: None,
-            value: None,
-            checked: None,
-            disabled: false,
-            live: None,
+            ..Semantics::new(Role::ListBox, "")
         });
         menu.trap = true;
         menu.scroll = Some(crate::element::Axis::Vertical);
@@ -776,8 +821,8 @@ impl<Msg: Clone + 'static> Menu<Msg> {
                 option.disabled,
             );
             interact.popup = PopupAction::Close;
-            let mut sem = Semantics::new(Role::ListItem, option.text().to_string());
-            sem.checked = Some(chosen);
+            let mut sem = Semantics::new(Role::ListBoxOption, option.text().to_string());
+            sem.selected = Some(chosen);
             sem.disabled = option.disabled;
             let fill: Color = if chosen {
                 c.accent_muted.into()

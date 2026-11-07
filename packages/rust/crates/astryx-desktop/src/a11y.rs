@@ -4,7 +4,7 @@ use accesskit::{
     Action, ActionRequest, Node, NodeId, Rect, Role as AkRole, Toggled, TreeId, TreeInfo,
     TreeUpdate,
 };
-use astryx_core::{A11yAction, A11yNode, Role};
+use astryx_core::{A11yAction, A11yNode, Live, Role};
 
 /// The id of the window node that holds the app's tree. App ids never use it.
 pub const WINDOW_ID: NodeId = NodeId(u64::MAX);
@@ -22,7 +22,8 @@ fn role(role: Role) -> AkRole {
         Role::List => AkRole::List,
         Role::ListItem => AkRole::ListItem,
         Role::Image => AkRole::Image,
-        Role::Separator => AkRole::Splitter,
+        // AccessKit has no separator role; Splitter would announce a resize handle.
+        Role::Separator => AkRole::GenericContainer,
         Role::ComboBox => AkRole::ComboBox,
         Role::ListBox => AkRole::ListBox,
         Role::ListBoxOption => AkRole::ListBoxOption,
@@ -36,6 +37,18 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
     }
     if let Some(value) = &node.value {
         ak.set_value(value.clone());
+    }
+    if let Some(description) = &node.description {
+        ak.set_description(description.clone());
+    }
+    if let Some(selected) = node.selected {
+        ak.set_selected(selected);
+    }
+    if let Some(live) = node.live {
+        ak.set_live(match live {
+            Live::Polite => accesskit::Live::Polite,
+            Live::Assertive => accesskit::Live::Assertive,
+        });
     }
     let b = node.bounds;
     ak.set_bounds(Rect {
@@ -53,12 +66,19 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
     if node.disabled {
         ak.set_disabled();
     }
+    if node.focusable && !node.disabled {
+        ak.add_action(Action::Focus);
+    }
     if matches!(
         node.role,
-        Role::Button | Role::Switch | Role::Checkbox | Role::TextInput
+        Role::Button
+            | Role::Switch
+            | Role::Checkbox
+            | Role::TextInput
+            | Role::ComboBox
+            | Role::ListBoxOption
     ) && !node.disabled
     {
-        ak.add_action(Action::Focus);
         ak.add_action(Action::Click);
     }
     if node.focused {
@@ -116,6 +136,8 @@ mod tests {
 
     fn node(id: u64, role: Role, focused: bool, children: Vec<A11yNode>) -> A11yNode {
         A11yNode {
+            text_selection: None,
+            secure: false,
             description: None,
             selected: None,
             focusable: false,
@@ -195,6 +217,27 @@ mod tests {
         );
         assert_eq!(action(&request(Action::ScrollUp, NodeId(7))), None);
         assert_eq!(action(&request(Action::Click, WINDOW_ID)), None);
+    }
+
+    #[test]
+    fn description_selection_live_and_focus_are_bridged() {
+        let mut option = node(9, Role::ListBoxOption, false, vec![]);
+        option.description = Some("Ships in 2 days".into());
+        option.selected = Some(true);
+        option.focusable = true;
+        option.live = Some(Live::Polite);
+        let update = tree_update(Some(&option), "App", 1.0);
+        let ak = &update
+            .nodes
+            .iter()
+            .find(|(id, _)| *id == NodeId(9))
+            .unwrap()
+            .1;
+        assert_eq!(ak.description(), Some("Ships in 2 days"));
+        assert_eq!(ak.is_selected(), Some(true));
+        assert_eq!(ak.live(), Some(accesskit::Live::Polite));
+        assert!(ak.supports_action(Action::Focus));
+        assert!(ak.supports_action(Action::Click));
     }
 
     #[test]

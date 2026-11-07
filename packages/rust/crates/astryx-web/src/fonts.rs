@@ -20,11 +20,12 @@ pub(crate) const FACES: [(&str, u16); 3] = [
     ("Roboto-Bold", 700),
 ];
 
-/// The face that draws a CSS weight. The buckets match the renderer's.
+/// The face that draws a CSS weight, by CSS font matching over 400, 500,
+/// and 700, as the renderer picks faces.
 pub(crate) fn face_for_weight(weight: u16) -> usize {
     match weight {
-        0..=499 => 0,
-        500..=599 => 1,
+        0..=400 => 0,
+        401..=500 => 1,
         _ => 2,
     }
 }
@@ -132,10 +133,6 @@ impl FontPlan {
     pub(crate) fn file_name(&self, key: FontKey) -> String {
         format!("{}.{}.ttf", FACES[key.1].0, self.subsets[key.0].name)
     }
-
-    pub(crate) fn subset_name(&self, key: FontKey) -> &str {
-        &self.subsets[key.0].name
-    }
 }
 
 /// Fetches one file and hands the result to `deliver` if its owner still
@@ -222,7 +219,10 @@ greek U+0370-03FF
     #[test]
     fn weights_map_to_faces() {
         assert_eq!(face_for_weight(300), 0);
+        assert_eq!(face_for_weight(400), 0);
+        assert_eq!(face_for_weight(450), 1);
         assert_eq!(face_for_weight(500), 1);
-        assert_eq!(face_for_weight(700), 2);
+        assert_eq!(face_for_weight(600), 2);
+        assert_eq!(face_for_weight(900), 2);
     }
 }

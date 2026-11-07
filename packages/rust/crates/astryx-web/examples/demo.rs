@@ -26,6 +26,7 @@ enum Kind {
     Switch,
     Checkbox,
     Button,
+    Field,
 }
 
 struct Item {
@@ -34,6 +35,7 @@ struct Item {
     label: &'static str,
     checked: bool,
     disabled: bool,
+    value: String,
 }
 
 struct Palette {
@@ -84,6 +86,8 @@ const PROGRESS: u64 = 5;
 const STATUS: u64 = 6;
 const RECENT: u64 = 7;
 const SAVE: u64 = 13;
+const HELP_BUTTON: u64 = 15;
+const NAME: u64 = 16;
 const ROW: f32 = 48.0;
 const GAP: f32 = 8.0;
 const RING_SECONDS: f32 = 0.2;
@@ -115,13 +119,16 @@ impl Demo {
             label,
             checked,
             disabled,
+            value: String::new(),
         };
         Self {
             items: vec![
                 item(11, Kind::Switch, "Wi-Fi", true, false),
                 item(12, Kind::Checkbox, "Send diagnostics", false, false),
+                item(NAME, Kind::Field, "Name", false, false),
                 item(SAVE, Kind::Button, "Save", false, false),
                 item(14, Kind::Button, "Reset", false, true),
+                item(HELP_BUTTON, Kind::Button, "Help", false, false),
             ],
             focus: Some(0),
             saves: 0,
@@ -167,15 +174,23 @@ impl Demo {
         }
     }
 
-    fn activate(&mut self) {
+    fn activate(&mut self) -> Command {
         let Some(item) = self.focus.map(|i| &mut self.items[i]) else {
-            return;
+            return Command::None;
         };
         match item.kind {
             Kind::Switch | Kind::Checkbox => item.checked = !item.checked,
             Kind::Button if item.id == SAVE => self.saves += 1,
-            Kind::Button => {}
+            Kind::Button if item.id == HELP_BUTTON => return Command::OpenUrl("help.html".into()),
+            Kind::Button | Kind::Field => {}
         }
+        Command::None
+    }
+
+    /// The focused text field, which takes typing and Backspace.
+    fn field(&mut self) -> Option<&mut Item> {
+        let index = self.focus?;
+        Some(&mut self.items[index]).filter(|item| item.kind == Kind::Field)
     }
 
     fn progress(&self) -> u32 {
@@ -194,6 +209,8 @@ fn text_style(size: f32, weight: u16) -> TextStyle {
 
 fn node(id: u64, role: Role, label: Option<String>, bounds: Rect) -> A11yNode {
     A11yNode {
+        text_selection: None,
+        secure: false,
         description: None,
         selected: None,
         focusable: false,
@@ -220,9 +237,21 @@ impl Surface for Demo {
             Input::Up => self.step(false, false),
             Input::Next => self.step(true, true),
             Input::Previous => self.step(false, true),
-            Input::A => self.activate(),
+            Input::A => return self.activate(),
             Input::B => self.set_focus(0),
+            Input::Backspace => {
+                if let Some(field) = self.field() {
+                    field.value.pop();
+                }
+            }
             _ => {}
+        }
+        Command::None
+    }
+
+    fn text_input(&mut self, text: &str) -> Command {
+        if let Some(field) = self.field() {
+            field.value.push_str(text);
         }
         Command::None
     }
@@ -320,7 +349,7 @@ impl Surface for Demo {
         for (index, item) in self.items.iter().enumerate() {
             let rect = match item.kind {
                 Kind::Button => {
-                    let w = (width - 12.0) / 2.0;
+                    let w = (width - 24.0) / 3.0;
                     let r = Rect::new(button_x, y, w, 40.0);
                     button_x += w + 12.0;
                     r
@@ -393,6 +422,39 @@ impl Surface for Demo {
                         stroke: None,
                     });
                 }
+                Kind::Field => {
+                    let field = Rect::new(rect.x + 120.0, rect.y + 6.0, rect.width - 128.0, 36.0);
+                    cmds.push(DrawCmd::Rect {
+                        rect: field,
+                        radii: Radii::all(6.0),
+                        fill: Color::TRANSPARENT,
+                        stroke: Some((p.secondary, 1.5)),
+                    });
+                    let value_style = text_style(16.0, 400);
+                    cmds.push(DrawCmd::Text {
+                        rect: Rect::new(field.x + 10.0, rect.y + 13.0, field.width - 20.0, 22.0),
+                        text: item.value.clone(),
+                        style: value_style,
+                        color: p.text,
+                        align: TextAlign::Start,
+                    });
+                    if self.focus == Some(index) {
+                        let caret =
+                            field.x + 10.0 + text.measure(&item.value, &value_style, None).width;
+                        cmds.push(DrawCmd::Line {
+                            from: Point {
+                                x: caret,
+                                y: field.y + 8.0,
+                            },
+                            to: Point {
+                                x: caret,
+                                y: field.y + 28.0,
+                            },
+                            color: p.text,
+                            width: 1.5,
+                        });
+                    }
+                }
             }
             let (label_rect, color, align) = match item.kind {
                 Kind::Button => (
@@ -423,12 +485,16 @@ impl Surface for Demo {
                 Kind::Switch => Role::Switch,
                 Kind::Checkbox => Role::Checkbox,
                 Kind::Button => Role::Button,
+                Kind::Field => Role::TextInput,
             };
             let mut n = node(item.id, role, Some(item.label.into()), rect);
             n.focused = focused;
             n.focusable = true;
             n.disabled = item.disabled;
-            n.checked = (item.kind != Kind::Button).then_some(item.checked);
+            n.checked = matches!(item.kind, Kind::Switch | Kind::Checkbox).then_some(item.checked);
+            if item.kind == Kind::Field {
+                n.value = Some(item.value.clone());
+            }
             children.push(n);
             if item.kind != Kind::Button || button_x > x + width {
                 y += rect.height + GAP;

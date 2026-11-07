@@ -667,7 +667,7 @@ fn list_item_padding_type_and_roles() {
     );
     let node = &a11y(&rt, Role::ListItem)[0];
     assert_eq!(
-        (node.label.as_deref(), node.value.as_deref()),
+        (node.label.as_deref(), node.description.as_deref()),
         (Some("Static"), Some("Words"))
     );
     assert!(rt.focused().is_none(), "a static row is not a focus stop");
@@ -1080,21 +1080,24 @@ fn selector_opens_a_menu_traps_focus_and_picks() {
     tap(&mut rt, Input::A);
     let open = draw(&mut rt, 400, 600);
     assert!(rect_filled(&open, c(t.color.background_popover)).is_some());
-    let items = a11y(&rt, Role::ListItem);
+    let items = a11y(&rt, Role::ListBoxOption);
     assert_eq!(items.len(), 3);
     assert!(
-        items[0].focused && items[0].checked == Some(true),
+        items[0].focused && items[0].selected == Some(true),
         "the chosen option takes focus"
     );
+    assert_eq!(items[1].selected, Some(false));
+    assert_eq!(a11y(&rt, Role::ListBox).len(), 1);
+    assert_eq!(a11y(&rt, Role::ComboBox)[0].value.as_deref(), Some("apple"));
     // Focus stays in the menu.
     tap(&mut rt, Input::Up);
-    assert!(a11y(&rt, Role::ListItem)[0].focused);
+    assert!(a11y(&rt, Role::ListBoxOption)[0].focused);
     tap(&mut rt, Input::Down);
     tap(&mut rt, Input::A);
     assert_eq!(rt.app().sent, vec!["banana".to_string()]);
     draw(&mut rt, 400, 600);
     assert!(
-        a11y(&rt, Role::ListItem).is_empty(),
+        a11y(&rt, Role::ListBoxOption).is_empty(),
         "picking closes the menu"
     );
     assert_eq!(rt.focused(), trigger, "focus returns to the trigger");
@@ -1110,9 +1113,250 @@ fn b_closes_an_open_selector_without_choosing() {
     draw(&mut rt, 400, 600);
     tap(&mut rt, Input::A);
     draw(&mut rt, 400, 600);
-    assert_eq!(a11y(&rt, Role::ListItem).len(), 2);
+    assert_eq!(a11y(&rt, Role::ListBoxOption).len(), 2);
     tap(&mut rt, Input::B);
     draw(&mut rt, 400, 600);
-    assert!(a11y(&rt, Role::ListItem).is_empty());
+    assert!(a11y(&rt, Role::ListBoxOption).is_empty());
     assert!(rt.app().sent.is_empty());
+}
+
+// ---- Links, separators, and editing ----
+
+#[test]
+fn hrefs_open_after_the_press_handler() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(
+                Button::new("Docs")
+                    .href("https://example.com/docs")
+                    .on_click("docs"),
+            )
+            .child(ListItem::new("Row link").href(" https://example.com/row "))
+            .child(
+                Button::new("Bad")
+                    .href("javascript:alert(1)")
+                    .on_click("bad"),
+            )
+            .child(
+                Button::new("Off")
+                    .href("https://example.com")
+                    .is_disabled(true),
+            )
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::OpenUrl("https://example.com/docs".into())
+    );
+    assert_eq!(rt.app().sent, vec!["docs"]);
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::OpenUrl("https://example.com/row".into()),
+        "trimmed"
+    );
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::None,
+        "script links are refused"
+    );
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::None,
+        "disabled links never open"
+    );
+}
+
+#[test]
+fn dividers_are_separators() {
+    let mut rt = runtime(|| {
+        VStack::<()>::new()
+            .child(Divider::new())
+            .child(Divider::new().label("or"))
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    let seps = a11y(&rt, Role::Separator);
+    assert_eq!(seps.len(), 2);
+    assert_eq!(
+        (seps[0].label.as_deref(), seps[1].label.as_deref()),
+        (None, Some("or"))
+    );
+}
+
+/// A text field app that stores what it is told.
+struct Field {
+    value: String,
+    masked: bool,
+    read_only: bool,
+}
+
+impl App for Field {
+    type Msg = String;
+    fn view(&self) -> Element<String> {
+        TextInput::new("Name", self.value.clone())
+            .r#type(if self.masked {
+                TextInputType::Password
+            } else {
+                TextInputType::Text
+            })
+            .is_read_only(self.read_only)
+            .on_change(|v| v)
+            .into()
+    }
+    fn update(&mut self, v: String) -> Command {
+        self.value = v;
+        Command::None
+    }
+}
+
+fn field(value: &str) -> Runtime<Field> {
+    let mut rt = Runtime::new(Field {
+        value: value.into(),
+        masked: false,
+        read_only: false,
+    });
+    draw(&mut rt, 300, 200);
+    rt
+}
+
+#[test]
+fn typing_inserts_at_the_caret_and_control_characters_edit() {
+    let mut rt = field("ac");
+    rt.text_input("d");
+    assert_eq!(rt.app().value, "acd", "the caret starts at the end");
+    draw(&mut rt, 300, 200);
+    tap(&mut rt, Input::Left);
+    tap(&mut rt, Input::Left);
+    rt.text_input("b");
+    assert_eq!(rt.app().value, "abcd");
+    rt.text_input("\u{8}");
+    assert_eq!(rt.app().value, "acd", "backspace removes before the caret");
+    rt.text_input("\u{7f}");
+    assert_eq!(rt.app().value, "ad", "delete removes after the caret");
+    rt.text_input("\n\t");
+    assert_eq!(rt.app().value, "ad", "other control characters are ignored");
+    rt.text_input("héllo ");
+    assert_eq!(rt.app().value, "ahéllo d");
+}
+
+#[test]
+fn arrows_move_the_caret_then_focus_at_the_ends() {
+    let mut rt = Runtime::new(View {
+        view: Box::new(|| {
+            HStack::new()
+                .gap(Space::S2)
+                .child(TextInput::new("A", "xy").on_change(|v| v))
+                .child(Button::new("Next").on_click(String::new()))
+                .into()
+        }),
+        sent: Vec::new(),
+        choice: ThemeChoice::default(),
+    });
+    draw(&mut rt, 400, 200);
+    let field = rt.focused();
+    tap(&mut rt, Input::Right);
+    assert_ne!(rt.focused(), field, "at the end, Right moves focus");
+    tap(&mut rt, Input::Left);
+    assert_eq!(rt.focused(), field);
+    tap(&mut rt, Input::Left);
+    tap(&mut rt, Input::Left);
+    assert_eq!(rt.focused(), field, "Left moves the caret while it can");
+}
+
+#[test]
+fn caret_draws_in_the_text_color_and_follows_typing() {
+    let t = light();
+    let mut rt = field("ab");
+    let list = draw(&mut rt, 300, 200);
+    let value = text(&list, "ab").0;
+    let caret = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.text_primary))
+        .expect("caret");
+    assert_eq!(
+        (caret.0.x, caret.0.width, caret.0.height),
+        (value.x + value.width, 1.0, 20.0)
+    );
+    rt.text_input("c");
+    let list = draw(&mut rt, 300, 200);
+    let moved = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.text_primary))
+        .unwrap();
+    assert_eq!(moved.0.x, caret.0.x + 7.0);
+}
+
+#[test]
+fn long_values_scroll_to_the_caret_inside_the_field() {
+    let t = light();
+    let mut rt = field(&"w".repeat(80));
+    let list = draw(&mut rt, 300, 200);
+    let (field_rect, _, _) = rect_filled(&list, c(t.color.background_surface)).unwrap();
+    let caret = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.text_primary))
+        .unwrap()
+        .0;
+    assert!(
+        caret.x <= field_rect.x + field_rect.width - t.space.s3,
+        "caret stays inside"
+    );
+    let value = &texts(&list)[1];
+    assert!(value.0.x < field_rect.x, "the value scrolls left");
+    assert!(
+        !value.1.ends_with('\u{2026}'),
+        "editable values clip, not truncate"
+    );
+}
+
+#[test]
+fn password_and_read_only_fields() {
+    let mut rt = Runtime::new(Field {
+        value: "pw".into(),
+        masked: true,
+        read_only: false,
+    });
+    draw(&mut rt, 300, 200);
+    rt.text_input("x");
+    assert_eq!(rt.app().value, "pwx");
+    let list = draw(&mut rt, 300, 200);
+    assert!(texts(&list)
+        .iter()
+        .any(|t| t.1 == "\u{2022}\u{2022}\u{2022}"));
+    let mut ro = Runtime::new(Field {
+        value: "fixed".into(),
+        masked: false,
+        read_only: true,
+    });
+    draw(&mut ro, 300, 200);
+    assert_eq!(ro.text_input("x"), Command::None);
+    assert_eq!(ro.app().value, "fixed");
+}
+
+#[test]
+fn text_reaches_only_a_focused_field() {
+    let mut rt = runtime(|| Button::new("Not a field").on_click(String::new()).into());
+    draw(&mut rt, 300, 200);
+    assert_eq!(rt.text_input("x"), Command::None);
+    assert!(rt.app().sent.is_empty());
+}
+
+#[test]
+fn editing_keys_from_a_keyboard() {
+    let mut rt = field("bc");
+    tap(&mut rt, Input::Home);
+    rt.text_input("a");
+    assert_eq!(rt.app().value, "abc");
+    tap(&mut rt, Input::Delete);
+    assert_eq!(rt.app().value, "ac");
+    tap(&mut rt, Input::End);
+    tap(&mut rt, Input::Backspace);
+    assert_eq!(rt.app().value, "a");
+    tap(&mut rt, Input::Backspace);
+    tap(&mut rt, Input::Backspace);
+    assert_eq!(rt.app().value, "", "backspace at the start does nothing");
 }

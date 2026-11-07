@@ -344,10 +344,9 @@ impl<Msg> Build<Msg> for Divider {
             style.margin.top = len_auto(-bleed);
             style.margin.bottom = len_auto(-bleed);
         }
-        let mut node = Node::new(style);
-        if let Some(label) = &self.label {
-            node.sem = Some(Semantics::new(Role::Text, label.clone()));
-        }
+        let mut sem = Semantics::new(Role::Separator, "");
+        sem.label = self.label.clone();
+        let node = Node::new(style).sem(sem);
         cx.key(self.base.id.as_deref());
         cx.begin(node);
         let bw = t.size.border_width;

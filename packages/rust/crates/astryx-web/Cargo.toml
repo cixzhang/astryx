@@ -7,7 +7,8 @@ version.workspace = true
 
 [dependencies]
 astryx-core.workspace = true
-astryx-render-gl = { path = "../astryx-render-gl" }
+# Fonts load at runtime as script subsets, so the wasm embeds none.
+astryx-render-gl = { path = "../astryx-render-gl", default-features = false }
 # Keep this version equal to the installed wasm-bindgen CLI.
 wasm-bindgen = "=0.2.130"
 js-sys = "0.3"
@@ -17,6 +18,11 @@ wasm-bindgen-futures = "0.4"
 version = "0.3"
 features = [
   "AddEventListenerOptions",
+  "CompositionEvent",
+  "DataTransfer",
+  "InputEvent",
+  "Location",
+  "Url",
   "CssStyleDeclaration",
   "Document",
   "DomRect",
@@ -54,3 +60,10 @@ features = [
 [[example]]
 name = "demo"
 crate-type = ["cdylib"]
+
+[[example]]
+name = "gallery"
+crate-type = ["cdylib"]
+
+[dev-dependencies]
+astryx-gallery = { path = "../../examples/gallery" }

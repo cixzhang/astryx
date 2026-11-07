@@ -105,8 +105,8 @@ impl<Msg> Button<Msg> {
         self.tooltip = Some(tooltip.into());
         self
     }
-    /// Kept for the Astryx contract; the core does not open links, so a
-    /// press sends only `on_click`.
+    /// A link: a press sends `on_click`, then asks the shell to open it
+    /// (`Command::OpenUrl`). Script and HTML `data:` links are refused.
     pub fn href(mut self, href: impl Into<String>) -> Self {
         self.href = Some(href.into());
         self
@@ -188,7 +188,11 @@ impl<Msg> Build<Msg> for Button<Msg> {
                 shadow: self.elevation.layers(t),
                 ..BoxDraw::fill(bg, radius)
             }))
-            .interact(Interact::new(self.on_click, self.is_disabled).busy(busy))
+            .interact(
+                Interact::new(self.on_click, self.is_disabled)
+                    .busy(busy)
+                    .href(self.href.as_deref()),
+            )
             .indicator(Indicator::ring(
                 ring.into(),
                 radius,

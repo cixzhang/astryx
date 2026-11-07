@@ -1,7 +1,7 @@
 //! Maps keyboard keys and gamepad buttons to Astryx [`Input`].
 
 use astryx_core::Input;
-use winit::keyboard::{Key, NamedKey};
+use winit::keyboard::{Key, ModifiersState, NamedKey};
 
 /// The input for a key, given whether Shift is held.
 pub fn key_input(key: &Key, shift: bool) -> Option<Input> {
@@ -15,6 +15,10 @@ pub fn key_input(key: &Key, shift: bool) -> Option<Input> {
             NamedKey::Tab => Input::Next,
             NamedKey::Enter | NamedKey::Space => Input::A,
             NamedKey::Escape => Input::B,
+            NamedKey::Backspace => Input::Backspace,
+            NamedKey::Delete => Input::Delete,
+            NamedKey::Home => Input::Home,
+            NamedKey::End => Input::End,
             NamedKey::ContextMenu => Input::Menu,
             _ => return None,
         }),
@@ -22,6 +26,22 @@ pub fn key_input(key: &Key, shift: bool) -> Option<Input> {
         Key::Character(c) if c == " " => Some(Input::A),
         _ => None,
     }
+}
+
+/// True for keys that type into a focused text field instead of moving
+/// focus or confirming.
+pub fn is_text_key(key: &Key) -> bool {
+    matches!(key, Key::Character(_) | Key::Named(NamedKey::Space))
+}
+
+/// The text a key press types, without control characters. Shortcuts with
+/// Ctrl or the Super key type nothing.
+pub fn typed_text(text: Option<&str>, modifiers: ModifiersState) -> Option<String> {
+    if modifiers.control_key() || modifiers.super_key() {
+        return None;
+    }
+    let text: String = text?.chars().filter(|c| !c.is_control()).collect();
+    (!text.is_empty()).then_some(text)
 }
 
 #[cfg(feature = "gamepad")]
@@ -82,6 +102,23 @@ mod tests {
             Some(Input::B)
         );
         assert_eq!(key_input(&Key::Character("q".into()), false), None);
+    }
+
+    #[test]
+    fn typed_text_drops_controls_and_shortcuts() {
+        let none = ModifiersState::empty();
+        assert_eq!(typed_text(Some("é"), none).as_deref(), Some("é"));
+        assert_eq!(typed_text(Some(" "), none).as_deref(), Some(" "));
+        assert_eq!(typed_text(Some("\r"), none), None);
+        assert_eq!(typed_text(Some("\u{8}"), none), None);
+        assert_eq!(typed_text(Some("a"), ModifiersState::CONTROL), None);
+        assert_eq!(
+            typed_text(Some("ä"), ModifiersState::ALT).as_deref(),
+            Some("ä")
+        );
+        assert_eq!(typed_text(None, none), None);
+        assert!(is_text_key(&Key::Named(NamedKey::Space)));
+        assert!(!is_text_key(&Key::Named(NamedKey::Enter)));
     }
 
     #[cfg(feature = "gamepad")]

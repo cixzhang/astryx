@@ -16,12 +16,33 @@ pub(crate) struct PaintState {
     pub pressed: Option<u64>,
     /// Seconds since the runtime started, for spinners.
     pub time: f32,
+    pub caret: Option<Caret>,
+}
+
+/// The focused text field's caret.
+pub(crate) struct Caret {
+    /// The node that draws the field's value.
+    pub text_node: usize,
+    /// How far the value scrolls left so the caret stays in view.
+    pub shift: f32,
+    pub rect: Rect,
+    pub color: Color,
 }
 
 #[derive(Clone, Copy, Default)]
 struct Owner {
     focused: bool,
     pressed: bool,
+}
+
+/// What a node inherits from its ancestors while painting.
+#[derive(Clone, Copy)]
+struct Ctx {
+    owner: Owner,
+    /// The painted rect of the nearest scroll container.
+    viewport: Option<Rect>,
+    /// The product of the ancestors' opacities.
+    opacity: f32,
 }
 
 pub(crate) fn paint<Msg>(
@@ -34,16 +55,26 @@ pub(crate) fn paint<Msg>(
         clear,
         commands: Vec::with_capacity(nodes.len() * 2),
     };
+    // Focus rings paint after all content, so no card or other clip cuts
+    // them; only the nearest scroll viewport, grown by the ring, clips them.
+    let mut overlay = Vec::new();
     if !nodes.is_empty() {
+        let ctx = Ctx {
+            owner: Owner::default(),
+            viewport: None,
+            opacity: 1.0,
+        };
         paint_node(
             nodes,
             layout,
             state,
             0,
-            Owner::default(),
+            ctx,
             &mut list.commands,
+            &mut overlay,
         );
     }
+    list.commands.extend(overlay);
     list
 }
 
@@ -52,10 +83,12 @@ fn paint_node<Msg>(
     layout: &Layout,
     state: &PaintState,
     ix: usize,
-    owner: Owner,
+    ctx: Ctx,
     out: &mut Vec<DrawCmd>,
+    overlay: &mut Vec<DrawCmd>,
 ) {
     let node = &nodes[ix];
+    let owner = ctx.owner;
     let mut rect = layout.rects[ix];
     if node.centered {
         if let Some(p) = node.parent {
@@ -68,6 +101,10 @@ fn paint_node<Msg>(
         let parent = layout.rects[p as usize];
         let phase = (state.time % period) / period;
         rect.x = parent.x + rect.width * (-1.0 + 3.5 * phase);
+    }
+    let caret = state.caret.as_ref().filter(|c| c.text_node == ix);
+    if let Some(c) = caret {
+        rect.x -= c.shift;
     }
     let owner = match &node.interact {
         Some(i) => Owner {
@@ -171,6 +208,14 @@ fn paint_node<Msg>(
         Draw::Spinner(color) => out.push(spinner(rect, *color, state.time)),
         _ => {}
     }
+    if let Some(c) = caret {
+        out.push(DrawCmd::Rect {
+            rect: c.rect,
+            radii: Radii::default(),
+            fill: c.color,
+            stroke: None,
+        });
+    }
     let clip = match (node.clip, node.scroll) {
         (Some(radii), _) => Some(clamp_radii(rect.width, rect.height, radii)),
         (None, Some(_)) => Some(Radii::default()),
@@ -179,15 +224,46 @@ fn paint_node<Msg>(
     if let Some(radii) = clip {
         out.push(DrawCmd::PushClip { rect, radii });
     }
+    let inner = Ctx {
+        owner,
+        viewport: if node.scroll.is_some() {
+            Some(rect)
+        } else {
+            ctx.viewport
+        },
+        opacity: ctx.opacity * node.opacity,
+    };
     for &child in &node.children {
-        paint_node(nodes, layout, state, child as usize, owner, out);
+        paint_node(nodes, layout, state, child as usize, inner, out, overlay);
     }
     if clip.is_some() {
         out.push(DrawCmd::PopClip);
     }
     if let (Some(ind), true) = (node.indicator, owner.focused) {
         if let Some(ring) = ind.ring {
-            out.push(focus_ring(rect, ind.radii, ring));
+            if let Some(view) = ctx.viewport {
+                let reach = FOCUS_RING_OFFSET + FOCUS_RING_WIDTH;
+                let grown = Rect::new(
+                    view.x - reach,
+                    view.y - reach,
+                    view.width + 2.0 * reach,
+                    view.height + 2.0 * reach,
+                );
+                overlay.push(DrawCmd::PushClip {
+                    rect: grown,
+                    radii: Radii::default(),
+                });
+            }
+            if inner.opacity < 1.0 {
+                overlay.push(DrawCmd::PushOpacity(inner.opacity));
+            }
+            overlay.push(focus_ring(rect, ind.radii, ring));
+            if inner.opacity < 1.0 {
+                overlay.push(DrawCmd::PopOpacity);
+            }
+            if ctx.viewport.is_some() {
+                overlay.push(DrawCmd::PopClip);
+            }
         }
         if let Some((border, inner)) = ind.field {
             let bw = match &node.draw {

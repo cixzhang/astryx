@@ -16,6 +16,9 @@ for f in demo_bg.wasm demo.js index.html; do
   row "$f" "$raw" "$g" "$(br "$dist/$f")"
 done
 row "app total (wasm+js+html)" "$total_raw" "$total_gz" ""
+for f in gallery_bg.wasm gallery.js; do
+  row "$f" "$(wc -c < "$dist/$f")" "$(gz "$dist/$f")" "$(br "$dist/$f")"
+done
 # Runtime subsets: the first frame needs the Latin ones; others load on demand.
 for group in latin all; do
   raw_sum=0; gz_sum=0
@@ -27,11 +30,3 @@ for group in latin all; do
   row "font subsets ($group)" "$raw_sum" "$gz_sum" ""
 done
 
-# The renderer still embeds these fonts in the wasm; listed for reference.
-fonts="$(cd "$(dirname "$0")/../../.." && pwd)/assets/fonts"
-font_raw=0; font_gz=0
-for f in "$fonts"/*.ttf; do
-  raw=$(wc -c < "$f"); g=$(gz "$f")
-  font_raw=$((font_raw + raw)); font_gz=$((font_gz + g))
-done
-row "embedded fonts (in wasm)" "$font_raw" "$font_gz" ""

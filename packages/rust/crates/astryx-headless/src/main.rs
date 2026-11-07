@@ -34,6 +34,10 @@ fn parse_input(name: &str) -> Option<Input> {
         "start" => Input::Start,
         "select" => Input::Select,
         "menu" => Input::Menu,
+        "backspace" => Input::Backspace,
+        "delete" => Input::Delete,
+        "home" => Input::Home,
+        "end" => Input::End,
         _ => return None,
     })
 }

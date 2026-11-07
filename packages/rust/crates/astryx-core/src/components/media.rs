@@ -253,7 +253,7 @@ impl<Msg> Avatar<Msg> {
         self.tooltip = Some(tooltip.into());
         self
     }
-    /// Kept for the Astryx contract; the core does not open links.
+    /// A link the avatar opens on a press, after `on_click`.
     pub fn href(mut self, href: impl Into<String>) -> Self {
         self.href = Some(href.into());
         self
@@ -343,9 +343,13 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
             flex_shrink: 0.0,
             ..Style::default()
         });
-        if let Some(msg) = self.on_click {
+        let href = self
+            .href
+            .as_deref()
+            .and_then(crate::element::safe_destination);
+        if self.on_click.is_some() || href.is_some() {
             node = node
-                .interact(Interact::new(Some(msg), false))
+                .interact(Interact::new(self.on_click, false).href(href.as_deref()))
                 .indicator(Indicator::ring(
                     c.accent.into(),
                     shape_radii,

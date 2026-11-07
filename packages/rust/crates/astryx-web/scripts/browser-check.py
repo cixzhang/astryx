@@ -360,6 +360,40 @@ def timing_runs(chrome, url, runs):
             "navigation_to_first_frame_all_ms": [round(v, 1) for v in firsts]}
 
 
+def gallery_check(chrome, url, proof, check, summary):
+    """The gallery on the real core runtime: paints, exposes a tree, takes keys."""
+    with tempfile.TemporaryDirectory() as user_dir:
+        cdp = open_page(chrome, user_dir, 960, 900, 2)
+        summary["gallery_timing"] = load(cdp, url)
+        settle(cdp, 300)
+        shot = Screen(base64.b64decode(cdp.send("Page.captureScreenshot", {"format": "png"})["data"]), 2)
+        with open(os.path.join(proof, "screenshot-gallery.png"), "wb") as f:
+            f.write(shot.png)
+        colors = {shot.pixel(x, y) for x in range(0, 960, 16) for y in range(0, 900, 16)}
+        check("gallery: the runtime paints (many distinct colors)", len(colors) > 20, len(colors))
+        rows = ax(cdp)
+        with open(os.path.join(proof, "ax-tree-gallery.txt"), "w") as f:
+            f.write(format_ax(rows) + "\n")
+        roles = {}
+        for r in rows:
+            roles[r["role"]] = roles.get(r["role"], 0) + 1
+        summary["gallery_roles"] = roles
+        check("gallery: the tree has headings, buttons, switches, and text fields",
+              all(roles.get(role, 0) > 0 for role in ("heading", "button", "switch", "textbox")), roles)
+        key(cdp, "Tab", vk=9)
+        first = cdp.eval(ACTIVE_ID)
+        key(cdp, "Tab", vk=9)
+        settle(cdp)
+        second = cdp.eval(ACTIVE_ID)
+        check("gallery: Tab enters the app and moves focus with the DOM following",
+              first is not None and second is not None and first != second, [first, second])
+        errors = [e for e in cdp.events if e.get("method") == "Runtime.exceptionThrown"
+                  or (e.get("method") == "Runtime.consoleAPICalled"
+                      and e["params"].get("type") in ("error", "warning"))]
+        check("gallery: no console errors or exceptions", not errors, errors[:3])
+        cdp.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dist", default=os.path.join(CRATE, "dist"))
@@ -382,6 +416,7 @@ def main():
     with tempfile.TemporaryDirectory() as user_dir:
         cdp = open_page(chrome, user_dir, 800, 900, 2)
         summary["chrome_version"] = cdp.send("Browser.getVersion", session=False)["product"]
+        cdp.send("Target.setDiscoverTargets", {"discover": True}, session=False)
         cdp.send("Page.addScriptToEvaluateOnNewDocument", {"source": GAMEPAD_STUB})
         summary["timing"] = load(cdp, url)
         settle(cdp, 300)
@@ -444,6 +479,13 @@ def main():
         check("Cyrillic, Greek, and Vietnamese load after the first frame, Regular only",
               all(n in loaded and loaded[n][0] >= first for n in on_demand) and len(loaded) == 6,
               sorted(loaded))
+        def ink(node_id):
+            x, y, w, h = rect_of(cdp, node_id)
+            return sum(1 for px in range(int(x), int(x + w), 2) for py in range(int(y), int(y + h), 2)
+                       if sum(shot.pixel(px, py)) < 300)
+        inks = {name: ink(node_id) for name, node_id in (("cyrillic", 103), ("greek", 104), ("vietnamese", 105))}
+        check("Cyrillic, Greek, and Vietnamese rows draw text with the loaded faces",
+              all(v > 40 for v in inks.values()), inks)
         check("unused subsets (latin-ext, cyrillic-ext, greek-ext) never load",
               not any("-ext" in n for n in loaded), sorted(loaded))
 
@@ -471,6 +513,43 @@ def main():
         diag = ax_find(ax(cdp), "checkbox", "Send diagnostics") or {}
         check("Space toggles the checkbox exactly once", diag.get("props", {}).get("checked") == "true", diag)
         key(cdp, "Tab", vk=9)
+        check("Tab moves to the Name text field", cdp.eval(ACTIVE_ID) == "16", cdp.eval(ACTIVE_ID))
+
+        # Typing reaches the app through the mirror field; the app owns the value.
+        field_value = ("(() => { const n = document.querySelector('[data-astryx-id=\"16\"]');"
+                       " return n.value; })()")
+        for ch, code, vk in (("H", "KeyH", 72), ("i", "KeyI", 73), ("!", "Digit1", 49)):
+            key(cdp, ch, code=code, vk=vk, text=ch)
+        key(cdp, " ", code="Space", vk=32, text=" ")
+        settle(cdp)
+        textbox = ax_find(ax(cdp), "textbox", "Name") or {}
+        diag = ax_find(ax(cdp), "checkbox", "Send diagnostics") or {}
+        check("typed text and Space reach the app as text (Space does not activate)",
+              textbox.get("props", {}).get("value") == "Hi! " and diag.get("props", {}).get("checked") == "true",
+              textbox)
+        key(cdp, "Backspace", vk=8)
+        key(cdp, "Backspace", vk=8)
+        settle(cdp)
+        textbox = ax_find(ax(cdp), "textbox", "Name") or {}
+        check("Backspace reaches the app as Input::Backspace", textbox.get("props", {}).get("value") == "Hi",
+              textbox)
+        cdp.send("Input.imeSetComposition", {"text": "e", "selectionStart": 1, "selectionEnd": 1})
+        composing = cdp.eval(field_value)
+        cdp.send("Input.insertText", {"text": "\u1ebf"})
+        settle(cdp)
+        textbox = ax_find(ax(cdp), "textbox", "Name") or {}
+        check("IME composition commits once through compositionend",
+              composing == "Hie" and textbox.get("props", {}).get("value") == "Hi\u1ebf"
+              and cdp.eval(field_value) == "Hi\u1ebf", [composing, textbox, cdp.eval(field_value)])
+        cdp.eval("(() => { const n = document.querySelector('[data-astryx-id=\"16\"]');"
+                 " const d = new DataTransfer(); d.setData('text/plain', ' web');"
+                 " n.dispatchEvent(new InputEvent('beforeinput', {inputType: 'insertFromPaste',"
+                 " dataTransfer: d, cancelable: true, bubbles: true})); })()")
+        settle(cdp)
+        textbox = ax_find(ax(cdp), "textbox", "Name") or {}
+        check("paste reaches the app as text", textbox.get("props", {}).get("value") == "Hi\u1ebf web", textbox)
+
+        key(cdp, "Tab", vk=9)
         check("Tab moves to Save", cdp.eval(ACTIVE_ID) == "13", cdp.eval(ACTIVE_ID))
         key(cdp, "Enter", vk=13, text="\r")
         settle(cdp)
@@ -479,6 +558,17 @@ def main():
               any(r["name"] == "Saved once" for r in rows), [r["name"] for r in rows if "Saved" in r["name"]])
         bar = ax_find(rows, "progressbar", "Storage used") or {}
         check("progressbar value updates to 50", bar.get("props", {}).get("value") == 50, bar)
+        key(cdp, "Tab", vk=9)
+        check("Tab skips the disabled Reset and moves to Help", cdp.eval(ACTIVE_ID) == "15", cdp.eval(ACTIVE_ID))
+        key(cdp, "Enter", vk=13, text="\r")
+        settle(cdp, 300)
+        # A new tab starts blank and reports its URL in a later info change.
+        opened = {e["params"]["targetInfo"]["targetId"]: e["params"]["targetInfo"] for e in cdp.events
+                  if e.get("method") in ("Target.targetCreated", "Target.targetInfoChanged")
+                  and e["params"]["targetInfo"].get("url", "").endswith("/help.html")}
+        opened = list(opened.values())
+        check("Command::OpenUrl opens a new tab without an opener", len(opened) == 1
+              and opened[0].get("canAccessOpener") is not True, opened)
         key(cdp, "Tab", vk=9)
         check("Tab past the last item leaves the app (no keyboard trap)",
               cdp.eval("document.activeElement.id") == "after", cdp.eval("document.activeElement.outerHTML"))
@@ -525,7 +615,7 @@ def main():
         settle(cdp, 100)
         cdp.eval("__stubPad.axes[1] = 0")
         settle(cdp, 100)
-        check("gamepad stick moves focus", tab_stop(cdp) == "13", tab_stop(cdp))
+        check("gamepad stick moves focus", tab_stop(cdp) == "16", tab_stop(cdp))
         cdp.eval("window.__stubPadOn = false")
         settle(cdp, 100)
 
@@ -572,6 +662,8 @@ def main():
                       and e["params"].get("type") in ("error", "warning"))]
         check("no console errors or exceptions", not errors, errors[:3])
         cdp.close()
+
+    gallery_check(chrome, url.replace("index.html", "gallery.html"), args.proof, check, summary)
 
     summary["checks"] = check.results
     summary["passed"] = sum(r["ok"] for r in check.results)

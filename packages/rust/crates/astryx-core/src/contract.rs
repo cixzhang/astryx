@@ -240,6 +240,14 @@ pub enum Input {
     Start,
     Select,
     Menu,
+    /// Text editing keys. Shells send them from a keyboard; the runtime uses
+    /// them only while a text field has focus. In a focused text field,
+    /// Left and Right move the caret, and Up, Down, Next, and Previous still
+    /// move focus.
+    Backspace,
+    Delete,
+    Home,
+    End,
 }
 
 /// Whether a button went down or up. Key repeats arrive as extra `Pressed`.
@@ -325,6 +333,12 @@ pub struct A11yNode {
     pub selected: Option<bool>,
     /// True when the node takes keyboard focus.
     pub focusable: bool,
+    /// For text fields: the caret or selection as `(anchor, focus)` in
+    /// UTF-8 byte offsets into `value`. Equal values mean a caret.
+    pub text_selection: Option<(u32, u32)>,
+    /// For text fields: the value is secret, such as a password. Platforms
+    /// must not speak or copy it.
+    pub secure: bool,
     /// Set when changes to the node's text must be announced.
     pub live: Option<Live>,
     pub children: Vec<A11yNode>,
@@ -381,6 +395,12 @@ pub trait Surface {
     fn text_input(&mut self, text: &str) -> Command {
         let _ = text;
         Command::None
+    }
+    /// Text an input method is composing but has not committed, with the
+    /// cursor as a UTF-8 byte offset into it. Empty text ends composing.
+    /// Committed text still arrives through `text_input`.
+    fn text_compose(&mut self, text: &str, cursor: u32) {
+        let _ = (text, cursor);
     }
     /// The person's preferences changed, or are known for the first time.
     fn set_preferences(&mut self, preferences: &Preferences) {

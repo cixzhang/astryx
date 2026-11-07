@@ -145,6 +145,7 @@ impl<Msg> Build<Msg> for Switch<Msg> {
         let mut sem = Semantics::new(Role::Switch, f.label.clone());
         sem.checked = Some(self.value);
         sem.disabled = f.is_disabled;
+        sem.description = f.description.clone();
         let gap = if f.is_label_hidden { 0.0 } else { t.space.s2 };
         cx.begin(
             Node::new(Style {

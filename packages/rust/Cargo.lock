@@ -280,6 +280,7 @@ name = "astryx-web"
 version = "0.1.0"
 dependencies = [
  "astryx-core",
+ "astryx-gallery",
  "astryx-render-gl",
  "js-sys",
  "wasm-bindgen",

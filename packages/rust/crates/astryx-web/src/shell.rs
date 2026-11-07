@@ -16,11 +16,12 @@ use web_sys::{
 };
 
 use crate::focus::{focus_order, focused_id, stepped_within};
-use crate::fonts::{FontKey, FontPlan, FACES};
+use crate::fonts::{FontKey, FontPlan};
 use crate::gamepad::{PadTracker, Snapshot};
 use crate::keys::map_key;
 use crate::mirror::Mirror;
 use crate::prefs::{detect_preferences, QUERIES};
+use astryx_render_gl::GlRenderer;
 
 /// The canvas to draw into: a CSS selector or the element itself.
 pub enum Target {
@@ -47,15 +48,23 @@ impl From<HtmlCanvasElement> for Target {
 }
 
 /// Options for [`run_with`].
-#[derive(Default)]
 pub struct Options {
     /// The directory, relative to the page, that holds the font subsets
-    /// `scripts/subset-fonts.py` writes. `None` uses only the renderer's
-    /// built-in fonts.
+    /// `scripts/subset-fonts.py` writes. The default is `fonts/`. The wasm
+    /// embeds no fonts, so with `None` text does not draw.
     pub fonts_url: Option<String>,
     /// The accessible name of the app. Assistive tech announces it when the
     /// app has no focusable nodes and the mirror root takes focus.
     pub label: Option<String>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            fonts_url: Some("fonts/".into()),
+            label: None,
+        }
+    }
 }
 
 /// Runs `surface` in a canvas with default [`Options`].
@@ -85,18 +94,44 @@ pub fn run_with(
 }
 
 #[cfg(target_arch = "wasm32")]
-fn create_renderer(canvas: &HtmlCanvasElement) -> Result<Box<dyn Renderer>, JsValue> {
+fn create_renderer(canvas: &HtmlCanvasElement) -> Result<GlRenderer, JsValue> {
+    use astryx_render_gl::astryx_raster::text::FontSet;
     use astryx_render_gl::femtovg::renderer::OpenGl;
     let backend = OpenGl::new_from_html_canvas(canvas)
         .map_err(|e| format!("astryx-web: no WebGL2: {e:?}"))?;
-    let renderer = astryx_render_gl::GlRenderer::new(backend)
-        .map_err(|e| format!("astryx-web: renderer: {e:?}"))?;
-    Ok(Box::new(renderer))
+    // Faces arrive as they load; see `Shell::add_font`.
+    GlRenderer::with_fonts(backend, FontSet::new())
+        .map_err(|e| format!("astryx-web: renderer: {e:?}").into())
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn create_renderer(_: &HtmlCanvasElement) -> Result<Box<dyn Renderer>, JsValue> {
+fn create_renderer(_: &HtmlCanvasElement) -> Result<GlRenderer, JsValue> {
     Err("astryx-web runs only on wasm32".into())
+}
+
+/// Schemes `Command::OpenUrl` may open. Others, such as `javascript:`, could
+/// run code with the page's origin or surprise the person.
+fn is_openable_scheme(protocol: &str) -> bool {
+    matches!(protocol, "http:" | "https:" | "mailto:" | "tel:")
+}
+
+/// Opens a link in a new tab with no `window.opener`, resolving relative
+/// links against the page. Browsers allow this only during a key press or
+/// click, so a gamepad press may be blocked as a pop-up.
+fn open_url(window: &Window, url: &str) {
+    let base = window.location().href().unwrap_or_default();
+    let target = match web_sys::Url::new_with_base(url, &base) {
+        Ok(parsed) if is_openable_scheme(&parsed.protocol()) => parsed.href(),
+        _ => {
+            web_sys::console::warn_1(&format!("astryx-web: not opening {url}").into());
+            return;
+        }
+    };
+    let opened =
+        window.open_with_url_and_target_and_features(&target, "_blank", "noopener,noreferrer");
+    if opened.is_err() {
+        web_sys::console::warn_1(&format!("astryx-web: the browser blocked {target}").into());
+    }
 }
 
 fn mark(window: &Window, name: &str) {
@@ -113,7 +148,7 @@ struct Shell {
     window: Window,
     canvas: HtmlCanvasElement,
     surface: Box<dyn Surface>,
-    renderer: Box<dyn Renderer>,
+    renderer: GlRenderer,
     mirror: Mirror,
     width: u32,
     height: u32,
@@ -132,15 +167,6 @@ struct Shell {
     font_plan: FontPlan,
     /// First-subset files still loading. The first frame waits for them.
     initial_fonts_pending: usize,
-    fonts: Vec<FontFile>,
-}
-
-/// One loaded font subset, kept for the renderer.
-#[allow(dead_code)]
-struct FontFile {
-    subset: String,
-    weight: u16,
-    data: Vec<u8>,
 }
 
 impl Shell {
@@ -157,9 +183,24 @@ impl Shell {
         if self.stopped {
             return;
         }
-        if self.surface.input(input, phase) == Command::Quit {
+        let command = self.surface.input(input, phase);
+        self.handle(command);
+    }
+
+    fn text_input(&mut self, text: &str) {
+        if self.stopped || text.is_empty() {
+            return;
+        }
+        let command = self.surface.text_input(text);
+        self.handle(command);
+    }
+
+    fn handle(&mut self, command: Command) {
+        match command {
+            Command::None => {}
             // A page cannot close itself, so the app stops taking input and frames.
-            self.stopped = true;
+            Command::Quit => self.stopped = true,
+            Command::OpenUrl(url) => open_url(&self.window, &url),
         }
         self.dirty = true;
     }
@@ -225,25 +266,21 @@ impl Shell {
         }
     }
 
-    /// Keeps a loaded subset. The renderer still uses its built-in fonts;
-    /// once astryx-raster takes font data at runtime, this hands it over.
+    /// Gives a loaded subset to the renderer. Each script subset is its own
+    /// family, so it becomes a fallback after the subsets loaded before it.
     fn add_font(&mut self, key: FontKey, data: Vec<u8>) {
-        let subset = self.font_plan.subset_name(key).to_string();
-        self.fonts.push(FontFile {
-            subset,
-            weight: FACES[key.1].1,
-            data,
-        });
+        if self.renderer.add_fallback_font(data).is_err() {
+            let file = self.font_plan.file_name(key);
+            web_sys::console::warn_1(&format!("astryx-web: {file} is not a font").into());
+        }
     }
 
     fn a11y_action(&mut self, id: u64, action: A11yAction) {
         if self.stopped {
             return;
         }
-        if self.surface.a11y_action(id, action) == Command::Quit {
-            self.stopped = true;
-        }
-        self.dirty = true;
+        let command = self.surface.a11y_action(id, action);
+        self.handle(command);
     }
 
     /// Sizes the canvas backing store. `physical` is the exact device-pixel
@@ -400,12 +437,21 @@ impl Runner {
         }
     }
 
-    fn on_keydown(&self, event: &KeyboardEvent) {
+    fn key_input(&self, event: &KeyboardEvent, shell: &Shell) -> Option<Input> {
+        // Keys during composition belong to the input method.
+        if event.is_composing() || event.key() == "Process" {
+            return None;
+        }
         let command = event.ctrl_key() || event.alt_key() || event.meta_key();
-        let Some(input) = map_key(&event.key(), event.shift_key(), command) else {
+        let in_text_field = shell.mirror.is_text_field(event.target().as_ref());
+        map_key(&event.key(), event.shift_key(), command, in_text_field)
+    }
+
+    fn on_keydown(&self, event: &KeyboardEvent) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
-        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+        let Some(input) = self.key_input(event, &shell) else {
             return;
         };
         let time = now(&self.window);
@@ -440,11 +486,10 @@ impl Runner {
     }
 
     fn on_keyup(&self, event: &KeyboardEvent) {
-        let command = event.ctrl_key() || event.alt_key() || event.meta_key();
-        let Some(input) = map_key(&event.key(), event.shift_key(), command) else {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
-        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+        let Some(input) = self.key_input(event, &shell) else {
             return;
         };
         if input == Input::A {
@@ -454,6 +499,66 @@ impl Runner {
             shell.suppress_click_until = now(&self.window) + 100.0;
         }
         shell.input(input, InputPhase::Released);
+        drop(shell);
+        self.schedule();
+    }
+
+    /// Typing, pasting, dictation, and on-screen keyboards in a mirror field
+    /// arrive here. Text goes to the app and the field keeps the app's value.
+    fn on_beforeinput(&self, event: &web_sys::InputEvent) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        if !shell.mirror.is_text_field(event.target().as_ref()) {
+            return;
+        }
+        let kind = event.input_type();
+        match kind.as_str() {
+            // Composition is not cancelable; it commits in `compositionend`.
+            "insertCompositionText" => return,
+            "insertText" | "insertReplacementText" | "insertFromYank" => {
+                if let Some(text) = event.data() {
+                    shell.text_input(&text);
+                }
+            }
+            "insertFromPaste" | "insertFromDrop" => {
+                let text = event.data().or_else(|| {
+                    event
+                        .data_transfer()
+                        .and_then(|d| d.get_data("text/plain").ok())
+                });
+                if let Some(text) = text {
+                    shell.text_input(&text);
+                }
+            }
+            // On-screen keyboards delete without a Backspace key event.
+            "deleteContentBackward" => {
+                shell.input(Input::Backspace, InputPhase::Pressed);
+                shell.input(Input::Backspace, InputPhase::Released);
+            }
+            "deleteContentForward" => {
+                shell.input(Input::Delete, InputPhase::Pressed);
+                shell.input(Input::Delete, InputPhase::Released);
+            }
+            _ => {}
+        }
+        event.prevent_default();
+        drop(shell);
+        self.schedule();
+    }
+
+    fn on_composition(&self, event: &web_sys::CompositionEvent) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        if event.type_() == "compositionstart" {
+            shell.mirror.set_composing(true);
+            return;
+        }
+        if let Some(text) = event.data() {
+            shell.text_input(&text);
+        }
+        shell.mirror.set_composing(false);
         drop(shell);
         self.schedule();
     }
@@ -647,7 +752,6 @@ fn start(
         }),
         font_plan: FontPlan::new(),
         initial_fonts_pending: 0,
-        fonts: Vec::new(),
     };
     let runner = Rc::new(Runner {
         window: window.clone(),
@@ -676,6 +780,14 @@ fn start(
     listen::<KeyboardEvent>(&root, "keyup", &runner, Runner::on_keyup)?;
     listen::<web_sys::Event>(&root, "click", &runner, Runner::on_click)?;
     listen::<web_sys::Event>(&root, "focusin", &runner, Runner::on_focusin)?;
+    listen::<web_sys::InputEvent>(&root, "beforeinput", &runner, Runner::on_beforeinput)?;
+    listen::<web_sys::CompositionEvent>(
+        &root,
+        "compositionstart",
+        &runner,
+        Runner::on_composition,
+    )?;
+    listen::<web_sys::CompositionEvent>(&root, "compositionend", &runner, Runner::on_composition)?;
     listen::<web_sys::MouseEvent>(&canvas, "mousedown", &runner, |runner, event| {
         // Clicking the canvas gives the app keyboard focus.
         event.prevent_default();
@@ -717,4 +829,19 @@ fn start(
     }
     runner.schedule();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_openable_scheme;
+
+    #[test]
+    fn opens_only_web_mail_and_phone_links() {
+        for ok in ["http:", "https:", "mailto:", "tel:"] {
+            assert!(is_openable_scheme(ok), "{ok}");
+        }
+        for blocked in ["javascript:", "data:", "file:", "blob:", "vbscript:"] {
+            assert!(!is_openable_scheme(blocked), "{blocked}");
+        }
+    }
 }

@@ -222,7 +222,6 @@ impl Indicator {
 }
 
 /// Makes a node a focus stop.
-#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Interact<Msg> {
     /// Sent when the node is activated (A).
     pub on_activate: Option<Msg>,
@@ -231,6 +230,21 @@ pub(crate) struct Interact<Msg> {
     /// Busy controls keep focus, ignore activation, and paint no press.
     pub busy: bool,
     pub popup: PopupAction,
+    /// A link the shell opens after `on_activate`, already checked as safe.
+    pub href: Option<String>,
+    /// Makes the node a text field that takes typed text.
+    pub edit: Option<Edit<Msg>>,
+}
+
+/// A text field's value and how to report a new one.
+pub(crate) struct Edit<Msg> {
+    pub value: String,
+    pub on_change: std::rc::Rc<dyn Fn(String) -> Msg>,
+    /// The index of the node that draws the value, for the caret.
+    pub text_node: u32,
+    /// Drawn masked, so the caret follows the mask.
+    pub masked: bool,
+    pub caret: Color,
 }
 
 /// What activating a control does to the open popup (a Selector's menu).
@@ -251,7 +265,14 @@ impl<Msg> Interact<Msg> {
             disabled,
             busy: false,
             popup: PopupAction::None,
+            href: None,
+            edit: None,
         }
+    }
+    /// Opens `href` on activation, unless Astryx's navigation rules refuse it.
+    pub fn href(mut self, href: Option<&str>) -> Self {
+        self.href = href.and_then(safe_destination);
+        self
     }
     pub fn busy(mut self, busy: bool) -> Self {
         self.busy = busy;
@@ -265,7 +286,9 @@ pub(crate) struct Semantics {
     pub role: Role,
     pub label: Option<String>,
     pub value: Option<String>,
+    pub description: Option<String>,
     pub checked: Option<bool>,
+    pub selected: Option<bool>,
     pub disabled: bool,
     /// Changes to the label are announced. Such a node is always in the
     /// accessibility tree, even inside a labeled control.
@@ -278,11 +301,50 @@ impl Semantics {
             role,
             label: Some(label.into()),
             value: None,
+            description: None,
             checked: None,
+            selected: None,
             disabled: false,
             live: None,
         }
     }
+}
+
+/// An `href` as a link reads it, trimmed and without control characters,
+/// or `None` for a script URL or an HTML `data:` URL, which Astryx's
+/// navigation destinations refuse.
+pub(crate) fn safe_destination(href: &str) -> Option<String> {
+    let normalized: String = href
+        .chars()
+        .filter(|c| !c.is_control())
+        .collect::<String>()
+        .trim()
+        .to_string();
+    if normalized.is_empty() {
+        return None;
+    }
+    let mut comparable = normalized.to_lowercase();
+    if let Some(colon) = comparable.find(':') {
+        let scheme = &comparable[..colon];
+        let is_scheme = scheme
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphabetic())
+            && scheme
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || "+.-".contains(c));
+        if is_scheme {
+            comparable = format!(
+                "{}:{}",
+                scheme,
+                comparable[colon + 1..].trim_start_matches(' ')
+            );
+        }
+    }
+    let blocked = ["javascript:", "vbscript:", "data:text/html"]
+        .iter()
+        .any(|b| comparable.starts_with(b));
+    (!blocked).then_some(normalized)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -463,12 +525,9 @@ impl<Msg> BuildCx<Msg> {
     /// announces when they change, as an ARIA live region does.
     pub fn live_region(&mut self, words: Option<&str>, live: Live) {
         let sem = Semantics {
-            role: Role::Text,
             label: words.map(str::to_string),
-            value: None,
-            checked: None,
-            disabled: false,
             live: Some(live),
+            ..Semantics::new(Role::Text, "")
         };
         self.leaf(
             Node::new(Style {

@@ -105,7 +105,7 @@ macro_rules! row_props {
             self.p.on_click = Some(msg);
             self
         }
-        /// Kept for the Astryx contract; the core does not open links.
+        /// A link the row opens on a press, after `on_click`.
         pub fn href(mut self, href: impl Into<String>) -> Self {
             self.p.href = Some(href.into());
             self
@@ -243,20 +243,22 @@ fn build_row<Msg>(base: Base, p: ItemProps<Msg>, static_role: Option<Role>, cx: 
         ..Style::default()
     })
     .draw(Draw::Box(BoxDraw::fill(fill, radius)));
-    let interactive = p.on_click.is_some();
+    let href = p.href.as_deref().and_then(crate::element::safe_destination);
+    let interactive = p.on_click.is_some() || href.is_some();
     let mut sem = if interactive {
         Some(Semantics::new(Role::Button, p.label.clone()))
     } else {
         static_role.map(|role| Semantics::new(role, p.label.clone()))
     };
     if let Some(sem) = &mut sem {
-        sem.value = p.description.clone();
+        sem.description = p.description.clone();
         sem.disabled = p.is_disabled;
+        sem.selected = p.is_selected.then_some(true);
     }
     node.sem = sem;
     if interactive {
         node = node
-            .interact(Interact::new(p.on_click, p.is_disabled))
+            .interact(Interact::new(p.on_click, p.is_disabled).href(href.as_deref()))
             .indicator(Indicator::ring(
                 c.accent.into(),
                 radius,
