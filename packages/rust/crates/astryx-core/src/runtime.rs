@@ -83,6 +83,15 @@ pub trait App {
         let _ = id;
         None
     }
+
+    /// Called when the shell passes new preferences, such as the color
+    /// scheme or the time of day (`day_phase`). Return a message to keep
+    /// what the app needs, such as lighting a scene for night. Themes that
+    /// follow the system scheme switch on their own.
+    fn on_preferences(&self, preferences: &Preferences) -> Option<Self::Msg> {
+        let _ = preferences;
+        None
+    }
 }
 
 /// The overlap of two rects, if any.
@@ -373,6 +382,11 @@ impl<A: App> Runtime<A> {
         let command = self.app.update(msg);
         self.stale = true;
         command
+    }
+
+    /// The preferences the shell passed last.
+    pub fn preferences(&self) -> &Preferences {
+        &self.prefs
     }
 
     /// Phase timings of the last frame.
@@ -2181,6 +2195,11 @@ impl<A: App> Surface for Runtime<A> {
                 },
             };
             self.stale = true;
+            if let Some(msg) = self.app.on_preferences(preferences) {
+                // Preferences change between frames, with no caller to take
+                // a command; the effect lands in the app's state.
+                let _ = self.send(msg);
+            }
         }
     }
 

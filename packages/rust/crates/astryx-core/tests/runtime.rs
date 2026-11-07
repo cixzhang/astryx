@@ -1273,3 +1273,48 @@ fn a_colors_only_switch_keeps_the_layout() {
     assert!(rt.timings().laid_out);
     assert_eq!(buttons(&rt).len(), 2);
 }
+
+struct Lit {
+    phases: Vec<(DayPhase, ColorScheme)>,
+}
+
+impl App for Lit {
+    type Msg = (DayPhase, ColorScheme);
+    fn view(&self) -> Element<Self::Msg> {
+        Text::new("Garden").into()
+    }
+    fn update(&mut self, msg: Self::Msg) -> Command {
+        self.phases.push(msg);
+        Command::None
+    }
+    fn on_preferences(&self, p: &Preferences) -> Option<Self::Msg> {
+        Some((p.day_phase, p.color_scheme))
+    }
+}
+
+#[test]
+fn apps_read_the_day_phase_with_the_other_preferences() {
+    let mut rt = Runtime::new(Lit { phases: Vec::new() });
+    draw(&mut rt, 200, 100);
+    let night = Preferences {
+        day_phase: DayPhase::Night,
+        color_scheme: ColorScheme::Dark,
+        ..Preferences::default()
+    };
+    rt.set_preferences(&night);
+    rt.set_preferences(&night);
+    assert_eq!(
+        rt.app().phases,
+        [(DayPhase::Night, ColorScheme::Dark)],
+        "once per change"
+    );
+    assert_eq!(rt.preferences().day_phase, DayPhase::Night);
+    rt.set_preferences(&Preferences {
+        day_phase: DayPhase::Dusk,
+        ..night
+    });
+    assert_eq!(
+        rt.app().phases.last(),
+        Some(&(DayPhase::Dusk, ColorScheme::Dark))
+    );
+}
