@@ -3,23 +3,81 @@
 //! use these instead of a real app.
 
 use astryx_core::{
-    A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, Input,
-    InputPhase, PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface, TextAlign, TextMeasure,
-    TextStyle,
+    A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
+    ImageFit, ImageId, Input, InputPhase, PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface,
+    TextAlign, TextMeasure, TextStyle,
 };
 
 /// Logical size every fixture is designed for.
 pub const FIXTURE_SIZE: (u32, u32) = (480, 320);
 
 /// The fixture names, in a stable order.
-pub const FIXTURES: [&str; 6] = [
+pub const FIXTURES: [&str; 8] = [
     "shapes",
     "text",
     "shadows",
     "clips",
     "transforms",
+    "bidi",
     "gallery",
+    "images",
 ];
+
+/// The images the `images` fixture draws: a landscape and a checkerboard
+/// with transparent squares, made in code.
+pub const LANDSCAPE: ImageId = ImageId(1);
+pub const CHECKER: ImageId = ImageId(2);
+/// An id nothing registers: drawing it draws nothing.
+const MISSING: ImageId = ImageId(3);
+
+/// A 96x64 landscape: a sky gradient, a sun with a soft edge, and hills.
+pub fn landscape() -> ImageData {
+    let (w, h) = (96u32, 64u32);
+    let mut rgba = Vec::with_capacity((w * h * 4) as usize);
+    for y in 0..h {
+        for x in 0..w {
+            let t = y as f32 / h as f32;
+            let mut c = [40.0 + 180.0 * t, 110.0 + 90.0 * t, 230.0 - 60.0 * t];
+            let d = ((x as f32 - 66.0).powi(2) + (y as f32 - 22.0).powi(2)).sqrt();
+            let sun = (12.0 - d).clamp(0.0, 1.0);
+            c = [
+                c[0] + (255.0 - c[0]) * sun,
+                c[1] + (210.0 - c[1]) * sun,
+                c[2] + (60.0 - c[2]) * sun,
+            ];
+            let hill = 46.0 + 8.0 * ((x as f32) / 12.0).sin();
+            if y as f32 > hill {
+                c = [40.0, 140.0 + (x % 7) as f32, 80.0];
+            }
+            rgba.extend_from_slice(&[c[0] as u8, c[1] as u8, c[2] as u8, 255]);
+        }
+    }
+    ImageData {
+        width: w,
+        height: h,
+        rgba: rgba.into(),
+    }
+}
+
+/// A 16x16 checkerboard of 4-pixel squares: orange and transparent.
+pub fn checker() -> ImageData {
+    let mut rgba = Vec::with_capacity(16 * 16 * 4);
+    for y in 0..16u32 {
+        for x in 0..16u32 {
+            let on = (x / 4 + y / 4) % 2 == 0;
+            rgba.extend_from_slice(if on {
+                &[242, 140, 40, 255]
+            } else {
+                &[0, 0, 0, 0]
+            });
+        }
+    }
+    ImageData {
+        width: 16,
+        height: 16,
+        rgba: rgba.into(),
+    }
+}
 
 const fn rgb(r: u8, g: u8, b: u8) -> Color {
     Color::rgba(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, 1.0)
@@ -36,6 +94,7 @@ const ORANGE: Color = rgb(242, 140, 40);
 
 fn style(size: f32, weight: u16) -> TextStyle {
     TextStyle {
+        direction: None,
         family: FontFamily::Body,
         size,
         weight,
@@ -387,6 +446,82 @@ fn shadows() -> Vec<DrawCmd> {
         fill: Color::rgba(1.0, 1.0, 1.0, 0.3),
         stroke: Some((BORDER, 1.0)),
     });
+    c
+}
+
+fn bidi() -> Vec<DrawCmd> {
+    let row = |c: &mut Vec<DrawCmd>, y: f32, h: f32, s: &str, st: TextStyle, align: TextAlign| {
+        c.push(rect(16.0, y, 448.0, h, 6.0, SURFACE));
+        c.push(text(
+            Rect::new(24.0, y + 4.0, 432.0, h - 8.0),
+            s,
+            st,
+            INK,
+            align,
+        ));
+    };
+    let mut c = Vec::new();
+    // Latin paragraph with Hebrew and Arabic words inside.
+    row(
+        &mut c,
+        12.0,
+        30.0,
+        "Save as שמור or حفظ, then press OK.",
+        style(15.0, 400),
+        TextAlign::Start,
+    );
+    // Hebrew paragraph with a Latin name and digits, aligned to its start (the right).
+    row(
+        &mut c,
+        48.0,
+        30.0,
+        "ברוכים הבאים ל-Astryx 2.0, גרסה 98!",
+        style(15.0, 400),
+        TextAlign::End,
+    );
+    // Arabic with joined letters, a ligature, and marks.
+    row(
+        &mut c,
+        84.0,
+        34.0,
+        "مرحبًا بكم في Astryx — لا شيء أسهل",
+        style(16.0, 400),
+        TextAlign::End,
+    );
+    // Bold Hebrew heading and Medium Arabic label.
+    row(
+        &mut c,
+        124.0,
+        36.0,
+        "הגדרות מערכת",
+        style(22.0, 700),
+        TextAlign::End,
+    );
+    row(
+        &mut c,
+        166.0,
+        30.0,
+        "الإعدادات العامة",
+        style(16.0, 500),
+        TextAlign::End,
+    );
+    // A right-to-left paragraph that wraps: the first words stay on the top line.
+    c.push(rect(16.0, 202.0, 220.0, 106.0, 6.0, SURFACE));
+    c.push(text(
+        Rect::new(24.0, 206.0, 204.0, 98.0),
+        "هذا نص عربي طويل يلتف على عدة أسطر مع كلمة English في الوسط.",
+        style(14.0, 400),
+        INK,
+        TextAlign::End,
+    ));
+    c.push(rect(244.0, 202.0, 220.0, 106.0, 6.0, SURFACE));
+    c.push(text(
+        Rect::new(252.0, 206.0, 204.0, 98.0),
+        "זהו טקסט עברי ארוך שנשבר לכמה שורות, עם המילה Astryx באמצע.",
+        style(14.0, 400),
+        MUTED,
+        TextAlign::End,
+    ));
     c
 }
 
@@ -743,6 +878,60 @@ fn gallery(text_measure: &dyn TextMeasure, focus: usize, toggled: bool) -> Vec<D
     c
 }
 
+/// Images in each fit, with radii, alpha, a clip, and an opacity group.
+fn images_fixture() -> Vec<DrawCmd> {
+    let image = |x, y, w, h, r, image, fit| DrawCmd::Image {
+        rect: Rect::new(x, y, w, h),
+        radii: Radii::all(r),
+        image,
+        fit,
+    };
+    let frame = |x, y, w, h| DrawCmd::Rect {
+        rect: Rect::new(x, y, w, h),
+        radii: Radii::default(),
+        fill: Color::TRANSPARENT,
+        stroke: Some((BORDER, 1.0)),
+    };
+    vec![
+        rect(16.0, 16.0, 448.0, 288.0, 12.0, SURFACE),
+        // An avatar: cover in a circle.
+        image(32.0, 32.0, 96.0, 96.0, 48.0, LANDSCAPE, ImageFit::Cover),
+        // Contain letterboxes inside a tall box.
+        frame(144.0, 32.0, 80.0, 120.0),
+        image(144.0, 32.0, 80.0, 120.0, 0.0, LANDSCAPE, ImageFit::Contain),
+        // Fill stretches, with rounded corners.
+        image(240.0, 32.0, 96.0, 96.0, 12.0, LANDSCAPE, ImageFit::Fill),
+        // Under a scaling transform, inside a clip the transform also moves.
+        DrawCmd::PushTransform {
+            origin: Point { x: 400.0, y: 80.0 },
+            scale: 0.75,
+            translate: Point { x: 0.0, y: 0.0 },
+        },
+        DrawCmd::PushClip {
+            rect: Rect::new(352.0, 32.0, 96.0, 96.0),
+            radii: Radii::all(24.0),
+        },
+        image(352.0, 32.0, 96.0, 96.0, 0.0, LANDSCAPE, ImageFit::Cover),
+        DrawCmd::PopClip,
+        DrawCmd::PopTransform,
+        // Transparent pixels show what is under them.
+        rect(32.0, 168.0, 120.0, 120.0, 0.0, ACCENT),
+        image(32.0, 168.0, 120.0, 120.0, 16.0, CHECKER, ImageFit::Cover),
+        // Inside a clip and an opacity group.
+        DrawCmd::PushClip {
+            rect: Rect::new(176.0, 168.0, 120.0, 120.0),
+            radii: Radii::all(60.0),
+        },
+        DrawCmd::PushOpacity(0.5),
+        image(176.0, 168.0, 160.0, 120.0, 0.0, LANDSCAPE, ImageFit::Cover),
+        DrawCmd::PopOpacity,
+        DrawCmd::PopClip,
+        // Not registered: nothing is drawn inside the frame.
+        frame(320.0, 168.0, 128.0, 120.0),
+        image(320.0, 168.0, 128.0, 120.0, 8.0, MISSING, ImageFit::Cover),
+    ]
+}
+
 /// Builds one fixture's display list. `focus` and `toggled` only affect `gallery`.
 pub fn fixture(
     name: &str,
@@ -756,7 +945,9 @@ pub fn fixture(
         "shadows" => shadows(),
         "clips" => clips(),
         "transforms" => transforms(),
+        "bidi" => bidi(),
         "gallery" => gallery(text_measure, focus, toggled),
+        "images" => images_fixture(),
         _ => return None,
     };
     Some(DisplayList {
@@ -772,6 +963,7 @@ pub struct FixtureSurface {
     focus: usize,
     toggled: bool,
     last_size: (f32, f32),
+    images_sent: bool,
 }
 
 impl FixtureSurface {
@@ -782,6 +974,7 @@ impl FixtureSurface {
             focus: 0,
             toggled: false,
             last_size: (0.0, 0.0),
+            images_sent: false,
         })
     }
 
@@ -807,6 +1000,13 @@ impl Surface for FixtureSurface {
             _ => {}
         }
         Command::None
+    }
+
+    fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
+        if self.name != "images" || std::mem::replace(&mut self.images_sent, true) {
+            return Vec::new();
+        }
+        vec![(LANDSCAPE, Some(landscape())), (CHECKER, Some(checker()))]
     }
 
     fn frame(&mut self, frame: &FrameInfo, text: &dyn TextMeasure) -> DisplayList {
@@ -948,9 +1148,9 @@ mod tests {
                 seen.insert(discriminant(&cmd));
             }
         }
-        // Rect, Shadow, Text, Line, Path, PushClip, PopClip, PushOpacity,
-        // PopOpacity, PushTransform, PopTransform.
-        assert_eq!(seen.len(), 11);
+        // Rect, Shadow, Text, Line, Path, Image, PushClip, PopClip,
+        // PushOpacity, PopOpacity, PushTransform, PopTransform.
+        assert_eq!(seen.len(), 12);
     }
 
     #[test]

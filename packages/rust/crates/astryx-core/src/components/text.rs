@@ -77,6 +77,7 @@ pub enum HeadingType {
 
 pub(crate) fn type_style(t: TypeStyle, family: FontFamily) -> TextStyle {
     TextStyle {
+        direction: None,
         family,
         size: t.size,
         weight: t.weight,

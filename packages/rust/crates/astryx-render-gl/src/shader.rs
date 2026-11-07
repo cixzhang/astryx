@@ -120,8 +120,11 @@ void main() {
         cov = clamp(0.5 - outer, 0.0, 1.0) * clamp(0.5 + inner, 0.0, 1.0);
     } else if (mode < 2.5) {
         cov = TEX(u_tex, v_uv).r;
+    } else if (mode < 3.5) {
+        color = TEX(u_tex, v_uv) * v_color.a;
     } else {
         color = TEX(u_tex, v_uv) * v_color.a;
+        cov = clamp(0.5 - sd(v_local, v_half, v_radii), 0.0, 1.0);
     }
     float clip = clamp(0.5 - sd(v_pos - v_clip.xy, v_clip.zw, v_clip_radii), 0.0, 1.0);
     FRAG = color * (cov * clip);

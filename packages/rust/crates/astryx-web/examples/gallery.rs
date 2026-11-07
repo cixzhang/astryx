@@ -2,7 +2,6 @@
 //!
 //! Build it with `crates/astryx-web/scripts/build.sh` and open `gallery.html`.
 
-use astryx_core::Runtime;
 use astryx_gallery::Gallery;
 use astryx_web::Options;
 use wasm_bindgen::prelude::*;
@@ -13,5 +12,5 @@ pub fn start() -> Result<(), JsValue> {
         label: Some("Astryx gallery".into()),
         ..Options::default()
     };
-    astryx_web::run_with("#app", Runtime::new(Gallery::new()), options)
+    astryx_web::run_with("#app", astryx_gallery::runtime(Gallery::new()), options)
 }

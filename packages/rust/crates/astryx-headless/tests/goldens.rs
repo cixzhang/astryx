@@ -30,7 +30,7 @@ fn fixtures_at_1x() {
 
 #[test]
 fn fixtures_at_2x() {
-    for name in ["text", "shadows", "transforms", "gallery"] {
+    for name in ["text", "shadows", "transforms", "bidi", "gallery", "images"] {
         check(name, 2.0, &[], &format!("{name}@2x.png"));
     }
 }

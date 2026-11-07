@@ -251,6 +251,9 @@ impl Shell {
         };
         let had_focus = follow_focus && self.mirror.has_dom_focus();
         let info = self.frame_info(dt);
+        for (id, data) in self.surface.take_image_updates() {
+            self.renderer.set_image(id, data.as_ref());
+        }
         let list = self.surface.frame(&info, self.renderer.measurer());
         self.renderer.render(&list, &info);
         self.request_fonts_for(&list.commands);

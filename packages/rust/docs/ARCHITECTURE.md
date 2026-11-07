@@ -50,6 +50,7 @@ crates/astryx-core          contract.rs (shared, orchestrator-owned), theme,
                             components                                          (Lane A)
 crates/astryx-motion        motion tokens (tokens/motion.json), easing, springs,
                             Animated, enter/exit, reduced motion, gestures      (Lane D)
+crates/astryx-image         PNG/JPEG/WebP decoding and downscaling              (Lane D)
 crates/astryx-raster        shared text engine, pixel snapping, shadow masks    (Lane B)
 crates/astryx-render-gl     batched GL renderer on glow: OpenGL ES 2/3, WebGL2   (Lane B)
 crates/astryx-render-soft   CPU renderer (tiny-skia) for headless and no-GPU    (Lane B)
@@ -71,6 +72,9 @@ tools/                      token export and helper scripts
 - `Surface`: what a shell drives each frame. The core runtime implements it
   for any `App`; shells and renderers never see app or element types.
 - `A11yNode`, `Role`: the accessibility tree.
+- Images: `DrawCmd::Image`, `Renderer::set_image`, and `Surface::take_image_updates`.
+  A `Surface` wrapper must forward every `Surface` method, including the ones
+  with defaults; a missed `take_image_updates` drops images without an error.
 
 App model (Lane A owns it): Elm style. `view(&self) -> Element<Msg>`,
 `update(&mut self, msg) -> Command`. An app is a library crate; each shell

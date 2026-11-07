@@ -281,6 +281,9 @@ impl<S: Surface> Shell<S> {
             scale: gpu.window.scale_factor() as f32,
             dt,
         };
+        for (id, data) in self.surface.take_image_updates() {
+            gpu.renderer.set_image(id, data.as_ref());
+        }
         let list = self.surface.frame(&frame, gpu.renderer.text());
         gpu.renderer.render_list(&list, &frame);
         self.frames += 1;

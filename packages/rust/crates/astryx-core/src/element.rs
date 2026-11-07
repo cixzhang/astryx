@@ -185,6 +185,15 @@ pub(crate) enum Draw {
     Text(TextDraw),
     Path(PathDraw),
     Spinner(Color),
+    Image(ImageDraw),
+}
+
+/// A registered image filling the node's box.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct ImageDraw {
+    pub image: crate::contract::ImageId,
+    pub fit: crate::contract::ImageFit,
+    pub radii: Radii,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -527,6 +536,8 @@ pub(crate) struct BuildCx<Msg> {
     pub viewport: (f32, f32),
     /// Popups to build above everything else once the view is built.
     pub overlays: Vec<Overlay<Msg>>,
+    /// The images the app registered: true when ready, false when failed.
+    pub images: std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, bool>>,
     open: Vec<u32>,
     key: Option<u64>,
 }
@@ -544,9 +555,16 @@ impl<Msg> BuildCx<Msg> {
             popup: None,
             viewport: (0.0, 0.0),
             overlays: Vec::new(),
+            images: Default::default(),
             open: Vec::new(),
             key: None,
         }
+    }
+
+    /// Whether the image for `src` is ready (`Some(true)`), failed
+    /// (`Some(false)`), or not registered yet, so still loading (`None`).
+    pub fn image_state(&self, src: &str) -> Option<bool> {
+        self.images.get(&crate::contract::ImageId::of(src)).copied()
     }
 
     pub fn inherited(&self) -> Inherited {

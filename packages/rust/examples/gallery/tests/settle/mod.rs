@@ -3,8 +3,8 @@
 //! frame.
 
 use astryx_core::{
-    A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Point, Preferences,
-    Surface, TextMeasure,
+    A11yAction, A11yNode, Command, DisplayList, FrameInfo, ImageData, ImageId, Input, InputPhase,
+    Point, Preferences, Surface, TextMeasure,
 };
 
 pub struct Settled<'a, S: Surface> {
@@ -42,6 +42,9 @@ impl<S: Surface> Surface for Settled<'_, S> {
     }
     fn set_preferences(&mut self, preferences: &Preferences) {
         self.inner.set_preferences(preferences)
+    }
+    fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
+        self.inner.take_image_updates()
     }
 }
 

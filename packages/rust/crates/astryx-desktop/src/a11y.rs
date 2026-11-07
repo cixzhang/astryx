@@ -1,8 +1,8 @@
 //! Bridges the Astryx [`A11yNode`] tree to AccessKit.
 
 use accesskit::{
-    Action, ActionRequest, Node, NodeId, Rect, Role as AkRole, Toggled, TreeId, TreeInfo,
-    TreeUpdate,
+    Action, ActionRequest, Node, NodeId, Rect, Role as AkRole, TextDirection, Toggled, TreeId,
+    TreeInfo, TreeUpdate,
 };
 use astryx_core::{A11yAction, A11yNode, Live, Role};
 
@@ -65,6 +65,9 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
     }
     if node.disabled {
         ak.set_disabled();
+    }
+    if node.rtl {
+        ak.set_text_direction(TextDirection::RightToLeft);
     }
     if node.focusable && !node.disabled {
         ak.add_action(Action::Focus);
@@ -227,6 +230,7 @@ mod tests {
         option.selected = Some(true);
         option.focusable = true;
         option.live = Some(Live::Polite);
+        option.rtl = true;
         let update = tree_update(Some(&option), "App", 1.0);
         let ak = &update
             .nodes
@@ -238,6 +242,7 @@ mod tests {
         assert_eq!(ak.is_selected(), Some(true));
         assert_eq!(ak.live(), Some(accesskit::Live::Polite));
         assert!(ak.supports_action(Action::Focus));
+        assert_eq!(ak.text_direction(), Some(TextDirection::RightToLeft));
         assert!(ak.supports_action(Action::Click));
     }
 

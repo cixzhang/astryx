@@ -2,7 +2,7 @@
 //! `cargo run -p astryx-gallery --example shot -- <section-slug> <out.png> [inputs...]`,
 //! where inputs are names such as `Down`, `Next`, `A`, `B`.
 
-use astryx_core::{Input, Runtime};
+use astryx_core::Input;
 use astryx_gallery::{Gallery, Section};
 use astryx_headless::render_png;
 
@@ -27,6 +27,6 @@ fn main() {
         .find(|s| s.slug() == args[0])
         .expect("section slug");
     let inputs: Vec<Input> = args[2..].iter().map(|a| input(a)).collect();
-    let mut rt = Runtime::new(Gallery::section(section));
+    let mut rt = astryx_gallery::runtime(Gallery::section(section));
     std::fs::write(&args[1], render_png(&mut rt, 720, 600, 1.0, &inputs)).unwrap();
 }

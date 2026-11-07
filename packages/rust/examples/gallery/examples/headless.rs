@@ -3,7 +3,7 @@
 //! Writes one image per section in light and dark mode, the home screen,
 //! and a section opened from it.
 
-use astryx_core::{Mode, Runtime, Theme};
+use astryx_core::{Mode, Theme};
 use astryx_gallery::{Gallery, Section};
 use astryx_headless::render_png;
 use std::path::PathBuf;
@@ -15,7 +15,8 @@ fn main() -> std::io::Result<()> {
     std::fs::create_dir_all(&out)?;
     for section in Section::ALL {
         for mode in [Mode::Light, Mode::Dark] {
-            let mut rt = Runtime::new(Gallery::section(section).with_theme(Theme::ASTRYX, mode));
+            let mut rt =
+                astryx_gallery::runtime(Gallery::section(section).with_theme(Theme::ASTRYX, mode));
             let png = render_png(&mut rt, 720, 900, scale, &[]);
             let name = format!(
                 "{}-{}.png",
@@ -26,14 +27,14 @@ fn main() -> std::io::Result<()> {
             println!("{}", out.join(name).display());
         }
     }
-    let mut rt = Runtime::new(Gallery::new());
+    let mut rt = astryx_gallery::runtime(Gallery::new());
     std::fs::write(
         out.join("home.png"),
         render_png(&mut rt, 960, 640, scale, &[]),
     )?;
     // The home screen after opening its fifth row.
     use astryx_core::Input::{Down, Next, A};
-    let mut rt = Runtime::new(Gallery::new());
+    let mut rt = astryx_gallery::runtime(Gallery::new());
     let inputs = [Next, Next, Down, Down, Down, Down, A];
     std::fs::write(
         out.join("opened.png"),

@@ -1,15 +1,18 @@
 //! Avatar, AvatarStatusDot, and Thumbnail.
 //!
-//! The display list has no image command yet, so `src` is kept but not
-//! drawn: an Avatar shows its initials or person symbol and a Thumbnail its
-//! placeholder, as both do while an image loads.
+//! `src` names an image the app registers with the runtime under
+//! `ImageId::of(src)` (`Runtime::register_image`). Until it is ready an
+//! Avatar shows its initials or person symbol; a failed image falls back as
+//! a failed load does in Astryx.
 
 use super::display::{icon_node, Icon, IconSize};
 use super::{dim, len_auto, radii, square};
-use crate::contract::{Color, FontFamily, PathCmd, Point, Radii, Role, TextAlign, TextStyle};
+use crate::contract::{
+    Color, FontFamily, ImageFit, ImageId, PathCmd, Point, Radii, Role, TextAlign, TextStyle,
+};
 use crate::element::{
-    base_props, Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, Node, PathDraw,
-    Semantics, TextDraw,
+    base_props, Base, BoxDraw, Build, BuildCx, Draw, ImageDraw, Indicator, Interact, Node,
+    PathDraw, Semantics, TextDraw,
 };
 use taffy::{AlignItems, FlexDirection, JustifyContent, LengthPercentageAuto, Position, Style};
 
@@ -315,6 +318,39 @@ fn meaningful(s: &Option<String>) -> Option<&str> {
     s.as_deref().map(str::trim).filter(|s| !s.is_empty())
 }
 
+/// A node that fills its parent with the image registered for `src`, cover-fitted.
+fn image_fill<Msg>(src: &str, corner: Radii) -> Node<Msg> {
+    Node::new(Style {
+        position: Position::Absolute,
+        size: taffy::Size {
+            width: taffy::Dimension::percent(1.0),
+            height: taffy::Dimension::percent(1.0),
+        },
+        ..Style::default()
+    })
+    .draw(Draw::Image(ImageDraw {
+        image: ImageId::of(src),
+        fit: ImageFit::Cover,
+        radii: corner,
+    }))
+}
+
+/// Avatar's picture (`component:Avatar` FR2): `src` until it fails, then
+/// `fallback_src` until it fails. A source still loading shows the
+/// initials or symbol; the fallback is tried only once `src` has failed or
+/// when there is none.
+fn avatar_source<'a, Msg>(
+    cx: &BuildCx<Msg>,
+    src: Option<&'a str>,
+    fallback: Option<&'a str>,
+) -> Option<&'a str> {
+    match src.map(|s| (s, cx.image_state(s))) {
+        Some((s, Some(true))) => Some(s),
+        Some((_, None)) => None,
+        Some((_, Some(false))) | None => fallback.filter(|f| cx.image_state(f) == Some(true)),
+    }
+}
+
 impl<Msg> Build<Msg> for Avatar<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         if self.base.is_hidden {
@@ -378,7 +414,10 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
         plate.clip = Some(shape_radii);
         cx.begin(plate);
         let letters = self.name.as_deref().map(initials).unwrap_or_default();
-        if letters.is_empty() {
+        let picture = avatar_source(cx, meaningful(&self.src), meaningful(&self.fallback_src));
+        if let Some(src) = picture {
+            cx.leaf(image_fill(src, shape_radii));
+        } else if letters.is_empty() {
             cx.leaf(
                 Node::new(Style {
                     size: square(side * 0.6),
@@ -393,6 +432,7 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
             );
         } else {
             let style = TextStyle {
+                direction: None,
                 family: FontFamily::Body,
                 size: side * 0.4,
                 weight: t.font.weight.medium,
@@ -595,18 +635,46 @@ impl<Msg> Build<Msg> for Thumbnail<Msg> {
         }
         cx.key(self.base.id.as_deref());
         cx.begin(node);
-        cx.leaf(
-            Node::new(Style {
-                size: square(24.0),
-                ..Style::default()
-            })
-            .draw(Draw::Path(PathDraw {
-                commands: image_path(),
-                view_box: 24.0,
-                fill: None,
-                stroke: Some((c.icon_secondary.into(), 1.5)),
-            })),
-        );
+        // `component:Thumbnail` FR2: the image while it has not failed (blank
+        // while it loads), with a 1px inset border; the placeholder glyph
+        // without a `src` or after it failed.
+        let src = meaningful(&self.src);
+        let state = src.map(|s| cx.image_state(s));
+        let shows_image = matches!(state, Some(Some(true)) | Some(None));
+        if let (Some(src), Some(Some(true))) = (src, state) {
+            cx.leaf(image_fill(src, radii(radius)));
+        }
+        if shows_image {
+            cx.leaf(
+                Node::new(Style {
+                    position: Position::Absolute,
+                    size: taffy::Size {
+                        width: taffy::Dimension::percent(1.0),
+                        height: taffy::Dimension::percent(1.0),
+                    },
+                    ..Style::default()
+                })
+                .draw(Draw::Box(BoxDraw {
+                    border: Some((c.border.into(), 1.0)),
+                    ..BoxDraw::fill(Color::TRANSPARENT, radii(radius))
+                })),
+            );
+        } else {
+            cx.leaf(
+                Node::new(Style {
+                    size: square(24.0),
+                    ..Style::default()
+                })
+                .draw(Draw::Path(PathDraw {
+                    commands: image_path(),
+                    view_box: 24.0,
+                    fill: None,
+                    stroke: Some((c.icon_secondary.into(), 1.5)),
+                })),
+            );
+        }
+        // FR2 asks for a Skeleton when loading without a `src`; the native
+        // component set has no Skeleton yet, so the upload scrim shows instead.
         if self.is_loading {
             cx.leaf(
                 Node::new(Style {

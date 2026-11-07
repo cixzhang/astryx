@@ -4,6 +4,8 @@
 //! Every draw command becomes quads in one vertex buffer, drawn in a few
 //! batched calls:
 //! - Rounded rectangles and borders are signed-distance shapes in the shader.
+//! - Images are premultiplied RGBA textures, one per registered image,
+//!   sampled inside their rounded box.
 //! - Glyphs, shadows, and icon paths are 8-bit coverage masks from
 //!   [`astryx_raster`], the same code the CPU renderer uses, packed into
 //!   shared textures and cached across frames.
@@ -20,7 +22,10 @@ mod shader;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use astryx_core::{Color, DisplayList, DrawCmd, FrameInfo, Renderer, TextAlign, TextMeasure};
+use astryx_core::{
+    Color, DisplayList, DrawCmd, FrameInfo, ImageData, ImageFit, ImageId, Renderer, TextAlign,
+    TextMeasure,
+};
 use astryx_raster::geom::{
     fit_radii, line_rect, path_segs, rect_px, snap_rect, width_px, Affine, PxRect, Seg,
 };
@@ -213,6 +218,7 @@ const MODE_FILL: f32 = 0.0;
 const MODE_BORDER: f32 = 1.0;
 const MODE_MASK: f32 = 2.0;
 const MODE_LAYER: f32 = 3.0;
+const MODE_IMAGE: f32 = 4.0;
 
 /// One quad to draw.
 #[derive(Clone, Copy, Debug)]
@@ -337,18 +343,27 @@ pub struct GlRenderer {
     placed: Vec<GlyphDraw>,
     vertices: Vec<Vertex>,
     stats: RenderStats,
+    /// Registered images: the texture and its size in pixels.
+    images: HashMap<ImageId, (glow::Texture, u32, u32)>,
 }
 
 impl GlRenderer {
-    /// Takes over a GL context. Uses the embedded Roboto faces, or no faces
-    /// when the `embedded-fonts` feature is off; add them later with
+    /// Takes over a GL context. Uses the embedded Roboto faces and, on demand,
+    /// the embedded Arabic and Hebrew faces; no faces when the
+    /// `embedded-fonts` feature is off, so add them with
     /// [`Self::add_fallback_font`].
     pub fn new(gl: glow::Context) -> Result<Self, GlError> {
         #[cfg(feature = "embedded-fonts")]
         let fonts = astryx_fonts::roboto();
         #[cfg(not(feature = "embedded-fonts"))]
         let fonts = FontSet::new();
-        Self::with_fonts(gl, fonts)
+        let renderer = Self::with_fonts(gl, fonts);
+        #[cfg(feature = "embedded-fonts")]
+        let renderer = renderer.inspect(|r| {
+            r.text()
+                .set_fallback_provider(Box::new(astryx_fonts::fallback))
+        });
+        renderer
     }
 
     /// Takes over a GL context and draws text with `fonts`, in their
@@ -403,6 +418,7 @@ impl GlRenderer {
                 placed: Vec::new(),
                 vertices: Vec::new(),
                 stats: RenderStats::default(),
+                images: HashMap::new(),
             })
         }
     }
@@ -450,6 +466,61 @@ impl GlRenderer {
     /// Layout picks it up on the next frame; request one.
     pub fn add_fallback_font(&mut self, data: impl Into<FontData>) -> Result<(), FontError> {
         self.text.add_fallback_font(data)
+    }
+
+    /// Adds or replaces an image; `None` frees it. Pixels that do not match
+    /// the size are ignored.
+    pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        let gl = self.gl.clone();
+        if let Some((old, _, _)) = self.images.remove(&id) {
+            // SAFETY: the texture belongs to this context.
+            unsafe { gl.delete_texture(old) };
+        }
+        let Some(d) = data else { return };
+        let (w, h) = (d.width as usize, d.height as usize);
+        if w == 0 || h == 0 || d.rgba.len() != w * h * 4 {
+            return;
+        }
+        // Premultiplied, so filtering does not bleed the color of transparent
+        // pixels into their neighbours.
+        let mut px = d.rgba.to_vec();
+        for p in px.as_chunks_mut::<4>().0 {
+            let a = p[3] as u32;
+            for c in &mut p[..3] {
+                *c = ((*c as u32 * a + 127) / 255) as u8;
+            }
+        }
+        // SAFETY: the context is current while the shell drives the
+        // renderer; the pixel buffer matches the size and format.
+        unsafe {
+            let Ok(texture) = gl.create_texture() else {
+                return;
+            };
+            gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+            // Clamped, linear, no mipmaps: what every GL ES 2 device allows
+            // for any size.
+            for (k, v) in [
+                (glow::TEXTURE_MIN_FILTER, glow::LINEAR),
+                (glow::TEXTURE_MAG_FILTER, glow::LINEAR),
+                (glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE),
+                (glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE),
+            ] {
+                gl.tex_parameter_i32(glow::TEXTURE_2D, k, v as i32);
+            }
+            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+            gl.tex_image_2d(
+                glow::TEXTURE_2D,
+                0,
+                glow::RGBA as i32,
+                d.width as i32,
+                d.height as i32,
+                0,
+                glow::RGBA,
+                glow::UNSIGNED_BYTE,
+                glow::PixelUnpackData::Slice(Some(&px)),
+            );
+            self.images.insert(id, (texture, d.width, d.height));
+        }
     }
 
     /// Timings and counts of the last frame.
@@ -861,6 +932,52 @@ impl GlRenderer {
                         *color,
                     );
                 }
+            }
+            DrawCmd::Image {
+                rect,
+                radii,
+                image,
+                fit,
+            } => {
+                let r = rect_px(rect, s, snap);
+                let Some(&(texture, w, h)) = self.images.get(image) else {
+                    return;
+                };
+                if r.is_empty() || !self.visible(IRect::outer(&r)) {
+                    self.stats.culled += 1;
+                    return;
+                }
+                let radii = fit_radii(radii, s, &r);
+                let box_ = astryx_core::Rect::new(r.x0, r.y0, r.width(), r.height());
+                let dest = fit.place(box_, w, h);
+                // Cover and fill reach past the box, so the quad covers the
+                // box and the shape cuts the corners. Contain draws only where
+                // the image lands, on whole pixels while snapping, like the
+                // CPU renderer.
+                let area = if *fit == ImageFit::Contain {
+                    let edge = |v: f32| if snap { v.round() } else { v };
+                    PxRect {
+                        x0: edge(dest.x.max(r.x0)),
+                        y0: edge(dest.y.max(r.y0)),
+                        x1: edge((dest.x + dest.width).min(r.x1)),
+                        y1: edge((dest.y + dest.height).min(r.y1)),
+                    }
+                } else {
+                    r.outset(1.0)
+                };
+                let uv = |x: f32, y: f32| ((x - dest.x) / dest.width, (y - dest.y) / dest.height);
+                let (u0, v0) = uv(area.x0, area.y0);
+                let (u1, v1) = uv(area.x1, area.y1);
+                self.push(Quad {
+                    area,
+                    shape: r,
+                    radii,
+                    uv: [u0, v0, u1, v1],
+                    color: [255; 4],
+                    mode: MODE_IMAGE,
+                    border: 0.0,
+                    texture: Some(texture),
+                });
             }
             DrawCmd::PushClip { rect, radii } => {
                 let r = rect_px(rect, s, snap);
@@ -1339,6 +1456,9 @@ impl Drop for GlRenderer {
                 gl.delete_texture(l.texture);
                 gl.delete_framebuffer(l.framebuffer);
             }
+            for (_, (texture, _, _)) in self.images.drain() {
+                gl.delete_texture(texture);
+            }
             gl.delete_texture(self.white);
             gl.delete_buffer(self.vbo);
             gl.delete_buffer(self.ibo);
@@ -1404,5 +1524,9 @@ impl Renderer for GlRenderer {
 
     fn render(&mut self, list: &DisplayList, frame: &FrameInfo) {
         self.render_list(list, frame);
+    }
+
+    fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        GlRenderer::set_image(self, id, data);
     }
 }

@@ -18,7 +18,7 @@ const TOLERANCE: Tolerance = Tolerance {
 const SIZE: (u32, u32) = (720, 900);
 
 fn check(gallery: Gallery, scale: f32, inputs: &[Input], golden: &str) {
-    let mut rt = Runtime::new(gallery);
+    let mut rt = astryx_gallery::runtime(gallery);
     let png = render_png(&mut rt, SIZE.0, SIZE.1, scale, inputs);
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/goldens")
@@ -122,7 +122,7 @@ fn focus_rings_at_edges_are_whole() {
 
 #[test]
 fn header_at_scale_3() {
-    let mut rt = Runtime::new(Gallery::new());
+    let mut rt = astryx_gallery::runtime(Gallery::new());
     let png = render_png(&mut rt, 960, 250, 3.0, &[]);
     assert_golden(
         &png,

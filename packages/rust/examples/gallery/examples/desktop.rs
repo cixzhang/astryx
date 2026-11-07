@@ -2,7 +2,6 @@
 //! `cargo run -p astryx-gallery --example desktop [-- <screenshot.png>]`.
 //! With a path, it writes the first frame there and exits.
 
-use astryx_core::Runtime;
 use astryx_desktop::{run_with, Options};
 use astryx_gallery::Gallery;
 
@@ -14,5 +13,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         screenshot,
         ..Options::default()
     };
-    run_with(Runtime::new(Gallery::new()), options)
+    run_with(astryx_gallery::runtime(Gallery::new()), options)
 }

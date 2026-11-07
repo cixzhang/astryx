@@ -206,6 +206,7 @@ impl Demo {
 
 fn text_style(size: f32, weight: u16) -> TextStyle {
     TextStyle {
+        direction: None,
         family: FontFamily::Body,
         size,
         weight,

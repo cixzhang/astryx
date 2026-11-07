@@ -379,27 +379,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         let clears =
             self.has_clear && !self.value.is_empty() && !f.is_disabled && !self.is_read_only;
         if let (true, Some(on_change)) = (clears, &self.on_change) {
-            let pill = radii(t.radius.inner);
-            cx.begin(
-                Node::new(Style {
-                    size: square(IconSize::Md.points()),
-                    flex_shrink: 0.0,
-                    align_items: AlignItems::CENTER,
-                    justify_content: taffy::JustifyContent::CENTER,
-                    ..Style::default()
-                })
-                .interact(Interact::new(Some(on_change(String::new())), false))
-                .indicator(Indicator::ring(
-                    c.accent.into(),
-                    pill,
-                    Some(c.overlay_pressed.into()),
-                ))
-                .sem(Semantics::new(Role::Button, format!("Clear {}", f.label))),
-            );
-            if let Some(n) = icon_node("close", IconSize::Sm.points(), c.text_secondary.into()) {
-                cx.leaf(n);
-            }
-            cx.end();
+            clear_button(cx, on_change(String::new()), &f.label);
         }
         cx.end();
         if let Some(status) = &f.status {
@@ -407,6 +387,33 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         }
         cx.end();
     }
+}
+
+/// A field's clear (×) action: its own focus stop, named after the field.
+fn clear_button<Msg>(cx: &mut BuildCx<Msg>, msg: Msg, label: &str) {
+    let t = cx.tokens;
+    let c = &t.color;
+    let pill = radii(t.radius.inner);
+    cx.begin(
+        Node::new(Style {
+            size: square(IconSize::Md.points()),
+            flex_shrink: 0.0,
+            align_items: AlignItems::CENTER,
+            justify_content: taffy::JustifyContent::CENTER,
+            ..Style::default()
+        })
+        .interact(Interact::new(Some(msg), false))
+        .indicator(Indicator::ring(
+            c.accent.into(),
+            pill,
+            Some(c.overlay_pressed.into()),
+        ))
+        .sem(Semantics::new(Role::Button, format!("Clear {label}"))),
+    );
+    if let Some(n) = icon_node("close", IconSize::Sm.points(), c.text_secondary.into()) {
+        cx.leaf(n);
+    }
+    cx.end();
 }
 
 /// One choice in a Selector.
@@ -729,6 +736,18 @@ impl<Msg: Clone + 'static> Build<Msg> for Selector<Msg> {
             if let Some(n) = icon_node(icon, IconSize::Sm.points(), color) {
                 cx.leaf(n);
             }
+        }
+        // The clear action is its own focus stop, as TextInput's is; it is
+        // unavailable while disabled, read only, or busy (FR6). Clearing
+        // sends an empty value, as the native contract's `onChange` takes a
+        // string.
+        let clears = self.has_clear
+            && selected.is_some()
+            && !f.is_disabled
+            && !self.is_read_only
+            && !self.is_loading;
+        if let (true, Some(on_change)) = (clears, &self.on_change) {
+            clear_button(cx, on_change(String::new()), &f.label);
         }
         if self.indicator_position == SelectorIndicatorPosition::End {
             chevron(cx);

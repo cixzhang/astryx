@@ -71,6 +71,17 @@ fn gaps(a: &Rect, b: &Rect, input: Input) -> Option<(f32, f32)> {
             (b.y, b.y + b.height),
         ),
     };
+    // A stop nested in another, such as a field's clear button, is next to
+    // it: the inner one is reached first from the outer one, and the outer
+    // one first from the inner one, in the direction of their centers.
+    let nested = contains(a, b) || contains(b, a);
+    let ahead = match input {
+        Input::Down | Input::Right => (b_lo + b_hi) > (a_lo + a_hi) + EPS,
+        _ => (b_lo + b_hi) < (a_lo + a_hi) - EPS,
+    };
+    if nested {
+        return ahead.then_some((0.0, 0.0));
+    }
     let along = match input {
         Input::Down | Input::Right if b_lo >= a_hi - EPS => b_lo - a_hi,
         Input::Up | Input::Left if b_hi <= a_lo + EPS => a_lo - b_hi,
@@ -88,6 +99,13 @@ fn gaps(a: &Rect, b: &Rect, input: Input) -> Option<(f32, f32)> {
         0.0
     };
     Some((along.max(0.0), across))
+}
+
+fn contains(outer: &Rect, inner: &Rect) -> bool {
+    inner.x >= outer.x - EPS
+        && inner.y >= outer.y - EPS
+        && inner.x + inner.width <= outer.x + outer.width + EPS
+        && inner.y + inner.height <= outer.y + outer.height + EPS
 }
 
 #[cfg(test)]
@@ -171,5 +189,21 @@ mod tests {
         for input in [Input::A, Input::B, Input::Start, Input::L1] {
             assert_eq!(navigate(&g, Some(0), input), None);
         }
+    }
+
+    #[test]
+    fn nested_stops_are_next_to_their_container() {
+        // A field with a clear button at its end, and a button after it.
+        let rects = [
+            r(0.0, 0.0, 200.0, 36.0),
+            r(170.0, 8.0, 20.0, 20.0),
+            r(210.0, 0.0, 80.0, 36.0),
+        ];
+        assert_eq!(navigate(&rects, Some(0), Input::Right), Some(1));
+        assert_eq!(navigate(&rects, Some(1), Input::Right), Some(2));
+        assert_eq!(navigate(&rects, Some(1), Input::Left), Some(0));
+        // From outside, the nearer edge wins: the field itself.
+        assert_eq!(navigate(&rects, Some(2), Input::Left), Some(0));
+        assert_eq!(navigate(&rects, Some(0), Input::Left), None);
     }
 }

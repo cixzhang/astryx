@@ -25,6 +25,14 @@ pub fn frame_info(width: u32, height: u32, scale: f32) -> FrameInfo {
     }
 }
 
+/// Hands the surface's image changes to the renderer, as a shell does
+/// before each frame it draws.
+pub fn drain_images(renderer: &mut SoftRenderer, surface: &mut dyn Surface) {
+    for (id, data) in surface.take_image_updates() {
+        renderer.set_image(id, data.as_ref());
+    }
+}
+
 /// Renders `surface` at `width`×`height` logical points and `scale` pixels
 /// per point. It draws one frame, then presses and releases each input in
 /// turn with a frame after each, and returns the last frame.
@@ -48,6 +56,7 @@ pub fn render_pixmap(
     } else {
         surface.frame(&frame, renderer.text())
     };
+    drain_images(renderer, surface);
     renderer.render_list(&list, &frame);
     renderer.pixmap().clone()
 }

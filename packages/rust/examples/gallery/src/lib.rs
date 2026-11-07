@@ -5,6 +5,18 @@
 
 use astryx_core::*;
 
+pub mod images;
+
+/// Runs `gallery` with its sample images registered. Every shell starts the
+/// gallery this way.
+pub fn runtime(gallery: Gallery) -> Runtime<Gallery> {
+    let mut rt = Runtime::new(gallery);
+    for (id, data) in images::samples() {
+        rt.register_image(id, data);
+    }
+    rt
+}
+
 /// One part of the gallery, for showing a single component.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Section {
@@ -258,7 +270,8 @@ impl App for Gallery {
             }
             Msg::Toggle(i, on) => self.switches[i] = on,
             Msg::Pressed(what) => self.last = Some(what),
-            Msg::Pick(value) => self.fruit = Some(value),
+            // The clear action sends an empty value.
+            Msg::Pick(value) => self.fruit = (!value.is_empty()).then_some(value),
             Msg::SelectRow(i) => self.selected_row = i,
             Msg::Remove(i) => self.removed.push(i),
             Msg::Back => self.last = None,
@@ -641,7 +654,11 @@ impl Gallery {
             group(
                 "Variants",
                 row()
-                    .child(pick(Selector::new("Fruit", options.clone())).on_change(Msg::Pick))
+                    .child(
+                        pick(Selector::new("Fruit", options.clone()))
+                            .has_clear(true)
+                            .on_change(Msg::Pick)
+                    )
                     .child(
                         pick(Selector::new("Secondary", options.clone()))
                             .variant(SelectorVariant::Secondary)
@@ -676,29 +693,56 @@ impl Gallery {
 
     fn thumbnails(&self) -> Element<Msg> {
         let mut r = row();
-        r = r.child(Thumbnail::new().label("beach.jpg"));
         r = r.child(
             Thumbnail::new()
+                .src(images::BEACH)
+                .alt("Beach")
+                .label("beach.jpg"),
+        );
+        r = r.child(
+            Thumbnail::new()
+                .src(images::HILLS)
+                .alt("Hills at sunset")
                 .label("open.jpg")
                 .on_click(Msg::Pressed("thumbnail")),
         );
-        for i in 0..2 {
+        for (i, src) in [images::CITY, images::STICKER].into_iter().enumerate() {
             if !self.removed.contains(&i) {
                 r = r.child(
                     Thumbnail::new()
+                        .src(src)
                         .label(format!("photo-{i}.jpg"))
                         .on_remove(Msg::Remove(i)),
                 );
             }
         }
-        r = r.child(Thumbnail::new().label("loading.jpg").is_loading(true));
         r = r.child(
             Thumbnail::new()
+                .src(images::BEACH)
+                .label("uploading.jpg")
+                .is_loading(true),
+        );
+        r = r.child(
+            Thumbnail::new()
+                .src(images::CITY)
                 .label("disabled.jpg")
                 .is_disabled(true)
                 .on_remove(Msg::Remove(9)),
         );
-        group("Plain, open, remove, loading, disabled", r).into()
+        let mut fallbacks = row();
+        fallbacks = fallbacks.child(Thumbnail::new().label("no image"));
+        fallbacks = fallbacks.child(Thumbnail::new().src(images::BROKEN).label("broken.jpg"));
+        fallbacks = fallbacks.child(Thumbnail::new().src(images::PENDING).label("pending.jpg"));
+        fallbacks = fallbacks.child(Thumbnail::new().label("loading.jpg").is_loading(true));
+        vstack![
+            group("Images: plain, open, remove, uploading, disabled", r),
+            group(
+                "No image, failed, still loading, loading without an image",
+                fallbacks
+            ),
+        ]
+        .gap(Space::S4)
+        .into()
     }
 }
 
@@ -1211,9 +1255,64 @@ fn avatars() -> Element<Msg> {
             .shape(AvatarShape::Rounded)
             .status(AvatarStatusDot::new(AvatarStatusDotVariant::Success).label("Online")),
     );
+    let mut photos = row();
+    for s in [
+        AvatarSize::Sm,
+        AvatarSize::Md,
+        AvatarSize::Lg,
+        AvatarSize::Xl,
+    ] {
+        photos = photos.child(Avatar::new().name("Ada Lovelace").src(images::ADA).size(s));
+    }
+    for (shape, src) in [
+        (AvatarShape::Rounded, images::GRACE),
+        (AvatarShape::Square, images::ALAN),
+    ] {
+        photos = photos.child(
+            Avatar::new()
+                .name("Grace Hopper")
+                .src(src)
+                .size(AvatarSize::Lg)
+                .shape(shape),
+        );
+    }
+    photos = photos.child(
+        Avatar::new()
+            .name("Katherine Johnson")
+            .src(images::KATHERINE)
+            .size(AvatarSize::Lg)
+            .status(AvatarStatusDot::new(AvatarStatusDotVariant::Success).label("Online")),
+    );
+    let fallbacks = row()
+        .child(
+            Avatar::new()
+                .name("Alan Turing")
+                .src(images::BROKEN)
+                .fallback_src(images::ALAN)
+                .size(AvatarSize::Lg),
+        )
+        .child(
+            Avatar::new()
+                .name("Alan Turing")
+                .src(images::BROKEN)
+                .size(AvatarSize::Lg),
+        )
+        .child(
+            Avatar::new()
+                .name("Alan Turing")
+                .src(images::PENDING)
+                .fallback_src(images::ALAN)
+                .size(AvatarSize::Lg),
+        )
+        .child(Avatar::new().src(images::BROKEN).size(AvatarSize::Lg));
     vstack![
         group("Sizes", sizes),
         group("Shapes and the person symbol", shapes),
+        group("Photos", photos),
+        group(
+            "Failed then fallback, failed, still loading, failed without a name",
+            fallbacks
+        ),
         group("Status dots", status),
         group(
             "Pressable",

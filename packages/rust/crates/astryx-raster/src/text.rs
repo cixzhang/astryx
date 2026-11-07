@@ -13,9 +13,16 @@ use std::sync::Arc;
 
 use astryx_core::{Size, TextAlign, TextMeasure, TextStyle};
 use swash::scale::{Render, ScaleContext, Source};
-use swash::shape::ShapeContext;
+use swash::shape::{Direction, ShapeContext};
 use swash::text::cluster::Boundary;
-use swash::text::{Codepoint, Script};
+use swash::text::Codepoint;
+use unicode_bidi::BidiInfo;
+
+pub use swash::text::Script;
+
+/// Supplies faces for a script no face in the set covers, the first time
+/// text in that script is shaped. Returns no faces when it has none.
+pub type FallbackProvider = Box<dyn FnMut(Script) -> Vec<FontData>>;
 use swash::zeno::{Format, Vector};
 use swash::{CacheKey, FontRef, StringId};
 
@@ -215,6 +222,8 @@ pub struct TextLayout {
 #[derive(Clone, Copy, Debug)]
 struct Cluster {
     advance: f32,
+    /// Bidirectional embedding level: odd reads right to left.
+    level: u8,
     first_glyph: usize,
     glyph_count: usize,
     whitespace: bool,
@@ -267,6 +276,12 @@ struct EngineInner {
     scaler: ScaleContext,
     shapes: HashMap<ShapeKey, Rc<ShapedText>>,
     glyphs: HashMap<GlyphKey, Rc<GlyphBitmap>>,
+    provider: Option<FallbackProvider>,
+    /// Scripts already asked for, whether or not a face came back.
+    requested: Vec<Script>,
+    /// Scripts asked for that no provider answered, for shells that load
+    /// faces asynchronously.
+    missing: Vec<Script>,
 }
 
 impl Default for TextEngine {
@@ -285,6 +300,9 @@ impl TextEngine {
                 scaler: ScaleContext::new(),
                 shapes: HashMap::new(),
                 glyphs: HashMap::new(),
+                provider: None,
+                requested: Vec::new(),
+                missing: Vec::new(),
             }),
         }
     }
@@ -300,6 +318,20 @@ impl TextEngine {
         inner.shapes.clear();
         inner.generation += 1;
         Ok(())
+    }
+
+    /// Sets where faces for uncovered scripts come from. It is asked once per
+    /// script, while text is shaped.
+    pub fn set_fallback_provider(&self, provider: FallbackProvider) {
+        self.inner.borrow_mut().provider = Some(provider);
+    }
+
+    /// Scripts that appeared in text with no face to draw them and no
+    /// provider to supply one. Each script is reported once. A shell that
+    /// loads faces asynchronously fetches them and calls
+    /// [`Self::add_fallback_font`].
+    pub fn take_missing_scripts(&self) -> Vec<Script> {
+        std::mem::take(&mut self.inner.borrow_mut().missing)
     }
 
     /// Changes whenever the font set changes, so callers that cache
@@ -323,6 +355,11 @@ impl TextEngine {
             return found.clone();
         }
         let inner = &mut *inner;
+        if inner.request_faces(text) {
+            // Earlier shapes drew these characters as missing glyphs.
+            inner.shapes.clear();
+            inner.generation += 1;
+        }
         let candidates = inner.fonts.candidates(weight);
         let (ascent, descent) = match candidates.first() {
             Some(&primary) => {
@@ -375,7 +412,8 @@ impl TextEngine {
                 let baseline = lines.len() as f32 * line_height + half_leading + shaped.ascent;
                 let mut pen = 0.0;
                 let mut glyphs = Vec::new();
-                for cluster in &paragraph.clusters[start..end] {
+                for ix in visual_order(&paragraph.clusters, start, end) {
+                    let cluster = &paragraph.clusters[ix];
                     for g in &paragraph.glyphs
                         [cluster.first_glyph..cluster.first_glyph + cluster.glyph_count]
                     {
@@ -516,6 +554,46 @@ impl TextEngine {
     }
 }
 
+impl EngineInner {
+    /// Asks for faces for the scripts in `text` no face covers. Returns true
+    /// when faces were added.
+    fn request_faces(&mut self, text: &str) -> bool {
+        let mut added = false;
+        for c in text.chars() {
+            if c.is_whitespace() || c.is_control() {
+                continue;
+            }
+            let script = c.script();
+            if matches!(script, Script::Common | Script::Inherited | Script::Unknown)
+                || self.requested.contains(&script)
+            {
+                continue;
+            }
+            let covered = self
+                .fonts
+                .faces
+                .iter()
+                .any(|f| f.font().charmap().map(c) != 0);
+            if covered {
+                continue;
+            }
+            self.requested.push(script);
+            let faces = self
+                .provider
+                .as_mut()
+                .map(|p| p(script))
+                .unwrap_or_default();
+            if faces.is_empty() {
+                self.missing.push(script);
+            }
+            for face in faces {
+                added |= self.fonts.add(face).is_ok();
+            }
+        }
+        added
+    }
+}
+
 impl TextMeasure for TextEngine {
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> Size {
         self.layout(text, style, max_width, TextAlign::Start).bounds
@@ -567,26 +645,53 @@ fn shape_paragraph(
         whitespace[offset] = ch.is_whitespace();
     }
     let covers = |face: usize, c: char| fonts.faces[face].font().charmap().map(c) != 0;
-    // Runs of text that share one face.
-    let mut runs: Vec<(usize, usize, usize)> = Vec::new();
+    // The paragraph direction comes from its first strong character.
+    let bidi = BidiInfo::new(text, None);
+    // Runs that share one face, one embedding level, and one script.
+    let mut runs: Vec<Run> = Vec::new();
     for (offset, ch) in text.char_indices() {
-        let current = runs.last().map(|r| r.2);
+        let current = runs.last().map(|r| r.face);
         let face = pick_face(ch, current, candidates, covers);
+        let level = bidi.levels[offset].number();
+        let script = Some(ch.script())
+            .filter(|s| !matches!(s, Script::Common | Script::Inherited | Script::Unknown));
+        let end = offset + ch.len_utf8();
         match runs.last_mut() {
-            Some(run) if run.2 == face => run.1 = offset + ch.len_utf8(),
-            _ => runs.push((offset, offset + ch.len_utf8(), face)),
+            Some(run)
+                if run.face == face
+                    && run.level == level
+                    && (script.is_none() || run.script.is_none() || run.script == script) =>
+            {
+                run.end = end;
+                run.script = run.script.or(script);
+            }
+            _ => runs.push(Run {
+                start: offset,
+                end,
+                face,
+                level,
+                script,
+            }),
         }
     }
-    for (start, end, face) in runs {
+    for Run {
+        start,
+        end,
+        face,
+        level,
+        script,
+    } in runs
+    {
         let run = &text[start..end];
-        let script = run
-            .chars()
-            .map(Codepoint::script)
-            .find(|s| !matches!(s, Script::Common | Script::Inherited | Script::Unknown))
-            .unwrap_or(Script::Latin);
+        let direction = if level % 2 == 1 {
+            Direction::RightToLeft
+        } else {
+            Direction::LeftToRight
+        };
         let mut shaper = ctx
             .builder(fonts.faces[face].font())
-            .script(script)
+            .script(script.unwrap_or(Script::Latin))
+            .direction(direction)
             .size(size)
             .build();
         shaper.add_str(run);
@@ -606,6 +711,7 @@ fn shape_paragraph(
             }
             out.clusters.push(Cluster {
                 advance,
+                level,
                 first_glyph,
                 glyph_count: cluster.glyphs.len(),
                 whitespace: (cs..ce).all(|i| !text.is_char_boundary(i) || whitespace[i]),
@@ -614,6 +720,47 @@ fn shape_paragraph(
         });
     }
     out
+}
+
+struct Run {
+    start: usize,
+    end: usize,
+    face: usize,
+    level: u8,
+    script: Option<Script>,
+}
+
+/// The clusters of one line in left-to-right display order, as the Unicode
+/// bidirectional algorithm reorders them (rule L2). Trailing white space is
+/// left out; it takes no room at the line end.
+fn visual_order(clusters: &[Cluster], start: usize, end: usize) -> Vec<usize> {
+    let mut end = end;
+    while end > start && clusters[end - 1].whitespace {
+        end -= 1;
+    }
+    let mut order: Vec<usize> = (start..end).collect();
+    let max = order.iter().map(|&i| clusters[i].level).max().unwrap_or(0);
+    let lowest_odd = order
+        .iter()
+        .map(|&i| clusters[i].level)
+        .filter(|l| l % 2 == 1)
+        .min()
+        .unwrap_or(max + 1);
+    for level in (lowest_odd..=max).rev() {
+        let mut i = 0;
+        while i < order.len() {
+            if clusters[order[i]].level >= level {
+                let from = i;
+                while i < order.len() && clusters[order[i]].level >= level {
+                    i += 1;
+                }
+                order[from..i].reverse();
+            } else {
+                i += 1;
+            }
+        }
+    }
+    order
 }
 
 /// Greedy line breaking at Unicode line break opportunities. Returns cluster
@@ -700,6 +847,10 @@ mod tests {
     static REGULAR: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Regular.ttf");
     static MEDIUM: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Medium.ttf");
     static BOLD: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Bold.ttf");
+    const HEBREW: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../astryx-fonts/fonts/NotoSansHebrew-Regular.ttf"
+    );
 
     fn roboto() -> FontSet {
         FontSet::new()
@@ -717,6 +868,7 @@ mod tests {
 
     fn style(size: f32, weight: u16) -> TextStyle {
         TextStyle {
+            direction: None,
             family: FontFamily::Body,
             size,
             weight,
@@ -824,7 +976,62 @@ mod tests {
         let unwrapped: usize = engine.layout(text, &st, None, TextAlign::Start).lines[0]
             .glyphs
             .len();
-        assert_eq!(glyphs, unwrapped);
+        // Each break drops the space at the end of its line.
+        assert_eq!(glyphs + layout.lines.len() - 1, unwrapped);
+    }
+
+    fn shaped_order(engine: &TextEngine, text: &str) -> Vec<(u16, u16)> {
+        engine
+            .layout(text, &style(16.0, 400), None, TextAlign::Start)
+            .lines[0]
+            .glyphs
+            .iter()
+            .map(|g| (g.face, g.id))
+            .collect()
+    }
+
+    #[test]
+    fn right_to_left_runs_display_reversed() {
+        let engine = engine();
+        engine
+            .add_fallback_font(std::fs::read(HEBREW).unwrap())
+            .unwrap();
+        // Two Hebrew words read right to left, so the second word is drawn first.
+        let both = shaped_order(&engine, "שלום עולם");
+        let first = shaped_order(&engine, "שלום");
+        let second = shaped_order(&engine, "עולם");
+        assert_eq!(&both[..second.len()], &second[..]);
+        assert_eq!(&both[both.len() - first.len()..], &first[..]);
+        // Latin inside Hebrew keeps its own left-to-right order.
+        let mixed = shaped_order(&engine, "שלום abc עולם");
+        let abc = shaped_order(&engine, "abc");
+        let at = mixed.windows(3).position(|w| w == &abc[..]);
+        assert!(at.is_some(), "abc stays in order inside right-to-left text");
+        // A Hebrew word inside a Latin paragraph flips, the Latin does not.
+        let latin = shaped_order(&engine, "abc שלום def");
+        assert_eq!(&latin[..3], &abc[..]);
+        // "abc", a space, the word, a space, "def".
+        assert_eq!(&latin[4..4 + first.len()], &first[..]);
+    }
+
+    #[test]
+    fn missing_scripts_are_reported_once_without_a_provider() {
+        let engine = engine();
+        engine.measure("שלום", &style(16.0, 400), None);
+        engine.measure("עולם", &style(16.0, 400), None);
+        assert_eq!(engine.take_missing_scripts(), vec![Script::Hebrew]);
+        assert!(engine.take_missing_scripts().is_empty());
+    }
+
+    #[test]
+    fn a_provider_supplies_faces_on_first_use() {
+        let engine = engine();
+        engine.set_fallback_provider(Box::new(|script| match script {
+            Script::Hebrew => vec![std::fs::read(HEBREW).unwrap().into()],
+            _ => Vec::new(),
+        }));
+        let g = shaped_order(&engine, "שלום");
+        assert!(g.iter().all(|&(face, id)| face == 3 && id != 0), "{g:?}");
     }
 
     #[test]

@@ -215,6 +215,7 @@ impl Affine {
                 rect: self.rect(rect),
                 text: text.clone(),
                 style: astryx_core::TextStyle {
+                    direction: None,
                     size: style.size * k,
                     ..*style
                 },
@@ -255,6 +256,17 @@ impl Affine {
             DrawCmd::PushClip { rect, radii: r } => DrawCmd::PushClip {
                 rect: self.rect(rect),
                 radii: radii(r),
+            },
+            DrawCmd::Image {
+                rect,
+                radii: r,
+                image,
+                fit,
+            } => DrawCmd::Image {
+                rect: self.rect(rect),
+                radii: radii(r),
+                image: *image,
+                fit: *fit,
             },
             other => other.clone(),
         }

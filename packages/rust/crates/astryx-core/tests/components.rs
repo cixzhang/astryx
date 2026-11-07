@@ -1758,3 +1758,43 @@ fn the_switch_thumb_slides_to_its_new_side() {
         assert!(!rt.wants_frames());
     }
 }
+
+#[test]
+fn selector_clear_is_a_focus_stop_that_sends_an_empty_value() {
+    let mut rt = runtime(|| {
+        Selector::new("Fruit", ["apple", "pear"])
+            .value("apple")
+            .has_clear(true)
+            .on_change(|v: String| v)
+            .into()
+    });
+    draw(&mut rt, 400, 200);
+    let clear = a11y(&rt, Role::Button);
+    assert_eq!(clear[0].label.as_deref(), Some("Clear Fruit"));
+    tap(&mut rt, Input::Right);
+    draw(&mut rt, 400, 200);
+    assert!(
+        a11y(&rt, Role::Button)[0].focused,
+        "Right from the trigger reaches it"
+    );
+    tap(&mut rt, Input::A);
+    assert_eq!(rt.app().sent, vec![String::new()]);
+    for (read_only, value) in [(true, Some("apple")), (false, None)] {
+        let mut rt = runtime(move || {
+            let s = Selector::new("Fruit", ["apple"])
+                .has_clear(true)
+                .is_read_only(read_only)
+                .on_change(|v: String| v);
+            match value {
+                Some(v) => s.value(v),
+                None => s,
+            }
+            .into()
+        });
+        draw(&mut rt, 400, 200);
+        assert!(
+            a11y(&rt, Role::Button).is_empty(),
+            "no clear when read only or empty"
+        );
+    }
+}

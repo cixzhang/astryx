@@ -1,8 +1,8 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
 use crate::contract::{
-    A11yAction, A11yNode, Command, DisplayList, FontFamily, FrameInfo, Input, InputPhase, Point,
-    Preferences, Radii, Rect, Size, Surface, TextMeasure,
+    A11yAction, A11yNode, Command, DisplayList, FontFamily, FrameInfo, ImageData, ImageId, Input,
+    InputPhase, Point, Preferences, Radii, Rect, Size, Surface, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
@@ -197,6 +197,10 @@ pub struct Runtime<A: App> {
     time: f32,
     a11y: Option<A11yNode>,
     timings: FrameTimings,
+    /// Registered images: true when ready, false when failed.
+    images: std::sync::Arc<HashMap<ImageId, bool>>,
+    /// Image changes the shell has not taken yet.
+    image_updates: Vec<(ImageId, Option<ImageData>)>,
 }
 
 impl<A: App> Runtime<A> {
@@ -243,6 +247,40 @@ impl<A: App> Runtime<A> {
             time: 0.0,
             a11y: None,
             timings: FrameTimings::default(),
+            images: Default::default(),
+            image_updates: Vec::new(),
+        }
+    }
+
+    /// Registers the image for `id`: `Some` makes it ready, replacing any
+    /// earlier one; `None` marks it failed, so components fall back (an
+    /// Avatar to `fallback_src`, then initials; a Thumbnail to its
+    /// placeholder). The pixels go to the renderer on the next frame
+    /// through [`Surface::take_image_updates`]; the runtime keeps no copy.
+    /// Use [`ImageId::of`] for an image a component names by `src`.
+    pub fn register_image(&mut self, id: ImageId, data: Option<ImageData>) {
+        std::sync::Arc::make_mut(&mut self.images).insert(id, data.is_some());
+        self.image_updates.retain(|(i, _)| *i != id);
+        self.image_updates.push((id, data));
+        self.stale = true;
+    }
+
+    /// [`Self::register_image`] as a builder.
+    pub fn with_image(mut self, id: ImageId, data: Option<ImageData>) -> Self {
+        self.register_image(id, data);
+        self
+    }
+
+    /// Forgets the image for `id` and frees it in the renderer; components
+    /// treat it as loading again.
+    pub fn forget_image(&mut self, id: ImageId) {
+        if std::sync::Arc::make_mut(&mut self.images)
+            .remove(&id)
+            .is_some()
+        {
+            self.image_updates.retain(|(i, _)| *i != id);
+            self.image_updates.push((id, None));
+            self.stale = true;
         }
     }
 
@@ -281,6 +319,7 @@ impl<A: App> Runtime<A> {
         cx.viewport = self.viewport;
         self.direction = self.app.direction();
         cx.direction = self.direction;
+        cx.images = self.images.clone();
         cx.popup = self.popup.and_then(|id| {
             let ix = self.nodes.iter().position(|n| n.id == id)?;
             Some((id, self.layout.as_ref()?.rects.get(ix).copied()?))
@@ -1507,6 +1546,10 @@ impl<A: App> Surface for Runtime<A> {
             A11yAction::Focus => Command::None,
             A11yAction::Activate => self.activate(id),
         }
+    }
+
+    fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
+        std::mem::take(&mut self.image_updates)
     }
 
     fn set_preferences(&mut self, preferences: &Preferences) {

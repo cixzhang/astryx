@@ -1,0 +1,15 @@
+[package]
+name = "astryx-image"
+description = "Decodes PNG, JPEG, and WebP into Astryx ImageData, downscaled to fit, for small-memory devices and the web"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+png = { version = "0.18", default-features = false }
+jpeg-decoder = { version = "0.3", default-features = false }
+image-webp = { version = "0.2", default-features = false }
+
+[dev-dependencies]
+jpeg-encoder = "0.6"

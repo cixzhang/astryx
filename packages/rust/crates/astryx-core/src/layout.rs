@@ -287,6 +287,7 @@ mod tests {
         TextDraw {
             text: text.into(),
             style: TextStyle {
+                direction: None,
                 family: FontFamily::Body,
                 size: 14.0,
                 weight: 400,

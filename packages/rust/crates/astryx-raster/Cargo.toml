@@ -8,3 +8,4 @@ version.workspace = true
 [dependencies]
 astryx-core.workspace = true
 swash = "0.2.10"
+unicode-bidi = { version = "0.3.18", default-features = false, features = ["hardcoded-data"] }

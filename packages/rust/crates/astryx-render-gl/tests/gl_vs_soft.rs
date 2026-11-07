@@ -43,6 +43,10 @@ fn gl_matches_soft() {
         for name in FIXTURES {
             let frame = frame_info(FIXTURE_SIZE.0, FIXTURE_SIZE.1, scale);
             let mut surface = FixtureSurface::new(name).unwrap();
+            for (id, data) in surface.take_image_updates() {
+                soft.set_image(id, data.as_ref());
+                gl.renderer.set_image(id, data.as_ref());
+            }
             let list = surface.frame(&frame, soft.text());
             // Both renderers lay out with the same engine, so the list is shared.
             soft.render_list(&list, &frame);

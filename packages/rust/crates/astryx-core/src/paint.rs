@@ -237,6 +237,12 @@ fn paint_node<Msg>(
                 });
             }
         }
+        Draw::Image(i) => out.push(DrawCmd::Image {
+            rect,
+            radii: clamp_radii(rect.width, rect.height, i.radii),
+            image: i.image,
+            fit: i.fit,
+        }),
         _ => {}
     }
     if let (Some(ind), true) = (node.indicator, owner.pressed && state.press_strength > 0.0) {

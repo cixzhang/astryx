@@ -86,6 +86,73 @@ impl Radii {
     }
 }
 
+/// An image the app registers with the runtime. The app picks the number and
+/// keeps it stable; [`ImageId::of`] derives one from a source string.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ImageId(pub u64);
+
+impl ImageId {
+    /// A stable id for a source string such as a component's `src`
+    /// (64-bit FNV-1a), so the same string always names the same image.
+    pub const fn of(src: &str) -> ImageId {
+        let bytes = src.as_bytes();
+        let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+        let mut i = 0;
+        while i < bytes.len() {
+            hash ^= bytes[i] as u64;
+            hash = hash.wrapping_mul(0x0100_0000_01b3);
+            i += 1;
+        }
+        ImageId(hash)
+    }
+}
+
+/// How an image fills its box, as CSS `object-fit` does, centered.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum ImageFit {
+    /// Covers the box and crops the overflow.
+    #[default]
+    Cover,
+    /// Fits inside the box, leaving the rest empty.
+    Contain,
+    /// Stretches to the box.
+    Fill,
+}
+
+impl ImageFit {
+    /// Where an image of `width` x `height` pixels lands for this fit in
+    /// `rect`. Renderers draw it there, clipped to `rect` and its radii.
+    pub fn place(self, rect: Rect, width: u32, height: u32) -> Rect {
+        let (iw, ih) = (width.max(1) as f32, height.max(1) as f32);
+        let scale = match self {
+            ImageFit::Fill => return rect,
+            ImageFit::Cover => (rect.width / iw).max(rect.height / ih),
+            ImageFit::Contain => (rect.width / iw).min(rect.height / ih),
+        };
+        let (w, h) = (iw * scale, ih * scale);
+        Rect::new(
+            rect.x + (rect.width - w) / 2.0,
+            rect.y + (rect.height - h) / 2.0,
+            w,
+            h,
+        )
+    }
+}
+
+/// Decoded pixels: straight-alpha sRGB RGBA8, row by row, top row first.
+#[derive(Clone, PartialEq, Eq)]
+pub struct ImageData {
+    pub width: u32,
+    pub height: u32,
+    pub rgba: std::sync::Arc<[u8]>,
+}
+
+impl std::fmt::Debug for ImageData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ImageData({}x{})", self.width, self.height)
+    }
+}
+
 /// One layer of a box shadow, as CSS `box-shadow` draws it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ShadowLayer {
@@ -114,6 +181,15 @@ pub struct TextStyle {
     pub weight: u16,
     /// Line height as a multiple of `size`.
     pub leading: f32,
+    /// The paragraph direction. `None` takes it from the first strong
+    /// letter, as the Unicode bidirectional algorithm does by default.
+    pub direction: Option<TextDirection>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum TextDirection {
+    Ltr,
+    Rtl,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -169,6 +245,14 @@ pub enum DrawCmd {
         fill: Option<Color>,
         stroke: Option<(Color, f32)>,
     },
+    /// A registered image drawn into `rect` with `fit`, clipped to `rect` and
+    /// `radii`. An image the renderer does not have draws nothing.
+    Image {
+        rect: Rect,
+        radii: Radii,
+        image: ImageId,
+        fit: ImageFit,
+    },
     /// Clip all following commands to `rect` until the matching `PopClip`.
     PushClip {
         rect: Rect,
@@ -222,6 +306,10 @@ pub trait TextMeasure {
 pub trait Renderer {
     fn measurer(&self) -> &dyn TextMeasure;
     fn render(&mut self, list: &DisplayList, frame: &FrameInfo);
+    /// Adds or replaces an image; `None` frees it.
+    fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        let _ = (id, data);
+    }
 }
 
 /// One logical input. Shells map keys, gamepads, and device buttons to these.
@@ -422,6 +510,11 @@ pub trait Surface {
     fn scroll(&mut self, at: Point, delta: Point) -> bool {
         let _ = (at, delta);
         false
+    }
+    /// Images added, replaced, or freed (`None`) since the last call. Shells
+    /// drain it every frame, before drawing, into their renderer.
+    fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
+        Vec::new()
     }
     /// The person's preferences changed, or are known for the first time.
     fn set_preferences(&mut self, preferences: &Preferences) {

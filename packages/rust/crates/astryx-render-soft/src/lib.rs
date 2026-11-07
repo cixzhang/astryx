@@ -5,9 +5,13 @@
 //! Text, pixel snapping, and shadow masks come from [`astryx_raster`], the
 //! same code the GPU renderer uses.
 
-use astryx_core::{Color, DisplayList, DrawCmd, FrameInfo, Renderer, TextMeasure};
+use astryx_core::{
+    Color, DisplayList, DrawCmd, FrameInfo, ImageData, ImageFit, ImageId, Renderer, TextMeasure,
+};
+use std::collections::HashMap;
 use tiny_skia::{
-    FillRule, LineCap, LineJoin, Mask, Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform,
+    FillRule, FilterQuality, IntSize, LineCap, LineJoin, Mask, Paint, PathBuilder, Pattern, Pixmap,
+    PixmapPaint, SpreadMode, Stroke, Transform,
 };
 
 pub use astryx_raster;
@@ -121,6 +125,8 @@ pub struct SoftRenderer {
     transform: Affine,
     segs: Vec<Seg>,
     placed: Vec<GlyphDraw>,
+    /// Registered images, premultiplied.
+    images: HashMap<ImageId, Pixmap>,
 }
 
 impl Default for SoftRenderer {
@@ -130,14 +136,20 @@ impl Default for SoftRenderer {
 }
 
 impl SoftRenderer {
-    /// A renderer with the embedded Roboto faces, or with no faces when the
-    /// `embedded-fonts` feature is off.
+    /// A renderer with the embedded Roboto faces and, on demand, the embedded
+    /// Arabic and Hebrew faces; with no faces when the `embedded-fonts`
+    /// feature is off.
     pub fn new() -> Self {
         #[cfg(feature = "embedded-fonts")]
         let fonts = astryx_fonts::roboto();
         #[cfg(not(feature = "embedded-fonts"))]
         let fonts = FontSet::new();
-        Self::with_fonts(fonts)
+        let renderer = Self::with_fonts(fonts);
+        #[cfg(feature = "embedded-fonts")]
+        renderer
+            .text
+            .set_fallback_provider(Box::new(astryx_fonts::fallback));
+        renderer
     }
 
     /// A renderer that draws text with `fonts`, in their fallback order.
@@ -153,6 +165,34 @@ impl SoftRenderer {
             transform: Affine::IDENTITY,
             segs: Vec::new(),
             placed: Vec::new(),
+            images: HashMap::new(),
+        }
+    }
+
+    /// Adds or replaces an image; `None` frees it. Pixels that do not match
+    /// the size are ignored.
+    pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        let pixmap = data.and_then(|d| {
+            let size = IntSize::from_wh(d.width, d.height)?;
+            if d.rgba.len() != (d.width as usize) * (d.height as usize) * 4 {
+                return None;
+            }
+            let mut px = d.rgba.to_vec();
+            for p in px.as_chunks_mut::<4>().0 {
+                let a = p[3] as u32;
+                for c in &mut p[..3] {
+                    *c = div255(*c as u32 * a) as u8;
+                }
+            }
+            Pixmap::from_vec(px, size)
+        });
+        match pixmap {
+            Some(p) => {
+                self.images.insert(id, p);
+            }
+            None => {
+                self.images.remove(&id);
+            }
         }
     }
 
@@ -500,6 +540,12 @@ impl SoftRenderer {
                     self.stroke(width * s, *color, true);
                 }
             }
+            DrawCmd::Image {
+                rect,
+                radii,
+                image,
+                fit,
+            } => self.draw_image(rect, radii, *image, *fit, s, snap),
             DrawCmd::PushClip { rect, radii } => {
                 let r = rect_px(rect, s, snap);
                 let radii = fit_radii(radii, s, &r);
@@ -510,6 +556,82 @@ impl SoftRenderer {
             | DrawCmd::PopOpacity
             | DrawCmd::PushTransform { .. }
             | DrawCmd::PopTransform => {}
+        }
+    }
+
+    fn draw_image(
+        &mut self,
+        rect: &astryx_core::Rect,
+        radii: &astryx_core::Radii,
+        image: ImageId,
+        fit: ImageFit,
+        s: f32,
+        snap: bool,
+    ) {
+        let r = rect_px(rect, s, snap);
+        let Some((pw, ph)) = self.images.get(&image).map(|p| (p.width(), p.height())) else {
+            return;
+        };
+        if r.is_empty() {
+            return;
+        }
+        let radii = fit_radii(radii, s, &r);
+        let area = astryx_core::Rect::new(r.x0, r.y0, r.width(), r.height());
+        let dest = fit.place(area, pw, ph);
+        // Contain can leave part of the box empty, so it clips to the box and
+        // fills only where the image lands; the other fits cover the box.
+        let contained = fit == ImageFit::Contain;
+        if contained {
+            self.push_clip(&r, radii);
+        }
+        self.segs.clear();
+        if contained {
+            // Whole pixels while snapping, so the letterbox edges are sharp.
+            let edge = |v: f32| if snap { v.round() } else { v };
+            let d = PxRect {
+                x0: edge(dest.x.max(r.x0)),
+                y0: edge(dest.y.max(r.y0)),
+                x1: edge((dest.x + dest.width).min(r.x1)),
+                y1: edge((dest.y + dest.height).min(r.y1)),
+            };
+            rounded_rect(&d, [0.0; 4], &mut self.segs);
+        } else {
+            rounded_rect(&r, radii, &mut self.segs);
+        }
+        if let (Some(path), Some(pixmap)) = (to_skia_path(&self.segs), self.images.get(&image)) {
+            let transform = Transform::from_row(
+                dest.width / pw as f32,
+                0.0,
+                0.0,
+                dest.height / ph as f32,
+                dest.x,
+                dest.y,
+            );
+            let paint = Paint {
+                shader: Pattern::new(
+                    pixmap.as_ref(),
+                    SpreadMode::Pad,
+                    FilterQuality::Bilinear,
+                    1.0,
+                    transform,
+                ),
+                anti_alias: true,
+                ..Paint::default()
+            };
+            let target = match self.layers.last_mut() {
+                Some((layer, _)) => layer,
+                None => &mut self.base,
+            };
+            target.fill_path(
+                &path,
+                &paint,
+                FillRule::Winding,
+                Transform::identity(),
+                self.clips.last(),
+            );
+        }
+        if contained {
+            self.pop_group();
         }
     }
 
@@ -538,6 +660,10 @@ impl Renderer for SoftRenderer {
 
     fn render(&mut self, list: &DisplayList, frame: &FrameInfo) {
         self.render_list(list, frame);
+    }
+
+    fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        SoftRenderer::set_image(self, id, data);
     }
 }
 
@@ -690,6 +816,7 @@ mod tests {
                 rect: Rect::new(0.0, 0.0, 100.0, 20.0),
                 text: "Late".into(),
                 style: astryx_core::TextStyle {
+                    direction: None,
                     family: astryx_core::FontFamily::Body,
                     size: 14.0,
                     weight: 400,
@@ -716,6 +843,7 @@ mod tests {
                 rect: Rect::new(4.0, 4.0, 120.0, 40.0),
                 text: "Deterministic text".into(),
                 style: astryx_core::TextStyle {
+                    direction: None,
                     family: astryx_core::FontFamily::Body,
                     size: 14.0,
                     weight: 400,
@@ -731,5 +859,107 @@ mod tests {
         b.render(&list, &frame(128, 48, 2.0));
         assert_eq!(a.pixmap().data(), b.pixmap().data());
         assert!(a.pixmap().pixels().iter().any(|p| p.green() < 50));
+    }
+
+    /// An 8x4 image: red on the left half, blue on the right.
+    fn red_blue() -> ImageData {
+        let mut rgba = Vec::new();
+        for _ in 0..4 {
+            for x in 0..8 {
+                rgba.extend_from_slice(if x < 4 {
+                    &[255, 0, 0, 255]
+                } else {
+                    &[0, 0, 255, 255]
+                });
+            }
+        }
+        ImageData {
+            width: 8,
+            height: 4,
+            rgba: std::sync::Arc::from(rgba),
+        }
+    }
+
+    fn image_frame(fit: ImageFit, radii: Radii) -> SoftRenderer {
+        let mut r = SoftRenderer::new();
+        r.set_image(ImageId(7), Some(&red_blue()));
+        let list = DisplayList {
+            clear: WHITE,
+            commands: vec![DrawCmd::Image {
+                rect: Rect::new(10.0, 10.0, 40.0, 40.0),
+                radii,
+                image: ImageId(7),
+                fit,
+            }],
+        };
+        r.render_list(&list, &frame(60, 60, 1.0));
+        r
+    }
+
+    #[test]
+    fn cover_fills_the_box_and_crops() {
+        let r = image_frame(ImageFit::Cover, Radii::default());
+        // The middle of a 2x1 image fills a square: red left of center, blue right.
+        assert_eq!(px(&r, 12, 30), [255, 0, 0, 255]);
+        assert_eq!(px(&r, 48, 30), [0, 0, 255, 255]);
+        assert_eq!(px(&r, 30, 11)[3], 255);
+        assert_eq!(
+            px(&r, 5, 30),
+            [255, 255, 255, 255],
+            "nothing outside the box"
+        );
+    }
+
+    #[test]
+    fn contain_letterboxes() {
+        let r = image_frame(ImageFit::Contain, Radii::default());
+        // A 40x20 band through the middle; above and below stay clear.
+        assert_eq!(px(&r, 12, 30), [255, 0, 0, 255]);
+        assert_eq!(px(&r, 30, 15), [255, 255, 255, 255]);
+        assert_eq!(px(&r, 30, 45), [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn radii_clip_the_corners_and_missing_images_draw_nothing() {
+        let r = image_frame(ImageFit::Fill, Radii::all(20.0));
+        assert_eq!(px(&r, 11, 11), [255, 255, 255, 255]);
+        assert_eq!(px(&r, 12, 30), [255, 0, 0, 255]);
+        let mut r = image_frame(ImageFit::Fill, Radii::default());
+        r.set_image(ImageId(7), None);
+        let list = DisplayList {
+            clear: WHITE,
+            commands: vec![DrawCmd::Image {
+                rect: Rect::new(10.0, 10.0, 40.0, 40.0),
+                radii: Radii::default(),
+                image: ImageId(7),
+                fit: ImageFit::Fill,
+            }],
+        };
+        r.render_list(&list, &frame(60, 60, 1.0));
+        assert_eq!(px(&r, 30, 30), [255, 255, 255, 255]);
+    }
+
+    #[test]
+    fn straight_alpha_is_premultiplied_on_upload() {
+        let mut r = SoftRenderer::new();
+        let half = ImageData {
+            width: 1,
+            height: 1,
+            rgba: std::sync::Arc::from(vec![255, 0, 0, 128]),
+        };
+        r.set_image(ImageId(1), Some(&half));
+        let list = DisplayList {
+            clear: WHITE,
+            commands: vec![DrawCmd::Image {
+                rect: Rect::new(0.0, 0.0, 4.0, 4.0),
+                radii: Radii::default(),
+                image: ImageId(1),
+                fit: ImageFit::Fill,
+            }],
+        };
+        r.render_list(&list, &frame(4, 4, 1.0));
+        let [red, green, _, _] = px(&r, 2, 2);
+        assert_eq!(red, 255);
+        assert!((green as i32 - 127).abs() <= 1, "{green}");
     }
 }

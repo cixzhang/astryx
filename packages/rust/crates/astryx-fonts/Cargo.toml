@@ -1,9 +1,17 @@
 [package]
 name = "astryx-fonts"
-description = "Roboto Regular, Medium, and Bold embedded for Astryx renderers that need fonts with no setup"
+description = "Fonts embedded for Astryx renderers that need text with no setup: Roboto, plus Noto Sans Arabic and Hebrew as fallbacks"
 edition.workspace = true
 license.workspace = true
 version.workspace = true
 
+[features]
+default = ["noto-rtl"]
+# Noto Sans Arabic and Hebrew (SIL OFL 1.1, see fonts/OFL-Noto.txt), added on demand.
+noto-rtl = []
+
 [dependencies]
 astryx-raster = { path = "../astryx-raster" }
+
+[dev-dependencies]
+astryx-core.workspace = true

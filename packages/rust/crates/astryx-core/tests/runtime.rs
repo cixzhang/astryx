@@ -1104,3 +1104,26 @@ fn spinners_off_screen_cost_no_frames() {
     draw(&mut rt, 400, 600);
     assert!(!rt.wants_frames(), "a spinner below the viewport does not");
 }
+
+#[test]
+fn accessibility_nodes_carry_their_direction() {
+    let mut rt = rtl(|| {
+        VStack::<()>::new()
+            .child(Text::new("rtl"))
+            .child(Element::from(Text::new("ltr")).direction(Direction::Ltr))
+            .into()
+    });
+    draw(&mut rt, 300, 200);
+    let tree = rt.accessibility().unwrap();
+    assert!(tree.rtl);
+    let nodes = a11y_nodes(&tree);
+    let dir = |l: &str| {
+        nodes
+            .iter()
+            .find(|n| n.label.as_deref() == Some(l))
+            .unwrap()
+            .rtl
+    };
+    assert!(dir("rtl"));
+    assert!(!dir("ltr"), "a nested region keeps its own direction");
+}
