@@ -1,0 +1,14 @@
+[package]
+name = "astryx-headless"
+description = "Headless Astryx shell: render a Surface to PNG, script input, and compare golden images"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+astryx-render-soft = { path = "../astryx-render-soft" }
+
+[[bin]]
+name = "astryx-headless"
+path = "src/main.rs"

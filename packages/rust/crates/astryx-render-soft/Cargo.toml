@@ -1,0 +1,11 @@
+[package]
+name = "astryx-render-soft"
+description = "CPU renderer for Astryx display lists, plus the text engine and shadow masks every Astryx renderer shares"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+swash = "0.2.10"
+tiny-skia = { version = "0.12.0", default-features = false, features = ["std", "simd", "png-format"] }

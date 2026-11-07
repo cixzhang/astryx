@@ -1,0 +1,28 @@
+[package]
+name = "astryx-desktop"
+description = "Desktop Astryx shell: winit window, glutin GL context, GPU renderer, keyboard and gamepad input, AccessKit"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[features]
+default = ["gamepad"]
+gamepad = ["dep:gilrs"]
+
+[dependencies]
+astryx-core.workspace = true
+astryx-render-gl = { path = "../astryx-render-gl" }
+astryx-render-soft = { path = "../astryx-render-soft" }
+accesskit = "0.25.2"
+accesskit_winit = "0.34.2"
+gilrs = { version = "0.11.2", optional = true }
+glutin = "0.32.3"
+glutin-winit = "0.5.0"
+winit = "0.30.13"
+
+[dev-dependencies]
+astryx-headless = { path = "../astryx-headless" }
+
+[[test]]
+name = "window_smoke"
+harness = false

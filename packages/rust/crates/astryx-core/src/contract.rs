@@ -29,13 +29,26 @@ pub struct Rect {
 
 impl Rect {
     pub const fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
     pub fn center(&self) -> Point {
-        Point { x: self.x + self.width / 2.0, y: self.y + self.height / 2.0 }
+        Point {
+            x: self.x + self.width / 2.0,
+            y: self.y + self.height / 2.0,
+        }
     }
     pub fn inset(&self, by: f32) -> Self {
-        Self::new(self.x + by, self.y + by, (self.width - 2.0 * by).max(0.0), (self.height - 2.0 * by).max(0.0))
+        Self::new(
+            self.x + by,
+            self.y + by,
+            (self.width - 2.0 * by).max(0.0),
+            (self.height - 2.0 * by).max(0.0),
+        )
     }
 }
 
@@ -49,7 +62,12 @@ pub struct Color {
 }
 
 impl Color {
-    pub const TRANSPARENT: Color = Color { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+    pub const TRANSPARENT: Color = Color {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 0.0,
+    };
     pub const fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
@@ -110,19 +128,52 @@ pub enum TextAlign {
 /// the frame scale.
 #[derive(Clone, Debug, PartialEq)]
 pub enum DrawCmd {
-    /// A filled and optionally stroked rounded rectangle.
-    Rect { rect: Rect, radii: Radii, fill: Color, stroke: Option<(Color, f32)> },
+    /// A filled and optionally stroked rounded rectangle. The stroke is
+    /// drawn inside the rectangle, like a CSS border.
+    Rect {
+        rect: Rect,
+        radii: Radii,
+        fill: Color,
+        stroke: Option<(Color, f32)>,
+    },
     /// Shadow layers for a rounded rectangle. Emitted before the rectangle.
-    Shadow { rect: Rect, radii: Radii, layers: Vec<ShadowLayer> },
-    /// Text laid out inside `rect`: wraps at `rect.width`, first baseline
-    /// placed from the top of `rect` by the style's line height.
-    Text { rect: Rect, text: String, style: TextStyle, color: Color, align: TextAlign },
-    /// A stroked line, for dividers and icons.
-    Line { from: Point, to: Point, color: Color, width: f32 },
+    Shadow {
+        rect: Rect,
+        radii: Radii,
+        layers: Vec<ShadowLayer>,
+    },
+    /// Text laid out inside `rect`, drawn the CSS way:
+    /// - It wraps at `rect.width`. A word longer than the box overflows; it
+    ///   does not break.
+    /// - Each line is `size * leading` tall. The space between the line
+    ///   height and the font height is split evenly above and below.
+    /// - Empty text measures 0x0.
+    Text {
+        rect: Rect,
+        text: String,
+        style: TextStyle,
+        color: Color,
+        align: TextAlign,
+    },
+    /// A stroked line with butt caps, for dividers.
+    Line {
+        from: Point,
+        to: Point,
+        color: Color,
+        width: f32,
+    },
     /// A vector path in points, for icons. `fill` or `stroke` may be absent.
-    Path { commands: Vec<PathCmd>, fill: Option<Color>, stroke: Option<(Color, f32)> },
+    /// Strokes use round caps and round joins.
+    Path {
+        commands: Vec<PathCmd>,
+        fill: Option<Color>,
+        stroke: Option<(Color, f32)>,
+    },
     /// Clip all following commands to `rect` until the matching `PopClip`.
-    PushClip { rect: Rect, radii: Radii },
+    PushClip {
+        rect: Rect,
+        radii: Radii,
+    },
     PopClip,
     /// Multiply the alpha of all following commands until `PopOpacity`.
     PushOpacity(f32),
@@ -208,7 +259,10 @@ pub struct FrameInfo {
 impl FrameInfo {
     /// The drawable size in logical points.
     pub fn logical_size(&self) -> Size {
-        Size { width: self.width as f32 / self.scale, height: self.height as f32 / self.scale }
+        Size {
+            width: self.width as f32 / self.scale,
+            height: self.height as f32 / self.scale,
+        }
     }
 }
 
@@ -265,4 +319,19 @@ pub trait Surface {
     fn accessibility(&self) -> Option<A11yNode>;
     /// True while something animates, so the shell keeps drawing frames.
     fn wants_frames(&self) -> bool;
+    /// An action from assistive technology on the node with this `A11yNode`
+    /// id, for example a screen reader moving focus or clicking.
+    fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
+        let _ = (id, action);
+        Command::None
+    }
+}
+
+/// What assistive technology can ask a node to do.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum A11yAction {
+    /// Move app focus to the node.
+    Focus,
+    /// Activate the node, as `Input::A` does for the focused node.
+    Activate,
 }
