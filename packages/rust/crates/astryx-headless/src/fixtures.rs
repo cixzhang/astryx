@@ -3,16 +3,17 @@
 //! use these instead of a real app.
 
 use astryx_core::{
-    A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
-    ImageFit, ImageId, Input, InputPhase, PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface,
-    TextAlign, TextDirection, TextMeasure, TextStyle,
+    A11yAction, A11yNode, Color, Command, Dapple, DisplayList, DrawCmd, Flicker, FontFamily,
+    FrameInfo, ImageData, ImageFit, ImageId, Input, InputPhase, Light, Lighting, PathCmd, Point,
+    Pulse, Radii, Rect, Role, ShadowLayer, Surface, TextAlign, TextDirection, TextMeasure,
+    TextStyle,
 };
 
 /// Logical size every fixture is designed for.
 pub const FIXTURE_SIZE: (u32, u32) = (480, 320);
 
 /// The fixture names, in a stable order.
-pub const FIXTURES: [&str; 8] = [
+pub const FIXTURES: [&str; 10] = [
     "shapes",
     "text",
     "shadows",
@@ -21,6 +22,8 @@ pub const FIXTURES: [&str; 8] = [
     "bidi",
     "gallery",
     "images",
+    "night",
+    "canopy",
 ];
 
 /// The images the `images` fixture draws: a landscape and a checkerboard
@@ -538,6 +541,135 @@ fn bidi() -> Vec<DrawCmd> {
     c
 }
 
+fn fill(r: Rect, color: Color) -> DrawCmd {
+    DrawCmd::Rect {
+        rect: r,
+        radii: Radii::all(0.0),
+        fill: color,
+        stroke: None,
+    }
+}
+
+fn light(x: f32, y: f32, rx: f32, ry: f32, color: Color, intensity: f32) -> Light {
+    Light {
+        center: p(x, y),
+        radius_x: rx,
+        radius_y: ry,
+        color,
+        intensity,
+        flicker: Flicker::default(),
+        pulse: Pulse::default(),
+    }
+}
+
+/// A village street at night: dark ambient, warm light pools from windows,
+/// a lamp, and a flickering lantern on an ellipse; lit windows draw
+/// unlit (emissive), and a label after the pass is not lit.
+fn night() -> Vec<DrawCmd> {
+    let warm = rgb(255, 196, 120);
+    let mut c = vec![
+        fill(Rect::new(0.0, 0.0, 480.0, 180.0), rgb(120, 170, 220)),
+        fill(Rect::new(0.0, 180.0, 480.0, 140.0), rgb(96, 168, 88)),
+        fill(Rect::new(0.0, 236.0, 480.0, 28.0), rgb(200, 180, 140)),
+        fill(Rect::new(40.0, 110.0, 120.0, 90.0), rgb(220, 120, 100)),
+        fill(Rect::new(250.0, 96.0, 140.0, 104.0), rgb(230, 220, 200)),
+        fill(Rect::new(420.0, 150.0, 6.0, 90.0), rgb(60, 60, 70)),
+    ];
+    let mut lantern = light(330.0, 250.0, 70.0, 44.0, rgb(255, 170, 90), 1.2);
+    lantern.flicker = Flicker {
+        amplitude: 0.12,
+        hz: 2.0,
+    };
+    let mut lamp = light(423.0, 150.0, 60.0, 60.0, warm, 1.0);
+    lamp.pulse = Pulse {
+        period: 3.0,
+        min: 0.6,
+    };
+    c.insert(
+        0,
+        DrawCmd::PushLighting(Lighting {
+            ambient: rgb(0x12, 0x18, 0x38),
+            strength: 0.84,
+            time: 0.4,
+            dapple: None,
+        }),
+    );
+    c.extend([
+        DrawCmd::Light(light(100.0, 165.0, 64.0, 64.0, warm, 1.0)),
+        DrawCmd::Light(light(320.0, 160.0, 80.0, 70.0, warm, 0.9)),
+        DrawCmd::Light(lamp),
+        DrawCmd::Light(lantern),
+        DrawCmd::Emissive {
+            rect: Rect::new(86.0, 140.0, 28.0, 24.0),
+            color: rgb(255, 214, 130),
+        },
+        DrawCmd::Emissive {
+            rect: Rect::new(280.0, 130.0, 30.0, 30.0),
+            color: rgb(255, 214, 130),
+        },
+        DrawCmd::Emissive {
+            rect: Rect::new(330.0, 130.0, 30.0, 30.0),
+            color: rgb(255, 214, 130),
+        },
+        DrawCmd::PopLighting,
+        DrawCmd::Rect {
+            rect: Rect::new(16.0, 16.0, 120.0, 32.0),
+            radii: Radii::all(8.0),
+            fill: SURFACE,
+            stroke: None,
+        },
+        text(
+            Rect::new(28.0, 22.0, 100.0, 20.0),
+            "Night 21:40",
+            style(14.0, 500),
+            INK,
+            TextAlign::Start,
+        ),
+    ]);
+    c
+}
+
+/// A garden under a canopy by day: green-gray shade, warm sun pools on the
+/// beds, and leaf dapple in three bands.
+fn canopy() -> Vec<DrawCmd> {
+    let sun = rgb(255, 236, 190);
+    let mut c = vec![
+        DrawCmd::PushLighting(Lighting {
+            ambient: rgb(120, 150, 130),
+            strength: 0.45,
+            time: 1.5,
+            dapple: Some(Dapple {
+                cell: 18.0,
+                velocity: p(6.0, 2.0),
+                bands: 3,
+                depth: 0.6,
+            }),
+        }),
+        fill(Rect::new(0.0, 0.0, 480.0, 320.0), rgb(150, 200, 120)),
+    ];
+    for (i, x) in [40.0, 190.0, 340.0].into_iter().enumerate() {
+        c.push(fill(Rect::new(x, 120.0, 110.0, 150.0), rgb(140, 100, 70)));
+        for row in 0..4 {
+            c.push(fill(
+                Rect::new(x + 15.0, 135.0 + row as f32 * 35.0, 80.0, 16.0),
+                rgb(60 + 20 * i as u8, 150, 70),
+            ));
+        }
+        c.push(DrawCmd::Light(light(x + 55.0, 195.0, 90.0, 55.0, sun, 0.8)));
+    }
+    c.extend([
+        DrawCmd::PopLighting,
+        text(
+            Rect::new(16.0, 16.0, 200.0, 20.0),
+            "Garden, noon",
+            style(14.0, 500),
+            INK,
+            TextAlign::Start,
+        ),
+    ]);
+    c
+}
+
 fn transforms() -> Vec<DrawCmd> {
     let push = |origin: Point, scale: f32, translate: Point| DrawCmd::PushTransform {
         origin,
@@ -961,6 +1093,8 @@ pub fn fixture(
         "bidi" => bidi(),
         "gallery" => gallery(text_measure, focus, toggled),
         "images" => images_fixture(),
+        "night" => night(),
+        "canopy" => canopy(),
         _ => return None,
     };
     Some(DisplayList {
@@ -1162,8 +1296,9 @@ mod tests {
             }
         }
         // Rect, Shadow, Text, Line, Path, Image, PushClip, PopClip,
-        // PushOpacity, PopOpacity, PushTransform, PopTransform.
-        assert_eq!(seen.len(), 12);
+        // PushOpacity, PopOpacity, PushTransform, PopTransform,
+        // PushLighting, Light, Emissive, PopLighting.
+        assert_eq!(seen.len(), 16);
     }
 
     #[test]
@@ -1174,8 +1309,12 @@ mod tests {
                 match cmd {
                     DrawCmd::PushClip { .. }
                     | DrawCmd::PushOpacity(_)
-                    | DrawCmd::PushTransform { .. } => depth += 1,
-                    DrawCmd::PopClip | DrawCmd::PopOpacity | DrawCmd::PopTransform => depth -= 1,
+                    | DrawCmd::PushTransform { .. }
+                    | DrawCmd::PushLighting(_) => depth += 1,
+                    DrawCmd::PopClip
+                    | DrawCmd::PopOpacity
+                    | DrawCmd::PopTransform
+                    | DrawCmd::PopLighting => depth -= 1,
                     _ => {}
                 }
                 assert!(depth >= 0, "{name}");

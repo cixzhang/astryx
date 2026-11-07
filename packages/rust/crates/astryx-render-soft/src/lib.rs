@@ -21,6 +21,7 @@ use astryx_raster::geom::{
     border_ring, fit_radii, line_rect, path_segs, rect_px, rounded_rect, snap_rect, width_px,
     Affine, PxRect, Seg,
 };
+use astryx_raster::light::{light_map, PlacedLight, MAP_DIVISOR};
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
 
@@ -129,6 +130,16 @@ pub struct SoftRenderer {
     grids: Vec<f32>,
     /// Registered images, premultiplied.
     images: HashMap<ImageId, Pixmap>,
+    /// The open lighting pass, if any.
+    lighting: Option<LightingPass>,
+}
+
+/// A lighting pass collecting its lights and emissive rects until it closes.
+struct LightingPass {
+    lighting: astryx_core::Lighting,
+    lights: Vec<PlacedLight>,
+    /// Emissive rects, already moved by the transform, and whether they snap.
+    emissive: Vec<(astryx_core::Rect, astryx_core::Color, bool)>,
 }
 
 impl Default for SoftRenderer {
@@ -169,6 +180,7 @@ impl SoftRenderer {
             placed: Vec::new(),
             grids: Vec::new(),
             images: HashMap::new(),
+            lighting: None,
         }
     }
 
@@ -359,6 +371,17 @@ impl SoftRenderer {
                 self.grids.pop();
                 return;
             }
+            DrawCmd::PushLighting(lighting) => {
+                if self.lighting.is_none() {
+                    self.lighting = Some(LightingPass {
+                        lighting: *lighting,
+                        lights: Vec::new(),
+                        emissive: Vec::new(),
+                    });
+                }
+                return;
+            }
+            DrawCmd::PopLighting => return self.finish_lighting(s),
             DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip)),
             DrawCmd::PopOpacity => {
                 return self.pop_until(|g| matches!(g, Group::Layer | Group::Pass))
@@ -575,12 +598,67 @@ impl SoftRenderer {
                 self.push_clip(&r, radii);
             }
             DrawCmd::PushOpacity(opacity) => self.push_opacity(*opacity),
+            DrawCmd::Light(light) => {
+                if let Some(pass) = &mut self.lighting {
+                    let l = &pass.lighting;
+                    pass.lights
+                        .push(PlacedLight::new(light, l.time, s, l.strength));
+                }
+            }
+            DrawCmd::Emissive { rect, color } => match &mut self.lighting {
+                Some(pass) => pass.emissive.push((*rect, *color, snap)),
+                None => self.draw_emissive(rect, *color, s, snap),
+            },
             DrawCmd::PopClip
             | DrawCmd::PopOpacity
             | DrawCmd::PushTransform { .. }
             | DrawCmd::PopTransform
             | DrawCmd::PushPixelGrid { .. }
-            | DrawCmd::PopPixelGrid => {}
+            | DrawCmd::PopPixelGrid
+            | DrawCmd::PushLighting(_)
+            | DrawCmd::PopLighting => {}
+        }
+    }
+
+    fn draw_emissive(
+        &mut self,
+        rect: &astryx_core::Rect,
+        color: astryx_core::Color,
+        s: f32,
+        snap: bool,
+    ) {
+        let cmd = DrawCmd::Rect {
+            rect: *rect,
+            radii: astryx_core::Radii::default(),
+            fill: color,
+            stroke: None,
+        };
+        self.draw_moved(&cmd, s, snap);
+    }
+
+    /// Multiplies the light map over the target, then draws the emissive rects.
+    fn finish_lighting(&mut self, s: f32) {
+        let Some(pass) = self.lighting.take() else {
+            return;
+        };
+        if pass.lighting.strength > 0.0 {
+            let (target, _) = self.target();
+            let (w, h) = (target.width(), target.height());
+            let map = light_map(&pass.lighting, &pass.lights, s, w, h);
+            let data = target.data_mut();
+            for y in 0..h {
+                let row = (y / MAP_DIVISOR * map.width) as usize;
+                for x in 0..w {
+                    let m = &map.rgb[(row + (x / MAP_DIVISOR) as usize) * 3..][..3];
+                    let px = &mut data[((y * w + x) * 4) as usize..][..3];
+                    for (c, &k) in px.iter_mut().zip(m) {
+                        *c = div255(*c as u32 * k as u32) as u8;
+                    }
+                }
+            }
+        }
+        for (rect, color, snap) in pass.emissive {
+            self.draw_emissive(&rect, color, s, snap);
         }
     }
 
@@ -676,10 +754,12 @@ impl SoftRenderer {
         self.shadows.begin_frame();
         self.transform = Affine::IDENTITY;
         self.grids.clear();
+        self.lighting = None;
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
         for cmd in &list.commands {
             self.draw(cmd, scale);
         }
+        self.finish_lighting(scale);
         while self.pop_group().is_some() {}
     }
 }

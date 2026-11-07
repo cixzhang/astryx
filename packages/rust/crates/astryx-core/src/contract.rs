@@ -286,6 +286,137 @@ pub enum DrawCmd {
         cell: f32,
     },
     PopPixelGrid,
+    /// Light the commands up to `PopLighting`, as a scene at dusk, at night
+    /// or under a canopy. They draw as usual; then a light map at a quarter
+    /// of the target's resolution is multiplied over the whole target. The
+    /// map starts at `ambient` mixed with white by `strength`, may be
+    /// darkened by a `dapple`, and each `Light` inside adds its color.
+    /// `Emissive` rects inside draw after the map and are not darkened.
+    /// Strength 0 skips the map. Commands after `PopLighting`, such as the
+    /// UI, are not lit. Lighting does not nest.
+    PushLighting(Lighting),
+    /// A light of the enclosing lighting pass.
+    Light(Light),
+    /// A rect drawn after the light map of the enclosing lighting pass, not
+    /// darkened: a lit window, a glow.
+    Emissive {
+        rect: Rect,
+        color: Color,
+    },
+    PopLighting,
+}
+
+/// See [`DrawCmd::PushLighting`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Lighting {
+    /// The color unlit areas are multiplied by at full strength. Alpha is
+    /// ignored.
+    pub ambient: Color,
+    /// 0 leaves the scene as it is, 1 multiplies it by `ambient`.
+    pub strength: f32,
+    /// Seconds, for flicker, pulse and dapple motion. Hold it still to
+    /// pause them, for example under reduced motion.
+    pub time: f32,
+    pub dapple: Option<Dapple>,
+}
+
+/// Leaf shade: a tileable noise pattern scrolled over the light map and
+/// multiplied in, in a few flat bands.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Dapple {
+    /// Points per noise cell: the size of a patch of light or shade.
+    pub cell: f32,
+    /// Points per second the pattern moves.
+    pub velocity: Point,
+    /// Flat levels, 2 or 3.
+    pub bands: u8,
+    /// How much the darkest band darkens, 0 to 1, scaled by the strength.
+    pub depth: f32,
+}
+
+/// A light: an ellipse whose color falls off from its center as
+/// `(1 - d)^2`, in four flat bands.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Light {
+    pub center: Point,
+    pub radius_x: f32,
+    pub radius_y: f32,
+    /// Alpha is ignored.
+    pub color: Color,
+    /// 0 to 1.5.
+    pub intensity: f32,
+    pub flicker: Flicker,
+    pub pulse: Pulse,
+}
+
+/// Fast random-looking change in intensity, as a flame.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Flicker {
+    /// The largest change, as a fraction of the intensity (0 to 0.15).
+    pub amplitude: f32,
+    pub hz: f32,
+}
+
+/// Slow breathing of intensity. A period of 0 is steady.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Pulse {
+    /// Seconds per breath.
+    pub period: f32,
+    /// The lowest intensity, as a fraction of the full one.
+    pub min: f32,
+}
+
+impl Lighting {
+    /// The standard lighting of a time of day at `time` seconds: none by
+    /// day, a warm multiply at dusk, dark blue at night, when lights show.
+    pub fn for_phase(phase: DayPhase, time: f32) -> Option<Lighting> {
+        let (ambient, strength) = match phase {
+            DayPhase::Day => return None,
+            DayPhase::Dusk => (
+                Color::rgba(
+                    0xf6 as f32 / 255.0,
+                    0xb3 as f32 / 255.0,
+                    0x8a as f32 / 255.0,
+                    1.0,
+                ),
+                0.35,
+            ),
+            DayPhase::Night => (
+                Color::rgba(
+                    0x12 as f32 / 255.0,
+                    0x18 as f32 / 255.0,
+                    0x38 as f32 / 255.0,
+                    1.0,
+                ),
+                0.84,
+            ),
+        };
+        Some(Lighting {
+            ambient,
+            strength,
+            time,
+            dapple: None,
+        })
+    }
+}
+
+impl Light {
+    /// The intensity at `time` seconds, with flicker and pulse applied.
+    pub fn intensity_at(&self, time: f32) -> f32 {
+        use std::f32::consts::TAU;
+        let mut k = 1.0;
+        if self.flicker.amplitude > 0.0 && self.flicker.hz > 0.0 {
+            // Two unrelated waves, offset by position so neighbors differ.
+            let phase = self.center.x * 0.37 + self.center.y * 0.71;
+            let t = TAU * self.flicker.hz * time + phase;
+            k *= 1.0 + self.flicker.amplitude * (0.6 * t.sin() + 0.4 * (2.7 * t + 1.3).sin());
+        }
+        if self.pulse.period > 0.0 {
+            let wave = 0.5 + 0.5 * (TAU * time / self.pulse.period).cos();
+            k *= self.pulse.min + (1.0 - self.pulse.min) * wave;
+        }
+        (self.intensity * k).max(0.0)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -488,6 +619,19 @@ pub struct Preferences {
     /// The primary pointer is coarse, such as a touch screen. Reduced motion
     /// then cross-fades instead of changing at once.
     pub coarse_pointer: bool,
+    /// The time of day where the person is, for shells that know it.
+    pub day_phase: DayPhase,
+}
+
+/// The time of day, for scenes lit to match it. Shells that read a clock
+/// set it; others leave `Day`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum DayPhase {
+    #[default]
+    Day,
+    /// Sunrise and sunset.
+    Dusk,
+    Night,
 }
 
 /// What a shell drives, once per frame. The core's runtime implements it for

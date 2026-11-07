@@ -29,6 +29,7 @@ use astryx_core::{
 use astryx_raster::geom::{
     fit_radii, line_rect, path_segs, rect_px, snap_rect, width_px, Affine, PxRect, Seg,
 };
+use astryx_raster::light::{self, PlacedLight};
 use astryx_raster::path::{self, PathKey, PathStyle};
 use astryx_raster::shadow::{shadow_mask, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
@@ -97,6 +98,14 @@ fn since(t: Option<Clock>) -> std::time::Duration {
 #[cfg(target_arch = "wasm32")]
 fn since(_: Option<Clock>) -> std::time::Duration {
     std::time::Duration::ZERO
+}
+
+/// A lighting pass collecting its lights and emissive rects until it closes.
+struct LightingPass {
+    lighting: astryx_core::Lighting,
+    lights: Vec<PlacedLight>,
+    /// Emissive rects, already moved by the transform, and whether they snap.
+    emissive: Vec<(astryx_core::Rect, Color, bool)>,
 }
 
 /// Where a shadow tile's mask sits relative to its box, and the center
@@ -260,6 +269,8 @@ struct Quad {
     mode: f32,
     border: f32,
     texture: Option<glow::Texture>,
+    /// Multiplies the target by the quad's color instead of blending over it.
+    multiply: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -345,6 +356,12 @@ pub struct GlRenderer {
     dialect: Dialect,
     program: Program,
     vao: Option<glow::VertexArray>,
+    light_program: shader::LightProgram,
+    light_vbo: glow::Buffer,
+    /// The dapple noise lattice, repeating.
+    lattice: glow::Texture,
+    /// The open lighting pass, if any.
+    lighting: Option<LightingPass>,
     vbo: glow::Buffer,
     ibo: glow::Buffer,
     white: glow::Texture,
@@ -434,11 +451,27 @@ impl GlRenderer {
                 glow::STATIC_DRAW,
             );
             let white = atlas::mask_texture(&gl, dialect, 1, 1, Some(&[255]));
+            let light_program = shader::compile_light(&gl, dialect).map_err(GlError)?;
+            let light_vbo = gl.create_buffer().map_err(GlError)?;
+            let lattice = atlas::mask_texture(
+                &gl,
+                dialect,
+                light::LATTICE as i32,
+                light::LATTICE as i32,
+                Some(&light::lattice()),
+            );
+            for wrap in [glow::TEXTURE_WRAP_S, glow::TEXTURE_WRAP_T] {
+                gl.tex_parameter_i32(glow::TEXTURE_2D, wrap, glow::REPEAT as i32);
+            }
             let mut renderer = GlRenderer {
                 gl: Rc::new(gl),
                 dialect,
                 program,
                 vao,
+                light_program,
+                light_vbo,
+                lattice,
+                lighting: None,
                 vbo,
                 ibo,
                 white,
@@ -644,6 +677,7 @@ impl GlRenderer {
             mode,
             border,
             texture: None,
+            multiply: false,
         });
     }
 
@@ -868,6 +902,7 @@ impl GlRenderer {
             mode: MODE_MASK,
             border: 0.0,
             texture: Some(region.texture),
+            multiply: false,
         });
     }
 
@@ -979,6 +1014,17 @@ impl GlRenderer {
                 self.grids.pop();
                 return;
             }
+            DrawCmd::PushLighting(lighting) => {
+                if self.lighting.is_none() {
+                    self.lighting = Some(LightingPass {
+                        lighting: *lighting,
+                        lights: Vec::new(),
+                        emissive: Vec::new(),
+                    });
+                }
+                return;
+            }
+            DrawCmd::PopLighting => return self.finish_lighting(s),
             DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip { .. })),
             DrawCmd::PopOpacity => return self.pop_until(|g| matches!(g, Group::Opacity { .. })),
             _ => {}
@@ -1284,6 +1330,7 @@ impl GlRenderer {
                     mode: MODE_IMAGE,
                     border: 0.0,
                     texture: Some(texture),
+                    multiply: false,
                 });
             }
             DrawCmd::PushClip { rect, radii } => {
@@ -1299,12 +1346,25 @@ impl GlRenderer {
                 }
                 self.groups.push(Group::Opacity { layer });
             }
+            DrawCmd::Light(light) => {
+                if let Some(pass) = &mut self.lighting {
+                    let l = &pass.lighting;
+                    pass.lights
+                        .push(PlacedLight::new(light, l.time, s, l.strength));
+                }
+            }
+            DrawCmd::Emissive { rect, color } => match &mut self.lighting {
+                Some(pass) => pass.emissive.push((*rect, *color, snap)),
+                None => self.draw_emissive(rect, *color, s, snap),
+            },
             DrawCmd::PopClip
             | DrawCmd::PopOpacity
             | DrawCmd::PushTransform { .. }
             | DrawCmd::PopTransform
             | DrawCmd::PushPixelGrid { .. }
-            | DrawCmd::PopPixelGrid => {}
+            | DrawCmd::PopPixelGrid
+            | DrawCmd::PushLighting(_)
+            | DrawCmd::PopLighting => {}
         }
     }
 
@@ -1402,6 +1462,167 @@ impl GlRenderer {
     }
 
     /// Closes the innermost layer target and composites it into its parent.
+    fn draw_emissive(&mut self, rect: &astryx_core::Rect, color: Color, s: f32, snap: bool) {
+        let cmd = DrawCmd::Rect {
+            rect: *rect,
+            radii: astryx_core::Radii::default(),
+            fill: color,
+            stroke: None,
+        };
+        self.draw_moved(&cmd, s, snap);
+    }
+
+    /// Renders the light map, multiplies it over the target, then draws
+    /// the emissive rects.
+    fn finish_lighting(&mut self, s: f32) {
+        let Some(pass) = self.lighting.take() else {
+            return;
+        };
+        if pass.lighting.strength > 0.0 {
+            let (w, h) = self.frame_size;
+            let d = light::MAP_DIVISOR as i32;
+            let (mw, mh) = ((w + d - 1) / d, (h + d - 1) / d);
+            let target = self.layer((mw, mh));
+            let t = now();
+            self.draw_light_map(&pass, s, &target, (mw, mh));
+            self.stats.flush += since(t);
+            let (tw, th) = (target.size.0 as f32, target.size.1 as f32);
+            let area = PxRect {
+                x0: 0.0,
+                y0: 0.0,
+                x1: w as f32,
+                y1: h as f32,
+            };
+            // The map's first row is at the top of the texture.
+            let (sw, sh) = (w as f32 / d as f32, h as f32 / d as f32);
+            let quad = Quad {
+                area,
+                shape: area,
+                radii: [0.0; 4],
+                uv: [0.0, 1.0, sw / tw, 1.0 - sh / th],
+                color: [255; 4],
+                mode: MODE_LAYER,
+                border: 0.0,
+                texture: Some(target.texture),
+                multiply: true,
+            };
+            self.layers_in_use.push(target);
+            let saved = self.clip;
+            self.clip = ClipState {
+                scissor: IRect {
+                    x0: 0,
+                    y0: 0,
+                    x1: w,
+                    y1: h,
+                },
+                shape: None,
+            };
+            self.push(quad);
+            self.clip = saved;
+        }
+        for (rect, color, snap) in pass.emissive {
+            self.draw_emissive(&rect, color, s, snap);
+        }
+    }
+
+    /// Draws the light map of `pass` into `target`, `size` map pixels.
+    fn draw_light_map(&mut self, pass: &LightingPass, s: f32, target: &Layer, size: (i32, i32)) {
+        let lit = &pass.lighting;
+        let (mw, mh) = (size.0 as f32, size.1 as f32);
+        let d = light::MAP_DIVISOR as f32;
+        // Per vertex, three vec4s: position and center (target pixels),
+        // radii and kind (0 base, 1 light), color.
+        let mut data: Vec<f32> = Vec::with_capacity(48 * (pass.lights.len() + 1));
+        let mut quad =
+            |r: [f32; 4], center: (f32, f32), radii: (f32, f32), kind: f32, rgb: [f32; 3]| {
+                for (x, y) in [(r[0], r[1]), (r[2], r[1]), (r[2], r[3]), (r[0], r[3])] {
+                    data.extend_from_slice(&[x, y, center.0, center.1]);
+                    data.extend_from_slice(&[radii.0, radii.1, kind, 0.0]);
+                    data.extend_from_slice(&[rgb[0], rgb[1], rgb[2], 0.0]);
+                }
+            };
+        quad(
+            [0.0, 0.0, mw, mh],
+            (0.0, 0.0),
+            (1.0, 1.0),
+            0.0,
+            light::base(lit),
+        );
+        for l in &pass.lights {
+            let (cx, cy) = l.center;
+            let (rx, ry) = l.radius;
+            if rx <= 0.0 || ry <= 0.0 {
+                continue;
+            }
+            let r = [
+                ((cx - rx) / d).floor().max(0.0),
+                ((cy - ry) / d).floor().max(0.0),
+                ((cx + rx) / d).ceil().min(mw),
+                ((cy + ry) / d).ceil().min(mh),
+            ];
+            if r[0] < r[2] && r[1] < r[3] {
+                quad(r, l.center, l.radius, 1.0, l.rgb);
+            }
+        }
+        let quads = data.len() / 48;
+        let lattice_on = lit.dapple.filter(|d| d.cell > 0.0 && d.bands >= 2);
+        let gl = self.gl.clone();
+        let p = &self.light_program;
+        // SAFETY: the context is current while rendering; the objects belong to it.
+        unsafe {
+            gl.bind_framebuffer(glow::FRAMEBUFFER, Some(target.framebuffer));
+            gl.viewport(0, 0, target.size.0, target.size.1);
+            gl.disable(glow::SCISSOR_TEST);
+            gl.use_program(Some(p.program));
+            gl.uniform_2_f32(p.size.as_ref(), target.size.0 as f32, target.size.1 as f32);
+            gl.uniform_1_f32(p.divisor.as_ref(), d);
+            gl.uniform_1_i32(p.lattice.as_ref(), 0);
+            match lattice_on {
+                Some(dp) => {
+                    gl.uniform_4_f32(
+                        p.dapple.as_ref(),
+                        1.0 / (dp.cell * s),
+                        dp.velocity.x * lit.time / dp.cell,
+                        dp.velocity.y * lit.time / dp.cell,
+                        f32::from(dp.bands),
+                    );
+                    gl.uniform_1_f32(
+                        p.dapple_depth.as_ref(),
+                        dp.depth.clamp(0.0, 1.0) * lit.strength.clamp(0.0, 1.0),
+                    );
+                }
+                None => gl.uniform_1_f32(p.dapple_depth.as_ref(), 0.0),
+            }
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_texture(glow::TEXTURE_2D, Some(self.lattice));
+            gl.bind_vertex_array(self.vao);
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ibo));
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.light_vbo));
+            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, as_bytes(&data), glow::STREAM_DRAW);
+            for i in 0..7u32 {
+                if i < 3 {
+                    gl.enable_vertex_attrib_array(i);
+                    gl.vertex_attrib_pointer_f32(i, 4, glow::FLOAT, false, 48, i as i32 * 16);
+                } else {
+                    gl.disable_vertex_attrib_array(i);
+                }
+            }
+            gl.disable(glow::BLEND);
+            gl.draw_elements(glow::TRIANGLES, 6, glow::UNSIGNED_SHORT, 0);
+            if quads > 1 {
+                gl.enable(glow::BLEND);
+                gl.blend_func(glow::ONE, glow::ONE);
+                gl.draw_elements(
+                    glow::TRIANGLES,
+                    ((quads - 1) * 6) as i32,
+                    glow::UNSIGNED_SHORT,
+                    12,
+                );
+            }
+            self.stats.draw_calls += 1 + usize::from(quads > 1);
+        }
+    }
+
     fn finish_layer(&mut self) {
         let target = self.targets.pop().expect("layer target");
         let Some(bounds) = target.bounds else { return };
@@ -1469,6 +1690,7 @@ impl GlRenderer {
             mode: MODE_LAYER,
             border: 0.0,
             texture: Some(layer.texture),
+            multiply: false,
         };
         match key {
             Some(k) => {
@@ -1499,7 +1721,7 @@ impl GlRenderer {
         };
         for item in items {
             let q = &item.quad;
-            if q.texture.is_some_and(|t| self.atlas.is_transient(t)) {
+            if q.multiply || q.texture.is_some_and(|t| self.atlas.is_transient(t)) {
                 return None;
             }
             bits(
@@ -1623,14 +1845,15 @@ impl GlRenderer {
             // Batches: runs of items that share a texture and scissor.
             let mut vertices = std::mem::take(&mut self.vertices);
             vertices.clear();
-            let mut batches: Vec<(usize, usize, Option<glow::Texture>, IRect)> = Vec::new();
+            let mut batches: Vec<(usize, usize, Option<glow::Texture>, IRect, bool)> = Vec::new();
             for item in items {
                 let q = &item.quad;
                 let start = vertices.len() / 4;
                 let joins = match batches.last_mut() {
-                    Some((first, count, texture, scissor))
+                    Some((first, count, texture, scissor, multiply))
                         if *scissor == item.clip.scissor
                             && *count < BATCH_QUADS
+                            && *multiply == q.multiply
                             && (q.texture.is_none()
                                 || texture.is_none()
                                 || *texture == q.texture) =>
@@ -1645,7 +1868,7 @@ impl GlRenderer {
                     _ => false,
                 };
                 if !joins {
-                    batches.push((start, 1, q.texture, item.clip.scissor));
+                    batches.push((start, 1, q.texture, item.clip.scissor, q.multiply));
                 }
                 push_vertices(&mut vertices, item);
             }
@@ -1654,7 +1877,16 @@ impl GlRenderer {
             for (i, _) in ATTRIBUTES.iter().enumerate() {
                 gl.enable_vertex_attrib_array(i as u32);
             }
-            for (first, count, texture, scissor) in &batches {
+            let mut multiplying = false;
+            for (first, count, texture, scissor, multiply) in &batches {
+                if *multiply != multiplying {
+                    multiplying = *multiply;
+                    if multiplying {
+                        gl.blend_func(glow::DST_COLOR, glow::ZERO);
+                    } else {
+                        gl.blend_func(glow::ONE, glow::ONE_MINUS_SRC_ALPHA);
+                    }
+                }
                 let s = scissor.intersect(IRect {
                     x0: origin.0,
                     y0: origin.1,
@@ -1766,9 +1998,11 @@ impl GlRenderer {
         self.groups.clear();
         self.transform = Affine::IDENTITY;
         self.targets.push(Target::new(Kind::Frame));
+        self.lighting = None;
         for cmd in &list.commands {
             self.draw(cmd, scale);
         }
+        self.finish_lighting(scale);
         while self.pop_group().is_some() {}
         let frame_target = self.targets.pop().expect("frame target");
         let encoded = now();
@@ -1812,6 +2046,26 @@ impl GlRenderer {
         let list = DisplayList {
             clear: Color::rgba(1.0, 1.0, 1.0, 1.0),
             commands: vec![
+                DrawCmd::PushLighting(astryx_core::Lighting {
+                    ambient: red,
+                    strength: 0.5,
+                    time: 0.0,
+                    dapple: Some(astryx_core::Dapple {
+                        cell: 8.0,
+                        velocity: Point { x: 1.0, y: 0.0 },
+                        bands: 3,
+                        depth: 0.5,
+                    }),
+                }),
+                DrawCmd::Light(astryx_core::Light {
+                    center: Point { x: 20.0, y: 20.0 },
+                    radius_x: 16.0,
+                    radius_y: 12.0,
+                    color: red,
+                    intensity: 1.0,
+                    flicker: Default::default(),
+                    pulse: Default::default(),
+                }),
                 DrawCmd::Shadow {
                     rect: r(4.0, 4.0),
                     radii: Radii::all(6.0),
@@ -1873,6 +2127,7 @@ impl GlRenderer {
                     color: red,
                     width: 1.0,
                 },
+                DrawCmd::PopLighting,
             ],
         };
         let target = self.layer((64, 64));
@@ -1964,6 +2219,9 @@ impl Drop for GlRenderer {
                 gl.delete_vertex_array(vao);
             }
             gl.delete_program(self.program.program);
+            gl.delete_program(self.light_program.program);
+            gl.delete_buffer(self.light_vbo);
+            gl.delete_texture(self.lattice);
         }
     }
 }

@@ -1,6 +1,6 @@
 //! Reads [`Preferences`] from the browser's media queries.
 
-use astryx_core::{ColorScheme, Preferences};
+use astryx_core::{ColorScheme, DayPhase, Preferences};
 
 /// Media queries that change a [`Preferences`] field.
 pub(crate) const QUERIES: [&str; 5] = [
@@ -35,6 +35,8 @@ pub fn detect_preferences() -> Preferences {
         more_contrast: matches(QUERIES[2]),
         forced_colors: matches(QUERIES[3]),
         coarse_pointer: matches(QUERIES[4]),
+        // The browser does not say; apps that light scenes read their own clock.
+        day_phase: DayPhase::Day,
     }
 }
 

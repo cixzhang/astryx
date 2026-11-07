@@ -268,6 +268,16 @@ impl Affine {
                 image: *image,
                 fit: *fit,
             },
+            DrawCmd::Light(light) => DrawCmd::Light(astryx_core::Light {
+                center: self.point(light.center),
+                radius_x: light.radius_x * k,
+                radius_y: light.radius_y * k,
+                ..*light
+            }),
+            DrawCmd::Emissive { rect, color } => DrawCmd::Emissive {
+                rect: self.rect(rect),
+                color: *color,
+            },
             other => other.clone(),
         }
     }

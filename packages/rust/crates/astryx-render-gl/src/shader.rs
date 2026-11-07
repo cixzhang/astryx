@@ -157,11 +157,117 @@ pub struct Program {
 /// # Safety
 /// `gl` must be current.
 pub unsafe fn compile(gl: &glow::Context, dialect: Dialect) -> Result<Program, String> {
+    let program = link(gl, dialect, VERTEX, FRAGMENT, &ATTRIBUTES)?;
+    Ok(Program {
+        size: gl.get_uniform_location(program, "u_size"),
+        origin: gl.get_uniform_location(program, "u_origin"),
+        tex: gl.get_uniform_location(program, "u_tex"),
+        program,
+    })
+}
+
+/// Attributes of the light map program, each one vec4 slot.
+pub const LIGHT_ATTRIBUTES: [&str; 3] = ["a_pos_center", "a_radii_kind", "a_color"];
+
+const LIGHT_VERTEX: &str = r#"
+ATTR vec4 a_pos_center;
+ATTR vec4 a_radii_kind;
+ATTR vec4 a_color;
+uniform vec2 u_size;
+VARY vec2 v_pos;
+VARY vec2 v_center;
+VARY vec3 v_radii_kind;
+VARY vec3 v_color;
+void main() {
+    vec2 p = a_pos_center.xy;
+    gl_Position = vec4(p.x / u_size.x * 2.0 - 1.0, 1.0 - p.y / u_size.y * 2.0, 0.0, 1.0);
+    v_pos = p;
+    v_center = a_pos_center.zw;
+    v_radii_kind = a_radii_kind.xyz;
+    v_color = a_color.rgb;
+}
+"#;
+
+// Matches astryx_raster::light: the base mixed with the banded dapple, or
+// a light's color in four bands of (1 - d)^2. Positions are target pixels.
+const LIGHT_FRAGMENT: &str = r#"
+VARY vec2 v_pos;
+VARY vec2 v_center;
+VARY vec3 v_radii_kind;
+VARY vec3 v_color;
+uniform sampler2D u_lattice;
+uniform float u_divisor;
+// Inverse cell size in target pixels, offset in cells (x, y), bands.
+uniform vec4 u_dapple;
+// Depth times strength; 0 without dapple.
+uniform float u_dapple_depth;
+float lattice(vec2 cell) {
+    return TEX(u_lattice, (cell + 0.5) / 16.0).r;
+}
+void main() {
+    vec2 p = v_pos * u_divisor;
+    if (v_radii_kind.z < 0.5) {
+        float shade = 1.0;
+        if (u_dapple_depth > 0.0) {
+            vec2 uv = p * u_dapple.x + u_dapple.yz;
+            vec2 i = floor(uv);
+            vec2 f = uv - i;
+            vec2 s = f * f * (3.0 - 2.0 * f);
+            float top = mix(lattice(i), lattice(i + vec2(1.0, 0.0)), s.x);
+            float bottom = mix(lattice(i + vec2(0.0, 1.0)), lattice(i + vec2(1.0, 1.0)), s.x);
+            float n = mix(top, bottom, s.y);
+            float bands = u_dapple.w;
+            float band = min(floor(n * bands), bands - 1.0) / (bands - 1.0);
+            shade = 1.0 - u_dapple_depth * (1.0 - band);
+        }
+        FRAG = vec4(v_color * shade, 1.0);
+    } else {
+        vec2 d = (p - v_center) / v_radii_kind.xy;
+        float f = max(1.0 - length(d), 0.0);
+        f = f * f;
+        float q = f > 0.0 ? ceil(f * 4.0) / 4.0 : 0.0;
+        FRAG = vec4(v_color * q, 0.0);
+    }
+}
+"#;
+
+pub struct LightProgram {
+    pub program: glow::Program,
+    pub size: Option<glow::UniformLocation>,
+    pub lattice: Option<glow::UniformLocation>,
+    pub divisor: Option<glow::UniformLocation>,
+    pub dapple: Option<glow::UniformLocation>,
+    pub dapple_depth: Option<glow::UniformLocation>,
+}
+
+/// Compiles and links the light map program.
+///
+/// # Safety
+/// `gl` must be current.
+pub unsafe fn compile_light(gl: &glow::Context, dialect: Dialect) -> Result<LightProgram, String> {
+    let program = link(gl, dialect, LIGHT_VERTEX, LIGHT_FRAGMENT, &LIGHT_ATTRIBUTES)?;
+    Ok(LightProgram {
+        size: gl.get_uniform_location(program, "u_size"),
+        lattice: gl.get_uniform_location(program, "u_lattice"),
+        divisor: gl.get_uniform_location(program, "u_divisor"),
+        dapple: gl.get_uniform_location(program, "u_dapple"),
+        dapple_depth: gl.get_uniform_location(program, "u_dapple_depth"),
+        program,
+    })
+}
+
+unsafe fn link(
+    gl: &glow::Context,
+    dialect: Dialect,
+    vertex: &str,
+    fragment: &str,
+    attributes: &[&str],
+) -> Result<glow::Program, String> {
     let program = gl.create_program()?;
     let mut shaders = Vec::new();
     for (kind, body, fragment) in [
-        (glow::VERTEX_SHADER, VERTEX, false),
-        (glow::FRAGMENT_SHADER, FRAGMENT, true),
+        (glow::VERTEX_SHADER, vertex, false),
+        (glow::FRAGMENT_SHADER, fragment, true),
     ] {
         let shader = gl.create_shader(kind)?;
         gl.shader_source(shader, &format!("{}{}", dialect.header(fragment), body));
@@ -172,7 +278,7 @@ pub unsafe fn compile(gl: &glow::Context, dialect: Dialect) -> Result<Program, S
         gl.attach_shader(program, shader);
         shaders.push(shader);
     }
-    for (i, name) in ATTRIBUTES.iter().enumerate() {
+    for (i, name) in attributes.iter().enumerate() {
         gl.bind_attrib_location(program, i as u32, name);
     }
     gl.link_program(program);
@@ -183,10 +289,5 @@ pub unsafe fn compile(gl: &glow::Context, dialect: Dialect) -> Result<Program, S
         gl.detach_shader(program, shader);
         gl.delete_shader(shader);
     }
-    Ok(Program {
-        size: gl.get_uniform_location(program, "u_size"),
-        origin: gl.get_uniform_location(program, "u_origin"),
-        tex: gl.get_uniform_location(program, "u_tex"),
-        program,
-    })
+    Ok(program)
 }
