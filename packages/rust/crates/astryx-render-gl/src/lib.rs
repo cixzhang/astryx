@@ -78,6 +78,8 @@ pub struct RenderStats {
     pub textures: usize,
     /// Time spent in texture uploads, part of `encode`.
     pub upload_time: std::time::Duration,
+    /// Uploads by kind: glyphs, shadows, paths.
+    pub upload_kinds: [usize; 3],
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -830,6 +832,69 @@ impl GlRenderer {
                 self.mask_hollow(area, Region { uv, ..region }, color, hole);
             }
         }
+    }
+
+    /// Uploads the shadow tiles of these box styles that the prewarm has
+    /// computed so far, so boxes first shown later cost no upload. Returns
+    /// how many tiles it uploaded.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn preload_shadows(
+        &mut self,
+        styles: &[([f32; 4], Vec<astryx_core::ShadowLayer>)],
+        scale: f32,
+    ) -> usize {
+        if let Some(rx) = &self.shadow_prewarm {
+            while let Ok(batch) = rx.try_recv() {
+                self.prewarmed_shadows.extend(batch);
+            }
+        }
+        let big = PxRect {
+            x0: 0.0,
+            y0: 0.0,
+            x1: 4096.0,
+            y1: 4096.0,
+        };
+        let mut done = 0;
+        for (radii, layers) in styles {
+            let radii = radii.map(|r| r * scale);
+            for layer in layers {
+                let tile = ShadowKey::new(&big, radii, layer, scale).tiling().tile;
+                let mk = MaskKey::Shadow(tile);
+                if self.atlas.get(&mk).is_some() {
+                    continue;
+                }
+                let Some(Some(mask)) = self.prewarmed_shadows.remove(&tile) else {
+                    continue;
+                };
+                let (cx, cy) = tile.center(&mask);
+                let place = ShadowPlace {
+                    x: mask.x,
+                    y: mask.y,
+                    w: mask.width,
+                    h: mask.height,
+                    cx,
+                    cy,
+                };
+                self.atlas.preload(
+                    &self.gl,
+                    self.dialect,
+                    mk,
+                    mask.width,
+                    mask.height,
+                    &mask.data,
+                );
+                self.shadow_places.insert(tile, Some(place));
+                done += 1;
+            }
+        }
+        self.atlas.flush(&self.gl, self.dialect);
+        done
+    }
+
+    /// Ends preloading: the preload pages free their CPU copies and take
+    /// no more masks.
+    pub fn finish_preload(&mut self) {
+        self.atlas.seal_preloaded(&self.gl, self.dialect);
     }
 
     /// Starts computing the shadow tiles of these box styles on another
@@ -2251,6 +2316,7 @@ impl GlRenderer {
         self.stats.glyphs = self.text.take_rasterized();
         self.stats.uploads = self.atlas.uploads;
         self.stats.upload_time = self.atlas.upload_time;
+        self.stats.upload_kinds = self.atlas.upload_kinds;
         self.stats.textures += self.atlas.textures;
     }
 

@@ -172,9 +172,8 @@ Items of the source `LEAKAGE.md` that only existed because of CSS:
 
 1. **Two kinds of pixel theme.** Terrace is held to the fixed palette;
    the five themes from the source keep their generated colors.
-   The gallery's World section draws its own sample art in code, which is
-   not on the palette yet (`tools/check-palette` flags it), so its Terrace
-   goldens are not palette-exact.
+   The gallery's World section picks every color by swatch name from
+   `PALETTE`, so its Terrace goldens pass `tools/check-palette`.
 2. **Galmuri, not Silkscreen.** The port sets all text in Galmuri for
    readability. Text is mixed case, and Galmuri has no bold, so weight
    tokens draw regular; hierarchy comes from size steps and color.

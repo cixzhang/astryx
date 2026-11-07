@@ -6,6 +6,7 @@ use crate::Msg;
 use astryx_core::paged::CameraFollow;
 use astryx_core::world::{Autotile, Board, Sprite, SpriteSheet, TerrainGrid, TileLayout, TileMap};
 use astryx_core::{Element, ImageData, ImageId};
+use astryx_theme_pixel::PALETTE;
 use std::sync::OnceLock;
 
 /// The ground's tile sheet, laid out as `ground_rules` reads it.
@@ -118,13 +119,14 @@ fn tiles() -> &'static SpriteSheet {
     static SHEET: OnceLock<SpriteSheet> = OnceLock::new();
     SHEET.get_or_init(|| {
         let mut cells = vec![grass(0), grass(9)];
-        cells
-            .extend((0..16).map(|bits| edged(soil(), SOIL_EDGE, |x, y| corner_inside(bits, x, y))));
+        cells.extend(
+            (0..16).map(|bits| edged(soil(), swatch("wood-2"), |x, y| corner_inside(bits, x, y))),
+        );
         for seed in [0, 7] {
             cells.extend(
                 blob_masks()
                     .iter()
-                    .map(|&m| edged(water(seed), WATER_EDGE, |x, y| blob_inside(m, x, y))),
+                    .map(|&m| edged(water(seed), swatch("teal-2"), |x, y| blob_inside(m, x, y))),
             );
         }
         cells.extend([tuft(0), tuft(1), wildflower(0), wildflower(1)]);
@@ -178,9 +180,6 @@ fn ground_map() -> TileMap {
         .scatter(GRASS, &[TUFT, WILDFLOWER], 18, 2, 2.0)
         .wave(0.09 * 4.0)
 }
-
-const SOIL_EDGE: [u8; 4] = [0x8a, 0x5a, 0x34, 255];
-const WATER_EDGE: [u8; 4] = [0x2a, 0x55, 0x9a, 255];
 
 /// A tile of `fill` where `inside` holds, outlined in `edge`, clear elsewhere.
 fn edged(fill: ImageData, edge: [u8; 4], inside: impl Fn(i32, i32) -> bool) -> ImageData {
@@ -314,7 +313,7 @@ fn tuft(frame: u32) -> ImageData {
     sprite(|x, y| {
         let blade =
             |base: i32, height: i32| y >= 15 - height && y < 15 && x == base + (15 - y) * lean / 3;
-        (blade(6, 6) || blade(8, 8) || blade(10, 5)).then_some([0x7c, 0xc4, 0x5a, 255])
+        (blade(6, 6) || blade(8, 8) || blade(10, 5)).then_some(swatch("leaf-1"))
     })
 }
 
@@ -326,11 +325,11 @@ fn wildflower(frame: u32) -> ImageData {
         let center = x == 8 + lean && y == 8;
         let stem = x == 8 && (10..15).contains(&y);
         if center {
-            Some([0xf5, 0xc8, 0x3b, 255])
+            Some(swatch("straw-2"))
         } else if head {
-            Some([0xf2, 0xf2, 0xf7, 255])
+            Some(swatch("paper"))
         } else {
-            stem.then_some([0x3b, 0x8f, 0x3e, 255])
+            stem.then_some(swatch("green-2"))
         }
     })
 }
@@ -349,20 +348,29 @@ fn sprite(pixel: impl Fn(i32, i32) -> Option<[u8; 4]>) -> ImageData {
 
 fn color(c: char) -> [u8; 4] {
     match c {
-        'k' => [0x2b, 0x21, 0x1d, 255],
-        't' => [0x7a, 0x4a, 0x2a, 255],
-        'l' => [0x2f, 0x7d, 0x3a, 255],
-        'L' => [0x5b, 0xb0, 0x4e, 255],
-        'r' => [0x76, 0x7a, 0x85, 255],
-        'R' => [0xa9, 0xae, 0xb8, 255],
-        'f' => [0xe8, 0x4d, 0x6a, 255],
-        'y' => [0xf5, 0xc8, 0x3b, 255],
-        's' => [0xf1, 0xc2, 0x9a, 255],
-        'h' => [0x5a, 0x34, 0x1e, 255],
-        'b' => [0x3a, 0x6e, 0xd8, 255],
-        'p' => [0x34, 0x3a, 0x5e, 255],
+        'k' => swatch("soil-4"),
+        't' => swatch("wood-2"),
+        'l' => swatch("green-2"),
+        'L' => swatch("leaf-2"),
+        'r' => swatch("stone-2"),
+        'R' => swatch("stone-1"),
+        'f' => swatch("rose-2"),
+        'y' => swatch("straw-2"),
+        's' => swatch("skin-1"),
+        'h' => swatch("soil-1"),
+        'b' => swatch("blue-3"),
+        'p' => swatch("ink"),
         _ => [0, 0, 0, 0],
     }
+}
+
+/// A swatch of the pixel palette, opaque. Every color of the world's art is
+/// one, so the art stays on the palette as it changes.
+fn swatch(name: &str) -> [u8; 4] {
+    let s = PALETTE
+        .swatch(name)
+        .unwrap_or_else(|| panic!("no swatch {name}"));
+    [s.rgb[0], s.rgb[1], s.rgb[2], 255]
 }
 fn art<S: AsRef<str>>(rows: &[S]) -> ImageData {
     let (h, w) = (rows.len(), rows[0].as_ref().len());
@@ -395,15 +403,15 @@ fn speckled(base: [u8; 4], fleck: [u8; 4], seed: u32) -> ImageData {
 }
 
 fn grass(seed: u32) -> ImageData {
-    speckled([0x4f, 0x9a, 0x45, 255], [0x6c, 0xb8, 0x55, 255], seed)
+    speckled(swatch("leaf-3"), swatch("leaf-2"), seed)
 }
 
 fn soil() -> ImageData {
-    speckled([0xc4, 0x93, 0x5c, 255], [0xa8, 0x77, 0x46, 255], 5)
+    speckled(swatch("wood-1"), swatch("straw-3"), 5)
 }
 
 fn water(seed: u32) -> ImageData {
-    speckled([0x3d, 0x7f, 0xd1, 255], [0x9c, 0xc8, 0xf2, 255], seed)
+    speckled(swatch("teal-1"), swatch("water-2"), seed)
 }
 
 const TREE_ART: [&str; 16] = [
@@ -519,3 +527,18 @@ const HERO_C: [&str; 16] = [
     "...kkk..........",
     "................",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every image of the world, tiles and sprites alike, is drawn only from
+    /// palette swatches (or clear pixels).
+    #[test]
+    fn world_art_is_on_the_palette() {
+        for (id, data) in images() {
+            let data = data.expect("drawn");
+            assert_eq!(PALETTE.check(&data), Ok(()), "{id:?}");
+        }
+    }
+}

@@ -8,6 +8,8 @@ publish = false
 
 [dependencies]
 astryx-core.workspace = true
+# World art draws its colors from the pixel palette.
+astryx-theme-pixel = { path = "../../crates/astryx-theme-pixel" }
 
 [dev-dependencies]
 astryx-desktop = { path = "../../crates/astryx-desktop" }

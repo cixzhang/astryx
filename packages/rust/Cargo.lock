@@ -260,6 +260,7 @@ dependencies = [
  "astryx-desktop",
  "astryx-headless",
  "astryx-render-soft",
+ "astryx-theme-pixel",
 ]
 
 [[package]]

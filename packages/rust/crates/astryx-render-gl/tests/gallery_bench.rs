@@ -195,3 +195,130 @@ fn gallery_scroll_matches_soft() {
     }
     eprintln!("worst frame {} max diff {}", worst.1, worst.0);
 }
+
+/// The World board at the Brick's size: per-frame encode and what each
+/// frame computes or uploads once it is steady.
+#[test]
+#[ignore]
+fn world_frame_costs() {
+    let mut gl = match common::OffscreenGl::new() {
+        Ok(gl) => gl,
+        Err(e) => {
+            eprintln!("skipping: {e}");
+            return;
+        }
+    };
+    let frame = FrameInfo {
+        width: 1024,
+        height: 768,
+        scale: 2.0,
+        dt: 1.0 / 60.0,
+    };
+    let gallery = Gallery {
+        page: Some(astryx_gallery::Section::World),
+        ..Gallery::new()
+    };
+    let mut rt = astryx_gallery::runtime(gallery);
+    for _ in 0..5 {
+        rt.input(Input::Down, InputPhase::Pressed);
+        rt.input(Input::Down, InputPhase::Released);
+    }
+    let mut worst = Duration::ZERO;
+    for i in 0..240 {
+        for (id, data) in rt.take_image_updates() {
+            gl.renderer.set_image(id, data.as_ref());
+        }
+        let t = Instant::now();
+        let list = rt.frame(&frame, gl.renderer.text());
+        let app = t.elapsed();
+        gl.render(&list, &frame);
+        let s = gl.renderer.last_stats();
+        if i >= 60 {
+            worst = worst.max(s.encode);
+        }
+        if i % 60 == 59 {
+            eprintln!(
+                "world frame {i}: app {app:?}, {} commands, {s:?}",
+                list.commands.len()
+            );
+        }
+    }
+    eprintln!("world steady worst encode {worst:?}");
+}
+
+/// A garden-like lit scene over many frames: encode must not grow.
+#[test]
+#[ignore]
+fn lit_scene_over_time() {
+    use astryx_core::{
+        Color, Dapple, DisplayList, DrawCmd, Flicker, Light, Lighting, Point, Pulse, Rect,
+    };
+    let mut gl = match common::OffscreenGl::new() {
+        Ok(gl) => gl,
+        Err(e) => {
+            eprintln!("skipping: {e}");
+            return;
+        }
+    };
+    let frame = FrameInfo {
+        width: 1024,
+        height: 768,
+        scale: 2.0,
+        dt: 1.0 / 60.0,
+    };
+    for i in 0..3000u32 {
+        let time = i as f32 / 60.0;
+        let mut commands = vec![
+            DrawCmd::PushLighting(Lighting {
+                ambient: Color::rgba(0.07, 0.09, 0.22, 1.0),
+                strength: 0.84,
+                time,
+                dapple: Some(Dapple {
+                    cell: 26.0,
+                    velocity: Point { x: 2.0, y: 1.0 },
+                    bands: 3,
+                    depth: 0.35,
+                }),
+            }),
+            DrawCmd::Rect {
+                rect: Rect::new(0.0, 0.0, 512.0, 384.0),
+                radii: Default::default(),
+                fill: Color::rgba(0.4, 0.7, 0.3, 1.0),
+                stroke: None,
+            },
+        ];
+        for k in 0..5 {
+            commands.push(DrawCmd::Light(Light {
+                center: Point {
+                    x: 80.0 + k as f32 * 80.0,
+                    y: 200.0,
+                },
+                radius_x: 60.0,
+                radius_y: 40.0,
+                color: Color::rgba(1.0, 0.8, 0.5, 1.0),
+                intensity: 1.0,
+                flicker: Flicker {
+                    amplitude: 0.1,
+                    hz: 2.0,
+                },
+                pulse: Pulse {
+                    period: if k == 0 { 2.0 } else { 0.0 },
+                    min: 0.5,
+                },
+            }));
+        }
+        commands.push(DrawCmd::Emissive {
+            rect: Rect::new(10.0, 10.0, 20.0, 20.0),
+            color: Color::rgba(1.0, 0.9, 0.5, 1.0),
+        });
+        commands.push(DrawCmd::PopLighting);
+        let list = DisplayList {
+            clear: Color::rgba(0.0, 0.0, 0.0, 1.0),
+            commands,
+        };
+        gl.render(&list, &frame);
+        if i % 500 == 0 || i == 2999 {
+            eprintln!("lit frame {i}: {:?}", gl.renderer.last_stats());
+        }
+    }
+}

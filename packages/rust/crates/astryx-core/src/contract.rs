@@ -400,6 +400,70 @@ impl Lighting {
     }
 }
 
+/// One stop of the day's light: from `minute`, tint toward `rgb` at
+/// `strength`. Colors are Terrace palette swatches.
+const DAY: [(f32, u32, f32); 12] = [
+    (4.0 * 60.0 + 45.0, 0x30569b, 0.70),  // night: blue-3
+    (5.0 * 60.0 + 45.0, 0xe08e79, 0.35),  // dawn: rose-3
+    (6.0 * 60.0 + 30.0, 0xfdefbd, 0.18),  // morning: straw-1
+    (7.0 * 60.0, 0xfdefbd, 0.0),          // day
+    (16.0 * 60.0 + 30.0, 0xeac086, 0.0),  // day
+    (17.0 * 60.0, 0xeac086, 0.22),        // golden hour: straw-3
+    (17.0 * 60.0 + 30.0, 0xeac086, 0.30), // golden hour
+    (18.0 * 60.0 + 15.0, 0xe08e79, 0.38), // sunset: rose-3
+    (19.0 * 60.0, 0x542437, 0.50),        // sunset: ink-plum
+    (19.0 * 60.0 + 45.0, 0x30569b, 0.60), // dusk: blue-3
+    (20.0 * 60.0 + 30.0, 0x30569b, 0.70), // night
+    (24.0 * 60.0 + 4.0 * 60.0 + 45.0, 0x30569b, 0.70),
+];
+
+/// Steps between two stops of the day. The light holds still between
+/// steps, like the art, and each step is about two 8-bit levels at most.
+const DAY_STEPS: f32 = 32.0;
+
+impl Lighting {
+    /// The light at `minutes` after local midnight, at `time` seconds:
+    /// night, dawn, day, golden hour, sunset and dusk blend into each other
+    /// in small eased steps. `None` by day.
+    pub fn at(minutes: f32, time: f32) -> Option<Lighting> {
+        let m = minutes.rem_euclid(24.0 * 60.0);
+        // Before the first stop, the night that began the evening before.
+        let m = if m < DAY[0].0 { m + 24.0 * 60.0 } else { m };
+        let i = DAY
+            .windows(2)
+            .position(|w| m < w[1].0)
+            .unwrap_or(DAY.len() - 2);
+        let ((m0, c0, s0), (m1, c1, s1)) = (DAY[i], DAY[i + 1]);
+        let f = ((m - m0) / (m1 - m0)).clamp(0.0, 1.0);
+        let f = (f * DAY_STEPS).floor() / DAY_STEPS;
+        let f = f * f * (3.0 - 2.0 * f);
+        let strength = s0 + (s1 - s0) * f;
+        if strength <= 0.0 {
+            return None;
+        }
+        let channel = |c: u32, shift: u32| ((c >> shift) & 255) as f32 / 255.0;
+        let mix = |shift| channel(c0, shift) + (channel(c1, shift) - channel(c0, shift)) * f;
+        Some(Lighting {
+            ambient: Color::rgba(mix(16), mix(8), mix(0), 1.0),
+            strength,
+            time,
+            dapple: None,
+        })
+    }
+
+    /// How bright lamps and lanterns are at `minutes` after midnight, 0 to
+    /// 1: off by day, fading in through dusk and out through dawn.
+    pub fn lamp_level(minutes: f32) -> f32 {
+        let m = minutes.rem_euclid(24.0 * 60.0);
+        let ramp = |from: f32, to: f32| {
+            let f = ((m - from) / (to - from)).clamp(0.0, 1.0);
+            f * f * (3.0 - 2.0 * f)
+        };
+        // Up from 17:30 to 19:30, down from 05:30 to 07:00.
+        ramp(17.5 * 60.0, 19.5 * 60.0).max(1.0 - ramp(5.5 * 60.0, 7.0 * 60.0))
+    }
+}
+
 impl Light {
     /// The intensity at `time` seconds, with flicker and pulse applied.
     pub fn intensity_at(&self, time: f32) -> f32 {
@@ -706,7 +770,7 @@ pub enum ColorScheme {
 
 /// What the person asked their OS or browser for. Shells read it from the
 /// platform and pass changes to `Surface::set_preferences`.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Preferences {
     pub reduced_motion: bool,
     pub color_scheme: ColorScheme,
@@ -718,8 +782,27 @@ pub struct Preferences {
     pub coarse_pointer: bool,
     /// The time of day where the person is, for shells that know it.
     pub day_phase: DayPhase,
+    /// Minutes since local midnight, for scenes lit to follow the day
+    /// smoothly. Shells that read a clock set it, refreshed every minute;
+    /// others leave `None`.
+    pub day_time: Option<f32>,
+    /// How long since the person last touched the device, for shells that
+    /// save power. Apps may calm motion while `Dim`.
+    pub idle: Idle,
     /// The person turned sounds off.
     pub sound_off: bool,
+}
+
+/// Whether the person is using the device. Shells that save power set it;
+/// others leave `Active`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Idle {
+    #[default]
+    Active,
+    /// No input for a while: the shell draws at a low frame rate.
+    Dim,
+    /// No input for longer: the shell draws nothing until input arrives.
+    Asleep,
 }
 
 /// The time of day, for scenes lit to match it. Shells that read a clock

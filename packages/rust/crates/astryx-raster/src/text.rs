@@ -103,14 +103,27 @@ impl FontSet {
     /// in the set joins it as another weight; otherwise its family becomes
     /// the last fallback.
     pub fn add(&mut self, data: impl Into<FontData>) -> Result<(), FontError> {
-        let data = data.into();
+        self.add_face(data.into(), None)
+    }
+
+    /// Adds a face under `family`, whatever family name the file gives.
+    pub fn add_as(&mut self, data: impl Into<FontData>, family: &str) -> Result<(), FontError> {
+        self.add_face(data.into(), Some(family))
+    }
+
+    fn add_face(&mut self, data: FontData, family: Option<&str>) -> Result<(), FontError> {
         let font = FontRef::from_index(data.bytes(), 0).ok_or(FontError)?;
-        let strings = font.localized_strings();
-        let family = strings
-            .find_by_id(StringId::TypographicFamily, None)
-            .or_else(|| strings.find_by_id(StringId::Family, None))
-            .map(|s| s.chars().collect::<String>())
-            .unwrap_or_default();
+        let family = match family {
+            Some(name) => name.to_owned(),
+            None => {
+                let strings = font.localized_strings();
+                strings
+                    .find_by_id(StringId::TypographicFamily, None)
+                    .or_else(|| strings.find_by_id(StringId::Family, None))
+                    .map(|s| s.chars().collect::<String>())
+                    .unwrap_or_default()
+            }
+        };
         let face = Face {
             offset: font.offset,
             key: font.key,
@@ -539,7 +552,9 @@ impl TextEngine {
         !self.inner.borrow().fonts.is_empty()
     }
 
-    /// Adds the files of a theme's font the first time it is drawn.
+    /// Adds the files of a theme's font the first time it is drawn, under
+    /// the theme's family name: the files may call themselves something
+    /// else, and the name is how fallback order and this check find them.
     fn load_theme_font(&self, font: &'static ThemeFont) {
         if self.inner.borrow().fonts.has_family(font.family) {
             return;
@@ -547,7 +562,7 @@ impl TextEngine {
         let mut inner = self.inner.borrow_mut();
         let mut added = false;
         for &file in font.files {
-            added |= inner.fonts.add(file).is_ok();
+            added |= inner.fonts.add_as(file, font.family).is_ok();
         }
         if added {
             inner.shapes.clear();
@@ -1402,6 +1417,39 @@ mod tests {
         let after = engine.measure("Hello", &st, None);
         assert!(after.width > 30.0, "{after:?}");
         assert!(engine.add_fallback_font(vec![1, 2, 3]).is_err());
+    }
+
+    #[test]
+    fn theme_fonts_load_once_under_their_theme_name() {
+        static FILES: [&[u8]; 1] = [MEDIUM];
+        static FONT: ThemeFont = ThemeFont {
+            family: "Not Roboto",
+            files: &FILES,
+            em_pixels: 0,
+            fallbacks: &[],
+        };
+        let engine = engine();
+        let mut st = style(14.0, 400);
+        st.family = FontFamily::Theme(&FONT);
+        engine.layout("Hello", &st, None, TextAlign::Start);
+        let generation = engine.generation();
+        for _ in 0..3 {
+            engine.layout("Hello", &st, None, TextAlign::Start);
+            engine.measure("Hello again", &st, None);
+        }
+        assert_eq!(
+            engine.generation(),
+            generation,
+            "the theme font was added again"
+        );
+        let inner = engine.inner.borrow();
+        assert_eq!(
+            inner.fonts.faces.len(),
+            4,
+            "Roboto's three faces and the theme's one"
+        );
+        let first = inner.fonts.candidates(400, &["Not Roboto"])[0];
+        assert_eq!(first, 3, "the theme's face leads");
     }
 
     #[test]

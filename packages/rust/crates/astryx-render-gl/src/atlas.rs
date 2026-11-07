@@ -36,7 +36,7 @@ const TRANSIENT_PAGE: i32 = 512;
 const LARGEST_PACKED: u32 = 256;
 /// Pixels of lasting pages kept across frames; more may be added within
 /// one frame.
-const PAGE_BUDGET: i64 = 5 * (PRELOAD_PAGE as i64 * PRELOAD_PAGE as i64);
+const PAGE_BUDGET: i64 = 8 * (PRELOAD_PAGE as i64 * PRELOAD_PAGE as i64);
 const LARGE: usize = 64;
 const TRANSIENT_PAGES: usize = 3;
 
@@ -55,6 +55,8 @@ struct Page {
     dirty: Option<(i32, i32)>,
     /// The last frame that drew from this page; 0 when none has.
     last_used: u64,
+    /// Filled and uploaded for good: no CPU copy, no more masks.
+    sealed: bool,
 }
 
 impl Page {
@@ -74,6 +76,7 @@ impl Page {
             pixels,
             dirty: None,
             last_used: 0,
+            sealed: false,
         }
     }
 
@@ -138,6 +141,8 @@ pub struct Atlas {
     pub upload_time: std::time::Duration,
     /// Masks uploaded since the last frame started.
     pub uploads: usize,
+    /// Of those: glyphs, shadows, paths.
+    pub upload_kinds: [usize; 3],
     /// Textures created since the last frame started.
     pub textures: usize,
     large: Vec<glow::Texture>,
@@ -200,6 +205,7 @@ impl Atlas {
         }
         self.upload_time = std::time::Duration::ZERO;
         self.uploads = 0;
+        self.upload_kinds = [0; 3];
         self.textures = 0;
         let area: i64 = self
             .pages
@@ -253,6 +259,18 @@ impl Atlas {
             page.flush(gl, dialect);
         }
         self.upload_time += crate::since(t);
+    }
+
+    /// Uploads the preload pages and frees their CPU copies; they take no
+    /// more masks.
+    pub fn seal_preloaded(&mut self, gl: &glow::Context, dialect: Dialect) {
+        self.flush(gl, dialect);
+        for page in &mut self.pages {
+            if page.size == PRELOAD_PAGE && !page.sealed {
+                page.sealed = true;
+                page.pixels = Vec::new();
+            }
+        }
     }
 
     /// True for the textures of the per-frame pages.
@@ -339,8 +357,19 @@ impl Atlas {
         size: i32,
     ) -> Region {
         self.uploads += 1;
+        self.upload_kinds[match key {
+            MaskKey::Glyph(_) => 0,
+            MaskKey::Shadow(_) => 1,
+            MaskKey::Path(_) => 2,
+        }] += 1;
         let t = crate::now();
-        let region = if w > LARGEST_PACKED || h > LARGEST_PACKED {
+        // Preload pages are big enough for shadow tiles too.
+        let largest = if size == PRELOAD_PAGE {
+            1024
+        } else {
+            LARGEST_PACKED
+        };
+        let region = if w > largest || h > largest {
             // SAFETY: the context is current while rendering.
             let texture = unsafe { mask_texture(gl, dialect, w as i32, h as i32, Some(data)) };
             self.large.push(texture);
@@ -378,6 +407,9 @@ impl Atlas {
 }
 
 fn fits(p: &Page, w: u32, h: u32) -> bool {
+    if p.sealed {
+        return false;
+    }
     let (pw, ph) = (w as i32 + 1, h as i32 + 1);
     (p.x + pw <= p.size && p.y + ph.max(p.row) <= p.size) || p.y + p.row + ph <= p.size
 }
