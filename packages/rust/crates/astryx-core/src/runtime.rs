@@ -1,13 +1,13 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
 use crate::contract::{
-    A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Point, Preferences,
-    Rect, Surface, TextMeasure,
+    A11yAction, A11yNode, Command, DisplayList, FontFamily, FrameInfo, Input, InputPhase, Point,
+    Preferences, Radii, Rect, Size, Surface, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
-use crate::theme::ThemeChoice;
+use crate::theme::{Direction, ThemeChoice};
 use crate::{a11y, focus};
 use astryx_motion::gesture::{
     Page, PagingGesture, Phase, PressEvent, PressGesture, PressHighlight, RepeatGesture,
@@ -15,7 +15,7 @@ use astryx_motion::gesture::{
 };
 use astryx_motion::tokens::{self as motion_tokens, MotionTokens};
 use astryx_motion::{Animated, Change, Motion, MotionPolicy, Pointer};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use taffy::{FlexDirection, Style};
 
 /// An Astryx app: state, a view of it, and an update for each message.
@@ -59,6 +59,12 @@ pub trait App {
         ThemeChoice::default()
     }
 
+    /// The writing direction of the whole app. Read after every update, so
+    /// switching it is an ordinary message.
+    fn direction(&self) -> Direction {
+        Direction::Ltr
+    }
+
     /// Inputs focus does not use: B (back), X, Y, the shoulder buttons,
     /// Start, Select, and Menu, on press. Return a message to handle one.
     fn on_input(&self, input: Input) -> Option<Self::Msg> {
@@ -66,6 +72,18 @@ pub trait App {
         None
     }
 }
+
+/// Astryx's press scale for a standalone Button.
+const PRESS_SCALE: f32 = 0.98;
+
+/// A moving node: where it is shown, relative to its parent, and its width.
+#[derive(Clone, Copy, Debug)]
+struct Moving {
+    shown: Animated<[f32; 3]>,
+}
+
+/// Astryx's widest tooltip, in points.
+const TOOLTIP_MAX_WIDTH: f32 = 300.0;
 
 /// How long the phases of the last frame took, for profiling shells.
 /// All zero on targets without a clock (WebAssembly).
@@ -131,6 +149,7 @@ pub struct Runtime<A: App> {
     focused_box: Option<Rect>,
     pressed: Option<u64>,
     prefs: Preferences,
+    direction: Direction,
     /// Caret positions of text fields, in characters, by node id.
     carets: HashMap<u64, usize>,
     measure_generation: u64,
@@ -145,6 +164,9 @@ pub struct Runtime<A: App> {
     lost: Vec<u64>,
     /// The scroll container around the focused element.
     focus_container: Option<u64>,
+    /// The focus stop whose tooltip B dismissed; it stays hidden until
+    /// focus moves.
+    tooltip_dismissed: Option<u64>,
     /// Milliseconds since the runtime started, from frame times; drives
     /// animations and gestures.
     motion_ms: f64,
@@ -160,6 +182,11 @@ pub struct Runtime<A: App> {
     repeats: RepeatGesture<Input>,
     /// L2 and R2.
     paging: PagingGesture,
+    /// The press scale, and the element it applies to until it is back at 1.
+    press_scale: Animated<f32>,
+    scaled: Option<u64>,
+    /// Offset from its target place (x, y) and size, for each moving node.
+    moving: HashMap<u64, Moving>,
     scroll: HashMap<u64, f32>,
     reveal: bool,
     /// Focus or press changed since the last frame.
@@ -188,6 +215,7 @@ impl<A: App> Runtime<A> {
             focused_box: None,
             pressed: None,
             prefs: Preferences::default(),
+            direction: Direction::Ltr,
             carets: HashMap::new(),
             measure_generation: 0,
             typed: None,
@@ -195,6 +223,7 @@ impl<A: App> Runtime<A> {
             popup: None,
             lost: Vec::new(),
             focus_container: None,
+            tooltip_dismissed: None,
             motion_ms: 0.0,
             policy: MotionPolicy::default(),
             shown: HashMap::new(),
@@ -203,6 +232,9 @@ impl<A: App> Runtime<A> {
             highlight: PressHighlight::new(),
             repeats: RepeatGesture::new(DPAD_REPEAT),
             paging: PagingGesture::new(),
+            press_scale: Animated::new(1.0),
+            scaled: None,
+            moving: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
             repaint: true,
@@ -247,6 +279,8 @@ impl<A: App> Runtime<A> {
         let mut cx = BuildCx::new(tokens);
         cx.prefs = self.prefs;
         cx.viewport = self.viewport;
+        self.direction = self.app.direction();
+        cx.direction = self.direction;
         cx.popup = self.popup.and_then(|id| {
             let ix = self.nodes.iter().position(|n| n.id == id)?;
             Some((id, self.layout.as_ref()?.rects.get(ix).copied()?))
@@ -339,6 +373,7 @@ impl<A: App> Runtime<A> {
         if self.focused != Some(id) {
             // Moving focus ends a press without activating.
             self.end_press();
+            self.tooltip_dismissed = None;
             self.composing = None;
         }
         self.focused = Some(id);
@@ -473,7 +508,7 @@ impl<A: App> Runtime<A> {
                     new.y - old.y
                 } else {
                     new.x - old.x
-                };
+                } * self.scroll_sign(a);
                 let layout = self.layout.as_mut().expect("layout");
                 let next = (self.scroll.get(&id).copied().unwrap_or(0.0) + delta)
                     .clamp(0.0, layout.overflow[a]);
@@ -524,9 +559,20 @@ impl<A: App> Runtime<A> {
                 } else {
                     0.0
                 };
-                self.set_scroll(a, current + delta, smooth);
+                self.set_scroll(a, current + delta * self.scroll_sign(a), smooth);
             }
             ancestor = self.nodes[a].parent;
+        }
+    }
+
+    /// How a scroll offset moves content on screen: 1 when a larger offset
+    /// moves content up or left, -1 for a right-to-left row, whose larger
+    /// offsets move content right.
+    fn scroll_sign(&self, ix: usize) -> f32 {
+        if self.nodes[ix].rtl && self.nodes[ix].scroll == Some(Axis::Horizontal) {
+            -1.0
+        } else {
+            1.0
         }
     }
 
@@ -596,6 +642,10 @@ impl<A: App> Runtime<A> {
         let tokens = self.motion_tokens();
         for event in self.press.cancel() {
             self.highlight.apply(event, tokens, &self.policy, false);
+            self.press_scale.animate_to(
+                1.0,
+                Motion::curve(tokens.durations.fast, tokens.ease_standard),
+            );
         }
     }
 
@@ -603,9 +653,26 @@ impl<A: App> Runtime<A> {
     fn press_event(&mut self, event: PressEvent) -> Command {
         let tokens = self.motion_tokens();
         self.highlight.apply(event, tokens, &self.policy, false);
+        // Button's press scale moves on its fast, standard transition, and
+        // never under reduced motion (Button FR15, reduced-motion DR1).
+        let scale_motion = Motion::curve(tokens.durations.fast, tokens.ease_standard);
         match event {
             PressEvent::Down => {
                 self.pressed = self.focused;
+                let scales = self
+                    .focused
+                    .and_then(|id| self.nodes.iter().find(|n| n.id == id))
+                    .is_some_and(|n| {
+                        n.press_scale && n.interact.as_ref().is_some_and(|i| !i.disabled && !i.busy)
+                    });
+                if scales && !self.policy.reduces(tokens) {
+                    self.scaled = self.focused;
+                    self.press_scale.animate_to(PRESS_SCALE, scale_motion);
+                }
+                Command::None
+            }
+            PressEvent::Up => {
+                self.press_scale.animate_to(1.0, scale_motion);
                 Command::None
             }
             PressEvent::Activate => match self.pressed {
@@ -614,7 +681,7 @@ impl<A: App> Runtime<A> {
             },
             // The contract has no context request yet, so a long press is a
             // press that does not activate.
-            PressEvent::LongPress | PressEvent::Up => Command::None,
+            PressEvent::LongPress => Command::None,
         }
     }
 
@@ -681,7 +748,7 @@ impl<A: App> Runtime<A> {
             if !near {
                 let offset = self.scroll.get(&self.nodes[c].id).copied().unwrap_or(0.0);
                 let step = if forward { span / 3.0 } else { -span / 3.0 };
-                if self.set_scroll(c, offset + step, true) {
+                if self.set_scroll(c, offset + step * self.scroll_sign(c), true) {
                     return Command::None;
                 }
             }
@@ -725,6 +792,133 @@ impl<A: App> Runtime<A> {
         Command::None
     }
 
+    /// Starts moving nodes toward the places the last layout gave them, on
+    /// the theme's fast, standard transition; a spring under a touch
+    /// presentation, as Switch's thumb settles; instant under reduced motion.
+    fn update_moving(&mut self) {
+        let Some(layout) = self.layout.as_ref() else {
+            return;
+        };
+        let tokens = self.motion_tokens();
+        let motion = match self.policy.pointer {
+            Pointer::Fine => Motion::curve(tokens.durations.fast, tokens.ease_standard),
+            Pointer::Coarse => {
+                Motion::Spring(tokens.spring(motion_tokens::springs::STATE_CHANGE).spring())
+            }
+        };
+        let motion = self.policy.travel(Change::Transition, motion, tokens);
+        let mut seen = HashSet::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let (true, Some(p)) = (node.moves, node.parent) else {
+                continue;
+            };
+            let (r, parent) = (layout.rects[ix], layout.rects[p as usize]);
+            let target = [r.x - parent.x, r.y - parent.y, r.width];
+            seen.insert(node.id);
+            match self.moving.get_mut(&node.id) {
+                Some(m) if m.shown.target() != target => m.shown.animate_to(target, motion),
+                Some(_) => {}
+                None => {
+                    self.moving.insert(
+                        node.id,
+                        Moving {
+                            shown: Animated::new(target),
+                        },
+                    );
+                }
+            }
+        }
+        self.moving.retain(|id, _| seen.contains(id));
+    }
+
+    /// Paint transforms: the press scale, and moving nodes on their way.
+    fn transforms(&self, rects: &[Rect]) -> HashMap<usize, paint::Transform> {
+        let mut out = HashMap::new();
+        let index = |id: u64| self.nodes.iter().position(|n| n.id == id);
+        if let Some(ix) = self.scaled.and_then(index) {
+            let r = rects[ix];
+            out.insert(
+                ix,
+                paint::Transform {
+                    origin: r.center(),
+                    scale: self.press_scale.value(),
+                    translate: Point { x: 0.0, y: 0.0 },
+                },
+            );
+        }
+        for (&id, m) in &self.moving {
+            if !m.shown.is_animating() {
+                continue;
+            }
+            let Some(ix) = index(id) else { continue };
+            let [x, y, w] = m.shown.value();
+            let [tx, ty, tw] = m.shown.target();
+            let r = rects[ix];
+            out.insert(
+                ix,
+                paint::Transform {
+                    origin: r.center(),
+                    scale: if tw > 0.0 { w / tw } else { 1.0 },
+                    translate: Point {
+                        x: x - tx,
+                        y: y - ty,
+                    },
+                },
+            );
+        }
+        out
+    }
+
+    /// The focused element's tooltip words, unless B dismissed them.
+    fn tooltip_text(&self) -> Option<&str> {
+        let id = self.focused?;
+        if self.tooltip_dismissed == Some(id) {
+            return None;
+        }
+        self.nodes.iter().find(|n| n.id == id)?.tooltip.as_deref()
+    }
+
+    /// The tooltip bubble for the focused element: above it with Astryx's
+    /// `space.s1` offset, below it when there is no room above, and slid
+    /// sideways to stay `space.s4` inside the window. It is at most 300
+    /// points wide, as Astryx's tooltip is.
+    fn tooltip_paint(&self, rects: &[Rect], text: &dyn TextMeasure) -> Option<paint::Tooltip> {
+        let words = self.tooltip_text()?;
+        let id = self.focused?;
+        let ix = self.nodes.iter().position(|n| n.id == id)?;
+        let anchor = rects[ix];
+        let t = self.theme.tokens(&self.prefs);
+        let style = crate::components::text::type_style(t.font.body, FontFamily::Body);
+        let (pad_x, pad_y) = (t.space.s2, t.space.s1);
+        let measured = text.measure(words, &style, Some(TOOLTIP_MAX_WIDTH - 2.0 * pad_x));
+        let line = style.size * style.leading;
+        let lines = (measured.height / line).round().max(1.0);
+        let inner = Size {
+            width: (measured.width - 0.01).ceil(),
+            height: (lines * line - 0.01).ceil(),
+        };
+        let (w, h) = (inner.width + 2.0 * pad_x, inner.height + 2.0 * pad_y);
+        let (vw, _) = self.viewport;
+        let (gap, margin) = (t.space.s1, t.space.s4);
+        let y = if anchor.y - gap - h >= margin {
+            anchor.y - gap - h
+        } else {
+            anchor.y + anchor.height + gap
+        };
+        let centered = anchor.x + (anchor.width - w) / 2.0;
+        let x = centered.min(vw - margin - w).max(margin);
+        let rect = Rect::new(x.round(), y.round(), w, h);
+        Some(paint::Tooltip {
+            rect,
+            radii: Radii::all(t.radius.container),
+            fill: t.color.text_primary.into(),
+            text: words.to_string(),
+            text_rect: Rect::new(rect.x + pad_x, rect.y + pad_y, inner.width, inner.height),
+            style,
+            color: t.color.background_surface.into(),
+        })
+    }
+
     /// Thumbs for the scroll containers that scrolled recently.
     fn indicators(&self, rects: &[Rect]) -> Vec<paint::Indicator> {
         let Some(layout) = self.layout.as_ref() else {
@@ -755,12 +949,24 @@ impl<A: App> Runtime<A> {
                 .max(tokens.space.s6)
                 .min(span);
             let start = (span - length) * (offset / overflow);
+            // Under RTL the vertical thumb sits on the left, the inline end,
+            // and the horizontal one starts at the right.
+            let rtl = node.rtl;
             let thumb = match axis {
+                Axis::Vertical if rtl => {
+                    Rect::new(view.x + inset, view.y + start, thickness, length)
+                }
                 Axis::Vertical => Rect::new(
                     view.x + view.width - inset - thickness,
                     view.y + start,
                     thickness,
                     length,
+                ),
+                Axis::Horizontal if rtl => Rect::new(
+                    view.x + view.width - start - length,
+                    view.y + view.height - inset - thickness,
+                    length,
+                    thickness,
                 ),
                 Axis::Horizontal => Rect::new(
                     view.x + start,
@@ -803,6 +1009,13 @@ impl<A: App> Runtime<A> {
         self.highlight.tick(dt);
         if !self.press.is_down() && !self.highlight.wants_frames() {
             self.pressed = None;
+        }
+        self.press_scale.tick(dt);
+        if !self.press_scale.is_animating() && self.press_scale.value() == 1.0 {
+            self.scaled = None;
+        }
+        for m in self.moving.values_mut() {
+            m.shown.tick(dt);
         }
         let mut command = Command::None;
         for event in self.press.tick(now) {
@@ -952,8 +1165,18 @@ impl<A: App> Runtime<A> {
             .parent
             .map_or(layout.rects[ix], |p| layout.rects[p as usize]);
         let caret_width = 1.0;
-        let shift = (x + caret_width - area.width).max(0.0);
         let rect = layout.rects[edit.text_node as usize];
+        // The value slides so the caret stays inside the field: left past
+        // its end, or right past its start, where a right-to-left field's
+        // long value overflows.
+        let at = rect.x + x;
+        let shift = if at + caret_width > area.x + area.width {
+            at + caret_width - (area.x + area.width)
+        } else if at < area.x {
+            at - area.x
+        } else {
+            0.0
+        };
         let line = (t.style.size * t.style.leading - 0.01).ceil();
         let top = rect.y + (rect.height - line) / 2.0;
         Some(paint::Caret {
@@ -1075,6 +1298,11 @@ impl<A: App> Surface for Runtime<A> {
                 self.close_popup();
                 Command::None
             }
+            // A shown tooltip takes B first, as the topmost layer takes Escape.
+            (Input::B, InputPhase::Pressed) if self.tooltip_text().is_some() => {
+                self.tooltip_dismissed = self.focused;
+                Command::None
+            }
             (_, InputPhase::Pressed) => match self.app.on_input(input) {
                 Some(msg) => self.send(msg),
                 None => Command::None,
@@ -1100,7 +1328,7 @@ impl<A: App> Surface for Runtime<A> {
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
-        if self.stale || self.app.theme() != self.theme {
+        if self.stale || self.app.theme() != self.theme || self.app.direction() != self.direction {
             self.rebuild();
         }
         // New font faces can change every measurement, so cached sizes go.
@@ -1130,6 +1358,7 @@ impl<A: App> Surface for Runtime<A> {
         if std::mem::take(&mut self.reveal) {
             self.reveal_focus(false);
         }
+        self.update_moving();
         self.animating_visible = self.animation_visible();
         self.timings.layout = watch.lap();
         self.a11y = a11y::tree(
@@ -1152,6 +1381,8 @@ impl<A: App> Surface for Runtime<A> {
         };
         let caret = self.caret_paint(text);
         let indicators = self.indicators(&rects);
+        let tooltip = self.tooltip_paint(&rects, text);
+        let transforms = self.transforms(&rects);
         let state = PaintState {
             focused: self.focused,
             pressed: self.pressed,
@@ -1159,6 +1390,8 @@ impl<A: App> Surface for Runtime<A> {
             time: self.time,
             caret,
             indicators,
+            tooltip,
+            transforms,
         };
         let layout = self.layout.as_ref().expect("layout");
         let list = paint::paint(
@@ -1188,7 +1421,7 @@ impl<A: App> Surface for Runtime<A> {
         for ix in chain {
             let along = match self.nodes[ix].scroll {
                 Some(Axis::Vertical) => delta.y,
-                _ => delta.x,
+                _ => delta.x * self.scroll_sign(ix),
             };
             if along == 0.0 {
                 continue;
@@ -1302,6 +1535,8 @@ impl<A: App> Surface for Runtime<A> {
             || !self.shown.is_empty()
             || !self.scroll_indicators.is_empty()
             || self.highlight.wants_frames()
+            || self.press_scale.is_animating()
+            || self.moving.values().any(|m| m.shown.is_animating())
             || self.press.wants_frames()
             || self.repeats.wants_frames()
             || self.paging.wants_frames()

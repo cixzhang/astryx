@@ -4,6 +4,22 @@ use crate::contract::{Color, ColorScheme, Preferences, Radii, ShadowLayer};
 use astryx_tokens::{Rgba, Theme, Tokens};
 use std::sync::{Mutex, OnceLock};
 
+/// The writing direction of a region: which side inline start is on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Direction {
+    /// Left to right.
+    #[default]
+    Ltr,
+    /// Right to left: rows, alignment, and horizontal scrolling mirror.
+    Rtl,
+}
+
+impl Direction {
+    pub fn is_rtl(self) -> bool {
+        self == Direction::Rtl
+    }
+}
+
 /// Light or dark color mode.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Mode {

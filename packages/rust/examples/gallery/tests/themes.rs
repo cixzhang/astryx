@@ -5,7 +5,9 @@ use astryx_core::testing::{draw, tap};
 use astryx_core::*;
 use astryx_gallery::Gallery;
 use astryx_headless::golden::{assert_golden, Tolerance};
-use astryx_headless::render_png;
+mod settle;
+
+use settle::render_png;
 use std::path::PathBuf;
 
 const TOLERANCE: Tolerance = Tolerance {

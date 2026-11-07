@@ -24,4 +24,4 @@ pub use components::*;
 pub use element::{Element, Space};
 pub use paint::{FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 pub use runtime::{App, FrameTimings, Runtime};
-pub use theme::{Mode, ThemeChoice};
+pub use theme::{Direction, Mode, ThemeChoice};

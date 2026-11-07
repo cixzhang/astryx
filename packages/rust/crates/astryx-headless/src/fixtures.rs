@@ -12,7 +12,14 @@ use astryx_core::{
 pub const FIXTURE_SIZE: (u32, u32) = (480, 320);
 
 /// The fixture names, in a stable order.
-pub const FIXTURES: [&str; 5] = ["shapes", "text", "shadows", "clips", "gallery"];
+pub const FIXTURES: [&str; 6] = [
+    "shapes",
+    "text",
+    "shadows",
+    "clips",
+    "transforms",
+    "gallery",
+];
 
 const fn rgb(r: u8, g: u8, b: u8) -> Color {
     Color::rgba(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, 1.0)
@@ -383,6 +390,135 @@ fn shadows() -> Vec<DrawCmd> {
     c
 }
 
+fn transforms() -> Vec<DrawCmd> {
+    let push = |origin: Point, scale: f32, translate: Point| DrawCmd::PushTransform {
+        origin,
+        scale,
+        translate,
+    };
+    let button = |c: &mut Vec<DrawCmd>, x: f32, y: f32, label: &str| {
+        let r = Rect::new(x, y, 120.0, 40.0);
+        c.push(DrawCmd::Shadow {
+            rect: r,
+            radii: Radii::all(10.0),
+            layers: vec![shadow(0.0, 2.0, 6.0, 0.0, 0.3)],
+        });
+        c.push(DrawCmd::Rect {
+            rect: r,
+            radii: Radii::all(10.0),
+            fill: ACCENT,
+            stroke: None,
+        });
+        c.push(DrawCmd::Path {
+            commands: vec![
+                PathCmd::MoveTo(p(x + 14.0, y + 20.0)),
+                PathCmd::LineTo(p(x + 19.0, y + 25.0)),
+                PathCmd::LineTo(p(x + 28.0, y + 15.0)),
+            ],
+            fill: None,
+            stroke: Some((SURFACE, 2.0)),
+        });
+        c.push(text(
+            Rect::new(x + 30.0, y + 10.0, 84.0, 20.0),
+            label,
+            style(14.0, 600),
+            SURFACE,
+            TextAlign::Center,
+        ));
+    };
+    let mut c = Vec::new();
+    // At rest, and pressed: scaled to 96% about its center.
+    button(&mut c, 24.0, 24.0, "At rest");
+    c.push(push(p(224.0, 44.0), 0.96, p(0.0, 0.0)));
+    button(&mut c, 164.0, 24.0, "Pressed");
+    c.push(DrawCmd::PopTransform);
+    // A switch thumb moved by a fractional amount still lands on whole pixels.
+    for (i, travel) in [0.0f32, 10.5, 20.0].iter().enumerate() {
+        let y = 92.0 + i as f32 * 34.0;
+        c.push(rect(
+            24.0,
+            y,
+            48.0,
+            26.0,
+            13.0,
+            if *travel > 15.0 { GREEN } else { BORDER },
+        ));
+        c.push(push(p(0.0, 0.0), 1.0, p(*travel, 0.0)));
+        c.push(DrawCmd::Shadow {
+            rect: Rect::new(27.0, y + 3.0, 20.0, 20.0),
+            radii: Radii::all(10.0),
+            layers: vec![shadow(0.0, 1.0, 3.0, 0.0, 0.35)],
+        });
+        c.push(rect(27.0, y + 3.0, 20.0, 20.0, 10.0, SURFACE));
+        c.push(DrawCmd::PopTransform);
+    }
+    // A card grown 125% about its corner, with a rounded clip and opacity inside.
+    c.push(push(p(300.0, 90.0), 1.25, p(0.0, 0.0)));
+    c.push(DrawCmd::Shadow {
+        rect: Rect::new(300.0, 90.0, 120.0, 90.0),
+        radii: Radii::all(12.0),
+        layers: vec![shadow(0.0, 6.0, 14.0, 0.0, 0.25)],
+    });
+    c.push(DrawCmd::Rect {
+        rect: Rect::new(300.0, 90.0, 120.0, 90.0),
+        radii: Radii::all(12.0),
+        fill: SURFACE,
+        stroke: Some((BORDER, 1.0)),
+    });
+    c.push(DrawCmd::PushClip {
+        rect: Rect::new(308.0, 98.0, 104.0, 30.0),
+        radii: Radii::all(8.0),
+    });
+    for i in 0..6 {
+        c.push(rect(300.0 + i as f32 * 20.0, 90.0, 10.0, 60.0, 0.0, ORANGE));
+    }
+    c.push(DrawCmd::PopClip);
+    c.push(DrawCmd::PushOpacity(0.6));
+    c.push(text(
+        Rect::new(308.0, 134.0, 104.0, 40.0),
+        "Scaled text wraps the same",
+        style(12.0, 400),
+        INK,
+        TextAlign::Start,
+    ));
+    c.push(DrawCmd::PopOpacity);
+    c.push(DrawCmd::Line {
+        from: p(308.0, 131.0),
+        to: p(412.0, 131.0),
+        color: BORDER,
+        width: 1.0,
+    });
+    c.push(DrawCmd::PopTransform);
+    // Nested: a move inside a shrink; and text moved by half a point.
+    c.push(push(p(100.0, 260.0), 0.8, p(0.0, 0.0)));
+    c.push(push(p(0.0, 0.0), 1.0, p(30.0, 0.0)));
+    c.push(DrawCmd::Rect {
+        rect: Rect::new(24.0, 230.0, 160.0, 60.0),
+        radii: Radii([4.0, 20.0, 4.0, 20.0]),
+        fill: ORANGE,
+        stroke: Some((INK, 2.0)),
+    });
+    c.push(text(
+        Rect::new(24.0, 248.0, 160.0, 24.0),
+        "nested",
+        style(16.0, 700),
+        INK,
+        TextAlign::Center,
+    ));
+    c.push(DrawCmd::PopTransform);
+    c.push(DrawCmd::PopTransform);
+    c.push(push(p(0.0, 0.0), 1.0, p(0.5, 0.5)));
+    c.push(text(
+        Rect::new(240.0, 270.0, 220.0, 24.0),
+        "Moved half a point",
+        style(14.0, 400),
+        MUTED,
+        TextAlign::Start,
+    ));
+    c.push(DrawCmd::PopTransform);
+    c
+}
+
 fn clips() -> Vec<DrawCmd> {
     let stripes = |c: &mut Vec<DrawCmd>, x: f32, y: f32| {
         for i in 0..8 {
@@ -619,6 +755,7 @@ pub fn fixture(
         "text" => text_fixture(),
         "shadows" => shadows(),
         "clips" => clips(),
+        "transforms" => transforms(),
         "gallery" => gallery(text_measure, focus, toggled),
         _ => return None,
     };
@@ -680,6 +817,7 @@ impl Surface for FixtureSurface {
 
     fn accessibility(&self) -> Option<A11yNode> {
         let node = |id, role, label: &str, bounds, focused, checked| A11yNode {
+            rtl: false,
             text_selection: None,
             secure: false,
             description: None,
@@ -747,6 +885,7 @@ impl Surface for FixtureSurface {
                     Some(true),
                 ),
                 A11yNode {
+                    rtl: false,
                     text_selection: None,
                     secure: false,
                     description: None,
@@ -809,8 +948,9 @@ mod tests {
                 seen.insert(discriminant(&cmd));
             }
         }
-        // Rect, Shadow, Text, Line, Path, PushClip, PopClip, PushOpacity, PopOpacity.
-        assert_eq!(seen.len(), 9);
+        // Rect, Shadow, Text, Line, Path, PushClip, PopClip, PushOpacity,
+        // PopOpacity, PushTransform, PopTransform.
+        assert_eq!(seen.len(), 11);
     }
 
     #[test]
@@ -819,8 +959,10 @@ mod tests {
             let mut depth = 0i32;
             for cmd in fixture(name, &Fixed, 0, false).unwrap().commands {
                 match cmd {
-                    DrawCmd::PushClip { .. } | DrawCmd::PushOpacity(_) => depth += 1,
-                    DrawCmd::PopClip | DrawCmd::PopOpacity => depth -= 1,
+                    DrawCmd::PushClip { .. }
+                    | DrawCmd::PushOpacity(_)
+                    | DrawCmd::PushTransform { .. } => depth += 1,
+                    DrawCmd::PopClip | DrawCmd::PopOpacity | DrawCmd::PopTransform => depth -= 1,
                     _ => {}
                 }
                 assert!(depth >= 0, "{name}");

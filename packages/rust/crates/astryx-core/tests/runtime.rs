@@ -916,6 +916,176 @@ fn a_held_direction_repeats_after_a_delay() {
     assert!(!rt.wants_frames());
 }
 
+// ---- Right to left ----
+
+struct Dir<M: Clone + 'static> {
+    view: Box<dyn Fn() -> Element<M>>,
+    sent: Vec<M>,
+}
+
+impl<M: Clone + 'static> App for Dir<M> {
+    type Msg = M;
+    fn view(&self) -> Element<M> {
+        (self.view)()
+    }
+    fn update(&mut self, msg: M) -> Command {
+        self.sent.push(msg);
+        Command::None
+    }
+    fn direction(&self) -> Direction {
+        Direction::Rtl
+    }
+}
+
+fn rtl<M: Clone + 'static>(view: impl Fn() -> Element<M> + 'static) -> Runtime<Dir<M>> {
+    Runtime::new(Dir {
+        view: Box::new(view),
+        sent: Vec::new(),
+    })
+}
+
+fn labels_x<A: App>(rt: &Runtime<A>) -> Vec<(String, f32)> {
+    a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .filter_map(|n| Some((n.label?, n.bounds.x)))
+        .collect()
+}
+
+#[test]
+fn rows_padding_and_text_mirror() {
+    let mut rt = rtl(|| {
+        VStack::<()>::new()
+            .padding_inline_start(Space::S8)
+            .child(
+                HStack::new()
+                    .gap(Space::S2)
+                    .child(Text::new("first"))
+                    .child(Text::new("second")),
+            )
+            .child(Text::new("aligned"))
+            .into()
+    });
+    let list = draw(&mut rt, 400, 300);
+    let x = labels_x(&rt);
+    let at = |l: &str| x.iter().find(|(n, _)| n == l).unwrap().1;
+    assert!(
+        at("first") > at("second"),
+        "the first child sits on the right"
+    );
+    let first = texts(&list).into_iter().find(|t| t.1 == "first").unwrap().0;
+    assert_eq!(
+        first.x + first.width,
+        400.0 - light().space.s8,
+        "inline-start padding is on the right"
+    );
+    let aligned = list.commands.iter().find_map(|c| match c {
+        DrawCmd::Text {
+            text, rect, align, ..
+        } if text == "aligned" => Some((*rect, *align)),
+        _ => None,
+    });
+    let (rect, align) = aligned.unwrap();
+    assert_eq!(align, TextAlign::End, "start alignment is the right edge");
+    assert_eq!(rect.x, 0.0);
+    assert_eq!(
+        rect.width,
+        400.0 - light().space.s8,
+        "inline-start padding is on the right"
+    );
+}
+
+#[test]
+fn switch_thumbs_travel_toward_inline_end() {
+    let t = light();
+    for (on, inset) in [(false, 4.0), (true, 2.0)] {
+        let mut rt = rtl(move || Switch::<()>::new("S", on).into());
+        let list = draw(&mut rt, 300, 100);
+        let track_color = if on {
+            t.color.accent
+        } else {
+            t.color.background_gray
+        };
+        let (track, _, _) = rect_filled(&list, c(track_color)).unwrap();
+        let (thumb, _, _) = rect_filled(&list, c(t.color.background_surface)).unwrap();
+        if on {
+            assert_eq!(thumb.x, track.x + inset, "on: at the left, the inline end");
+        } else {
+            assert_eq!(
+                thumb.x + thumb.width,
+                track.x + track.width - inset,
+                "off: at the right, the inline start"
+            );
+        }
+        assert_eq!(track.x + track.width, 300.0, "the track leads on the right");
+    }
+}
+
+#[test]
+fn right_to_left_rows_scroll_toward_the_left() {
+    let mut rt = rtl(|| {
+        // Avatars keep their size, so the row overflows.
+        HStack::new()
+            .gap(Space::S2)
+            .is_scrollable(true)
+            .children((0..20).map(|i| Avatar::new().alt(format!("B{i}")).on_click(i)))
+            .into()
+    });
+    draw(&mut rt, 200, 100);
+    let at =
+        |rt: &Runtime<Dir<i32>>, l: &str| labels_x(rt).into_iter().find(|(n, _)| n == l).unwrap().1;
+    let first = at(&rt, "B0");
+    assert!(
+        first > 150.0,
+        "the first button is at the right edge: {first}"
+    );
+    // Left is toward inline end: focus and scroll move left through the row.
+    for _ in 0..10 {
+        tap(&mut rt, Input::Left);
+        draw(&mut rt, 200, 100);
+    }
+    let focused = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.focused)
+        .unwrap();
+    assert_ne!(focused.label.as_deref(), Some("B0"));
+    assert!(
+        focused.bounds.x >= 0.0 && focused.bounds.x + focused.bounds.width <= 200.0,
+        "{:?}",
+        focused.bounds
+    );
+    assert!(
+        at(&rt, "B0") > first,
+        "the content moved right: {} then {}",
+        first,
+        at(&rt, "B0")
+    );
+    // A wheel scrolling toward the left (negative x) moves farther along too.
+    let before = at(&rt, "B0");
+    assert!(rt.scroll(Point { x: 100.0, y: 10.0 }, Point { x: -40.0, y: 0.0 }));
+    draw(&mut rt, 200, 100);
+    assert_eq!(at(&rt, "B0"), before + 40.0);
+}
+
+#[test]
+fn menus_line_up_with_the_trigger_start() {
+    let mut rt = rtl(|| {
+        HStack::new()
+            .h_align(StackJustify::Start)
+            .child(Selector::new("Fruit", ["apple", "banana"]).on_change(|v: String| v))
+            .into()
+    });
+    let t = light();
+    draw(&mut rt, 400, 300);
+    tap(&mut rt, Input::A);
+    let list = draw(&mut rt, 400, 300);
+    let (menu, _, _) = rect_filled(&list, c(t.color.background_popover)).unwrap();
+    assert_eq!(
+        menu.x + menu.width,
+        400.0,
+        "aligned to the trigger's right edge"
+    );
+}
+
 #[test]
 fn spinners_off_screen_cost_no_frames() {
     let list = |n: usize| {

@@ -52,6 +52,7 @@ mod tests {
 
     fn node(id: u64, role: Role, bounds: Rect, focusable: bool) -> A11yNode {
         A11yNode {
+            rtl: false,
             id,
             role,
             label: None,

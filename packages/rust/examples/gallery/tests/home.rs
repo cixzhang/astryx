@@ -1,6 +1,8 @@
 //! The gallery's home screen: sections as rows, A opens one, B comes back
 //! to the same row.
 
+mod settle;
+
 use astryx_core::testing::{draw, tap};
 use astryx_core::*;
 use astryx_gallery::{Gallery, Section};
@@ -35,9 +37,10 @@ fn home_lists_every_section() {
 fn a_opens_a_section_and_b_returns_to_its_row() {
     let mut rt = Runtime::new(Gallery::new());
     draw(&mut rt, 960, 640);
-    // Past the two header selectors, then down the list to the fifth row.
-    tap(&mut rt, Input::Next);
-    tap(&mut rt, Input::Next);
+    // Past the three header selectors, then down the list to the fifth row.
+    for _ in 0..3 {
+        tap(&mut rt, Input::Next);
+    }
     for _ in 0..4 {
         tap(&mut rt, Input::Down);
     }
@@ -106,7 +109,7 @@ fn home_goldens() {
     ] {
         let mut rt = Runtime::new(Gallery::new());
         assert_golden(
-            &astryx_headless::render_png(&mut rt, 960, 640, 1.0, inputs),
+            &settle::render_png(&mut rt, 960, 640, 1.0, inputs),
             dir.join(name),
             tolerance,
         );

@@ -14,6 +14,7 @@ pub(crate) fn tree<Msg>(
 ) -> Option<A11yNode> {
     let root = nodes.first()?;
     let mut out = A11yNode {
+        rtl: false,
         text_selection: None,
         secure: false,
         id: root.id,
@@ -55,6 +56,7 @@ fn collect<Msg>(
         }
     };
     let mut a = A11yNode {
+        rtl: false,
         text_selection: None,
         secure: sem.secure,
         id: node.id,

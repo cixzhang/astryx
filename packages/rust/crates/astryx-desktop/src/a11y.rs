@@ -136,6 +136,7 @@ mod tests {
 
     fn node(id: u64, role: Role, focused: bool, children: Vec<A11yNode>) -> A11yNode {
         A11yNode {
+            rtl: false,
             text_selection: None,
             secure: false,
             description: None,

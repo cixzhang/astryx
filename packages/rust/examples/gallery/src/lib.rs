@@ -128,6 +128,8 @@ pub enum Msg {
     Home,
     /// A text field's new value, by label.
     Field(&'static str, String),
+    /// `"ltr"` or `"rtl"`.
+    Direction(String),
 }
 
 /// The gallery's state.
@@ -136,6 +138,7 @@ pub struct Gallery {
     pub theme: &'static Theme,
     /// `None` follows the person's light or dark preference.
     pub mode: Option<Mode>,
+    pub direction: Direction,
     /// Shows one section alone, without the header, for screenshots.
     pub only: Option<Section>,
     /// The open section page; `None` is the home screen.
@@ -156,6 +159,7 @@ impl Default for Gallery {
         Gallery {
             theme: Theme::ASTRYX,
             mode: None,
+            direction: Direction::Ltr,
             only: None,
             page: None,
             switches: [false, true, false, true],
@@ -194,6 +198,11 @@ impl Gallery {
             only: Some(section),
             ..Self::default()
         }
+    }
+
+    pub fn with_direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
     }
 
     pub fn with_theme(mut self, theme: &'static Theme, mode: Mode) -> Self {
@@ -255,11 +264,22 @@ impl App for Gallery {
             Msg::Back => self.last = None,
             Msg::Open(section) => self.page = Some(section),
             Msg::Home => self.page = None,
+            Msg::Direction(dir) => {
+                self.direction = if dir == "rtl" {
+                    Direction::Rtl
+                } else {
+                    Direction::Ltr
+                }
+            }
             Msg::Field(label, value) => {
                 self.fields.insert(label, value);
             }
         }
         Command::None
+    }
+
+    fn direction(&self) -> Direction {
+        self.direction
     }
 
     fn theme(&self) -> ThemeChoice {
@@ -332,6 +352,20 @@ impl Gallery {
                     .value(mode_value(self.mode))
                     .on_change(Msg::Mode)
                     .id("mode"),
+            )
+            .child(
+                Selector::new(
+                    "Direction",
+                    [("ltr", "Left to right"), ("rtl", "Right to left")]
+                        .map(|(v, l)| SelectorOption::new(v).label(l)),
+                )
+                .value(if self.direction.is_rtl() {
+                    "rtl"
+                } else {
+                    "ltr"
+                })
+                .on_change(Msg::Direction)
+                .id("direction"),
             );
         if self.announced {
             let mode = match self.mode {
@@ -392,7 +426,9 @@ impl Gallery {
             group(
                 "Disabled, read only, loading, required, optional",
                 grid(vec![
-                    self.field("Disabled").is_disabled(true),
+                    self.field("Disabled")
+                        .is_disabled(true)
+                        .disabled_message("Ask an admin to change this"),
                     self.field("Read only").is_read_only(true),
                     self.field("Loading").is_loading(true),
                     self.field("Required")
@@ -423,7 +459,16 @@ impl Gallery {
             list = list.child(
                 ListItem::new(section.title())
                     .description(section.summary())
-                    .end_content(Icon::new("chevronRight").color(IconColor::Secondary))
+                    // A "go forward" chevron points toward inline end: the paired
+                    // glyph swaps under RTL, so it mirrors exactly once.
+                    .end_content(
+                        Icon::new(if self.direction.is_rtl() {
+                            "chevronLeft"
+                        } else {
+                            "chevronRight"
+                        })
+                        .color(IconColor::Secondary),
+                    )
                     .on_click(Msg::Open(section))
                     .id(section.slug()),
             );
@@ -505,7 +550,11 @@ impl Gallery {
                 "Disabled, loading, hidden label",
                 row()
                     .child(Switch::new("Disabled off", false).is_disabled(true))
-                    .child(Switch::new("Disabled on", true).is_disabled(true))
+                    .child(
+                        Switch::new("Disabled on", true)
+                            .is_disabled(true)
+                            .disabled_message("Managed by your organization")
+                    )
                     .child(Switch::new("Loading", true).is_loading(true))
                     .child(Switch::new("Hidden label", true).is_label_hidden(true)),
             ),
@@ -929,6 +978,22 @@ fn buttons() -> Element<Msg> {
                         Button::new("A very long button label that truncates inside a narrow row")
                             .on_click(Msg::Pressed("long"))
                     )
+                ),
+        ),
+        group(
+            "Tooltips show while focused; B hides them",
+            row()
+                .child(
+                    Button::new("Share")
+                        .tooltip("Copies a link to this page")
+                        .on_click(Msg::Pressed("share"))
+                )
+                .child(
+                    Button::new("Publish")
+                        .variant(ButtonVariant::Primary)
+                        .is_disabled(true)
+                        .tooltip("Add a title before publishing")
+                        .on_click(Msg::Pressed("publish")),
                 ),
         ),
     ]

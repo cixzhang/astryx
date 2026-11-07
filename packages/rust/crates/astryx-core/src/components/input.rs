@@ -297,6 +297,11 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
             field: Some((c.accent.into(), c.accent_muted.into())),
         })
         .sem(sem)
+        .tooltip(if f.is_disabled {
+            self.disabled_message.clone().or(self.label_tooltip.clone())
+        } else {
+            self.label_tooltip.clone()
+        })
         .opacity(if f.is_disabled { 0.5 } else { 1.0 });
         node.autofocus = self.has_auto_focus;
         cx.key(self.base.id.as_deref());
@@ -670,6 +675,12 @@ impl<Msg: Clone + 'static> Build<Msg> for Selector<Msg> {
         .interact(interact)
         .indicator(indicator)
         .sem(sem)
+        .press_scale()
+        .tooltip(if f.is_disabled {
+            self.disabled_message.clone()
+        } else {
+            None
+        })
         .opacity(if f.is_disabled { 0.5 } else { 1.0 });
         cx.key(self.base.id.as_deref());
         let trigger_ix = cx.begin(trigger);
@@ -773,16 +784,28 @@ impl<Msg: Clone + 'static> Menu<Msg> {
             let h = wanted.min(above.max(row));
             (self.anchor.y - gap - h, h)
         };
-        let width = self
-            .anchor
-            .width
-            .max(160.0)
-            .min(vw - self.anchor.x.max(0.0));
+        // The menu lines up with the trigger's inline start edge.
+        let width = if cx.rtl() {
+            self.anchor
+                .width
+                .max(160.0)
+                .min(self.anchor.x + self.anchor.width)
+        } else {
+            self.anchor
+                .width
+                .max(160.0)
+                .min(vw - self.anchor.x.max(0.0))
+        };
+        let left = if cx.rtl() {
+            self.anchor.x + self.anchor.width - width
+        } else {
+            self.anchor.x
+        };
         let radius = radii(t.radius.container);
         let mut menu = Node::new(Style {
             position: Position::Absolute,
             inset: taffy::Rect {
-                left: len_auto(self.anchor.x),
+                left: len_auto(left),
                 top: len_auto(top),
                 right: LengthPercentageAuto::auto(),
                 bottom: LengthPercentageAuto::auto(),

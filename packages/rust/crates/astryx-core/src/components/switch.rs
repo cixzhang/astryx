@@ -164,7 +164,12 @@ impl<Msg> Build<Msg> for Switch<Msg> {
                 )
                 .busy(self.is_loading),
             )
-            .sem(sem),
+            .sem(sem)
+            .tooltip(if f.is_disabled {
+                self.disabled_message.clone().or(self.label_tooltip.clone())
+            } else {
+                self.label_tooltip.clone()
+            }),
         );
 
         let pill = radii(t.radius.full);
@@ -191,15 +196,20 @@ impl<Msg> Build<Msg> for Switch<Msg> {
         cx.begin(
             Node::new(Style {
                 position: Position::Absolute,
-                inset: taffy::Rect {
-                    left: len_auto(x),
-                    top: len_auto(y),
-                    right: LengthPercentageAuto::auto(),
-                    bottom: LengthPercentageAuto::auto(),
+                // The thumb travels toward inline end, which mirrors under RTL.
+                inset: {
+                    let (left, right) = cx.inline(len_auto(x), LengthPercentageAuto::auto());
+                    taffy::Rect {
+                        left,
+                        right,
+                        top: len_auto(y),
+                        bottom: LengthPercentageAuto::auto(),
+                    }
                 },
                 size: square(side),
                 ..Style::default()
             })
+            .moves()
             .draw(Draw::Box(BoxDraw::fill(c.background_surface.into(), pill)))
             .indicator(Indicator {
                 ring: None,

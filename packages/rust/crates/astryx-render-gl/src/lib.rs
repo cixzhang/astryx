@@ -21,7 +21,9 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use astryx_core::{Color, DisplayList, DrawCmd, FrameInfo, Renderer, TextAlign, TextMeasure};
-use astryx_raster::geom::{fit_radii, path_segs, snap_line, snap_rect, snap_width, PxRect, Seg};
+use astryx_raster::geom::{
+    fit_radii, line_rect, path_segs, rect_px, snap_rect, width_px, Affine, PxRect, Seg,
+};
 use astryx_raster::path::{self, PathKey, PathStyle};
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
@@ -287,8 +289,15 @@ struct Layer {
 }
 
 enum Group {
-    Clip { previous: ClipState, layer: bool },
-    Opacity { layer: bool },
+    /// A transform, holding the one around it.
+    Transform(Affine),
+    Clip {
+        previous: ClipState,
+        layer: bool,
+    },
+    Opacity {
+        layer: bool,
+    },
 }
 
 /// Frames an unused layer texture stays in the pool.
@@ -323,6 +332,7 @@ pub struct GlRenderer {
     targets: Vec<Target>,
     groups: Vec<Group>,
     clip: ClipState,
+    transform: Affine,
     segs: Vec<Seg>,
     placed: Vec<GlyphDraw>,
     vertices: Vec<Vertex>,
@@ -388,6 +398,7 @@ impl GlRenderer {
                 targets: Vec::new(),
                 groups: Vec::new(),
                 clip: ClipState::NONE,
+                transform: Affine::IDENTITY,
                 segs: Vec::new(),
                 placed: Vec::new(),
                 vertices: Vec::new(),
@@ -489,6 +500,10 @@ impl GlRenderer {
             x1: (x + w as i32) as f32,
             y1: (y + h as i32) as f32,
         };
+        self.mask_area(area, region, color);
+    }
+
+    fn mask_area(&mut self, area: PxRect, region: Region, color: Color) {
         self.push(Quad {
             area,
             shape: area,
@@ -561,7 +576,101 @@ impl GlRenderer {
         self.mask(m.x, m.y, m.width, m.height, region, color);
     }
 
+    /// Closes groups until one that `done` accepts is closed. Groups opened
+    /// inside it and never closed close with it.
+    fn pop_until(&mut self, done: impl Fn(&Group) -> bool) {
+        while let Some(group) = self.pop_group() {
+            if done(&group) {
+                break;
+            }
+        }
+    }
+
     fn draw(&mut self, cmd: &DrawCmd, s: f32) {
+        match cmd {
+            DrawCmd::PushTransform {
+                origin,
+                scale,
+                translate,
+            } => {
+                let previous = self.transform;
+                self.transform = previous.then(*origin, *scale, *translate);
+                self.groups.push(Group::Transform(previous));
+                return;
+            }
+            DrawCmd::PopTransform => return self.pop_until(|g| matches!(g, Group::Transform(_))),
+            DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip { .. })),
+            DrawCmd::PopOpacity => return self.pop_until(|g| matches!(g, Group::Opacity { .. })),
+            _ => {}
+        }
+        let t = self.transform;
+        if t.is_identity() {
+            self.draw_moved(cmd, s, true);
+        } else if let (
+            DrawCmd::Shadow {
+                rect,
+                radii,
+                layers,
+            },
+            false,
+        ) = (cmd, t.snaps())
+        {
+            self.draw_scaled_shadow(rect, radii, layers, s);
+        } else {
+            self.draw_moved(&t.apply(cmd), s, t.snaps());
+        }
+    }
+
+    /// A shadow under a scaling transform: the untransformed mask on a
+    /// scaled quad. Blurred edges scale without visible loss, and the mask
+    /// stays cached while the scale animates.
+    fn draw_scaled_shadow(
+        &mut self,
+        rect: &astryx_core::Rect,
+        radii: &astryx_core::Radii,
+        layers: &[astryx_core::ShadowLayer],
+        s: f32,
+    ) {
+        let r = snap_rect(rect, s);
+        if r.is_empty() {
+            return;
+        }
+        let radii = fit_radii(radii, s, &r);
+        let t = self.transform;
+        let map = |x: f32, y: f32| (x * t.scale + t.offset.x * s, y * t.scale + t.offset.y * s);
+        for layer in layers.iter().rev() {
+            let key = ShadowKey::new(&r, radii, layer, s);
+            let mk = MaskKey::Shadow(key);
+            let Some(mask) = self.shadows.get(&key) else {
+                continue;
+            };
+            let (x0, y0) = map(r.x0 + mask.x as f32, r.y0 + mask.y as f32);
+            let (x1, y1) = map(
+                r.x0 + (mask.x + mask.width as i32) as f32,
+                r.y0 + (mask.y + mask.height as i32) as f32,
+            );
+            let area = PxRect { x0, y0, x1, y1 };
+            if !self.visible(IRect::outer(&area)) {
+                continue;
+            }
+            let region = match self.atlas.get(&mk) {
+                Some(region) => region,
+                None => self.atlas.insert(
+                    &self.gl,
+                    self.dialect,
+                    mk,
+                    mask.width,
+                    mask.height,
+                    &mask.data,
+                ),
+            };
+            self.mask_area(area, region, layer.color);
+        }
+    }
+
+    /// Draws a command already moved by the transform. Edges snap to whole
+    /// pixels only when `snap` is set.
+    fn draw_moved(&mut self, cmd: &DrawCmd, s: f32, snap: bool) {
         match cmd {
             DrawCmd::Rect {
                 rect,
@@ -569,7 +678,7 @@ impl GlRenderer {
                 fill,
                 stroke,
             } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 if r.is_empty() || !self.visible(IRect::outer(&r)) {
                     self.stats.culled += 1;
                     return;
@@ -579,7 +688,7 @@ impl GlRenderer {
                     self.shape(&r, radii, *fill, None);
                 }
                 if let Some((color, width)) = stroke {
-                    let w = snap_width(*width, s);
+                    let w = width_px(*width, s, snap);
                     if w > 0.0 && color.a > 0.0 {
                         let inner_empty = r.width() <= 2.0 * w || r.height() <= 2.0 * w;
                         self.shape(&r, radii, *color, if inner_empty { None } else { Some(w) });
@@ -591,7 +700,7 @@ impl GlRenderer {
                 radii,
                 layers,
             } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 let reach = layers
                     .iter()
                     .map(|l| {
@@ -653,7 +762,8 @@ impl GlRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.text.place(&layout, (rect.x, rect.y), s, &mut placed);
+                self.text
+                    .place(&layout, (rect.x, rect.y), s, snap, &mut placed);
                 for g in &placed {
                     let b = &g.bitmap;
                     let (x, y) = (g.pen_x + b.left, g.pen_y - b.top);
@@ -669,6 +779,25 @@ impl GlRenderer {
                     let key = MaskKey::Glyph(g.key);
                     let region = match self.atlas.get(&key) {
                         Some(region) => region,
+                        // Sizes under a scaling transform change every frame of
+                        // an animation, so they stay out of the lasting atlas.
+                        None if !snap => match self.atlas.insert_transient(
+                            &self.gl,
+                            self.dialect,
+                            b.width,
+                            b.height,
+                            &b.data,
+                        ) {
+                            Some(region) => region,
+                            None => self.atlas.insert(
+                                &self.gl,
+                                self.dialect,
+                                key,
+                                b.width,
+                                b.height,
+                                &b.data,
+                            ),
+                        },
                         None => self.atlas.insert(
                             &self.gl,
                             self.dialect,
@@ -688,7 +817,7 @@ impl GlRenderer {
                 color,
                 width,
             } => {
-                if let Some(r) = snap_line(*from, *to, *width, s) {
+                if let Some(r) = line_rect(*from, *to, *width, s, snap) {
                     if self.visible(IRect::outer(&r)) {
                         self.shape(&r, [0.0; 4], *color, None);
                     } else {
@@ -734,16 +863,9 @@ impl GlRenderer {
                 }
             }
             DrawCmd::PushClip { rect, radii } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 let radii = fit_radii(radii, s, &r);
                 self.push_clip(r, radii);
-            }
-            DrawCmd::PopClip => {
-                while let Some(group) = self.pop_group() {
-                    if matches!(group, Group::Clip { .. }) {
-                        break;
-                    }
-                }
             }
             DrawCmd::PushOpacity(opacity) => {
                 let layer = *opacity < 1.0;
@@ -753,13 +875,10 @@ impl GlRenderer {
                 }
                 self.groups.push(Group::Opacity { layer });
             }
-            DrawCmd::PopOpacity => {
-                while let Some(group) = self.pop_group() {
-                    if matches!(group, Group::Opacity { .. }) {
-                        break;
-                    }
-                }
-            }
+            DrawCmd::PopClip
+            | DrawCmd::PopOpacity
+            | DrawCmd::PushTransform { .. }
+            | DrawCmd::PopTransform => {}
         }
     }
 
@@ -851,6 +970,7 @@ impl GlRenderer {
                     self.finish_layer();
                 }
             }
+            Group::Transform(previous) => self.transform = previous,
         }
         Some(group)
     }
@@ -1145,6 +1265,7 @@ impl GlRenderer {
         };
         self.targets.clear();
         self.groups.clear();
+        self.transform = Affine::IDENTITY;
         self.targets.push(Target::new(Kind::Frame));
         for cmd in &list.commands {
             self.draw(cmd, scale);

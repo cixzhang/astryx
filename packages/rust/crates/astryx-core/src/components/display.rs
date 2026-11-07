@@ -633,15 +633,26 @@ impl<Msg> Build<Msg> for ProgressBar {
                 cx.leaf(
                     Node::new(Style {
                         position: Position::Absolute,
-                        inset: taffy::Rect {
-                            left: LengthPercentageAuto::percent(at),
-                            top: len_auto(0.0),
-                            right: LengthPercentageAuto::auto(),
-                            bottom: LengthPercentageAuto::auto(),
+                        // Marks measure from inline start, as the fill grows.
+                        inset: {
+                            let (left, right) = cx.inline(
+                                LengthPercentageAuto::percent(at),
+                                LengthPercentageAuto::auto(),
+                            );
+                            taffy::Rect {
+                                left,
+                                right,
+                                top: len_auto(0.0),
+                                bottom: LengthPercentageAuto::auto(),
+                            }
                         },
-                        margin: taffy::Rect {
-                            left: len_auto(-1.0),
-                            ..taffy::Rect::zero()
+                        margin: {
+                            let (left, right) = cx.inline(len_auto(-1.0), len_auto(0.0));
+                            taffy::Rect {
+                                left,
+                                right,
+                                ..taffy::Rect::zero()
+                            }
                         },
                         size: taffy::Size {
                             width: dim(2.0),

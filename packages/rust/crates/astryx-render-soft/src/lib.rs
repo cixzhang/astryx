@@ -14,7 +14,8 @@ pub use astryx_raster;
 pub use tiny_skia;
 
 use astryx_raster::geom::{
-    border_ring, fit_radii, path_segs, rounded_rect, snap_line, snap_rect, snap_width, PxRect, Seg,
+    border_ring, fit_radii, line_rect, path_segs, rect_px, rounded_rect, snap_rect, width_px,
+    Affine, PxRect, Seg,
 };
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
@@ -104,6 +105,8 @@ enum Group {
     Layer,
     /// An opacity group that needs no buffer.
     Pass,
+    /// A transform, holding the one around it.
+    Transform(Affine),
 }
 
 /// The CPU renderer. Owns its pixel buffer; read it with [`Self::pixmap`].
@@ -115,6 +118,7 @@ pub struct SoftRenderer {
     pool: Vec<Pixmap>,
     clips: Vec<Mask>,
     groups: Vec<Group>,
+    transform: Affine,
     segs: Vec<Seg>,
     placed: Vec<GlyphDraw>,
 }
@@ -146,6 +150,7 @@ impl SoftRenderer {
             pool: Vec::new(),
             clips: Vec::new(),
             groups: Vec::new(),
+            transform: Affine::IDENTITY,
             segs: Vec::new(),
             placed: Vec::new(),
         }
@@ -274,11 +279,109 @@ impl SoftRenderer {
                 self.pool.push(layer);
             }
             Group::Pass => {}
+            Group::Transform(previous) => self.transform = previous,
         }
         Some(group)
     }
 
+    /// Closes groups until one that `done` accepts is closed. Groups opened
+    /// inside it and never closed close with it.
+    fn pop_until(&mut self, done: impl Fn(&Group) -> bool) {
+        while let Some(group) = self.pop_group() {
+            if done(&group) {
+                break;
+            }
+        }
+    }
+
     fn draw(&mut self, cmd: &DrawCmd, s: f32) {
+        match cmd {
+            DrawCmd::PushTransform {
+                origin,
+                scale,
+                translate,
+            } => {
+                let previous = self.transform;
+                self.transform = previous.then(*origin, *scale, *translate);
+                self.groups.push(Group::Transform(previous));
+                return;
+            }
+            DrawCmd::PopTransform => return self.pop_until(|g| matches!(g, Group::Transform(_))),
+            DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip)),
+            DrawCmd::PopOpacity => {
+                return self.pop_until(|g| matches!(g, Group::Layer | Group::Pass))
+            }
+            _ => {}
+        }
+        let t = self.transform;
+        if t.is_identity() {
+            self.draw_moved(cmd, s, true);
+        } else if let (
+            DrawCmd::Shadow {
+                rect,
+                radii,
+                layers,
+            },
+            false,
+        ) = (cmd, t.snaps())
+        {
+            self.draw_scaled_shadow(rect, radii, layers, s);
+        } else {
+            self.draw_moved(&t.apply(cmd), s, t.snaps());
+        }
+    }
+
+    /// A shadow under a scaling transform: the untransformed mask, scaled.
+    /// Blurred edges scale without visible loss, and the mask stays cached
+    /// while the scale animates.
+    fn draw_scaled_shadow(
+        &mut self,
+        rect: &astryx_core::Rect,
+        radii: &astryx_core::Radii,
+        layers: &[astryx_core::ShadowLayer],
+        s: f32,
+    ) {
+        let r = snap_rect(rect, s);
+        let radii = fit_radii(radii, s, &r);
+        let t = self.transform;
+        for layer in layers.iter().rev() {
+            let Some(mask) = self.shadows.get(&ShadowKey::new(&r, radii, layer, s)) else {
+                continue;
+            };
+            let Some(mut tinted) = Pixmap::new(mask.width, mask.height) else {
+                continue;
+            };
+            let color = premultiplied(layer.color);
+            for (px, &c) in tinted
+                .data_mut()
+                .as_chunks_mut::<4>()
+                .0
+                .iter_mut()
+                .zip(&mask.data)
+            {
+                *px = color.map(|v| div255(v as u32 * c as u32) as u8);
+            }
+            let (x, y) = (r.x0 + mask.x as f32, r.y0 + mask.y as f32);
+            let transform = Transform::from_row(
+                t.scale,
+                0.0,
+                0.0,
+                t.scale,
+                x * t.scale + t.offset.x * s,
+                y * t.scale + t.offset.y * s,
+            );
+            let paint = PixmapPaint {
+                quality: tiny_skia::FilterQuality::Bilinear,
+                ..PixmapPaint::default()
+            };
+            let (target, clip) = self.target();
+            target.draw_pixmap(0, 0, tinted.as_ref(), &paint, transform, clip);
+        }
+    }
+
+    /// Draws a command already moved by the transform. Edges snap to whole
+    /// pixels only when `snap` is set.
+    fn draw_moved(&mut self, cmd: &DrawCmd, s: f32, snap: bool) {
         match cmd {
             DrawCmd::Rect {
                 rect,
@@ -286,7 +389,7 @@ impl SoftRenderer {
                 fill,
                 stroke,
             } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 if r.is_empty() {
                     return;
                 }
@@ -297,7 +400,7 @@ impl SoftRenderer {
                     self.fill(FillRule::Winding, *fill);
                 }
                 if let Some((color, width)) = stroke {
-                    let w = snap_width(*width, s);
+                    let w = width_px(*width, s, snap);
                     if w > 0.0 && color.a > 0.0 {
                         self.segs.clear();
                         let ring = border_ring(&r, radii, w, &mut self.segs);
@@ -317,7 +420,7 @@ impl SoftRenderer {
                 radii,
                 layers,
             } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 let radii = fit_radii(radii, s, &r);
                 // CSS paints the first layer on top.
                 for layer in layers.iter().rev() {
@@ -349,7 +452,8 @@ impl SoftRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.text.place(&layout, (rect.x, rect.y), s, &mut placed);
+                self.text
+                    .place(&layout, (rect.x, rect.y), s, snap, &mut placed);
                 let color = premultiplied(*color);
                 let (target, clip) = self.target();
                 for g in &placed {
@@ -373,7 +477,7 @@ impl SoftRenderer {
                 color,
                 width,
             } => {
-                if let Some(r) = snap_line(*from, *to, *width, s) {
+                if let Some(r) = line_rect(*from, *to, *width, s, snap) {
                     self.fill_px_rect(&r, *color);
                 } else {
                     self.segs.clear();
@@ -397,26 +501,15 @@ impl SoftRenderer {
                 }
             }
             DrawCmd::PushClip { rect, radii } => {
-                let r = snap_rect(rect, s);
+                let r = rect_px(rect, s, snap);
                 let radii = fit_radii(radii, s, &r);
                 self.push_clip(&r, radii);
             }
-            DrawCmd::PopClip => {
-                // Closes groups opened inside the clip and never closed.
-                while let Some(group) = self.pop_group() {
-                    if matches!(group, Group::Clip) {
-                        break;
-                    }
-                }
-            }
             DrawCmd::PushOpacity(opacity) => self.push_opacity(*opacity),
-            DrawCmd::PopOpacity => {
-                while let Some(group) = self.pop_group() {
-                    if !matches!(group, Group::Clip) {
-                        break;
-                    }
-                }
-            }
+            DrawCmd::PopClip
+            | DrawCmd::PopOpacity
+            | DrawCmd::PushTransform { .. }
+            | DrawCmd::PopTransform => {}
         }
     }
 
@@ -429,6 +522,7 @@ impl SoftRenderer {
         }
         self.base.fill(skia_color(list.clear));
         self.shadows.begin_frame();
+        self.transform = Affine::IDENTITY;
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
         for cmd in &list.commands {
             self.draw(cmd, scale);

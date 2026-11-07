@@ -199,6 +199,8 @@ impl<Msg> Build<Msg> for Button<Msg> {
                 Some(c.overlay_pressed.into()),
             ))
             .sem(sem)
+            .press_scale()
+            .tooltip(self.tooltip)
             .opacity(if self.is_disabled { 0.5 } else { 1.0 });
         cx.key(self.base.id.as_deref());
         cx.begin(node);

@@ -108,6 +108,8 @@ fn build_stack<Msg>(
             y: Overflow::Scroll,
         }
     };
+    // Inline start is the right edge in a right-to-left region.
+    let (inline_left, inline_right) = cx.inline(p.padding_inline_start, p.padding_inline_end);
     let style = Style {
         flex_direction: direction,
         flex_wrap: match p.wrap {
@@ -120,8 +122,8 @@ fn build_stack<Msg>(
             height: gap,
         },
         padding: taffy::Rect {
-            left: edge(p.padding_inline_start, p.padding_inline),
-            right: edge(p.padding_inline_end, p.padding_inline),
+            left: edge(inline_left, p.padding_inline),
+            right: edge(inline_right, p.padding_inline),
             top: edge(p.padding_block_start, p.padding_block),
             bottom: edge(p.padding_block_end, p.padding_block),
         },

@@ -46,6 +46,7 @@ impl Surface for Field {
     }
     fn accessibility(&self) -> Option<A11yNode> {
         Some(A11yNode {
+            rtl: false,
             text_selection: None,
             secure: false,
             id: 1,

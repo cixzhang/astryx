@@ -5,7 +5,9 @@
 use astryx_core::{Input, Mode, Runtime, Theme};
 use astryx_gallery::{Gallery, Section};
 use astryx_headless::golden::{assert_golden, Tolerance};
-use astryx_headless::render_png;
+mod settle;
+
+use settle::render_png;
 use std::path::PathBuf;
 
 // Antialiasing may round differently on other CPUs; layout may not move.
@@ -125,6 +127,53 @@ fn header_at_scale_3() {
     assert_golden(
         &png,
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens/header@3x.png"),
+        TOLERANCE,
+    );
+}
+
+#[test]
+fn tooltip_states() {
+    use Input::Next;
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
+    // Twenty-one stops in reading order reach the Share button.
+    let to_share: Vec<Input> = std::iter::repeat_n(Next, 21).collect();
+    for (inputs, name) in [
+        (to_share.clone(), "tooltip-button.png"),
+        (
+            [to_share.clone(), vec![Next]].concat(),
+            "tooltip-disabled-reason.png",
+        ),
+        ([to_share, vec![Input::B]].concat(), "tooltip-dismissed.png"),
+    ] {
+        let mut rt = Runtime::new(Gallery::section(Section::Buttons));
+        let png = render_png(&mut rt, SIZE.0, SIZE.1, 1.0, &inputs);
+        assert_golden(&png, dir.join(name), TOLERANCE);
+    }
+}
+
+#[test]
+fn right_to_left_sections() {
+    use astryx_core::Direction;
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
+    for section in [Section::Switches, Section::ListItems, Section::ProgressBars] {
+        for (mode, m) in [(Mode::Light, "light"), (Mode::Dark, "dark")] {
+            let gallery = Gallery::section(section)
+                .with_theme(Theme::ASTRYX, mode)
+                .with_direction(Direction::Rtl);
+            let mut rt = Runtime::new(gallery);
+            let png = render_png(&mut rt, SIZE.0, SIZE.1, 1.0, &[]);
+            assert_golden(
+                &png,
+                dir.join(format!("{}-rtl-{m}.png", section.slug())),
+                TOLERANCE,
+            );
+        }
+    }
+    // The home screen, with its forward chevrons swapped.
+    let mut rt = Runtime::new(Gallery::new().with_direction(Direction::Rtl));
+    assert_golden(
+        &render_png(&mut rt, 960, 640, 1.0, &[]),
+        dir.join("home-rtl.png"),
         TOLERANCE,
     );
 }

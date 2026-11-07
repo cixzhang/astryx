@@ -109,6 +109,8 @@ impl Layout {
             if let Some(axis) = node.scroll {
                 let b = self.boxes[ix];
                 let pad = self.tree.layout(self.ids[ix]).expect("layout").padding;
+                // A right-to-left row overflows past its left edge instead.
+                let rtl_row = axis == Axis::Horizontal && node.rtl;
                 let end = node
                     .children
                     .iter()
@@ -116,6 +118,7 @@ impl Layout {
                         let r = self.boxes[c as usize];
                         match axis {
                             Axis::Vertical => r.y + r.height - b.y + pad.bottom,
+                            Axis::Horizontal if rtl_row => b.x + b.width - r.x + pad.left,
                             Axis::Horizontal => r.x + r.width - b.x + pad.right,
                         }
                     })
@@ -154,6 +157,8 @@ impl Layout {
                     .clamp(0.0, self.overflow[ix]);
                 match axis {
                     Axis::Vertical => dy += offset,
+                    // Scrolling toward inline end moves the content right.
+                    Axis::Horizontal if node.rtl => dx -= offset,
                     Axis::Horizontal => dx += offset,
                 }
             }

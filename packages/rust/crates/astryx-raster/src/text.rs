@@ -431,7 +431,12 @@ impl TextEngine {
             .size(f32::from_bits(key.size))
             .hint(false)
             .build();
-        let offset = Vector::new(key.subpixel as f32 / SUBPIXEL_STEPS as f32, 0.0);
+        // Low four bits step right, high four bits step down; font space points up.
+        let steps = SUBPIXEL_STEPS as f32;
+        let offset = Vector::new(
+            (key.subpixel & 15) as f32 / steps,
+            -((key.subpixel >> 4) as f32) / steps,
+        );
         let bitmap = match Render::new(&[Source::Outline])
             .format(Format::Alpha)
             .offset(offset)
@@ -461,31 +466,40 @@ impl TextEngine {
     }
 
     /// Places every glyph of a layout drawn with its box at `origin` (logical
-    /// points) and `scale` physical pixels per point. Baselines snap to whole
-    /// pixels; horizontal positions keep subpixel precision.
+    /// points) and `scale` physical pixels per point. Horizontal positions
+    /// keep subpixel precision. Baselines snap to whole pixels when `snap` is
+    /// set, else they keep subpixel precision too, so moving text glides.
     pub fn place(
         &self,
         layout: &TextLayout,
         origin: (f32, f32),
         scale: f32,
+        snap: bool,
         out: &mut Vec<GlyphDraw>,
     ) {
         let size = (layout.size * scale).to_bits();
+        let steps = SUBPIXEL_STEPS as f32;
+        // Splits a position into a whole pixel and a quarter-pixel step.
+        let split = |v: f32| {
+            let mut whole = v.floor();
+            let mut step = ((v - whole) * steps).round() as u32;
+            if step == SUBPIXEL_STEPS {
+                whole += 1.0;
+                step = 0;
+            }
+            (whole as i32, step as u8)
+        };
         for line in &layout.lines {
-            let baseline = ((origin.1 + line.baseline) * scale).round();
+            let baseline = (origin.1 + line.baseline) * scale;
+            let baseline = if snap { baseline.round() } else { baseline };
             for g in &line.glyphs {
-                let x = (origin.0 + line.x + g.x) * scale;
-                let mut pen_x = x.floor();
-                let mut subpixel = ((x - pen_x) * SUBPIXEL_STEPS as f32).round() as u32;
-                if subpixel == SUBPIXEL_STEPS {
-                    pen_x += 1.0;
-                    subpixel = 0;
-                }
+                let (pen_x, sx) = split((origin.0 + line.x + g.x) * scale);
+                let (pen_y, sy) = split(baseline - g.y * scale);
                 let key = GlyphKey {
                     face: g.face,
                     id: g.id,
                     size,
-                    subpixel: subpixel as u8,
+                    subpixel: sx | (sy << 4),
                 };
                 let bitmap = self.glyph(key);
                 if bitmap.width == 0 || bitmap.height == 0 {
@@ -494,8 +508,8 @@ impl TextEngine {
                 out.push(GlyphDraw {
                     key,
                     bitmap,
-                    pen_x: pen_x as i32,
-                    pen_y: (baseline - g.y * scale).round() as i32,
+                    pen_x,
+                    pen_y,
                 });
             }
         }
@@ -666,6 +680,7 @@ pub struct GlyphKey {
     pub id: u16,
     /// Pixel size as `f32` bits.
     pub size: u32,
+    /// Quarter-pixel offsets: right in the low four bits, down in the high four.
     pub subpixel: u8,
 }
 
@@ -839,11 +854,32 @@ mod tests {
     }
 
     #[test]
+    fn unsnapped_baselines_move_ink_by_subpixels() {
+        let engine = engine();
+        let layout = engine.layout("H", &style(16.0, 400), None, TextAlign::Start);
+        // Vertical center of ink, in frame pixels.
+        let ink_y = |y: f32| {
+            let mut out = Vec::new();
+            engine.place(&layout, (0.0, y), 2.0, false, &mut out);
+            let g = &out[0];
+            let (mut sum, mut weight) = (0.0f64, 0.0f64);
+            for (i, &a) in g.bitmap.data.iter().enumerate() {
+                let row = (i as u32 / g.bitmap.width) as f64;
+                sum += (g.pen_y - g.bitmap.top) as f64 * a as f64 + row * a as f64;
+                weight += a as f64;
+            }
+            sum / weight
+        };
+        let moved = ink_y(0.25) - ink_y(0.0);
+        assert!((moved - 0.5).abs() < 0.1, "moved {moved} px");
+    }
+
+    #[test]
     fn glyphs_rasterize() {
         let engine = engine();
         let layout = engine.layout("Ag", &style(16.0, 400), None, TextAlign::Start);
         let mut out = Vec::new();
-        engine.place(&layout, (0.0, 0.0), 2.0, &mut out);
+        engine.place(&layout, (0.0, 0.0), 2.0, true, &mut out);
         assert_eq!(out.len(), 2);
         assert!(out.iter().all(|g| g.bitmap.data.iter().any(|&a| a > 200)));
     }

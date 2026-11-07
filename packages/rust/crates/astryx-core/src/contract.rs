@@ -178,6 +178,14 @@ pub enum DrawCmd {
     /// Multiply the alpha of all following commands until `PopOpacity`.
     PushOpacity(f32),
     PopOpacity,
+    /// Scale following commands about `origin`, then translate them by `translate`,
+    /// until `PopTransform`. Used for press feedback and motion.
+    PushTransform {
+        origin: Point,
+        scale: f32,
+        translate: Point,
+    },
+    PopTransform,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -339,6 +347,9 @@ pub struct A11yNode {
     /// For text fields: the value is secret, such as a password. Platforms
     /// must not speak or copy it.
     pub secure: bool,
+    /// The node's content reads right to left. Accessibility direction must
+    /// match the visual direction.
+    pub rtl: bool,
     /// Set when changes to the node's text must be announced.
     pub live: Option<Live>,
     pub children: Vec<A11yNode>,

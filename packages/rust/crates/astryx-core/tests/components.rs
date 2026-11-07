@@ -1481,3 +1481,280 @@ fn fields_expose_their_caret_and_secrecy() {
         "offsets into the masked value"
     );
 }
+
+// ---- Tooltips ----
+
+#[test]
+fn a_focused_button_shows_its_tooltip_above_it() {
+    let t = light();
+    let mut rt = runtime(|| {
+        VStack::new()
+            .padding(Space::S10)
+            .padding_block_start(Space::S10)
+            .gap(Space::S10)
+            .h_align(StackAlign::Center)
+            .child(Text::new("Room above"))
+            .child(Button::new("Save").tooltip("Saves a draft").on_click(()))
+            .into()
+    });
+    let list = draw(&mut rt, 400, 300);
+    let button = a11y(&rt, Role::Button)[0].bounds;
+    let (bubble, radii, _) = rect_filled(&list, c(t.color.text_primary)).expect("tooltip surface");
+    assert_eq!(radii, Radii::all(t.radius.container));
+    assert_eq!(
+        bubble.y + bubble.height,
+        button.y - t.space.s1,
+        "space.s1 above the trigger"
+    );
+    assert!(
+        (bubble.x + bubble.width / 2.0 - (button.x + button.width / 2.0)).abs() <= 0.5,
+        "centered on the trigger"
+    );
+    let (words, style, color) = text(&list, "Saves a draft");
+    assert_eq!(
+        (color, style.size),
+        (c(t.color.background_surface), t.font.body.size)
+    );
+    assert_eq!(
+        (words.x - bubble.x, words.y - bubble.y),
+        (t.space.s2, t.space.s1)
+    );
+    // It is the last thing painted, above the focus ring.
+    assert!(matches!(list.commands.last(), Some(DrawCmd::Text { .. })));
+    assert_eq!(
+        a11y(&rt, Role::Button)[0].description.as_deref(),
+        Some("Saves a draft")
+    );
+}
+
+#[test]
+fn tooltips_flip_below_and_slide_inside_the_window() {
+    let t = light();
+    let mut rt = runtime(|| {
+        HStack::new()
+            .h_align(StackJustify::End)
+            .child(
+                Button::new("Edge")
+                    .tooltip("A tooltip whose words are long enough to wrap onto a second line")
+                    .on_click(()),
+            )
+            .into()
+    });
+    let list = draw(&mut rt, 400, 300);
+    let button = a11y(&rt, Role::Button)[0].bounds;
+    let (bubble, _, _) = rect_filled(&list, c(t.color.text_primary)).unwrap();
+    assert_eq!(
+        bubble.y,
+        button.y + button.height + t.space.s1,
+        "no room above, so below"
+    );
+    assert_eq!(
+        bubble.x + bubble.width,
+        400.0 - t.space.s4,
+        "slid inside the right edge"
+    );
+    assert!(bubble.width <= 300.0);
+    assert!(bubble.height > 2.0 * 20.0, "wrapped");
+}
+
+#[test]
+fn b_dismisses_a_tooltip_until_focus_moves() {
+    let t = light();
+    let mut rt = runtime(|| {
+        VStack::new()
+            .padding(Space::S10)
+            .gap(Space::S2)
+            .child(Button::new("One").tooltip("First").on_click(1))
+            .child(Button::new("Two").tooltip("Second").on_click(2))
+            .into()
+    });
+    draw(&mut rt, 400, 300);
+    tap(&mut rt, Input::B);
+    let list = draw(&mut rt, 400, 300);
+    assert!(
+        rect_filled(&list, c(t.color.text_primary)).is_none(),
+        "dismissed"
+    );
+    tap(&mut rt, Input::Down);
+    let list = draw(&mut rt, 400, 300);
+    assert_eq!(
+        text(&list, "Second").2,
+        c(t.color.background_surface),
+        "a new focus shows its own"
+    );
+    tap(&mut rt, Input::Up);
+    let list = draw(&mut rt, 400, 300);
+    assert!(
+        texts(&list).iter().any(|t| t.1 == "First"),
+        "and coming back shows it again"
+    );
+}
+
+#[test]
+fn disabled_reasons_and_label_tips_show_for_fields() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .padding(Space::S10)
+            .gap(Space::S4)
+            .child(
+                Switch::new("Sync", false)
+                    .is_disabled(true)
+                    .disabled_message("Sign in to sync")
+                    .label_tooltip("Keeps devices alike")
+                    .on_change(|_| ()),
+            )
+            .child(
+                Switch::new("Wi-Fi", true)
+                    .label_tooltip("Uses your saved networks")
+                    .on_change(|_| ()),
+            )
+            .child(
+                Selector::new("Fruit", ["apple"])
+                    .is_disabled(true)
+                    .disabled_message("Out of season"),
+            )
+            .into()
+    });
+    let list = draw(&mut rt, 400, 400);
+    assert!(
+        texts(&list).iter().any(|t| t.1 == "Sign in to sync"),
+        "a disabled control shows its reason"
+    );
+    tap(&mut rt, Input::Down);
+    let list = draw(&mut rt, 400, 400);
+    assert!(texts(&list)
+        .iter()
+        .any(|t| t.1 == "Uses your saved networks"));
+    let switches = a11y(&rt, Role::Switch);
+    assert_eq!(switches[0].description.as_deref(), Some("Sign in to sync"));
+    assert_eq!(
+        a11y(&rt, Role::ComboBox)[0].description.as_deref(),
+        Some("Out of season")
+    );
+}
+
+#[test]
+fn a_tooltip_that_repeats_the_name_is_not_read_twice() {
+    let mut rt = runtime(|| Button::new("Save").tooltip("Save").on_click(()).into());
+    draw(&mut rt, 300, 200);
+    assert_eq!(a11y(&rt, Role::Button)[0].description, None);
+}
+
+// ---- Press scale and thumb travel ----
+
+fn transforms(list: &DisplayList) -> Vec<(Point, f32, Point)> {
+    list.commands
+        .iter()
+        .filter_map(|c| match c {
+            DrawCmd::PushTransform {
+                origin,
+                scale,
+                translate,
+            } => Some((*origin, *scale, *translate)),
+            _ => None,
+        })
+        .collect()
+}
+
+fn step<A: App>(rt: &mut Runtime<A>, dt: f32) -> DisplayList {
+    rt.frame(
+        &FrameInfo {
+            width: 400,
+            height: 300,
+            scale: 1.0,
+            dt,
+        },
+        &measure(),
+    )
+}
+
+#[test]
+fn a_pressed_button_scales_to_0_98_and_back() {
+    let mut rt = runtime(|| Button::new("Ok").on_click(()).into());
+    step(&mut rt, 0.0);
+    rt.input(Input::A, InputPhase::Pressed);
+    let start = step(&mut rt, 0.0);
+    let button = a11y(&rt, Role::Button)[0].bounds;
+    let mid = step(&mut rt, 0.06);
+    let s = transforms(&mid);
+    assert_eq!(s.len(), 2, "the button and its ring");
+    assert!(s[0].1 < 1.0 && s[0].1 > 0.98, "{s:?}");
+    assert_eq!(
+        s[0].0,
+        Point {
+            x: button.x + button.width / 2.0,
+            y: button.y + button.height / 2.0
+        }
+    );
+    assert!(transforms(&start).iter().all(|t| t.1 == 1.0));
+    let held = step(&mut rt, 0.3);
+    assert!((transforms(&held)[0].1 - 0.98).abs() < 1e-4);
+    assert!(!rt.wants_frames() || rt.app().sent.is_empty());
+    rt.input(Input::A, InputPhase::Released);
+    step(&mut rt, 0.06);
+    let back = step(&mut rt, 0.3);
+    assert!(transforms(&back).is_empty(), "back at rest, no transform");
+    assert!(!rt.wants_frames());
+}
+
+#[test]
+fn no_press_scale_under_reduced_motion_or_when_disabled() {
+    for (reduced, disabled) in [(true, false), (false, true)] {
+        let mut rt = runtime(move || Button::new("Ok").is_disabled(disabled).on_click(()).into());
+        rt.set_preferences(&Preferences {
+            reduced_motion: reduced,
+            ..Preferences::default()
+        });
+        step(&mut rt, 0.0);
+        rt.input(Input::A, InputPhase::Pressed);
+        step(&mut rt, 0.0);
+        assert!(transforms(&step(&mut rt, 0.1)).is_empty());
+    }
+}
+
+struct Toggle {
+    on: bool,
+}
+
+impl App for Toggle {
+    type Msg = bool;
+    fn view(&self) -> Element<bool> {
+        Switch::new("Wi-Fi", self.on).on_change(|v| v).into()
+    }
+    fn update(&mut self, msg: bool) -> Command {
+        self.on = msg;
+        Command::None
+    }
+}
+
+#[test]
+fn the_switch_thumb_slides_to_its_new_side() {
+    for reduced in [false, true] {
+        let mut rt = Runtime::new(Toggle { on: false });
+        rt.set_preferences(&Preferences {
+            reduced_motion: reduced,
+            ..Preferences::default()
+        });
+        step(&mut rt, 0.0);
+        tap(&mut rt, Input::A);
+        let first = step(&mut rt, 0.0);
+        let mid = step(&mut rt, 0.08);
+        if reduced {
+            assert!(
+                transforms(&first).is_empty() && transforms(&mid).is_empty(),
+                "lands at once"
+            );
+            continue;
+        }
+        let at_start = transforms(&first);
+        assert_eq!(at_start.len(), 1);
+        // md: the thumb moves from x 4 to x 18 and grows from 16 to 20.
+        assert_eq!(at_start[0].2.x, -14.0, "drawn where it was");
+        assert!((at_start[0].1 - 0.8).abs() < 1e-4);
+        let m = transforms(&mid)[0];
+        assert!(m.2.x > -14.0 && m.2.x < 0.0, "{m:?}");
+        assert!(rt.wants_frames());
+        assert!(transforms(&step(&mut rt, 0.3)).is_empty());
+        assert!(!rt.wants_frames());
+    }
+}

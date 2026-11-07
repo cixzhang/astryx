@@ -215,6 +215,7 @@ fn text_style(size: f32, weight: u16) -> TextStyle {
 
 fn node(id: u64, role: Role, label: Option<String>, bounds: Rect) -> A11yNode {
     A11yNode {
+        rtl: false,
         text_selection: None,
         secure: false,
         description: None,

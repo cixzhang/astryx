@@ -7,7 +7,7 @@
 //! behavior, and semantics.
 
 use crate::contract::{Color, Live, PathCmd, Preferences, Radii, Role, TextAlign, TextStyle};
-use crate::theme::ThemeChoice;
+use crate::theme::{Direction, ThemeChoice};
 use astryx_tokens::{ShadowLayer as TokenShadow, Tokens};
 use taffy::Style;
 
@@ -28,6 +28,17 @@ impl<Msg: 'static> Element<Msg> {
             }),
         }
     }
+
+    /// Lays out this element and everything inside it in `direction`, as an
+    /// element with its own `dir` does on the web.
+    pub fn direction(self, direction: Direction) -> Self {
+        Element {
+            build: Box::new(Directed {
+                direction,
+                child: self,
+            }),
+        }
+    }
 }
 
 /// Builds one component into nodes.
@@ -37,6 +48,24 @@ pub(crate) trait Build<Msg> {
 
 pub(crate) fn element<Msg, B: Build<Msg> + 'static>(b: B) -> Element<Msg> {
     Element { build: Box::new(b) }
+}
+
+struct Directed<Msg> {
+    direction: Direction,
+    child: Element<Msg>,
+}
+
+impl<Msg> Build<Msg> for Directed<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let saved = std::mem::replace(&mut cx.direction, self.direction);
+        cx.begin(Node::new(Style {
+            flex_direction: taffy::FlexDirection::Column,
+            ..Style::default()
+        }));
+        cx.child(self.child);
+        cx.end();
+        cx.direction = saved;
+    }
 }
 
 struct Themed<Msg> {
@@ -379,6 +408,15 @@ pub(crate) struct Node<Msg> {
     pub trap: bool,
     /// Takes focus when focus has to move into its trap.
     pub autofocus: bool,
+    /// Words a tooltip shows while this focus stop has focus.
+    pub tooltip: Option<String>,
+    /// Built in a right-to-left region.
+    pub rtl: bool,
+    /// Scales down while pressed, as Astryx's standalone Button does.
+    pub press_scale: bool,
+    /// Moves and resizes smoothly when a rebuild places it elsewhere in its
+    /// parent, as a CSS transition on its transform and size does.
+    pub moves: bool,
 }
 
 impl<Msg> Node<Msg> {
@@ -399,6 +437,10 @@ impl<Msg> Node<Msg> {
             slide: None,
             trap: false,
             autofocus: false,
+            tooltip: None,
+            rtl: false,
+            press_scale: false,
+            moves: false,
         }
     }
     pub fn draw(mut self, draw: Draw) -> Self {
@@ -419,6 +461,29 @@ impl<Msg> Node<Msg> {
     }
     pub fn interact(mut self, interact: Interact<Msg>) -> Self {
         self.interact = Some(interact);
+        self
+    }
+    pub fn press_scale(mut self) -> Self {
+        self.press_scale = true;
+        self
+    }
+    pub fn moves(mut self) -> Self {
+        self.moves = true;
+        self
+    }
+    /// A tooltip shown while the node has focus. Its words join the node's
+    /// description, unless they repeat its name.
+    pub fn tooltip(mut self, tip: Option<String>) -> Self {
+        let tip = tip.filter(|t| !t.trim().is_empty());
+        if let (Some(t), Some(sem)) = (&tip, self.sem.as_mut()) {
+            if sem.label.as_deref().map(str::trim) != Some(t.trim()) {
+                sem.description = Some(match sem.description.take() {
+                    Some(d) => format!("{d}, {t}"),
+                    None => t.clone(),
+                });
+            }
+        }
+        self.tooltip = tip;
         self
     }
 }
@@ -451,6 +516,8 @@ pub(crate) struct BuildCx<Msg> {
     pub animating: bool,
     /// The person's preferences: color scheme, contrast, and motion.
     pub prefs: Preferences,
+    /// The writing direction of the region being built.
+    pub direction: Direction,
     /// The padding of the nearest container that publishes it (Card), for
     /// full-bleed children.
     pub container_padding: Vec<f32>,
@@ -472,6 +539,7 @@ impl<Msg> BuildCx<Msg> {
             inherit: vec![Inherited::root(tokens)],
             animating: false,
             prefs: Preferences::default(),
+            direction: Direction::Ltr,
             container_padding: Vec::new(),
             popup: None,
             viewport: (0.0, 0.0),
@@ -504,6 +572,10 @@ impl<Msg> BuildCx<Msg> {
         let local = self.key.take().map_or(sibling, |k| k ^ KEYED);
         node.id = mix(parent_id, local);
         node.parent = parent;
+        if self.direction.is_rtl() {
+            node.rtl = true;
+            node.style.direction = taffy::Direction::Rtl;
+        }
         if let Some(p) = parent {
             self.nodes[p as usize].children.push(ix);
         }
@@ -539,6 +611,20 @@ impl<Msg> BuildCx<Msg> {
             })
             .sem(sem),
         );
+    }
+
+    pub fn rtl(&self) -> bool {
+        self.direction.is_rtl()
+    }
+
+    /// The physical (left, right) pair for logical (start, end) values in
+    /// the region being built.
+    pub fn inline<T>(&self, start: T, end: T) -> (T, T) {
+        if self.rtl() {
+            (end, start)
+        } else {
+            (start, end)
+        }
     }
 
     /// The id of the node `begin` returned.

@@ -1,7 +1,7 @@
 //! Geometry in physical pixels that every renderer shares, so edges land on
 //! the same pixels whichever backend draws them.
 
-use astryx_core::{PathCmd, Point, Radii, Rect};
+use astryx_core::{DrawCmd, PathCmd, Point, Radii, Rect, ShadowLayer};
 
 /// One path segment in physical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -65,6 +65,199 @@ pub fn snap_rect(rect: &Rect, scale: f32) -> PxRect {
         y0: (rect.y * scale).round(),
         x1: ((rect.x + rect.width) * scale).round(),
         y1: ((rect.y + rect.height) * scale).round(),
+    }
+}
+
+/// Maps a logical rectangle to physical pixels, on the pixel grid when
+/// `snap` is set.
+pub fn rect_px(rect: &Rect, scale: f32, snap: bool) -> PxRect {
+    if snap {
+        snap_rect(rect, scale)
+    } else {
+        PxRect {
+            x0: rect.x * scale,
+            y0: rect.y * scale,
+            x1: (rect.x + rect.width) * scale,
+            y1: (rect.y + rect.height) * scale,
+        }
+    }
+}
+
+/// A border or line width in physical pixels, whole pixels when `snap` is set.
+pub fn width_px(width: f32, scale: f32, snap: bool) -> f32 {
+    if snap {
+        snap_width(width, scale)
+    } else {
+        (width * scale).max(0.0)
+    }
+}
+
+/// An axis-aligned line as a filled rectangle, snapped to whole pixels when
+/// `snap` is set. Returns `None` for diagonal lines.
+pub fn line_rect(from: Point, to: Point, width: f32, scale: f32, snap: bool) -> Option<PxRect> {
+    if snap {
+        return snap_line(from, to, width, scale);
+    }
+    let w = width * scale;
+    if w <= 0.0 {
+        return None;
+    }
+    let (a, b) = ((from.x.min(to.x)) * scale, (from.x.max(to.x)) * scale);
+    let (c, d) = ((from.y.min(to.y)) * scale, (from.y.max(to.y)) * scale);
+    if from.y == to.y {
+        Some(PxRect {
+            x0: a,
+            y0: c - w / 2.0,
+            x1: b,
+            y1: c + w / 2.0,
+        })
+    } else if from.x == to.x {
+        Some(PxRect {
+            x0: a - w / 2.0,
+            y0: c,
+            x1: a + w / 2.0,
+            y1: d,
+        })
+    } else {
+        None
+    }
+}
+
+/// A uniform scale followed by a translation, in logical points:
+/// `p' = p * scale + offset`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Affine {
+    pub scale: f32,
+    pub offset: Point,
+}
+
+impl Affine {
+    pub const IDENTITY: Affine = Affine {
+        scale: 1.0,
+        offset: Point { x: 0.0, y: 0.0 },
+    };
+
+    /// This transform applied after a `PushTransform` of `origin`, `scale`,
+    /// and `translate`.
+    pub fn then(self, origin: Point, scale: f32, translate: Point) -> Affine {
+        let inner = Point {
+            x: origin.x * (1.0 - scale) + translate.x,
+            y: origin.y * (1.0 - scale) + translate.y,
+        };
+        Affine {
+            scale: self.scale * scale,
+            offset: self.point(inner),
+        }
+    }
+
+    pub fn is_identity(&self) -> bool {
+        *self == Affine::IDENTITY
+    }
+
+    /// Pixel snapping holds while nothing is scaled.
+    pub fn snaps(&self) -> bool {
+        self.scale == 1.0
+    }
+
+    pub fn point(&self, p: Point) -> Point {
+        Point {
+            x: p.x * self.scale + self.offset.x,
+            y: p.y * self.scale + self.offset.y,
+        }
+    }
+
+    pub fn rect(&self, r: &Rect) -> Rect {
+        let p = self.point(Point { x: r.x, y: r.y });
+        Rect::new(p.x, p.y, r.width * self.scale, r.height * self.scale)
+    }
+
+    /// The command with its geometry moved. Shadow layers scale with their box.
+    pub fn apply(&self, cmd: &DrawCmd) -> DrawCmd {
+        let k = self.scale;
+        let radii = |r: &Radii| Radii(r.0.map(|v| v * k));
+        match cmd {
+            DrawCmd::Rect {
+                rect,
+                radii: r,
+                fill,
+                stroke,
+            } => DrawCmd::Rect {
+                rect: self.rect(rect),
+                radii: radii(r),
+                fill: *fill,
+                stroke: stroke.map(|(c, w)| (c, w * k)),
+            },
+            DrawCmd::Shadow {
+                rect,
+                radii: r,
+                layers,
+            } => DrawCmd::Shadow {
+                rect: self.rect(rect),
+                radii: radii(r),
+                layers: layers
+                    .iter()
+                    .map(|l| ShadowLayer {
+                        x: l.x * k,
+                        y: l.y * k,
+                        blur: l.blur * k,
+                        spread: l.spread * k,
+                        ..*l
+                    })
+                    .collect(),
+            },
+            DrawCmd::Text {
+                rect,
+                text,
+                style,
+                color,
+                align,
+            } => DrawCmd::Text {
+                rect: self.rect(rect),
+                text: text.clone(),
+                style: astryx_core::TextStyle {
+                    size: style.size * k,
+                    ..*style
+                },
+                color: *color,
+                align: *align,
+            },
+            DrawCmd::Line {
+                from,
+                to,
+                color,
+                width,
+            } => DrawCmd::Line {
+                from: self.point(*from),
+                to: self.point(*to),
+                color: *color,
+                width: width * k,
+            },
+            DrawCmd::Path {
+                commands,
+                fill,
+                stroke,
+            } => DrawCmd::Path {
+                commands: commands
+                    .iter()
+                    .map(|c| match *c {
+                        PathCmd::MoveTo(a) => PathCmd::MoveTo(self.point(a)),
+                        PathCmd::LineTo(a) => PathCmd::LineTo(self.point(a)),
+                        PathCmd::QuadTo(a, b) => PathCmd::QuadTo(self.point(a), self.point(b)),
+                        PathCmd::CubicTo(a, b, c) => {
+                            PathCmd::CubicTo(self.point(a), self.point(b), self.point(c))
+                        }
+                        PathCmd::Close => PathCmd::Close,
+                    })
+                    .collect(),
+                fill: *fill,
+                stroke: stroke.map(|(c, w)| (c, w * k)),
+            },
+            DrawCmd::PushClip { rect, radii: r } => DrawCmd::PushClip {
+                rect: self.rect(rect),
+                radii: radii(r),
+            },
+            other => other.clone(),
+        }
     }
 }
 
@@ -244,6 +437,51 @@ mod tests {
         assert_eq!(spread_radius(20.0, 10.0), 30.0);
         assert!((spread_radius(5.0, 10.0) - 13.75).abs() < 1e-4);
         assert_eq!(spread_radius(5.0, -10.0), 0.0);
+    }
+
+    #[test]
+    fn transforms_compose_like_nested_groups() {
+        let p = |x, y| Point { x, y };
+        // Scale 2 about (10, 10), then inside it move by (5, 0).
+        let t = Affine::IDENTITY.then(p(10.0, 10.0), 2.0, p(0.0, 0.0)).then(
+            p(0.0, 0.0),
+            1.0,
+            p(5.0, 0.0),
+        );
+        assert_eq!(t.point(p(10.0, 10.0)), p(20.0, 10.0));
+        assert_eq!(t.point(p(12.0, 10.0)), p(24.0, 10.0));
+        assert!(!t.snaps());
+        let moved = Affine::IDENTITY.then(p(0.0, 0.0), 1.0, p(3.5, 0.0));
+        assert!(moved.snaps());
+        assert_eq!(
+            moved.rect(&Rect::new(1.0, 2.0, 3.0, 4.0)),
+            Rect::new(4.5, 2.0, 3.0, 4.0)
+        );
+    }
+
+    #[test]
+    fn unsnapped_geometry_keeps_fractions() {
+        let r = Rect::new(1.25, 2.0, 3.0, 4.0);
+        assert_eq!(
+            rect_px(&r, 2.0, false),
+            PxRect {
+                x0: 2.5,
+                y0: 4.0,
+                x1: 8.5,
+                y1: 12.0
+            }
+        );
+        assert_eq!(
+            rect_px(&r, 2.0, true),
+            PxRect {
+                x0: 3.0,
+                y0: 4.0,
+                x1: 9.0,
+                y1: 12.0
+            }
+        );
+        assert_eq!(width_px(0.5, 1.0, false), 0.5);
+        assert_eq!(width_px(0.5, 1.0, true), 1.0);
     }
 
     #[test]

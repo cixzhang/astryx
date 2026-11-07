@@ -1,6 +1,8 @@
 //! Paints the laid-out node tree into a [`DisplayList`].
 
-use crate::contract::{Color, DisplayList, DrawCmd, PathCmd, Point, Radii, Rect};
+use std::collections::HashMap;
+
+use crate::contract::{Color, DisplayList, DrawCmd, PathCmd, Point, Radii, Rect, TextAlign};
 use crate::element::{Draw, Node};
 use crate::layout::{line_height, Layout};
 use crate::theme::{clamp_radii, shadow_layers};
@@ -21,6 +23,39 @@ pub(crate) struct PaintState {
     pub caret: Option<Caret>,
     /// Scroll indicators, drawn above everything.
     pub indicators: Vec<Indicator>,
+    /// The focused element's tooltip, drawn above everything.
+    pub tooltip: Option<Tooltip>,
+    /// Transforms by node index: the press scale and moving nodes on their way.
+    pub transforms: HashMap<usize, Transform>,
+}
+
+/// A node's transform: scale about `origin`, then translate.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Transform {
+    pub origin: Point,
+    pub scale: f32,
+    pub translate: Point,
+}
+
+impl Transform {
+    fn push(self) -> DrawCmd {
+        DrawCmd::PushTransform {
+            origin: self.origin,
+            scale: self.scale,
+            translate: self.translate,
+        }
+    }
+}
+
+/// A tooltip bubble: an inverted surface with wrapped text.
+pub(crate) struct Tooltip {
+    pub rect: Rect,
+    pub radii: Radii,
+    pub fill: Color,
+    pub text: String,
+    pub text_rect: Rect,
+    pub style: crate::contract::TextStyle,
+    pub color: Color,
 }
 
 /// A scroll container's position thumb.
@@ -89,6 +124,21 @@ pub(crate) fn paint<Msg>(
         paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
     }
     list.commands.extend(overlay);
+    if let Some(tip) = &state.tooltip {
+        list.commands.push(DrawCmd::Rect {
+            rect: tip.rect,
+            radii: tip.radii,
+            fill: tip.fill,
+            stroke: None,
+        });
+        list.commands.push(DrawCmd::Text {
+            rect: tip.text_rect,
+            text: tip.text.clone(),
+            style: tip.style,
+            color: tip.color,
+            align: crate::contract::TextAlign::Start,
+        });
+    }
     for indicator in &state.indicators {
         let faded = indicator.opacity < 1.0;
         if faded {
@@ -140,7 +190,13 @@ fn paint_node<Msg>(
     if let (Some(period), Some(p)) = (node.slide, node.parent) {
         let parent = rects[p as usize];
         let phase = (state.time % period) / period;
-        rect.x = parent.x + rect.width * (-1.0 + 3.5 * phase);
+        let travel = rect.width * (-1.0 + 3.5 * phase);
+        // The slide runs from inline start to inline end.
+        rect.x = if node.rtl {
+            parent.x + parent.width - rect.width - travel
+        } else {
+            parent.x + travel
+        };
     }
     let caret = state.caret.as_ref().filter(|c| c.text_node == ix);
     if let Some(c) = caret {
@@ -153,6 +209,10 @@ fn paint_node<Msg>(
         },
         None => owner,
     };
+    let transform = state.transforms.get(&ix).copied();
+    if let Some(t) = transform {
+        out.push(t.push());
+    }
     let faded = node.opacity < 1.0;
     if faded {
         out.push(DrawCmd::PushOpacity(node.opacity));
@@ -201,12 +261,18 @@ fn paint_node<Msg>(
             }
             let t = &crate::element::TextDraw { color, ..t.clone() };
             if t.color.a > 0.0 {
+                // Renderers align physically; start is the right edge under RTL.
+                let align = match (t.align, node.rtl) {
+                    (TextAlign::Start, true) => TextAlign::End,
+                    (TextAlign::End, true) => TextAlign::Start,
+                    (align, _) => align,
+                };
                 out.push(DrawCmd::Text {
                     rect,
                     text,
                     style: t.style,
                     color: t.color,
-                    align: t.align,
+                    align,
                 });
                 if t.strikethrough {
                     let lh = line_height(t);
@@ -313,7 +379,14 @@ fn paint_node<Msg>(
             if inner.opacity < 1.0 {
                 overlay.push(DrawCmd::PushOpacity(inner.opacity));
             }
+            // The ring scales with its element, as a CSS outline does.
+            if let Some(t) = transform {
+                overlay.push(t.push());
+            }
             overlay.push(focus_ring(rect, ind.radii, ring));
+            if transform.is_some() {
+                overlay.push(DrawCmd::PopTransform);
+            }
             if inner.opacity < 1.0 {
                 overlay.push(DrawCmd::PopOpacity);
             }
@@ -344,6 +417,9 @@ fn paint_node<Msg>(
     }
     if faded {
         out.push(DrawCmd::PopOpacity);
+    }
+    if transform.is_some() {
+        out.push(DrawCmd::PopTransform);
     }
 }
 

@@ -572,6 +572,7 @@ mod tests {
 
     fn node(role: Role) -> A11yNode {
         A11yNode {
+            rtl: false,
             text_selection: None,
             secure: false,
             description: None,

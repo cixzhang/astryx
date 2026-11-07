@@ -28,6 +28,7 @@ struct Buttons(Arc<Mutex<Vec<Event>>>);
 
 fn button(id: u64, bounds: Rect) -> A11yNode {
     A11yNode {
+        rtl: false,
         id,
         role: Role::Button,
         label: Some(format!("Button {id}")),

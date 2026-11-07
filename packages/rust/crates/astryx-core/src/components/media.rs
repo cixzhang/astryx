@@ -358,7 +358,8 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
                 .sem(Semantics::new(
                     Role::Button,
                     label.clone().unwrap_or_default(),
-                ));
+                ))
+                .tooltip(self.tooltip.clone());
         } else if let Some(label) = label {
             node = node.sem(Semantics::new(Role::Image, label));
         }
@@ -423,11 +424,15 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
             };
             cx.begin(Node::new(Style {
                 position: Position::Absolute,
-                inset: taffy::Rect {
-                    right: len_auto(-offset),
-                    bottom: len_auto(-offset),
-                    left: LengthPercentageAuto::auto(),
-                    top: LengthPercentageAuto::auto(),
+                // The bottom trailing corner: bottom left under RTL.
+                inset: {
+                    let (left, right) = cx.inline(LengthPercentageAuto::auto(), len_auto(-offset));
+                    taffy::Rect {
+                        left,
+                        right,
+                        bottom: len_auto(-offset),
+                        top: LengthPercentageAuto::auto(),
+                    }
                 },
                 flex_direction: FlexDirection::Row,
                 ..Style::default()
@@ -584,6 +589,10 @@ impl<Msg> Build<Msg> for Thumbnail<Msg> {
                 ));
         }
         node.clip = Some(radii(radius));
+        // As in the Swift port, the file name shows while the tile has focus.
+        if node.interact.is_some() {
+            node = node.tooltip(self.label.clone());
+        }
         cx.key(self.base.id.as_deref());
         cx.begin(node);
         cx.leaf(
@@ -627,11 +636,15 @@ impl<Msg> Build<Msg> for Thumbnail<Msg> {
             cx.begin(
                 Node::new(Style {
                     position: Position::Absolute,
-                    inset: taffy::Rect {
-                        top: len_auto(t.space.s1),
-                        right: len_auto(t.space.s1),
-                        left: LengthPercentageAuto::auto(),
-                        bottom: LengthPercentageAuto::auto(),
+                    inset: {
+                        let (left, right) =
+                            cx.inline(LengthPercentageAuto::auto(), len_auto(t.space.s1));
+                        taffy::Rect {
+                            left,
+                            right,
+                            top: len_auto(t.space.s1),
+                            bottom: LengthPercentageAuto::auto(),
+                        }
                     },
                     size: square(20.0),
                     align_items: AlignItems::CENTER,
