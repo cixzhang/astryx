@@ -2,7 +2,7 @@
 
 use crate::contract::{
     A11yAction, A11yNode, Command, DisplayList, FontFamily, FrameInfo, ImageData, ImageId, Input,
-    InputPhase, Point, Preferences, Radii, Rect, Size, Surface, TextMeasure,
+    InputPhase, Point, Preferences, Radii, Rect, Size, Surface, TextDirection, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
@@ -315,6 +315,7 @@ impl<A: App> Runtime<A> {
         self.theme = self.app.theme();
         let tokens = self.theme.tokens(&self.prefs);
         let mut cx = BuildCx::new(tokens);
+        cx.theme = self.theme.theme;
         cx.prefs = self.prefs;
         cx.viewport = self.viewport;
         self.direction = self.app.direction();
@@ -927,7 +928,16 @@ impl<A: App> Runtime<A> {
         let ix = self.nodes.iter().position(|n| n.id == id)?;
         let anchor = rects[ix];
         let t = self.theme.tokens(&self.prefs);
-        let style = crate::components::text::type_style(t.font.body, FontFamily::Body);
+        let mut style = crate::element::themed_text(
+            self.theme.theme,
+            t,
+            crate::components::text::type_style(t.font.body, FontFamily::Body),
+        );
+        style.direction = Some(if self.nodes[ix].rtl {
+            TextDirection::Rtl
+        } else {
+            TextDirection::Ltr
+        });
         let (pad_x, pad_y) = (t.space.s2, t.space.s1);
         let measured = text.measure(words, &style, Some(TOOLTIP_MAX_WIDTH - 2.0 * pad_x));
         let line = style.size * style.leading;

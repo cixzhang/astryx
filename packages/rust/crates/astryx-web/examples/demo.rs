@@ -93,15 +93,19 @@ const NAME: u64 = 16;
 const ROW: f32 = 48.0;
 const GAP: f32 = 8.0;
 const RING_SECONDS: f32 = 0.2;
-// Cyrillic, Greek, and Vietnamese entries make the shell load those subsets.
-const RECENT_FILES: [&str; 6] = [
+// Cyrillic, Greek, Vietnamese, Hebrew, and Arabic entries make the shell load
+// those subsets. The last two read right to left.
+const RECENT_FILES: [&str; 8] = [
     "Quarterly plan",
     "Design review notes",
     "Launch checklist",
     "Отчёт за квартал",
     "Σημειώσεις σχεδίου",
     "Kế hoạch ra mắt",
+    "\u{5ea}\u{5db}\u{5e0}\u{5d9}\u{5ea} \u{5e2}\u{5d1}\u{5d5}\u{5d3}\u{5d4}",
+    "\u{62e}\u{637}\u{629} \u{627}\u{644}\u{639}\u{645}\u{644}",
 ];
+const FIRST_RTL_FILE: usize = 6;
 
 struct Demo {
     items: Vec<Item>,
@@ -624,12 +628,9 @@ impl Surface for Demo {
                 color: p.text,
                 align: TextAlign::Start,
             });
-            items.push(node(
-                100 + i as u64,
-                Role::ListItem,
-                Some((*file).into()),
-                rect,
-            ));
+            let mut item = node(100 + i as u64, Role::ListItem, Some((*file).into()), rect);
+            item.rtl = i >= FIRST_RTL_FILE;
+            items.push(item);
             y += 24.0;
         }
         let mut list = node(

@@ -1,0 +1,17 @@
+[package]
+name = "astryx-theme-pixel"
+description = "A retro pixel theme for Astryx: Silkscreen type, stepped corners, and hard shadows on a pixel grid"
+edition.workspace = true
+# The code is MIT; the bundled Silkscreen font is under the SIL Open Font License 1.1.
+license = "MIT AND OFL-1.1"
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+
+[build-dependencies]
+serde_json = "1"
+
+[dev-dependencies]
+astryx-gallery = { path = "../../examples/gallery" }
+astryx-headless = { path = "../astryx-headless" }

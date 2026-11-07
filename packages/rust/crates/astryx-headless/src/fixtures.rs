@@ -5,7 +5,7 @@
 use astryx_core::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
     ImageFit, ImageId, Input, InputPhase, PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface,
-    TextAlign, TextMeasure, TextStyle,
+    TextAlign, TextDirection, TextMeasure, TextStyle,
 };
 
 /// Logical size every fixture is designed for.
@@ -505,18 +505,31 @@ fn bidi() -> Vec<DrawCmd> {
         style(16.0, 500),
         TextAlign::End,
     );
+    // A Latin-first string in a right-to-left region: with the direction set,
+    // "Astryx" starts the line at the right instead of the left.
+    row(
+        &mut c,
+        202.0,
+        30.0,
+        "Astryx הגדרות 2.0",
+        TextStyle {
+            direction: Some(TextDirection::Rtl),
+            ..style(15.0, 500)
+        },
+        TextAlign::End,
+    );
     // A right-to-left paragraph that wraps: the first words stay on the top line.
-    c.push(rect(16.0, 202.0, 220.0, 106.0, 6.0, SURFACE));
+    c.push(rect(16.0, 238.0, 220.0, 76.0, 6.0, SURFACE));
     c.push(text(
-        Rect::new(24.0, 206.0, 204.0, 98.0),
+        Rect::new(24.0, 242.0, 204.0, 68.0),
         "هذا نص عربي طويل يلتف على عدة أسطر مع كلمة English في الوسط.",
         style(14.0, 400),
         INK,
         TextAlign::End,
     ));
-    c.push(rect(244.0, 202.0, 220.0, 106.0, 6.0, SURFACE));
+    c.push(rect(244.0, 238.0, 220.0, 76.0, 6.0, SURFACE));
     c.push(text(
-        Rect::new(252.0, 206.0, 204.0, 98.0),
+        Rect::new(252.0, 242.0, 204.0, 68.0),
         "זהו טקסט עברי ארוך שנשבר לכמה שורות, עם המילה Astryx באמצע.",
         style(14.0, 400),
         MUTED,

@@ -343,6 +343,10 @@ pub struct GlRenderer {
     placed: Vec<GlyphDraw>,
     vertices: Vec<Vertex>,
     stats: RenderStats,
+    /// Open pixel grids, innermost last, in points.
+    grids: Vec<f32>,
+    /// Images whose textures sample nearest, last drawn on a pixel grid.
+    nearest: std::collections::HashSet<ImageId>,
     /// Registered images: the texture and its size in pixels.
     images: HashMap<ImageId, (glow::Texture, u32, u32)>,
 }
@@ -418,6 +422,8 @@ impl GlRenderer {
                 placed: Vec::new(),
                 vertices: Vec::new(),
                 stats: RenderStats::default(),
+                grids: Vec::new(),
+                nearest: std::collections::HashSet::new(),
                 images: HashMap::new(),
             })
         }
@@ -471,6 +477,8 @@ impl GlRenderer {
     /// Adds or replaces an image; `None` frees it. Pixels that do not match
     /// the size are ignored.
     pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        // A new texture starts with linear filtering.
+        self.nearest.remove(&id);
         let gl = self.gl.clone();
         if let Some((old, _, _)) = self.images.remove(&id) {
             // SAFETY: the texture belongs to this context.
@@ -595,6 +603,23 @@ impl GlRenderer {
         let Some(prepared) = path::prepare(&self.segs, style) else {
             return;
         };
+        if !self.grids.is_empty() {
+            // On a pixel grid, coverage is all or nothing. Such masks are
+            // few, so they skip the path cache.
+            let Some(mut m) = prepared.rasterize() else {
+                return;
+            };
+            for v in &mut m.data {
+                *v = if *v >= 128 { 255 } else { 0 };
+            }
+            if let Some(region) =
+                self.atlas
+                    .insert_transient(&self.gl, self.dialect, m.width, m.height, &m.data)
+            {
+                self.mask(m.x, m.y, m.width, m.height, region, color);
+            }
+            return;
+        }
         let key = MaskKey::Path(prepared.key.clone());
         if let Some(placed) = self.paths.get(&prepared.key) {
             // The atlas and this cache are cleared together, so a cached mask is in the atlas.
@@ -670,6 +695,14 @@ impl GlRenderer {
                 return;
             }
             DrawCmd::PopTransform => return self.pop_until(|g| matches!(g, Group::Transform(_))),
+            DrawCmd::PushPixelGrid { cell } => {
+                self.grids.push(*cell);
+                return;
+            }
+            DrawCmd::PopPixelGrid => {
+                self.grids.pop();
+                return;
+            }
             DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip { .. })),
             DrawCmd::PopOpacity => return self.pop_until(|g| matches!(g, Group::Opacity { .. })),
             _ => {}
@@ -833,8 +866,15 @@ impl GlRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.text
-                    .place(&layout, (rect.x, rect.y), s, snap, &mut placed);
+                match self.grids.last() {
+                    Some(&cell) if snap => {
+                        self.text
+                            .place_on_grid(&layout, (rect.x, rect.y), s, cell, &mut placed)
+                    }
+                    _ => self
+                        .text
+                        .place(&layout, (rect.x, rect.y), s, snap, &mut placed),
+                }
                 for g in &placed {
                     let b = &g.bitmap;
                     let (x, y) = (g.pen_x + b.left, g.pen_y - b.top);
@@ -943,6 +983,33 @@ impl GlRenderer {
                 let Some(&(texture, w, h)) = self.images.get(image) else {
                     return;
                 };
+                // On a pixel grid, image pixels stay square. The filter is
+                // the texture's, so it follows where the image was drawn last.
+                let on_grid = !self.grids.is_empty();
+                if on_grid != self.nearest.contains(image) {
+                    let filter = if on_grid { glow::NEAREST } else { glow::LINEAR };
+                    // SAFETY: the context is current while the shell drives
+                    // the renderer, and the texture is alive.
+                    unsafe {
+                        let gl = &self.gl;
+                        gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+                        gl.tex_parameter_i32(
+                            glow::TEXTURE_2D,
+                            glow::TEXTURE_MIN_FILTER,
+                            filter as i32,
+                        );
+                        gl.tex_parameter_i32(
+                            glow::TEXTURE_2D,
+                            glow::TEXTURE_MAG_FILTER,
+                            filter as i32,
+                        );
+                    }
+                    if on_grid {
+                        self.nearest.insert(*image);
+                    } else {
+                        self.nearest.remove(image);
+                    }
+                }
                 if r.is_empty() || !self.visible(IRect::outer(&r)) {
                     self.stats.culled += 1;
                     return;
@@ -995,7 +1062,9 @@ impl GlRenderer {
             DrawCmd::PopClip
             | DrawCmd::PopOpacity
             | DrawCmd::PushTransform { .. }
-            | DrawCmd::PopTransform => {}
+            | DrawCmd::PopTransform
+            | DrawCmd::PushPixelGrid { .. }
+            | DrawCmd::PopPixelGrid => {}
         }
     }
 
@@ -1347,6 +1416,7 @@ impl GlRenderer {
         let (w, h) = (frame.width.max(1) as i32, frame.height.max(1) as i32);
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
         self.frame += 1;
+        self.grids.clear();
         self.frame_size = (w, h);
         self.stats = RenderStats {
             commands: list.commands.len(),

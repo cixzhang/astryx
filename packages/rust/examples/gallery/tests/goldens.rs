@@ -155,7 +155,12 @@ fn tooltip_states() {
 fn right_to_left_sections() {
     use astryx_core::Direction;
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
-    for section in [Section::Switches, Section::ListItems, Section::ProgressBars] {
+    for section in [
+        Section::Typography,
+        Section::Switches,
+        Section::ListItems,
+        Section::ProgressBars,
+    ] {
         for (mode, m) in [(Mode::Light, "light"), (Mode::Dark, "dark")] {
             let gallery = Gallery::section(section)
                 .with_theme(Theme::ASTRYX, mode)

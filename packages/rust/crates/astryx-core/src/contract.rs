@@ -164,11 +164,17 @@ pub struct ShadowLayer {
     pub color: Color,
 }
 
+pub use astryx_tokens::ThemeFont;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum FontFamily {
     Body,
     Heading,
     Code,
+    /// A family the theme ships. The text engine loads its files the first
+    /// time it sees them, tries it first, and falls back to its other
+    /// fonts for characters it lacks.
+    Theme(&'static ThemeFont),
 }
 
 /// Everything a renderer and a text measurer need to set one run of text.
@@ -192,6 +198,9 @@ pub enum TextDirection {
     Rtl,
 }
 
+/// Physical alignment: `Start` is left and `End` is right in every
+/// direction. The runtime mirrors alignment for right-to-left regions before
+/// it paints, so renderers never flip it again.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum TextAlign {
     #[default]
@@ -270,6 +279,13 @@ pub enum DrawCmd {
         translate: Point,
     },
     PopTransform,
+    /// Draw the following commands on a pixel grid of `cell` points until
+    /// `PopPixelGrid`: nothing is antialiased, and text origins and
+    /// baselines snap to whole cells. Pixel themes wrap their content in it.
+    PushPixelGrid {
+        cell: f32,
+    },
+    PopPixelGrid,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Splits each Roboto face into the script subsets in fonts/ranges.txt.
+"""Splits each source family into the script subsets in fonts/ranges.txt.
 
     scripts/subset-fonts.py OUT_DIR
 
-Writes OUT_DIR/<Face>.<subset>.ttf, for example Roboto-Bold.cyrillic.ttf.
+Writes OUT_DIR/<subset>-<weight>.ttf, for example cyrillic-700.ttf, for the
+weights 400, 500, and 700. Roboto (Apache 2.0) comes from assets/fonts; Noto
+Sans Arabic and Hebrew (SIL OFL 1.1) from crates/astryx-fonts/fonts.
 Needs fontTools. Hinting is dropped because the renderer rasterizes without
 it; all OpenType layout features stay so shaping matches the full font.
 
@@ -20,8 +22,13 @@ from fontTools.ttLib import TTFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CRATE = os.path.dirname(HERE)
-FONTS = os.path.join(CRATE, "..", "..", "assets", "fonts")
-FACES = ["Roboto-Regular", "Roboto-Medium", "Roboto-Bold"]
+ROOT = os.path.join(CRATE, "..", "..")
+SOURCES = {
+    "Roboto": os.path.join(ROOT, "assets", "fonts", "Roboto"),
+    "NotoSansArabic": os.path.join(ROOT, "crates", "astryx-fonts", "fonts", "NotoSansArabic"),
+    "NotoSansHebrew": os.path.join(ROOT, "crates", "astryx-fonts", "fonts", "NotoSansHebrew"),
+}
+WEIGHTS = {400: "Regular", 500: "Medium", 700: "Bold"}
 
 # Spaces stay in the face of the run around them, so every subset carries
 # them. They do not decide which subset loads.
@@ -35,13 +42,13 @@ def read_ranges(path):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            name, ranges = line.split(" ", 1)
+            name, source, ranges = line.split(" ", 2)
             codepoints = set()
             for part in ranges.split(","):
                 part = part.strip().removeprefix("U+")
                 lo, _, hi = part.partition("-")
                 codepoints.update(range(int(lo, 16), int(hi or lo, 16) + 1))
-            subsets.append((name, codepoints))
+            subsets.append((name, source, codepoints))
     return subsets
 
 
@@ -54,18 +61,16 @@ def main():
     options.desubroutinize = True
     options.notdef_outline = True
     options.name_IDs = ["*"]
-    for face in FACES:
-        source = os.path.join(FONTS, f"{face}.ttf")
-        for name, codepoints in read_ranges(os.path.join(CRATE, "fonts", "ranges.txt")):
-            font = TTFont(source)
+    for name, source, codepoints in read_ranges(os.path.join(CRATE, "fonts", "ranges.txt")):
+        for weight, style in WEIGHTS.items():
+            font = TTFont(f"{SOURCES[source]}-{style}.ttf")
             subsetter = subset.Subsetter(options)
             subsetter.populate(unicodes=codepoints | set(SHARED))
             subsetter.subset(font)
             for record in font["name"].names:
                 if record.nameID in (1, 16):
-                    record.string = f"Roboto {name}"
-            font.save(os.path.join(out, f"{face}.{name}.ttf"))
-
+                    record.string = f"{source} {name}"
+            font.save(os.path.join(out, f"{name}-{weight}.ttf"))
 
 if __name__ == "__main__":
     main()

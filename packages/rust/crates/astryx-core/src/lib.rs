@@ -16,6 +16,7 @@ mod element;
 mod focus;
 mod layout;
 mod paint;
+mod pixel;
 mod runtime;
 pub mod testing;
 mod theme;

@@ -49,18 +49,84 @@ pub struct Tokens {
     pub shadow: ShadowTokens,
 }
 
-/// A published Astryx theme: its name and its light and dark tokens.
+/// An Astryx theme: its name, its light and dark tokens, and what it adds
+/// beyond tokens, as Astryx `defineTheme` adds `icons` and font faces.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Theme {
     pub name: &'static str,
     pub light: Tokens,
     pub dark: Tokens,
+    /// Draws on a pixel grid of this many points, as a pixel theme does:
+    /// edges snap to whole cells, rounded corners and circles become
+    /// staircases, and nothing is antialiased. `None` draws smooth shapes.
+    pub grid: Option<f32>,
+    /// Bitmap icons that replace built-in icons of the same name.
+    pub icons: &'static [BitmapIcon],
+    /// Font files the theme ships. A text role uses the first family of its
+    /// `font.family` stack that is here.
+    pub fonts: &'static [ThemeFont],
+}
+
+/// An icon drawn as a grid of cells, one string per row: `#` is a filled
+/// cell, any other character is empty.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BitmapIcon {
+    pub name: &'static str,
+    pub rows: &'static [&'static str],
+}
+
+/// A font family a theme ships with its files. Compared and hashed by
+/// family name and grid, never by file contents.
+#[derive(Clone, Copy)]
+pub struct ThemeFont {
+    pub family: &'static str,
+    /// OpenType or TrueType files, one per weight.
+    pub files: &'static [&'static [u8]],
+    /// Design pixels per em for a pixel font, else 0. On a pixel grid, text
+    /// sizes snap to multiples of this many cells, so each design pixel
+    /// covers whole cells.
+    pub em_pixels: u16,
+    /// Families to try next, in order, for characters this one lacks, when
+    /// the renderer has them, for example from files an app adds at run
+    /// time. The renderer's own fonts come after them.
+    pub fallbacks: &'static [&'static str],
+}
+
+impl PartialEq for ThemeFont {
+    fn eq(&self, other: &Self) -> bool {
+        self.family == other.family && self.em_pixels == other.em_pixels
+    }
+}
+
+impl Eq for ThemeFont {}
+
+impl core::hash::Hash for ThemeFont {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.family.hash(state);
+        self.em_pixels.hash(state);
+    }
+}
+
+impl core::fmt::Debug for ThemeFont {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ThemeFont")
+            .field("family", &self.family)
+            .field("files", &self.files.len())
+            .field("em_pixels", &self.em_pixels)
+            .field("fallbacks", &self.fallbacks)
+            .finish()
+    }
 }
 
 impl Theme {
     /// The published theme with this name, such as `"gothic"`.
     pub fn by_name(name: &str) -> Option<&'static Theme> {
         Self::ALL.iter().copied().find(|theme| theme.name == name)
+    }
+
+    /// The bitmap icon this theme draws for `name`, if it has one.
+    pub fn icon(&self, name: &str) -> Option<&'static BitmapIcon> {
+        self.icons.iter().find(|icon| icon.name == name)
     }
 }
 

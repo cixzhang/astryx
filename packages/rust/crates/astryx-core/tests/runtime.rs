@@ -1127,3 +1127,22 @@ fn accessibility_nodes_carry_their_direction() {
     assert!(dir("rtl"));
     assert!(!dir("ltr"), "a nested region keeps its own direction");
 }
+
+#[test]
+fn text_takes_its_paragraph_direction_from_its_region() {
+    let mut rt = rtl(|| {
+        VStack::<()>::new()
+            .child(Text::new("Astryx שלום"))
+            .child(Element::from(Text::new("plain")).direction(Direction::Ltr))
+            .into()
+    });
+    let list = draw(&mut rt, 300, 200);
+    let dir = |s: &str| {
+        list.commands.iter().find_map(|c| match c {
+            DrawCmd::Text { text, style, .. } if text == s => Some(style.direction),
+            _ => None,
+        })
+    };
+    assert_eq!(dir("Astryx שלום"), Some(Some(TextDirection::Rtl)));
+    assert_eq!(dir("plain"), Some(Some(TextDirection::Ltr)));
+}

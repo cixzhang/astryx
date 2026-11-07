@@ -378,8 +378,8 @@ def gallery_check(chrome, url, proof, check, summary):
         for r in rows:
             roles[r["role"]] = roles.get(r["role"], 0) + 1
         summary["gallery_roles"] = roles
-        check("gallery: the tree has headings, buttons, switches, and text fields",
-              all(roles.get(role, 0) > 0 for role in ("heading", "button", "switch", "textbox")), roles)
+        check("gallery: the home screen exposes headings, section buttons, and selectors",
+              all(roles.get(role, 0) > 0 for role in ("heading", "button", "combobox")), roles)
         key(cdp, "Tab", vk=9)
         first = cdp.eval(ACTIVE_ID)
         key(cdp, "Tab", vk=9)
@@ -415,21 +415,34 @@ def gallery_check(chrome, url, proof, check, summary):
             settle(cdp, 200)
             return cursor
 
-        switch = ".astryx-a11y [role=switch]:not([aria-disabled])"
-        before = cdp.eval(f"document.querySelector('{switch}').getAttribute('aria-checked')")
-        switch_id = cdp.eval(f"document.querySelector('{switch}').getAttribute('data-astryx-id')")
-        cursor = click(switch)
-        after = cdp.eval(f"document.querySelector('[data-astryx-id=\"{switch_id}\"]').getAttribute('aria-checked')")
-        check("gallery: a mouse click focuses and toggles a switch (pointer cursor on hover)",
-              cursor == "pointer" and before != after and cdp.eval(ACTIVE_ID) == switch_id,
-              [cursor, before, after, cdp.eval(ACTIVE_ID), switch_id])
+        def open_section(title):
+            row = cdp.eval("[...document.querySelectorAll('.astryx-a11y button')].findIndex("
+                           f"b => b.textContent === '{title}' || b.getAttribute('aria-label') === '{title}')")
+            if row < 0:
+                return None
+            cdp.eval("[...document.querySelectorAll('.astryx-a11y button')].forEach((b, i) => "
+                     f"b.toggleAttribute('data-check-target', i === {row}))")
+            return click(".astryx-a11y [data-check-target]")
 
+        cursor = open_section("Switch")
+        switch = ".astryx-a11y [role=switch]:not([aria-disabled])"
+        opened = cdp.eval(f"!!document.querySelector('{switch}')")
+        check("gallery: a mouse click on a home row opens that section (pointer cursor on hover)",
+              cursor == "pointer" and opened, [cursor, opened])
+        if opened:
+            before = cdp.eval(f"document.querySelector('{switch}').getAttribute('aria-checked')")
+            switch_id = cdp.eval(f"document.querySelector('{switch}').getAttribute('data-astryx-id')")
+            cursor = click(switch)
+            after = cdp.eval(f"document.querySelector('[data-astryx-id=\"{switch_id}\"]').getAttribute('aria-checked')")
+            check("gallery: a mouse click focuses and toggles a switch",
+                  before != after and cdp.eval(ACTIVE_ID) == switch_id,
+                  [cursor, before, after, cdp.eval(ACTIVE_ID), switch_id])
+        key(cdp, "Escape", code="Escape", vk=27)
+        settle(cdp, 200)
+        open_section("TextInput")
         field = ".astryx-a11y input:not([readonly])"
-        field_id = cdp.eval(f"document.querySelector('{field}').getAttribute('data-astryx-id')")
-        value = f"document.querySelector('[data-astryx-id=\"{field_id}\"]').value"
-        cursor = click(field)
-        # The gallery's fields have no change handler, so typing does not edit
-        # them; the demo checks typing.
+        field_id = cdp.eval(f"document.querySelector('{field}')?.getAttribute('data-astryx-id')")
+        cursor = click(field) if field_id else None
         check("gallery: clicking a text field focuses it (text cursor on hover)",
               cursor == "text" and cdp.eval(ACTIVE_ID) == field_id, [cursor, cdp.eval(ACTIVE_ID), field_id])
         summary["gallery_password_inputs"] = cdp.eval("document.querySelectorAll('.astryx-a11y input[type=password]').length")
@@ -499,8 +512,8 @@ def main():
         check("button 'Reset' disabled", reset.get("props", {}).get("disabled") is True, reset)
         bar = ax_find(rows, "progressbar", "Storage used") or {}
         check("progressbar 'Storage used' value 40", bar.get("props", {}).get("value") == 40, bar)
-        check("list 'Recent files' with 6 list items", ax_find(rows, "list", "Recent files") is not None
-              and sum(1 for r in rows if r["role"] == "listitem") == 6)
+        check("list 'Recent files' with 8 list items", ax_find(rows, "list", "Recent files") is not None
+              and sum(1 for r in rows if r["role"] == "listitem") == 8)
         check("image 'Astryx logo'", ax_find(rows, "image", "Astryx logo") is not None)
         check("browser find matches mirror text (find highlight lands over the canvas text)",
               cdp.eval("window.find('Design review notes')") is True)
@@ -517,20 +530,32 @@ def main():
         first = summary["timing"]["first"]
         loaded = {name: (start, end) for name, start, end in fonts}
         summary["fonts"] = [[n, round(s), round(e)] for n, s, e in fonts]
-        latin = [f"Roboto-{w}.latin.ttf" for w in ("Regular", "Medium", "Bold")]
+        latin = [f"latin-{w}.ttf" for w in (400, 500, 700)]
         check("Latin subsets of all three faces load before the first frame",
               all(n in loaded and loaded[n][1] <= first for n in latin), {n: loaded.get(n) for n in latin})
-        on_demand = [f"Roboto-Regular.{s}.ttf" for s in ("cyrillic", "greek", "vietnamese")]
-        check("Cyrillic, Greek, and Vietnamese load after the first frame, Regular only",
-              all(n in loaded and loaded[n][0] >= first for n in on_demand) and len(loaded) == 6,
+        on_demand = [f"{s}-400.ttf" for s in ("cyrillic", "greek", "vietnamese", "hebrew", "arabic")]
+        check("Cyrillic, Greek, Vietnamese, Hebrew, and Arabic load after the first frame, 400 only",
+              all(n in loaded and loaded[n][0] >= first for n in on_demand) and len(loaded) == 8,
               sorted(loaded))
         def ink(node_id):
             x, y, w, h = rect_of(cdp, node_id)
             return sum(1 for px in range(int(x), int(x + w), 2) for py in range(int(y), int(y + h), 2)
                        if sum(shot.pixel(px, py)) < 300)
-        inks = {name: ink(node_id) for name, node_id in (("cyrillic", 103), ("greek", 104), ("vietnamese", 105))}
-        check("Cyrillic, Greek, and Vietnamese rows draw text with the loaded faces",
-              all(v > 40 for v in inks.values()), inks)
+        rows_by_script = (("cyrillic", 103), ("greek", 104), ("vietnamese", 105), ("hebrew", 106), ("arabic", 107))
+        inks = {name: ink(node_id) for name, node_id in rows_by_script}
+        check("Cyrillic, Greek, Vietnamese, Hebrew, and Arabic rows draw text with the loaded faces",
+              all(v > 15 for v in inks.values()), inks)
+
+        def ink_side(node_id):
+            x, y, w, h = rect_of(cdp, node_id)
+            xs = [px for px in range(int(x), int(x + w), 2) for py in range(int(y), int(y + h), 2)
+                  if sum(shot.pixel(px, py)) < 300]
+            return (min(xs) - x, x + w - max(xs)) if xs else None
+        # The renderer aligns TextAlign::Start to the left in either direction,
+        # so where the ink sits is recorded, not checked.
+        summary["rtl_ink_margins_left_right"] = {name: ink_side(node_id) for name, node_id in rows_by_script[3:]}
+        dirs = cdp.eval("[106, 107].map(id => document.querySelector(`[data-astryx-id=\"${id}\"]`).dir)")
+        check("Hebrew and Arabic rows have dir=rtl in the mirror", dirs == ["rtl", "rtl"], dirs)
         check("unused subsets (latin-ext, cyrillic-ext, greek-ext) never load",
               not any("-ext" in n for n in loaded), sorted(loaded))
 

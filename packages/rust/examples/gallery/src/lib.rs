@@ -251,6 +251,7 @@ impl App for Gallery {
     fn update(&mut self, msg: Msg) -> Command {
         self.announced = matches!(msg, Msg::ShiftTheme(_) | Msg::CycleMode);
         match msg {
+            Msg::Theme(name) if name == self.theme.name => {}
             Msg::Theme(name) => self.theme = Theme::by_name(&name).unwrap_or(Theme::ASTRYX),
             Msg::Mode(mode) => self.mode = mode_from(&mode),
             Msg::ShiftTheme(by) => {
@@ -338,10 +339,15 @@ fn group(name: &str, content: impl Into<Element<Msg>>) -> VStack<Msg> {
 
 impl Gallery {
     fn header(&self) -> Element<Msg> {
-        let themes: Vec<SelectorOption> = Theme::ALL
+        // A theme from outside the published set, such as a pixel theme,
+        // is listed too, so the selector shows it.
+        let mut themes: Vec<SelectorOption> = Theme::ALL
             .iter()
             .map(|t| SelectorOption::new(t.name).label(capitalize(t.name)))
             .collect();
+        if Theme::by_name(self.theme.name).is_none() {
+            themes.push(SelectorOption::new(self.theme.name));
+        }
         let modes = [("light", "Light"), ("dark", "Dark"), ("system", "System")]
             .map(|(value, label)| SelectorOption::new(value).label(label));
         let mut title = VStack::new().gap(Space::S1).child(Heading::new(1, "Astryx gallery")).child(caption(
@@ -819,6 +825,15 @@ fn typography() -> Element<Msg> {
         group("Types", by_type),
         group("Colors", by_color),
         group("Weights", by_weight),
+        // Each line starts with a Latin word, so only the region's direction
+        // makes it read right to left in a right-to-left gallery.
+        group(
+            "Mixed scripts",
+            VStack::new()
+                .gap(Space::S1)
+                .child(Text::new("Astryx היא מערכת עיצוב פתוחה."))
+                .child(Text::new("Astryx هو نظام تصميم مفتوح.")),
+        ),
         group(
             "Sizes, strikethrough, justify, max lines",
             VStack::new()

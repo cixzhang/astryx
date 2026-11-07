@@ -23,7 +23,7 @@ done
 for group in latin all; do
   raw_sum=0; gz_sum=0
   for f in "$dist"/fonts/*.ttf; do
-    case "$group:$(basename "$f")" in latin:*.latin.ttf|all:*) ;; *) continue ;; esac
+    case "$group:$(basename "$f")" in latin:latin-[0-9]*.ttf|all:*) ;; *) continue ;; esac
     raw=$(wc -c < "$f"); g=$(gz "$f")
     raw_sum=$((raw_sum + raw)); gz_sum=$((gz_sum + g))
   done

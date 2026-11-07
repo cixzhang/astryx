@@ -68,19 +68,22 @@ impl IconColor {
 /// An icon node, or `None` for a name Astryx does not define.
 pub(crate) fn icon_node<Msg>(name: &str, side: f32, color: Color) -> Option<Node<Msg>> {
     let (commands, filled, width) = icon_path(name)?;
-    Some(
-        Node::new(Style {
-            size: square(side),
-            flex_shrink: 0.0,
-            ..Style::default()
-        })
-        .draw(Draw::Path(PathDraw {
-            commands: commands.to_vec(),
-            view_box: 24.0,
-            fill: filled.then_some(color),
-            stroke: (!filled).then_some((color, width)),
-        })),
-    )
+    let mut node = Node::new(Style {
+        size: square(side),
+        flex_shrink: 0.0,
+        ..Style::default()
+    })
+    .draw(Draw::Path(PathDraw {
+        commands: commands.to_vec(),
+        view_box: 24.0,
+        fill: filled.then_some(color),
+        stroke: (!filled).then_some((color, width)),
+    }));
+    node.icon = BUILT_IN_ICONS
+        .iter()
+        .find(|n| **n == name)
+        .map(|n| (*n, side));
+    Some(node)
 }
 
 /// A shared icon by name (`Icon`), such as `"check"` or `"chevronDown"`.
@@ -237,9 +240,10 @@ impl<Msg> Build<Msg> for Badge {
                 top: len(0.0),
                 bottom: len(0.0),
             },
+            // Never shorter than the label's line, for themes with large type.
             min_size: taffy::Size {
                 width: len_auto(0.0),
-                height: LengthPercentageAuto::auto(),
+                height: len_auto(style.size * style.leading),
             },
             max_size: taffy::Size {
                 width: LengthPercentageAuto::percent(1.0),

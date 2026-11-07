@@ -6,9 +6,12 @@
 //! list of [`Node`]s (pre-order), which carry concrete styles, colors, focus
 //! behavior, and semantics.
 
-use crate::contract::{Color, Live, PathCmd, Preferences, Radii, Role, TextAlign, TextStyle};
+use crate::contract::TextDirection;
+use crate::contract::{
+    Color, FontFamily, Live, PathCmd, Preferences, Radii, Role, TextAlign, TextStyle,
+};
 use crate::theme::{Direction, ThemeChoice};
-use astryx_tokens::{ShadowLayer as TokenShadow, Tokens};
+use astryx_tokens::{ShadowLayer as TokenShadow, Theme, Tokens};
 use taffy::Style;
 
 /// A piece of UI built by a component, such as [`Button`](crate::Button) or
@@ -77,6 +80,7 @@ impl<Msg> Build<Msg> for Themed<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let tokens = self.choice.tokens(&cx.prefs);
         let saved = std::mem::replace(&mut cx.tokens, tokens);
+        let saved_theme = std::mem::replace(&mut cx.theme, self.choice.theme);
         cx.inherit.push(Inherited::root(tokens));
         // The scope paints its own ground, so a dark subtree reads as dark.
         let node = Node::new(Style {
@@ -92,6 +96,7 @@ impl<Msg> Build<Msg> for Themed<Msg> {
         cx.end();
         cx.inherit.pop();
         cx.tokens = saved;
+        cx.theme = saved_theme;
     }
 }
 
@@ -184,6 +189,8 @@ pub(crate) enum Draw {
     Box(BoxDraw),
     Text(TextDraw),
     Path(PathDraw),
+    /// A theme's bitmap icon, one cell per character.
+    Bitmap(&'static [&'static str], Color),
     Spinner(Color),
     Image(ImageDraw),
 }
@@ -426,6 +433,11 @@ pub(crate) struct Node<Msg> {
     /// Moves and resizes smoothly when a rebuild places it elsewhere in its
     /// parent, as a CSS transition on its transform and size does.
     pub moves: bool,
+    /// The pixel grid of the node's theme, in points.
+    pub grid: Option<f32>,
+    /// The built-in icon this node draws, and its side in points, so a
+    /// theme can draw its own icon instead.
+    pub icon: Option<(&'static str, f32)>,
 }
 
 impl<Msg> Node<Msg> {
@@ -450,6 +462,8 @@ impl<Msg> Node<Msg> {
             rtl: false,
             press_scale: false,
             moves: false,
+            grid: None,
+            icon: None,
         }
     }
     pub fn draw(mut self, draw: Draw) -> Self {
@@ -520,6 +534,8 @@ pub(crate) type Overlay<Msg> = Box<dyn FnOnce(&mut BuildCx<Msg>)>;
 pub(crate) struct BuildCx<Msg> {
     pub nodes: Vec<Node<Msg>>,
     pub tokens: &'static Tokens,
+    /// The theme `tokens` come from, for what it adds beyond tokens.
+    pub theme: &'static Theme,
     pub inherit: Vec<Inherited>,
     /// Something animates, so the shell keeps drawing frames.
     pub animating: bool,
@@ -547,6 +563,7 @@ impl<Msg> BuildCx<Msg> {
         BuildCx {
             nodes: Vec::new(),
             tokens,
+            theme: Theme::ASTRYX,
             inherit: vec![Inherited::root(tokens)],
             animating: false,
             prefs: Preferences::default(),
@@ -576,8 +593,47 @@ impl<Msg> BuildCx<Msg> {
         self.key = id.map(|id| fnv1a(id.as_bytes()));
     }
 
+    /// Applies what the theme adds beyond tokens: its grid, fonts, and icons.
+    fn apply_theme(&self, node: &mut Node<Msg>) {
+        let theme = self.theme;
+        node.grid = theme.grid;
+        if let Draw::Text(t) = &mut node.draw {
+            t.style = self.themed_text(t.style);
+        }
+        let Some((name, side)) = node.icon else {
+            return;
+        };
+        let Some(icon) = theme.icon(name) else {
+            return;
+        };
+        let color = match &node.draw {
+            Draw::Path(p) => p.fill.or(p.stroke.map(|(c, _)| c)),
+            _ => None,
+        };
+        node.draw = Draw::Bitmap(icon.rows, color.unwrap_or(Color::TRANSPARENT));
+        if let Some(cell) = theme.grid {
+            // The icon keeps its box. Its pixel is the largest whole number
+            // of cells that fits, or a half or quarter cell for small boxes,
+            // so it stays on the grid's device pixels.
+            let n = icon.rows.len().max(1) as f32;
+            let mut pixel = (side / (n * cell)).floor() * cell;
+            if pixel == 0.0 {
+                pixel = cell;
+                while pixel * n > side && pixel > cell / 8.0 {
+                    pixel /= 2.0;
+                }
+            }
+            node.icon = Some((name, n * pixel));
+        }
+    }
+
+    fn themed_text(&self, style: TextStyle) -> TextStyle {
+        themed_text(self.theme, self.tokens, style)
+    }
+
     /// Adds a node as a child of the open node and opens it.
     pub fn begin(&mut self, mut node: Node<Msg>) -> u32 {
+        self.apply_theme(&mut node);
         let ix = self.nodes.len() as u32;
         let parent = self.open.last().copied();
         let (parent_id, sibling) = match parent {
@@ -593,6 +649,15 @@ impl<Msg> BuildCx<Msg> {
         if self.direction.is_rtl() {
             node.rtl = true;
             node.style.direction = taffy::Direction::Rtl;
+        }
+        // Text sets its paragraph direction from its region, so a Hebrew
+        // label that starts with a Latin word still reads right to left.
+        if let Draw::Text(t) = &mut node.draw {
+            t.style.direction = Some(if node.rtl {
+                TextDirection::Rtl
+            } else {
+                TextDirection::Ltr
+            });
         }
         if let Some(p) = parent {
             self.nodes[p as usize].children.push(ix);
@@ -677,4 +742,35 @@ pub(crate) fn mix(parent: u64, local: u64) -> u64 {
     z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
     z ^ (z >> 31)
+}
+
+/// A text style with the theme's font, and on a grid, sizes and line
+/// heights in whole cells.
+pub(crate) fn themed_text(
+    theme: &'static Theme,
+    tokens: &Tokens,
+    mut style: TextStyle,
+) -> TextStyle {
+    let stack = match style.family {
+        FontFamily::Body => tokens.font.family.body,
+        FontFamily::Heading => tokens.font.family.heading,
+        FontFamily::Code => tokens.font.family.code,
+        FontFamily::Theme(_) => &[],
+    };
+    let shipped = stack
+        .iter()
+        .find_map(|name| theme.fonts.iter().find(|f| f.family == *name));
+    if let Some(font) = shipped {
+        style.family = FontFamily::Theme(font);
+    }
+    if let (Some(cell), FontFamily::Theme(font)) = (theme.grid, style.family) {
+        if font.em_pixels > 0 && style.size > 0.0 {
+            let step = cell * f32::from(font.em_pixels);
+            let size = (style.size / step).round().max(1.0) * step;
+            let line = (style.size * style.leading / cell).round() * cell;
+            style.leading = line.max(size) / size;
+            style.size = size;
+        }
+    }
+    style
 }

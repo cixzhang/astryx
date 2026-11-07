@@ -1,8 +1,9 @@
 //! Runtime font loading by script subset, the way CSS `unicode-range` works.
 //!
-//! `fonts/ranges.txt` lists the subsets. The first one loads for every face
-//! before the first frame; the others load when drawn text needs them, only
-//! for the faces that text uses.
+//! `fonts/ranges.txt` lists the subsets. The first one loads for every
+//! weight before the first frame; the others load when drawn text needs them,
+//! only for the weights that text uses, or when the text engine reports a
+//! script it has no face for.
 
 use std::rc::Weak;
 
@@ -13,12 +14,8 @@ use web_sys::Response;
 
 const RANGES: &str = include_str!("../fonts/ranges.txt");
 
-/// Face file stems and their CSS weights.
-pub(crate) const FACES: [(&str, u16); 3] = [
-    ("Roboto-Regular", 400),
-    ("Roboto-Medium", 500),
-    ("Roboto-Bold", 700),
-];
+/// The CSS weights each subset comes in.
+pub(crate) const FACES: [u16; 3] = [400, 500, 700];
 
 /// The face that draws a CSS weight, by CSS font matching over 400, 500,
 /// and 700, as the renderer picks faces.
@@ -48,7 +45,9 @@ pub(crate) fn parse_ranges(text: &str) -> Vec<Subset> {
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .filter_map(|line| {
-            let (name, list) = line.split_once(' ')?;
+            // The source family only matters to the subset script.
+            let (name, rest) = line.split_once(' ')?;
+            let (_, list) = rest.split_once(' ')?;
             let ranges = list
                 .split(',')
                 .filter_map(|part| match part.split_once('-') {
@@ -125,13 +124,23 @@ impl FontPlan {
         out
     }
 
+    /// The regular-weight file of the subset named after a script, such as
+    /// "Arabic", for a script the text engine reported without a face.
+    pub(crate) fn request_script(&mut self, script: &str) -> Option<FontKey> {
+        let subset = self
+            .subsets
+            .iter()
+            .position(|s| s.name.eq_ignore_ascii_case(script))?;
+        self.take((subset, 0))
+    }
+
     /// Marks a file done, loaded or failed. Failed files are not retried.
     pub(crate) fn finish(&mut self, key: FontKey) {
         self.state[key.0][key.1] = State::Done;
     }
 
     pub(crate) fn file_name(&self, key: FontKey) -> String {
-        format!("{}.{}.ttf", FACES[key.1].0, self.subsets[key.0].name)
+        format!("{}-{}.ttf", self.subsets[key.0].name, FACES[key.1])
     }
 }
 
@@ -168,9 +177,9 @@ mod tests {
 
     const RANGES: &str = "\
 # comment
-latin U+0000-00FF, U+2000-206F
-cyrillic U+0400-045F, U+2116
-greek U+0370-03FF
+latin Roboto U+0000-00FF, U+2000-206F
+cyrillic Roboto U+0400-045F, U+2116
+greek Roboto U+0370-03FF
 ";
 
     #[test]
@@ -200,7 +209,7 @@ greek U+0370-03FF
         let mut plan = FontPlan::from_ranges(RANGES);
         assert_eq!(plan.request_initial(), vec![(0, 0), (0, 1), (0, 2)]);
         assert_eq!(plan.request_initial(), vec![]);
-        assert_eq!(plan.file_name((0, 2)), "Roboto-Bold.latin.ttf");
+        assert_eq!(plan.file_name((0, 2)), "latin-700.ttf");
     }
 
     #[test]
@@ -214,6 +223,20 @@ greek U+0370-03FF
         assert_eq!(plan.request_for("\u{4e2d}", 400), vec![]);
         plan.finish((1, 0));
         assert_eq!(plan.request_for("Ж", 400), vec![]);
+    }
+
+    #[test]
+    fn missing_scripts_map_to_subsets_by_name() {
+        let mut plan = FontPlan::new();
+        let arabic = plan.request_script("Arabic").expect("arabic subset");
+        assert_eq!(plan.file_name(arabic), "arabic-400.ttf");
+        assert_eq!(plan.request_script("Arabic"), None);
+        assert!(plan.request_script("Hebrew").is_some());
+        assert_eq!(plan.request_script("Han"), None);
+        assert_eq!(
+            plan.request_for("\u{5e9}\u{5dc}\u{5d5}\u{5dd}", 700).len(),
+            1
+        );
     }
 
     #[test]

@@ -11,12 +11,12 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use astryx_core::{Size, TextAlign, TextMeasure, TextStyle};
+use astryx_core::{FontFamily, Size, TextAlign, TextDirection, TextMeasure, TextStyle, ThemeFont};
 use swash::scale::{Render, ScaleContext, Source};
 use swash::shape::{Direction, ShapeContext};
 use swash::text::cluster::Boundary;
 use swash::text::Codepoint;
-use unicode_bidi::BidiInfo;
+use unicode_bidi::{BidiInfo, Level};
 
 pub use swash::text::Script;
 
@@ -141,13 +141,25 @@ impl FontSet {
         self.families.iter().map(|(name, _)| name.as_str())
     }
 
-    /// One face per family for a CSS weight, in fallback order.
-    fn candidates(&self, weight: u16) -> Vec<usize> {
-        self.families
+    fn has_family(&self, name: &str) -> bool {
+        self.families.iter().any(|(family, _)| family == name)
+    }
+
+    /// One face per family for a CSS weight, in fallback order, with the
+    /// families named in `first` moved to the front in that order.
+    fn candidates(&self, weight: u16, first: &[&str]) -> Vec<usize> {
+        let pick = |faces: &Vec<usize>| {
+            match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
+        };
+        let lead = first
             .iter()
-            .filter_map(|(_, faces)| {
-                match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
-            })
+            .filter_map(|want| self.families.iter().find(|(name, _)| name == want));
+        let rest = self
+            .families
+            .iter()
+            .filter(|(name, _)| !first.contains(&name.as_str()));
+        lead.chain(rest)
+            .filter_map(|(_, faces)| pick(faces))
             .collect()
     }
 }
@@ -257,6 +269,8 @@ struct ShapeKey {
     text: String,
     weight: u16,
     size: u32,
+    family: Option<&'static str>,
+    direction: Option<TextDirection>,
 }
 
 const SHAPE_CACHE_LIMIT: usize = 4096;
@@ -344,11 +358,38 @@ impl TextEngine {
         !self.inner.borrow().fonts.is_empty()
     }
 
-    fn shaped(&self, text: &str, weight: u16, size: f32) -> Rc<ShapedText> {
+    /// Adds the files of a theme's font the first time it is drawn.
+    fn load_theme_font(&self, font: &'static ThemeFont) {
+        if self.inner.borrow().fonts.has_family(font.family) {
+            return;
+        }
+        let mut inner = self.inner.borrow_mut();
+        let mut added = false;
+        for &file in font.files {
+            added |= inner.fonts.add(file).is_ok();
+        }
+        if added {
+            inner.shapes.clear();
+            inner.generation += 1;
+        }
+    }
+
+    fn shaped(&self, text: &str, style: &TextStyle, size: f32) -> Rc<ShapedText> {
+        let font = match style.family {
+            FontFamily::Theme(font) => {
+                self.load_theme_font(font);
+                Some(font)
+            }
+            _ => None,
+        };
+        let weight = style.weight;
+        let direction = style.direction;
         let key = ShapeKey {
             text: text.to_owned(),
             weight,
             size: size.to_bits(),
+            family: font.map(|f| f.family),
+            direction,
         };
         let mut inner = self.inner.borrow_mut();
         if let Some(found) = inner.shapes.get(&key) {
@@ -360,7 +401,11 @@ impl TextEngine {
             inner.shapes.clear();
             inner.generation += 1;
         }
-        let candidates = inner.fonts.candidates(weight);
+        let mut first: Vec<&str> = font.map_or(Vec::new(), |f| f.fallbacks.to_vec());
+        if let Some(f) = font {
+            first.insert(0, f.family);
+        }
+        let candidates = inner.fonts.candidates(weight, &first);
         let (ascent, descent) = match candidates.first() {
             Some(&primary) => {
                 let m = inner.fonts.faces[primary].font().metrics(&[]).scale(size);
@@ -371,7 +416,16 @@ impl TextEngine {
         };
         let paragraphs = text
             .split('\n')
-            .map(|p| shape_paragraph(&mut inner.shaper, &inner.fonts, &candidates, size, p))
+            .map(|p| {
+                shape_paragraph(
+                    &mut inner.shaper,
+                    &inner.fonts,
+                    &candidates,
+                    size,
+                    direction,
+                    p,
+                )
+            })
             .collect();
         let shaped = Rc::new(ShapedText {
             paragraphs,
@@ -403,7 +457,7 @@ impl TextEngine {
                 bounds: Size::default(),
             };
         }
-        let shaped = self.shaped(text, style.weight, size);
+        let shaped = self.shaped(text, style, size);
         let half_leading = (line_height - (shaped.ascent + shaped.descent)) / 2.0;
         let mut lines = Vec::new();
         let mut max_width: f32 = 0.0;
@@ -475,7 +529,7 @@ impl TextEngine {
             (key.subpixel & 15) as f32 / steps,
             -((key.subpixel >> 4) as f32) / steps,
         );
-        let bitmap = match Render::new(&[Source::Outline])
+        let mut bitmap = match Render::new(&[Source::Outline])
             .format(Format::Alpha)
             .offset(offset)
             .render(&mut scaler, key.id)
@@ -495,6 +549,14 @@ impl TextEngine {
                 data: Vec::new(),
             },
         };
+        if key.cell > 0 {
+            for v in &mut bitmap.data {
+                *v = if *v >= 128 { 255 } else { 0 };
+            }
+        }
+        if key.cell > 1 {
+            bitmap = bitmap.upscaled(u32::from(key.cell));
+        }
         if inner.glyphs.len() >= GLYPH_CACHE_LIMIT {
             inner.glyphs.clear();
         }
@@ -538,6 +600,7 @@ impl TextEngine {
                     id: g.id,
                     size,
                     subpixel: sx | (sy << 4),
+                    cell: 0,
                 };
                 let bitmap = self.glyph(key);
                 if bitmap.width == 0 || bitmap.height == 0 {
@@ -548,6 +611,56 @@ impl TextEngine {
                     bitmap,
                     pen_x,
                     pen_y,
+                });
+            }
+        }
+    }
+}
+
+impl TextEngine {
+    /// [`Self::place`] on a pixel grid of `cell` points: line origins and
+    /// baselines snap to whole cells and glyphs draw without antialiasing.
+    /// When a cell is a whole number of device pixels, glyphs are sampled
+    /// once per cell and scaled up, so a pixel font's design pixels fill
+    /// whole cells even where its outlines leave its grid.
+    pub fn place_on_grid(
+        &self,
+        layout: &TextLayout,
+        origin: (f32, f32),
+        scale: f32,
+        cell: f32,
+        out: &mut Vec<GlyphDraw>,
+    ) {
+        let snap = |v: f32| (v / cell).round() * cell;
+        let px = cell * scale;
+        let k = if (px - px.round()).abs() < 0.01 && (2.0..=64.0).contains(&px.round()) {
+            px.round()
+        } else {
+            1.0
+        };
+        let size = (layout.size * scale / k).to_bits();
+        for line in &layout.lines {
+            let baseline = (snap(origin.1 + line.baseline) * scale).round();
+            let line_x = snap(origin.0 + line.x);
+            for g in &line.glyphs {
+                let pen_x = ((line_x + g.x) * scale / k).round() * k;
+                let pen_y = ((baseline - g.y * scale) / k).round() * k;
+                let key = GlyphKey {
+                    face: g.face,
+                    id: g.id,
+                    size,
+                    subpixel: 0,
+                    cell: k as u8,
+                };
+                let bitmap = self.glyph(key);
+                if bitmap.width == 0 || bitmap.height == 0 {
+                    continue;
+                }
+                out.push(GlyphDraw {
+                    key,
+                    bitmap,
+                    pen_x: pen_x as i32,
+                    pen_y: pen_y as i32,
                 });
             }
         }
@@ -630,6 +743,7 @@ fn shape_paragraph(
     fonts: &FontSet,
     candidates: &[usize],
     size: f32,
+    direction: Option<TextDirection>,
     text: &str,
 ) -> Shaped {
     let mut out = Shaped::default();
@@ -645,8 +759,12 @@ fn shape_paragraph(
         whitespace[offset] = ch.is_whitespace();
     }
     let covers = |face: usize, c: char| fonts.faces[face].font().charmap().map(c) != 0;
-    // The paragraph direction comes from its first strong character.
-    let bidi = BidiInfo::new(text, None);
+    // Without a set direction, the paragraph takes it from its first strong letter.
+    let base = direction.map(|d| match d {
+        TextDirection::Ltr => Level::ltr(),
+        TextDirection::Rtl => Level::rtl(),
+    });
+    let bidi = BidiInfo::new(text, base);
     // Runs that share one face, one embedding level, and one script.
     let mut runs: Vec<Run> = Vec::new();
     for (offset, ch) in text.char_indices() {
@@ -817,6 +935,26 @@ pub struct GlyphBitmap {
     pub data: Vec<u8>,
 }
 
+impl GlyphBitmap {
+    /// Each pixel as a `k` by `k` block, placed relative to the same pen.
+    fn upscaled(&self, k: u32) -> GlyphBitmap {
+        let (w, h) = (self.width * k, self.height * k);
+        let mut data = vec![0; (w * h) as usize];
+        for y in 0..h {
+            for x in 0..w {
+                data[(y * w + x) as usize] = self.data[((y / k) * self.width + x / k) as usize];
+            }
+        }
+        GlyphBitmap {
+            left: self.left * k as i32,
+            top: self.top * k as i32,
+            width: w,
+            height: h,
+            data,
+        }
+    }
+}
+
 /// Horizontal subpixel positions per pixel. Four keeps text spacing even
 /// while bounding the cache.
 pub const SUBPIXEL_STEPS: u32 = 4;
@@ -829,6 +967,10 @@ pub struct GlyphKey {
     pub size: u32,
     /// Quarter-pixel offsets: right in the low four bits, down in the high four.
     pub subpixel: u8,
+    /// On a pixel grid, device pixels per cell: coverage is all or nothing,
+    /// and above 1 the glyph is drawn at `size` and each pixel scaled up to
+    /// a cell. 0 off the grid.
+    pub cell: u8,
 }
 
 /// A glyph ready to draw: its bitmap and the integer pixel of its pen.
@@ -880,7 +1022,7 @@ mod tests {
     fn faces_group_into_one_family() {
         let set = roboto();
         assert_eq!(set.families().collect::<Vec<_>>(), vec!["Roboto"]);
-        assert_eq!(set.candidates(400).len(), 1);
+        assert_eq!(set.candidates(400, &[]).len(), 1);
     }
 
     #[test]
@@ -1012,6 +1154,46 @@ mod tests {
         assert_eq!(&latin[..3], &abc[..]);
         // "abc", a space, the word, a space, "def".
         assert_eq!(&latin[4..4 + first.len()], &first[..]);
+    }
+
+    #[test]
+    fn a_set_direction_overrides_the_first_strong_letter() {
+        let engine = engine();
+        engine
+            .add_fallback_font(std::fs::read(HEBREW).unwrap())
+            .unwrap();
+        let order = |text: &str, direction| {
+            let st = TextStyle {
+                direction,
+                ..style(16.0, 400)
+            };
+            engine.layout(text, &st, None, TextAlign::Start).lines[0]
+                .glyphs
+                .iter()
+                .map(|g| (g.face, g.id))
+                .collect::<Vec<_>>()
+        };
+        let abc = order("abc", None);
+        let word = order("שלום", None);
+        // Detected: the Latin word starts the paragraph and stays on the left.
+        let auto = order("abc שלום", None);
+        assert_eq!(&auto[..3], &abc[..]);
+        // Right to left: the Latin word starts the line at the right.
+        let rtl = order("abc שלום", Some(TextDirection::Rtl));
+        assert_eq!(&rtl[..word.len()], &word[..]);
+        assert_eq!(&rtl[rtl.len() - 3..], &abc[..]);
+        // Left to right on a Hebrew-first paragraph puts the Latin word last.
+        let ltr = order("שלום abc", Some(TextDirection::Ltr));
+        assert_eq!(&ltr[..word.len()], &word[..]);
+        assert_eq!(&ltr[ltr.len() - 3..], &abc[..]);
+        // Measurement agrees with drawing and does not depend on the order.
+        let st = |direction| TextStyle {
+            direction,
+            ..style(16.0, 400)
+        };
+        let a = engine.measure("abc שלום", &st(None), None);
+        let b = engine.measure("abc שלום", &st(Some(TextDirection::Rtl)), None);
+        assert!((a.width - b.width).abs() < 0.01 && a.height == b.height);
     }
 
     #[test]

@@ -292,6 +292,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "astryx-theme-pixel"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-gallery",
+ "astryx-headless",
+ "serde_json",
+]
+
+[[package]]
 name = "astryx-tokens"
 version = "0.1.0"
 dependencies = [

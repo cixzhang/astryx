@@ -3,8 +3,9 @@
 use std::collections::HashMap;
 
 use crate::contract::{Color, DisplayList, DrawCmd, PathCmd, Point, Radii, Rect, TextAlign};
-use crate::element::{Draw, Node};
+use crate::element::{BoxDraw, Draw, Node};
 use crate::layout::{line_height, Layout};
+use crate::pixel;
 use crate::theme::{clamp_radii, shadow_layers};
 
 /// Keyboard focus ring: 2 points wide, 3 points outside the element, as the
@@ -38,6 +39,27 @@ pub(crate) struct Transform {
 }
 
 impl Transform {
+    /// The transform on a pixel grid: translations move by whole cells and
+    /// a scale that is not a whole number is left out, so the element keeps
+    /// its pixels. `None` when nothing is left.
+    fn on_grid(self, cell: f32) -> Option<Transform> {
+        let scale = if self.scale.fract() == 0.0 && self.scale > 0.0 {
+            self.scale
+        } else {
+            1.0
+        };
+        let translate = Point {
+            x: pixel::snap(self.translate.x, cell),
+            y: pixel::snap(self.translate.y, cell),
+        };
+        let t = Transform {
+            scale,
+            translate,
+            ..self
+        };
+        (scale != 1.0 || translate.x != 0.0 || translate.y != 0.0).then_some(t)
+    }
+
     fn push(self) -> DrawCmd {
         DrawCmd::PushTransform {
             origin: self.origin,
@@ -93,6 +115,8 @@ struct Ctx {
     viewport: Option<Rect>,
     /// The product of the ancestors' opacities.
     opacity: f32,
+    /// The pixel grid already open around this node.
+    grid: Option<f32>,
 }
 
 pub(crate) fn paint<Msg>(
@@ -114,6 +138,7 @@ pub(crate) fn paint<Msg>(
             owner: Owner::default(),
             viewport: None,
             opacity: 1.0,
+            grid: None,
         };
         let scene = Scene {
             nodes,
@@ -124,36 +149,59 @@ pub(crate) fn paint<Msg>(
         paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
     }
     list.commands.extend(overlay);
+    let grid = nodes.first().and_then(|n| n.grid);
     if let Some(tip) = &state.tooltip {
-        list.commands.push(DrawCmd::Rect {
-            rect: tip.rect,
-            radii: tip.radii,
-            fill: tip.fill,
-            stroke: None,
-        });
+        match grid {
+            Some(cell) => {
+                list.commands.push(DrawCmd::PushPixelGrid { cell });
+                let rect = pixel::snap_rect(tip.rect, cell);
+                let fill = pixel::fill(rect, tip.radii, cell);
+                pixel::push_rects(&mut list.commands, fill, tip.fill);
+            }
+            None => list.commands.push(DrawCmd::Rect {
+                rect: tip.rect,
+                radii: tip.radii,
+                fill: tip.fill,
+                stroke: None,
+            }),
+        }
+        let text_rect = match grid {
+            Some(cell) => {
+                let r = pixel::snap_rect(tip.text_rect, cell);
+                Rect::new(r.x, r.y, r.width.max(tip.text_rect.width), r.height)
+            }
+            None => tip.text_rect,
+        };
         list.commands.push(DrawCmd::Text {
-            rect: tip.text_rect,
+            rect: text_rect,
             text: tip.text.clone(),
             style: tip.style,
             color: tip.color,
             align: crate::contract::TextAlign::Start,
         });
+        if grid.is_some() {
+            list.commands.push(DrawCmd::PopPixelGrid);
+        }
     }
     for indicator in &state.indicators {
         let faded = indicator.opacity < 1.0;
         if faded {
             list.commands.push(DrawCmd::PushOpacity(indicator.opacity));
         }
-        list.commands.push(DrawCmd::Rect {
-            rect: indicator.thumb,
-            radii: clamp_radii(
-                indicator.thumb.width,
-                indicator.thumb.height,
-                Radii::all(9999.0),
+        let full = Radii::all(9999.0);
+        match grid {
+            Some(cell) => pixel::push_rects(
+                &mut list.commands,
+                pixel::fill(indicator.thumb, full, cell),
+                indicator.color,
             ),
-            fill: indicator.color,
-            stroke: None,
-        });
+            None => list.commands.push(DrawCmd::Rect {
+                rect: indicator.thumb,
+                radii: clamp_radii(indicator.thumb.width, indicator.thumb.height, full),
+                fill: indicator.color,
+                stroke: None,
+            }),
+        }
         if faded {
             list.commands.push(DrawCmd::PopOpacity);
         }
@@ -202,6 +250,10 @@ fn paint_node<Msg>(
     if let Some(c) = caret {
         rect.x -= c.shift;
     }
+    let grid = node.grid;
+    if let Some(cell) = grid {
+        rect = pixel::snap_rect(rect, cell);
+    }
     let owner = match &node.interact {
         Some(i) => Owner {
             focused: state.focused == Some(node.id),
@@ -210,6 +262,10 @@ fn paint_node<Msg>(
         None => owner,
     };
     let transform = state.transforms.get(&ix).copied();
+    let transform = match grid {
+        Some(cell) => transform.and_then(|t| t.on_grid(cell)),
+        None => transform,
+    };
     if let Some(t) = transform {
         out.push(t.push());
     }
@@ -217,9 +273,13 @@ fn paint_node<Msg>(
     if faded {
         out.push(DrawCmd::PushOpacity(node.opacity));
     }
-    match &node.draw {
-        Draw::None => {}
-        Draw::Box(b) => {
+    let opens_grid = grid.is_some() && grid != ctx.grid;
+    if let (true, Some(cell)) = (opens_grid, grid) {
+        out.push(DrawCmd::PushPixelGrid { cell });
+    }
+    match (&node.draw, grid) {
+        (Draw::Box(b), Some(cell)) => grid_box(out, rect, b, cell),
+        (Draw::Box(b), None) => {
             let radii = clamp_radii(rect.width, rect.height, b.radii);
             if !b.shadow.is_empty() {
                 out.push(DrawCmd::Shadow {
@@ -237,7 +297,29 @@ fn paint_node<Msg>(
                 });
             }
         }
-        Draw::Image(i) => out.push(DrawCmd::Image {
+        (Draw::Image(i), Some(cell)) => {
+            // Stepped corners: the image drawn once per row band of its
+            // stepped shape, each clipped square.
+            let image = DrawCmd::Image {
+                rect,
+                radii: Radii::default(),
+                image: i.image,
+                fit: i.fit,
+            };
+            if i.radii.0.iter().all(|&r| r <= 0.0) {
+                out.push(image);
+            } else {
+                for band in pixel::fill(rect, i.radii, cell) {
+                    out.push(DrawCmd::PushClip {
+                        rect: band,
+                        radii: Radii::default(),
+                    });
+                    out.push(image.clone());
+                    out.push(DrawCmd::PopClip);
+                }
+            }
+        }
+        (Draw::Image(i), None) => out.push(DrawCmd::Image {
             rect,
             radii: clamp_radii(rect.width, rect.height, i.radii),
             image: i.image,
@@ -245,7 +327,13 @@ fn paint_node<Msg>(
         }),
         _ => {}
     }
-    if let (Some(ind), true) = (node.indicator, owner.pressed && state.press_strength > 0.0) {
+    let pressed = owner.pressed && state.press_strength > 0.0;
+    if let (Some(ind), true, Some(cell)) = (node.indicator, pressed, grid) {
+        if let Some(overlay) = ind.overlay {
+            let fill = overlay.with_alpha(overlay.a * state.press_strength);
+            pixel::push_rects(out, pixel::fill(rect, ind.radii, cell), fill);
+        }
+    } else if let (Some(ind), true) = (node.indicator, pressed) {
         if let Some(overlay) = ind.overlay {
             out.push(DrawCmd::Rect {
                 rect,
@@ -285,6 +373,12 @@ fn paint_node<Msg>(
                     let lines = ((rect.height / lh).round() as usize).max(1);
                     for line in 0..lines {
                         let y = rect.y + lh * (line as f32 + 0.5);
+                        if let Some(cell) = grid {
+                            let y = pixel::snap(y - cell / 2.0, cell);
+                            let band = Rect::new(rect.x, y, rect.width, cell);
+                            pixel::push_rects(out, vec![band], t.color);
+                            continue;
+                        }
                         out.push(DrawCmd::Line {
                             from: Point { x: rect.x, y },
                             to: Point {
@@ -325,7 +419,23 @@ fn paint_node<Msg>(
                 stroke: p.stroke.map(|(c, w)| (c, w * s)),
             });
         }
-        Draw::Spinner(color) => out.push(spinner(rect, *color, state.time)),
+        Draw::Bitmap(rows, color) => {
+            // Centered in its box, on whole icon pixels.
+            let side = node.icon.map_or(rect.width.min(rect.height), |(_, s)| s);
+            let px = side / rows.len().max(1) as f32;
+            let offset = |free: f32| (free / 2.0 / px).round() * px;
+            let art = Rect::new(
+                rect.x + offset(rect.width - side),
+                rect.y + offset(rect.height - side),
+                side,
+                side,
+            );
+            out.extend(pixel::bitmap(art, rows, *color));
+        }
+        Draw::Spinner(color) => match grid {
+            Some(cell) => out.extend(pixel::spinner(rect, *color, state.time, cell)),
+            None => out.push(spinner(rect, *color, state.time)),
+        },
         _ => {}
     }
     if let Some(line) = caret.and_then(|c| c.underline) {
@@ -337,14 +447,24 @@ fn paint_node<Msg>(
         });
     }
     if let Some(c) = caret {
+        let rect = match grid {
+            Some(cell) => {
+                let x = pixel::snap(c.rect.x, cell);
+                let r = pixel::snap_rect(c.rect, cell);
+                Rect::new(x, r.y, pixel::snap_width(c.rect.width, cell), r.height)
+            }
+            None => c.rect,
+        };
         out.push(DrawCmd::Rect {
-            rect: c.rect,
+            rect,
             radii: Radii::default(),
             fill: c.color,
             stroke: None,
         });
     }
     let clip = match (node.clip, node.scroll) {
+        // Clips stay square on a grid; content draws its own steps.
+        (Some(_), _) if grid.is_some() => Some(Radii::default()),
         (Some(radii), _) => Some(clamp_radii(rect.width, rect.height, radii)),
         (None, Some(_)) => Some(Radii::default()),
         (None, None) => None,
@@ -360,6 +480,7 @@ fn paint_node<Msg>(
             ctx.viewport
         },
         opacity: ctx.opacity * node.opacity,
+        grid: grid.or(ctx.grid),
     };
     for &child in &node.children {
         paint_node(scene, child as usize, inner, out, overlay);
@@ -389,7 +510,14 @@ fn paint_node<Msg>(
             if let Some(t) = transform {
                 overlay.push(t.push());
             }
-            overlay.push(focus_ring(rect, ind.radii, ring));
+            match grid {
+                Some(cell) => {
+                    overlay.push(DrawCmd::PushPixelGrid { cell });
+                    grid_ring(overlay, rect, ind.radii, ring, cell);
+                    overlay.push(DrawCmd::PopPixelGrid);
+                }
+                None => overlay.push(focus_ring(rect, ind.radii, ring)),
+            }
             if transform.is_some() {
                 overlay.push(DrawCmd::PopTransform);
             }
@@ -400,7 +528,13 @@ fn paint_node<Msg>(
                 overlay.push(DrawCmd::PopClip);
             }
         }
-        if let Some((border, inner)) = ind.field {
+        if let (Some((border, inner)), Some(cell)) = (ind.field, grid) {
+            let bw = match &node.draw {
+                Draw::Box(b) => b.border.map_or(cell, |(_, w)| w),
+                _ => cell,
+            };
+            grid_field(out, rect, ind.radii, bw, (border, inner), cell);
+        } else if let Some((border, inner)) = ind.field {
             let bw = match &node.draw {
                 Draw::Box(b) => b.border.map_or(1.0, |(_, w)| w),
                 _ => 1.0,
@@ -421,12 +555,88 @@ fn paint_node<Msg>(
             });
         }
     }
+    if opens_grid {
+        out.push(DrawCmd::PopPixelGrid);
+    }
     if faded {
         out.push(DrawCmd::PopOpacity);
     }
     if transform.is_some() {
         out.push(DrawCmd::PopTransform);
     }
+}
+
+/// A box on a pixel grid: hard shadows, fill, and border as whole cells.
+/// Shadows with blur have no pixel form and stay smooth.
+fn grid_box(out: &mut Vec<DrawCmd>, rect: Rect, b: &BoxDraw, cell: f32) {
+    let radii = b.radii;
+    // CSS paints the first layer on top.
+    for layer in b.shadow.iter().rev() {
+        let color: Color = layer.color.into();
+        if layer.blur > 0.0 {
+            out.push(DrawCmd::Shadow {
+                rect,
+                radii: clamp_radii(rect.width, rect.height, radii),
+                layers: shadow_layers(std::slice::from_ref(layer)),
+            });
+        } else if layer.is_inset {
+            if layer.spread > 0.0 {
+                let r = Rect::new(rect.x + layer.x, rect.y + layer.y, rect.width, rect.height);
+                pixel::push_rects(out, pixel::frame(r, radii, layer.spread, cell), color);
+            }
+        } else {
+            let s = layer.spread;
+            let r = Rect::new(
+                rect.x + layer.x - s,
+                rect.y + layer.y - s,
+                rect.width + 2.0 * s,
+                rect.height + 2.0 * s,
+            );
+            let grown = Radii(
+                radii
+                    .0
+                    .map(|v| if v > 0.0 { (v + s).max(0.0) } else { 0.0 }),
+            );
+            pixel::push_rects(out, pixel::fill(r, grown, cell), color);
+        }
+    }
+    if b.fill.a > 0.0 {
+        pixel::push_rects(out, pixel::fill(rect, radii, cell), b.fill);
+    }
+    if let Some((color, width)) = b.border {
+        pixel::push_rects(out, pixel::frame(rect, radii, width, cell), color);
+    }
+}
+
+/// The focus ring on a pixel grid: one cell wide, one cell outside the
+/// edge, stepped.
+fn grid_ring(out: &mut Vec<DrawCmd>, rect: Rect, radii: Radii, color: Color, cell: f32) {
+    let by = 2.0 * cell;
+    let r = Rect::new(
+        rect.x - by,
+        rect.y - by,
+        rect.width + 2.0 * by,
+        rect.height + 2.0 * by,
+    );
+    let radii = Radii(radii.0.map(|v| if v > 0.0 { v + by } else { 0.0 }));
+    pixel::push_rects(out, pixel::frame(r, radii, cell, cell), color);
+}
+
+/// A text field's focus on a pixel grid: its border and an inner ring,
+/// both stepped.
+fn grid_field(
+    out: &mut Vec<DrawCmd>,
+    rect: Rect,
+    radii: Radii,
+    border_width: f32,
+    (border, inner): (Color, Color),
+    cell: f32,
+) {
+    let bw = pixel::snap_width(border_width, cell);
+    let inside = Radii(radii.0.map(|r| (r - bw).max(0.0)));
+    let ring = pixel::snap_width(2.0, cell);
+    pixel::push_rects(out, pixel::frame(rect.inset(bw), inside, ring, cell), inner);
+    pixel::push_rects(out, pixel::frame(rect, radii, bw, cell), border);
 }
 
 /// The ring around `rect`: `offset` outside the edge and `width` wide, with
@@ -481,5 +691,25 @@ fn spinner(rect: Rect, color: Color, time: f32) -> DrawCmd {
         commands,
         fill: None,
         stroke: Some((color, width)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transforms_on_a_grid_keep_whole_pixels() {
+        let t = |scale, x, y| Transform {
+            origin: Point { x: 10.0, y: 10.0 },
+            scale,
+            translate: Point { x, y },
+        };
+        // A press scale alone has no pixel form.
+        assert_eq!(t(0.98, 0.0, 0.0).on_grid(2.0), None);
+        // A moving thumb steps by whole cells.
+        assert_eq!(t(1.0, 4.9, -1.2).on_grid(2.0), Some(t(1.0, 4.0, -2.0)));
+        assert_eq!(t(0.5, 3.1, 0.0).on_grid(2.0), Some(t(1.0, 4.0, 0.0)));
+        assert_eq!(t(2.0, 0.0, 0.0).on_grid(2.0), Some(t(2.0, 0.0, 0.0)));
     }
 }

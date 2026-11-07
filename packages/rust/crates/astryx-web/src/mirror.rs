@@ -226,6 +226,9 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
     if node.disabled {
         d.attrs.push(("aria-disabled", "true".into()));
     }
+    if node.rtl {
+        d.attrs.push(("dir", "rtl".into()));
+    }
     if let Some(live) = node.live {
         let politeness = match live {
             Live::Polite => "polite",
@@ -695,6 +698,14 @@ mod tests {
         assert_eq!(utf16_selection(value, 8, 1), (1, 5, true));
         // Inside a character and past the end.
         assert_eq!(utf16_selection(value, 2, 99), (1, 5, false));
+    }
+
+    #[test]
+    fn rtl_nodes_get_dir_rtl() {
+        let mut n = node(Role::Text);
+        assert_eq!(attr(&describe(&n, None), "dir"), None);
+        n.rtl = true;
+        assert_eq!(attr(&describe(&n, None), "dir"), Some("rtl"));
     }
 
     #[test]

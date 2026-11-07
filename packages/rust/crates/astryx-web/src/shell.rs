@@ -257,6 +257,7 @@ impl Shell {
         let list = self.surface.frame(&info, self.renderer.measurer());
         self.renderer.render(&list, &info);
         self.request_fonts_for(&list.commands);
+        self.request_missing_scripts();
         self.mirror.sync(self.surface.accessibility().as_ref());
         if had_focus {
             self.mirror.focus_tab_stop();
@@ -284,6 +285,20 @@ impl Shell {
                 keys.extend(self.font_plan.request_for(text, style.weight));
             }
         }
+        self.fetch_fonts(keys);
+    }
+
+    /// Loads subsets for scripts the text engine met with no face, such as
+    /// Arabic or Hebrew in measured text that has not drawn yet.
+    fn request_missing_scripts(&mut self) {
+        let missing = self.renderer.text().take_missing_scripts();
+        if self.font_base.is_none() || missing.is_empty() {
+            return;
+        }
+        let keys = missing
+            .iter()
+            .filter_map(|script| self.font_plan.request_script(script.name()))
+            .collect();
         self.fetch_fonts(keys);
     }
 

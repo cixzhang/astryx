@@ -34,6 +34,7 @@ fn main() {
         for mode in ["light", "dark"] {
             writeln!(out, "    {mode}: {},", tokens_value(&theme[mode])).unwrap();
         }
+        out.push_str("    grid: None,\n    icons: &[],\n    fonts: &[],\n");
         out.push_str("};\n\n");
     }
     out.push_str("impl Theme {\n");

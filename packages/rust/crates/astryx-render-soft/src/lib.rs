@@ -125,6 +125,8 @@ pub struct SoftRenderer {
     transform: Affine,
     segs: Vec<Seg>,
     placed: Vec<GlyphDraw>,
+    /// Open pixel grids, innermost last, in points.
+    grids: Vec<f32>,
     /// Registered images, premultiplied.
     images: HashMap<ImageId, Pixmap>,
 }
@@ -165,6 +167,7 @@ impl SoftRenderer {
             transform: Affine::IDENTITY,
             segs: Vec::new(),
             placed: Vec::new(),
+            grids: Vec::new(),
             images: HashMap::new(),
         }
     }
@@ -237,7 +240,7 @@ impl SoftRenderer {
         };
         let mut paint = Paint::default();
         paint.set_color(skia_color(color));
-        paint.anti_alias = true;
+        paint.anti_alias = self.grids.is_empty();
         let (target, clip) = self.target();
         target.fill_path(&path, &paint, rule, Transform::identity(), clip);
     }
@@ -254,7 +257,7 @@ impl SoftRenderer {
         };
         let mut paint = Paint::default();
         paint.set_color(skia_color(color));
-        paint.anti_alias = true;
+        paint.anti_alias = self.grids.is_empty();
         let stroke = Stroke {
             width,
             line_cap: if round { LineCap::Round } else { LineCap::Butt },
@@ -275,7 +278,8 @@ impl SoftRenderer {
         self.segs.clear();
         rounded_rect(rect, radii, &mut self.segs);
         if let (Some(path), false) = (to_skia_path(&self.segs), rect.is_empty()) {
-            mask.fill_path(&path, FillRule::Winding, true, Transform::identity());
+            let anti_alias = self.grids.is_empty();
+            mask.fill_path(&path, FillRule::Winding, anti_alias, Transform::identity());
         }
         if let Some(parent) = self.clips.last() {
             for (m, &p) in mask.data_mut().iter_mut().zip(parent.data()) {
@@ -347,6 +351,14 @@ impl SoftRenderer {
                 return;
             }
             DrawCmd::PopTransform => return self.pop_until(|g| matches!(g, Group::Transform(_))),
+            DrawCmd::PushPixelGrid { cell } => {
+                self.grids.push(*cell);
+                return;
+            }
+            DrawCmd::PopPixelGrid => {
+                self.grids.pop();
+                return;
+            }
             DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip)),
             DrawCmd::PopOpacity => {
                 return self.pop_until(|g| matches!(g, Group::Layer | Group::Pass))
@@ -492,8 +504,15 @@ impl SoftRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.text
-                    .place(&layout, (rect.x, rect.y), s, snap, &mut placed);
+                match self.grids.last() {
+                    Some(&cell) if snap => {
+                        self.text
+                            .place_on_grid(&layout, (rect.x, rect.y), s, cell, &mut placed)
+                    }
+                    _ => self
+                        .text
+                        .place(&layout, (rect.x, rect.y), s, snap, &mut placed),
+                }
                 let color = premultiplied(*color);
                 let (target, clip) = self.target();
                 for g in &placed {
@@ -555,7 +574,9 @@ impl SoftRenderer {
             DrawCmd::PopClip
             | DrawCmd::PopOpacity
             | DrawCmd::PushTransform { .. }
-            | DrawCmd::PopTransform => {}
+            | DrawCmd::PopTransform
+            | DrawCmd::PushPixelGrid { .. }
+            | DrawCmd::PopPixelGrid => {}
         }
     }
 
@@ -611,11 +632,16 @@ impl SoftRenderer {
                 shader: Pattern::new(
                     pixmap.as_ref(),
                     SpreadMode::Pad,
-                    FilterQuality::Bilinear,
+                    // On a pixel grid, image pixels stay square.
+                    if self.grids.is_empty() {
+                        FilterQuality::Bilinear
+                    } else {
+                        FilterQuality::Nearest
+                    },
                     1.0,
                     transform,
                 ),
-                anti_alias: true,
+                anti_alias: self.grids.is_empty(),
                 ..Paint::default()
             };
             let target = match self.layers.last_mut() {
@@ -645,6 +671,7 @@ impl SoftRenderer {
         self.base.fill(skia_color(list.clear));
         self.shadows.begin_frame();
         self.transform = Affine::IDENTITY;
+        self.grids.clear();
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
         for cmd in &list.commands {
             self.draw(cmd, scale);
