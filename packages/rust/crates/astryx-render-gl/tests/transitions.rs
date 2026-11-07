@@ -121,3 +121,45 @@ fn transitions_match_soft_halfway() {
         }
     }
 }
+
+#[test]
+fn prepared_transitions_create_no_textures() {
+    let mut gl = match common::OffscreenGl::new() {
+        Ok(gl) => gl,
+        Err(e) => {
+            eprintln!("skipping: {e}");
+            return;
+        }
+    };
+    let old = scene(
+        Color::rgba(0.1, 0.2, 0.5, 1.0),
+        Color::rgba(0.9, 0.8, 0.2, 1.0),
+    );
+    let new = scene(
+        Color::rgba(0.9, 0.5, 0.2, 1.0),
+        Color::rgba(0.1, 0.5, 0.3, 1.0),
+    );
+    let still = FrameInfo {
+        width: 320,
+        height: 240,
+        scale: 1.0,
+        dt: 0.0,
+    };
+    gl.render(&old, &still);
+    gl.renderer.prepare_transitions(320, 240);
+    let t = Transition {
+        kind: TransitionKind::Door,
+        duration_ms: 300,
+        easing: Easing::EaseIn,
+        sound: None,
+    };
+    gl.renderer.begin_transition(&t, &old, &still);
+    let begun = gl.renderer.last_stats().textures;
+    gl.render(&new, &FrameInfo { dt: 0.1, ..still });
+    assert_eq!((begun, gl.renderer.last_stats().textures), (0, 0));
+    // A second transition reuses the same two textures.
+    gl.render(&new, &FrameInfo { dt: 1.0, ..still });
+    gl.renderer.begin_transition(&t, &new, &still);
+    gl.render(&old, &FrameInfo { dt: 0.1, ..still });
+    assert_eq!(gl.renderer.last_stats().textures, 0);
+}

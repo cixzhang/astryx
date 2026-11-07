@@ -101,6 +101,13 @@ fn since(_: Option<Clock>) -> std::time::Duration {
     std::time::Duration::ZERO
 }
 
+/// The texture size a layer of `size` pixels gets: rounded up to 64, so
+/// layers of nearby sizes share textures.
+fn layer_size(size: (i32, i32)) -> (i32, i32) {
+    let round = |v: i32| ((v.max(1) + 63) / 64) * 64;
+    (round(size.0), round(size.1))
+}
+
 /// A transition in progress: the old frame and the time so far.
 struct Running {
     transition: astryx_core::Transition,
@@ -373,6 +380,9 @@ pub struct GlRenderer {
     lighting: Option<LightingPass>,
     transition_program: shader::TransitionProgram,
     transition: Option<Running>,
+    /// Frame-sized textures kept for transitions, so starting one creates
+    /// none.
+    frame_layers: Vec<Layer>,
     vbo: glow::Buffer,
     ibo: glow::Buffer,
     white: glow::Texture,
@@ -486,6 +496,7 @@ impl GlRenderer {
                 lighting: None,
                 transition_program,
                 transition: None,
+                frame_layers: Vec::new(),
                 vbo,
                 ibo,
                 white,
@@ -1763,8 +1774,7 @@ impl GlRenderer {
 
     /// A pooled offscreen texture at least `size` large.
     fn layer(&mut self, size: (i32, i32)) -> Layer {
-        let round = |v: i32| ((v + 63) / 64) * 64;
-        let size = (round(size.0.max(1)), round(size.1.max(1)));
+        let size = layer_size(size);
         if let Some(i) = self.layers.iter().position(|l| l.size == size) {
             let mut layer = self.layers.swap_remove(i);
             layer.last_used = self.frame;
@@ -1962,10 +1972,10 @@ impl GlRenderer {
         let t = run.elapsed * 1000.0 / run.transition.duration_ms as f32;
         let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
         if t >= 1.0 || run.size != size {
-            self.layers_in_use.push(run.old);
+            self.keep_frame_layer(run.old);
             return self.render_frame(list, frame);
         }
-        let new = self.layer(size);
+        let new = self.frame_layer(size);
         let saved = self.framebuffer;
         self.framebuffer = Some(new.framebuffer);
         self.render_frame(list, frame);
@@ -1974,7 +1984,7 @@ impl GlRenderer {
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
         self.draw_transition(&run, &new, t, scale);
         self.stats.flush += since(start);
-        self.layers_in_use.push(new);
+        self.keep_frame_layer(new);
         self.transition = Some(run);
     }
 
@@ -1987,19 +1997,17 @@ impl GlRenderer {
         frame: &FrameInfo,
     ) {
         if let Some(run) = self.transition.take() {
-            self.layers.push(run.old);
+            self.keep_frame_layer(run.old);
         }
         if transition.duration_ms == 0 {
             return;
         }
         let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
-        let old = self.layer(size);
+        let old = self.frame_layer(size);
         let saved = self.framebuffer;
         self.framebuffer = Some(old.framebuffer);
         self.render_frame(from, frame);
         self.framebuffer = saved;
-        // Kept out of the pool until the transition ends.
-        self.layers_in_use.retain(|l| l.texture != old.texture);
         self.transition = Some(Running {
             transition: *transition,
             elapsed: 0.0,
@@ -2011,6 +2019,50 @@ impl GlRenderer {
     /// A transition is running.
     pub fn transitioning(&self) -> bool {
         self.transition.is_some()
+    }
+
+    /// Creates the two textures a transition draws through, for frames of
+    /// this size, so the first transition does not wait for them.
+    pub fn prepare_transitions(&mut self, width: u32, height: u32) {
+        let size = (width.max(1) as i32, height.max(1) as i32);
+        let (keep, other): (Vec<Layer>, Vec<Layer>) = self
+            .frame_layers
+            .drain(..)
+            .partition(|l| l.size == layer_size(size));
+        self.frame_layers = keep;
+        self.layers.extend(other);
+        while self.frame_layers.len() < 2 {
+            let l = self.layer(size);
+            // SAFETY: the context is current; the framebuffer belongs to it.
+            unsafe {
+                self.gl
+                    .bind_framebuffer(glow::FRAMEBUFFER, Some(l.framebuffer));
+                self.gl.viewport(0, 0, l.size.0, l.size.1);
+                self.gl.disable(glow::SCISSOR_TEST);
+                self.gl.clear_color(0.0, 0.0, 0.0, 0.0);
+                self.gl.clear(glow::COLOR_BUFFER_BIT);
+            }
+            self.frame_layers.push(l);
+        }
+    }
+
+    fn frame_layer(&mut self, size: (i32, i32)) -> Layer {
+        match self
+            .frame_layers
+            .iter()
+            .position(|l| l.size == layer_size(size))
+        {
+            Some(i) => self.frame_layers.swap_remove(i),
+            None => self.layer(size),
+        }
+    }
+
+    fn keep_frame_layer(&mut self, layer: Layer) {
+        if self.frame_layers.len() < 2 {
+            self.frame_layers.push(layer);
+        } else {
+            self.layers_in_use.push(layer);
+        }
     }
 
     /// Composites the old and new frames of `run` at time `t` into the
@@ -2300,21 +2352,35 @@ impl GlRenderer {
         let target = self.layer((64, 64));
         let saved = self.framebuffer;
         self.framebuffer = Some(target.framebuffer);
-        self.render_list(
-            &list,
-            &FrameInfo {
-                width: 64,
-                height: 64,
-                scale: 1.0,
-                dt: 0.0,
-            },
-        );
+        let small = FrameInfo {
+            width: 64,
+            height: 64,
+            scale: 1.0,
+            dt: 0.0,
+        };
+        self.render_list(&list, &small);
+        // One transition frame, so its program is ready too.
+        let fade = astryx_core::Transition {
+            kind: astryx_core::TransitionKind::Swirl,
+            duration_ms: 1000,
+            easing: astryx_core::Easing::Linear,
+            sound: None,
+        };
+        self.begin_transition(&fade, &list, &small);
+        self.render_list(&list, &FrameInfo { dt: 0.5, ..small });
+        if let Some(run) = self.transition.take() {
+            self.layers.push(run.old);
+        }
+        self.layers.append(&mut self.frame_layers);
         self.framebuffer = saved;
         // SAFETY: the context is current while the renderer is created.
         unsafe { self.gl.finish() };
         self.layers.push(target);
-        self.layer_cache.clear();
-        self.frame = 0;
+        // Layers cached from the warm-up go back to the pool. The frame
+        // counter keeps running: pooled layers carry the frames they were
+        // last used in.
+        let cached: Vec<Layer> = self.layer_cache.drain().map(|(_, l)| l).collect();
+        self.layers.extend(cached);
     }
 
     /// Reads back the frame just drawn as straight-alpha RGBA rows, top row
@@ -2388,9 +2454,10 @@ impl Drop for GlRenderer {
             gl.delete_program(self.program.program);
             gl.delete_program(self.light_program.program);
             gl.delete_program(self.transition_program.program);
-            if let Some(run) = self.transition.take() {
-                gl.delete_texture(run.old.texture);
-                gl.delete_framebuffer(run.old.framebuffer);
+            let running = self.transition.take().map(|r| r.old);
+            for l in running.into_iter().chain(self.frame_layers.drain(..)) {
+                gl.delete_texture(l.texture);
+                gl.delete_framebuffer(l.framebuffer);
             }
             gl.delete_buffer(self.light_vbo);
             gl.delete_texture(self.lattice);
