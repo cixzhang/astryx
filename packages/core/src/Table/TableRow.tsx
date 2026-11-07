@@ -6,7 +6,8 @@
  * @file TableRow.tsx
  * @input React, StyleX, TableContext, theme tokens
  * @output Exports TableRow component, TableRowProps
- * @position Sub-component; used inside Table children mode
+ * @position Sub-component; used inside a Table section (TableHeader /
+ *   TableBody / TableFooter) in children mode
  *
  * SYNC: When modified, update:
  * - /packages/core/src/Table/Table.doc.mjs
@@ -20,6 +21,7 @@ import * as stylex from '@stylexjs/stylex';
 import {colorVars, durationVars, easeVars} from '../theme/tokens.stylex';
 import type {StyleXStyles} from '../theme/types';
 import {tableRowMarker} from './table.stylex';
+import {glidingDividerStyles} from './glidingDivider';
 import {TableContext} from './TableContext';
 import {mergeProps} from '../utils';
 import {themeProps} from '../utils/themeProps';
@@ -41,18 +43,29 @@ export interface TableRowProps extends BaseProps<HTMLTableRowElement> {
   isHeaderRow?: boolean;
 }
 
+/**
+ * Zebra striping counts body rows — and a row-expansion panel is not one.
+ *
+ * The panel is appended as a sibling `<tr>` (see BaseTable's `afterRow`), so a
+ * plain `:nth-child(even)` counts it and every row below an open panel takes
+ * the opposite stripe: expanding one row repaints half the table. Counting
+ * `of :not([data-expansion-panel])` leaves the panel out of the sequence, so
+ * the rows keep their parity whatever is open.
+ */
+const NOT_PANEL_ROW = ':nth-child(even of :not([data-expansion-panel]))';
+
 const stripedRowStyles = stylex.create({
   row: {
     backgroundColor: {
       default: null,
-      ':nth-child(even)': colorVars['--color-background-muted'],
+      [NOT_PANEL_ROW]: colorVars['--color-background-muted'],
     },
     // Publish the row's current overlay color as an inheritable variable so
     // pinned/sticky cells (which paint an opaque background over the otherwise
     // transparent row) can replay the exact same striping. Unset on odd rows.
     '--table-row-overlay': {
       default: null,
-      ':nth-child(even)': colorVars['--color-background-muted'],
+      [NOT_PANEL_ROW]: colorVars['--color-background-muted'],
     },
   },
 });
@@ -61,13 +74,13 @@ const hoverRowStyles = stylex.create({
   row: {
     backgroundColor: {
       default: null,
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
     '--table-row-overlay': {
       default: null,
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
@@ -81,15 +94,15 @@ const stripedHoverRowStyles = stylex.create({
   row: {
     backgroundColor: {
       default: null,
-      ':nth-child(even)': colorVars['--color-background-muted'],
-      ':hover': {
+      [NOT_PANEL_ROW]: colorVars['--color-background-muted'],
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
     '--table-row-overlay': {
       default: null,
-      ':nth-child(even)': colorVars['--color-background-muted'],
-      ':hover': {
+      [NOT_PANEL_ROW]: colorVars['--color-background-muted'],
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
@@ -105,13 +118,23 @@ const stripedHoverRowStyles = stylex.create({
  * When used inside `<Table>`, inherits styling from the table context
  * (striped, hover, divider overrides). When used standalone, renders a plain `<tr>`.
  *
+ * Rows go inside a section — `<TableBody>`, `<TableHeader>`, or
+ * `<TableFooter>`. `<table>` cannot contain a `<tr>` directly: the HTML parser
+ * inserts an implied `<tbody>` when it parses server-rendered markup and React
+ * does not when it renders on the client, so the two trees mismatch on
+ * hydration. Children mode passes children straight through, so the section is
+ * the caller's to supply — the data-driven `data={...}` mode renders it for
+ * you.
+ *
  * @example
  * ```
  * <Table>
- *   <TableRow>
- *     <TableCell>Alice</TableCell>
- *     <TableCell>30</TableCell>
- *   </TableRow>
+ *   <TableBody>
+ *     <TableRow>
+ *       <TableCell>Alice</TableCell>
+ *       <TableCell>30</TableCell>
+ *     </TableRow>
+ *   </TableBody>
  * </Table>
  * ```
  */
@@ -120,6 +143,8 @@ export function TableRow({
   xstyle,
   ref,
   isHeaderRow = false,
+  className: incomingClassName,
+  style: incomingStyle,
   ...props
 }: TableRowProps) {
   const ctx = use(TableContext);
@@ -132,6 +157,8 @@ export function TableRow({
         {...mergeProps(
           themeProps('table-row'),
           stylex.props(tableRowMarker, xstyle),
+          incomingClassName,
+          incomingStyle,
         )}>
         {children}
       </tr>
@@ -156,6 +183,8 @@ export function TableRow({
   if (ctx.dividers === 'rows' || ctx.dividers === 'grid') {
     // Note: last-body-row border removal is handled by TableCell
     // to avoid affecting the header row in <thead>.
+    // While a glide moves the row, its divider moves with it.
+    rowStyles.push(glidingDividerStyles.row);
   }
 
   if (xstyle) {
@@ -169,6 +198,8 @@ export function TableRow({
       {...mergeProps(
         themeProps('table-row'),
         stylex.props(tableRowMarker, ...rowStyles),
+        incomingClassName,
+        incomingStyle,
       )}>
       {children}
     </tr>

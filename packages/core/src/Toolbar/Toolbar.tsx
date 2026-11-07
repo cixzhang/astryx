@@ -6,7 +6,8 @@
  * @file Toolbar.tsx
  * @input Uses Section, SizeContext, useListFocus, useKeyboardHint, StyleX, spacingVars, sizeVars
  * @output Exports Toolbar component and ToolbarProps
- * @position Core implementation; consumed by index.ts
+ * @position Core implementation; consumed by index.ts. Owns toolbar focus and
+ *   keyboard navigation, excluding nested toolbars and popover contents.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/core/src/Toolbar/Toolbar.doc.mjs
@@ -25,7 +26,7 @@ import * as stylex from '@stylexjs/stylex';
 import {spacingVars, sizeVars} from '../theme/tokens.stylex';
 import {mergeProps} from '../utils';
 import {Section} from '../Section/Section';
-import {useListFocus} from '../hooks/useListFocus';
+import {oneTabStopAmong, useInternalListFocus} from '../hooks/useListFocus';
 import {useKeyboardHint} from '../hooks/useKeyboardHint';
 import {SizeProvider} from '../SizeContext/SizeContext';
 import {edgeCompSlot} from '../Layout/edgeCompensation.stylex';
@@ -71,12 +72,15 @@ const styles = stylex.create({
     display: 'flex',
     alignItems: 'center',
   },
+  // `minWidth: 0` lets the `auto` track shrink below the content's width, so a
+  // wide center never widens the toolbar. The slot deliberately does not clip
+  // (`overflow`): clipping would cut off the box-shadow and focus ring of its
+  // outermost children, which paint outside their own box.
   centerSlot: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 0,
-    overflow: 'hidden',
   },
   endSlot: {
     display: 'flex',
@@ -198,6 +202,11 @@ export interface ToolbarProps extends BaseProps<HTMLDivElement> {
   dividers?: ('top' | 'bottom' | 'start' | 'end')[];
 }
 
+// `a[href]` catches a Button rendered with `href`.
+const TOOLBAR_ITEMS = 'button, input, a[href], [tabindex]';
+const TOOLBAR_BOUNDARY = '[role="toolbar"], [popover]';
+const toolbarTabStop = oneTabStopAmong(TOOLBAR_ITEMS, TOOLBAR_BOUNDARY);
+
 /**
  * General-purpose toolbar with start, center, and end content slots.
  *
@@ -243,12 +252,16 @@ export function Toolbar({
 
   const gapVar = spacingVars[spacingStepToVar[gap]] as string;
 
-  const {listRef, handleKeyDown, handleFocus} = useListFocus<HTMLDivElement>({
-    itemSelector: 'button, input, [tabindex]',
-    orientation,
-    hasRovingTabIndex: true,
-    hasCaretGuard: true,
-  });
+  const {listRef, handleKeyDown, handleFocus} =
+    useInternalListFocus<HTMLDivElement>({
+      itemSelector: TOOLBAR_ITEMS,
+      boundarySelector: TOOLBAR_BOUNDARY,
+      orientation,
+      hasRovingTabIndex: true,
+      hasCaretGuard: true,
+      // A read-only toolbar of disabled controls stays one Tab stop.
+      tabStopOrder: toolbarTabStop,
+    });
 
   const {
     hintElement,

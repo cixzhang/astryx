@@ -13,6 +13,7 @@ import * as stylex from '@stylexjs/stylex';
 import type {StyleXStyles} from '@stylexjs/stylex';
 import {renderIconSlot, type IconType} from '../Icon';
 import {Item} from '../Item';
+import {useSelectorRowLayout} from './SelectorRowLayoutContext';
 import {mergeProps} from '../utils';
 import {themeProps} from '../utils/themeProps';
 
@@ -21,6 +22,10 @@ const embeddedStyles = stylex.create({
     paddingBlock: 0,
     paddingInline: 0,
     borderRadius: 0,
+    // The host row lays this out as a flex item, whose automatic minimum
+    // size is the full label width. Without the reset a long label runs
+    // past a narrow popover and is clipped instead of ellipsizing.
+    minWidth: 0,
   },
 });
 
@@ -39,6 +44,20 @@ export interface SelectorOptionProps {
    * Secondary description text displayed below the label.
    */
   description?: ReactNode;
+
+  /**
+   * How the label and description sit together. `stacked` puts the
+   * description on its own line below the label; `inline` keeps both on one
+   * line, with the description ellipsizing first.
+   *
+   * In a Selector trigger this is the caller's choice and the trigger sizes
+   * itself to it — one line at the size token, two lines exactly one text line
+   * taller. Inside an `InputGroup` the row height is pinned by the group, so
+   * `inline` is forced.
+   *
+   * @default 'stacked'
+   */
+  layout?: 'stacked' | 'inline';
 
   /**
    * Additional content to render after the label/description.
@@ -95,11 +114,16 @@ export function SelectorOption({
   icon,
   label,
   description,
+  layout,
   endContent,
   xstyle,
   className,
   style,
 }: SelectorOptionProps) {
+  // A height-pinned host (the trigger inside an InputGroup) overrides the
+  // caller's choice: the row physically cannot be two lines there.
+  const enforcedLayout = useSelectorRowLayout();
+
   return (
     <Item
       startContent={
@@ -109,6 +133,7 @@ export function SelectorOption({
       }
       label={label}
       description={description}
+      layout={enforcedLayout === 'inline' ? 'inline' : layout}
       endContent={endContent}
       xstyle={[embeddedStyles.root, xstyle]}
       {...mergeProps(themeProps('selector-option'), {className, style})}

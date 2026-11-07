@@ -4,82 +4,59 @@
 
 /**
  * @file useContainerReveal.ts
- * @input Uses React, the generated marker pool, useDevWarning
- * @output Exports useContainerReveal — a headless hover/focus reveal primitive
- * @position Core hook. Consumed by any component that reveals (or conceals)
- *   content when its container is hovered or focused — e.g. Thumbnail's remove
- *   button, TreeList row actions.
- *
- * Gives a container a scoped hover/focus-within trigger that reveals or
- * conceals content inside it, entirely in CSS (no hover state in JS, no
- * re-render on hover). The caller authors NO StyleX: the hook hands out a
- * marker + matching reveal styles from a pre-compiled pool.
- *
- * ACCESSIBILITY (WCAG 2.2 by construction):
- * - Revealed content is visually hidden at rest via position + opacity, so it
- *   stays in the accessibility tree and tab order — never display:none.
- * - Keyboard: revealed on :focus-within, so tabbing in shows it.
- * - Touch: always visible on coarse pointers; never gated behind hover.
- * - Concealed (inverted) content is a mouse-only visual swap: it ignores
- *   :focus-within (a keyboard user must never watch content vanish) and stays
- *   visible on touch and in the a11y tree.
- * - Motion: honors prefers-reduced-motion.
+ * @input The containerReveal styles
+ * @output useContainerReveal, a headless hover and focus reveal primitive
+ * @position Core hook for content that shows or hides when its container is
+ *   hovered or focused, such as Thumbnail's remove button
  *
  * SYNC: When modified, update:
  * - /packages/core/src/hooks/index.ts (export)
- * - containerReveal.pool.stylex.ts (if the slot shape changes)
+ * - containerReveal.stylex.ts (if the style blocks change)
  */
 
-import {useState, useEffect, type CSSProperties} from 'react';
+import {useMemo, type CSSProperties} from 'react';
 import * as stylex from '@stylexjs/stylex';
-import {POOL, POOL_SIZE, type RevealSlot} from './containerReveal.pool.stylex';
-import {useDevWarning} from './useDevWarning';
-
-// Module-level free-list. Each mounted, enabled useContainerReveal claims a
-// distinct pool slot so that any two CONCURRENTLY mounted containers — in
-// particular a nested container inside another's revealed content — get
-// different markers and cannot leak hover/focus into one another. Slots are
-// returned on unmount. Sibling containers that would only ever collide when
-// the pool is exhausted are harmless (a sibling is never an ancestor), so the
-// pool only needs to cover the number of concurrently mounted containers, not
-// instances over time.
-const claimed: boolean[] = new Array(POOL_SIZE).fill(false);
-
-interface Claim {
-  /** Pool index to use. */
-  index: number;
-  /** True when the pool was full and this claim fell back to a shared slot. */
-  isExhausted: boolean;
-}
-
-function claimSlot(): Claim {
-  for (let i = 0; i < POOL_SIZE; i++) {
-    if (!claimed[i]) {
-      claimed[i] = true;
-      return {index: i, isExhausted: false};
-    }
-  }
-  // Exhausted: fall back to slot 0. Safe for siblings (a sibling is never an
-  // ancestor); only nesting deeper than POOL_SIZE could reintroduce a leak.
-  // Surfaced via useDevWarning so the pool can be grown.
-  return {index: 0, isExhausted: true};
-}
-
-function releaseSlot(index: number, isExhausted: boolean): void {
-  // A fallback claim never owned the slot exclusively; leave it as-is.
-  if (!isExhausted) {
-    claimed[index] = false;
-  }
-}
+import {styles} from './containerReveal.stylex';
 
 export interface UseContainerRevealOptions {
   /**
-   * When false the hook is inert: no marker is applied and content getters
-   * return no styles, so content is always shown. Lets a component gate on its
-   * own prop (e.g. `revealOn === 'hover'`).
+   * When false the hook is inert: the container gets no styles and content
+   * getters return no styles, so content is always shown. Read on every
+   * render, so a component can flip it with its own prop (e.g.
+   * `revealOn === 'hover'`).
    * @default true
    */
   isEnabled?: boolean;
+}
+
+export interface ContainerRevealOptions {
+  /**
+   * Pin the container's trigger state instead of letting the pointer drive it.
+   * `'active'` reads as pointed-at and `'inactive'` as at rest; omit it — the
+   * default — to leave the container on hover and focus.
+   *
+   * State, not appearance: what each child then looks like is the child's own
+   * business (revealed content fades in on `'active'`, inverted content fades
+   * out). This is the lever for state a caller owns — a motion gate over a
+   * list, a scroll in progress, a row whose menu is open and must stay lit.
+   *
+   * `'inactive'` never overrides keyboard focus or a coarse pointer: the
+   * container still reveals on :focus-within and stays revealed on touch, so
+   * it cannot hide content from a keyboard or touch user.
+   */
+  forceState?: 'active' | 'inactive';
+  /**
+   * Hover-intent gate, in milliseconds: how long the pointer must rest on the
+   * container before the reveal starts. A pointer that passes through leaves
+   * nothing painted behind it, which is what keeps a list of rows quiet while
+   * the cursor sweeps across it.
+   *
+   * Mouse-only, like Tooltip's and HoverCard's `delay`: keyboard focus and
+   * touch reveal immediately. It survives `prefers-reduced-motion` — an intent
+   * gate is timing, not motion.
+   * @default 0
+   */
+  hoverDelay?: number;
 }
 
 export interface ContentRevealOptions {
@@ -96,11 +73,27 @@ export interface ContentRevealOptions {
    * @default false
    */
   isLayoutPreserved?: boolean;
+  /**
+   * Pin THIS element's appearance, whatever the container's state: `'shown'`
+   * keeps it visible, `'hidden'` keeps it out. Omit it — the default — to
+   * follow the container.
+   *
+   * Appearance, not state: it says how one element looks, so it is unambiguous
+   * where the container's `forceState` cannot be (a container feeds revealed
+   * and inverted children at once).
+   *
+   * `'hidden'` yields to focus — a forced-hidden element is still mounted and
+   * tabbable, so it reappears when focus lands inside it.
+   */
+  forceVisibility?: 'shown' | 'hidden';
 }
 
 export interface UseContainerRevealReturn {
   /** Spread onto the container whose hover/focus-within drives the reveal. */
-  getContainerProps: () => {className?: string; style?: CSSProperties};
+  getContainerProps: (options?: ContainerRevealOptions) => {
+    className?: string;
+    style?: CSSProperties;
+  };
   /** Spread onto each revealed / concealed child. */
   getContentRevealProps: (options?: ContentRevealOptions) => {
     className?: string;
@@ -113,13 +106,22 @@ const EMPTY = Object.freeze({});
 /**
  * Scoped, CSS-only hover/focus reveal for content inside a container.
  *
+ * Revealed content stays in the accessibility tree and the tab order. It
+ * shows on :focus-within without a delay, and it always shows on touch.
+ * Concealed content hides only for a mouse. Motion honors
+ * prefers-reduced-motion.
+ *
  * @example
- * ```tsx
+ * ```
  * const {getContainerProps, getContentRevealProps} = useContainerReveal({
  *   isEnabled: revealOn === 'hover',
  * });
  *
- * <div {...mergeProps(getContainerProps(), stylex.props(styles.row))}>
+ * <div
+ *   {...mergeProps(
+ *     getContainerProps({hoverDelay: 120, forceState: gateState}),
+ *     stylex.props(styles.row),
+ *   )}>
  *   {label}
  *   <span {...mergeProps(getContentRevealProps(), stylex.props(styles.actions))}>
  *     {actions}
@@ -132,50 +134,45 @@ export function useContainerReveal(
 ): UseContainerRevealReturn {
   const {isEnabled = true} = options;
 
-  // Claim a slot for this container's lifetime. Assigned in the initializer
-  // (not the render body) and released on unmount so the free-list stays
-  // effect-scoped and StrictMode-safe.
-  const [claim] = useState<Claim | null>(() =>
-    isEnabled ? claimSlot() : null,
-  );
-
-  useEffect(() => {
-    if (claim == null) {
-      return;
+  return useMemo(() => {
+    if (!isEnabled) {
+      return {
+        getContainerProps: () => EMPTY,
+        getContentRevealProps: () => EMPTY,
+      };
     }
-    return () => releaseSlot(claim.index, claim.isExhausted);
-  }, [claim]);
-
-  useDevWarning(
-    'useContainerReveal',
-    `More than ${POOL_SIZE} reveal containers are mounted at once; nested ` +
-      `containers beyond the pool may share a marker. Add markers to ` +
-      `containerReveal.pool.stylex.ts and raise POOL_SIZE.`,
-    claim?.isExhausted ?? false,
-  );
-
-  if (claim == null) {
     return {
-      getContainerProps: () => EMPTY,
-      getContentRevealProps: () => EMPTY,
+      getContainerProps: (containerOptions: ContainerRevealOptions = {}) => {
+        const {forceState, hoverDelay = 0} = containerOptions;
+        return stylex.props(
+          styles.container,
+          hoverDelay > 0 && styles.hoverDelay(`${hoverDelay}ms`),
+          forceState === 'inactive' && styles.stateInactive,
+          forceState === 'active' && styles.stateActive,
+        );
+      },
+      getContentRevealProps: (contentOptions: ContentRevealOptions = {}) => {
+        const {
+          isRevealInverted = false,
+          isLayoutPreserved = false,
+          forceVisibility,
+        } = contentOptions;
+        const style = isRevealInverted
+          ? isLayoutPreserved
+            ? styles.concealLayoutPreserved
+            : styles.conceal
+          : isLayoutPreserved
+            ? styles.revealLayoutPreserved
+            : styles.reveal;
+        return stylex.props(
+          style,
+          forceVisibility === 'shown' && styles.contentShown,
+          forceVisibility === 'hidden' &&
+            (isLayoutPreserved
+              ? styles.contentHiddenLayoutPreserved
+              : styles.contentHidden),
+        );
+      },
     };
-  }
-
-  const slot: RevealSlot = POOL[claim.index];
-
-  return {
-    getContainerProps: () => stylex.props(slot.marker),
-    getContentRevealProps: (contentOptions: ContentRevealOptions = {}) => {
-      const {isRevealInverted = false, isLayoutPreserved = false} =
-        contentOptions;
-      const style = isRevealInverted
-        ? isLayoutPreserved
-          ? slot.concealLayoutPreserved
-          : slot.conceal
-        : isLayoutPreserved
-          ? slot.revealLayoutPreserved
-          : slot.reveal;
-      return stylex.props(style);
-    },
-  };
+  }, [isEnabled]);
 }

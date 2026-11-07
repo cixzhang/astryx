@@ -13,9 +13,27 @@ import {useState} from 'react';
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import * as stylex from '@stylexjs/stylex';
+import {colorVars} from '../theme/tokens.stylex';
 import {TestIcon} from '../__tests__/TestIcon';
 import {TextArea} from './TextArea';
+import {InternationalizationProvider} from '../i18n';
 import {__resetLiveRegionsForTest} from '../hooks/useAnnounce';
+
+// jsdom cannot match `:focus-visible`: compare the ring's StyleX class hash.
+const RING = stylex
+  .props(
+    stylex.create({
+      ring: {
+        boxShadow: {
+          default: null,
+          ':has(> [aria-disabled="true"]:focus-visible)': `inset 0px 0px 0px 2px ${colorVars['--color-accent-muted']}`,
+        },
+      },
+    }).ring,
+  )
+  .className!.split(' ')
+  .pop()!;
 
 // FieldStatus announces status messages through the persistent useAnnounce
 // singletons; remove them between tests so role/aria-live queries in this
@@ -54,6 +72,14 @@ beforeEach(() => {
 // jsdom popover content is in the DOM but may not be "visible" in the
 // accessibility tree. Use hidden: true to find it.
 const h = {hidden: true} as const;
+
+/** A busy control's Spinner is decorative and silent (spec:AST-086 FR8). */
+function expectSilentBusySpinner() {
+  const spinner = document.querySelector('.astryx-spinner');
+  expect(spinner).not.toBeNull();
+  expect(spinner).toHaveAttribute('aria-hidden', 'true');
+  expect(screen.queryByRole('status', {name: 'Loading'})).toBeNull();
+}
 
 describe('TextArea', () => {
   it('renders with label', () => {
@@ -158,11 +184,50 @@ describe('TextArea', () => {
     expect(screen.getByRole('textbox')).toHaveAttribute('rows', '3');
   });
 
-  it('is disabled when isDisabled is true', () => {
+  it('exposes aria-disabled and read-only, not native disabled, when isDisabled is true', () => {
     render(
       <TextArea label="Description" isDisabled value="" onChange={() => {}} />,
     );
-    expect(screen.getByRole('textbox')).toBeDisabled();
+    const textarea = screen.getByRole('textbox');
+    expect(textarea).not.toBeDisabled();
+    expect(textarea).toHaveAttribute('aria-disabled', 'true');
+    expect(textarea).toHaveAttribute('readonly');
+  });
+
+  it('keeps a disabled textarea in the tab order (spec:AST-085)', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <TextArea label="First" value="" onChange={() => {}} />
+        <TextArea label="Second" isDisabled value="" onChange={() => {}} />
+        <TextArea label="Third" value="" onChange={() => {}} />
+      </>,
+    );
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole('textbox', {name: 'Second'})).toHaveFocus();
+  });
+
+  it('runs no caller handler from a disabled textarea and rings it under focus (spec:AST-085 FR2, FR6)', async () => {
+    const user = userEvent.setup();
+    const handlers = {onPaste: vi.fn(), onKeyDown: vi.fn()};
+    render(
+      <TextArea
+        label="Notes"
+        isDisabled
+        value=""
+        onChange={() => {}}
+        {...handlers}
+      />,
+    );
+    const textarea = screen.getByRole('textbox');
+    await user.click(textarea);
+    await user.keyboard('a');
+    await user.paste('x');
+    for (const handler of Object.values(handlers)) {
+      expect(handler).not.toHaveBeenCalled();
+    }
+    expect(textarea.parentElement).toHaveClass(RING);
   });
 
   it('is not disabled by default', () => {
@@ -216,6 +281,57 @@ describe('TextArea', () => {
     );
     // No SVG should be present
     expect(container.querySelector('svg')).not.toBeInTheDocument();
+  });
+
+  // One presence check decides the start icon's slot and its padding
+  // (architecture:react-component-runtime INV16): empty values render no
+  // slot, and 0 is content shown inside the slot, never a stray "0" beside it.
+  describe('start icon slot presence', () => {
+    const zeroTextParent = (container: HTMLElement) => {
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.textContent === '0') {
+          return node.parentElement;
+        }
+      }
+      return null;
+    };
+
+    it.each([
+      ['null', null],
+      ['false', false],
+      ['an empty string', ''],
+    ])('renders no slot and reserves no padding for %s', (_label, value) => {
+      const {container} = render(
+        <TextArea
+          label="Description"
+          value=""
+          onChange={() => {}}
+          startIcon={value}
+        />,
+      );
+      expect(container.querySelector('[class*="startIcon"]')).toBeNull();
+      expect(screen.getByRole('textbox').className).not.toContain(
+        'textareaWithStartIcon',
+      );
+    });
+
+    it('shows 0 inside the slot, with its padding, not beside it', () => {
+      const {container} = render(
+        <TextArea
+          label="Description"
+          value=""
+          onChange={() => {}}
+          startIcon={0}
+        />,
+      );
+      const parent = zeroTextParent(container);
+      expect(parent).not.toBeNull();
+      expect(parent?.className).toContain('startIcon');
+      expect(screen.getByRole('textbox').className).toContain(
+        'textareaWithStartIcon',
+      );
+    });
   });
 
   describe('status prop', () => {
@@ -348,7 +464,7 @@ describe('TextArea', () => {
       );
       // Matches the other inputs: spinner (role="status") and the status icon
       // render side by side in the end slot, not mutually exclusively.
-      expect(screen.getByRole('status')).toBeInTheDocument();
+      expectSilentBusySpinner();
       // Status icon svg is also present alongside the spinner.
       expect(container.querySelectorAll('svg').length).toBeGreaterThan(0);
     });
@@ -457,6 +573,38 @@ describe('TextArea', () => {
       expect(screen.getByText('5/20')).toBeInTheDocument();
     });
 
+    it('formats the counter from the catalog with locale number formatting', () => {
+      render(
+        <InternationalizationProvider
+          locale="de-DE"
+          overrides={{
+            'de-DE': {
+              '@astryx.textArea.counter': '{count, number} von {limit, number}',
+            },
+          }}>
+          <TextArea
+            label="Bio"
+            value={'a'.repeat(62)}
+            onChange={() => {}}
+            maxLength={2000}
+          />
+        </InternationalizationProvider>,
+      );
+      expect(screen.getByText('62 von 2.000')).toBeInTheDocument();
+    });
+
+    it('formats an English counter with grouped digits', () => {
+      render(
+        <TextArea
+          label="Bio"
+          value="hi"
+          onChange={() => {}}
+          maxLength={2000}
+        />,
+      );
+      expect(screen.getByText('2/2,000')).toBeInTheDocument();
+    });
+
     it('does not display counter when maxLength is not provided', () => {
       render(
         <TextArea label="Description" value="Hello" onChange={() => {}} />,
@@ -502,6 +650,33 @@ describe('TextArea', () => {
     it('does not set maxLength attribute when not provided', () => {
       render(<TextArea label="Description" value="" onChange={() => {}} />);
       expect(screen.getByRole('textbox')).not.toHaveAttribute('maxlength');
+    });
+
+    it('counts user-perceived characters, not code units (#4759)', () => {
+      // Two surrogate-pair emoji: 4 code units, but 2 user-perceived characters.
+      render(
+        <TextArea
+          label="Description"
+          value={'\u{1F600}\u{1F600}'}
+          onChange={() => {}}
+          maxLength={5}
+        />,
+      );
+      expect(screen.getByText('2/5')).toBeInTheDocument();
+    });
+
+    it('measures the over-limit state in characters (#4759)', () => {
+      // Three ZWJ family emoji: 33 code units, 3 user-perceived characters.
+      const family = '\u{1F468}‍\u{1F469}‍\u{1F467}‍\u{1F466}';
+      render(
+        <TextArea
+          label="Description"
+          value={family.repeat(3)}
+          onChange={() => {}}
+          maxLength={2}
+        />,
+      );
+      expect(screen.getByText('3/2')).toBeInTheDocument();
     });
 
     it('counter updates as user types (controlled)', async () => {
@@ -568,6 +743,51 @@ describe('TextArea', () => {
           '1 character over the limit',
         );
       });
+    });
+
+    it('announces zone transitions using character counts (#4759)', async () => {
+      function Wrapper() {
+        const [val, setVal] = useState('x'.repeat(7));
+        return (
+          <TextArea
+            label="Description"
+            value={val}
+            onChange={setVal}
+            maxLength={10}
+          />
+        );
+      }
+      render(<Wrapper />);
+      // Appending two emoji makes 9 characters (11 code units): near the limit
+      // with 1 remaining. Code-unit counting would call this over the limit
+      // and announce assertively instead.
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: {value: 'x'.repeat(7) + '\u{1F600}\u{1F600}'},
+      });
+      const politeRegion = () =>
+        document.querySelector('[data-astryx-live-region="polite"]');
+      const assertiveRegion = () =>
+        document.querySelector('[data-astryx-live-region="assertive"]');
+      await waitFor(() => {
+        expect(politeRegion()).toHaveTextContent('1 character remaining');
+      });
+      expect(assertiveRegion()).not.toHaveTextContent('over the limit');
+    });
+
+    it('does not flag over-limit while characters fit, even when code units exceed (#4759)', () => {
+      // Three emoji: 6 code units but 3 user-perceived characters — within a
+      // maxLength of 4, so no error state anywhere.
+      render(
+        <TextArea
+          label="Description"
+          value={'\u{1F600}'.repeat(3)}
+          onChange={() => {}}
+          maxLength={4}
+        />,
+      );
+      const counter = screen.getByText('3/4');
+      expect(counter.querySelector('svg')).toBeNull();
+      expect(screen.getByRole('textbox')).not.toHaveAttribute('aria-invalid');
     });
 
     it('shows a non-color over-limit indicator icon when exceeded', () => {
@@ -670,6 +890,208 @@ describe('TextArea', () => {
     it('does not set name attribute when htmlName is not provided', () => {
       render(<TextArea label="Description" value="" onChange={() => {}} />);
       expect(screen.getByRole('textbox')).not.toHaveAttribute('name');
+    });
+  });
+
+  describe('form participation', () => {
+    it('submits the value under htmlName', () => {
+      const {container} = render(
+        <form>
+          <TextArea
+            label="Notes"
+            htmlName="notes"
+            value="hello"
+            onChange={() => {}}
+          />
+        </form>,
+      );
+      const data = new FormData(container.querySelector('form')!);
+      expect(data.get('notes')).toBe('hello');
+    });
+
+    it('is excluded from form data when disabled', () => {
+      const {container} = render(
+        <form>
+          <TextArea
+            label="Notes"
+            htmlName="notes"
+            value="hello"
+            onChange={() => {}}
+            isDisabled
+          />
+        </form>,
+      );
+      expect([
+        ...new FormData(container.querySelector('form')!).keys(),
+      ]).toEqual([]);
+    });
+
+    // Regression: a disabledMessage swaps the native `disabled` attribute for
+    // aria-disabled + readOnly so the reason stays focus-discoverable, but
+    // read-only fields still submit — the name has to be withheld too.
+    it('is excluded from form data when disabled, even with a disabledMessage', () => {
+      const {container} = render(
+        <form>
+          <TextArea
+            label="Notes"
+            htmlName="notes"
+            value="hello"
+            onChange={() => {}}
+            isDisabled
+            disabledMessage="Notes are locked while the review is open"
+          />
+        </form>,
+      );
+      expect([
+        ...new FormData(container.querySelector('form')!).keys(),
+      ]).toEqual([]);
+    });
+  });
+
+  describe('isReadOnly', () => {
+    it('marks the textarea read-only', () => {
+      render(
+        <TextArea label="Notes" value="hello" onChange={() => {}} isReadOnly />,
+      );
+      expect(screen.getByRole('textbox')).toHaveAttribute('readonly');
+    });
+
+    it('still submits its value with the form', () => {
+      const {container} = render(
+        <form>
+          <TextArea
+            label="Notes"
+            htmlName="notes"
+            value="hello"
+            onChange={() => {}}
+            isReadOnly
+          />
+        </form>,
+      );
+      expect(new FormData(container.querySelector('form')!).get('notes')).toBe(
+        'hello',
+      );
+    });
+
+    it('does not call onChange when the user types', async () => {
+      const user = userEvent.setup();
+      const handleChange = vi.fn();
+      render(
+        <TextArea
+          label="Notes"
+          value="hello"
+          onChange={handleChange}
+          isReadOnly
+        />,
+      );
+      await user.type(screen.getByRole('textbox'), 'xyz');
+      expect(handleChange).not.toHaveBeenCalled();
+    });
+
+    it('stays focusable and is not disabled', async () => {
+      const user = userEvent.setup();
+      render(
+        <TextArea label="Notes" value="hello" onChange={() => {}} isReadOnly />,
+      );
+      const textarea = screen.getByRole('textbox');
+      expect(textarea).not.toBeDisabled();
+      await user.tab();
+      expect(textarea).toHaveFocus();
+    });
+
+    it('lets isDisabled win when both are set', () => {
+      const {container} = render(
+        <form>
+          <TextArea
+            label="Notes"
+            htmlName="notes"
+            value="hello"
+            onChange={() => {}}
+            isReadOnly
+            isDisabled
+          />
+        </form>,
+      );
+      expect(screen.getByRole('textbox')).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      expect([
+        ...new FormData(container.querySelector('form')!).keys(),
+      ]).toEqual([]);
+    });
+  });
+
+  describe('touch keyboard traits', () => {
+    it('renders no trait attribute when none is set, leaving the browser default', () => {
+      render(<TextArea label="Notes" value="" onChange={() => {}} />);
+      const textarea = screen.getByRole('textbox');
+      for (const attribute of [
+        'enterkeyhint',
+        'inputmode',
+        'autocapitalize',
+        'autocorrect',
+      ]) {
+        expect(textarea).not.toHaveAttribute(attribute);
+      }
+    });
+
+    it('forwards every trait to the native textarea', () => {
+      render(
+        <TextArea
+          label="Message"
+          value=""
+          onChange={() => {}}
+          enterKeyHint="send"
+          inputMode="text"
+          autoCapitalize="sentences"
+          hasAutoCorrect={false}
+          hasSpellCheck={false}
+        />,
+      );
+      const textarea = screen.getByRole('textbox');
+      expect(textarea).toHaveAttribute('enterkeyhint', 'send');
+      expect(textarea).toHaveAttribute('inputmode', 'text');
+      expect(textarea).toHaveAttribute('autocapitalize', 'sentences');
+      expect(textarea).toHaveAttribute('autocorrect', 'off');
+      expect(textarea).toHaveAttribute('spellcheck', 'false');
+    });
+
+    it('keeps Return a line break whatever enterKeyHint says', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <TextArea
+          label="Message"
+          value="a"
+          onChange={onChange}
+          enterKeyHint="send"
+        />,
+      );
+      await user.type(screen.getByRole('textbox'), '{Enter}');
+      expect(onChange).toHaveBeenLastCalledWith('a\n', expect.anything());
+    });
+  });
+
+  describe('autoComplete prop (#5638)', () => {
+    it('forwards autoComplete to the native textarea unchanged', () => {
+      render(
+        <TextArea
+          label="Reason"
+          value=""
+          onChange={() => {}}
+          autoComplete="off"
+        />,
+      );
+      expect(screen.getByRole('textbox')).toHaveAttribute(
+        'autocomplete',
+        'off',
+      );
+    });
+
+    it('does not set autocomplete when not provided', () => {
+      render(<TextArea label="Description" value="" onChange={() => {}} />);
+      expect(screen.getByRole('textbox')).not.toHaveAttribute('autocomplete');
     });
   });
 
@@ -821,13 +1243,13 @@ describe('TextArea', () => {
       expect(textarea).toHaveValue('');
     });
 
-    it('remains natively disabled when disabled without a reason', () => {
+    it('stays focusable when disabled without a reason', () => {
       render(
         <TextArea label="Notes" value="" onChange={() => {}} isDisabled />,
       );
       const textarea = screen.getByRole('textbox');
-      expect(textarea).toBeDisabled();
-      expect(textarea).not.toHaveAttribute('aria-disabled');
+      expect(textarea).not.toBeDisabled();
+      expect(textarea).toHaveAttribute('aria-disabled', 'true');
     });
   });
 });
@@ -861,6 +1283,137 @@ describe('TextArea statusVariant forwarding', () => {
     expect(container.querySelector('.astryx-field-status')).toHaveAttribute(
       'data-variant',
       'detached',
+    );
+  });
+
+  it('reserves trailing space for the on-field icon with the default (attached) status', () => {
+    // Attached renders the on-field status icon, so the textarea must inset its
+    // trailing edge to clear it.
+    render(
+      <TextArea
+        label="Bio"
+        value=""
+        onChange={() => {}}
+        status={{type: 'error', message: 'Required'}}
+      />,
+    );
+    // The on-field status glyph renders (in the end slot).
+    expect(document.querySelector('.astryx-input-status-icon')).not.toBeNull();
+  });
+
+  it('does not render an on-field icon for statusVariant="detached", and does not reserve trailing space for it', () => {
+    // The detached variant suppresses the on-field icon (its glyph lives in the
+    // message box below), so the textarea must NOT inset its trailing edge —
+    // otherwise the text is pushed in for an icon that never appears.
+    const attached = render(
+      <TextArea
+        label="Bio"
+        value=""
+        onChange={() => {}}
+        status={{type: 'error', message: 'Required'}}
+        statusVariant="attached"
+      />,
+    );
+    const attachedTextarea = attached.getByRole('textbox');
+    const attachedClasses = new Set(attachedTextarea.className.split(/\s+/));
+    attached.unmount();
+
+    const detached = render(
+      <TextArea
+        label="Bio"
+        value=""
+        onChange={() => {}}
+        status={{type: 'error', message: 'Required'}}
+        statusVariant="detached"
+      />,
+    );
+    // No on-field icon is rendered for detached.
+    expect(document.querySelector('.astryx-input-status-icon')).toBeNull();
+
+    const detachedTextarea = detached.getByRole('textbox');
+    const detachedClasses = new Set(detachedTextarea.className.split(/\s+/));
+
+    // The attached textarea carries exactly one extra StyleX class over the
+    // detached one: the trailing-reserve style. Detached must not carry it, so
+    // its class set is a strict subset of attached's.
+    for (const cls of detachedClasses) {
+      expect(attachedClasses.has(cls)).toBe(true);
+    }
+    expect(detachedClasses.size).toBeLessThan(attachedClasses.size);
+  });
+});
+
+describe('TextArea disabled theme state', () => {
+  it('reflects disabled on the root target so themes can gate paint on it', () => {
+    const {container} = render(
+      <TextArea label="Description" value="" onChange={() => {}} isDisabled />,
+    );
+    const root = container.querySelector('.astryx-text-area');
+    expect(root).toHaveAttribute('data-disabled', 'disabled');
+  });
+
+  it('omits data-disabled when enabled, like status does', () => {
+    const {container} = render(
+      <TextArea label="Description" value="" onChange={() => {}} />,
+    );
+    const root = container.querySelector('.astryx-text-area');
+    expect(root).not.toHaveAttribute('data-disabled');
+  });
+});
+
+describe('TextArea readonly theme state', () => {
+  it('reflects readonly on the root target so themes can gate paint on it', () => {
+    const {container} = render(
+      <TextArea label="Notes" value="" onChange={() => {}} isReadOnly />,
+    );
+    const root = container.querySelector('.astryx-text-area');
+    expect(root).toHaveAttribute('data-readonly', 'readonly');
+  });
+
+  it('omits data-readonly when editable', () => {
+    const {container} = render(
+      <TextArea label="Notes" value="" onChange={() => {}} />,
+    );
+    const root = container.querySelector('.astryx-text-area');
+    expect(root).not.toHaveAttribute('data-readonly');
+  });
+});
+
+describe('TextArea theme target names', () => {
+  it('renders only the canonical target class', () => {
+    const {container} = render(
+      <TextArea label="Notes" value="" onChange={() => {}} />,
+    );
+    const root = container.querySelector('.astryx-text-area');
+    expect(root).not.toBeNull();
+    expect(root).toHaveClass('astryx-text-area');
+    expect(root).not.toHaveClass('astryx-textarea');
+  });
+});
+
+describe('TextArea caller aria-labelledby', () => {
+  it('names the textarea by its label and a caller aria-labelledby', () => {
+    render(
+      <>
+        <span id="billing-heading">Billing</span>
+        <TextArea
+          label="Notes"
+          value=""
+          onChange={() => {}}
+          aria-labelledby="billing-heading"
+        />
+      </>,
+    );
+    const textarea = screen.getByRole('textbox', {name: 'Notes Billing'});
+    expect(textarea.getAttribute('aria-labelledby')?.split(' ')).toContain(
+      'billing-heading',
+    );
+  });
+
+  it('leaves a textarea named by its label element without a caller aria-labelledby', () => {
+    render(<TextArea label="Notes" value="" onChange={() => {}} />);
+    expect(screen.getByRole('textbox', {name: 'Notes'})).not.toHaveAttribute(
+      'aria-labelledby',
     );
   });
 });

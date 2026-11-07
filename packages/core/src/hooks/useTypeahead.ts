@@ -4,7 +4,8 @@
 
 /**
  * @file useTypeahead.ts
- * @input Uses React useCallback/useRef
+ * @input Uses React useCallback/useEffect/useRef, shared type-to-select
+ *   matching (utils/typeaheadMatch)
  * @output Exports useTypeahead hook for first-character (type-to-focus) search
  * @position Core hook; adds APG typeahead to menus, listboxes, and other
  *   collections. Composes with useListFocus/useGridFocus (or any collection)
@@ -14,7 +15,8 @@
  * - /packages/core/src/hooks/index.ts
  */
 
-import {useCallback, useRef} from 'react';
+import {useCallback, useEffect, useRef} from 'react';
+import {findTypeaheadMatch, nextTypeaheadBuffer} from '../utils/typeaheadMatch';
 
 export interface UseTypeaheadOptions {
   /**
@@ -32,8 +34,9 @@ export interface UseTypeaheadOptions {
 
   /**
    * The index to start searching from — typically the currently focused item,
-   * so repeated presses of the same letter cycle through matches. Defaults to
-   * -1 (search from the top).
+   * so repeated presses of the same letter cycle through matches. Any negative
+   * value (the default) means nothing is current: the search runs from the top
+   * and never skips the first item.
    */
   getCurrentIndex?: () => number;
 
@@ -67,19 +70,35 @@ export interface UseTypeaheadReturn {
 function isPrintableCharacter(e: React.KeyboardEvent | KeyboardEvent): boolean {
   return (
     e.key.length === 1 &&
+    // Alt alone is not excluded: Option+letter on macOS composes a printable
+    // character (Option+a → "å"), and dropping those makes accented labels
+    // untypeable. Real chords still carry ctrl or meta — including AltGr,
+    // which sets ctrlKey on Windows and Linux.
     !e.ctrlKey &&
     !e.metaKey &&
-    !e.altKey &&
+    // A key that is part of an input method's composition is the IME's, not
+    // a jump. React's synthetic event surfaces `isComposing` too.
+    !isComposingKey(e) &&
     // A lone space is used for activation in menus, not typeahead-from-empty.
     e.key !== ' '
   );
+}
+
+function isComposingKey(e: React.KeyboardEvent | KeyboardEvent): boolean {
+  if ((e as {isComposing?: boolean}).isComposing === true) {
+    return true;
+  }
+  const native = (e as {nativeEvent?: {isComposing?: boolean}}).nativeEvent;
+  return native?.isComposing === true;
 }
 
 /**
  * First-character ("type-ahead") search for a collection.
  *
  * Buffers printable keystrokes (resetting after `resetMs` of inactivity),
- * matches items whose label starts with the buffer, and cycles from the
+ * matches items whose label starts with the buffer (ignoring case, accents,
+ * stroked letters and Turkish dotted/dotless i, the same in every locale:
+ * `architecture:internationalization` INV17), and cycles from the
  * current index — so pressing "s" repeatedly walks through the "s" items
  * instead of sticking on the first. Space is reserved for activation and is
  * only treated as typeahead while a buffer is already active.
@@ -120,6 +139,11 @@ export function useTypeahead(options: UseTypeaheadOptions): UseTypeaheadReturn {
     }
   }, []);
 
+  // A collection that unmounts, or that an `<Activity>` boundary hides,
+  // mid-typing leaves no reset timer running and comes back with an empty
+  // buffer, as the reset would have left it.
+  useEffect(() => reset, [reset]);
+
   const scheduleReset = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -133,9 +157,24 @@ export function useTypeahead(options: UseTypeaheadOptions): UseTypeaheadReturn {
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent | KeyboardEvent): boolean => {
       // A bare Space with no active buffer is not typeahead (menus activate on
-      // Space); once the user is mid-typing, Space extends the query.
-      const isSpaceMidType = e.key === ' ' && bufferRef.current.length > 0;
+      // Space); once the user is mid-typing, Space extends the query. Chorded
+      // with ctrl or meta it is neither — that is an OS or IME shortcut, and
+      // consuming it would append a raw space that poisons the whole buffer.
+      const isSpaceMidType =
+        e.key === ' ' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !isComposingKey(e) &&
+        bufferRef.current.length > 0;
       if (!isPrintableCharacter(e) && !isSpaceMidType) {
+        return false;
+      }
+
+      // A lone combining mark typed first is not a letter to jump to; after
+      // a letter it is part of that letter. A repeat of the same letter
+      // cycles rather than filtering deeper (APG behavior).
+      const nextBuffer = nextTypeaheadBuffer(bufferRef.current, e.key);
+      if (nextBuffer == null) {
         return false;
       }
 
@@ -144,35 +183,29 @@ export function useTypeahead(options: UseTypeaheadOptions): UseTypeaheadReturn {
         return false;
       }
 
-      // Pressing the SAME single character repeatedly cycles to the next match
-      // rather than filtering deeper (APG behavior).
-      const char = e.key.toLowerCase();
-      const isRepeatSameChar =
-        bufferRef.current.length > 0 &&
-        bufferRef.current.split('').every(c => c === char);
-      const nextBuffer = isRepeatSameChar ? char : bufferRef.current + char;
       bufferRef.current = nextBuffer;
       scheduleReset();
 
-      const start = getCurrentIndex?.() ?? -1;
+      const current = getCurrentIndex?.() ?? -1;
       const count = labels.length;
-      // When repeating a single char, start the search AFTER the current item
-      // so we advance; otherwise include the current item.
-      const offset = isRepeatSameChar ? 1 : 0;
-
+      const hasCurrent = current >= 0;
+      const start = hasCurrent ? current : 0;
+      // A single-character search starts AFTER the current item, so pressing a
+      // letter walks to the next item beginning with it instead of re-matching
+      // the one already selected (native <select> and APG getIndexByLetter).
+      // Once the buffer is longer it is refining a match, so the current item
+      // stays in range. With nothing current there is nothing to advance past.
+      const offset = hasCurrent && nextBuffer.length === 1 ? 1 : 0;
+      const order: number[] = [];
       for (let i = 0; i < count; i++) {
         const index = (start + offset + i + count) % count;
-        if (isDisabled?.(index)) {
-          continue;
+        if (!isDisabled?.(index)) {
+          order.push(index);
         }
-        const label = labels[index];
-        if (
-          label != null &&
-          label.trim().toLowerCase().startsWith(nextBuffer)
-        ) {
-          onMatch(index);
-          return true;
-        }
+      }
+      const match = findTypeaheadMatch(order, i => labels[i], nextBuffer);
+      if (match >= 0) {
+        onMatch(match);
       }
       return true;
     },

@@ -47,6 +47,8 @@ export {
   DATE_FORMAT_SHORT_WITH_WEEKDAY,
   DATE_FORMAT_LONG,
   DATE_FORMAT_MONTH_YEAR,
+  DATE_FORMAT_MONTH_ONLY,
+  DATE_FORMAT_WEEKDAY_ONLY,
   DATE_FORMAT_SHORT,
   DATE_FORMAT_SHORT_WITH_YEAR,
   SHARED_DATE_FORMAT_OPTIONS,
@@ -70,8 +72,11 @@ export type {ISOTimeString, ParsedTime} from './timeParser';
 export {parseStyleKey} from './parseStyleKey';
 export {getKey, type Key, type KeyFallback} from './getKey';
 
+export {characterCount, firstCharacter, truncateCharacters} from './characters';
+
 export {mergeProps} from './mergeProps';
 export {mergeRefs} from './mergeRefs';
+export {isFocusDetached} from './isFocusDetached';
 export {composeEventHandlers} from './composeEventHandlers';
 export {themeProps, themeDataAttributes} from './themeProps';
 export type {
@@ -81,7 +86,7 @@ export type {
   ThemeProps,
 } from './themeProps';
 export {groupItems, getItemGroup} from './groupItems';
-export type {ItemGroup} from './groupItems';
+export type {ItemGroup, GroupItemsOptions} from './groupItems';
 export {observeResize, unobserveResize} from './sharedResizeObserver';
 export {isRenderable} from './isRenderable';
 export {getInputARIA} from './inputAria';
@@ -100,3 +105,16 @@ export type {RGBA} from './color';
 export {devWarn, devError, warnOnce, formatDevMessage} from './devWarning';
 
 export {rtlStyles} from './rtlStyles';
+
+// The shared focus ring, exported for @astryxdesign/lab — same reason
+// rtlStyles is: a style that must be identical across packages, not copied.
+export {focusOutlineStyles, focusOutlineProps} from './focusOutline.stylex';
+
+export {isImeKeyEvent} from './ime';
+
+// The touch press model's one composable: the shared hover and pressed overlay
+// styles, which carry the press's strength, its release and its paint. A local
+// pressable spreads the result of the `usePressFeedback` hook on the element
+// that paints and composes one of these on it; the controller, its attributes
+// and its clocks are internals.
+export {interactionOverlayStyles} from './interactionOverlay.stylex';

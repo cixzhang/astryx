@@ -8,12 +8,14 @@
  * @output Exports ChatTokenizedText component
  * @position Utility component for rendering tokenized text in message bubbles
  *
- * Parses a plain text string and replaces token values with inline badges.
- * Accepts the same ChatComposerToken type used by the input triggers,
- * so the same token definitions work for both input and display.
+ * Parses a plain text string and replaces non-empty token values with inline
+ * token content. Accepts the same ChatComposerToken type used by the input
+ * triggers, so the same token definitions work for both input and display.
  *
  * SYNC: When modified, update:
  * - /packages/core/src/Chat/index.ts
+ * - /packages/core/src/Chat/ChatComposerInput.tsx (token alignment must match,
+ *   or a token moves when the message is sent)
  * - /packages/cli/assets/templates/blocks/components/ChatTokenizedText/ (block examples)
  */
 
@@ -33,6 +35,12 @@ const styles = stylex.create({
   root: {
     display: 'inline',
   },
+  token: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: '1lh',
+    verticalAlign: 'top',
+  },
 });
 
 // =============================================================================
@@ -45,8 +53,8 @@ export interface ChatTokenizedTextProps extends BaseProps<HTMLSpanElement> {
   children: string;
   /**
    * Token definitions — same type returned by trigger onSelect.
-   * Each token's `value` is matched against the text and replaced
-   * with its badge representation (label, variant, icon).
+   * Each non-empty token `value` is matched literally against the text and
+   * replaced with its Badge or custom representation. Empty values are ignored.
    *
    * @example
    * ```
@@ -74,7 +82,7 @@ function isCustomToken(
 }
 
 function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // =============================================================================
@@ -82,7 +90,7 @@ function escapeRegExp(str: string): string {
 // =============================================================================
 
 /**
- * Renders text with token values replaced by inline badges.
+ * Renders text with token values replaced by inline token content.
  *
  * Accepts the same `ChatComposerToken` type used by input triggers,
  * so you can share a single token definition between input and display.
@@ -135,11 +143,17 @@ ChatTokenizedText.displayName = 'ChatTokenizedText';
 // =============================================================================
 
 function renderTokens(text: string, tokens: ChatComposerToken[]): ReactNode[] {
-  const pattern = tokens.map(t => escapeRegExp(t.value)).join('|');
+  const matchableTokens = tokens.filter(token => token.value.length > 0);
+
+  if (matchableTokens.length === 0) {
+    return [text];
+  }
+
+  const pattern = matchableTokens.map(t => escapeRegExp(t.value)).join('|');
   const regex = new RegExp(`(${pattern})`, 'g');
 
   const tokenMap = new Map<string, ChatComposerToken>();
-  for (const t of tokens) {
+  for (const t of matchableTokens) {
     tokenMap.set(t.value, t);
   }
 
@@ -156,16 +170,17 @@ function renderTokens(text: string, tokens: ChatComposerToken[]): ReactNode[] {
     const token = tokenMap.get(matched);
     if (token) {
       parts.push(
-        isCustomToken(token) ? (
-          <span key={`${matched}-${match.index}`}>{token.render()}</span>
-        ) : (
-          <Badge
-            key={`${matched}-${match.index}`}
-            label={token.label}
-            variant={token.variant}
-            icon={token.icon}
-          />
-        ),
+        <span key={`${matched}-${match.index}`} {...stylex.props(styles.token)}>
+          {isCustomToken(token) ? (
+            token.render()
+          ) : (
+            <Badge
+              label={token.label}
+              variant={token.variant}
+              icon={token.icon}
+            />
+          )}
+        </span>,
       );
     }
 

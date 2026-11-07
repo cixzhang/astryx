@@ -32,8 +32,12 @@ import type {LinkComponentType} from '../Link/types';
 import {useTopNavRenderMode} from './TopNavRenderContext';
 import {mergeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
-import {useAppShellMobile} from '../AppShell/AppShellMobileContext';
+import {useCloseMobileDrawerOnActivate} from '../AppShell/useCloseMobileDrawerOnActivate';
 import {themeProps} from '../utils/themeProps';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {interactionOverlayStyles} from '../utils/interactionOverlay.stylex';
+import {usePressFeedback} from '../hooks/usePressFeedback';
+import {isRenderable} from '../utils/isRenderable';
 
 // =============================================================================
 // Styles
@@ -49,26 +53,15 @@ const styles = stylex.create({
     paddingInline: spacingVars['--spacing-3'],
     borderRadius: radiusVars['--radius-element'],
     textDecoration: 'none',
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     transitionProperty: 'background-color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
-    backgroundColor: {
-      default: 'transparent',
-      ':hover': {
-        '@media (hover: hover)': colorVars['--color-overlay-hover'],
-      },
-      ':active': colorVars['--color-overlay-pressed'],
-    },
-    border: 'none',
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
+    borderWidth: 0,
+    borderStyle: 'none',
     color: 'inherit',
     fontFamily: 'inherit',
     textAlign: 'start',
@@ -199,10 +192,17 @@ export function TopNavMegaMenuItem({
   onClick,
   as,
   tabIndex,
+  xstyle,
+  className,
+  style,
+  ...restProps
 }: TopNavMegaMenuItemProps) {
+  const pressable = usePressFeedback();
   const renderMode = useTopNavRenderMode();
   const LinkComponent = useLinkComponent(as);
-  const {closeMobileNav} = useAppShellMobile();
+  const closeDrawerAfter = useCloseMobileDrawerOnActivate(
+    renderMode === 'drawer',
+  );
 
   // =========================================================================
   // Drawer mode — matches SideNavItem / TopNavMenu drawer appearance
@@ -210,21 +210,32 @@ export function TopNavMegaMenuItem({
   if (renderMode === 'drawer') {
     const Element = href ? LinkComponent : 'button';
     const elementProps = Element === 'button' ? {type: 'button' as const} : {};
-    const handleDrawerClick = () => {
+    const handleDrawerClick = closeDrawerAfter(() => {
       onClick?.();
-      closeMobileNav();
-    };
+    });
     return (
       <Element
+        {...restProps}
         ref={ref}
         href={href}
+        {...pressable}
         onClick={handleDrawerClick}
+        tabIndex={tabIndex}
         {...elementProps}
         {...mergeProps(
           themeProps('top-nav-mega-menu-item', {mode: 'drawer'}),
-          stylex.props(navItemStyles.item, styles.drawerItem),
+          focusOutlineProps.focusVisible(
+            navItemStyles.item,
+            interactionOverlayStyles.backgroundColor,
+            styles.drawerItem,
+            xstyle,
+          ),
+          className,
+          style,
         )}>
-        {icon && <div {...stylex.props(styles.drawerItemIcon)}>{icon}</div>}
+        {isRenderable(icon) && (
+          <div {...stylex.props(styles.drawerItemIcon)}>{icon}</div>
+        )}
         <div {...stylex.props(styles.drawerItemContent)}>
           {title}
           {description && (
@@ -243,15 +254,25 @@ export function TopNavMegaMenuItem({
   const Element = href ? LinkComponent : 'div';
   return (
     <Element
+      {...restProps}
       ref={ref}
       href={href}
+      {...pressable}
       onClick={onClick}
       tabIndex={tabIndex}
       {...mergeProps(
         themeProps('top-nav-mega-menu-item'),
-        stylex.props(styles.desktop),
+        focusOutlineProps.focusVisible(
+          styles.desktop,
+          interactionOverlayStyles.backgroundColor,
+          xstyle,
+        ),
+        className,
+        style,
       )}>
-      {icon && <div {...stylex.props(styles.desktopIcon)}>{icon}</div>}
+      {isRenderable(icon) && (
+        <div {...stylex.props(styles.desktopIcon)}>{icon}</div>
+      )}
       <div {...stylex.props(styles.desktopContent)}>
         <span {...stylex.props(styles.desktopTitle)}>{title}</span>
         {description && (

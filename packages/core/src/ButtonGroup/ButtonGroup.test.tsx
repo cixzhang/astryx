@@ -5,17 +5,21 @@
  * @input Uses vitest, @testing-library/react, @babel/core + @stylexjs/babel-plugin,
  *   ButtonGroup and Button components
  * @output Unit tests for ButtonGroup, incl. the compiled-CSS contract for the
- *   trailing radius (#2508)
+ *   trailing radius (#2508): compiled selector shape and membership; corners
+ *   in ButtonGroupCorners.interaction.browser.spec.ts
  * @position Testing; validates ButtonGroup component implementation
  *
  * SYNC: When ButtonGroup component changes, update tests to match new behavior
  */
 
 import {describe, it, expect} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import type {ReactNode} from 'react';
+import {render, screen, fireEvent} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {transformSync} from '@babel/core';
 import stylexBabelPlugin from '@stylexjs/babel-plugin';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 import {ButtonGroup} from './ButtonGroup';
 import {Button} from '../Button';
@@ -160,8 +164,14 @@ describe('ButtonGroup', () => {
     );
 
     expect(screen.getByRole('group')).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('button', {name: 'Copy'})).toBeDisabled();
-    expect(screen.getByRole('button', {name: 'Cut'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Copy'})).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('button', {name: 'Cut'})).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it('does not set aria-disabled when not disabled', () => {
@@ -202,24 +212,33 @@ describe('ButtonGroup', () => {
   // Trailing radius (issue #2508)
   //
   // The trailing end cap cannot be keyed off `:last-child`: members render an
-  // invisible layer AFTER their button (tooltip'd Button, DropdownMenu), and
-  // useLayer renders it inline rather than portaling it, so the layer steals the
-  // slot. See IS_LAST_ITEM in Button.tsx.
+  // invisible layer infrastructure AFTER their button (tooltip'd Button,
+  // DropdownMenu), and useLayer renders a marker plus the layer inline when the
+  // host is safe, so they steal the slot. See IS_LAST_ITEM in Button.tsx.
   //
-  // HOW THESE TESTS CATCH THE BUG
-  // jsdom applies no StyleX CSS, so a DOM-only test cannot prove which rule
-  // wins — and a test that hand-copies the selector is a tautology (revert
-  // groupStyles to `:last-child` and it still passes). So the predicate is NOT
-  // hand-copied here: `compileButtonRules()` runs the REAL StyleX babel plugin
-  // over Button.tsx (same config as scripts/build-css.mjs) and reads the
-  // trailing-radius rule's selector straight out of the emitted CSS, then
-  // matches it against the real rendered DOM. Revert groupStyles to
-  // `:last-child` and these go red.
+  // WHAT THESE TESTS CHECK, AND WHERE THE CORNERS ARE CHECKED
+  // The trailing predicate is `:nth-last-child(1 of S)` (S = not a layer
+  // piece), which jsdom evaluates slowly and wrongly, so jsdom never receives
+  // it (internal/test-utils/src/setup.ts). Here, `compileButtonRules()` runs
+  // the REAL StyleX babel plugin over Button.tsx and asserts the compiled
+  // trailing selector's shape (layer-skipping, never `:last-child`), and the
+  // DOM tests assert MEMBERSHIP: which element is the group's last member,
+  // with the layer pieces after it. Which corners actually round is checked in
+  // a real browser by ButtonGroupCorners.interaction.browser.spec.ts
+  // (ButtonGroup FR3).
   // ===========================================================================
   describe('trailing radius (#2508)', () => {
     /** The group members, in DOM order (excludes invisible layer siblings). */
     const items = (group: HTMLElement): Element[] =>
-      Array.from(group.querySelectorAll(':scope > *:not([popover])'));
+      Array.from(
+        group.querySelectorAll(
+          ':scope > *:not([popover]):not(template):not(dialog)',
+        ),
+      );
+
+    /** The element is the group's last member (layer pieces may follow it). */
+    const isLastMember = (group: HTMLElement, el: Element): boolean =>
+      items(group).at(-1) === el;
 
     // -- Compiled CSS, read from the source -----------------------------------
 
@@ -233,7 +252,7 @@ describe('ButtonGroup', () => {
       property: string;
       /** CSS value, e.g. `var(--radius-element)`. */
       value: string;
-      /** The full compiled selector, e.g. `.xp0wexf:not(:has(~ [data-...]))`. */
+      /** The full compiled selector, e.g. `.xp0wexf:nth-last-child(1 of …)`. */
       selector: string;
     };
 
@@ -246,14 +265,20 @@ describe('ButtonGroup', () => {
     function compileButtonRules(): CompiledRule[] {
       const repoRoot = path.resolve(__dirname, '../../../..');
       const buttonSrc = path.resolve(__dirname, '../Button/Button.tsx');
+      // Babel looks bare preset names up from the cwd, the repo root, which
+      // does not declare them. Resolve them from this package, which does.
+      const require = createRequire(__filename);
 
       const result = transformSync(readFileSync(buttonSrc, 'utf8'), {
         babelrc: false,
         configFile: false,
         filename: buttonSrc,
         presets: [
-          ['@babel/preset-typescript', {isTSX: true, allExtensions: true}],
-          ['@babel/preset-react', {runtime: 'automatic'}],
+          [
+            require.resolve('@babel/preset-typescript'),
+            {isTSX: true, allExtensions: true},
+          ],
+          [require.resolve('@babel/preset-react'), {runtime: 'automatic'}],
         ],
         plugins: [
           [
@@ -344,14 +369,11 @@ describe('ButtonGroup', () => {
       return rules.map(rule => rule.selector);
     };
 
-    /** Does the compiled CSS actually round `el`'s trailing corners? */
-    const hasRoundedTrailingCorners = (
+    /** `el` carries both trailing-corner rounding rules (StyleX classes). */
+    const carriesTrailingRule = (
       el: Element,
       orientation: Orientation = 'horizontal',
-    ): boolean =>
-      trailingRoundingSelectors(el, orientation).every(selector =>
-        el.matches(selector),
-      );
+    ): boolean => trailingRoundingSelectors(el, orientation).length === 2;
 
     // -- The compiled CSS contract --------------------------------------------
 
@@ -369,12 +391,18 @@ describe('ButtonGroup', () => {
 
         for (const selector of selectors) {
           // `:last-child` is the bug: an inline layer element steals the slot.
-          expect(selector).not.toContain(':last-child');
+          expect(selector).not.toMatch(/:last-child/);
+          // The last sibling that is not a layer piece, written so WebKit
+          // does not re-evaluate it per sibling on every insertion (#9281).
+          expect(selector).toContain(':nth-last-child(1 of ');
+          expect(selector).not.toContain(':has(');
           // `[popover]` must survive compilation *verbatim*. StyleX only
           // statically evaluates a selector key from a same-file const; from a
           // .stylex.ts file it compiles to a mangled selector like `[x13pbwiz]`
           // that matches nothing in the DOM.
           expect(selector).toContain('[popover]');
+          expect(selector).toContain('template');
+          expect(selector).toContain('dialog');
         }
       },
     );
@@ -427,8 +455,9 @@ describe('ButtonGroup', () => {
         expect(more).not.toBe(group.lastElementChild);
         expect(items(group).at(-1)).toBe(more);
 
-        expect(hasRoundedTrailingCorners(more, orientation)).toBe(true);
-        expect(hasRoundedTrailingCorners(save, orientation)).toBe(false);
+        expect(carriesTrailingRule(more, orientation)).toBe(true);
+        expect(isLastMember(group, more)).toBe(true);
+        expect(isLastMember(group, save)).toBe(false);
       },
     );
 
@@ -453,8 +482,9 @@ describe('ButtonGroup', () => {
         expect(trigger).not.toBe(group.lastElementChild);
         expect(items(group).at(-1)).toBe(trigger);
 
-        expect(hasRoundedTrailingCorners(trigger, orientation)).toBe(true);
-        expect(hasRoundedTrailingCorners(allow, orientation)).toBe(false);
+        expect(carriesTrailingRule(trigger, orientation)).toBe(true);
+        expect(isLastMember(group, trigger)).toBe(true);
+        expect(isLastMember(group, allow)).toBe(false);
       },
     );
 
@@ -473,7 +503,8 @@ describe('ButtonGroup', () => {
       expect(link).not.toBe(group.lastElementChild);
       expect(items(group).at(-1)).toBe(link);
 
-      expect(hasRoundedTrailingCorners(link)).toBe(true);
+      expect(carriesTrailingRule(link)).toBe(true);
+      expect(isLastMember(group, link)).toBe(true);
     });
 
     it('rounds only the last member (first/middle/last)', () => {
@@ -499,9 +530,9 @@ describe('ButtonGroup', () => {
 
       // Middle has a tooltip layer after it, but a *marked* sibling follows too,
       // so it must NOT take the trailing radius.
-      expect(hasRoundedTrailingCorners(first)).toBe(false);
-      expect(hasRoundedTrailingCorners(middle)).toBe(false);
-      expect(hasRoundedTrailingCorners(last)).toBe(true);
+      expect(isLastMember(group, first)).toBe(false);
+      expect(isLastMember(group, middle)).toBe(false);
+      expect(isLastMember(group, last)).toBe(true);
     });
 
     it('rounds both edges of a lone tooltip’d member', () => {
@@ -511,11 +542,13 @@ describe('ButtonGroup', () => {
         </ButtonGroup>,
       );
 
+      const group = screen.getByRole('group');
       const only = screen.getByRole('button', {name: 'Only'});
 
       // Leading edge is unaffected: a member's button always precedes its layer.
       expect(only.matches(':first-child')).toBe(true);
-      expect(hasRoundedTrailingCorners(only)).toBe(true);
+      expect(only).not.toBe(group.lastElementChild);
+      expect(isLastMember(group, only)).toBe(true);
     });
 
     // -- Members the group does not recognise ---------------------------------
@@ -535,11 +568,12 @@ describe('ButtonGroup', () => {
         </ButtonGroup>,
       );
 
+      const group = screen.getByRole('group');
       const save = screen.getByRole('button', {name: 'Save'});
 
       // Tooltip wraps element children in a `display: contents` <div>, so the
       // inner Button is a DESCENDANT of the wrapper, not a DOM sibling of Save.
-      expect(hasRoundedTrailingCorners(save)).toBe(false);
+      expect(isLastMember(group, save)).toBe(false);
     });
 
     it('does not round the preceding button when a HoverCard-wrapped member follows', () => {
@@ -552,11 +586,12 @@ describe('ButtonGroup', () => {
         </ButtonGroup>,
       );
 
+      const group = screen.getByRole('group');
       const save = screen.getByRole('button', {name: 'Save'});
 
       // Button has no `hoverCard` prop, so wrapping is the ONLY way to put a
       // HoverCard on a group button — this composition has no alternative.
-      expect(hasRoundedTrailingCorners(save)).toBe(false);
+      expect(isLastMember(group, save)).toBe(false);
     });
 
     it('does not round the preceding button when a raw <button> follows', () => {
@@ -567,9 +602,10 @@ describe('ButtonGroup', () => {
         </ButtonGroup>,
       );
 
+      const group = screen.getByRole('group');
       const save = screen.getByRole('button', {name: 'Save'});
 
-      expect(hasRoundedTrailingCorners(save)).toBe(false);
+      expect(isLastMember(group, save)).toBe(false);
     });
   });
 
@@ -607,6 +643,423 @@ describe('ButtonGroup', () => {
       expect(def.querySelector('[role="group"]')!.className).toBe(
         none.querySelector('[role="group"]')!.className,
       );
+    });
+
+    it('exposes the elevation to a theme as a data attribute', () => {
+      render(
+        <ButtonGroup label="Actions" elevation="high">
+          <Button label="One" />
+        </ButtonGroup>,
+      );
+
+      expect(screen.getByRole('group')).toHaveAttribute(
+        'data-elevation',
+        'high',
+      );
+    });
+
+    it('reports flat on a member, since the group owns the surface', () => {
+      render(
+        <ButtonGroup label="Actions" elevation="high">
+          <Button label="One" elevation="high" />
+        </ButtonGroup>,
+      );
+
+      expect(screen.getByRole('button', {name: 'One'})).toHaveAttribute(
+        'data-elevation',
+        'none',
+      );
+    });
+  });
+
+  // ===========================================================================
+  // Keyboard navigation
+  //
+  // The group wires useListFocus, so arrow keys move focus between members.
+  // The last two tests cover the boundary: a member can own a layer, whose
+  // keys belong to that layer, and the group itself can sit inside a layer,
+  // whose keys are still the group's own. Both must hold at once.
+  // ===========================================================================
+  describe('keyboard navigation', () => {
+    const clipboard = (
+      <ButtonGroup label="Actions">
+        <Button label="Copy" />
+        <Button label="Cut" />
+        <Button label="Paste" />
+      </ButtonGroup>
+    );
+
+    it('moves focus between members with the arrow keys, wrapping at the end', async () => {
+      const user = userEvent.setup();
+      render(clipboard);
+
+      screen.getByRole('button', {name: 'Copy'}).focus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('button', {name: 'Cut'})).toHaveFocus();
+
+      await user.keyboard('{ArrowRight}{ArrowRight}');
+      expect(screen.getByRole('button', {name: 'Copy'})).toHaveFocus();
+
+      await user.keyboard('{ArrowLeft}');
+      expect(screen.getByRole('button', {name: 'Paste'})).toHaveFocus();
+    });
+
+    it('jumps to the first and last member with Home and End', async () => {
+      const user = userEvent.setup();
+      render(clipboard);
+
+      screen.getByRole('button', {name: 'Cut'}).focus();
+
+      await user.keyboard('{End}');
+      expect(screen.getByRole('button', {name: 'Paste'})).toHaveFocus();
+
+      await user.keyboard('{Home}');
+      expect(screen.getByRole('button', {name: 'Copy'})).toHaveFocus();
+    });
+
+    it('uses the vertical arrows when the group is vertical', async () => {
+      const user = userEvent.setup();
+      render(
+        <ButtonGroup label="Actions" orientation="vertical">
+          <Button label="Copy" />
+          <Button label="Cut" />
+        </ButtonGroup>,
+      );
+
+      screen.getByRole('button', {name: 'Copy'}).focus();
+
+      await user.keyboard('{ArrowDown}');
+      expect(screen.getByRole('button', {name: 'Cut'})).toHaveFocus();
+
+      await user.keyboard('{ArrowUp}');
+      expect(screen.getByRole('button', {name: 'Copy'})).toHaveFocus();
+    });
+
+    it('follows visual direction in RTL', async () => {
+      const user = userEvent.setup();
+      // dir sits on the group because jsdom resolves computed direction from
+      // the element's own attribute, not from an ancestor.
+      render(
+        <ButtonGroup label="Actions" dir="rtl">
+          <Button label="Copy" />
+          <Button label="Cut" />
+          <Button label="Paste" />
+        </ButtonGroup>,
+      );
+      screen.getByRole('button', {name: 'Copy'}).focus();
+
+      await user.keyboard('{ArrowLeft}');
+      expect(screen.getByRole('button', {name: 'Cut'})).toHaveFocus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('button', {name: 'Copy'})).toHaveFocus();
+    });
+
+    it('leaves arrow keys to a member\u2019s open menu', async () => {
+      const user = userEvent.setup();
+      render(
+        <ButtonGroup label="Approve action">
+          <Button label="Allow once" />
+          <DropdownMenu
+            hasChevron={false}
+            button={{label: 'Allow options', isIconOnly: true}}
+            items={[{label: 'Allow for 30 minutes'}, {label: 'Always allow'}]}
+          />
+        </ButtonGroup>,
+      );
+
+      await user.click(screen.getByRole('button', {name: /Allow options/}));
+      const item = screen.getByRole('menuitem', {
+        name: 'Allow for 30 minutes',
+        hidden: true,
+      });
+      item.focus();
+
+      // Assert positively: the menu item keeps focus. `.not.toHaveFocus()` on
+      // the group's buttons would also pass if the group had thrown focus
+      // somewhere else entirely.
+      fireEvent.keyDown(item, {key: 'ArrowRight'});
+      expect(item).toHaveFocus();
+
+      fireEvent.keyDown(item, {key: 'ArrowLeft'});
+      expect(item).toHaveFocus();
+
+      // End belongs to the menu's own list focus, so it lands on the last menu
+      // item rather than the group's last button.
+      fireEvent.keyDown(item, {key: 'End'});
+      expect(
+        screen.getByRole('menuitem', {name: 'Always allow', hidden: true}),
+      ).toHaveFocus();
+    });
+
+    it('leaves a link member in the arrow order', async () => {
+      const user = userEvent.setup();
+      render(
+        <ButtonGroup label="Docs actions">
+          <Button label="Save" />
+          <Button label="Docs" href="https://example.com" />
+          <Button label="Print" />
+        </ButtonGroup>,
+      );
+
+      screen.getByRole('button', {name: 'Save'}).focus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('link', {name: 'Docs'})).toHaveFocus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('button', {name: 'Print'})).toHaveFocus();
+    });
+
+    it('still moves between its own members when the group sits inside a popover', async () => {
+      const user = userEvent.setup();
+      // A group rendered inside a Popover, ContextMenu, HoverCard or Toast has
+      // a `[popover]` ancestor, because that is how useLayer mounts a layer.
+      // A bare `popover` div is the same DOM fact without the layer harness.
+      render(
+        <div popover="manual">
+          <ButtonGroup label="Actions">
+            <Button label="Copy" />
+            <Button label="Cut" />
+            <Button label="Paste" />
+          </ButtonGroup>
+        </div>,
+      );
+
+      // A closed popover is display:none in jsdom, so its contents read as
+      // inaccessible; focus and key handling still work on them.
+      const button = (name: string) =>
+        screen.getByRole('button', {name, hidden: true});
+
+      button('Copy').focus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(button('Cut')).toHaveFocus();
+
+      await user.keyboard('{End}');
+      expect(button('Paste')).toHaveFocus();
+
+      await user.keyboard('{Home}');
+      expect(button('Copy')).toHaveFocus();
+    });
+  });
+
+  // ===========================================================================
+  // Roving tabindex
+  //
+  // The group is a single tab stop: exactly one enabled member carries
+  // tabindex="0", the rest carry -1, and the stop moves with arrow navigation.
+  // Entering and leaving is asserted through the real tab order as well as the
+  // attribute, because the attribute alone says nothing about a member the
+  // itemSelector missed — such a member stays natively tabbable and quietly
+  // adds a second stop.
+  // ===========================================================================
+  describe('roving tabindex', () => {
+    const tabIndexOf = (name: string) =>
+      screen.getByRole('button', {name}).getAttribute('tabindex');
+
+    const bracketed = (group: ReactNode) => (
+      <>
+        <button type="button">before</button>
+        {group}
+        <button type="button">after</button>
+      </>
+    );
+
+    const clipboard = (
+      <ButtonGroup label="Actions">
+        <Button label="Copy" />
+        <Button label="Cut" />
+        <Button label="Paste" />
+      </ButtonGroup>
+    );
+
+    it('gives the group one tab stop, on the first member', () => {
+      render(clipboard);
+
+      expect(tabIndexOf('Copy')).toBe('0');
+      expect(tabIndexOf('Cut')).toBe('-1');
+      expect(tabIndexOf('Paste')).toBe('-1');
+    });
+
+    it('takes one Tab to enter and one to leave', async () => {
+      const user = userEvent.setup();
+      render(bracketed(clipboard));
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'before'})).toHaveFocus();
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'Copy'})).toHaveFocus();
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'after'})).toHaveFocus();
+    });
+
+    it('moves the tab stop with arrow navigation', async () => {
+      const user = userEvent.setup();
+      render(clipboard);
+
+      screen.getByRole('button', {name: 'Copy'}).focus();
+      await user.keyboard('{ArrowRight}');
+
+      expect(tabIndexOf('Copy')).toBe('-1');
+      expect(tabIndexOf('Cut')).toBe('0');
+    });
+
+    it('never parks the tab stop on a disabled member', () => {
+      render(
+        <ButtonGroup label="Actions">
+          <Button label="Copy" isDisabled />
+          <Button label="Cut" />
+          <Button label="Paste" />
+        </ButtonGroup>,
+      );
+
+      expect(tabIndexOf('Copy')).toBe('-1');
+      expect(tabIndexOf('Cut')).toBe('0');
+    });
+
+    it('repairs the tab stop when the member holding it unmounts', () => {
+      const {rerender} = render(
+        <ButtonGroup label="Actions">
+          <Button label="Copy" />
+          <Button label="Cut" />
+        </ButtonGroup>,
+      );
+      expect(tabIndexOf('Copy')).toBe('0');
+
+      rerender(
+        <ButtonGroup label="Actions">
+          <Button label="Cut" />
+        </ButtonGroup>,
+      );
+
+      expect(tabIndexOf('Cut')).toBe('0');
+    });
+
+    it('repairs the tab stop when the member holding it becomes disabled', () => {
+      const {rerender} = render(
+        <ButtonGroup label="Actions">
+          <Button label="Copy" />
+          <Button label="Cut" />
+        </ButtonGroup>,
+      );
+      expect(tabIndexOf('Copy')).toBe('0');
+
+      rerender(
+        <ButtonGroup label="Actions">
+          <Button label="Copy" isDisabled />
+          <Button label="Cut" />
+        </ButtonGroup>,
+      );
+
+      expect(tabIndexOf('Copy')).toBe('-1');
+      expect(tabIndexOf('Cut')).toBe('0');
+    });
+
+    it('counts a link member as the tab stop', async () => {
+      const user = userEvent.setup();
+      render(
+        bracketed(
+          <ButtonGroup label="Docs actions">
+            <Button label="Docs" href="https://example.com" />
+            <Button label="Print" />
+          </ButtonGroup>,
+        ),
+      );
+
+      expect(
+        screen.getByRole('link', {name: 'Docs'}).getAttribute('tabindex'),
+      ).toBe('0');
+      expect(tabIndexOf('Print')).toBe('-1');
+
+      await user.tab();
+      await user.tab();
+      expect(screen.getByRole('link', {name: 'Docs'})).toHaveFocus();
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'after'})).toHaveFocus();
+    });
+
+    it('keeps its one tab stop when the whole group is disabled', async () => {
+      // A group disabled as a whole keeps the focus order it has when
+      // enabled, so it still contributes exactly one tab stop.
+      const user = userEvent.setup();
+      render(
+        bracketed(
+          <ButtonGroup label="Actions" isDisabled>
+            <Button label="Copy" />
+            <Button label="Cut" />
+          </ButtonGroup>,
+        ),
+      );
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'before'})).toHaveFocus();
+
+      await user.tab();
+      const copy = screen.getByRole('button', {name: 'Copy'});
+      expect(copy).toHaveFocus();
+      expect(copy).toHaveAttribute('aria-disabled', 'true');
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'after'})).toHaveFocus();
+    });
+
+    it('keeps its one tab stop when every member is individually disabled', async () => {
+      // component:ButtonGroup FR8: an enabled group whose members are all
+      // isDisabled keeps its one tab stop.
+      const user = userEvent.setup();
+      render(
+        bracketed(
+          <ButtonGroup label="History">
+            <Button label="Undo" isDisabled />
+            <Button label="Redo" isDisabled />
+          </ButtonGroup>,
+        ),
+      );
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'before'})).toHaveFocus();
+
+      await user.tab();
+      const undo = screen.getByRole('button', {name: 'Undo'});
+      expect(undo).toHaveFocus();
+      expect(undo).toHaveAttribute('aria-disabled', 'true');
+
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'after'})).toHaveFocus();
+    });
+
+    it('leaves the tab stop on its own members when a member owns an open menu', async () => {
+      const user = userEvent.setup();
+      render(
+        <ButtonGroup label="Approve action">
+          <Button label="Allow once" />
+          <DropdownMenu
+            hasChevron={false}
+            button={{label: 'Allow options', isIconOnly: true}}
+            items={[{label: 'Allow for 30 minutes'}, {label: 'Always allow'}]}
+          />
+        </ButtonGroup>,
+      );
+
+      const trigger = screen.getByRole('button', {name: /Allow options/});
+      expect(tabIndexOf('Allow once')).toBe('0');
+      expect(trigger.getAttribute('tabindex')).toBe('-1');
+
+      await user.click(trigger);
+
+      // The menu's own items are a different list level (the boundary), so the
+      // group must not stamp them or hand them its tab stop.
+      const item = screen.getByRole('menuitem', {
+        name: 'Allow for 30 minutes',
+        hidden: true,
+      });
+      expect(item.getAttribute('tabindex')).not.toBe('0');
+      expect(tabIndexOf('Allow once')).toBe('0');
     });
   });
 });

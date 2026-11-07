@@ -4,25 +4,42 @@
 
 /**
  * @file MobileNav.tsx
- * @input Uses React, useEffect, useRef, useCallback, ReactNode, StyleX
+ * @input Uses React, useEffect, useRef, useCallback, ReactNode, StyleX and
+ *   the Layer module's entrance hold
  * @output Exports MobileNav component and MobileNavProps
  * @position Core implementation; consumed by index.ts
  *
  * Full-height slide-out drawer overlay for mobile navigation.
  * The mobile counterpart to SideNav — accepts the same children
- * (SideNavSection, SideNavItem, or any ReactNode).
+ * (SideNavSection, SideNavItem, or any ReactNode). The drawer is never wider
+ * than 85% of the viewport, so a strip of the page stays beside it to tap.
  *
  * Uses the native `<dialog>` element with `showModal()` for top-layer rendering.
  * This eliminates z-index stacking issues — the drawer renders above everything
  * without manual z-index management. The browser provides:
  * - Top layer promotion (no z-index needed)
  * - `::backdrop` pseudo-element
- * - Body scroll lock
  * - Focus trapping
- * - Escape key handling via `cancel` event
+ *
+ * The page behind takes `useScrollLock`, the same lock as every other modal.
+ *
+ * Escape is owned by the shared dismissal stack (`useLayerDismissal`), so a
+ * drawer opened over another layer takes the press and nothing behind it
+ * closes. The native `cancel` event still handles the dismissals the browser
+ * starts itself, such as the Android back gesture.
+ *
+ * Focus RESTORATION is not delegated to the browser. The drawer captures the
+ * element that opened it and refocuses it once the native dialog has closed,
+ * mirroring Dialog: the implicit `<dialog>` restore has been observed dropping
+ * focus to `<body>`. The close itself is deferred past the slide-out, and the
+ * restore has to follow it. Until close() runs the rest of the document is
+ * inert and focus() on the opener is silently dropped.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/core/src/MobileNav/index.ts (exports if types change)
+ * - /packages/core/src/Layer/useLayerDismissal.ts (dismissal stack)
+ * - /packages/core/src/hooks/useScrollLock.ts (the page's scroll lock)
+ * - /packages/core/src/MobileNav/MobileNavTouchPresentation.test.tsx (touch)
  * - /packages/cli/assets/templates/blocks/components/MobileNav/ (showcase blocks)
  */
 
@@ -34,6 +51,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {
@@ -47,11 +65,30 @@ import {Button} from '../Button';
 import {Icon} from '../Icon';
 import {Heading} from '../Heading/Heading';
 import {useAppShellMobile} from '../AppShell/AppShellMobileContext';
-import {mergeProps, mergeRefs, composeEventHandlers} from '../utils';
+import {holdEntranceInput} from '../Layer/holdEntranceInput';
+import {mergeProps, composeEventHandlers} from '../utils';
+import {layerTextReset} from '../Layer/layerTextReset.stylex';
+import {layerStructureReset} from '../Layer/layerStructureReset.stylex';
+import {LayerContentBoundary} from '../Layer/layerScopedContext';
+import {layerClickBoundary} from '../Layer/layerClickBoundary';
+import {overlayPaddingReset} from '../Layout/overlayPaddingReset.stylex';
+import {LayerDepthProvider} from '../Layer/LayerDepthContext';
+import {ModalAnnounceProvider} from '../hooks/ModalAnnounceProvider';
+import {useLayerDismissal} from '../Layer/useLayerDismissal';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
+import {matchesMediaQuery} from '../utils/coarsePointer';
 
+import {useMergedRefs} from '../hooks/useMergedRefs';
+import {useScrollLock} from '../hooks/useScrollLock';
+import {useFocusRegionContainment} from '../hooks/useFocusTrap';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/MobileNav/MobileNav.generated';
+
+registerEnglishFallback(english);
 // =============================================================================
 // Styles
 // =============================================================================
@@ -62,7 +99,8 @@ const styles = stylex.create({
     position: 'fixed',
     margin: 0,
     padding: 0,
-    border: 'none',
+    borderWidth: 0,
+    borderStyle: 'none',
     maxWidth: 'none',
     maxHeight: 'none',
     // Full viewport overlay — the dialog itself is the full-screen container
@@ -70,14 +108,37 @@ const styles = stylex.create({
     width: '100vw',
     height: '100dvh',
     backgroundColor: 'transparent',
-    overflow: 'hidden',
+    // `clip`, not `hidden`. Both clip the off-screen drawer, but `hidden` makes
+    // the dialog a SCROLL CONTAINER, and a scroll container in the top layer
+    // whose subtree holds another scroller (the drawer's content area) does not
+    // paint a @starting-style entry transition for its descendants in Chromium:
+    // the transition ticks in the CSSOM while every painted frame shows the
+    // end value, so the drawer appears fully open. `clip` clips without
+    // creating a scroll container and the slide-in paints normally. The dialog
+    // never scrolls anyway — its child is absolutely positioned — so nothing
+    // depended on it being a scroll container.
+    overflow: 'clip',
     overscrollBehavior: 'contain',
-    // Prevent touch gestures (pull-to-refresh, background scroll) passing through
-    touchAction: 'none',
+    // Stop pans passing through (pull-to-refresh, background scroll), but
+    // leave pinch to the browser: the open nav covers the whole viewport, and
+    // pinch-zoom is how phone readers resize text (WCAG 1.4.4).
+    touchAction: 'pinch-zoom',
     outline: 'none',
     // Native <dialog> uses display:none when closed.
     // Open state applied via isOpen prop to avoid :where([open]) specificity issues.
+    // `display` participates in the transition with allow-discrete so it flips
+    // to none only after the slide-out finishes. That also keeps the dialog
+    // rendered until close() has actually run: an open modal dialog that isn't
+    // rendered still blocks the whole document, and a browser that fails to
+    // un-block it on close leaves the page inert with no error (#4290).
+    // Deliberately not shortened under reduced motion: `display` is discrete,
+    // so a long hold animates nothing — it is only the window the close has to
+    // land inside. The visible transitions (the drawer's transform and the
+    // backdrop's opacity) are the ones that respect the preference.
     display: 'none',
+    transitionProperty: 'display',
+    transitionDuration: durationVars['--duration-medium'],
+    transitionBehavior: 'allow-discrete',
   },
   open: {
     display: 'flex',
@@ -85,8 +146,8 @@ const styles = stylex.create({
   // ::backdrop is provided by the browser's top layer
   backdrop: {
     '::backdrop': {
+      // No backdrop-filter: a full-viewport blur is costly to repaint.
       backgroundColor: colorVars['--color-overlay'],
-      backdropFilter: 'blur(2px)',
       opacity: 0,
       transitionProperty: 'opacity',
       transitionDuration: durationVars['--duration-medium'],
@@ -100,7 +161,14 @@ const styles = stylex.create({
   },
   backdropOpen: {
     '::backdrop': {
-      opacity: 1,
+      // The ::backdrop only exists once showModal() has put the dialog in the
+      // top layer, so its first rendered frame already has the open opacity.
+      // Without a starting style there is no earlier value to transition from
+      // and the scrim snaps in — @starting-style supplies that value.
+      opacity: {
+        default: 1,
+        '@starting-style': 0,
+      },
     },
   },
   drawer: {
@@ -131,7 +199,17 @@ const styles = stylex.create({
     },
   },
   drawerStartOpen: {
-    transform: 'translateX(0)',
+    // The whole dialog is `display: none` while closed, so the drawer is not
+    // rendered and the open transform is the only value it has ever had — a
+    // transition needs a previous value to run from. @starting-style gives the
+    // first rendered frame the off-screen transform, so the slide-in plays.
+    transform: {
+      default: 'translateX(0)',
+      '@starting-style': {
+        default: 'translateX(-100%)',
+        ':is([dir="rtl"] *)': 'translateX(100%)',
+      },
+    },
   },
   drawerEnd: {
     insetInlineEnd: 0,
@@ -144,13 +222,23 @@ const styles = stylex.create({
     },
   },
   drawerEndOpen: {
-    transform: 'translateX(0)',
+    // See drawerStartOpen — same starting style, mirrored edge.
+    transform: {
+      default: 'translateX(0)',
+      '@starting-style': {
+        default: 'translateX(100%)',
+        ':is([dir="rtl"] *)': 'translateX(-100%)',
+      },
+    },
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: spacingVars['--spacing-12'],
+    // At least one bar high, and taller for header content that needs it (a
+    // stacked title and search, or a title wrapped at a larger text size), so
+    // it never runs into the first item below.
+    minHeight: spacingVars['--spacing-12'],
     paddingInline: spacingVars['--spacing-2'],
     flexShrink: 0,
     borderBlockEndWidth: borderVars['--border-width'],
@@ -168,20 +256,138 @@ const styles = stylex.create({
     overflowY: 'auto',
     overflowX: 'hidden',
     overscrollBehavior: 'contain',
-    // Re-enable vertical touch scrolling inside the drawer content
-    // (dialog root has touch-action: none to block pull-to-refresh)
-    touchAction: 'pan-y',
+    // Re-enable vertical touch scrolling inside the drawer content (the
+    // dialog root allows only pinch-zoom, to block pull-to-refresh)
+    touchAction: 'pan-y pinch-zoom',
     paddingInline: spacingVars['--spacing-2'],
     paddingBlock: spacingVars['--spacing-2'],
   },
 });
 
 const dynamicStyles = stylex.create({
+  // The requested width, never more than 85 % of the viewport: on a narrow
+  // phone a strip of the page stays visible beside the drawer, as a target
+  // for the tap that closes it.
   width: (w: number) => ({
-    width: '100vw',
-    maxWidth: `${w}px`,
+    width: `${w}px`,
+    maxWidth: '85vw',
   }),
 });
+
+// =============================================================================
+// Close timing
+// =============================================================================
+
+/**
+ * Longest the drawer will wait before closing, however long the hold is.
+ *
+ * Exported so `AppShell` can defer hiding this drawer's `Activity` boundary
+ * by at least this long too (`ACTIVITY_HIDE_BUFFER_MS` in AppShell.tsx) —
+ * otherwise Activity's `display: none !important` lands before this delay's
+ * own scheduled `dialog.close()` has a chance to run (#5701).
+ */
+export const MAX_CLOSE_DELAY_MS = 250;
+/**
+ * Longest the drawer slides in or out for, in ms. Both run for the theme's
+ * `--duration-medium`: 410 ms by default, and at most 545 ms on the default
+ * scale (`--duration-medium-max`). The slide-out keeps playing after the
+ * dialog closes, while the dialog's `display` transition keeps it rendered.
+ * The touch hold on the slide-in ends by this time.
+ */
+export const MAX_EXIT_MS = 550;
+/** Fraction of the hold to close at, so the close never lands on its boundary. */
+const CLOSE_WITHIN_HOLD = 0.6;
+
+/**
+ * Shortest duration in a `transition-duration` list, in ms; null if unreadable.
+ *
+ * Browsers serialise computed `<time>` values in seconds — an authored `410ms`
+ * reads back as `"0.41s"` and a list as `"0.41s, 0.12s"` — so the seconds branch
+ * is the one that runs outside tests. jsdom echoes an inline `250ms` back as-is
+ * and never resolves `var()`, so both units and the unreadable case are covered
+ * directly in MobileNavCloseTiming.test.ts rather than through the component.
+ *
+ * @internal Exported for unit tests.
+ */
+export function parseShortestDurationMs(value: string): number | null {
+  const durations = value
+    .split(',')
+    .map(part => {
+      const trimmed = part.trim();
+      const ms = Number.parseFloat(trimmed);
+      if (!Number.isFinite(ms)) {
+        return null;
+      }
+      return trimmed.endsWith('ms')
+        ? ms
+        : trimmed.endsWith('s')
+          ? ms * 1000
+          : null;
+    })
+    .filter((ms): ms is number => ms !== null);
+
+  return durations.length ? Math.min(...durations) : null;
+}
+
+/**
+ * How long to wait before closing the native dialog.
+ *
+ * The drawer is only rendered for as long as its `display` transition runs, and
+ * closing an unrendered modal dialog is what leaves the page inert (#4290). So
+ * the close has to land inside that hold. The hold is `--duration-medium`,
+ * which themes rewrite — the shipped y2k theme sets it to exactly 250ms — so
+ * read the hold in effect rather than assuming it.
+ */
+function resolveCloseDelay(dialog: HTMLDialogElement): number {
+  // Reduced motion makes the close sooner; it must not make the hold shorter.
+  // Shrinking both leaves no slack — one slow frame between the commit and this
+  // macrotask and the drawer has already stopped being rendered.
+  const cap = matchesMediaQuery(
+    dialog.ownerDocument.defaultView,
+    '(prefers-reduced-motion: reduce)',
+  )
+    ? 0
+    : MAX_CLOSE_DELAY_MS;
+
+  const hold = parseShortestDurationMs(
+    window.getComputedStyle(dialog).transitionDuration,
+  );
+
+  // The hold is unreadable — an unresolved var() outside a real browser.
+  if (hold === null) {
+    return cap;
+  }
+
+  return hold <= 0 ? 0 : Math.min(cap, hold * CLOSE_WITHIN_HOLD);
+}
+
+/**
+ * Close the native dialog, then return focus to the element that opened it.
+ *
+ * Browsers are supposed to restore focus themselves when a modal <dialog>
+ * closes, but that has been observed to fail (focus lands on <body>), so the
+ * drawer does it explicitly, as Dialog does. The order is load-bearing: while
+ * the modal dialog holds the top layer the rest of the document is inert and
+ * focus() on the opener is silently dropped. So the restore rides on the close
+ * itself, wherever that happens (the delayed timer, or the unmount teardown),
+ * not on the `isOpen` flip that only schedules it.
+ *
+ * Focus is left alone when there was no real opener (activeElement was <body>)
+ * or the opener has since left the DOM: focusing <body> would blur whatever a
+ * router moved focus to, and a detached node cannot take focus.
+ */
+function closeAndRestoreFocus(
+  dialog: HTMLDialogElement,
+  openerRef: RefObject<HTMLElement | null>,
+): void {
+  dialog.close();
+  const opener = openerRef.current;
+  openerRef.current = null;
+  if (!opener || opener === document.body || !opener.isConnected) {
+    return;
+  }
+  opener.focus();
+}
 
 // =============================================================================
 // Types
@@ -292,7 +498,7 @@ export function MobileNav({
   ref,
   ...rest
 }: MobileNavProps) {
-  const t = useTranslator();
+  const t = useComponentTranslator();
   // Read from AppShell context as fallback
   const appShellMobile = useAppShellMobile();
   const isOpen = isOpenProp ?? appShellMobile.isMobileNavOpen;
@@ -314,11 +520,69 @@ export function MobileNav({
   );
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Native showModal() lets Tab leave for the browser's own UI, so the shared
+  // module wraps it. A closing drawer stops containing as soon as it starts to
+  // slide out.
+  useFocusRegionContainment(dialogRef, isOpen);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  // The input hold on the drawer's layer while it slides in under a coarse
+  // primary pointer. It is null under a fine one and once the slide-in ends.
+  const releaseHoldRef = useRef<(() => void) | null>(null);
+  // Element that was focused when the drawer opened; focus goes back to it
+  // once the native dialog has closed (see closeAndRestoreFocus).
+  const triggerElementRef = useRef<HTMLElement | null>(null);
+
+  // Keeps the dialog rendered from the commit that closes it until the delayed
+  // `close()` below has run. The `display` transition on the dialog is meant to
+  // do this, but a browser that does not hold a discrete `display` transition
+  // (WebKit) drops the dialog to `display: none` at once while it is still an
+  // open modal: nothing is visible, yet the whole page stays inert until the
+  // timer fires. Set during render, so it is already true in the commit that
+  // closes. The drawer's transform and the backdrop stay keyed to `isOpen`, so
+  // the slide-out is unchanged.
+  const [isCloseHeld, setIsCloseHeld] = useState(false);
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    setIsCloseHeld(!isOpen);
+  }
+  // The same page lock as every other modal. Its effect runs before the
+  // open/close effect below, so it measures the scrollbar gutter before
+  // showModal() can hide the scrollbar.
+  useScrollLock(isOpen);
   // Resolved side — computed from trigger position when side='auto'
   const [resolvedSide, setResolvedSide] = useState<'start' | 'end'>(
     side === 'auto' ? 'end' : side,
   );
+
+  // Resolve which edge the drawer slides from. Deliberately its own effect,
+  // declared before the open/close effect below so the trigger is still the
+  // active element when `side='auto'` reads it. Keeping it out of that effect
+  // is what stops a `side` change during a close from re-arming the delay: the
+  // CSS hold runs from the commit that started the slide-out and does not
+  // restart, so a fresh full delay could land after the drawer had already
+  // stopped being rendered — #4290 again.
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (side === 'auto') {
+      const trigger = document.activeElement as HTMLElement | null;
+      if (trigger && trigger !== document.body) {
+        const rect = trigger.getBoundingClientRect();
+        const triggerCenter = rect.left + rect.width / 2;
+        // eslint-disable-next-line @eslint-react/set-state-in-effect -- side is resolved from trigger layout immediately before showModal()
+        setResolvedSide(
+          triggerCenter < window.innerWidth / 2 ? 'start' : 'end',
+        );
+      }
+    } else {
+      // eslint-disable-next-line @eslint-react/set-state-in-effect -- side prop changes must update the open dialog placement
+      setResolvedSide(side);
+    }
+  }, [isOpen, side]);
 
   // Open/close the dialog via showModal()/close()
   // close() is delayed so the slide-out transition can play.
@@ -328,45 +592,36 @@ export function MobileNav({
       return;
     }
 
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-
     if (isOpen) {
-      // Determine drawer side from trigger position when auto
-      if (side === 'auto') {
-        const trigger = document.activeElement as HTMLElement | null;
-        if (trigger && trigger !== document.body) {
-          const rect = trigger.getBoundingClientRect();
-          const triggerCenter = rect.left + rect.width / 2;
-          // eslint-disable-next-line @eslint-react/set-state-in-effect -- side is resolved from trigger layout immediately before showModal()
-          setResolvedSide(
-            triggerCenter < window.innerWidth / 2 ? 'start' : 'end',
-          );
-        }
-      } else {
-        // eslint-disable-next-line @eslint-react/set-state-in-effect -- side prop changes must update the open dialog placement
-        setResolvedSide(side);
-      }
-
+      releaseHoldRef.current?.();
+      releaseHoldRef.current = null;
       if (!dialog.open) {
+        // Capture the opener before showModal() pulls focus into the top
+        // layer. Only on the transition into open: a reopen while the delayed
+        // close is still pending finds the dialog open, and must keep the
+        // original opener rather than whatever is focused inside the drawer.
+        triggerElementRef.current =
+          document.activeElement as HTMLElement | null;
         dialog.showModal();
       }
-      // Prevent background scrolling and iOS pull-to-refresh.
-      // overflow: clip avoids creating a scroll container (unlike hidden),
-      // so there's no scroll bounce and no need to save/restore scroll position.
-      document.documentElement.style.overflow = 'clip';
+      // Under a coarse primary pointer, nothing takes a touch until the
+      // slide-in ends, at most MAX_EXIT_MS in. A close holds nothing, because
+      // only an entrance is held. Under a fine one, nothing is held.
+      releaseHoldRef.current = holdEntranceInput(dialog, {
+        entrance: drawerRef.current,
+        capMs: MAX_EXIT_MS,
+      });
     } else if (dialog.open) {
-      document.documentElement.style.overflow = '';
-
-      const duration = window.matchMedia('(prefers-reduced-motion: reduce)')
-        .matches
-        ? 10
-        : 250;
+      releaseHoldRef.current?.();
+      releaseHoldRef.current = null;
       closeTimeoutRef.current = setTimeout(() => {
-        dialog.close();
-      }, duration);
+        closeAndRestoreFocus(dialog, triggerElementRef);
+        setIsCloseHeld(false);
+      }, resolveCloseDelay(dialog));
+    } else {
+      // Nothing is open, so there is no close to hold the dialog for, and no
+      // close timer is left to release the hold.
+      setIsCloseHeld(false);
     }
 
     return () => {
@@ -374,29 +629,67 @@ export function MobileNav({
         clearTimeout(closeTimeoutRef.current);
         closeTimeoutRef.current = null;
       }
-      document.documentElement.style.overflow = '';
-      // Close the native dialog on teardown if it's still open. Inside AppShell
-      // the drawer is mounted in an <Activity> that switches to mode="hidden"
-      // when the drawer closes; React then runs this cleanup (with a stale
-      // isOpen) instead of re-running the effect with isOpen=false, so the
-      // close branch above never fires. If we leave the <dialog> `open` here,
-      // showModal() is skipped on the next open (the dialog is already open in
-      // the hidden tree) and the drawer can never be re-opened. Closing it
-      // unconditionally on teardown keeps the native dialog state in sync so a
-      // subsequent open cleanly calls showModal() again.
-      if (dialog.open) {
-        dialog.close();
+      // The hold this run took ends with it: a reopen, a close or an
+      // unmount mid-slide never leaves input blocked.
+      releaseHoldRef.current?.();
+      releaseHoldRef.current = null;
+    };
+  }, [isOpen]);
+
+  // Close the native dialog on unmount if it's still open. Inside AppShell the
+  // drawer is mounted in an <Activity> that switches to mode="hidden" when the
+  // drawer closes; React then runs effect cleanups (with a stale isOpen)
+  // instead of re-running the effect with isOpen=false, so the close branch
+  // above never fires. If we leave the <dialog> `open` here, showModal() is
+  // skipped on the next open (the dialog is already open in the hidden tree)
+  // and the drawer can never be re-opened — see MobileNavReopen.test.tsx.
+  // This must be a separate unmount-only effect: putting it in the open/close
+  // effect above would close the dialog on every isOpen flip and cut off the
+  // delayed slide-out close.
+  //
+  // Inside AppShell this teardown is the only close the drawer ever gets, so
+  // it is also where focus goes back to the toggle.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    return () => {
+      releaseHoldRef.current?.();
+      releaseHoldRef.current = null;
+      if (dialog?.open) {
+        closeAndRestoreFocus(dialog, triggerElementRef);
       }
     };
-  }, [isOpen, side]);
+  }, []);
 
-  // Handle native cancel event (Escape key) — prevent default and route through onOpenChange
+  const {shouldDismissOnCloseRequest} = useLayerDismissal({
+    isActive: isOpen,
+    onDismiss: () => onOpenChange(false),
+    // The dialog's document is this layer's: rendered into an iframe or a
+    // Picture-in-Picture window, it ranks with the layers opened inside it.
+    getContainer: () => dialogRef.current,
+  });
+
+  // The native `cancel` event is the browser's own close-watcher firing: an
+  // Android back gesture, or a close request the stack never saw a press for.
+  // Escape presses the stack owns never arrive here — it preventDefault()s
+  // those, which suppresses the close watcher.
+  //
+  // Always preventDefault so the browser cannot close a controlled <dialog>
+  // behind React's back, then answer with the stack's own rules: top-most
+  // only, and never while an IME composition is in progress.
   const handleCancel = useCallback(
     (event: React.SyntheticEvent<HTMLDialogElement>) => {
+      // A cancel that bubbles up from inside (a dismissed file picker) is not
+      // a close request; the platform's is fired at the dialog itself.
+      if (event.target !== event.currentTarget) {
+        return;
+      }
       event.preventDefault();
+      if (!shouldDismissOnCloseRequest()) {
+        return;
+      }
       onOpenChange(false);
     },
-    [onOpenChange],
+    [onOpenChange, shouldDismissOnCloseRequest],
   );
 
   // Handle clicks on the dialog backdrop area (outside the drawer)
@@ -412,16 +705,22 @@ export function MobileNav({
   );
 
   const isStart = resolvedSide === 'start';
+  const navigationLabel =
+    label ??
+    (typeof header === 'string' ? header : t('@astryx.mobileNav.navigation'));
 
   return (
     <dialog
-      ref={mergeRefs(ref, dialogRef)}
+      ref={useMergedRefs(ref, dialogRef)}
       id={dialogId}
       {...mergeProps(
         themeProps('mobile-nav', {side: resolvedSide}),
         stylex.props(
+          layerTextReset.reset,
+          layerStructureReset.reset,
           styles.dialog,
-          isOpen && styles.open,
+          overlayPaddingReset.reset,
+          (isOpen || isCloseHeld) && styles.open,
           styles.backdrop,
           isOpen && styles.backdropOpen,
           xstyle,
@@ -431,46 +730,65 @@ export function MobileNav({
       )}
       {...rest}
       data-testid={testId}
-      aria-label={
-        label ??
-        (typeof header === 'string'
-          ? header
-          : t('@astryx.mobileNav.navigation'))
-      }
-      onClick={composeEventHandlers(onClickProp, handleDialogClick)}
+      aria-label={navigationLabel}
+      // Presses inside the navigation do not reach handlers around where it
+      // is written.
+      {...layerClickBoundary({
+        ...rest,
+        onClick: composeEventHandlers(onClickProp, handleDialogClick),
+      })}
       onCancel={handleCancel}>
-      {/* Drawer panel — tabIndex so showModal() focuses the drawer, not the close button */}
-      <div
-        tabIndex={-1}
-        {...stylex.props(
-          styles.drawer,
-          dynamicStyles.width(width),
-          isStart && styles.drawerStart,
-          isStart && isOpen && styles.drawerStartOpen,
-          !isStart && styles.drawerEnd,
-          !isStart && isOpen && styles.drawerEndOpen,
-        )}>
-        {/* Header — content + close button */}
-        <div {...stylex.props(styles.header, !header && styles.headerNoTitle)}>
-          {typeof header === 'string' ? (
-            <span {...stylex.props(styles.headerText)}>
-              <Heading level={2}>{header}</Heading>
-            </span>
-          ) : (
-            (header ?? null)
-          )}
-          <Button
-            variant="ghost"
-            label={t('@astryx.mobileNav.closeNavigation')}
-            icon={<Icon icon="close" color="inherit" />}
-            onClick={() => onOpenChange(false)}
-            isIconOnly
-          />
-        </div>
+      <ModalAnnounceProvider dialogRef={dialogRef} isOpen={isOpen}>
+        <LayerDepthProvider>
+          <LayerContentBoundary>
+            {/* Drawer panel — tabIndex so showModal() focuses the drawer, not the close button */}
+            <div
+              ref={drawerRef}
+              tabIndex={-1}
+              {...stylex.props(
+                styles.drawer,
+                dynamicStyles.width(width),
+                isStart && styles.drawerStart,
+                isStart && isOpen && styles.drawerStartOpen,
+                !isStart && styles.drawerEnd,
+                !isStart && isOpen && styles.drawerEndOpen,
+              )}>
+              {/* Header — content + close button */}
+              <div
+                {...stylex.props(
+                  styles.header,
+                  !header && styles.headerNoTitle,
+                )}>
+                {typeof header === 'string' ? (
+                  <Heading level={2} xstyle={styles.headerText}>
+                    {header}
+                  </Heading>
+                ) : (
+                  (header ?? null)
+                )}
+                <Button
+                  variant="ghost"
+                  label={t('@astryx.mobileNav.closeNavigation')}
+                  icon={<Icon icon="close" color="inherit" />}
+                  onClick={() => onOpenChange(false)}
+                  isIconOnly
+                />
+              </div>
 
-        {/* Scrollable content */}
-        <div {...stylex.props(styles.content)}>{children}</div>
-      </div>
+              {/* Scrollable content, the drawer's navigation landmark: a
+                  modal dialog is not a landmark. */}
+              <nav
+                // Named as the dialog is: by the caller's aria-labelledby when
+                // it resolves, else by the dialog's own label.
+                aria-labelledby={rest['aria-labelledby']}
+                aria-label={navigationLabel}
+                {...stylex.props(styles.content)}>
+                {children}
+              </nav>
+            </div>
+          </LayerContentBoundary>
+        </LayerDepthProvider>
+      </ModalAnnounceProvider>
     </dialog>
   );
 }

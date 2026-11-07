@@ -17,11 +17,12 @@
 
 export {Theme} from './Theme';
 export {MediaTheme} from './MediaTheme';
-export type {MediaThemeProps} from './MediaTheme';
+export type {MediaThemeProps, MediaThemeMode} from './MediaTheme';
 export {
   defineTheme,
   generateThemeCSS,
   generateOnMediaCSS,
+  generateAdaptationCSS,
   generateThemeRules,
   generateThemeRulesSplit,
   type ThemeCSSOutput,
@@ -38,12 +39,32 @@ export {
 export type {
   DefineThemeInput,
   DefinedTheme,
+  ResolvedDefinedTheme,
   CoreTokenName,
   TokenName,
   TokenValue,
   ComponentStyleMap,
   StyleOverrides,
 } from './defineTheme';
+
+// Ordered environment-conditioned theme adaptations
+export {
+  DEFAULT_COMPACT_DEFINITION,
+  DEFAULT_WIDTH_BREAKPOINTS,
+  WIDTH_BREAKPOINT_NAMES,
+  compactDefinition,
+} from './themeAdaptations';
+export type {
+  CompactDefinition,
+  WidthBreakpointName,
+  WidthBreakpoints,
+  ThemeAdaptations,
+  ThemeAdaptationCondition,
+  ThemeAdaptationWidthCondition,
+  ThemeAdaptationRule,
+  ThemeAdaptationValue,
+  ThemeAdaptationTypographyConfig,
+} from './themeAdaptations';
 
 export type {
   SyntaxTokenName,
@@ -83,6 +104,11 @@ export type {ColorScaleConfig, ColorScaleTokens} from './expandColorScale';
 
 export {expandMotionScale} from './expandMotionScale';
 export type {MotionScaleConfig, MotionScaleTokens} from './expandMotionScale';
+export type {
+  MotionCharacter,
+  ThemeMotionConfig,
+  ThemeMotionKnobs,
+} from './themeMotion';
 
 // Export token defaults and vars for use in custom components and themes
 export {
@@ -90,6 +116,7 @@ export {
   spacingDefaults,
   sizeDefaults,
   borderDefaults,
+  focusDefaults,
   radiusDefaults,
   shadowDefaults,
   durationDefaults,
@@ -102,6 +129,7 @@ export {
   spacingVars,
   sizeVars,
   borderVars,
+  focusVars,
   radiusVars,
   shadowVars,
   durationVars,
@@ -130,6 +158,19 @@ export type {
 
 export {useTheme, useThemeName, ThemeContext} from './useTheme';
 export type {UseThemeReturn, ThemeContextValue} from './useTheme';
+
+export type {
+  IndicatorComponent,
+  IndicatorFamily,
+  IndicatorFamilyMap,
+  IndicatorMap,
+  IndicatorName,
+  IndicatorNameOfFamily,
+  IndicatorProps,
+  IndicatorRegistry,
+  IndicatorSize,
+  IndicatorState,
+} from '../Indicator';
 export {
   resolveThemeToken,
   resolveThemeTokens,

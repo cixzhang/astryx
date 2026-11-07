@@ -24,10 +24,18 @@ import {
 } from '../theme/tokens.stylex';
 import {Kbd} from '../Kbd';
 import {themeProps} from '../utils/themeProps';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/CommandPalette/CommandPaletteFooter.generated';
+
+registerEnglishFallback(english);
 
 const styles = stylex.create({
   footer: {
     display: 'flex',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacingVars['--spacing-4'],
     paddingInline: spacingVars['--spacing-4'],
@@ -71,10 +79,13 @@ export interface CommandPaletteFooterProps extends BaseProps<HTMLDivElement> {
  * <CommandPalette
  *   isOpen={isOpen}
  *   onOpenChange={setIsOpen}
- *   input={<CommandPaletteInput />}
- *   footer={<CommandPaletteFooter />}>
- *   <CommandPaletteList>...</CommandPaletteList>
- * </CommandPalette>
+ *   searchSource={source}
+ *   footer={
+ *     <CommandPaletteFooter>
+ *       Type to filter available commands.
+ *     </CommandPaletteFooter>
+ *   }
+ * />
  * ```
  */
 export function CommandPaletteFooter({
@@ -85,6 +96,8 @@ export function CommandPaletteFooter({
   style,
   ...props
 }: CommandPaletteFooterProps) {
+  const t = useComponentTranslator();
+
   return (
     <div
       ref={ref}
@@ -100,15 +113,15 @@ export function CommandPaletteFooter({
           <span {...stylex.props(styles.hint)}>
             <Kbd keys="up" />
             <Kbd keys="down" />
-            Navigate
+            {t('@astryx.commandPalette.footer.navigate')}
           </span>
           <span {...stylex.props(styles.hint)}>
             <Kbd keys="enter" />
-            Select
+            {t('@astryx.commandPalette.footer.select')}
           </span>
           <span {...stylex.props(styles.hint)}>
             <Kbd keys="escape" />
-            Close
+            {t('@astryx.commandPalette.footer.close')}
           </span>
         </>
       )}

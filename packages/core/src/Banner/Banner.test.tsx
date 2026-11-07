@@ -3,7 +3,11 @@
 /**
  * @file Banner.test.tsx
  * @input Uses vitest, @testing-library/react, Banner component
- * @output Unit tests for Banner component behavior
+ * @output Unit tests for Banner component behavior, including default and
+ *   explicit live-region roles, augmented-status color fallback, scoped status
+ *   foregrounds that do not recolor consumer content or tooltips, the
+ *   'banner-frame' theme target on the outer elevation/radius painter, and the
+ *   'banner-icon' theme target on the status icon glyph (#4166)
  * @position Testing; validates Banner.tsx implementation
  *
  * SYNC: When modified, update this header
@@ -12,8 +16,11 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {Banner} from './Banner';
+import {Banner, type BannerStatus} from './Banner';
+import {defineTheme, generateThemeCSS} from '../theme';
 import {registerIcons, resetIcons} from '../Icon';
+import {InternationalizationProvider} from '../i18n';
+import {getForcedColorsRules} from '../__tests__/forcedColors';
 
 describe('Banner', () => {
   afterEach(() => {
@@ -25,24 +32,77 @@ describe('Banner', () => {
     expect(screen.getByText('Test Banner')).toBeInTheDocument();
   });
 
-  it('renders info status with role="status"', () => {
-    render(<Banner status="info" title="Info" />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+  it('does not infer a live-region role from visual status', () => {
+    const statuses = ['info', 'warning', 'error', 'success'] as const;
+    for (const status of statuses) {
+      const {container, unmount} = render(
+        <Banner status={status} title={`${status} banner`} />,
+      );
+      expect(container.firstElementChild).not.toHaveAttribute('role');
+      expect(container.firstElementChild).not.toHaveAttribute('aria-live');
+      unmount();
+    }
   });
 
-  it('renders warning status with role="alert"', () => {
-    render(<Banner status="warning" title="Warning" />);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+  it('forwards an explicit non-alert role to the frame', () => {
+    const {container} = render(
+      <Banner status="info" title="Saved" role="status" />,
+    );
+    expect(screen.getByRole('status')).toBe(container.firstElementChild);
   });
 
-  it('renders error status with role="alert"', () => {
-    render(<Banner status="error" title="Error" />);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+  it('puts an urgent role="alert" on the message: the title and the description only', () => {
+    const {container} = render(
+      <Banner
+        status="error"
+        title="Upload failed"
+        description="Check your network and try again."
+        role="alert"
+        isDismissable
+        endContent={<button type="button">Retry</button>}
+        collapsible={{defaultIsOpen: true}}>
+        Supporting details
+      </Banner>,
+    );
+    const alert = screen.getByRole('alert');
+    expect(container.firstElementChild).not.toHaveAttribute('role');
+    expect(alert.textContent).toBe(
+      'Upload failed Check your network and try again.',
+    );
+    expect(alert).not.toContainElement(
+      screen.getByRole('button', {name: 'Retry'}),
+    );
+    expect(alert).not.toHaveTextContent('Supporting details');
   });
 
-  it('renders success status with role="status"', () => {
-    render(<Banner status="success" title="Success" />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+  it("moves an urgent alert's ARIA attributes onto the message with the role", () => {
+    const {container} = render(
+      <Banner
+        status="error"
+        title="Upload failed"
+        role="alert"
+        aria-label="Upload error"
+      />,
+    );
+    expect(screen.getByRole('alert', {name: 'Upload error'})).toHaveTextContent(
+      'Upload failed',
+    );
+    expect(container.firstElementChild).not.toHaveAttribute('aria-label');
+  });
+
+  it('keeps ARIA attributes on the frame without an urgent alert', () => {
+    const {container} = render(
+      <Banner status="info" title="Saved" aria-label="Save status" />,
+    );
+    expect(container.firstElementChild).toHaveAttribute(
+      'aria-label',
+      'Save status',
+    );
+  });
+
+  it('reads an urgent title without a description as the title alone', () => {
+    render(<Banner status="error" title="Upload failed" role="alert" />);
+    expect(screen.getByRole('alert').textContent).toBe('Upload failed');
   });
 
   it('renders default icon per status with aria-hidden', () => {
@@ -94,9 +154,84 @@ describe('Banner', () => {
     expect(screen.queryByText('This is a description')).not.toBeInTheDocument();
   });
 
+  it('keeps base title and description colors for an augmented status', () => {
+    const augmentedStatus = 'neutral' as unknown as BannerStatus;
+    const {rerender} = render(
+      <Banner
+        status={augmentedStatus}
+        title="Neutral title"
+        description="Neutral description"
+      />,
+    );
+
+    const customTitleClass = screen.getByText('Neutral title').className;
+    const customDescriptionClass = screen.getByText(
+      'Neutral description',
+    ).className;
+
+    rerender(
+      <Banner
+        status="info"
+        title="Info title"
+        description="Info description"
+      />,
+    );
+
+    expect(screen.getByText('Info title').className).not.toBe(customTitleClass);
+    expect(screen.getByText('Info description').className).not.toBe(
+      customDescriptionClass,
+    );
+  });
+
+  it.each([
+    ['info', 'var(--color-on-info-muted)'],
+    ['success', 'var(--color-on-success-muted)'],
+    ['warning', 'var(--color-on-warning-muted)'],
+    ['error', 'var(--color-on-error-muted)'],
+  ] as const)(
+    'routes %s built-in controls to the matching on-muted role without recoloring tooltips',
+    (status, expectedRole) => {
+      render(
+        <Banner
+          status={status}
+          title={`${status} banner`}
+          collapsible={{defaultIsOpen: true}}
+          isDismissable>
+          <div>Details</div>
+        </Banner>,
+      );
+
+      for (const button of [
+        screen.getByRole('button', {name: 'Collapse'}),
+        screen.getByRole('button', {name: `Dismiss ${status} banner`}),
+      ]) {
+        expect(
+          getComputedStyle(button).getPropertyValue('--color-text-primary'),
+        ).toBe(expectedRole);
+        // A tooltip that repeats the name does not describe the button
+        // (Button FR12), so find it by its text.
+        const describedBy = button.getAttribute('aria-describedby');
+        const tooltip =
+          describedBy != null
+            ? document.getElementById(describedBy)
+            : (screen
+                .getAllByRole('tooltip', {hidden: true})
+                .find(
+                  el => el.textContent === button.getAttribute('aria-label'),
+                ) ?? null);
+        expect(tooltip).not.toBeNull();
+        expect(
+          getComputedStyle(tooltip!).getPropertyValue('--color-text-primary'),
+        ).not.toBe(expectedRole);
+      }
+    },
+  );
+
   it('renders dismiss button when isDismissable', () => {
     render(<Banner status="info" title="Dismissable" isDismissable />);
-    expect(screen.getByRole('button', {name: 'Dismiss'})).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Dismiss Dismissable'}),
+    ).toBeInTheDocument();
   });
 
   it('calls onDismiss when dismiss button is clicked', async () => {
@@ -110,7 +245,7 @@ describe('Banner', () => {
         onDismiss={onDismiss}
       />,
     );
-    await user.click(screen.getByRole('button', {name: 'Dismiss'}));
+    await user.click(screen.getByRole('button', {name: 'Dismiss Dismissable'}));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
@@ -125,7 +260,9 @@ describe('Banner', () => {
       />,
     );
     expect(screen.getByTestId('banner')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', {name: 'Dismiss'}));
+    await user.click(
+      screen.getByRole('button', {name: 'Dismiss Self Dismissing'}),
+    );
     expect(screen.queryByTestId('banner')).not.toBeInTheDocument();
   });
 
@@ -141,31 +278,52 @@ describe('Banner', () => {
         data-testid="banner"
       />,
     );
-    await user.click(screen.getByRole('button', {name: 'Dismiss'}));
+    await user.click(screen.getByRole('button', {name: 'Dismiss Dismissable'}));
     expect(screen.queryByTestId('banner')).not.toBeInTheDocument();
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('does not render dismiss button when isDismissable is false', () => {
     render(<Banner status="info" title="Not Dismissable" />);
-    expect(
-      screen.queryByRole('button', {name: 'Dismiss'}),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /^Dismiss/})).toBeNull();
   });
 
-  it('renders endContent', () => {
+  it('leaves consumer endContent outside the built-in status foreground', () => {
     render(
-      <Banner
-        status="info"
-        title="With Action"
-        endContent={
-          <button type="button" data-testid="end-btn">
-            Action
-          </button>
-        }
-      />,
+      <>
+        <style>{'dialog { color: inherit; }'}</style>
+        <Banner
+          status="warning"
+          title="Warning action"
+          endContent={
+            <dialog open data-testid="warning-dialog">
+              Consumer dialog
+            </dialog>
+          }
+        />
+        <Banner
+          status="error"
+          title="Error action"
+          endContent={
+            <dialog open data-testid="error-dialog">
+              Consumer dialog
+            </dialog>
+          }
+        />
+      </>,
     );
-    expect(screen.getByTestId('end-btn')).toBeInTheDocument();
+
+    const warningTitle = screen.getByText('Warning action');
+    const errorTitle = screen.getByText('Error action');
+    const warningDialog = screen.getByTestId('warning-dialog');
+    const errorDialog = screen.getByTestId('error-dialog');
+
+    expect(getComputedStyle(warningTitle).color).not.toBe(
+      getComputedStyle(errorTitle).color,
+    );
+    expect(getComputedStyle(warningDialog).color).toBe(
+      getComputedStyle(errorDialog).color,
+    );
   });
 
   it('renders card container by default', () => {
@@ -183,33 +341,86 @@ describe('Banner', () => {
   });
 
   // =========================================================================
-  // Collapsible content area
+  // Content area — collapsible by default, `collapsible={false}` opts out
   // =========================================================================
 
-  it('hides children by default (collapsed)', () => {
+  it('hides children behind a toggle by default', () => {
     render(
       <Banner status="info" title="Collapsible">
         <div data-testid="child-content">Extra content</div>
       </Banner>,
     );
+    // The historical default, unchanged: chevron present, content collapsed.
     expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Expand'})).toBeInTheDocument();
   });
 
-  it('shows children when defaultIsExpanded is true', () => {
+  it('treats an explicit collapsible={true} as the default', () => {
     render(
-      <Banner status="info" title="Expanded" defaultIsExpanded>
+      <Banner status="info" title="Explicit" collapsible>
+        <div data-testid="child-content">Extra content</div>
+      </Banner>,
+    );
+    expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Expand'})).toBeInTheDocument();
+  });
+
+  it('shows children with no toggle for collapsible={false}', () => {
+    render(
+      <Banner status="info" title="Opted out" collapsible={false}>
         <div data-testid="child-content">Extra content</div>
       </Banner>,
     );
     expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Expand'}),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Collapse'}),
+    ).not.toBeInTheDocument();
   });
 
-  it('shows expand button when children are provided', () => {
+  it('leaves non-collapsible content out of the disclosure wiring', () => {
     render(
-      <Banner status="info" title="With Toggle">
-        <div>Content</div>
+      <Banner
+        status="info"
+        title="Plain content"
+        isDismissable
+        collapsible={false}>
+        <div data-testid="child-content">Extra content</div>
       </Banner>,
     );
+    // No toggle exists, so nothing should carry disclosure state, and the
+    // region needs no id for a button to point at.
+    const dismiss = screen.getByRole('button', {
+      name: 'Dismiss Plain content',
+    });
+    expect(dismiss).not.toHaveAttribute('aria-expanded');
+    expect(dismiss).not.toHaveAttribute('aria-controls');
+    expect(
+      screen.getByTestId('child-content').parentElement,
+    ).not.toHaveAttribute('id');
+  });
+
+  it('starts open for collapsible={{defaultIsOpen: true}}', () => {
+    render(
+      <Banner status="info" title="Open" collapsible={{defaultIsOpen: true}}>
+        <div data-testid="child-content">Content</div>
+      </Banner>,
+    );
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Collapse'})).toBeInTheDocument();
+  });
+
+  it('treats a null collapsible as the default', () => {
+    render(
+      // @ts-expect-error null is outside the prop's type, but JS callers and a
+      // value widened to `| null` still reach this.
+      <Banner status="info" title="Nullish" collapsible={null}>
+        <div data-testid="child-content">Content</div>
+      </Banner>,
+    );
+    expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Expand'})).toBeInTheDocument();
   });
 
@@ -246,13 +457,38 @@ describe('Banner', () => {
     expect(screen.getByRole('button', {name: 'Expand'})).toBeInTheDocument();
   });
 
-  it('shows collapse button when defaultIsExpanded', () => {
+  it('reports open-state changes through onOpenChange', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
     render(
-      <Banner status="info" title="Expanded" defaultIsExpanded>
-        <div>Content</div>
+      <Banner status="info" title="Notify" collapsible={{onOpenChange}}>
+        <div data-testid="child-content">Extra content</div>
       </Banner>,
     );
-    expect(screen.getByRole('button', {name: 'Collapse'})).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', {name: 'Expand'}));
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    await user.click(screen.getByRole('button', {name: 'Collapse'}));
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('defers to the consumer when collapsible is controlled', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Banner
+        status="info"
+        title="Controlled"
+        collapsible={{isOpen: false, onOpenChange}}>
+        <div data-testid="child-content">Extra content</div>
+      </Banner>,
+    );
+
+    // A controlled banner must not move on its own: the click reports, the
+    // content stays hidden until the consumer re-renders with isOpen.
+    await user.click(screen.getByRole('button', {name: 'Expand'}));
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
   });
 
   it('renders expand button to the left of dismiss button', () => {
@@ -266,13 +502,16 @@ describe('Banner', () => {
       b => b.getAttribute('aria-label') || b.textContent,
     );
     const expandIndex = buttonNames.indexOf('Expand');
-    const dismissIndex = buttonNames.indexOf('Dismiss');
+    const dismissIndex = buttonNames.indexOf('Dismiss Order Test');
     expect(expandIndex).toBeLessThan(dismissIndex);
   });
 
   it('links the expand toggle to its content region via aria-controls', () => {
     render(
-      <Banner status="info" title="Controls Test" defaultIsExpanded>
+      <Banner
+        status="info"
+        title="Controls Test"
+        collapsible={{defaultIsOpen: true}}>
         <div data-testid="region-content">Region content</div>
       </Banner>,
     );
@@ -338,6 +577,64 @@ describe('Banner', () => {
   });
 
   // =========================================================================
+  // Status icon color theming (#4166)
+  // =========================================================================
+
+  it("carries the 'banner-icon' theme target on the default status icon glyph", () => {
+    // Theme overrides for 'banner-icon' + 'status:X' compile to
+    // '.astryx-banner-icon[data-status="<status>"]' (parseStyleKey). The target must sit on
+    // the <Icon> span itself so those same-element rules in
+    // @layer astryx-theme beat the Icon's own color variant.
+    const statuses = ['info', 'warning', 'error', 'success'] as const;
+    for (const status of statuses) {
+      const {container, unmount} = render(
+        <Banner status={status} title={`${status} banner`} />,
+      );
+      const glyph = container.querySelector(
+        `.astryx-icon.astryx-banner-icon[data-status="${status}"]`,
+      );
+      expect(glyph).not.toBeNull();
+      expect(glyph).toHaveAttribute('data-status', status);
+      // Exactly one element carries the target — the layout wrapper no
+      // longer does.
+      expect(container.querySelectorAll('.astryx-banner-icon')).toHaveLength(1);
+      unmount();
+    }
+  });
+
+  it('keeps the color variant on the theme-target element (regression pin for #4166)', () => {
+    // Pre-fix, '.astryx-banner-icon[data-status="info"]' matched the layout wrapper while
+    // the color variant (data-color="accent") sat on an inner span that a
+    // theme override could never reach. Target and paint now share one
+    // element.
+    const {container} = render(<Banner status="info" title="Info" />);
+    const target = container.querySelector(
+      '.astryx-banner-icon[data-status="info"]',
+    );
+    expect(target).toHaveAttribute('data-color', 'inherit');
+  });
+
+  it("keeps the 'banner-icon' target on the wrapper for a custom icon node", () => {
+    // Core never injects props into consumer elements, so with a custom
+    // `icon` the target stays on the (layout-only) wrapper and overrides
+    // reach the node via inheritance. The node itself is untouched.
+    const {container} = render(
+      <Banner
+        status="info"
+        title="Custom icon"
+        icon={<span data-testid="custom-glyph">i</span>}
+      />,
+    );
+    const targets = container.querySelectorAll('.astryx-banner-icon');
+    expect(targets).toHaveLength(1);
+    expect(targets[0]?.tagName).toBe('DIV');
+    expect(targets[0]).toHaveAttribute('aria-hidden', 'true');
+    const custom = container.querySelector('[data-testid="custom-glyph"]');
+    expect(custom).not.toBeNull();
+    expect(custom?.className).toBe('');
+  });
+
+  // =========================================================================
   // Icon registry integration
   // =========================================================================
 
@@ -370,6 +667,58 @@ describe('Banner', () => {
   });
 
   describe('elevation', () => {
+    it("carries the 'banner-frame' target and its visual axes on the outer painter", () => {
+      const containers = ['card', 'section'] as const;
+      const elevations = ['none', 'low', 'med', 'high'] as const;
+
+      for (const containerType of containers) {
+        for (const elevation of elevations) {
+          const {container, unmount} = render(
+            <Banner
+              status="info"
+              title="Heads up"
+              container={containerType}
+              elevation={elevation}
+            />,
+          );
+          const frame = container.firstElementChild;
+          expect(frame).toHaveClass('astryx-banner-frame');
+          // Visual axes are reflected only as canonical data attributes.
+          expect(frame).not.toHaveClass(containerType);
+          expect(frame).not.toHaveClass(elevation);
+          expect(frame).toHaveAttribute('data-container', containerType);
+          expect(frame).toHaveAttribute('data-elevation', elevation);
+          expect(frame?.firstElementChild).toHaveClass('astryx-banner');
+          expect(frame?.firstElementChild).not.toHaveClass(
+            'astryx-banner-frame',
+          );
+          unmount();
+        }
+      }
+    });
+
+    it('lets a theme set frame shadow and radius without a structural selector', () => {
+      const theme = defineTheme({
+        name: 'banner-frame-test',
+        components: {
+          'banner-frame': {
+            'container:card+elevation:high': {
+              boxShadow: 'var(--shadow-high)',
+              borderRadius: 'var(--radius-element)',
+            },
+          },
+        },
+      });
+      const {component: css} = generateThemeCSS(theme);
+
+      expect(css).toContain(
+        '.astryx-banner-frame[data-container="card"][data-elevation="high"]',
+      );
+      expect(css).toContain('box-shadow: var(--shadow-high)');
+      expect(css).toContain('border-radius: var(--radius-element)');
+      expect(css).not.toContain(':has(');
+    });
+
     it('renders a distinct root class for each elevation level', () => {
       const classFor = (elevation: 'none' | 'low' | 'med' | 'high') => {
         const {container} = render(
@@ -397,5 +746,204 @@ describe('Banner', () => {
         none.firstElementChild!.className,
       );
     });
+  });
+
+  describe('dismiss focus handoff', () => {
+    it('returns focus to where it came from instead of dropping it to body', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <button type="button">Before</button>
+          <Banner status="info" title="Heads up" isDismissable />
+        </>,
+      );
+      const before = screen.getByRole('button', {name: 'Before'});
+      before.focus();
+
+      await user.tab();
+      expect(
+        screen.getByRole('button', {name: 'Dismiss Heads up'}),
+      ).toHaveFocus();
+
+      await user.keyboard('{Enter}');
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(before).toHaveFocus();
+      expect(document.activeElement).not.toBe(document.body);
+    });
+
+    it('leaves focus alone when it never entered the banner', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <button type="button">Elsewhere</button>
+          <Banner status="info" title="Heads up" isDismissable />
+        </>,
+      );
+      await user.click(screen.getByRole('button', {name: 'Dismiss Heads up'}));
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('empty slots', () => {
+    it('does not show the expand affordance for children that render nothing', () => {
+      render(
+        <Banner status="info" title="Heads up">
+          {false}
+        </Banner>,
+      );
+      expect(
+        screen.queryByRole('button', {name: 'Expand'}),
+      ).not.toBeInTheDocument();
+    });
+
+    it('still shows the expand affordance for real children', () => {
+      render(
+        <Banner status="info" title="Heads up">
+          <p>Detail</p>
+        </Banner>,
+      );
+      expect(screen.getByRole('button', {name: 'Expand'})).toBeInTheDocument();
+    });
+
+    it('renders no content area for children that render nothing', () => {
+      const {container} = render(
+        <Banner status="info" title="Heads up" collapsible={false}>
+          {false}
+        </Banner>,
+      );
+      // Header only — an empty slot must not draw the card-background area.
+      expect(container.firstElementChild?.children).toHaveLength(1);
+    });
+
+    it('renders no description node for a description that renders nothing', () => {
+      const {container} = render(
+        <Banner status="info" title="Heads up" description="" />,
+      );
+      const header = container.firstElementChild!.firstElementChild!;
+      // icon wrapper + text column, and the text column holds the title alone
+      expect(header.children[1].children).toHaveLength(1);
+    });
+  });
+
+  // jsdom does no flex layout, so these read the declarations that produce the
+  // wrap. The rendered result is verified in Chromium at 320/375/480/768.
+  describe('narrow-viewport wrapping', () => {
+    const renderBanner = (endContent?: React.ReactNode) => {
+      const {container} = render(
+        <Banner
+          status="warning"
+          title="A compute node is required"
+          endContent={endContent}
+        />,
+      );
+      const header = container.firstElementChild!.firstElementChild!;
+      return {
+        header,
+        textColumn: screen.getByText('A compute node is required')
+          .parentElement!,
+      };
+    };
+
+    it('lets the header wrap so the end area can take its own row', () => {
+      const {header} = renderBanner(<button type="button">Retry</button>);
+      expect(getComputedStyle(header).flexWrap).toBe('wrap');
+    });
+
+    it('gives the text column a wrap threshold when endContent is present', () => {
+      const {textColumn} = renderBanner(<button type="button">Retry</button>);
+      expect(getComputedStyle(textColumn).flexBasis).toBe('8rem');
+    });
+
+    it('leaves the text column free to shrink when there is no endContent', () => {
+      const {textColumn} = renderBanner();
+      expect(getComputedStyle(textColumn).flexBasis).not.toBe('8rem');
+    });
+
+    it('leaves it free for an endContent that renders nothing', () => {
+      const {textColumn} = renderBanner(false);
+      expect(getComputedStyle(textColumn).flexBasis).not.toBe('8rem');
+    });
+  });
+
+  describe('dismiss control naming', () => {
+    it('names stacked string-title banners distinctly', () => {
+      render(
+        <>
+          <Banner status="error" title="Upload invoice failed" isDismissable />
+          <Banner status="error" title="Delete report failed" isDismissable />
+        </>,
+      );
+      const buttons = screen.getAllByRole('button');
+      expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+        'Dismiss Upload invoice failed',
+        'Dismiss Delete report failed',
+      ]);
+      for (const button of buttons) {
+        expect(button).toHaveAccessibleDescription('Dismiss');
+      }
+    });
+
+    it('keeps the bare name and tooltip for a rich title', () => {
+      render(
+        <Banner status="info" title={<span>Rich title</span>} isDismissable />,
+      );
+      const button = screen.getByRole('button', {name: 'Dismiss'});
+      // The tooltip repeats the name, so it shows but adds no description.
+      expect(button).not.toHaveAttribute('aria-describedby');
+      expect(
+        screen
+          .getAllByRole('tooltip', {hidden: true})
+          .some(el => el.textContent === 'Dismiss'),
+      ).toBe(true);
+    });
+
+    it('uses a translated dismissLabel for a rich title and its tooltip', () => {
+      render(
+        <Banner
+          status="info"
+          title={<span>Wartungshinweis</span>}
+          isDismissable
+          dismissLabel="Wartungshinweis schließen"
+        />,
+      );
+      const button = screen.getByRole('button', {
+        name: 'Wartungshinweis schließen',
+      });
+      expect(button).not.toHaveAttribute('aria-describedby');
+      expect(
+        screen
+          .getAllByRole('tooltip', {hidden: true})
+          .some(el => el.textContent === 'Wartungshinweis schließen'),
+      ).toBe(true);
+    });
+
+    it('keeps a translated verb when the titled message falls back to English', () => {
+      render(
+        <InternationalizationProvider
+          locale="de-DE"
+          overrides={{
+            'de-DE': {'@astryx.banner.dismiss': 'Schließen'},
+          }}>
+          <Banner status="info" title="Wartungshinweis" isDismissable />
+        </InternationalizationProvider>,
+      );
+      const button = screen.getByRole('button', {
+        name: 'Schließen Wartungshinweis',
+      });
+      expect(button).toHaveAccessibleDescription('Schließen');
+    });
+  });
+});
+
+// jsdom cannot emulate forced colors, so this asserts the compiled rule the
+// status fill relies on (architecture:theme-tokens INV11): the fill becomes
+// Canvas, and a CanvasText boundary keeps its shape.
+describe('Banner forced colors', () => {
+  it('keeps a visible boundary on the status fill', () => {
+    render(<Banner status="error" title="Upload failed" />);
+    const css = getForcedColorsRules();
+    expect(css).toContain('outline-style: solid;');
+    expect(css).toContain('outline-color: canvastext;');
   });
 });

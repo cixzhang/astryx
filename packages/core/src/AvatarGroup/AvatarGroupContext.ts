@@ -3,22 +3,28 @@
 
 /**
  * @file AvatarGroupContext.ts
- * @input None (pure context definition)
+ * @input Layer-scoped React context
  * @output Exports AvatarGroup context and useAvatarGroup hook
  * @position Shared context; consumed by children for group-aware styling
  */
 
-import {createContext, use} from 'react';
-import type {AvatarSize} from '../Avatar';
+import {use} from 'react';
+import {createLayerScopedContext} from '../Layer/layerScopedContext';
+import type {AvatarShape, AvatarSize} from '../Avatar';
 
 export interface AvatarGroupContextValue {
   size: AvatarSize;
+  shape: AvatarShape;
   overlap: number;
   numericSize: number;
 }
 
 export const AvatarGroupContext =
-  createContext<AvatarGroupContextValue | null>(null);
+  createLayerScopedContext<AvatarGroupContextValue | null>(
+    'AvatarGroupContext',
+    1,
+    null,
+  );
 AvatarGroupContext.displayName = 'AvatarGroupContext';
 
 export function useAvatarGroup(): AvatarGroupContextValue | null {

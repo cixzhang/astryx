@@ -9,7 +9,8 @@
  *
  * Compositional API: children are Avatar elements (and optionally
  * one AvatarGroupOverflow). The group provides overlap styling via
- * context — no child introspection needed.
+ * context — no child introspection needed. The overlap does not depend on
+ * child position, so avatars can be wrapped in HoverCard or Tooltip.
  *
  * When the group contains interactive avatars (rendered as links/buttons) or an
  * interactive AvatarGroupOverflow, it becomes a single Tab stop with roving
@@ -26,17 +27,24 @@
 
 import {useId, useMemo, useState, type ReactNode} from 'react';
 import type {BaseProps} from '../BaseProps';
-import {resolveSize, type AvatarSize} from '../Avatar';
+import {resolveSize, type AvatarShape, type AvatarSize} from '../Avatar';
 import * as stylex from '@stylexjs/stylex';
-import {mergeProps, mergeRefs} from '../utils';
+import {mergeProps} from '../utils';
 import {composeEventHandlers} from '../utils/composeEventHandlers';
 import {AvatarGroupContext} from './AvatarGroupContext';
 import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
 import {useListFocus} from '../hooks/useListFocus';
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
 import {VisuallyHidden} from '../VisuallyHidden';
 
+import {useMergedRefs} from '../hooks/useMergedRefs';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/AvatarGroup/AvatarGroup.generated';
+
+registerEnglishFallback(english);
 const OVERLAP_RATIO = 0.25;
 
 export interface AvatarGroupProps extends BaseProps<HTMLDivElement> {
@@ -48,10 +56,19 @@ export interface AvatarGroupProps extends BaseProps<HTMLDivElement> {
    */
   children: ReactNode;
   /**
-   * Size applied to all avatars via context.
+   * Size applied to all avatars via context. This wins over each child
+   * Avatar's own `size` prop, including when it is left at the default, so
+   * set the size here rather than on the children.
    * @default 'md'
    */
   size?: AvatarSize;
+  /**
+   * Shape applied to all avatars via context, overriding each avatar's own
+   * `shape` prop so a group stays visually uniform. Also applied to the
+   * `AvatarGroupOverflow` "+N" indicator, so it matches the group.
+   * @default 'circle'
+   */
+  shape?: AvatarShape;
   /**
    * Test ID for integration testing.
    */
@@ -62,7 +79,21 @@ const styles = stylex.create({
   root: {
     display: 'inline-flex',
     alignItems: 'center',
+    // Every avatar (and the overflow indicator) takes the negative overlap
+    // margin, including the first one, so the overlap survives wrappers such
+    // as HoverCard and Tooltip. This padding gives the first child that space
+    // back, keeping the row inside the group's box.
+    paddingInlineStart: {
+      default: 'calc(-1 * var(--_avatar-group-overlap))',
+      ':empty': 0,
+    },
   },
+});
+
+const dynamicStyles = stylex.create({
+  overlap: (offset: number) => ({
+    '--_avatar-group-overlap': `${offset}px`,
+  }),
 });
 
 /**
@@ -86,6 +117,7 @@ const styles = stylex.create({
 export function AvatarGroup({
   children,
   size = 'md',
+  shape = 'circle',
   'data-testid': testId,
   'aria-label': ariaLabelFromProps,
   'aria-describedby': ariaDescribedByFromProps,
@@ -97,14 +129,14 @@ export function AvatarGroup({
   ref,
   ...props
 }: AvatarGroupProps): ReactNode {
-  const t = useTranslator();
+  const t = useComponentTranslator();
   const ariaLabel = ariaLabelFromProps ?? t('@astryx.avatarGroup.label');
   const numericSize = resolveSize(size);
   const overlap = Math.round(numericSize * OVERLAP_RATIO);
 
   const contextValue = useMemo(
-    () => ({size, overlap, numericSize}),
-    [size, overlap, numericSize],
+    () => ({size, shape, overlap, numericSize}),
+    [size, shape, overlap, numericSize],
   );
 
   // The keyboard hint and roving tab stop only make sense once the group has
@@ -141,7 +173,7 @@ export function AvatarGroup({
     <AvatarGroupContext value={contextValue}>
       <div
         {...props}
-        ref={mergeRefs(ref, listRef)}
+        ref={useMergedRefs(ref, listRef)}
         role="group"
         aria-label={ariaLabel}
         aria-describedby={describedBy}
@@ -149,8 +181,8 @@ export function AvatarGroup({
         onKeyDown={composeEventHandlers(onKeyDown, handleKeyDown)}
         onFocus={composeEventHandlers(onFocus, handleFocus)}
         {...mergeProps(
-          themeProps('avatar-group', {size}),
-          stylex.props(styles.root, xstyle),
+          themeProps('avatar-group', {size, shape}),
+          stylex.props(styles.root, dynamicStyles.overlap(-overlap), xstyle),
           className,
           style,
         )}>

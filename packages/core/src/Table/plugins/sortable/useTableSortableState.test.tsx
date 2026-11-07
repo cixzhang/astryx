@@ -17,6 +17,7 @@ import {useTableSortable} from './useTableSortable';
 import type {TableSortState} from './useTableSortable';
 import {useTableSortableState} from './useTableSortableState';
 import type {UseTableSortableStateConfig} from './useTableSortableState';
+import {InternationalizationProvider} from '../../../i18n';
 
 // =============================================================================
 // Test Data
@@ -119,6 +120,39 @@ describe('useTableSortableState', () => {
       ]);
     });
 
+    it('re-sorts strings when the provider locale changes', () => {
+      const localeData: Employee[] = [
+        {
+          id: '1',
+          name: 'z',
+          age: 1,
+          department: 'Test',
+          salary: 1,
+        },
+        {
+          id: '2',
+          name: 'ä',
+          age: 2,
+          department: 'Test',
+          salary: 2,
+        },
+      ];
+      const table = (locale: string) => (
+        <InternationalizationProvider locale={locale}>
+          <SortableStateTable
+            data={localeData}
+            defaultSort={[{sortKey: 'name', direction: 'ascending'}]}
+          />
+        </InternationalizationProvider>
+      );
+
+      const {rerender} = render(table('sv-SE'));
+      expect(getNameColumnValues()).toEqual(['z', 'ä']);
+
+      rerender(table('de-DE'));
+      expect(getNameColumnValues()).toEqual(['ä', 'z']);
+    });
+
     it('renders unsorted when no defaultSort', () => {
       render(<SortableStateTable />);
 
@@ -152,9 +186,7 @@ describe('useTableSortableState', () => {
       render(<SortableStateTable />);
 
       // Click Name header to sort ascending
-      await userEvent.click(
-        screen.getByRole('button', {name: /sort by name/i}),
-      );
+      await userEvent.click(screen.getByRole('button', {name: 'Name'}));
       expect(getNameColumnValues()).toEqual([
         'Alice',
         'Bob',
@@ -163,9 +195,7 @@ describe('useTableSortableState', () => {
       ]);
 
       // Click again to sort descending
-      await userEvent.click(
-        screen.getByRole('button', {name: /sort by name/i}),
-      );
+      await userEvent.click(screen.getByRole('button', {name: 'Name'}));
       expect(getNameColumnValues()).toEqual([
         'Diana',
         'Charlie',
@@ -189,7 +219,7 @@ describe('useTableSortableState', () => {
       ]);
 
       // Sort by age instead
-      await userEvent.click(screen.getByRole('button', {name: /sort by age/i}));
+      await userEvent.click(screen.getByRole('button', {name: 'Age'}));
 
       // Age ascending: Alice(28), Diana(31), Charlie(35), Bob(42)
       expect(getNameColumnValues()).toEqual([
@@ -209,13 +239,9 @@ describe('useTableSortableState', () => {
       );
 
       // Click to descending
-      await userEvent.click(
-        screen.getByRole('button', {name: /sort by name/i}),
-      );
+      await userEvent.click(screen.getByRole('button', {name: 'Name'}));
       // Click to unsorted
-      await userEvent.click(
-        screen.getByRole('button', {name: /sort by name/i}),
-      );
+      await userEvent.click(screen.getByRole('button', {name: 'Name'}));
 
       // Back to original order
       expect(getNameColumnValues()).toEqual([
@@ -231,7 +257,7 @@ describe('useTableSortableState', () => {
     it('sorts numbers correctly without custom comparator', async () => {
       render(<SortableStateTable />);
 
-      await userEvent.click(screen.getByRole('button', {name: /sort by age/i}));
+      await userEvent.click(screen.getByRole('button', {name: 'Age'}));
 
       // Age ascending: 28, 31, 35, 42
       expect(getNameColumnValues()).toEqual([
@@ -363,9 +389,7 @@ describe('useTableSortableState', () => {
 
       render(<ControlledWithSpy />);
 
-      await userEvent.click(
-        screen.getByRole('button', {name: /sort by name/i}),
-      );
+      await userEvent.click(screen.getByRole('button', {name: 'Name'}));
 
       expect(onSortChange).toHaveBeenCalledWith([
         {sortKey: 'name', direction: 'ascending'},
@@ -408,7 +432,7 @@ describe('useTableSortableState', () => {
       // Department ascending: Design(Bob, Diana), Engineering(Alice, Charlie)
       // Now shift+click Name to add secondary sort
       await user.keyboard('{Shift>}');
-      await user.click(screen.getByRole('button', {name: /sort by name/i}));
+      await user.click(screen.getByRole('button', {name: 'Name'}));
       await user.keyboard('{/Shift}');
 
       // Design: Bob, Diana; Engineering: Alice, Charlie
@@ -507,9 +531,7 @@ describe('useTableSortableState', () => {
       // Should render without throwing — table still mounts with empty data
       expect(screen.getByRole('table')).toBeInTheDocument();
       // Sort headers should still be interactive
-      expect(
-        screen.getByRole('button', {name: /sort by name/i}),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'Name'})).toBeInTheDocument();
     });
   });
 

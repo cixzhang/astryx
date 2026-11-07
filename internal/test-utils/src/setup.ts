@@ -3,7 +3,9 @@
 /**
  * @file setup.ts
  * @input Uses @testing-library/jest-dom/vitest
- * @output Extends Vitest expect with jest-dom matchers (toBeInTheDocument, etc.)
+ * @output Extends Vitest expect with jest-dom matchers (toBeInTheDocument, etc.),
+ *   jsdom polyfills, and keeps the group last-member rule out of jsdom's
+ *   stylesheet
  * @position Test setup; loaded by vitest.config.ts before all tests
  *
  * SYNC: When modified, update this header and /internal/test-utils/src/README.md
@@ -12,6 +14,9 @@
 /// <reference types="@testing-library/jest-dom" />
 import '@testing-library/jest-dom/vitest';
 import {configure} from '@testing-library/react';
+import {afterEach} from 'vitest';
+import {__resetClickGuardForTest} from '../../../packages/core/src/utils/clickGuard';
+import {GROUP_LAST_MEMBER} from './jsdomRefusedRules';
 
 // Text queries (getByText/findByText/…) target VISIBLE text. Astryx's
 // `useAnnounce` renders a visually-hidden aria-live region
@@ -25,11 +30,54 @@ import {configure} from '@testing-library/react';
 // Keeps the jsdom defaults (script, style).
 configure({defaultIgnore: 'script, style, [data-astryx-live-region]'});
 
-// Polyfill for matchMedia (not supported in jsdom)
+// The click guard (packages/core/src/utils/clickGuard.ts) is armed per
+// document by a gesture that already acted and disarms itself 400 ms later.
+// A test that ends inside that window would leave the timer to fire after
+// the environment tears its window down, during a later file. Disarm every
+// guard as each test ends.
+afterEach(() => {
+  __resetClickGuardForTest();
+});
+
+// jsdom's selector engine evaluates the group last-member rule,
+// `:nth-last-child(1 of S)`, far too slowly and differently from browsers: a
+// document of a few hundred elements took tens of seconds per
+// `getComputedStyle`, which every role-and-name query calls, and a group
+// member between two popovers did not match. So jsdom never receives that
+// rule (ButtonGroup FR3); ButtonGroupCorners.interaction.browser.spec.ts checks
+// group corners in a real browser, and jsdom tests assert group
+// membership only. Other `of S` rules, such as Table's zebra striping, still
+// reach jsdom.
+const insertRule = CSSStyleSheet.prototype.insertRule;
+CSSStyleSheet.prototype.insertRule = function insertRuleWithoutGroupLastMember(
+  rule: string,
+  index?: number,
+): number {
+  if (rule.includes(GROUP_LAST_MEMBER)) {
+    // Refuse it as a browser refuses an unsupported rule, so StyleX's
+    // injector records nothing inserted and keeps its group offsets right.
+    throw new DOMException(
+      'jsdom does not receive the group last-member rule',
+      'SyntaxError',
+    );
+  }
+  return insertRule.call(this, rule, index);
+};
+
+// Polyfill for matchMedia (not supported in jsdom).
+//
+// `(hover: hover)` reports TRUE: jsdom models a desktop browser driven by a
+// mouse, and userEvent's hover()/unhover() dispatch real mouseenter/mouseleave.
+// Reporting false made every hover-gated behavior (useMenuHover, HoverCard,
+// Tooltip) silently dead in tests — the hover-then-click bug fixed in #3121
+// went unnoticed in three components partly because no unit test could reach
+// the hover path. Tests that need a touch device override this per-test.
+const HOVER_CAPABLE = /\(\s*hover\s*:\s*hover\s*\)/;
+
 if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query: string) => {
     const mql: MediaQueryList = {
-      matches: false,
+      matches: HOVER_CAPABLE.test(query),
       media: query,
       onchange: null,
       addListener: () => {},
@@ -58,7 +106,7 @@ if (typeof window.matchMedia === 'undefined') {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string) => ({
-      matches: false,
+      matches: HOVER_CAPABLE.test(query),
       media: query,
       onchange: null,
       addListener: () => {},
@@ -67,5 +115,30 @@ if (typeof window.matchMedia === 'undefined') {
       removeEventListener: () => {},
       dispatchEvent: () => false,
     }),
+  });
+}
+
+// Polyfill for localStorage (this jsdom build exposes none).
+// Used by useResizable's `autoSaveId` persistence.
+if (typeof window.localStorage === 'undefined') {
+  const store = new Map<string, string>();
+  Object.defineProperty(window, 'localStorage', {
+    writable: true,
+    value: {
+      get length() {
+        return store.size;
+      },
+      key: (index: number) => [...store.keys()][index] ?? null,
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, String(value));
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      clear: () => {
+        store.clear();
+      },
+    } satisfies Storage,
   });
 }

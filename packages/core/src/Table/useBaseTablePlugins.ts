@@ -46,6 +46,11 @@ import {devWarn} from '../utils/devWarning';
  * Canonical ordering for first-party plugin names.
  * Plugins are sorted by their position in this array.
  * Unknown names are appended after the known set.
+ *
+ * This decides LAYOUT — which column lands left of which, who wraps whom. It
+ * must never decide whether the table works: a plugin that renders in one
+ * order and crashes in the other is broken, and adding it here buys a lucky
+ * order rather than a fix.
  */
 const PLUGIN_ORDER: ReadonlyArray<string> = [
   'columnSettings',
@@ -84,6 +89,9 @@ function sortPluginEntries<T extends Record<string, unknown>>(
 // ======================================================================
 // Plugin Validation (dev mode only)
 // ======================================================================
+/** Known declaration fields on the TablePlugin interface. */
+const VALID_DECLARATION_KEYS = new Set(['rowModel']);
+
 /** Known transform method names on the TablePlugin interface. */
 const VALID_TRANSFORM_KEYS = new Set([
   'transformColumns',
@@ -112,11 +120,11 @@ function validatePlugin<T extends Record<string, unknown>>(
 
   // Warn about unknown keys (likely misspelled transform names)
   for (const key of keys) {
-    if (!VALID_TRANSFORM_KEYS.has(key)) {
+    if (!VALID_TRANSFORM_KEYS.has(key) && !VALID_DECLARATION_KEYS.has(key)) {
       devWarn(
         'Table',
         `Plugin "${name}" has unknown key "${key}". ` +
-          `Valid keys: ${[...VALID_TRANSFORM_KEYS].join(', ')}. ` +
+          `Valid keys: ${[...VALID_DECLARATION_KEYS, ...VALID_TRANSFORM_KEYS].join(', ')}. ` +
           `This key will be ignored.`,
       );
     }

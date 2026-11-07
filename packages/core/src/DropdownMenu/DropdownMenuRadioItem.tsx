@@ -12,29 +12,32 @@
  * (role="menuitemradio"). The row owns the role and aria-checked; there is no
  * nested native <input> (per the WAI-ARIA menuitemradio pattern). Selection
  * state + onChange come from DropdownMenuRadioGroupContext. Keyboard nav +
- * Enter/Space activation come from the parent DropdownMenu.
+ * Enter/Space activation come from the parent DropdownMenu. Caller onClick and
+ * onPointerMove run after the row's own selection and hover focus.
  *
- * The round radio visual (circle + center dot) is decorative (aria-hidden) —
- * the row owns the checked state. Its size is derived from the menu's item size
- * and it swaps to the inline-end of the row on coarse-pointer (touch) devices
- * via CSS `order`. The dot is a shaped element, not an icon (a filled circle
- * has no registry glyph).
+ * The round radio visual is the shared radio indicator, decorative
+ * (aria-hidden) — the row owns the checked state, and menu radios pick up the
+ * same `radio` theming (and any theme replacement) as RadioList. This row keeps
+ * the marker box: its size is derived from the menu's item size and it swaps to
+ * the inline-end of the row on coarse-pointer (touch) devices via CSS `order`.
  */
 
-import {useCallback, type PointerEvent, type ReactNode} from 'react';
+import {
+  useCallback,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {renderIconSlot, type IconType} from '../Icon';
+import {useIndicator} from '../Indicator';
 import {Item} from '../Item';
 import {useDropdownMenuContext} from './DropdownMenuContext';
+import {focusOutlineStyles} from '../utils/focusOutline.stylex';
+import {menuPressLitRowStyle} from '../privateAttributes/menuPressLit.stylex';
 import {focusMenuItemOnHover} from './menuItemHover';
-import {
-  colorVars,
-  spacingVars,
-  durationVars,
-  easeVars,
-  borderVars,
-} from '../theme/tokens.stylex';
-import {mergeProps, themeProps} from '../utils';
+import {colorVars, focusVars, spacingVars} from '../theme/tokens.stylex';
+import {composeEventHandlers, mergeProps, themeProps} from '../utils';
 import type {BaseProps} from '../BaseProps';
 import {useDropdownMenuRadioGroupContext} from './DropdownMenuContext';
 
@@ -45,32 +48,32 @@ const styles = stylex.create({
     color: colorVars['--color-text-primary'],
     backgroundColor: {
       default: 'transparent',
-      ':focus': colorVars['--color-overlay-hover'],
+      // menuPressLitRowStyle sets the variable on the row a held finger or pen
+      // lights.
+      ':focus': `var(--_menu-row-focus-paint, ${colorVars['--color-overlay-hover']})`,
     },
-    cursor: 'pointer',
-    outline: 'none',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
+    // Rows show focus with a translucent overlay, which forced colors replace
+    // with the page color. The standard focus ring (focusOutlineStyles), drawn
+    // inside the row by its own width, marks the focused row in every mode.
+    outlineOffset: `calc(-1 * ${focusVars['--focus-outline-width']})`,
   },
   disabled: {
     opacity: 0.5,
-    cursor: 'not-allowed',
+    cursor: 'default',
   },
   // Rendered in Item's `marker` slot as a raw flex child. On touch it moves to
   // the inline-end of the row via `order`.
-  circle: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    boxSizing: 'border-box',
-    borderWidth: borderVars['--border-width'],
-    borderStyle: 'solid',
-    borderRadius: '50%',
-    transitionProperty: 'background-color, border-color',
-    transitionDuration: {
-      default: durationVars['--duration-fast'],
-      '@media (prefers-reduced-motion: reduce)': '0s',
-    },
-    transitionTimingFunction: easeVars['--ease-standard'],
+  // Layout box for the decorative marker. The painted circle is the radio
+  // indicator inside it, which carries the shared `radio` theme target.
+  // Placement of the marker within the row. The indicator draws its own box
+  // (size, fill, border) — these are only the rules the MENU owns: where the
+  // marker sits in the row, and that it never takes the pointer.
+  marker: {
+    pointerEvents: 'none',
     order: {
       default: 0,
       '@media (pointer: coarse)': 1,
@@ -80,30 +83,10 @@ const styles = stylex.create({
       '@media (pointer: coarse)': 'auto',
     },
   },
-  unchecked: {
-    borderColor: colorVars['--color-border-emphasized'],
-    backgroundColor: colorVars['--color-background-surface'],
-  },
-  checked: {
-    borderColor: colorVars['--color-accent'],
-    backgroundColor: colorVars['--color-accent'],
-  },
-  dot: {
-    borderRadius: '50%',
-    backgroundColor: colorVars['--color-on-accent'],
-  },
 });
 
-const circleSizeStyles = stylex.create({
-  sm: {width: 18, height: 18},
-  md: {width: 22, height: 22},
-});
-
-const dotSizeStyles = stylex.create({
-  sm: {width: 6, height: 6},
-  md: {width: 8, height: 8},
-});
-
+// Matches the control sizes RadioList uses, so a radio reads the same in a
+// menu row as it does in a radio group.
 export interface DropdownMenuRadioItemProps extends Omit<
   BaseProps,
   'role' | 'aria-checked' | 'tabIndex'
@@ -123,13 +106,14 @@ export interface DropdownMenuRadioItemProps extends Omit<
   description?: ReactNode;
   /**
    * Icon to display before the label. Accepts a semantic icon name (see
-   * `npx astryx docs icons`) or a rendered node.
+   * `astryx docs icons`) or a rendered node.
    */
   icon?: ReactNode | IconType;
   /**
-   * Whether this individual radio item is disabled. Disabled items stay
-   * focusable (via `aria-disabled`) so they remain discoverable by keyboard
-   * and assistive technology, but selection is blocked.
+   * Whether this individual radio item is disabled. A disabled item stays in
+   * the accessibility tree as disabled (`aria-disabled`) but takes no focus:
+   * the arrow keys, typeahead, and the pointer highlight skip it, and
+   * selection is blocked.
    * @default false
    */
   isDisabled?: boolean;
@@ -138,10 +122,16 @@ export interface DropdownMenuRadioItemProps extends Omit<
    * metadata.
    */
   endContent?: ReactNode;
+  /** Ref forwarded to the row root — the element carrying `role="menuitemradio"`. */
+  ref?: React.Ref<HTMLElement>;
 }
 
 /**
  * A single option in a DropdownMenuRadioGroup (role="menuitemradio").
+ *
+ * Consumer click and pointer-move handlers compose after the row's own
+ * selection and hover-focus behavior; disabled activation stops before the
+ * consumer click handler.
  *
  * @example
  * ```
@@ -161,6 +151,8 @@ export function DropdownMenuRadioItem({
   xstyle,
   className,
   style,
+  onClick,
+  onPointerMove,
   ...rest
 }: DropdownMenuRadioItemProps) {
   const menuCtx = useDropdownMenuContext();
@@ -173,16 +165,21 @@ export function DropdownMenuRadioItem({
   const menuSize = menuCtx?.menuSize ?? 'md';
   const controlSize = menuSize === 'sm' ? 'sm' : 'md';
   const isChecked = groupCtx.value === value;
+  const RadioControl = useIndicator('radio');
 
-  const handleClick = useCallback(() => {
-    if (isDisabled) {
-      return;
-    }
-    groupCtx.onChange(value);
-    if (groupCtx.hasCloseOnSelect) {
-      menuCtx?.closeMenu();
-    }
-  }, [isDisabled, groupCtx, value, menuCtx]);
+  const handleClick = useCallback(
+    (event: MouseEvent) => {
+      if (isDisabled) {
+        return;
+      }
+      groupCtx.onChange(value);
+      if (groupCtx.hasCloseOnSelect) {
+        menuCtx?.closeMenu();
+      }
+      onClick?.(event as MouseEvent<HTMLElement>);
+    },
+    [isDisabled, groupCtx, value, menuCtx, onClick],
+  );
 
   const handlePointerMove = useCallback(
     (e: PointerEvent<HTMLElement>) => focusMenuItemOnHover(e, isDisabled),
@@ -195,35 +192,21 @@ export function DropdownMenuRadioItem({
       role="menuitemradio"
       aria-checked={isChecked}
       tabIndex={isDisabled ? undefined : -1}
-      onPointerMove={handlePointerMove}
+      onPointerMove={composeEventHandlers(handlePointerMove, onPointerMove)}
       marker={
-        <span
-          aria-hidden="true"
-          {...mergeProps(
-            themeProps('dropdown-menu-radio', {
-              size: controlSize,
-              checked: isChecked ? 'checked' : null,
-              disabled: isDisabled ? 'disabled' : null,
-            }),
-            stylex.props(
-              styles.circle,
-              circleSizeStyles[controlSize],
-              isChecked ? styles.checked : styles.unchecked,
-            ),
-          )}>
-          {isChecked && (
-            <span
-              {...mergeProps(
-                themeProps('dropdown-menu-radio-dot', {
-                  size: controlSize,
-                  checked: 'checked',
-                  disabled: isDisabled ? 'disabled' : null,
-                }),
-                stylex.props(styles.dot, dotSizeStyles[controlSize]),
-              )}
-            />
-          )}
-        </span>
+        // No wrapper — see DropdownMenuCheckboxItem: the target belongs on the
+        // visible circle, and the indicator already owns its control size.
+        <RadioControl
+          state={isChecked ? 'checked' : 'unchecked'}
+          size={controlSize}
+          isDisabled={isDisabled}
+          xstyle={styles.marker}
+          {...themeProps('dropdown-menu-radio', {
+            size: controlSize,
+            checked: isChecked ? 'checked' : null,
+            disabled: isDisabled ? 'disabled' : null,
+          })}
+        />
       }
       startContent={
         icon
@@ -235,7 +218,13 @@ export function DropdownMenuRadioItem({
       endContent={endContent}
       onClick={handleClick}
       isDisabled={isDisabled}
-      xstyle={[styles.root, isDisabled && styles.disabled, xstyle]}
+      xstyle={[
+        focusOutlineStyles.focusVisible,
+        styles.root,
+        menuPressLitRowStyle,
+        isDisabled && styles.disabled,
+        xstyle,
+      ]}
       {...mergeProps(themeProps('dropdown-menu-item', {size: menuSize}), {
         className,
         style,

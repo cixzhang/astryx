@@ -5,7 +5,7 @@
 /**
  * @file TopNavMenu.tsx
  * @input Uses React, StyleX, usePopover, useMenuHover, useListFocus,
- *   useTypeahead, TopNavItem tokens
+ *   useTypeahead, TopNavItem tokens, and the shared navigation policy
  * @output Exports TopNavMenu component and related types
  * @position Navigation item with hover-triggered overflow menu for TopNav
  *
@@ -26,17 +26,26 @@ import React, {
 import * as stylex from '@stylexjs/stylex';
 import {usePopover} from '../Popover/usePopover';
 import {useMenuHover} from '../hooks/useMenuHover';
+import {useMenuPress} from '../hooks/useMenuPress';
+import {pressOnItemsOnly} from '../hooks/menuPressOnItems';
+import {menuTouchActionStyles} from '../DropdownMenu/menuTouchAction.stylex';
+import {useMenuOverflow} from '../DropdownMenu/useMenuOverflow';
 import {useListFocus} from '../hooks/useListFocus';
 import {useTypeahead} from '../hooks/useTypeahead';
-import {useIcon} from '../Icon';
-import {mergeProps, mergeRefs} from '../utils';
+import {Icon} from '../Icon';
+import {mergeProps, composeEventHandlers} from '../utils';
+import {useMergedRefs} from '../hooks/useMergedRefs';
 import type {BaseProps} from '../BaseProps';
 import {navItemStyles} from '../NavItem/navItemStyles.stylex';
 import {useTopNavSlot} from './TopNavContext';
 import {useTopNavRenderMode} from './TopNavRenderContext';
-import {useAppShellMobile} from '../AppShell/AppShellMobileContext';
+import {useCloseMobileDrawerOnActivate} from '../AppShell/useCloseMobileDrawerOnActivate';
 import {useLinkComponent} from '../Link/useLinkComponent';
+import {isSafeUrl} from '../utils/safeUrl';
 import {themeProps} from '../utils/themeProps';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {interactionOverlayStyles} from '../utils/interactionOverlay.stylex';
+import {usePressFeedback} from '../hooks/usePressFeedback';
 import {
   colorVars,
   spacingVars,
@@ -46,6 +55,7 @@ import {
   fontWeightVars,
   typeScaleVars,
 } from '../theme/tokens.stylex';
+import {isRenderable} from '../utils/isRenderable';
 
 // =============================================================================
 // Styles
@@ -64,25 +74,21 @@ const styles = stylex.create({
     fontWeight: fontWeightVars['--font-weight-medium'],
     color: colorVars['--color-text-secondary'],
     textDecoration: 'none',
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     transitionProperty: 'background-color, color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
     backgroundColor: {
       default: 'transparent',
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
-    border: 'none',
+    borderWidth: 0,
+    borderStyle: 'none',
     fontFamily: 'inherit',
   },
   triggerOpen: {
@@ -92,6 +98,14 @@ const styles = stylex.create({
   chevron: {
     display: 'inline-flex',
     alignItems: 'center',
+    // The registry chevron is a 1em SVG, so it has always rendered at the
+    // trigger's own font size (--text-label-size). Icon's size box would repin
+    // it to a fixed rem (the nearest, sm, is 1rem = 16px vs the 14px here), so
+    // hold it on the inherited em: same pixels, and still tracks the type
+    // scale when a theme changes the label size.
+    width: '1em',
+    height: '1em',
+    fontSize: 'inherit',
     transitionProperty: 'transform',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
@@ -100,14 +114,13 @@ const styles = stylex.create({
     transform: 'rotate(180deg)',
   },
   menuContainer: {
+    // A held pointer slides across the items; it selects no text.
+    userSelect: 'none',
     display: 'flex',
     flexDirection: 'column',
     gap: spacingVars['--spacing-1'],
     minWidth: 280,
     padding: spacingVars['--spacing-1'],
-  },
-  menuOffset: {
-    marginBlockStart: spacingVars['--spacing-1'],
   },
   menuItem: {
     display: 'flex',
@@ -117,25 +130,21 @@ const styles = stylex.create({
     paddingInline: spacingVars['--spacing-3'],
     borderRadius: radiusVars['--radius-element'],
     textDecoration: 'none',
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     transitionProperty: 'background-color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
     backgroundColor: {
       default: 'transparent',
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
-    border: 'none',
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
+    borderWidth: 0,
+    borderStyle: 'none',
   },
   menuItemIcon: {
     display: 'flex',
@@ -174,11 +183,17 @@ const drawerStyles = stylex.create({
   },
   header: {
     justifyContent: 'space-between',
-    border: 'none',
-    background: 'none',
+    borderWidth: 0,
+    borderStyle: 'none',
+    backgroundColor: 'transparent',
   },
   chevron: {
     display: 'inline-flex',
+    // Same em pin as styles.chevron above — the drawer header inherits
+    // --text-label-size from navItemStyles.item.
+    width: '1em',
+    height: '1em',
+    fontSize: 'inherit',
     transitionProperty: 'transform',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
@@ -186,18 +201,26 @@ const drawerStyles = stylex.create({
   chevronExpanded: {
     transform: 'rotate(180deg)',
   },
+  // The section clips its items only for the 0fr collapse animation: a
+  // permanent clip cuts off the focus ring, which paints outside the item.
+  // `overflow` is discrete, so it rides the transition with `allow-discrete`
+  // and switches to `visible` only after the open has finished. Collapsing
+  // clips again at once.
   items: {
     display: 'grid',
     gridTemplateRows: '0fr',
-    transitionProperty: 'grid-template-rows',
-    transitionDuration: durationVars['--duration-medium'],
+    overflow: 'hidden',
+    transitionProperty: 'grid-template-rows, overflow',
+    transitionBehavior: 'allow-discrete',
+    transitionDuration: `${durationVars['--duration-medium']}, 0s`,
     transitionTimingFunction: easeVars['--ease-standard'],
   },
   itemsExpanded: {
     gridTemplateRows: '1fr',
+    overflow: 'visible',
+    transitionDelay: `0s, ${durationVars['--duration-medium']}`,
   },
   itemsInner: {
-    overflow: 'hidden',
     minHeight: 0,
   },
   item: {
@@ -330,10 +353,19 @@ export function TopNavMenu({
   items,
   delay = 150,
   hideDelay = 200,
+  xstyle,
+  className,
+  style,
+  onClick: onClickProp,
+  onMouseEnter: onMouseEnterProp,
+  onMouseLeave: onMouseLeaveProp,
+  ...rest
 }: TopNavMenuProps) {
+  const pressable = usePressFeedback();
   const renderMode = useTopNavRenderMode();
-  const chevronDownIcon = useIcon('chevronDown');
-  const {closeMobileNav} = useAppShellMobile();
+  const closeDrawerAfter = useCloseMobileDrawerOnActivate(
+    renderMode === 'drawer',
+  );
   const LinkComponent = useLinkComponent();
   const [drawerExpanded, setDrawerExpanded] = useState(false);
   const menuId = useId();
@@ -346,10 +378,9 @@ export function TopNavMenu({
     // wrapper would announce an unnamed dialog around the menu and make the
     // trigger claim aria-haspopup="dialog" for menu content (see TabMenu).
     role: 'none',
-    xstyle: styles.menuOffset,
   });
 
-  const {triggerProps, contentProps, menuRef, setTriggerEl} =
+  const {triggerProps, contentProps, menuRef, setTriggerEl, close} =
     useMenuHover<HTMLDivElement>({
       show: popover.show,
       hide: popover.hide,
@@ -357,9 +388,12 @@ export function TopNavMenu({
       isEnabled: true,
       showDelay: delay,
       hideDelay,
+      // Trigger sits outside an auto popover; the invoker relationship exempts
+      // it from light dismiss.
+      popoverId: popover.id,
     });
 
-  const setTriggerRef = mergeRefs<HTMLButtonElement>(
+  const setTriggerRef = useMergedRefs<HTMLButtonElement>(
     triggerButtonRef,
     popover.triggerRef,
     setTriggerEl,
@@ -375,7 +409,8 @@ export function TopNavMenu({
     useListFocus<HTMLDivElement>({
       itemSelector: '[role="menuitem"]',
       hasRovingTabIndex: true,
-      onEscape: popover.hide,
+      // Not popover.hide: Escape must also restore focus to the trigger.
+      onEscape: close,
     });
 
   // First-character typeahead over the menu items (menus-11).
@@ -423,7 +458,17 @@ export function TopNavMenu({
 
   // Menu container carries both the hover hook's ref (for its open/close
   // focus management) and the list-focus ref (for roving tabindex/typeahead).
-  const setMenuRef = mergeRefs<HTMLDivElement>(menuRef, listRef);
+  const setMenuRef = useMergedRefs<HTMLDivElement>(menuRef, listRef);
+
+  // A press that slides across the items acts on the item it lifts on, the
+  // highlight following the pointer, as every menu does
+  // (`family:action-groups` FR1-FR3); a mouse released outside closes it.
+  const menuPress = useMenuPress({
+    menuRef: listRef,
+    itemSelector: '[role="menuitem"]',
+    onDismiss: close,
+  });
+  const hasOverflow = useMenuOverflow(listRef, items.length, popover.isOpen);
 
   // Mobile bar: hide menus entirely
   if (renderMode === 'mobile-bar') {
@@ -435,22 +480,42 @@ export function TopNavMenu({
     return (
       <div {...stylex.props(drawerStyles.section)}>
         <button
+          ref={ref}
           type="button"
-          onClick={() => setDrawerExpanded(v => !v)}
+          {...rest}
+          onMouseEnter={onMouseEnterProp}
+          onMouseLeave={onMouseLeaveProp}
+          onClick={composeEventHandlers(onClickProp, () =>
+            setDrawerExpanded(v => !v),
+          )}
           aria-expanded={drawerExpanded}
           aria-controls={`${menuId}-items`}
-          {...stylex.props(navItemStyles.item, drawerStyles.header)}>
+          {...pressable}
+          {...mergeProps(
+            focusOutlineProps.focusVisible(
+              navItemStyles.item,
+              interactionOverlayStyles.backgroundColor,
+              drawerStyles.header,
+              xstyle,
+            ),
+            className,
+            style,
+          )}>
           {label}
-          <span
-            {...stylex.props(
+          <Icon
+            icon="chevronDown"
+            size="sm"
+            color="inherit"
+            xstyle={[
               drawerStyles.chevron,
               drawerExpanded && drawerStyles.chevronExpanded,
-            )}>
-            {chevronDownIcon}
-          </span>
+            ]}
+          />
         </button>
         <div
           id={`${menuId}-items`}
+          aria-hidden={!drawerExpanded}
+          inert={!drawerExpanded ? true : undefined}
           {...stylex.props(
             drawerStyles.items,
             drawerExpanded && drawerStyles.itemsExpanded,
@@ -460,12 +525,16 @@ export function TopNavMenu({
               <LinkComponent
                 key={getMenuItemKey(item)}
                 href={item.href}
-                onClick={(_e: React.MouseEvent) => {
+                {...pressable}
+                onClick={closeDrawerAfter((_e: React.MouseEvent) => {
                   item.onClick?.();
-                  closeMobileNav();
-                }}
-                {...stylex.props(navItemStyles.item, drawerStyles.item)}>
-                {item.icon && (
+                })}
+                {...focusOutlineProps.focusVisible(
+                  navItemStyles.item,
+                  interactionOverlayStyles.backgroundColor,
+                  drawerStyles.item,
+                )}>
+                {isRenderable(item.icon) && (
                   <span {...stylex.props(drawerStyles.itemIcon)}>
                     {item.icon}
                   </span>
@@ -492,20 +561,35 @@ export function TopNavMenu({
       <button
         ref={setTriggerRef}
         type="button"
+        {...rest}
         {...popover.triggerProps}
         {...triggerProps}
+        onClick={composeEventHandlers(onClickProp, triggerProps.onClick)}
+        onMouseEnter={composeEventHandlers(
+          onMouseEnterProp,
+          triggerProps.onMouseEnter,
+        )}
+        onMouseLeave={composeEventHandlers(
+          onMouseLeaveProp,
+          triggerProps.onMouseLeave,
+        )}
         {...mergeProps(
           themeProps('top-nav-menu'),
-          stylex.props(styles.trigger, popover.isOpen && styles.triggerOpen),
+          focusOutlineProps.focusVisible(
+            styles.trigger,
+            popover.isOpen && styles.triggerOpen,
+            xstyle,
+          ),
+          className,
+          style,
         )}>
         {label}
-        <span
-          {...stylex.props(
-            styles.chevron,
-            popover.isOpen && styles.chevronOpen,
-          )}>
-          {chevronDownIcon}
-        </span>
+        <Icon
+          icon="chevronDown"
+          size="sm"
+          color="inherit"
+          xstyle={[styles.chevron, popover.isOpen && styles.chevronOpen]}
+        />
       </button>
       {popover.render(
         <div
@@ -513,12 +597,22 @@ export function TopNavMenu({
           role="menu"
           aria-label={label}
           {...contentProps}
+          {...menuPress.menuProps}
+          onPointerDown={pressOnItemsOnly(
+            menuPress.menuProps.onPointerDown,
+            '[role="menuitem"]',
+          )}
           // After the contentProps spread so the full APG composition (roving
           // tabindex + typeahead + Enter/Space activation) replaces the hover
           // hook's basic arrow-key handler.
           onKeyDown={menuKeyDown}
           onFocus={handleFocus}
-          {...stylex.props(styles.menuContainer)}>
+          {...stylex.props(
+            styles.menuContainer,
+            hasOverflow
+              ? menuTouchActionStyles.scrolls
+              : menuTouchActionStyles.fits,
+          )}>
           {items.map(item => {
             const Element = item.href ? 'a' : 'div';
             return (
@@ -528,9 +622,16 @@ export function TopNavMenu({
                 // Single tab stop: useListFocus owns the roving tabindex and
                 // promotes exactly one item to 0.
                 tabIndex={-1}
-                href={item.href}
+                href={
+                  item.href != null && isSafeUrl(item.href)
+                    ? item.href
+                    : undefined
+                }
+                // A menu row is never a draggable link: a mouse press that
+                // slides to another item would start a drag instead.
+                draggable={item.href != null ? false : undefined}
                 onClick={item.onClick}
-                {...stylex.props(styles.menuItem)}>
+                {...focusOutlineProps.focusVisible(styles.menuItem)}>
                 <div {...stylex.props(styles.menuItemIcon)}>{item.icon}</div>
                 <div {...stylex.props(styles.menuItemContent)}>
                   <span {...stylex.props(styles.menuItemTitle)}>
@@ -549,7 +650,7 @@ export function TopNavMenu({
         {
           placement: 'below',
           alignment: slot,
-          xstyle: styles.menuOffset,
+          offset: spacingVars['--spacing-1'],
         },
       )}
     </>

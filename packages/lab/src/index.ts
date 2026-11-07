@@ -21,8 +21,78 @@ export {
   type SyntaxToken,
 } from '@astryxdesign/core/CodeBlock';
 
-// InfoTip — accessible info-icon help affordance (RFC facebook/astryx#3349)
+// InfoTip — accessible info-icon help affordance (RFC meta/astryx#3349)
 export {InfoTip, type InfoTipProps, type InfoTipSize} from './InfoTip';
+
+// SelectableCardGroup — a set of selectable cards with the semantics of its
+// selection: one choice is a radio group, several a group of checkboxes
+export {
+  SelectableCardGroup,
+  SelectableCardGroupItem,
+  type SelectableCardGroupProps,
+  type SelectableCardGroupItemProps,
+} from './SelectableCardGroup';
+
+// CircleCheckIndicator — the iOS multiple-selection circle, a checkbox-family
+// indicator a theme can map to `checkbox`
+export {CircleCheckIndicator} from './CircleCheckIndicator';
+
+// EmojiPicker — standalone searchable emoji panel
+export {
+  EmojiPicker,
+  DEFAULT_FREQUENT_EMOJIS,
+  type EmojiPickerProps,
+  type EmojiOption,
+  type EmojiCategory,
+} from './EmojiPicker';
+
+// CommentPin — avatar-first anchor for one or grouped annotation threads
+export {
+  CommentPin,
+  type CommentPinParticipant,
+  type CommentPinProps,
+} from './CommentPin';
+
+// Comments family — a panel, standalone thread, and controlled composer
+export {
+  Comments,
+  type CommentsProps,
+  CommentThread,
+  type CommentThreadProps,
+  CommentComposer,
+  type CommentComposerProps,
+  DEFAULT_COMMENT_REACTIONS,
+  COMMENT_ICON_KEYS,
+  type CommentAgentCommand,
+  type CommentAnchor,
+  type CommentComposerContext,
+  type CommentComposerRenderProps,
+  type CommentData,
+  type CommentStatus,
+  type CommentHighlightColor,
+  type CommentImageUploader,
+  type CommentMode,
+  type CommentProgress,
+  type CommentReaction,
+  type CommentReactionOption,
+  type CommentThreadData,
+  type CommentThreadSharedProps,
+  type CommentUploadedImage,
+  type CommentUser,
+  type CommentVersion,
+  type CommentActivityEvent,
+} from './Comments';
+
+// TransferList — controlled dual-panel collection input
+export {
+  TransferList,
+  TransferListSelector,
+  transferListVars,
+  type TransferListOption,
+  type TransferListProps,
+  type TransferListSelectorCommitBehavior,
+  type TransferListSelectorProps,
+} from './TransferList';
 
 // Chat — experimental reasoning display
 export {
@@ -31,11 +101,16 @@ export {
 } from './ChatReasoning/ChatReasoning';
 export * from './Chat';
 
-// Drawer — experimental overlay panel
-export {Drawer, type DrawerProps} from './Drawer';
-
-// BottomSheet — mobile touch sheet on a native modal <dialog>
-export {BottomSheet, type BottomSheetProps} from './BottomSheet';
+// Tour — guided product-tour / NUX walkthrough (meta/astryx#4239)
+export {
+  Tour,
+  type TourProps,
+  TourStep,
+  type TourStepProps,
+  useTour,
+  type UseTourReturn,
+  type TourDismissSource,
+} from './Tour';
 
 // Stat — experimental KPI/metric display
 export {
@@ -221,8 +296,10 @@ export {
 
 // Chart v2 (config model) moved to its own package: @astryxdesign/charts.
 // It is no longer re-exported from @astryxdesign/lab.
-export * from './Stepper';
 export * from './CircularProgress';
+
+// ListInput — compact editor for short collections of simple records
+export * from './ListInput';
 
 // LogStream — experimental streaming log viewer
 export {
@@ -232,31 +309,56 @@ export {
   type LogStreamLevel,
 } from './LogStream';
 
-// RichTextEditor — experimental Lexical WYSIWYG editor (RFC facebook/astryx#3899)
-// Optional peer deps: lexical + @lexical/*. Read-only rendering via RichTextView.
+// DiffViewer — read-only file diff (unified/split) for code review surfaces
 export {
-  RichTextEditor,
-  type RichTextEditorProps,
-  type RichTextEditorRef,
-  type RichTextEditorStatus,
-  type RichTextEditorStatusType,
-  type RichTextEditorSize,
-  type Transformer,
-  RichTextView,
-  type RichTextViewProps,
-  sharedEditorTheme,
-  markdownToEditorStateJSON,
-  editorStateJSONToMarkdown,
-  type MarkdownSerializerOptions,
-  RichTextEditorToolbar,
-  type RichTextEditorToolbarProps,
-  RICHTEXT_ICON_KEYS,
-  RichTextEditorAutoLinkPlugin,
-  type RichTextEditorAutoLinkPluginProps,
-  DEFAULT_LINK_MATCHERS,
-  NEW_TAB_LINK_ATTRIBUTES,
-  sanitizeUrl,
-  validateUrl,
-  URL_MATCHER,
-  EMAIL_MATCHER,
-} from './RichTextEditor';
+  DiffViewer,
+  parseUnifiedDiff,
+  createDiffFile,
+  type DiffViewerProps,
+  type DiffViewerViewMode,
+  type CreateDiffFileOptions,
+  type DiffViewerChangeIndicator,
+  type DiffViewerInlineHighlight,
+  type DiffViewerFile,
+  type DiffViewerFileStatus,
+  type DiffViewerHunk,
+  type DiffViewerLine,
+  type DiffViewerLineKind,
+  type DiffViewerLineRef,
+  type DiffViewerSide,
+} from './DiffViewer';
+
+// NavigationStack: push/pop drill-down navigation with UIKit's transitions
+// and back swipes.
+export {
+  NavigationScreen,
+  NavigationStack,
+  useNavigationStack,
+  type NavigationScreenProps,
+  type NavigationStackApi,
+  type NavigationStackProps,
+} from './NavigationStack';
+
+// PageControl: UIPageControl's row of page indicators.
+export {PageControl, type PageControlProps} from './PageControl';
+
+// TabBar: the floating bottom tab bar of iOS 26's UITabBarController.
+export {
+  TabBar,
+  TabBarItem,
+  type TabBarItemProps,
+  type TabBarProps,
+} from './TabBar';
+
+// RichTextEditor (RFC meta/astryx#3899) moved out of @astryxdesign/lab into
+// its own package, @astryxdesign/richtext. Import it from there:
+//   import {RichTextEditor, RichTextView} from '@astryxdesign/richtext';
+
+// Pull to refresh as UIRefreshControl, applied by the app to its own scroll
+// container, on Core's touch foundation.
+export {
+  REFRESH_REVEAL_VAR,
+  useRefreshControl,
+  type UseRefreshControlOptions,
+  type UseRefreshControlResult,
+} from './RefreshControl';

@@ -4,18 +4,10 @@
 
 /**
  * @file useStreamingText.ts
- * @input Uses React useState, useEffect, useRef, useMediaQuery, useTheme
- * @output Exports useStreamingText hook for smooth text streaming
- * @position Core hook; smooths bursty streamed text into steady character reveal
- *
- * Decouples the arrival rate of streamed chunks from the display rate,
- * draining characters at a steady pace using requestAnimationFrame.
- * Advances on word/syntax boundaries to avoid slicing mid-markdown or
- * mid-word, preventing visual glitches when used with markdown renderers.
- *
- * Animation timing derives from Astryx motion tokens (via useTheme) when
- * an Theme provider is present. Falls back to sensible defaults when
- * used outside a theme provider.
+ * @input React state, effects and refs; useMediaQuery; useTheme
+ * @output useStreamingText hook for smooth text streaming
+ * @position Core hook; smooths bursty streamed text into a steady reveal.
+ *   Timing comes from the motion tokens, with defaults outside a theme.
  *
  * SYNC: When modified, update:
  * - /packages/core/src/hooks/index.ts (exports)
@@ -68,6 +60,41 @@ const CHARS_PER_TICK = {
   instant: Infinity,
 } as const;
 
+// One shared segmenter. The granularity is fixed, and the locale does not
+// change grapheme boundaries.
+const graphemeSegmenter =
+  typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, {granularity: 'grapheme'})
+    : null;
+
+function isLowSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xdc00 && codeUnit <= 0xdfff;
+}
+
+/**
+ * Snap a UTF-16 code-unit offset down to the start of the grapheme cluster
+ * it falls inside, so slicing `text` at the returned offset never splits a
+ * surrogate pair, flag sequence, or ZWJ emoji mid-glyph. Offsets at the
+ * start/end of the string are returned unchanged (nothing to snap).
+ *
+ * Falls back to snapping off a lone low surrogate when `Intl.Segmenter` is
+ * unavailable — narrower than full grapheme-cluster awareness (a ZWJ
+ * sequence or flag pair can still split in that path), but it's what's
+ * achievable without a full grapheme-aware dependency, and it's strictly
+ * better than the unguarded default of never checking at all.
+ */
+export function snapToGraphemeBoundary(text: string, offset: number): number {
+  if (offset <= 0 || offset >= text.length) {
+    return offset;
+  }
+  if (graphemeSegmenter) {
+    // The guard above keeps offset in range, so `containing` is defined. The
+    // `??` satisfies the wider type.
+    return graphemeSegmenter.segment(text).containing(offset)?.index ?? offset;
+  }
+  return isLowSurrogate(text.charCodeAt(offset)) ? offset - 1 : offset;
+}
+
 /**
  * Smooths bursty streamed text into a steady character-by-character reveal.
  *
@@ -76,9 +103,11 @@ const CHARS_PER_TICK = {
  * reduced motion, the progressive reveal is skipped entirely and the full
  * `targetText` is returned immediately.
  *
- * The hook advances on word and syntax boundaries, avoiding slices inside
- * markdown markers like `**`, backticks, `[]()`, etc. This prevents visual
- * glitches when the output is rendered through a markdown parser.
+ * The reveal cadence itself advances by a fixed number of UTF-16 code units
+ * per tick, not on word or markdown-syntax boundaries — but the rendered
+ * slice is always snapped back to the nearest grapheme cluster boundary, so
+ * a tick landing mid-surrogate-pair or mid-emoji-sequence never renders a
+ * broken glyph.
  *
  * @example
  * ```
@@ -99,9 +128,8 @@ export function useStreamingText(
   const speed = options?.speed ?? 'natural';
   const charsPerTick = CHARS_PER_TICK[speed];
 
-  // Derive tick timing from Astryx motion tokens when available.
-  // natural → --duration-fast-min (frame-level cadence from the theme)
-  // fast → half that, floored at 4ms (roughly 2x speed)
+  // Tick timing comes from the motion tokens: natural uses
+  // --duration-fast-min, and fast uses half of it, at least 4ms.
   const {token} = useTheme();
   const tickMs = useMemo(() => {
     if (speed === 'instant') {
@@ -111,8 +139,8 @@ export function useStreamingText(
     if (base == null) {
       return speed === 'fast' ? FALLBACK_TICK_MS_FAST : FALLBACK_TICK_MS;
     }
-    // Scale: use ~1/10th of the theme's fast-min duration as the per-frame tick.
-    // This maps a 130ms token to ~13ms tick (natural) or ~6.5ms tick (fast).
+    // The per-frame tick is about 1/10 of the fast-min duration, so a 130ms
+    // token gives a 13ms tick (natural) or a 6.5ms tick (fast).
     const tick = speed === 'fast' ? base / 20 : base / 10;
     return Math.max(4, Math.round(tick));
   }, [token, speed]);
@@ -123,7 +151,6 @@ export function useStreamingText(
   const lastTickRef = useRef(0);
   const rafRef = useRef<number | null>(null);
 
-  // Keep target ref in sync
   targetRef.current = targetText;
 
   // Reset when target clears (new message)
@@ -136,7 +163,6 @@ export function useStreamingText(
     }
   }
 
-  // Snap to full text when streaming ends
   const prevIsStreamingRef = useRef(isStreaming);
   if (isStreaming !== prevIsStreamingRef.current) {
     prevIsStreamingRef.current = isStreaming;
@@ -146,15 +172,14 @@ export function useStreamingText(
     }
   }
 
-  // Respect the user's reduced-motion preference — skip the progressive
-  // reveal and snap straight to the full text. Uses the package's SSR-safe
-  // useMediaQuery (useMediaQuery.ts) so the read stays in sync if the
-  // preference changes mid-stream.
+  // Reduced motion skips the progressive reveal and shows the full text.
+  // useMediaQuery follows a preference change mid-stream.
   const prefersReducedMotion = useMediaQuery(
     '(prefers-reduced-motion: reduce)',
   );
 
-  // Animation loop
+  // Syncs the revealed text with an animation-frame clock while the text
+  // streams.
   useEffect(() => {
     if (!isStreaming || speed === 'instant' || prefersReducedMotion) {
       return;
@@ -191,5 +216,5 @@ export function useStreamingText(
     return targetText;
   }
 
-  return targetText.slice(0, displayedLen);
+  return targetText.slice(0, snapToGraphemeBoundary(targetText, displayedLen));
 }

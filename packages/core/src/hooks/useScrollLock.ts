@@ -4,26 +4,45 @@
 
 /**
  * @file useScrollLock.ts
- * @input Uses React useEffect
- * @output Exports useScrollLock hook for locking body scroll
- * @position Core hook; used by Dialog to prevent background scrolling
- *
- * Locks body scroll when active by pinning the body with position:fixed.
- * This is needed because overscroll-behavior:contain doesn't work on iOS Safari.
+ * @input React useEffect, rootScrollStyles, gestures/pageHold with the pan
+ *   decision, and the scrollbar gutter hold
+ * @output useScrollLock, which locks page scroll behind a modal
+ * @position Core hook; used by Dialog, BottomSheet, Drawer, Lightbox and
+ *   MobileNav
  *
  * SYNC: When modified, update:
  * - /packages/core/src/hooks/index.ts
+ * - /packages/core/src/hooks/scrollbarGutter.ts
+ * - /packages/core/src/hooks/rootScrollStyles.ts
+ * - /packages/core/src/gestures/pageHold.ts (holdPageScroll)
+ * - /packages/core/src/hooks/useScrollLockImports.test.ts
  */
 
 import {useEffect} from 'react';
+import {claimRootScrollStyle, reportScrollLock} from './rootScrollStyles';
+import {holdPageScroll} from '../gestures/pageHold';
+import {isPageZoomedIn, isPanAbsorbedBeforePage} from './scrollLockTouchGuard';
+import {holdScrollbarGutter, type ScrollbarGutterHold} from './scrollbarGutter';
+
+interface ActiveLock {
+  releaseRootStyle: () => void;
+  releasePageHold: () => void;
+  gutter: ScrollbarGutterHold;
+}
+
+let lockCount = 0;
+let activeLock: ActiveLock | null = null;
 
 /**
- * Locks body scroll when `isLocked` is true.
+ * Locks page scroll while `isLocked` is true.
  *
- * Pins the body with `position: fixed` to prevent background scrolling,
- * which is necessary for iOS Safari where `overscroll-behavior: contain`
- * does not prevent body scroll behind modals. Restores scroll position
- * on unlock.
+ * The page keeps its scroll offset, so nothing jumps on lock or unlock. iOS
+ * Safari scrolls an `overflow: hidden` page under a finger. So where the
+ * primary pointer is coarse (phones and tablets), the lock cancels a
+ * one-finger pan that would reach the page.
+ * Pans that a scroller in the overlay takes, and two-finger zoom, go through.
+ * The gutter of a classic scrollbar stays open, so the page does not shift
+ * sideways.
  *
  * @example
  * ```
@@ -31,33 +50,53 @@ import {useEffect} from 'react';
  * ```
  */
 export function useScrollLock(isLocked: boolean): void {
+  // Syncs the document's scroll lock with `isLocked`. A count of holders keeps
+  // the page locked until the last one releases.
   useEffect(() => {
     if (!isLocked) {
       return;
     }
 
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const {body} = document;
-    const prevOverflow = body.style.overflow;
-    const prevPosition = body.style.position;
-    const prevTop = body.style.top;
-    const prevLeft = body.style.left;
-    const prevRight = body.style.right;
+    if (lockCount === 0) {
+      // The hold measures before the lock writes a style, so the lock forces no
+      // layout of its own. `settle` writes the gutter with the styles below.
+      const gutter = holdScrollbarGutter(document.documentElement);
+      // `overscroll-behavior-y: none` also keeps the browser's own
+      // pull-to-refresh (Chrome on Android) from reloading the page behind
+      // the overlay.
+      const releaseRootStyle = claimRootScrollStyle({
+        overflow: 'hidden',
+        overscrollBehaviorY: 'none',
+      });
+      // The hold asks the gesture host only if one exists, so the lock does
+      // not bring the host into every overlay's import.
+      const releasePageHold = holdPageScroll(
+        document,
+        // A drag on a pinch-zoomed page pans the zoomed view: it goes
+        // through, so a zoomed-in reader can move around the overlay.
+        (origin, dx, dy) =>
+          !isPageZoomedIn(document) && !isPanAbsorbedBeforePage(origin, dx, dy),
+      );
+      gutter.settle();
+      activeLock = {releaseRootStyle, releasePageHold, gutter};
+    }
 
-    body.style.overflow = 'hidden';
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
+    lockCount += 1;
+    reportScrollLock(1);
 
     return () => {
-      body.style.overflow = prevOverflow;
-      body.style.position = prevPosition;
-      body.style.top = prevTop;
-      body.style.left = prevLeft;
-      body.style.right = prevRight;
-      window.scrollTo(scrollX, scrollY);
+      lockCount -= 1;
+      reportScrollLock(-1);
+
+      if (lockCount !== 0 || activeLock == null) {
+        return;
+      }
+
+      const lock = activeLock;
+      activeLock = null;
+      lock.releasePageHold();
+      lock.releaseRootStyle();
+      lock.gutter.release();
     };
   }, [isLocked]);
 }

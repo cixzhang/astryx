@@ -2,8 +2,9 @@
 
 /**
  * @file formatters.ts
- * @output Built-in, locale-aware tick/value format utilities for common data types
- * @position Utility; consumed by ChartAxis via tickFormat prop
+ * @input Values, a provider locale, and for dates an optional calendar
+ * @output Built-in locale-aware tick, value, and list format utilities
+ * @position Utility; consumed by Chart and ChartAxis
  *
  * Formatters degrade gracefully: non-finite numbers (NaN/±Infinity) and
  * unparseable values are passed through as-is rather than producing garbage
@@ -12,35 +13,66 @@
  * across the full magnitude range (K/M/B/T and beyond).
  */
 
-/** Lazily create a value once and cache it — keeps `Intl` construction off the import path. */
-function once<T>(create: () => T): () => T {
-  let cached: {value: T} | null = null;
-  return () => (cached ??= {value: create()}).value;
+import type {CalendarSystem, Locale} from '@astryxdesign/core/i18n';
+import {plainDateFormat, plainDateFromDate} from '@astryxdesign/core/utils';
+
+/** Lazily cache one formatter per locale, including the legacy host default. */
+function byLocale<T>(
+  create: (locale: Locale | undefined) => T,
+): (locale: Locale | undefined) => T {
+  const cache = new Map<Locale | undefined, T>();
+  return locale => {
+    let value = cache.get(locale);
+    if (value === undefined) {
+      value = create(locale);
+      cache.set(locale, value);
+    }
+    return value;
+  };
 }
 
-const getCompactFormat = once(
-  () =>
-    new Intl.NumberFormat(undefined, {
+const getCompactFormat = byLocale(
+  locale =>
+    new Intl.NumberFormat(locale, {
       notation: 'compact',
       maximumFractionDigits: 1,
     }),
 );
 
-const getPercentFormat = once(
-  () =>
-    new Intl.NumberFormat(undefined, {
+const getPercentFormat = byLocale(
+  locale =>
+    new Intl.NumberFormat(locale, {
       style: 'percent',
       maximumFractionDigits: 1,
     }),
 );
 
-const getShortDateFormat = once(
-  () => new Intl.DateTimeFormat(undefined, {month: 'short', day: 'numeric'}),
+const getShortDateFormat = byLocale(
+  locale =>
+    new Intl.DateTimeFormat(locale, {
+      month: 'short',
+      day: 'numeric',
+      calendar: 'gregory',
+    }),
 );
 
-const getMonthYearFormat = once(
-  () => new Intl.DateTimeFormat(undefined, {month: 'short', year: 'numeric'}),
+const getMonthYearFormat = byLocale(
+  locale =>
+    new Intl.DateTimeFormat(locale, {
+      month: 'short',
+      year: 'numeric',
+      calendar: 'gregory',
+    }),
 );
+
+const getListFormat = byLocale(
+  locale => new Intl.ListFormat(locale, {style: 'long', type: 'conjunction'}),
+);
+
+/** Format labels as a conjunction list using the provider locale. */
+export function formatList(values: readonly string[], locale: Locale): string {
+  return getListFormat(locale).format(values);
+}
 
 /**
  * Compact number formatter (e.g. 1200 → "1.2K", 1500000 → "1.5M", 1e12 → "1T").
@@ -48,12 +80,12 @@ const getMonthYearFormat = once(
  * Non-numeric values (e.g. category labels) and non-finite numbers pass through
  * unchanged, so it is safe to use as a general-purpose tick formatter.
  */
-export function compactNumber(value: unknown): string {
+export function compactNumber(value: unknown, locale: Locale): string {
   const n = Number(value);
   if (!Number.isFinite(n)) {
     return String(value);
   }
-  return getCompactFormat().format(n);
+  return getCompactFormat(locale).format(n);
 }
 
 /**
@@ -64,12 +96,15 @@ export function compactNumber(value: unknown): string {
  *
  * @example
  * ```
- * <ChartAxis tickFormat={currency()} />       // $1.5K
- * <ChartAxis tickFormat={currency('€')} />    // €1.5K
- * <ChartAxis tickFormat={currency('¥')} />    // ¥1.5K
+ * <ChartAxis tickFormat={currency('$', locale)} />  // $1.5K
+ * <ChartAxis tickFormat={currency('€', locale)} />  // €1.5K
+ * <ChartAxis tickFormat={currency('¥', locale)} />  // ¥1.5K
  * ```
  */
-export function currency(symbol = '$'): (value: unknown) => string {
+export function currency(
+  symbol = '$',
+  locale?: Locale,
+): (value: unknown) => string {
   return (value: unknown) => {
     const n = Number(value);
     if (!Number.isFinite(n)) {
@@ -78,7 +113,9 @@ export function currency(symbol = '$'): (value: unknown) => string {
     const sign = n < 0 ? '-' : '';
     const abs = Math.abs(n);
     const body =
-      abs >= 1000 ? getCompactFormat().format(abs) : abs.toLocaleString();
+      abs >= 1000
+        ? getCompactFormat(locale).format(abs)
+        : abs.toLocaleString(locale);
     return `${sign}${symbol}${body}`;
   };
 }
@@ -89,12 +126,12 @@ export function currency(symbol = '$'): (value: unknown) => string {
  * The input is a ratio; it is multiplied by 100 and localized. Whole percents
  * render without a decimal, and up to one fractional digit is shown otherwise.
  */
-export function percent(value: unknown): string {
+export function percent(value: unknown, locale: Locale): string {
   const n = Number(value);
   if (!Number.isFinite(n)) {
     return String(value);
   }
-  return getPercentFormat().format(n);
+  return getPercentFormat(locale).format(n);
 }
 
 /**
@@ -145,23 +182,47 @@ function toDate(value: unknown): Date {
 }
 
 /**
- * Date formatter — short date (e.g. "Jan 5", "Mar 12").
+ * Date formatter — short date (e.g. "Jan 5", "Mar 12"), in `calendar`. The
+ * calendar defaults to Gregorian; pass the application's calendar to match
+ * the date components.
  */
-export function shortDate(value: unknown): string {
+export function shortDate(
+  value: unknown,
+  locale: Locale,
+  calendar: CalendarSystem = 'gregory',
+): string {
   const d = toDate(value);
   if (Number.isNaN(d.getTime())) {
     return String(value);
   }
-  return getShortDateFormat().format(d);
+  return calendar === 'gregory'
+    ? getShortDateFormat(locale).format(d)
+    : plainDateFormat(
+        plainDateFromDate(d),
+        {month: 'short', day: 'numeric', calendar},
+        locale,
+      );
 }
 
 /**
- * Date formatter — month/year (e.g. "Jan 2024", "Mar 2025").
+ * Date formatter — month/year (e.g. "Jan 2024", "Mar 2025"), in `calendar`.
+ * The calendar defaults to Gregorian; pass the application's calendar to
+ * match the date components.
  */
-export function monthYear(value: unknown): string {
+export function monthYear(
+  value: unknown,
+  locale: Locale,
+  calendar: CalendarSystem = 'gregory',
+): string {
   const d = toDate(value);
   if (Number.isNaN(d.getTime())) {
     return String(value);
   }
-  return getMonthYearFormat().format(d);
+  return calendar === 'gregory'
+    ? getMonthYearFormat(locale).format(d)
+    : plainDateFormat(
+        plainDateFromDate(d),
+        {month: 'short', year: 'numeric', calendar},
+        locale,
+      );
 }

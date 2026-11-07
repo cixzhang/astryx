@@ -4,21 +4,10 @@
 
 /**
  * @file useHotkeys.ts
- * @input Uses React useEffect, useRef
- * @output Exports useHotkeys hook and Hotkey interface for global keyboard shortcuts
- * @position Core hook; used by consumers for app-level keyboard shortcuts
- *
- * Registers a single window keydown listener per hook instance. Handlers
- * are kept in a ref so re-renders never re-subscribe (subscribe once on
- * mount, unsubscribe on unmount). SSR-safe — window is only touched
- * inside the effect.
- *
- * Skips events that are already handled (defaultPrevented) and events
- * targeting typing surfaces (input, textarea, select, contenteditable)
- * unless a hotkey opts in via `allowInInputs`.
- *
- * Platform-aware: `mod` maps to metaKey (⌘) on Apple platforms and
- * ctrlKey elsewhere — mirrors the detection used by Kbd.
+ * @input React effects and refs
+ * @output useHotkeys hook and Hotkey interface for global keyboard shortcuts
+ * @position Core hook for app-level keyboard shortcuts. `mod` uses the same
+ *   isApplePlatform util as Kbd, so shown and handled shortcuts agree.
  *
  * SYNC: When modified, update:
  * - /packages/core/src/hooks/index.ts
@@ -26,6 +15,8 @@
  */
 
 import {useEffect, useRef} from 'react';
+import {isApplePlatform} from '../utils/isApplePlatform';
+import {isImeKeyEvent} from '../utils/ime';
 
 /**
  * A single keyboard shortcut registration.
@@ -70,23 +61,6 @@ const KEY_ALIASES: Record<string, string> = {
   return: 'enter',
   plus: '+',
 };
-
-/**
- * Detects whether the current platform is macOS/iOS.
- * Prefers the User-Agent Client Hints API when available (modern Chrome/Edge),
- * falls back to navigator.platform (deprecated but universally supported).
- * Mirrors the detection used by Kbd so displayed and handled shortcuts agree.
- */
-function isApplePlatform(): boolean {
-  if (typeof navigator === 'undefined') {
-    return false;
-  }
-  const uaData = 'userAgentData' in navigator ? navigator.userAgentData : null;
-  if (uaData && typeof uaData === 'object' && 'platform' in uaData) {
-    return /mac/i.test((uaData as {platform: string}).platform ?? '');
-  }
-  return /Mac|iPhone|iPad|iPod/.test(navigator.platform ?? '');
-}
 
 /**
  * Whether the event target is a typing surface where global shortcuts
@@ -183,11 +157,13 @@ export function useHotkeys(hotkeys: Hotkey[]): void {
     hotkeysRef.current = hotkeys;
   });
 
+  // Syncs a window keydown listener with this mount. The listener runs the
+  // first hotkey that matches.
   useEffect(() => {
     const isApple = isApplePlatform();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) {
+      if (event.defaultPrevented || isImeKeyEvent(event)) {
         return;
       }
       const isTyping = isTypingTarget(event.target);

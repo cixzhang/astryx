@@ -1,8 +1,13 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 import {describe, it, expect} from 'vitest';
-import {parseMarkdown, parseInline} from './parser';
-import type {InlineNode} from './parser';
+import {
+  createIncrementalState,
+  parseInline,
+  parseMarkdown,
+  parseMarkdownIncremental,
+} from './parser';
+import type {BlockNode, InlineNode} from './parser';
 
 describe('parseInline', () => {
   it('parses plain text', () => {
@@ -37,6 +42,78 @@ describe('parseInline', () => {
     expect(result).toEqual([{type: 'code', content: 'const x'}]);
   });
 
+  it('keeps backslash escapes literal inside standalone inline code', () => {
+    const result = parseInline('`T \\| null`');
+    expect(result).toEqual([{type: 'code', content: 'T \\| null'}]);
+  });
+
+  it('leaves math delimiters as literal text by default', () => {
+    expect(parseInline('Euler: $e^{i * pi} + 1 = 0$.')).toEqual([
+      {type: 'text', content: 'Euler: $e^{i * pi} + 1 = 0$.'},
+    ]);
+  });
+
+  it('parses inline math before Markdown formatting when explicitly enabled', () => {
+    expect(parseInline('Euler: $e^{i * pi} + 1 = 0$.', {math: true})).toEqual([
+      {type: 'text', content: 'Euler: '},
+      {type: 'math', value: 'e^{i * pi} + 1 = 0'},
+      {type: 'text', content: '.'},
+    ]);
+  });
+
+  it('preserves escaped delimiters inside math and leaves escaped openers literal', () => {
+    expect(
+      parseInline('Price: \\$5; formula: $x \\$ y$.', {math: true}),
+    ).toEqual([
+      {type: 'text', content: 'Price: '},
+      {type: 'text', content: '$5; formula: '},
+      {type: 'math', value: 'x \\$ y'},
+      {type: 'text', content: '.'},
+    ]);
+  });
+
+  it('leaves an unmatched inline math delimiter literal', () => {
+    expect(parseInline('The value is $x + 1.', {math: true})).toEqual([
+      {type: 'text', content: 'The value is $x + 1.'},
+    ]);
+  });
+
+  it('does not mistake paired currency amounts for inline math', () => {
+    expect(
+      parseInline('Tickets cost $20 and $30 today.', {math: true}),
+    ).toEqual([{type: 'text', content: 'Tickets cost $20 and $30 today.'}]);
+    expect(parseInline('$x$5 and $y$', {math: true})).toEqual([
+      {type: 'text', content: '$x$5 and '},
+      {type: 'math', value: 'y'},
+    ]);
+  });
+
+  it('allows an inline expression to begin with a number', () => {
+    expect(parseInline('Result: $2 + 2$.', {math: true})).toEqual([
+      {type: 'text', content: 'Result: '},
+      {type: 'math', value: '2 + 2'},
+      {type: 'text', content: '.'},
+    ]);
+  });
+
+  it('does not treat non-block double-dollar runs as inline math', () => {
+    expect(parseInline('Keep $$x + y$$ literal.', {math: true})).toEqual([
+      {type: 'text', content: 'Keep $$x + y$$ literal.'},
+    ]);
+  });
+
+  it('keeps code and link destinations opaque while parsing math in link labels', () => {
+    expect(parseInline('`$code$` [$label$](/price/$5)', {math: true})).toEqual([
+      {type: 'code', content: '$code$'},
+      {type: 'text', content: ' '},
+      {
+        type: 'link',
+        href: '/price/$5',
+        children: [{type: 'math', value: 'label'}],
+      },
+    ]);
+  });
+
   it('parses links', () => {
     const result = parseInline('[click](https://example.com)');
     expect(result[0].type).toBe('link');
@@ -49,6 +126,68 @@ describe('parseInline', () => {
   it('parses images', () => {
     const result = parseInline('![alt](img.png)');
     expect(result).toEqual([{type: 'image', src: 'img.png', alt: 'alt'}]);
+  });
+
+  it('rejects javascript: links as plain text (XSS prevention)', () => {
+    const result = parseInline('[click](javascript:alert(1))');
+    // Should be emitted as plain text, NOT as a link node
+    expect(result).toEqual([
+      {type: 'text', content: '[click](javascript:alert(1))'},
+    ]);
+  });
+
+  it('rejects javascript: with mixed case and whitespace (XSS prevention)', () => {
+    const result = parseInline('[click](JaVaScRiPt:alert(1))');
+    expect(result).toEqual([
+      {type: 'text', content: '[click](JaVaScRiPt:alert(1))'},
+    ]);
+  });
+
+  it('rejects vbscript: links (XSS prevention)', () => {
+    const result = parseInline('[click](vbscript:MsgBox(1))');
+    expect(result).toEqual([
+      {type: 'text', content: '[click](vbscript:MsgBox(1))'},
+    ]);
+  });
+
+  it('rejects data:text/html image src (XSS prevention)', () => {
+    const result = parseInline(
+      '![xss](data:text/html,<script>alert(1)</script>)',
+    );
+    expect(result).toEqual([
+      {
+        type: 'text',
+        content: '![xss](data:text/html,<script>alert(1)</script>)',
+      },
+    ]);
+  });
+
+  it('allows normal http/https links', () => {
+    const result = parseInline('[safe](https://example.com)');
+    expect(result[0].type).toBe('link');
+    if (result[0].type === 'link') {
+      expect(result[0].href).toBe('https://example.com');
+    }
+  });
+
+  it('decides link destinations with the shared navigation rule', () => {
+    const destinations: [string, boolean][] = [
+      ['https://example.com', true],
+      ['/page', true],
+      ['#section', true],
+      ['mailto:a@example.com', true],
+      ['tel:+1234567890', true],
+      ['custom:document', true],
+      ['data:image/png;base64,iVBORw0KGgo=', true],
+      ['javascript:alert(1)', false],
+      ['vbscript:MsgBox(1)', false],
+      ['data:text/html,<b>x</b>', false],
+      ['java\u0000script:alert(1)', false],
+    ];
+    for (const [destination, accepted] of destinations) {
+      const [node] = parseInline(`[t](${destination})`);
+      expect(node.type === 'link').toBe(accepted);
+    }
   });
 
   it('parses strikethrough', () => {
@@ -144,6 +283,148 @@ describe('parseInline', () => {
     }
   });
 
+  it('keeps a link title out of the destination', () => {
+    const cases = [
+      ['[t](https://example.com/notes "Notes")', 'https://example.com/notes'],
+      ["[t](https://example.com/notes 'Notes')", 'https://example.com/notes'],
+      ['[t](https://example.com/notes (Notes))', 'https://example.com/notes'],
+      ['[t](https://example.com "Say \\"hi\\"")', 'https://example.com'],
+      ['[t](<https://example.com/a b> "Spaced")', 'https://example.com/a b'],
+      [
+        '[t](https://example.com/wiki/Foo_(bar) "Wiki")',
+        'https://example.com/wiki/Foo_(bar)',
+      ],
+    ] as const;
+    for (const [source, href] of cases) {
+      expect(parseInline(source)[0], source).toMatchObject({
+        type: 'link',
+        href,
+      });
+    }
+  });
+
+  it('keeps an image title out of the source, inline and standalone', () => {
+    expect(parseInline('![alt](img.png "Caption")')).toEqual([
+      {type: 'image', src: 'img.png', alt: 'alt'},
+    ]);
+    expect(parseMarkdown('![alt](img.png "Caption")')[0]).toMatchObject({
+      type: 'image',
+      src: 'img.png',
+    });
+  });
+
+  it('keeps link content that has no title shape as the destination', () => {
+    // A space without a quoted title is not a destination and title pair, so
+    // the content keeps its released meaning.
+    expect(parseInline('[t](https://example.com/a b)')[0]).toMatchObject({
+      type: 'link',
+      href: 'https://example.com/a b',
+    });
+  });
+
+  it('decodes named and numeric character references in text', () => {
+    expect(
+      parseInline('Fish &amp; chips &copy; &#169; &#x1F600; a&nbsp;b'),
+    ).toEqual([
+      {type: 'text', content: 'Fish & chips \u00a9 \u00a9 \u{1F600} a\u00a0b'},
+    ]);
+  });
+
+  it('keeps unknown names, missing semicolons, and escaped ampersands literal', () => {
+    const nodes = parseInline('&notareference; &amp no semicolon \\&amp;');
+    expect(nodes.every(node => node.type === 'text')).toBe(true);
+    expect(
+      nodes.map(node => (node.type === 'text' ? node.content : '')).join(''),
+    ).toBe('&notareference; &amp no semicolon &amp;');
+  });
+
+  it('replaces NUL, surrogate, and out-of-range numeric references', () => {
+    expect(parseInline('&#0; &#xD800; &#1114112;')).toEqual([
+      {type: 'text', content: '\uFFFD \uFFFD \uFFFD'},
+    ]);
+  });
+
+  it('never turns a decoded character into markup', () => {
+    expect(
+      parseInline('&ast;not emphasis&ast; &lsqb;not a link&rsqb;(x)'),
+    ).toEqual([{type: 'text', content: '*not emphasis* [not a link](x)'}]);
+  });
+
+  it('keeps character references literal in inline and fenced code', () => {
+    expect(parseInline('`&amp;`')).toEqual([{type: 'code', content: '&amp;'}]);
+    expect(parseMarkdown('```\n&copy; &#169;\n```')[0]).toMatchObject({
+      type: 'codeblock',
+      content: '&copy; &#169;',
+    });
+  });
+
+  it('decodes character references and escapes in image alt text', () => {
+    expect(parseInline('![Fish &amp; chips \\*fresh\\*](fish.png)')).toEqual([
+      {type: 'image', src: 'fish.png', alt: 'Fish & chips *fresh*'},
+    ]);
+    expect(parseMarkdown('![&copy; 2026 &#169;](logo.png)')[0]).toMatchObject({
+      type: 'image',
+      alt: '\u00a9 2026 \u00a9',
+    });
+    expect(
+      parseMarkdown('![Q&amp;A][logo]\n\n[logo]: /logo.png')[0],
+    ).toMatchObject({
+      type: 'paragraph',
+      children: [{type: 'image', src: '/logo.png', alt: 'Q&A'}],
+    });
+  });
+
+  it('keeps an escaped ampersand and unknown names literal in alt text', () => {
+    expect(parseInline('![\\&amp; &nope;](x.png)')).toEqual([
+      {type: 'image', src: 'x.png', alt: '&amp; &nope;'},
+    ]);
+  });
+
+  it('makes two spaces or a backslash before a CRLF line ending a hard break', () => {
+    expect(parseInline('two  \r\nspaces')).toEqual([
+      {type: 'text', content: 'two'},
+      {type: 'break'},
+      {type: 'text', content: 'spaces'},
+    ]);
+    expect(parseInline('back\\\r\nslash')).toEqual([
+      {type: 'text', content: 'back'},
+      {type: 'break'},
+      {type: 'text', content: 'slash'},
+    ]);
+    // A Windows path ending a line keeps its other backslashes.
+    expect(parseInline('C:\\Users\\Ada\\\r\nnext')).toEqual([
+      {type: 'text', content: 'C:\\Users\\Ada'},
+      {type: 'break'},
+      {type: 'text', content: 'next'},
+    ]);
+  });
+
+  it('escapes only ASCII punctuation and keeps other backslashes literal', () => {
+    const textOf = (source: string) =>
+      parseInline(source)
+        .map(node => (node.type === 'text' ? node.content : `<${node.type}>`))
+        .join('');
+    expect(textOf('C:\\Users\\Ada')).toBe('C:\\Users\\Ada');
+    expect(textOf('\\*not emphasis\\* and \\\\ one backslash')).toBe(
+      '*not emphasis* and \\ one backslash',
+    );
+    expect(textOf('caf\\\u00e9 \\a \\1')).toBe('caf\\\u00e9 \\a \\1');
+  });
+
+  it('makes a backslash before a line break a hard break', () => {
+    expect(parseInline('line\\\nnext')).toEqual([
+      {type: 'text', content: 'line'},
+      {type: 'break'},
+      {type: 'text', content: 'next'},
+    ]);
+  });
+
+  it('keeps non-punctuation backslashes in image alt text', () => {
+    expect(parseInline('![C:\\Users \\& more](x.png)')).toEqual([
+      {type: 'image', src: 'x.png', alt: 'C:\\Users & more'},
+    ]);
+  });
+
   it('handles parentheses in image URLs', () => {
     const result = parseInline('![alt](https://example.com/img_(1).png)');
     expect(result[0].type).toBe('image');
@@ -173,6 +454,77 @@ describe('parseInline', () => {
 });
 
 describe('parseMarkdown', () => {
+  describe('hard breaks in CRLF documents', () => {
+    const hasBreak = (value: unknown): boolean =>
+      JSON.stringify(value).includes('"type":"break"');
+    const lf = (source: string) => source.replace(/\r\n/g, '\n');
+    // The parser keeps each CRLF line's `\r` in its text; drop it, and any text
+    // node left empty, to compare structure with the LF document. Parsed
+    // blocks are plain JSON data, so the comparison works on that shape.
+    type Json =
+      string | number | boolean | null | Json[] | {[key: string]: Json};
+    const isEmptyText = (node: Json): boolean =>
+      typeof node === 'object' &&
+      node !== null &&
+      !Array.isArray(node) &&
+      node.type === 'text' &&
+      node.content === '';
+    const withoutCarriageReturns = (value: Json): Json => {
+      if (Array.isArray(value)) {
+        return value
+          .map(withoutCarriageReturns)
+          .filter(node => !isEmptyText(node));
+      }
+      if (typeof value === 'object' && value !== null) {
+        return Object.fromEntries(
+          Object.entries(value).map(([key, entry]) => [
+            key,
+            withoutCarriageReturns(entry),
+          ]),
+        );
+      }
+      return typeof value === 'string' ? value.replace(/\r/g, '') : value;
+    };
+    const asJson = (blocks: ReadonlyArray<BlockNode>): Json =>
+      JSON.parse(JSON.stringify(blocks)) as Json;
+
+    it('breaks lines the same way as the LF document', () => {
+      for (const source of [
+        'Line one  \r\nLine two\r\n',
+        'C:\\Users\\Ada\\\r\nnext\r\n',
+        '[two  \r\nlines](https://example.com)\r\n',
+        '> quoted  \r\n> lines\r\n',
+      ]) {
+        const crlf = parseMarkdown(source);
+        expect(hasBreak(crlf), source).toBe(true);
+        expect(withoutCarriageReturns(asJson(crlf)), source).toEqual(
+          asJson(parseMarkdown(lf(source))),
+        );
+      }
+    });
+
+    it('leaves code spans, code blocks, and table cells without breaks', () => {
+      for (const source of [
+        '`a  \r\nb` and `c\\\r\nd`\r\n',
+        '```\r\ncode  \r\nmore\\\r\n```\r\n',
+        '| a |\r\n| --- |\r\n| x  |\r\n',
+      ]) {
+        expect(hasBreak(parseMarkdown(source)), source).toBe(false);
+      }
+    });
+
+    it('streams to the same result when chunks split the line ending', () => {
+      const source = 'One  \r\ntwo\\\r\nthree\r\n\r\nC:\\Users\r\n';
+      const state = createIncrementalState();
+      let blocks: BlockNode[] = [];
+      for (let end = 1; end <= source.length; end++) {
+        blocks = parseMarkdownIncremental(source.slice(0, end), state);
+      }
+      expect(blocks).toEqual(parseMarkdown(source));
+      expect(hasBreak(blocks)).toBe(true);
+    });
+  });
+
   it('parses headings', () => {
     const result = parseMarkdown('# Hello');
     expect(result[0].type).toBe('heading');
@@ -223,9 +575,235 @@ describe('parseMarkdown', () => {
     }
   });
 
+  it('parses display math only when explicitly enabled', () => {
+    const source = '$$\n\\int_0^1 x^2 \\, dx\n$$';
+    expect(parseMarkdown(source)).not.toContainEqual({
+      type: 'math',
+      value: '\\int_0^1 x^2 \\, dx',
+    });
+    expect(parseMarkdown(source, {math: true})).toEqual([
+      {type: 'math', value: '\\int_0^1 x^2 \\, dx'},
+    ]);
+  });
+
+  it('parses a same-line display math block', () => {
+    expect(parseMarkdown('$$E = mc^2$$', {math: true})).toEqual([
+      {type: 'math', value: 'E = mc^2'},
+    ]);
+  });
+
+  it('keeps empty display delimiters literal', () => {
+    const source = '$$\n$$';
+    expect(parseMarkdown(source, {math: true})).toEqual(parseMarkdown(source));
+  });
+
+  it('leaves unmatched display math delimiters literal', () => {
+    const source = '$$\nx + y';
+    expect(parseMarkdown(source, {math: true})).toEqual(parseMarkdown(source));
+  });
+
+  it('leaves escaped display delimiters literal', () => {
+    const blocks = parseMarkdown('\\$\\$\nx + y\n\\$\\$', {math: true});
+    expect(blocks.some(block => block.type === 'math')).toBe(false);
+  });
+
+  it('reports a display-math source range including its delimiters', () => {
+    const source = 'Before.\n\n$$\nx + y\n$$\n\nAfter.';
+    const blocks = parseMarkdown(source, {math: true, sourceRanges: true});
+    expect(blocks[1]?.range).toEqual({start: 9, end: 20});
+    expect(source.slice(blocks[1].range?.start, blocks[1].range?.end)).toBe(
+      '$$\nx + y\n$$',
+    );
+  });
+
+  it('keeps fenced code opaque when math parsing is enabled', () => {
+    expect(parseMarkdown('```tex\n$x$\n$$y$$\n```', {math: true})).toEqual([
+      {type: 'codeblock', language: 'tex', content: '$x$\n$$y$$'},
+    ]);
+  });
+
+  it('does not collect link definitions from display math', () => {
+    const blocks = parseMarkdown('$$\n[x]: /not-a-link\n$$\n\n[x]', {
+      math: true,
+    });
+    expect(blocks[0]).toEqual({type: 'math', value: '[x]: /not-a-link'});
+    expect(JSON.stringify(blocks[1])).not.toContain('"type":"link"');
+  });
+
   it('parses blockquotes', () => {
     const result = parseMarkdown('> This is a quote');
     expect(result[0].type).toBe('blockquote');
+  });
+
+  it('keeps lazy paragraph continuations inside blockquotes and list items', () => {
+    expect(parseMarkdown('> quoted\ncontinued lazily')).toEqual([
+      {
+        type: 'blockquote',
+        children: [
+          {
+            type: 'paragraph',
+            children: [{type: 'text', content: 'quoted\ncontinued lazily'}],
+          },
+        ],
+      },
+    ]);
+
+    for (const marker of ['-', '1.', '- [ ]']) {
+      const [list] = parseMarkdown(`${marker} listed\ncontinued lazily`);
+      expect(list).toMatchObject({
+        type: 'list',
+        items: [
+          {
+            children: [
+              {
+                type: 'paragraph',
+                children: [{type: 'text', content: 'listed\ncontinued lazily'}],
+              },
+            ],
+          },
+        ],
+      });
+    }
+    expect(parseMarkdown('> # Foo\n> bar\nbaz')).toMatchObject([
+      {
+        type: 'blockquote',
+        children: [
+          {type: 'heading', level: 1},
+          {
+            type: 'paragraph',
+            children: [{type: 'text', content: 'bar\nbaz'}],
+          },
+        ],
+      },
+    ]);
+    expect(parseMarkdown('> bar\nbaz\n> foo')).toMatchObject([
+      {
+        type: 'blockquote',
+        children: [
+          {
+            type: 'paragraph',
+            children: [{type: 'text', content: 'bar\nbaz\nfoo'}],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps lazy continuations in the deepest open paragraph', () => {
+    expect(parseMarkdown('> 1. > Blockquote\ncontinued here.')).toMatchObject([
+      {
+        type: 'blockquote',
+        children: [
+          {
+            type: 'list',
+            items: [
+              {
+                children: [
+                  {
+                    type: 'blockquote',
+                    children: [
+                      {
+                        type: 'paragraph',
+                        children: [
+                          {
+                            type: 'text',
+                            content: 'Blockquote\ncontinued here.',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(
+      parseMarkdown('- Outer item\n  > Nested quote\ncontinued here.'),
+    ).toMatchObject([
+      {
+        type: 'list',
+        items: [
+          {
+            children: [
+              {type: 'paragraph'},
+              {
+                type: 'blockquote',
+                children: [
+                  {
+                    type: 'paragraph',
+                    children: [
+                      {
+                        type: 'text',
+                        content: 'Nested quote\ncontinued here.',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('resumes lazy continuation for a later blockquote paragraph', () => {
+    expect(parseMarkdown('> para1\n>\n> para2\nlazy')).toMatchObject([
+      {
+        type: 'blockquote',
+        children: [
+          {
+            type: 'paragraph',
+            children: [{type: 'text', content: 'para1'}],
+          },
+          {
+            type: 'paragraph',
+            children: [{type: 'text', content: 'para2\nlazy'}],
+          },
+        ],
+      },
+    ]);
+
+    expect(parseMarkdown('> > para1\n> >\n> > para2\nlazy')).toMatchObject([
+      {
+        type: 'blockquote',
+        children: [
+          {
+            type: 'blockquote',
+            children: [
+              {
+                type: 'paragraph',
+                children: [{type: 'text', content: 'para1'}],
+              },
+              {
+                type: 'paragraph',
+                children: [{type: 'text', content: 'para2\nlazy'}],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('does not continue a container paragraph across a blank or block start', () => {
+    expect(
+      parseMarkdown('> quoted\n\noutside').map(block => block.type),
+    ).toEqual(['blockquote', 'paragraph']);
+    expect(
+      parseMarkdown('- listed\n\noutside').map(block => block.type),
+    ).toEqual(['list', 'paragraph']);
+    expect(
+      parseMarkdown('> quoted\n# Outside').map(block => block.type),
+    ).toEqual(['blockquote', 'heading']);
+    expect(parseMarkdown('- listed\n```\noutside\n```')).toMatchObject([
+      {type: 'list'},
+      {type: 'codeblock', content: 'outside'},
+    ]);
   });
 
   it('parses horizontal rules', () => {
@@ -407,6 +985,14 @@ describe('parseMarkdown', () => {
     }
   });
 
+  it('rejects a standalone image with an unsafe scheme as literal text (XSS prevention)', () => {
+    // Same rule as inline images: the line falls through to the paragraph
+    // path and stays literal text instead of becoming an image node.
+    const result = parseMarkdown('![alt](vbscript:msgbox)');
+    expect(result[0].type).toBe('paragraph');
+    expect(JSON.stringify(result)).not.toContain('"type":"image"');
+  });
+
   it('parses complex AI response', () => {
     const input = [
       '# Analysis',
@@ -484,17 +1070,24 @@ describe('parseMarkdown', () => {
 
   // --- Table with escaped pipes ---
 
-  it('handles escaped pipes in table cells', () => {
+  it('decodes escaped pipes in table code spans without changing prose nodes', () => {
     const input =
-      '| Concept | TypeScript |\n| --- | --- |\n| Null safety | `T \\| null` |\n| Union | `A \\| B \\| C` |';
+      '| Concept | TypeScript |\n| --- | --- |\n| Prose | A \\| B |\n| Null safety | `T \\| null` |\n| Union | `A \\| B \\| C` |';
     const result = parseMarkdown(input);
     expect(result[0].type).toBe('table');
     if (result[0].type === 'table') {
       expect(result[0].headers).toHaveLength(2);
-      expect(result[0].rows).toHaveLength(2);
-      // The cell should contain the escaped pipe as inline content
-      expect(result[0].rows[0]).toHaveLength(2);
-      expect(result[0].rows[1]).toHaveLength(2);
+      expect(result[0].rows).toHaveLength(3);
+      expect(result[0].rows[0][1].children).toEqual([
+        {type: 'text', content: 'A '},
+        {type: 'text', content: '| B'},
+      ]);
+      expect(result[0].rows[1][1].children).toEqual([
+        {type: 'code', content: 'T | null'},
+      ]);
+      expect(result[0].rows[2][1].children).toEqual([
+        {type: 'code', content: 'A | B | C'},
+      ]);
     }
   });
 
@@ -716,6 +1309,58 @@ describe('citation parsing', () => {
       }
     });
 
+    it('finds the same bare emails as a scan from every character', () => {
+      // The reference is the unanchored pattern the scan from each `@`
+      // replaced, with the same boundary checks.
+      const referenceEmails = (text: string): string[] => {
+        const found: string[] = [];
+        const re = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(text)) !== null) {
+          const prev = text[m.index - 1];
+          if (prev != null && /[A-Za-z0-9._%+\-@]/.test(prev)) {
+            continue;
+          }
+          if (text.slice(Math.max(0, m.index - 7), m.index) === 'mailto:') {
+            continue;
+          }
+          found.push(m[0]);
+        }
+        return found;
+      };
+      const linkedEmails = (text: string): string[] =>
+        parseInline(text, {autolink: 'gfm'}).flatMap(node =>
+          node.type === 'link' && node.href.startsWith('mailto:')
+            ? [node.href.slice('mailto:'.length)]
+            : [],
+        );
+
+      const cases = [
+        'a@b.c',
+        'x@a.b+c@d.e',
+        'name@x.y@host.com',
+        'a@b@c.d',
+        'mailto:user@host.com and user@host.com',
+        'ab@cd ef@gh.ij.',
+        '..a@b.c..d@e.f',
+        '@a.b x@ y@.z q@r.s',
+      ];
+      // A seeded walk over the characters that matter to the scan.
+      let seed = 7;
+      const alphabet = 'ab.@+-_ %:';
+      for (let n = 0; n < 300; n++) {
+        let text = '';
+        for (let i = 0; i < 24; i++) {
+          seed = (seed * 1103515245 + 12345) % 2147483648;
+          text += alphabet[seed % alphabet.length];
+        }
+        cases.push(text);
+      }
+      for (const text of cases) {
+        expect(linkedEmails(text), text).toEqual(referenceEmails(text));
+      }
+    });
+
     it('parses <scheme:url> angle-bracket autolinks', () => {
       const result = parseInline('see <https://example.com> ok', {
         autolink: 'gfm',
@@ -725,6 +1370,17 @@ describe('citation parsing', () => {
         href: 'https://example.com',
         children: [{type: 'text', content: 'https://example.com'}],
       });
+    });
+
+    it('rejects <javascript:...> angle-bracket autolinks (XSS prevention)', () => {
+      const result = parseInline('see <javascript:alert(1)> ok', {
+        autolink: 'gfm',
+      });
+      // Should NOT produce a link node with javascript: href
+      const linkNodes = result.filter(
+        (n): n is Extract<typeof n, {type: 'link'}> => n.type === 'link',
+      );
+      expect(linkNodes).toHaveLength(0);
     });
 
     it('parses <email> angle-bracket autolinks', () => {
@@ -1092,6 +1748,31 @@ describe('link reference definitions', () => {
     expect(links).toEqual([{type: 'image', src: '/logo.png', text: 'logo'}]);
   });
 
+  it('rejects a reference image whose definition has an unsafe scheme (XSS prevention)', () => {
+    const {links} = paragraphLinks('![logo][l]\n\n[l]: <javascript:alert(1)>');
+    expect(links).toEqual([]);
+  });
+
+  it('rejects a shortcut reference image with an unsafe definition (XSS prevention)', () => {
+    const {links} = paragraphLinks('![logo]\n\n[logo]: <javascript:alert(1)>');
+    expect(links).toEqual([]);
+  });
+
+  it('rejects definitions that hide the scheme behind control chars (XSS prevention)', () => {
+    // isSafeUrl strips control characters before testing; the angle-bracket
+    // destination form is the only definition shape that can contain them.
+    // Both consumers of a definition — reference images and reference links —
+    // must apply it.
+    const {links: imageLinks} = paragraphLinks(
+      '![logo][l]\n\n[l]: <java\tscript:alert(1)>',
+    );
+    expect(imageLinks).toEqual([]);
+    const {links: refLinks} = paragraphLinks(
+      '[click][l]\n\n[l]: <java\tscript:alert(1)>',
+    );
+    expect(refLinks).toEqual([]);
+  });
+
   it('does not treat a whitespace-only second label as collapsed', () => {
     // `[foo][ ]` is a full reference to the empty (normalized) label and matches
     // nothing; `[foo]` still resolves as a shortcut and `[ ]` stays literal.
@@ -1154,5 +1835,143 @@ describe('link reference definitions', () => {
     const {links, blocks} = paragraphLinks('an array like [1, 2, 3] here');
     expect(links).toEqual([]);
     expect(blocks[0].type).toBe('paragraph');
+  });
+});
+
+describe('sourceRanges', () => {
+  const slice = (source: string, block: BlockNode) =>
+    block.range == null
+      ? null
+      : source.slice(block.range.start, block.range.end);
+
+  it('is off by default', () => {
+    const [block] = parseMarkdown('# Title');
+    expect(block.range).toBeUndefined();
+  });
+
+  it('addresses a block with named start and end offsets', () => {
+    const source = 'One.\n\nTwo.';
+    const [, second] = parseMarkdown(source, {sourceRanges: true});
+    expect(second.range).toEqual({start: 6, end: 10});
+  });
+
+  it('gives every top-level block the source it came from', () => {
+    const source = [
+      '# Title',
+      '',
+      'A paragraph that',
+      'wraps onto two lines.',
+      '',
+      '- one',
+      '- two',
+      '',
+      '```js',
+      'const x = 1;',
+      '```',
+      '',
+      '| a | b |',
+      '| --- | --- |',
+      '| 1 | 2 |',
+      '',
+      '> quoted',
+      '',
+      '---',
+    ].join('\n');
+    const blocks = parseMarkdown(source, {sourceRanges: true});
+    expect(blocks.map(b => slice(source, b))).toEqual([
+      '# Title',
+      'A paragraph that\nwraps onto two lines.',
+      '- one\n- two',
+      '```js\nconst x = 1;\n```',
+      '| a | b |\n| --- | --- |\n| 1 | 2 |',
+      '> quoted',
+      '---',
+    ]);
+  });
+
+  it('reports offsets into the input, not into the link-definition-stripped text', () => {
+    // The definition lines are removed before the block loop runs, so a naive
+    // offset would drift by their length for everything after them.
+    const source = [
+      '[ref]: https://example.com',
+      '',
+      'See [the docs][ref].',
+      '',
+      'Another paragraph.',
+    ].join('\n');
+    const blocks = parseMarkdown(source, {sourceRanges: true});
+    expect(blocks.map(b => slice(source, b))).toEqual([
+      'See [the docs][ref].',
+      'Another paragraph.',
+    ]);
+  });
+
+  it('reports absolute offsets when the document is parsed incrementally', () => {
+    const source = ['# Title', '', 'One.', '', 'Two.', '', 'Three.'].join('\n');
+    const state = createIncrementalState();
+    let blocks: BlockNode[] = [];
+    for (let end = 1; end <= source.length; end++) {
+      blocks = parseMarkdownIncremental(source.slice(0, end), state, {
+        sourceRanges: true,
+      });
+    }
+    expect(blocks.map(b => slice(source, b))).toEqual([
+      '# Title',
+      'One.',
+      'Two.',
+      'Three.',
+    ]);
+  });
+
+  it('keeps the blank lines an unterminated fence owns', () => {
+    // Mid-stream the closing fence has not arrived, and the blank lines are
+    // part of the code, not spacing between blocks.
+    const source = '```\ncode\n\n';
+    const [block] = parseMarkdown(source, {sourceRanges: true});
+    // The whole thing: the fence consumed those lines as code.
+    expect(slice(source, block)).toBe(source);
+  });
+
+  it('slices to something that re-parses to the same block', () => {
+    // The property a consumer actually needs, and the one that says the
+    // offsets are right: what the range points at is the block.
+    const check = (source: string) => {
+      for (const block of parseMarkdown(source, {sourceRanges: true})) {
+        const {range: _range, ...node} = block;
+        expect(parseMarkdown(slice(source, block)!)).toEqual([node]);
+      }
+    };
+    check('# Title\n\nA paragraph.\n\n- one\n- two\n\n> quoted');
+    // CRLF: the parser keeps the `\r` in its own content, so the range does
+    // too rather than slicing to text that parses differently.
+    check('# Title\r\n\r\nA paragraph.\r\n');
+  });
+
+  it('re-parses when the caller flips the option on an existing state', () => {
+    const source = 'One.\n\nTwo.\n\nThree.';
+    const state = createIncrementalState();
+    const without = parseMarkdownIncremental(source, state);
+    expect(without.every(b => b.range == null)).toBe(true);
+    const with_ = parseMarkdownIncremental(source, state, {
+      sourceRanges: true,
+    });
+    expect(with_.map(b => slice(source, b))).toEqual([
+      'One.',
+      'Two.',
+      'Three.',
+    ]);
+    const back = parseMarkdownIncremental(source, state);
+    expect(back.every(b => b.range == null)).toBe(true);
+  });
+
+  it('spans both halves of a list the incremental parser merged', () => {
+    const source = '1. one\n\n1. two';
+    const state = createIncrementalState();
+    parseMarkdownIncremental('1. one\n\n', state, {sourceRanges: true});
+    const blocks = parseMarkdownIncremental(source, state, {
+      sourceRanges: true,
+    });
+    expect(blocks).toHaveLength(1);
+    expect(slice(source, blocks[0])).toBe(source);
   });
 });

@@ -10,7 +10,10 @@
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/core/src/FormLayout/FormLayout.test.tsx (tests for new/changed behavior)
+ * - /packages/core/src/FormLayout/FormLayoutContext.ts (context value shape)
+ * - /packages/core/src/FormLayout/FormLayout.doc.mjs (props table)
  * - /packages/core/src/FormLayout/index.ts (exports if types change)
+ * - /packages/core/src/Field/FieldLabel.tsx (defaultOptionality indicator resolution)
  * - /apps/storybook/stories/FormLayout.stories.tsx (storybook stories)
  * - /packages/cli/assets/templates/blocks/components/FormLayout/ (showcase blocks)
  */
@@ -19,7 +22,11 @@ import {useMemo, type ReactNode} from 'react';
 import type {BaseProps} from '../BaseProps';
 import * as stylex from '@stylexjs/stylex';
 import {spacingVars} from '../theme/tokens.stylex';
-import {FormLayoutContext, type FormLayoutDirection} from './FormLayoutContext';
+import {
+  FormLayoutContext,
+  type FormLayoutDirection,
+  type FormOptionality,
+} from './FormLayoutContext';
 import {mergeProps} from '../utils';
 import {themeProps} from '../utils/themeProps';
 
@@ -53,6 +60,7 @@ const styles = stylex.create({
       display: 'flex',
       flexDirection: 'column',
       gap: spacingVars['--spacing-4'],
+      alignItems: 'stretch',
     },
   },
 });
@@ -74,14 +82,39 @@ export interface FormLayoutProps extends BaseProps<HTMLDivElement> {
    * Direction of field arrangement.
    *
    * - `'vertical'` — Fields stack top-to-bottom (default). Most common.
-   * - `'horizontal'` — Fields arrange left-to-right in equal-width columns
-   *   using CSS Grid. Each child occupies one equal column.
-   * - `'horizontal-labels'` — CSS Grid with labels to the left of inputs.
-   *   Collapses to vertical when the container is narrow (≤480px).
+   * - `'horizontal'` — Fields occupy one `1fr` CSS Grid track per child in
+   *   logical inline order.
+   * - `'horizontal-labels'` — CSS Grid with labels beside their inputs on the
+   *   inline-start side. Collapses to vertical when the viewport is narrow
+   *   (≤480px).
    *
    * @default 'vertical'
    */
   direction?: FormLayoutDirection;
+
+  /**
+   * Which state the form treats as its default, so only the *exception*
+   * carries a visible optional/required indicator. It also resolves each
+   * field's `aria-required` so the unmarked majority is still announced
+   * correctly — but only `aria-required`, never the native `required`
+   * attribute, so a layout default can't switch on browser validation.
+   *
+   * - `'optional'` — fields read as optional; only a field with `isRequired`
+   *   shows an indicator (the "required" one).
+   * - `'required'` — fields read as required; only a field with `isOptional`
+   *   shows an indicator (the "optional" one). Fields without `isOptional`
+   *   expose `aria-required` even though they show no indicator. Checkboxes,
+   *   switches and checkbox groups are the exception: an unchecked box, an off
+   *   switch or an empty group is an answer, so they take no required state
+   *   from the default. A checkbox or switch is required only through its own
+   *   `isRequired`.
+   * - unset — today's behavior: `isRequired` and `isOptional` each show their
+   *   own indicator independently.
+   *
+   * A field that merely restates the default (e.g. `isOptional` under
+   * `'optional'`) shows nothing. An inner `FormLayout` shadows an outer one.
+   */
+  defaultOptionality?: FormOptionality;
 }
 
 // =============================================================================
@@ -109,18 +142,23 @@ export interface FormLayoutProps extends BaseProps<HTMLDivElement> {
 export function FormLayout({
   children,
   direction = 'vertical',
+  defaultOptionality,
   xstyle,
   className,
   style,
   ref,
   ...props
 }: FormLayoutProps) {
-  const contextValue = useMemo(() => ({direction}), [direction]);
+  const contextValue = useMemo(
+    () => ({direction, defaultOptionality}),
+    [direction, defaultOptionality],
+  );
 
   return (
     <FormLayoutContext value={contextValue}>
       <div
         ref={ref}
+        {...props}
         {...mergeProps(
           themeProps('form-layout', {direction}),
           stylex.props(
@@ -131,8 +169,7 @@ export function FormLayout({
           ),
           className,
           style,
-        )}
-        {...props}>
+        )}>
         {children}
       </div>
     </FormLayoutContext>

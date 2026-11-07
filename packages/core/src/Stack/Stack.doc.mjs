@@ -1,5 +1,24 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
+/** @type {import('@astryxdesign/cli/authoring').ComponentAnatomyElement[]} */
+const anatomy = [
+  {
+    name: 'Stack container',
+    required: true,
+    description: 'Layout container that arranges content along one flex axis.',
+  },
+  {
+    name: 'Item',
+    required: false,
+    description: 'Optional StackItem wrapper that controls one item in the stack.',
+  },
+  {
+    name: 'Content',
+    required: false,
+    description: 'Caller-supplied content rendered by a Stack or StackItem.',
+  },
+];
+
 /** @type {import('@astryxdesign/cli/authoring').ComponentDoc} */
 
 export const docs = {
@@ -16,11 +35,181 @@ export const docs = {
   },
   components: [
     {
+      name: 'Stack',
+      displayName: 'Stack',
+      description:
+        'Unified stack layout component with a direction prop. Use direction="horizontal" to flow along the inline axis (left to right in LTR, right to left in RTL) or direction="vertical" (default) for top-to-bottom. For convenience, HStack and VStack are pre-configured wrappers.',
+      playground: {
+        defaults: {
+          direction: 'horizontal',
+          gap: 2,
+          children: [
+            {__element: 'Card', props: {padding: 3}, children: 'Item 1'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 2'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 3'},
+          ],
+        },
+      },
+      props: [
+        {
+          name: 'direction',
+          type: "'horizontal' | 'vertical'",
+          description:
+            "Direction of the stack layout. 'horizontal' flows items along the inline axis, left to right in LTR and right to left in RTL (like HStack), 'vertical' flows top-to-bottom (like VStack). Note: the value is 'horizontal', NOT 'row'.",
+          default: "'vertical'",
+        },
+        {
+          name: 'gap',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Spacing step (number literal): 0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10. Pass as a JSX number expression e.g. gap={4}, NOT a string like gap="4".',
+        },
+        {
+          name: 'padding',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inner padding on all sides, using the spacing scale. Pass as a JSX number expression e.g. padding={3}.',
+        },
+        {
+          name: 'paddingInline',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline (horizontal) padding. Overrides padding on the inline axis when both are set.',
+        },
+        {
+          name: 'paddingInlineStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-start padding, using the spacing scale (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
+          name: 'paddingInlineEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-end padding, using the spacing scale (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
+          name: 'paddingBlock',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block (vertical) padding. Overrides padding on the block axis when both are set.',
+        },
+        {
+          name: 'paddingBlockStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
+        },
+        {
+          name: 'paddingBlockEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
+        },
+        {
+          name: 'isScrollable',
+          type: 'boolean',
+          description:
+            'Enables scrollable overflow (overflow: auto).',
+          default: 'false',
+        },
+        {
+          name: 'width',
+          type: 'SizeValue',
+          description: "Width of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'height',
+          type: 'SizeValue',
+          description: "Height of the stack container. Numbers are treated as pixels, strings are used as-is (e.g., '100%').",
+        },
+        {
+          name: 'maxWidth',
+          type: 'SizeValue',
+          description: "Maximum width of the stack container.",
+        },
+        {
+          name: 'minHeight',
+          type: 'SizeValue',
+          description: "Minimum height of the stack container.",
+        },
+        {
+          name: 'hAlign',
+          type: "'start' | 'center' | 'end' | 'between' | 'around' | 'evenly' | 'stretch'",
+          description: "Horizontal alignment. When direction='horizontal': main-axis (justify-content). When direction='vertical': cross-axis (align-items).",
+        },
+        {
+          name: 'vAlign',
+          type: "'start' | 'center' | 'end' | 'between' | 'around' | 'evenly' | 'stretch'",
+          description: "Vertical alignment. When direction='horizontal': cross-axis (align-items). When direction='vertical': main-axis (justify-content).",
+        },
+        {
+          name: 'justify',
+          type: "'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'",
+          description: "Main-axis alignment alias. Resolves to hAlign (horizontal) or vAlign (vertical). Note: use 'between', NOT 'space-between'.",
+        },
+        {
+          name: 'align',
+          type: "'start' | 'center' | 'end' | 'stretch'",
+          description: 'Cross-axis alignment alias. Mirrors CSS align-items.',
+        },
+        {
+          name: 'wrap',
+          type: "'nowrap' | 'wrap' | 'wrap-reverse'",
+          description: 'Flex wrap behavior.',
+          default: "'nowrap'",
+        },
+        {
+          name: 'as',
+          type: 'ElementType',
+          description: 'HTML element to render as the stack container.',
+          default: "'div'",
+        },
+        {
+          name: 'children',
+          type: 'ReactNode',
+          description: 'Stack content.',
+        },
+        {
+          name: 'xstyle',
+          type: 'StyleXStyles',
+          description:
+            'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value, not an inline style object like style={{}}.',
+        },
+        {
+          name: 'className',
+          type: 'string',
+          description: 'Class name added to the stack element, after the component styles.',
+        },
+        {
+          name: 'style',
+          type: 'CSSProperties',
+          description: 'Inline styles for the stack element. width, height, maxWidth, and minHeight win over the same properties here.',
+        },
+        {
+          name: 'ref',
+          type: 'Ref<HTMLElement>',
+          description: 'Ref to the rendered stack element.',
+        },
+      ],
+    },
+
+    {
       name: 'HStack',
       isHiddenFromOverview: true,
       displayName: 'H Stack',
       description:
-        'Horizontal stack for arranging items left-to-right. Supports polymorphic rendering.',
+        'Horizontal stack that arranges items along the inline axis: left to right in LTR, right to left in RTL. Supports polymorphic rendering.',
+      playground: {
+        defaults: {
+          gap: 2,
+          children: [
+            {__element: 'Card', props: {padding: 3}, children: 'Item 1'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 2'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 3'},
+          ],
+        },
+      },
       props: [
         {
           name: 'gap',
@@ -41,10 +230,34 @@ export const docs = {
             'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.',
         },
         {
+          name: 'paddingInlineStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-start padding, using the spacing scale (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
+          name: 'paddingInlineEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-end padding, using the spacing scale (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
           name: 'paddingBlock',
           type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.',
+        },
+        {
+          name: 'paddingBlockStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
+        },
+        {
+          name: 'paddingBlockEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
         },
         {
           name: 'isScrollable',
@@ -87,12 +300,12 @@ export const docs = {
         {
           name: 'justify',
           type: "'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'",
-          description: 'Main-axis alignment alias for hAlign. Mirrors CSS justify-content.',
+          description: 'Main-axis alignment alias for hAlign. Mirrors CSS justify-content. When hAlign is also set, hAlign wins.',
         },
         {
           name: 'align',
           type: "'start' | 'center' | 'end' | 'stretch'",
-          description: 'Cross-axis alignment alias for vAlign. Mirrors CSS align-items.',
+          description: 'Cross-axis alignment alias for vAlign. Mirrors CSS align-items. When vAlign is also set, vAlign wins.',
         },
         {
           name: 'wrap',
@@ -117,6 +330,21 @@ export const docs = {
           description:
             'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value, not an inline style object like style={{}}.',
         },
+        {
+          name: 'className',
+          type: 'string',
+          description: 'Class name added to the stack element, after the component styles.',
+        },
+        {
+          name: 'style',
+          type: 'CSSProperties',
+          description: 'Inline styles for the stack element. width, height, maxWidth, and minHeight win over the same properties here.',
+        },
+        {
+          name: 'ref',
+          type: 'Ref<HTMLElement>',
+          description: 'Ref to the rendered stack element.',
+        },
       ],    },
     {
       name: 'VStack',
@@ -124,6 +352,16 @@ export const docs = {
       displayName: 'V Stack',
       description:
         'Vertical stack for arranging items top-to-bottom. Supports polymorphic rendering.',
+      playground: {
+        defaults: {
+          gap: 2,
+          children: [
+            {__element: 'Card', props: {padding: 3}, children: 'Item 1'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 2'},
+            {__element: 'Card', props: {padding: 3}, children: 'Item 3'},
+          ],
+        },
+      },
       props: [
         {
           name: 'gap',
@@ -144,10 +382,34 @@ export const docs = {
             'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.',
         },
         {
+          name: 'paddingInlineStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-start padding, using the spacing scale (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
+          name: 'paddingInlineEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Inline-end padding, using the spacing scale (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.',
+        },
+        {
           name: 'paddingBlock',
           type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
           description:
             'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.',
+        },
+        {
+          name: 'paddingBlockStart',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
+        },
+        {
+          name: 'paddingBlockEnd',
+          type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+          description:
+            'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.',
         },
         {
           name: 'isScrollable',
@@ -214,6 +476,27 @@ export const docs = {
           type: 'ReactNode',
           description: 'Stack content.',
         },
+        {
+          name: 'xstyle',
+          type: 'StyleXStyles',
+          description:
+            'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value, not an inline style object like style={{}}.',
+        },
+        {
+          name: 'className',
+          type: 'string',
+          description: 'Class name added to the stack element, after the component styles.',
+        },
+        {
+          name: 'style',
+          type: 'CSSProperties',
+          description: 'Inline styles for the stack element. width, height, maxWidth, and minHeight win over the same properties here.',
+        },
+        {
+          name: 'ref',
+          type: 'Ref<HTMLElement>',
+          description: 'Ref to the rendered stack element.',
+        },
       ],
     },
     {
@@ -222,6 +505,13 @@ export const docs = {
       displayName: 'Stack Item',
       description:
         'Stack item for controlling individual item behavior within a stack. Supports polymorphic rendering.',
+      playground: {
+        wrapper: {component: 'HStack', props: {gap: 2, width: 300}},
+        defaults: {
+          size: 'fill',
+          children: {__element: 'Card', props: {padding: 3}, children: 'Fills the row'},
+        },
+      },
       props: [
         {
           name: 'size',
@@ -234,7 +524,7 @@ export const docs = {
           name: 'isScrollable',
           type: 'boolean',
           description:
-            'Enables scrollable overflow (overflow: auto). StackItem already applies the flex min-height/min-width reset, so <StackItem size="fill" isScrollable> is a complete scroll region. Matches isScrollable on LayoutContent and LayoutPanel.',
+            'Enables scrollable overflow (overflow: auto). StackItem already applies the flex min-height/min-width reset, so <StackItem size="fill" isScrollable> is a complete scroll region. Matches isScrollable on LayoutContent and LayoutPanel. While its content overflows, a div or span item is a group named by aria-label, or by a translated "Content"; another element keeps its own role.',
           default: 'false',
         },
         {
@@ -254,10 +544,32 @@ export const docs = {
           type: 'ReactNode',
           description: 'Item content.',
         },
+        {
+          name: 'xstyle',
+          type: 'StyleXStyles',
+          description:
+            'StyleX styles for layout customization (margins, positioning, sizing). Must be a stylex.create() value, not an inline style object like style={{}}.',
+        },
+        {
+          name: 'className',
+          type: 'string',
+          description: 'Class name added to the item element, after the component styles.',
+        },
+        {
+          name: 'style',
+          type: 'CSSProperties',
+          description: 'Inline styles for the item element.',
+        },
+        {
+          name: 'ref',
+          type: 'Ref<HTMLElement>',
+          description: 'Ref to the rendered item element.',
+        },
       ],
     },
   ],
   usage: {
+    anatomy,
     description:
       'Stack arranges items in a row or column with consistent spacing. Use the gap prop to control the space between items.',
     bestPractices: [
@@ -285,7 +597,7 @@ export const docsZh = {
       isHiddenFromOverview: true,
       displayName: 'H Stack',
       description:
-        '水平堆叠组件，将元素从左到右排列。支持多态渲染。',
+        '水平堆叠组件，沿行内方向排列元素：LTR 中从左到右，RTL 中从右到左。支持多态渲染。',
       props: [
         {
           name: 'gap',
@@ -317,12 +629,12 @@ export const docsZh = {
         {
           name: 'justify',
           type: "'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'",
-          description: 'hAlign 的别名。对应 CSS justify-content。',
+          description: 'hAlign 的别名。对应 CSS justify-content。同时设置 hAlign 时，以 hAlign 为准。',
         },
         {
           name: 'align',
           type: "'start' | 'center' | 'end' | 'stretch'",
-          description: 'vAlign 的别名。对应 CSS align-items。',
+          description: 'vAlign 的别名。对应 CSS align-items。同时设置 vAlign 时，以 vAlign 为准。',
         },
         {
           name: 'wrap',
@@ -447,6 +759,7 @@ export const docsZh = {
     },
   ],
   usage: {
+    anatomy,
     description:
       'Stack arranges items in a row or column with consistent spacing. Use the gap prop to control the space between items.',
     bestPractices: [
@@ -461,6 +774,7 @@ export const docsZh = {
 export const docsDense = {
   description: 'Stack layout primitives for horizontal/vertical sequences using flexbox w/ themed spacing tokens.',
   usage: {
+    anatomy,
     description:
       'Stack arranges items in a row or column with consistent spacing. Use the gap prop to control the space between items.',
     bestPractices: [
@@ -474,15 +788,15 @@ export const docsDense = {
       name: 'HStack',
       isHiddenFromOverview: true,
       displayName: 'H Stack',
-      description: 'Horizontal stack; left-to-right, polymorphic rendering.',
+      description: 'Horizontal stack; inline direction (left to right in LTR, right to left in RTL), polymorphic rendering.',
       propDescriptions: {
         gap: 'Number literal spacing step: 0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10. Use gap={4} not gap="4".',
         width: "Width of container. Numbers=pixels, strings=as-is (e.g. '100%').",
         height: "Height of container. Numbers=pixels, strings=as-is (e.g. '100%').",
         hAlign: 'Horizontal (main-axis) alignment.',
         vAlign: 'Vertical (cross-axis) alignment.',
-        justify: 'Main-axis alignment alias for hAlign. Mirrors CSS justify-content.',
-        align: 'Cross-axis alignment alias for vAlign. Mirrors CSS align-items.',
+        justify: 'Main-axis alignment alias for hAlign. Mirrors CSS justify-content. An explicit hAlign wins.',
+        align: 'Cross-axis alignment alias for vAlign. Mirrors CSS align-items. An explicit vAlign wins.',
         wrap: 'Flex wrap behavior.',
         as: 'HTML element to render as container.',
         children: 'Stack content.',

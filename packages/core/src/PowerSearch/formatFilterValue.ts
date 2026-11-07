@@ -2,7 +2,7 @@
 
 /**
  * @file formatFilterValue.ts
- * @input OperatorValue, FilterValue, config
+ * @input OperatorValue, FilterValue, config, locale, time zone, calendar
  * @output Formatted display string for a filter value
  * @position Pure utility; consumed by PowerSearch token rendering
  *
@@ -12,13 +12,20 @@
 
 import type {OperatorValue, FilterValue, EnumItem} from './types';
 import type {InternalConfig} from './useInternalConfig';
-import type {TranslatorFn} from '../i18n';
+import type {Locale, TranslatorFn} from '../i18n';
+import {
+  formatCalendarInstant,
+  type CalendarSystem,
+} from '../utils/calendarSystem';
+import {truncateCharacters} from '../utils/characters';
+import {registerEnglishFallback} from '../i18n/englishFallback';
+import english from '../i18n/generated-english/PowerSearch/formatFilterValue.generated';
+import {resolveDateZone} from './powerSearchDateZone';
+
+registerEnglishFallback(english);
 
 function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) {
-    return str;
-  }
-  return str.slice(0, maxLength - 1) + '\u2026';
+  return truncateCharacters(str, maxLength);
 }
 
 function formatEnumLabel(
@@ -29,21 +36,59 @@ function formatEnumLabel(
   return item?.label ?? value;
 }
 
-function formatNumber(value: number, units?: string): string {
-  const formatted = new Intl.NumberFormat().format(value);
+function formatNumber(value: number, locale: Locale, units?: string): string {
+  const formatted = formatSharedNumber(value, locale);
   return units ? `${formatted} ${units}` : formatted;
 }
 
-function formatDateAbsolute(unixSeconds: number, timezoneID?: string): string {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    ...(timezoneID ? {timeZone: timezoneID} : {}),
-  };
-  return new Intl.DateTimeFormat(undefined, options).format(unixSeconds * 1000);
+/**
+ * A number in the provider locale's digits, decimal mark, and — unless the
+ * options say otherwise — grouping. The shared number helper for
+ * PowerSearch's own readings of a value — this module owns the raw `Intl`
+ * access.
+ */
+export function formatSharedNumber(
+  value: number,
+  locale: Locale,
+  options?: Pick<
+    Intl.NumberFormatOptions,
+    'useGrouping' | 'maximumFractionDigits'
+  >,
+): string {
+  return new Intl.NumberFormat(locale, options).format(value);
+}
+
+/**
+ * The one reading of a calendar-day `date_absolute` value: its day in the
+ * zone `resolveDateZone` names. The token text and the accessible label share
+ * it; the editors read the same zone through `resolveDateZone`, so a value
+ * never reads as two days in one field. A value whose operator sets
+ * `isDateOnly: false` is an instant: its date and time in `timezoneID`,
+ * else the viewer's zone, the time its editor reads and writes.
+ */
+export function formatDateAbsolute(
+  unixSeconds: number,
+  locale: Locale,
+  timezoneID: string | undefined,
+  isDateOnly = true,
+  calendar: CalendarSystem = 'gregory',
+): string {
+  const options: Intl.DateTimeFormatOptions = isDateOnly
+    ? {year: 'numeric', month: 'short', day: 'numeric'}
+    : {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      };
+  return formatCalendarInstant(
+    calendar,
+    new Date(unixSeconds * 1000),
+    options,
+    locale,
+    resolveDateZone(timezoneID, isDateOnly),
+  );
 }
 
 function formatRelativeDate(value: string): string {
@@ -58,13 +103,20 @@ function formatDateRange(
   return t('@astryx.powersearch.valueEditor.dateRange');
 }
 
+/**
+ * The display text of a filter value. A `date_absolute` value is written in
+ * `calendar`, which defaults to Gregorian; PowerSearch passes the calendar that
+ * its provider resolves.
+ */
 export function formatFilterValue(
   _config: InternalConfig,
   operatorValue: OperatorValue,
   filterValue: FilterValue,
   maxLength: number,
   t: TranslatorFn,
+  locale: Locale,
   timezoneID?: string,
+  calendar: CalendarSystem = 'gregory',
 ): string {
   switch (filterValue.type) {
     case 'empty':
@@ -76,12 +128,14 @@ export function formatFilterValue(
     case 'integer':
       return formatNumber(
         filterValue.value,
+        locale,
         operatorValue.type === 'integer' ? operatorValue.units : undefined,
       );
 
     case 'float':
       return formatNumber(
         filterValue.value,
+        locale,
         operatorValue.type === 'float' ? operatorValue.units : undefined,
       );
 
@@ -159,7 +213,14 @@ export function formatFilterValue(
 
     case 'date_absolute':
       return truncate(
-        formatDateAbsolute(filterValue.unixSeconds, timezoneID),
+        formatDateAbsolute(
+          filterValue.unixSeconds,
+          locale,
+          timezoneID,
+          operatorValue.type !== 'date_absolute' ||
+            operatorValue.isDateOnly !== false,
+          calendar,
+        ),
         maxLength,
       );
 

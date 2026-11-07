@@ -16,12 +16,25 @@
 
 import {describe, it, expect, vi} from 'vitest';
 import {SHARED_DATE_FORMAT_OPTIONS} from '../utils/plainDate';
-import {formatTooltipLines} from './tooltipEntries';
+import {formatTooltipLines as formatTooltipLinesForLocale} from './tooltipEntries';
+
+const formatTooltipLines = (
+  date: Parameters<typeof formatTooltipLinesForLocale>[0],
+  entries: Parameters<typeof formatTooltipLinesForLocale>[1],
+  defaultTimezoneID?: Parameters<typeof formatTooltipLinesForLocale>[4],
+) =>
+  formatTooltipLinesForLocale(
+    date,
+    entries,
+    'en-US',
+    'gregory',
+    defaultTimezoneID,
+  );
 
 /** 2026-02-19T17:00:00Z — chosen so several zones land on different dates. */
 const INSTANT = new Date('2026-02-19T17:00:00Z');
 
-const LOCAL_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const LOCAL_ZONE = Intl.DateTimeFormat('en-US').resolvedOptions().timeZone;
 
 describe('formatTooltipLines', () => {
   // --- Explicit zones: exact, locale-free, TZ-agnostic ---
@@ -72,6 +85,46 @@ describe('formatTooltipLines', () => {
     expect(summer[0].value).toBe('2026-07-15 13:00:00');
   });
 
+  // A pinned default outside the host zone: on a UTC host (like CI) a 'UTC'
+  // default would pass even without inheritance, and on a Tokyo host Tokyo
+  // would. Sydney is daylight (+11) through February, so the instant below
+  // reads 04:00 on the 20th.
+  const PINNED =
+    LOCAL_ZONE === 'Asia/Tokyo' ? 'Australia/Sydney' : 'Asia/Tokyo';
+  const PINNED_SYSTEM_DATE_TIME =
+    PINNED === 'Asia/Tokyo' ? '2026-02-20 02:00:00' : '2026-02-20 04:00:00';
+
+  it('lets entries without a zone inherit the Timestamp timezoneID', () => {
+    const lines = formatTooltipLines(
+      INSTANT,
+      [{format: 'system_date_time'}],
+      PINNED,
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0].value).toBe(PINNED_SYSTEM_DATE_TIME);
+  });
+
+  it('keeps an explicit local entry in the viewer zone under a default', () => {
+    const [local, named] = formatTooltipLines(
+      INSTANT,
+      [
+        {timezoneID: 'local', format: 'system_date_time'},
+        {timezoneID: LOCAL_ZONE, format: 'system_date_time'},
+      ],
+      PINNED,
+    );
+    expect(local.value).toBe(named.value);
+  });
+
+  it('counts the pinned zone when labelling a viewer-zone row', () => {
+    const entries = [{timezoneID: 'local', format: 'date_time'}] as const;
+    const [labelled] = formatTooltipLines(INSTANT, [...entries], PINNED);
+    const [unlabelled] = formatTooltipLines(INSTANT, [...entries]);
+    // Next to pinned text the viewer-zone row carries its abbreviation; alone
+    // it reads like the page and stays unmarked.
+    expect(labelled.value).not.toBe(unlabelled.value);
+  });
+
   // --- The shared date vocabulary ---
 
   it.each(['date', 'date_long', 'date_weekday'] as const)(
@@ -86,7 +139,7 @@ describe('formatTooltipLines', () => {
       for (const timezoneID of ['UTC', 'Asia/Tokyo']) {
         const [line] = formatTooltipLines(INSTANT, [{timezoneID, format}]);
         expect(line.value).toBe(
-          new Intl.DateTimeFormat(undefined, {
+          new Intl.DateTimeFormat('en-US', {
             ...SHARED_DATE_FORMAT_OPTIONS[format],
             timeZone: timezoneID,
           }).format(INSTANT),
@@ -208,7 +261,7 @@ describe('formatTooltipLines', () => {
       {format: 'date_time'},
       {format: 'system_date_time'},
     ]);
-    const localName = new Intl.DateTimeFormat(undefined, {
+    const localName = new Intl.DateTimeFormat('en-US', {
       timeZoneName: 'short',
     })
       .formatToParts(INSTANT)
@@ -230,7 +283,7 @@ describe('formatTooltipLines', () => {
     // aria-describedby, and that element's accessible name is the LOCAL
     // absolute time. A lone foreign-zone line with no marker is therefore
     // announced right after a local time, with nothing to say it is not one.
-    const zoneName = new Intl.DateTimeFormat(undefined, {
+    const zoneName = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Tokyo',
       timeZoneName: 'short',
     })
@@ -248,7 +301,7 @@ describe('formatTooltipLines', () => {
     // The consumer never named a zone, so there is nothing to disambiguate
     // against — this must stay as bare as the visible text is by default.
     const [line] = formatTooltipLines(INSTANT, [{format: 'date_time'}]);
-    const localName = new Intl.DateTimeFormat(undefined, {
+    const localName = new Intl.DateTimeFormat('en-US', {
       timeZoneName: 'short',
     })
       .formatToParts(INSTANT)
@@ -557,5 +610,56 @@ describe('formatTooltipLines', () => {
       {timezoneID: 'asia/tokyo', format: 'system_date_time'},
     ]);
     expect(lines[0].value).toBe('2026-02-20 02:00:00');
+  });
+});
+
+describe('formatTooltipLines calendar', () => {
+  const CALENDAR_INSTANT = new Date('2026-10-30T12:00:00Z');
+
+  it.each([
+    {calendar: 'persian', locale: 'en', year: '1405'},
+    {calendar: 'persian', locale: 'fa', year: '۱۴۰۵'},
+    {calendar: 'hebrew', locale: 'en', year: '5787'},
+    {calendar: 'hebrew', locale: 'he', year: '5787'},
+    {calendar: 'buddhist', locale: 'en', year: '2569'},
+    {calendar: 'buddhist', locale: 'th', year: '2569'},
+  ] as const)(
+    'writes date rows in $calendar under $locale and keeps system rows ISO',
+    ({calendar, locale, year}) => {
+      const [dateLine, systemLine] = formatTooltipLinesForLocale(
+        CALENDAR_INSTANT,
+        [
+          {timezoneID: 'UTC', format: 'date_long'},
+          {timezoneID: 'UTC', format: 'system_date_time'},
+        ],
+        locale,
+        calendar,
+      );
+      expect(dateLine.value).toBe(
+        new Intl.DateTimeFormat(locale, {
+          ...SHARED_DATE_FORMAT_OPTIONS.date_long,
+          timeZone: 'UTC',
+          calendar,
+        }).format(CALENDAR_INSTANT),
+      );
+      expect(dateLine.value).toContain(year);
+      expect(systemLine.value).toBe('2026-10-30 12:00:00');
+    },
+  );
+
+  it('defaults to the Gregorian calendar', () => {
+    const [line] = formatTooltipLinesForLocale(
+      CALENDAR_INSTANT,
+      [{timezoneID: 'UTC', format: 'date_long'}],
+      'fa',
+    );
+    expect(line.value).toBe(
+      formatTooltipLinesForLocale(
+        CALENDAR_INSTANT,
+        [{timezoneID: 'UTC', format: 'date_long'}],
+        'fa',
+        'gregory',
+      )[0].value,
+    );
   });
 });

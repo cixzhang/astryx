@@ -2,72 +2,62 @@
 
 /**
  * @file parseOutlineFromMarkdown.ts
- * @input Uses Markdown parser internals and OutlineItem type
+ * @input Uses Markdown's canonical AST parser and heading slug helpers
  * @output Exports parseOutlineFromMarkdown for extracting heading outlines from Markdown
- * @position Pure utility; consumed by useOutlineFromMarkdown and public exports
+ * @position Pure compatibility utility; consumed by useOutlineFromMarkdown and public exports
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/core/src/Outline/Outline.doc.mjs
  * - /packages/core/src/Outline/index.ts
  */
 
-import {parseMarkdown, type InlineNode} from '../Markdown/parser';
+import {parseMarkdownAstInternal} from '../Markdown/parser';
+import {projectMarkdownHeadings} from '../Markdown/headingProjection';
+import {
+  prepareMarkdownPlugins,
+  reportMarkdownPluginFailure,
+} from '../Markdown/plugins/protocol';
+import type {
+  MarkdownExtensionNode,
+  MarkdownPluginEntry,
+  PreparedMarkdownPlugins,
+} from '../Markdown/plugins/protocol';
 import type {OutlineItem} from './types';
-
-function inlineText(nodes: InlineNode[]): string {
-  return nodes
-    .map(node => {
-      switch (node.type) {
-        case 'text':
-        case 'code':
-          return node.content;
-        case 'bold':
-        case 'italic':
-        case 'strikethrough':
-        case 'link':
-          return inlineText(node.children);
-        case 'image':
-          return node.alt;
-        case 'citation':
-        case 'break':
-          return '';
-      }
-    })
-    .join('');
-}
-
-function slugify(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/['"]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function uniqueSlug(baseSlug: string, counts: Map<string, number>): string {
-  const fallbackSlug = baseSlug || 'section';
-  const count = counts.get(fallbackSlug) ?? 0;
-  counts.set(fallbackSlug, count + 1);
-  return count === 0 ? fallbackSlug : `${fallbackSlug}-${count}`;
-}
 
 /**
  * Extract heading items from a Markdown string.
  *
  * Uses Markdown's parser so fenced code blocks, tables, lists, and inline
  * formatting are interpreted consistently with rendered Markdown output.
+ * Ids come from the parser's shared slug helpers, so they always match the
+ * `id` attributes Markdown renders on its headings.
  */
-export function parseOutlineFromMarkdown(markdown: string): OutlineItem[] {
-  const counts = new Map<string, number>();
-  return parseMarkdown(markdown)
-    .filter(block => block.type === 'heading')
-    .map(block => {
-      const label = inlineText(block.children).trim();
-      return {
-        id: uniqueSlug(slugify(label), counts),
-        label,
-        level: block.level,
-      };
-    });
+export interface ParseOutlineFromMarkdownOptions<
+  Node extends MarkdownExtensionNode = never,
+> {
+  readonly plugins?: ReadonlyArray<MarkdownPluginEntry<Node>>;
+  /** Match Markdown's transform finality while content is streaming. */
+  readonly isFinal?: boolean;
+}
+
+export function parseOutlineFromMarkdown<
+  Node extends MarkdownExtensionNode = never,
+>(
+  markdown: string,
+  options?: ParseOutlineFromMarkdownOptions<Node>,
+): OutlineItem[] {
+  let plugins = options?.plugins;
+  let prepared: PreparedMarkdownPlugins | undefined;
+  try {
+    prepared = plugins == null ? undefined : prepareMarkdownPlugins(plugins);
+  } catch (error) {
+    reportMarkdownPluginFailure('configuration', 'transform', error);
+    plugins = undefined;
+  }
+  const root = parseMarkdownAstInternal(
+    markdown,
+    {plugins},
+    options?.isFinal ?? true,
+  );
+  return [...projectMarkdownHeadings(root, prepared).outline];
 }

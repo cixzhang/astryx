@@ -4,6 +4,7 @@ import type {Meta, StoryObj} from '@storybook/react';
 import {HoverCard, useHoverCard} from '@astryxdesign/core/HoverCard';
 import {Button} from '@astryxdesign/core/Button';
 import {VStack, HStack} from '@astryxdesign/core/Layout';
+import {Text} from '@astryxdesign/core/Text';
 
 const meta: Meta<typeof HoverCard> = {
   title: 'Core/HoverCard',
@@ -31,6 +32,12 @@ const meta: Meta<typeof HoverCard> = {
     isEnabled: {
       control: 'boolean',
       description: 'Enable/disable the hover card',
+    },
+    touchTrigger: {
+      control: 'select',
+      options: ['auto', 'tap', 'none'],
+      description:
+        'What a tap does where there is no hover: auto (tap unless the trigger acts), tap, or none',
     },
   },
 };
@@ -91,9 +98,7 @@ export const CustomDelay: Story = {
     delay: 500,
     hideDelay: 300,
     content: <ProfileCard />,
-    children: (
-      <Button label="Slow hover (500ms)">Slow hover (500ms)</Button>
-    ),
+    children: <Button label="Slow hover (500ms)">Slow hover (500ms)</Button>,
   },
 };
 
@@ -208,5 +213,80 @@ export const TextNodeMultiple: Story = {
         , and others.
       </p>
     </div>
+  ),
+};
+
+/**
+ * Touch has no hover, so a tap decides instead. A tap-opened card is dismissed
+ * by a tap outside it, and a tap on the card's own content leaves it open.
+ */
+export const TouchTriggers: Story = {
+  render: () => (
+    <div style={{padding: 100}}>
+      <HStack gap={4}>
+        {/* Acts on tap: the tap belongs to the button, so no card. */}
+        <HoverCard content={<ProfileCard />} placement="above">
+          <Button label="Open profile">Open profile</Button>
+        </HoverCard>
+        {/* Does nothing on tap: the tap opens the card. */}
+        <HoverCard content={<ProfileCard />} placement="above">
+          Jane Doe
+        </HoverCard>
+      </HStack>
+    </div>
+  ),
+};
+
+function AuditProfile({name, role}: {name: string; role: string}) {
+  return (
+    <VStack gap={1}>
+      <Text type="label">{name}</Text>
+      <Text type="supporting">{role}</Text>
+    </VStack>
+  );
+}
+
+/**
+ * Both popup roles, shown open. An unlabelled card on a text trigger is a
+ * group that describes its trigger. A labelled card with actions is a named
+ * dialog that its button advertises.
+ */
+export const OpenStates: Story = {
+  render: () => (
+    <VStack gap={0}>
+      <div style={{paddingBlock: '24px 152px', paddingInline: 16}}>
+        <Text as="p">
+          Maintained by{' '}
+          <HoverCard
+            isOpen
+            placement="below"
+            alignment="start"
+            content={<AuditProfile name="Jane Doe" role="Software engineer" />}>
+            Jane Doe
+          </HoverCard>
+          .
+        </Text>
+      </div>
+      <div style={{paddingBlock: '0 200px', paddingInline: 16}}>
+        <HoverCard
+          isOpen
+          label="Jane Doe profile"
+          placement="below"
+          alignment="start"
+          content={
+            <VStack gap={3}>
+              <AuditProfile name="Jane Doe" role="Software engineer" />
+              <HStack gap={2}>
+                <Button label="Follow" variant="primary">
+                  Follow
+                </Button>
+                <Button label="Message">Message</Button>
+              </HStack>
+            </VStack>
+          }>
+          <Button label="Jane Doe">Jane Doe</Button>
+        </HoverCard>
+      </div>
+    </VStack>
   ),
 };

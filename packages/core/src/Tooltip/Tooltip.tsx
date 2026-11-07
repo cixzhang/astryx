@@ -22,11 +22,16 @@ import React, {
 } from 'react';
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect';
 import * as stylex from '@stylexjs/stylex';
-import {useTooltip, type TooltipFocusTrigger} from './useTooltip';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {
+  useTooltip,
+  type TooltipFocusTrigger,
+  type TooltipTouchTrigger,
+} from './useTooltip';
 import type {LayerAlignment, LayerPlacement} from '../Layer/useLayer';
 import {colorVars} from '../theme/tokens.stylex';
 
-export type {TooltipFocusTrigger} from './useTooltip';
+export type {TooltipFocusTrigger, TooltipTouchTrigger} from './useTooltip';
 
 const styles = stylex.create({
   wrapperContents: {
@@ -91,13 +96,26 @@ export interface TooltipProps {
 
   /**
    * When to trigger on focus:
-   * - `auto`: Only if element is naturally focusable
-   * - `always`: Always attach focus listeners
-   * - `never`: Never attach focus listeners (for composite widgets)
+   * - `auto`: focus on the trigger itself, or within a trigger that is
+   *   focusable when focus arrives
+   * - `always`: focus on the trigger or anything inside it
+   * - `never`: never on focus (for composite widgets)
    *
    * @default 'auto'
    */
   focusTrigger?: TooltipFocusTrigger;
+
+  /**
+   * What a tap does on a touch pointer, where there is no hover:
+   * - `auto`: tap opens the tooltip, unless the trigger performs an action of
+   *   its own (a button, a link, a form control) — that tap belongs to the
+   *   control, and a hint about a control the user just operated is noise
+   * - `tap`: tap always opens the tooltip, even on a trigger that acts
+   * - `none`: touch never opens the tooltip
+   *
+   * @default 'auto'
+   */
+  touchTrigger?: TooltipTouchTrigger;
 
   /**
    * Whether the tooltip is enabled.
@@ -128,6 +146,11 @@ export interface TooltipProps {
    * - `true`: force-show the tooltip (hover/focus hide is suppressed)
    * - `false`: force-hide the tooltip
    * - `undefined`: uncontrolled — hover/focus triggers manage visibility
+   *
+   * A controlled tooltip still takes Escape when it is the top-most layer, and
+   * answers by calling `onOpenChange(false)` without hiding itself — closing is
+   * your update's decision, exactly as for a controlled Dialog. Ignore the call
+   * and the tip stays, and so does the press: nothing underneath dismisses.
    */
   isOpen?: boolean;
 
@@ -176,6 +199,7 @@ export function Tooltip({
   delay = 200,
   hideDelay = 0,
   focusTrigger = 'auto',
+  touchTrigger = 'auto',
   isEnabled = true,
   onOpenChange,
   hasHoverIndication = 'auto',
@@ -204,6 +228,7 @@ export function Tooltip({
     delay,
     hideDelay,
     focusTrigger,
+    touchTrigger,
     isEnabled,
     isOpen,
     isDefaultOpen,
@@ -217,28 +242,51 @@ export function Tooltip({
       return;
     }
 
+    const attach = (el: HTMLElement) => {
+      // Use combined ref for position + interaction
+      tooltip.ref(el);
+
+      // Set aria-describedby, merging with existing
+      const existingDescribedBy = el.getAttribute('aria-describedby');
+      el.setAttribute(
+        'aria-describedby',
+        mergeIds(existingDescribedBy, tooltip.describedBy) ?? '',
+      );
+
+      return () => {
+        tooltip.ref(null);
+        if (existingDescribedBy) {
+          el.setAttribute('aria-describedby', existingDescribedBy);
+        } else {
+          el.removeAttribute('aria-describedby');
+        }
+      };
+    };
+
     const el = anchorRef.current;
-    if (!el) {
-      return;
+    if (el) {
+      return attach(el);
     }
 
-    // Use combined ref for position + interaction
-    tooltip.ref(el);
-
-    // Set aria-describedby, merging with existing
-    const existingDescribedBy = el.getAttribute('aria-describedby');
-    el.setAttribute(
-      'aria-describedby',
-      mergeIds(existingDescribedBy, tooltip.describedBy) ?? '',
-    );
-
-    return () => {
-      tooltip.ref(null);
-      if (existingDescribedBy) {
-        el.setAttribute('aria-describedby', existingDescribedBy);
-      } else {
-        el.removeAttribute('aria-describedby');
+    // React attaches an ancestor's ref after its descendants' layout effects,
+    // so a tooltip rendered inside its own anchor (SideNavItem's collapsed
+    // rail tooltip) still sees null here on mount, and this effect's deps
+    // never change to re-run it. Re-check once the commit has attached all
+    // refs; if the anchor is still gone, this tooltip has no anchor, as before.
+    let detach: (() => void) | undefined;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
       }
+      const el = anchorRef.current;
+      if (el) {
+        detach = attach(el);
+      }
+    });
+    return () => {
+      cancelled = true;
+      detach?.();
     };
   }, [anchorRef, tooltip.ref, tooltip.describedBy]);
 
@@ -294,7 +342,9 @@ export function Tooltip({
           ref={tooltip.ref}
           tabIndex={0}
           aria-describedby={tooltip.describedBy}
-          {...stylex.props(
+          // The span is a tab stop Astryx adds: it draws the shared ring,
+          // which a theme restyles through the focus-outline tokens.
+          {...focusOutlineProps.focusVisible(
             styles.wrapperInline,
             showHoverIndication && styles.hoverIndication,
           )}>

@@ -51,6 +51,33 @@ function renderEditor(value = '', props: {escapeHint?: string} = {}) {
 }
 
 describe('CodeEditor', () => {
+  it('keeps the code left-to-right inside a right-to-left page', () => {
+    render(
+      <div dir="rtl">
+        <CodeEditor label="Code" value="const a = 1;" onChange={() => {}} />
+      </div>,
+    );
+    const editor = screen.getByRole('textbox', {name: 'Code'});
+    expect(editor.closest('[dir]')).toHaveAttribute('dir', 'ltr');
+  });
+
+  it('lets the placeholder take its own text direction', () => {
+    render(
+      <div dir="rtl">
+        <CodeEditor
+          label="Code"
+          value=""
+          onChange={() => {}}
+          placeholder="اكتب الكود هنا..."
+        />
+      </div>,
+    );
+    expect(screen.getByText('اكتب الكود هنا...')).toHaveAttribute(
+      'dir',
+      'auto',
+    );
+  });
+
   it('uses the label prop as the accessible name', () => {
     render(
       <CodeEditor
@@ -187,5 +214,41 @@ describe('CodeEditor', () => {
     await user.keyboard('{Shift>}{Tab}{/Shift}');
 
     expect(onChange).toHaveBeenCalledWith('  a;\nb;');
+  });
+
+  it('exposes an explicit tabindex so scrollable editors count as focusable content', () => {
+    // contenteditable is not on axe's natively-focusable whitelist, and axe
+    // reads the tabindex ATTRIBUTE (not the browser's effective tabIndex),
+    // so the scrollable editorContainer only passes scrollable-region-focusable
+    // when the <code> editor materializes tabindex="0" explicitly.
+    render(
+      <CodeEditor
+        value={Array.from({length: 30}, (_, i) => `line ${i + 1};`).join('\n')}
+        onChange={() => {}}
+        language="typescript"
+        label="Edit snippet"
+        maxHeight={200}
+      />,
+    );
+    expect(screen.getByRole('textbox', {name: 'Edit snippet'})).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
+  });
+
+  it('keeps read-only editors keyboard-focusable, like a readonly textarea', () => {
+    render(
+      <CodeEditor
+        value="const x = 1;"
+        onChange={() => {}}
+        language="typescript"
+        label="Edit snippet"
+        isReadOnly
+      />,
+    );
+    expect(screen.getByRole('textbox', {name: 'Edit snippet'})).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
   });
 });

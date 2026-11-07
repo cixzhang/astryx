@@ -60,7 +60,10 @@ function renderedClassLiterals() {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(full);
-      } else if (entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx')) {
+      } else if (
+        (entry.name.endsWith('.tsx') || entry.name.endsWith('.ts')) &&
+        !entry.name.includes('.test.')
+      ) {
         const text = fs.readFileSync(full, 'utf8');
         for (const re of [
           /themeProps\(\s*'([^']+)'/g,
@@ -70,6 +73,15 @@ function renderedClassLiterals() {
           while ((m = re.exec(text)) !== null) {
             classes.add(m[1]);
           }
+        }
+        // A component can also name its popup SURFACE — an element usePopover
+        // owns, so the class cannot be rendered from the component itself.
+        // `surfaceTarget: 'x'` puts `astryx-x` on that surface, which makes it
+        // just as rendered as a direct themeProps() call.
+        const surfaceRe = /surfaceTarget:\s*'([^']+)'/g;
+        let sm;
+        while ((sm = surfaceRe.exec(text)) !== null) {
+          classes.add(sm[1]);
         }
       }
     }
@@ -114,14 +126,17 @@ describe('theme build emits a live TextInput selector (#4109)', () => {
         `};\n`,
     );
 
-    const result = await runCli(['theme', 'build', themeFile, '-o', outFile]);
+    const result = await runCli(
+      ['theme', 'build', themeFile, '-o', outFile],
+      tmpDir,
+    );
     const css = fs.readFileSync(outFile, 'utf8');
 
     expect(result.status).toBe(0);
     expect(result.stderr).not.toContain('Unknown component');
     expect(css).toContain('.astryx-side-nav-item');
     expect(css).toContain('.astryx-chat-composer');
-    expect(css).toContain('.astryx-chat-message-bubble.ghost');
+    expect(css).toContain('.astryx-chat-message-bubble[data-variant="ghost"]');
   });
 
   it('emits .astryx-text-input (the rendered class), not the dead .astryx-textinput', async () => {
@@ -136,7 +151,7 @@ describe('theme build emits a live TextInput selector (#4109)', () => {
         `};\n`,
     );
 
-    await runCli(['theme', 'build', themeFile, '-o', outFile]);
+    await runCli(['theme', 'build', themeFile, '-o', outFile], tmpDir);
     const css = fs.readFileSync(outFile, 'utf8');
 
     expect(css).toContain('.astryx-text-input');

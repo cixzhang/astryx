@@ -22,6 +22,7 @@ export * from './AvatarGroup';
 export * from './Badge';
 export * from './Banner';
 export * from './Blockquote';
+export * from './BottomSheet';
 export * from './Breadcrumbs';
 export * from './Button';
 export * from './ButtonGroup';
@@ -29,6 +30,7 @@ export * from './IconButton';
 export * from './Card';
 export * from './ClickableCard';
 export * from './Carousel';
+export * from './SnapPaging';
 export * from './Calendar';
 export * from './Center';
 export * from './CodeBlock';
@@ -42,6 +44,7 @@ export * from './CheckboxList';
 export * from './Collapsible';
 export * from './RadioList';
 export * from './Resizable';
+export * from './ScrollableArea';
 export * from './Divider';
 export * from './VisuallyHidden';
 export * from './EmptyState';
@@ -54,6 +57,7 @@ export * from './NavIcon';
 export * from './NavMenu';
 export * from './Slider';
 export * from './Stack';
+export * from './Stepper';
 export * from './Switch';
 export * from './DateInput';
 export * from './DateTimeInput';
@@ -68,6 +72,8 @@ export * from './SelectableCard';
 export * from './Selector';
 export * from './MultiSelector';
 export * from './Icon';
+export * from './InfoTip';
+export * from './Indicator';
 export * from './InputGroup';
 export * from './Item';
 export * from './Text';
@@ -91,6 +97,7 @@ export * from './AlertDialog';
 export * from './Dialog';
 export * from './ContextMenu';
 export * from './DropdownMenu';
+export * from './Drawer';
 export * from './MoreMenu';
 export * from './InteractiveRoleContext';
 export * from './SizeContext';
@@ -119,7 +126,7 @@ export type {
 
 // Layer provider
 export {LayerProvider} from './Layer';
-export type {LayerProviderProps, LayerToastConfig} from './Layer';
+export type {LayerProviderProps, LayerInset, LayerToastConfig} from './Layer';
 
 // Toast
 export {Toast, useToast} from './Toast';
@@ -132,6 +139,8 @@ export type {
   ToastOptions,
   ToastDismissFn,
   ShowToastFn,
+  ToastContentRenderProps,
+  ToastContentRenderFn,
 } from './Toast';
 
 // Popover component and hook
@@ -155,6 +164,9 @@ export * from './Spinner';
 // Timestamp display
 export * from './Timestamp';
 
+// Elapsed timer display
+export * from './Timer';
+
 // Overlay
 export * from './Overlay';
 export * from './Outline';
@@ -162,8 +174,31 @@ export * from './Outline';
 // Overflow list
 export * from './OverflowList';
 
+// Animating one element: from the package root only, since one API has one
+// entry. Its hook ships from './hooks'.
+export {
+  createAnimator,
+  type Animator,
+  type AnimatorAnimateOptions,
+  type AnimatorChannel,
+  type AnimatorDecayVelocity,
+  type AnimatorHandle,
+  type AnimatorSnapshot,
+  type AnimatorValues,
+} from './animator/createAnimator';
+
+// Settling an element on snap points: from the package root only, since one
+// API has one entry. Its hook ships from './hooks'.
+export {
+  createDragToSnapPoints,
+  type DragToSnapPoints,
+  type DragToSnapPointsOptions,
+} from './dragToSnapPoints/createDragToSnapPoints';
+
 // Hooks
 export * from './hooks';
+
+export {createPanGesture} from './gestures/createPanGesture';
 
 // Utilities
 export * from './utils';

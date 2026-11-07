@@ -1,39 +1,44 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import {describe, it, expect} from 'vitest';
-import {stripTemplateAssetRefs, template} from './template.mjs';
+import {
+  stripTemplateAssetRefs,
+  template,
+  extractComponents,
+} from './template.mjs';
 
 describe('stripTemplateAssetRefs', () => {
-  it('replaces a lookaside astryx image URL with an inline data URI', () => {
+  it('replaces a /template-assets image path with an inline data URI', () => {
     const src =
-      "const hero = 'https://lookaside.facebook.com/assets/astryx/colorful-home-horizontal-1.png';";
+      "const hero = '/template-assets/colorful-home-horizontal-1.png';";
     const out = stripTemplateAssetRefs(src);
-    expect(out).not.toContain('lookaside.facebook.com');
+    expect(out).not.toContain('/template-assets/');
     expect(out).toContain('data:image/svg+xml,');
   });
 
-  it('replaces a lookaside block-avatar image URL', () => {
-    const src =
-      'src="https://lookaside.facebook.com/assets/astryx/avatar-profile-05.jpg"';
+  it('replaces a /template-assets block-avatar image path', () => {
+    const src = 'src="/template-assets/avatar-profile-05.jpg"';
     const out = stripTemplateAssetRefs(src);
-    expect(out).not.toContain('lookaside.facebook.com');
+    expect(out).not.toContain('/template-assets/');
     expect(out).toContain('data:image/svg+xml,');
   });
 
-  it('replaces every lookaside reference, not just the first', () => {
+  it('replaces every /template-assets reference, not just the first', () => {
     const src = [
-      "'https://lookaside.facebook.com/assets/astryx/colorful-home-horizontal-1.png'",
-      "'https://lookaside.facebook.com/assets/astryx/illustrative-horizontal-3.png'",
-      "'https://lookaside.facebook.com/assets/astryx/moody-scene-horizontal-1.png'",
+      "'/template-assets/colorful-home-horizontal-1.png'",
+      "'/template-assets/illustrative-horizontal-3.png'",
+      "'/template-assets/moody-scene-horizontal-1.png'",
     ].join('\n');
     const out = stripTemplateAssetRefs(src);
-    expect(out).not.toContain('lookaside.facebook.com');
+    expect(out).not.toContain('/template-assets/');
     expect(out.match(/data:image\/svg\+xml,/g)).toHaveLength(3);
   });
 
   it('preserves surrounding source structure', () => {
-    const src =
-      "const data = [{src: 'https://lookaside.facebook.com/assets/astryx/x.png', alt: 'X'}];";
+    const src = "const data = [{src: '/template-assets/x.png', alt: 'X'}];";
     const out = stripTemplateAssetRefs(src);
     expect(out).toContain("alt: 'X'");
     expect(out).toContain('const data = [{src:');
@@ -52,6 +57,32 @@ describe('stripTemplateAssetRefs', () => {
     const src = "import x from './local.png'; const y = '/public/logo.svg';";
     const out = stripTemplateAssetRefs(src);
     expect(out).toBe(src);
+  });
+
+  it('strips a /template-assets .mp4 source to an empty string, not the image data URI (#4780)', () => {
+    const src = "src: '/template-assets/Nature-1.mp4',";
+    const out = stripTemplateAssetRefs(src);
+    expect(out).toBe("src: '',");
+    expect(out).not.toContain('data:image/svg+xml,');
+    expect(out).not.toContain('/template-assets/');
+  });
+
+  it('strips other video extensions (.webm, .mov, .ogv) the same way', () => {
+    for (const ext of ['webm', 'mov', 'ogv']) {
+      const src = `src: '/template-assets/clip.${ext}',`;
+      const out = stripTemplateAssetRefs(src);
+      expect(out).toBe("src: '',");
+    }
+  });
+
+  it('still replaces an adjacent image reference with the placeholder when a video reference is also present', () => {
+    const src = [
+      "poster: '/template-assets/Nature-1-poster.jpg',",
+      "src: '/template-assets/Nature-1.mp4',",
+    ].join('\n');
+    const out = stripTemplateAssetRefs(src);
+    expect(out).toContain('data:image/svg+xml,');
+    expect(out).toContain("src: '',");
   });
 });
 
@@ -76,5 +107,116 @@ describe('template --skeleton component extraction (prefix-agnostic)', () => {
     expect(result.data.skeleton).not.toContain('<XDS');
 
     expect(result.data.skeleton).toContain('columns={{minWidth: 200}}');
+  });
+
+  it('filters out local helper components declared in the same file', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'astryx-test-'));
+    const pagePath = path.join(tmpDir, 'page.tsx');
+    fs.writeFileSync(
+      pagePath,
+      `
+import {Card} from '@astryxdesign/core/Layout';
+
+function TimelineSection() {
+  return <div />;
+}
+
+export default function Page() {
+  return (
+    <Card>
+      <TimelineSection />
+    </Card>
+  );
+}
+      `,
+    );
+
+    try {
+      const components = extractComponents(pagePath);
+      expect(components).toContain('Card');
+      expect(components).not.toContain('Timeline');
+    } finally {
+      fs.rmSync(tmpDir, {recursive: true, force: true});
+    }
+  });
+
+  it('filters out a type-annotated local helper', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'astryx-test-'));
+    const pagePath = path.join(tmpDir, 'page.tsx');
+    fs.writeFileSync(
+      pagePath,
+      `
+import type {FC} from 'react';
+import {Card} from '@astryxdesign/core/Layout';
+
+const TimelineSection: FC = () => <div />;
+
+export default function Page() {
+  return (
+    <Card>
+      <TimelineSection />
+    </Card>
+  );
+}
+`,
+    );
+    try {
+      const components = extractComponents(pagePath);
+      expect(components).toContain('Card');
+      expect(components).not.toContain('Timeline');
+    } finally {
+      fs.rmSync(tmpDir, {recursive: true, force: true});
+    }
+  });
+
+  it('keeps an imported component when declaration-like text appears in a comment or string', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'astryx-test-'));
+    const pagePath = path.join(tmpDir, 'page.tsx');
+    fs.writeFileSync(
+      pagePath,
+      `
+import {Card} from '@astryxdesign/core/Layout';
+
+// const Card = () => null;
+const note = 'function Card() {}';
+
+export default function Page() {
+  return <Card>{note}</Card>;
+}
+`,
+    );
+    try {
+      expect(extractComponents(pagePath)).toContain('Card');
+    } finally {
+      fs.rmSync(tmpDir, {recursive: true, force: true});
+    }
+  });
+
+  it('keeps a bare imported component whose name is itself a stripped suffix', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'astryx-test-'));
+    const pagePath = path.join(tmpDir, 'page.tsx');
+    fs.writeFileSync(
+      pagePath,
+      `
+import {Section} from '@astryxdesign/core/Section';
+
+function SectionHeading() {
+  return <div />;
+}
+
+export default function Page() {
+  return (
+    <Section>
+      <SectionHeading />
+    </Section>
+  );
+}
+`,
+    );
+    try {
+      expect(extractComponents(pagePath)).toContain('Section');
+    } finally {
+      fs.rmSync(tmpDir, {recursive: true, force: true});
+    }
   });
 });

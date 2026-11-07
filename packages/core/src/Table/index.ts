@@ -9,6 +9,24 @@
  * SYNC: When modified, update this header and /packages/core/src/Table/Table.doc.mjs
  */
 
+import type {IconName} from '../Icon';
+import type {TableRowStatusColor} from './plugins/rowStatus/useTableRowStatus';
+
+/** Stable custom row-status marker contract. */
+export interface TableRowStatus {
+  color: TableRowStatusColor | (string & {});
+  icon?: IconName;
+  label: string;
+}
+
+/** Semantic row outcome resolved through the active theme. */
+export interface TableSemanticRowStatus {
+  status: 'success' | 'warning' | 'error';
+  color?: never;
+  icon?: never;
+  label: string;
+}
+
 export {Table} from './Table';
 export {TableRow} from './TableRow';
 export {TableCell} from './TableCell';
@@ -17,6 +35,7 @@ export {TableHeader} from './TableHeader';
 export {TableBody} from './TableBody';
 export {TableFooter} from './TableFooter';
 export {TableContext} from './TableContext';
+export {TableSelectionToolbar} from './TableSelectionToolbar';
 export {useTableSelection} from './plugins/selection';
 export {useTableSelectionState} from './plugins/selection';
 export {useTableSortable} from './plugins/sortable';
@@ -28,11 +47,8 @@ export {useTableColumnResize} from './plugins/columnResize';
 export {useTableStickyColumns} from './plugins/stickyColumns';
 export {useTableGroupedRows} from './plugins/groupedRows';
 export {useTableRowIndex} from './plugins/rowIndex';
-export {
-  useTableRowExpansion,
-  useTableRowExpansionState,
-} from './plugins/rowExpansion';
 export {useTableRowStatus} from './plugins/rowStatus';
+export {useTableRowExpansion} from './plugins/rowExpansion';
 export {useTableTreeData, useTableTreeState} from './plugins/tree';
 export {resolveContextActions} from './tableContextMenu';
 export {
@@ -65,6 +81,8 @@ export type {
   BodyCellRenderProps,
   ScrollWrapperRenderProps,
   BaseTableProps,
+  TableRenderContext,
+  TableRowContext,
 } from './types';
 export type {
   TableProps,
@@ -79,8 +97,10 @@ export type {TableHeaderProps} from './TableHeader';
 export type {TableBodyProps} from './TableBody';
 export type {TableFooterProps} from './TableFooter';
 export type {TableContextValue} from './TableContext';
+export type {TableSelectionToolbarProps} from './TableSelectionToolbar';
 export type {UseTableSelectionConfig} from './plugins/selection';
 export type {
+  TableSelectionState,
   UseTableSelectionStateConfig,
   UseTableSelectionStateResult,
 } from './plugins/selection';
@@ -111,10 +131,7 @@ export type {
   UseTableGroupedRowsConfig,
   UseTableGroupedRowsResult,
 } from './plugins/groupedRows';
-export type {
-  UseTableRowStatusConfig,
-  TableRowStatus,
-} from './plugins/rowStatus';
+export type {UseTableRowStatusConfig} from './plugins/rowStatus';
 export type {
   TableTreeRowMeta,
   UseTableTreeDataConfig,

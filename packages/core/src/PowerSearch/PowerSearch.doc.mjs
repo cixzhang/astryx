@@ -5,8 +5,18 @@
 export const docs = {
   name: 'PowerSearch',
   displayName: 'Power Search',
-  category: 'Data Input',
-  keywords: ["powersearch","search","searchbar","filter","filterbar","faceted","querybuilder","structured","omnibar"],
+  category: 'Form Controls',
+  keywords: [
+    'powersearch',
+    'search',
+    'searchbar',
+    'filter',
+    'filterbar',
+    'faceted',
+    'querybuilder',
+    'structured',
+    'omnibar',
+  ],
   props: [
     {
       name: 'config',
@@ -43,8 +53,7 @@ export const docs = {
     {
       name: 'placeholder',
       type: 'string',
-      description:
-        'Placeholder text shown when no filters are selected.',
+      description: 'Placeholder text shown when no filters are selected.',
       default: "'Search...'",
     },
     {
@@ -56,7 +65,8 @@ export const docs = {
     {
       name: 'hasClear',
       type: 'boolean',
-      description: 'Show a clear-all button for removing all filters.',
+      description:
+        'Show a clear-all button that removes every editable filter. Read-only filters stay.',
       default: 'true',
     },
     {
@@ -80,8 +90,7 @@ export const docs = {
     {
       name: 'status',
       type: "{type: 'warning' | 'error' | 'success', message?: string}",
-      description:
-        'Validation status object with type and optional message.',
+      description: 'Validation status object with type and optional message.',
     },
     {
       name: 'startIcon',
@@ -104,6 +113,26 @@ export const docs = {
       default: '40',
     },
     {
+      name: 'maxOperatorMenuItems',
+      type: 'number',
+      description:
+        'Maximum suggestions shown in string and entity value typeaheads. Does not affect the main field search menu or enum value menus.',
+      default: '10',
+    },
+    {
+      name: 'maxSearchResults',
+      type: 'number',
+      description:
+        'Max ranked results for a non-empty query. Does not affect a field value editor. Browsing with an empty query shows up to 1,000 fields.',
+      default: '10',
+    },
+    {
+      name: 'menuWidth',
+      type: 'number',
+      description:
+        'Width in pixels for the main field/search menu. Does not affect field value editors.',
+    },
+    {
       name: 'popoverSaveButtonLabel',
       type: 'string',
       description: 'Label for the save button in the edit popover.',
@@ -112,7 +141,8 @@ export const docs = {
     {
       name: 'timezoneID',
       type: 'string',
-      description: 'Timezone ID for date formatting (e.g. "America/New_York").',
+      description:
+        'IANA zone a date-only date_absolute value, and each absolute part of a date_range, is read and written in: the day shows, edits and stores (as that midnight) in it; unset, a day is its UTC day. A date_absolute with isDateOnly: false shows and edits its date and time in it; unset, in the viewer\'s zone. E.g. "America/New_York". Date values are written in the InternationalizationProvider calendar, such as calendar="persian"; filter values stay Unix seconds.',
     },
     {
       name: 'handleRef',
@@ -143,25 +173,148 @@ export const docs = {
       default: "'md'",
     },
     {
+      name: 'menuWidth',
+      type: 'number',
+      description:
+        'Maximum width for the operator/value dropdown menu in pixels.',
+    },
+    {
+      name: 'maxOperatorMenuItems',
+      type: 'number',
+      description:
+        'Maximum number of items displayed in the operator dropdown.',
+    },
+    {
+      name: 'tokenOverflowBehavior',
+      type: "'none' | 'unfocusedInline' | 'unfocusedLayer'",
+      description:
+        'Controls how tokens overflow when the container is too narrow. Forwarded to Tokenizer.',
+      default: "'none'",
+    },
+    {
+      name: 'onFocus',
+      type: '(e: React.FocusEvent) => void',
+      description: 'Fires when focus enters the search input.',
+    },
+    {
+      name: 'onBlur',
+      type: '(e: React.FocusEvent) => void',
+      description: 'Fires when focus leaves the search input.',
+    },
+    {
       name: 'xstyle',
       type: 'StyleXStyles',
       description:
         'StyleX styles for layout customization. Must be a stylex.create() value.',
     },
+    {
+      name: 'presentation',
+      type: "'popover' | 'bottom-sheet' | 'adaptive'",
+      description:
+        'How the field presents filter editing. adaptive (the default) uses the bottom sheet on compact touch screens and the popover otherwise, resolved the same way Selector resolves it; the server render and the hydrating render are the popover. popover is the tokenizer field with its typeahead and the editor popover on every device. bottom-sheet makes the whole field, on every device, one trigger showing display-only filter tokens: it opens a Filters sheet listing the filters as rows that edit or remove a filter, with Add filter, Done, and Clear all (which asks first and keeps read-only filters); an Add filter sheet with the fields (or the content search with inline suggestions) opens above it, and a value step that stages operator → value and confirms from its footer opens above that. Dismissing a step reveals the one beneath. The flow edits a draft: adding, editing and removing filters and Clear all change the draft, and onChange is called when Done applies it, once per edit in order; dismissing the flow with a changed draft asks before discarding it. List values edit through the Tokenizer\'s own sheet. In the sheet presentation menuWidth and tokenOverflowBehavior have no surface to act on and warn in development. Pass presentation="popover" to keep the tokenizer field and the editor popover on every device.',
+      default: "'adaptive'",
+    },
   ],
+  examples: [
+    {
+      label: 'Keep the popover on every device',
+      code: `const [filters, setFilters] = useState([]);
+<PowerSearch
+  config={config}
+  filters={filters}
+  onChange={next => setFilters(next)}
+  presentation="popover"
+/>`,
+    },
+  ],
+  // `config` and `filters` are custom values the docsite preview cannot
+  // generate automatically. Keep this small, but include an initial token so
+  // the Properties tab demonstrates a realistic controlled PowerSearch.
+  playground: {
+    defaults: {
+      config: {
+        name: 'IssueSearch',
+        fields: [
+          {
+            key: 'status',
+            label: 'Status',
+            defaultOperator: 'is',
+            operators: [
+              {
+                key: 'is',
+                label: 'is',
+                value: {
+                  type: 'enum',
+                  values: [
+                    {value: 'open', label: 'Open'},
+                    {value: 'closed', label: 'Closed'},
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            key: 'title',
+            label: 'Title',
+            defaultOperator: 'contains',
+            operators: [
+              {key: 'contains', label: 'contains', value: {type: 'string'}},
+            ],
+          },
+        ],
+      },
+      filters: [
+        {
+          field: 'status',
+          operator: 'is',
+          value: {type: 'enum', value: 'open'},
+        },
+      ],
+    },
+  },
   usage: {
     description:
       'PowerSearch is a structured filter bar where each token represents a field, operator, and value. Use it for complex multi-dimensional filtering when users need to combine multiple search criteria. For simple single-field search, use a text input instead.',
     bestPractices: [
-      { guidance: true, description: 'Define clear, descriptive field names and aliases so users can quickly find the filter they need.' },
-      { guidance: true, description: 'Provide a result count to give users feedback on how their filters affect the data set.' },
-      { guidance: false, description: 'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.' },
-      { guidance: false, description: 'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
+      {
+        guidance: true,
+        description:
+          'Define clear, descriptive field names and aliases so users can quickly find the filter they need.',
+      },
+      {
+        guidance: true,
+        description:
+          'Provide a result count to give users feedback on how their filters affect the data set.',
+      },
+      {
+        guidance: false,
+        description:
+          'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.',
+      },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
+      },
     ],
   },
   theming: {
-    targets: [
-      {className: 'astryx-power-search'},
+    targets: [{className: 'astryx-power-search'}],
+    vars: [
+      {
+        name: '--_power-search-sheet-hit-inset',
+        description:
+          "Outset of the invisible hit area of the touch sheet's icon-sized actions (the Filters header's Add filter and each row's remove button), applied to a ::after overlay. 0 on a fine pointer; negative on a coarse one, which grows the action to a 44px touch target without changing what is drawn.",
+        default: '0px',
+        private: true,
+      },
+      {
+        name: '--_power-search-sheet-hit-content',
+        description:
+          'Whether the touch sheet\'s invisible hit overlay exists. `none` on a fine pointer, so no ::after is generated and hover still reaches the action; `""` on a coarse one, where the overlay provides the 44px touch target.',
+        default: 'none',
+        private: true,
+      },
     ],
   },
 };
@@ -223,7 +376,7 @@ export const docsZh = {
     {
       name: 'hasClear',
       type: 'boolean',
-      description: '显示清除全部按钮以移除所有过滤器。',
+      description: '显示清除全部按钮，移除可编辑的过滤器，保留只读过滤器。',
       default: 'true',
     },
     {
@@ -269,6 +422,25 @@ export const docsZh = {
       default: '40',
     },
     {
+      name: 'maxOperatorMenuItems',
+      type: 'number',
+      description:
+        '字符串和实体值预输入菜单中显示的最大建议数。不影响主字段搜索菜单或枚举值菜单。',
+      default: '10',
+    },
+    {
+      name: 'maxSearchResults',
+      type: 'number',
+      description:
+        '非空查询的最大排名结果数。不影响字段值编辑器。使用空查询浏览时最多显示 1,000 个字段。',
+      default: '10',
+    },
+    {
+      name: 'menuWidth',
+      type: 'number',
+      description: '主字段/搜索菜单的像素宽度。不影响字段值编辑器。',
+    },
+    {
       name: 'popoverSaveButtonLabel',
       type: 'string',
       description: '编辑弹出窗口中保存按钮的标签。',
@@ -277,12 +449,14 @@ export const docsZh = {
     {
       name: 'timezoneID',
       type: 'string',
-      description: '用于日期格式化的时区 ID（例如 "America/New_York"）。',
+      description:
+        '仅日期的 date_absolute 值及 date_range 的每个绝对端点读写所用的 IANA 时区：该日在此时区显示、编辑并以其午夜存储；未设置时为 UTC 日。isDateOnly: false 的 date_absolute 值在此时区显示并编辑其日期和时间；未设置时为查看者所在时区。例如 "America/New_York"。日期值使用 InternationalizationProvider 的历法（如 calendar="persian"）显示；筛选值仍为 Unix 秒数。',
     },
     {
       name: 'handleRef',
       type: 'Ref<PowerSearchHandle>',
-      description: '提供 focusTypeahead() 和 blurTypeahead() 方法的命令式句柄。',
+      description:
+        '提供 focusTypeahead() 和 blurTypeahead() 方法的命令式句柄。',
     },
     {
       name: 'endContent',
@@ -306,15 +480,38 @@ export const docsZh = {
       type: 'StyleXStyles',
       description: '用于布局自定义的 StyleX 样式。必须是 stylex.create() 值。',
     },
+    {
+      name: 'presentation',
+      type: "'popover' | 'bottom-sheet' | 'adaptive'",
+      description:
+        '字段如何呈现筛选编辑。adaptive（默认）在紧凑触摸屏上使用底部面板，其他情况使用 popover，解析方式与 Selector 相同；服务端渲染和水合期间的渲染均为 popover。popover 在所有设备上为带有预输入和编辑弹出层的标记字段。bottom-sheet 在所有设备上将整个字段变为一个显示只读筛选标记的触发按钮——点按后打开列出筛选项的「筛选」面板，每行可编辑或移除筛选（含添加筛选、完成、全部清除；全部清除会先确认，并保留只读筛选）；列出字段（或带内联建议的内容搜索）的「添加筛选」面板在其上方打开，按运算符 → 值暂存并在底部确认的取值步骤再在其上方打开。关闭某一步会露出下方的那一步。整个流程编辑的是草稿：添加、编辑、移除筛选和全部清除都只改动草稿，点按「完成」应用草稿时才按编辑顺序逐次触发 onChange；草稿有改动时关闭流程会先询问是否放弃。列表值通过 Tokenizer 自身的面板编辑。在底部面板呈现中，menuWidth 和 tokenOverflowBehavior 没有作用对象，并会在开发环境中发出警告。传入 presentation="popover" 可在所有设备上保留标记字段和编辑弹出层。',
+      default: "'adaptive'",
+    },
   ],
   usage: {
     description:
       'PowerSearch is a structured filter bar where each token represents a field, operator, and value. Use it for complex multi-dimensional filtering when users need to combine multiple search criteria. For simple single-field search, use a text input instead.',
     bestPractices: [
-      { guidance: true, description: 'Define clear, descriptive field names and aliases so users can quickly find the filter they need.' },
-      { guidance: true, description: 'Provide a result count to give users feedback on how their filters affect the data set.' },
-      { guidance: false, description: 'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.' },
-      { guidance: false, description: 'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
+      {
+        guidance: true,
+        description:
+          'Define clear, descriptive field names and aliases so users can quickly find the filter they need.',
+      },
+      {
+        guidance: true,
+        description:
+          'Provide a result count to give users feedback on how their filters affect the data set.',
+      },
+      {
+        guidance: false,
+        description:
+          'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.',
+      },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
+      },
     ],
   },
 };
@@ -327,33 +524,65 @@ export const docsDense = {
     description:
       'PowerSearch is a structured filter bar where each token represents a field, operator, and value. Use it for complex multi-dimensional filtering when users need to combine multiple search criteria. For simple single-field search, use a text input instead.',
     bestPractices: [
-      { guidance: true, description: 'Define clear, descriptive field names and aliases so users can quickly find the filter they need.' },
-      { guidance: true, description: 'Provide a result count to give users feedback on how their filters affect the data set.' },
-      { guidance: false, description: 'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.' },
-      { guidance: false, description: 'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.' },
+      {
+        guidance: true,
+        description:
+          'Define clear, descriptive field names and aliases so users can quickly find the filter they need.',
+      },
+      {
+        guidance: true,
+        description:
+          'Provide a result count to give users feedback on how their filters affect the data set.',
+      },
+      {
+        guidance: false,
+        description:
+          'Use PowerSearch for simple keyword searches; a standard text input is more appropriate for single-field lookups.',
+      },
+      {
+        guidance: false,
+        description:
+          'Wrap a disabled PowerSearch in Tooltip to explain why it is disabled; disabled controls swallow the hover events the wrapper needs. Use the disabledMessage prop instead.',
+      },
     ],
   },
   propDescriptions: {
     config: 'Configuration defining available fields, operators, value types.',
     filters: 'Currently active filters.',
-    onChange: "Called on filter change. changeType is 'add', 'edit', or 'remove'. index is affected filter position.",
+    onChange:
+      "Called on filter change. changeType is 'add', 'edit', or 'remove'. index is affected filter position.",
     label: 'Accessible label for search input.',
     isLabelHidden: 'Visually hides label while keeping accessible.',
     placeholder: 'Text shown when no filters selected.',
     hasAutoFocus: 'Auto-focus input on mount.',
-    hasClear: 'Show clear-all button for removing all filters.',
+    hasClear:
+      'Show clear-all button; removes editable filters, keeps read-only ones.',
     isReadOnly: 'Prevent adding, editing, or removing filters.',
     isDisabled: 'Disables entire component.',
     status: 'Validation status object w/ type + optional message.',
-    startIcon: 'Icon at input start, before filter tokens. Forwarded to internal Tokenizer.',
-    statusVariant: 'How status message is placed: attached overlaps below input; detached floats below w/ spacing.',
+    startIcon:
+      'Icon at input start, before filter tokens. Forwarded to internal Tokenizer.',
+    statusVariant:
+      'How status message is placed: attached overlaps below input; detached floats below w/ spacing.',
     maxTokenLength: 'Max char length for filter value display in tokens.',
+    maxOperatorMenuItems:
+      'Max suggestions in string/entity value typeaheads; excludes main field search + enum menus.',
+    maxSearchResults:
+      'Max ranked results for a non-empty query; excludes value editors.',
+    menuWidth: 'Main field/search menu width in pixels.',
     popoverSaveButtonLabel: 'Label for save button in edit popover.',
-    timezoneID: 'Timezone ID for date formatting (e.g. "America/New_York").',
-    handleRef: 'Imperative handle w/ focusTypeahead() + blurTypeahead() methods.',
-    endContent: 'Content at end of input row. Useful for action buttons or controls.',
-    resultCount: 'Result count matching current filters. Number formatted as "N results"; string displayed as-is.',
+    timezoneID:
+      'IANA zone a date-only value reads and writes in; unset, its UTC day. Dates show in the provider calendar.',
+    handleRef:
+      'Imperative handle w/ focusTypeahead() + blurTypeahead() methods.',
+    endContent:
+      'Content at end of input row. Useful for action buttons or controls.',
+    resultCount:
+      'Result count matching current filters. Number formatted as "N results"; string displayed as-is.',
     size: 'Search input+token size.',
-    xstyle: 'StyleX styles for layout customization. Must be stylex.create() value.',
+    xstyle:
+      'StyleX styles for layout customization. Must be stylex.create() value.',
+    presentation:
+      "'adaptive' (default: sheet on compact touch, else popover; SSR/hydration render popover) | 'popover' (tokenizer field + editor popover, every device) | 'bottom-sheet' (one trigger with display-only tokens + stacked Filters / Add filter / value sheets; rows remove inline; Clear all confirms, keeps read-only; list values via Tokenizer's sheet). Sheet: menuWidth/tokenOverflowBehavior inert (dev warning). presentation=\"popover\" keeps the popover on every device.",
   },
 };

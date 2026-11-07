@@ -6,10 +6,10 @@
  * @position Utility; used by DropdownMenu to unify data-driven and compound paths
  */
 
-import type {ReactNode} from 'react';
+import type {ReactElement, ReactNode} from 'react';
 import * as stylex from '@stylexjs/stylex';
-import {Divider} from '../Divider';
 import {DropdownMenuItem} from './DropdownMenuItem';
+import {DropdownMenuDivider} from './DropdownMenuDivider';
 import {DropdownMenuSubMenu} from './DropdownMenuSubMenu';
 import {
   spacingVars,
@@ -34,17 +34,60 @@ const styles = stylex.create({
     color: colorVars['--color-text-secondary'],
     userSelect: 'none',
   },
-  divider: {
-    marginBlock: spacingVars['--spacing-1'],
-  },
 });
 
-function getItemKey(item: DropdownMenuItemData): string {
-  return `item-${item.label}`;
+function getItemKey(item: DropdownMenuItemData, index: number): string {
+  return `item-${item.id ?? index}`;
 }
 
 function getSectionKey(section: DropdownMenuSection, index: number): string {
-  return `section-${section.title ?? index}`;
+  return `section-${section.id ?? index}`;
+}
+
+/**
+ * Renders one leaf row as a `DropdownMenuItem`.
+ *
+ * Keyed by `item.id` when the caller supplies one, else by position. NOT by
+ * label: an item that reports its own result (a copy row swapping to "Copied")
+ * would change key mid-interaction, remounting the row and dropping keyboard
+ * focus. Position is the safe default because a menu's rows are usually fixed;
+ * a menu whose items reorder or filter needs `id` for the same reason.
+ *
+ * `items` selects the submenu shape rather than being an item prop, and `id` is
+ * identity for React rather than something `DropdownMenuItem` renders, so both
+ * are stripped. Every remaining field of `DropdownMenuItemData` is a
+ * `DropdownMenuItem` prop by construction (the type is `Pick`ed from
+ * `DropdownMenuItemProps`), so the data path forwards them wholesale and can't
+ * silently drop a field the data API advertises.
+ */
+function renderLeafItem(
+  item: DropdownMenuItemData,
+  index: number,
+): ReactElement {
+  const {items: _submenuItems, id: _id, ...itemProps} = item;
+  return <DropdownMenuItem key={getItemKey(item, index)} {...itemProps} />;
+}
+
+/**
+ * A data item that declares nested `items` becomes a submenu (data-mode
+ * parity with the compound DropdownMenuSubMenu API), at the top level and
+ * inside a section alike; otherwise it's a leaf. renderDropdownItems owns the
+ * recursion and hands the rendered children to DropdownMenuSubMenu, so
+ * DropdownMenuSubMenu never imports this module back (no import cycle).
+ */
+function renderItem(item: DropdownMenuItemData, index: number): ReactElement {
+  if (item.items && item.items.length > 0) {
+    return (
+      <DropdownMenuSubMenu
+        key={getItemKey(item, index)}
+        icon={item.icon}
+        label={item.label}
+        isDisabled={item.isDisabled}>
+        {renderDropdownItems(item.items)}
+      </DropdownMenuSubMenu>
+    );
+  }
+  return renderLeafItem(item, index);
 }
 
 /**
@@ -58,13 +101,7 @@ export function renderDropdownItems(items: DropdownMenuOption[]): ReactNode {
     const option = items[i];
 
     if ('type' in option && option.type === 'divider') {
-      elements.push(
-        <Divider
-          key={`divider-${i}`}
-          xstyle={styles.divider}
-          {...themeProps('dropdown-menu-divider')}
-        />,
-      );
+      elements.push(<DropdownMenuDivider key={`divider-${i}`} />);
     } else if ('type' in option && option.type === 'section') {
       elements.push(
         <div
@@ -81,44 +118,11 @@ export function renderDropdownItems(items: DropdownMenuOption[]): ReactNode {
               {option.title}
             </div>
           )}
-          {option.items.map(item => (
-            <DropdownMenuItem
-              key={getItemKey(item)}
-              icon={item.icon}
-              label={item.label}
-              onClick={item.onClick}
-              isDisabled={item.isDisabled}
-            />
-          ))}
+          {option.items.map(renderItem)}
         </div>,
       );
     } else if (!('type' in option)) {
-      // A plain item that declares nested `items` becomes a submenu (data-mode
-      // parity with the compound DropdownMenuSubMenu API); otherwise it's a
-      // leaf. renderDropdownItems owns the recursion and hands the rendered
-      // children to DropdownMenuSubMenu — so DropdownMenuSubMenu never imports
-      // this module back (no import cycle).
-      if (option.items && option.items.length > 0) {
-        elements.push(
-          <DropdownMenuSubMenu
-            key={getItemKey(option)}
-            icon={option.icon}
-            label={option.label}
-            isDisabled={option.isDisabled}>
-            {renderDropdownItems(option.items)}
-          </DropdownMenuSubMenu>,
-        );
-      } else {
-        elements.push(
-          <DropdownMenuItem
-            key={getItemKey(option)}
-            icon={option.icon}
-            label={option.label}
-            onClick={option.onClick}
-            isDisabled={option.isDisabled}
-          />,
-        );
-      }
+      elements.push(renderItem(option, i));
     }
   }
 

@@ -12,7 +12,7 @@ const meta: Meta<typeof Kbd> = {
     keys: {
       control: 'text',
       description:
-        'Keyboard shortcut string. Use "+" to separate keys. Special keys: mod, ctrl, alt, shift, enter, backspace, escape, tab, up, down, left, right.',
+        'Keyboard shortcut string. Use "+" to separate keys. Special keys: mod, ctrl, alt, shift, enter, backspace, escape, tab, up, down, left, right, plus. Aliases: esc for escape and return for enter.',
     },
   },
 };
@@ -76,12 +76,14 @@ export const SpecialKeys: Story = {
           Escape:
         </Text>
         <Kbd keys="escape" />
+        <Kbd keys="esc" />
       </div>
       <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
         <Text type="label" style={{width: '100px'}}>
           Enter:
         </Text>
         <Kbd keys="enter" />
+        <Kbd keys="return" />
       </div>
       <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
         <Text type="label" style={{width: '100px'}}>
@@ -192,8 +194,8 @@ export const InlineWithText: Story = {
         Press <Kbd keys="escape" /> to close the dialog.
       </Text>
       <Text type="body">
-        Navigate with <Kbd keys="up" /> and <Kbd keys="down" /> arrow
-        keys, then press <Kbd keys="enter" /> to select.
+        Navigate with <Kbd keys="up" /> and <Kbd keys="down" /> arrow keys, then
+        press <Kbd keys="enter" /> to select.
       </Text>
     </div>
   ),
@@ -265,6 +267,37 @@ export const MenuShortcuts: Story = {
         <Text type="body">Redo</Text>
         <Kbd keys="mod+shift+z" />
       </div>
+    </div>
+  ),
+};
+
+// =============================================================================
+// Larger Text
+// =============================================================================
+
+type LargerTextRow = React.CSSProperties & {'--text-supporting-size'?: string};
+
+export const LargerText: Story = {
+  name: 'Larger text',
+  render: () => (
+    <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+      {['default', '1.25rem', '2.5rem'].map(size => {
+        const row: LargerTextRow = {
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '16px',
+          alignItems: 'center',
+          ...(size === 'default' ? null : {'--text-supporting-size': size}),
+        };
+        return (
+          <div key={size} data-testid={`kbd-row-${size}`} style={row}>
+            <Kbd keys="mod+k" />
+            <Kbd keys="shift+enter" />
+            <Kbd keys="esc" />
+            <Kbd keys="up" />
+          </div>
+        );
+      })}
     </div>
   ),
 };

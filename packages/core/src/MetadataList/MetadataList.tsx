@@ -4,7 +4,7 @@
 
 /**
  * @file MetadataList.tsx
- * @input Uses React, ReactNode, StyleXStyles, theme tokens, MetadataListContext, i18n (useTranslator)
+ * @input Uses React, ReactNode, StyleXStyles, theme tokens, MetadataListContext, i18n (useComponentTranslator)
  * @output Exports MetadataList component, MetadataListProps, MetadataListColumns types
  * @position Core implementation; consumed by index.ts, tested by MetadataList.test.tsx
  *
@@ -30,8 +30,15 @@ import {
 } from './MetadataListContext';
 import type {BaseProps} from '../BaseProps';
 import {mergeProps} from '../utils';
+import {isRenderable} from '../utils/isRenderable';
 import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/MetadataList/MetadataList.generated';
+
+registerEnglishFallback(english);
 
 // =============================================================================
 // Types
@@ -113,7 +120,7 @@ const styles = stylex.create({
   // Vertical orientation — grid layout for label-value pairs
   gridSingle: {
     display: 'grid',
-    gridTemplateColumns: 'auto 1fr',
+    gridTemplateColumns: 'auto minmax(0, 1fr)',
     gap: `${spacingVars['--spacing-2']} ${spacingVars['--spacing-4']}`,
     alignItems: 'baseline',
   },
@@ -143,11 +150,15 @@ const styles = stylex.create({
   // Show more/less button
   toggleButton: {
     appearance: 'none',
-    background: 'none',
-    border: 'none',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderStyle: 'none',
     padding: `${spacingVars['--spacing-2']} 0`,
-    cursor: 'pointer',
-    color: colorVars['--color-accent'],
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
+    color: colorVars['--color-text-accent'],
     fontSize: typeScaleVars['--text-body-size'],
     lineHeight: typeScaleVars['--text-body-leading'],
     fontWeight: fontWeightVars['--font-weight-medium'],
@@ -155,6 +166,12 @@ const styles = stylex.create({
     textAlign: 'start',
     alignSelf: 'flex-start',
   },
+});
+
+// A fixed numeric column count (and a custom label width) is only known at
+// runtime, so it comes from a dynamic style rather than a static rule.
+const dynamicStyles = stylex.create({
+  gridTemplate: (gridTemplateColumns: string) => ({gridTemplateColumns}),
 });
 
 // =============================================================================
@@ -190,15 +207,23 @@ export function MetadataList({
   style,
   'data-testid': testId,
   ref,
+  ...restProps
 }: MetadataListProps) {
   const isMultiColumn =
     columns === 'multi' || (typeof columns === 'number' && columns > 1);
   // Default to 'top' for multi-column and horizontal layouts since side labels
   // don't work well when items are in separate grid cells.
-  const labelConfig = label ?? (isMultiColumn ? LABEL_TOP : LABEL_START);
+  const defaultLabelConfig = isMultiColumn ? LABEL_TOP : LABEL_START;
+  const labelConfig = useMemo(
+    () => ({
+      ...label,
+      position: label?.position ?? defaultLabelConfig.position,
+    }),
+    [label, defaultLabelConfig],
+  );
   const [isShowAll, setIsShowAll] = useState(false);
   const contentId = useId();
-  const t = useTranslator();
+  const t = useComponentTranslator();
 
   const contextValue = useMemo(
     () => ({
@@ -220,8 +245,9 @@ export function MetadataList({
       ? childrenArray.slice(0, effectiveMax)
       : childrenArray;
 
-  const titleContent =
-    title != null ? <div {...stylex.props(styles.title)}>{title}</div> : null;
+  const titleContent = isRenderable(title) ? (
+    <div {...stylex.props(styles.title)}>{title}</div>
+  ) : null;
 
   // Determine grid style based on columns and label position
   const getGridStyle = () => {
@@ -241,24 +267,37 @@ export function MetadataList({
     return styles.gridMulti;
   };
 
-  // For numeric columns > 1 with side labels, use inline style for dynamic grid
-  const dynamicGridStyle =
-    !isHorizontal &&
-    labelConfig.position === 'start' &&
-    typeof columns === 'number' &&
-    columns > 1
-      ? {gridTemplateColumns: `repeat(${columns}, auto 1fr)`}
-      : !isHorizontal &&
-          labelConfig.position === 'start' &&
-          labelConfig.width != null
-        ? {
-            gridTemplateColumns: `${typeof labelConfig.width === 'number' ? `${labelConfig.width}px` : labelConfig.width} 1fr`,
-          }
-        : undefined;
+  // The grid template for a fixed numeric column count, or for a custom label
+  // width. Both are runtime values, so they resolve to a dynamic style below.
+  // The track shape depends on the label position: stacked labels put a whole
+  // item in one cell, while side labels split each item into a label track and
+  // a value track.
+  const getGridTemplateColumns = () => {
+    if (isHorizontal) {
+      return null;
+    }
+    const isStacked = labelConfig.position === 'top';
+    if (typeof columns === 'number' && columns > 1) {
+      return isStacked
+        ? `repeat(${columns}, 1fr)`
+        : `repeat(${columns}, auto minmax(0, 1fr))`;
+    }
+    // A custom label width only applies to the label track of side labels.
+    if (!isStacked && labelConfig.width != null) {
+      const width =
+        typeof labelConfig.width === 'number'
+          ? `${labelConfig.width}px`
+          : labelConfig.width;
+      return `${width} minmax(0, 1fr)`;
+    }
+    return null;
+  };
+  const gridTemplateColumns = getGridTemplateColumns();
 
   return (
     <MetadataListContext value={contextValue}>
       <div
+        {...restProps}
         ref={ref}
         data-testid={testId}
         {...mergeProps(
@@ -273,9 +312,12 @@ export function MetadataList({
         {titleContent}
         <dl
           id={contentId}
-          {...mergeProps(stylex.props(styles.dl, getGridStyle()), {
-            style: dynamicGridStyle,
-          })}>
+          {...stylex.props(
+            styles.dl,
+            getGridStyle(),
+            gridTemplateColumns != null &&
+              dynamicStyles.gridTemplate(gridTemplateColumns),
+          )}>
           {visibleChildren}
         </dl>
         {isExceedMax && (

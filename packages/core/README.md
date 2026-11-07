@@ -6,10 +6,10 @@ Core UI components, theme system, and utilities for the Astryx design system. Fo
 >
 > ```bash
 > npm install -D @astryxdesign/cli   # or: pnpm add -D / yarn add -D / bun add -d
-> npx astryx init                    # resolves to the CLI you just installed
+> npx @astryxdesign/cli init         # the CLI you just installed
 > ```
 >
-> `init` writes the Astryx component index into your `AGENTS.md`/`CLAUDE.md` so your agent discovers components, templates, and design tokens instead of guessing. Need a single command without installing? Use the scoped package directly — `npx @astryxdesign/cli <cmd>` (or `pnpm dlx`/`bunx @astryxdesign/cli`). Bare `npx astryx` only works once `@astryxdesign/cli` is a dependency; before that npm resolves it to an unrelated package. See [XDS CLI](#xds-cli).
+> `init` writes the Astryx component index into your `AGENTS.md`/`CLAUDE.md` so your agent discovers components, templates, and design tokens instead of guessing. Need a single command without installing? The same scoped command works: `npx @astryxdesign/cli <cmd>`. Always use the scoped name: the unscoped `astryx` resolves to an unrelated npm package until `@astryxdesign/cli` is a dependency. See [XDS CLI](#xds-cli).
 
 ## Component Docs
 
@@ -21,7 +21,7 @@ npx @astryxdesign/cli component Button        # full docs for a component
 npx @astryxdesign/cli component --list        # list all components
 ```
 
-> Use the scoped `@astryxdesign/cli` to run without installing; bare `npx astryx` only resolves once the CLI is a dependency.
+> Use the scoped `@astryxdesign/cli`: it runs with or without installing, while the unscoped `astryx` resolves to an unrelated npm package until the CLI is a dependency.
 
 ## Page Layouts
 
@@ -57,19 +57,19 @@ astryx discover                     # discover external Astryx packages
 astryx gap-report                   # report a missing capability
 ```
 
-> Prefix these with your runner: `npx astryx …` / `pnpm exec astryx …` once the CLI is installed, or `npx @astryxdesign/cli …` to run without installing.
+> Run these as `npx @astryxdesign/cli …`, or `pnpm exec astryx …` (or your package manager's equivalent) once the CLI is installed.
 
 ## Related Packages
 
 | Package                                                                                               | Description                                                   |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [`@astryxdesign/cli`](https://github.com/facebook/astryx/tree/main/packages/cli)                      | CLI tooling: component docs, templates, scaffolding, codemods |
-| [`@astryxdesign/theme-neutral`](https://github.com/facebook/astryx/tree/main/packages/themes/neutral) | Muted, minimal theme (Lucide icons)                           |
+| [`@astryxdesign/cli`](https://github.com/meta/astryx/tree/main/packages/cli)                      | CLI tooling: component docs, templates, scaffolding, codemods |
+| [`@astryxdesign/theme-neutral`](https://github.com/meta/astryx/tree/main/packages/themes/neutral) | Muted, minimal theme (Lucide icons)                           |
 
 ## Resources
 
-- [Component Storybook](https://facebook.github.io/astryx/)
-- [GitHub Repository](https://github.com/facebook/astryx)
+- [Component Storybook](https://astryx.atmeta.com/storybook/)
+- [GitHub Repository](https://github.com/meta/astryx)
 
 ---
 
@@ -153,7 +153,7 @@ No build plugins needed; Astryx ships pre-built CSS that works alongside Tailwin
 @import 'tailwindcss/utilities.css' layer(utilities);
 ```
 
-The `tailwind-theme.css` import maps system tokens to Tailwind utilities via `@theme inline`:
+The `tailwind-theme.css` import maps system tokens to Tailwind utilities via `@theme reference inline`, so the mappings generate utilities without redeclaring the tokens at runtime:
 
 ```tsx
 // Without the bridge — verbose:
@@ -165,15 +165,18 @@ The `tailwind-theme.css` import maps system tokens to Tailwind utilities via `@t
 
 Some useful mappings:
 
-| Tailwind class                                            | Astryx token                                      |
-| --------------------------------------------------------- | ------------------------------------------------- |
-| `text-primary` / `text-secondary`                         | `--color-text-primary` / `--color-text-secondary` |
-| `bg-surface` / `bg-card` / `bg-body`                      | `--color-background-surface` / `card` / `body`    |
-| `border-border` / `border-strong`                         | `--color-border` / `--color-border-emphasized`    |
-| `bg-success` / `text-error` / `text-warning`              | Status tokens                                     |
-| `bg-blue-subtle` / `border-blue-ring` / `text-blue-vivid` | Hue palette (×10 hues)                            |
-| `rounded-sm` / `rounded-md` / `rounded-lg`                | `--radius-inner` / `element` / `container`        |
-| `shadow-sm` / `shadow-md` / `shadow-lg`                   | `--shadow-low` / `med` / `high`                   |
+| Tailwind class                                               | Astryx token                                                     |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `text-primary` / `text-secondary`                            | `--color-text-primary` / `--color-text-secondary`                |
+| `bg-surface` / `bg-card` / `bg-body`                         | `--color-background-surface` / `card` / `body`                   |
+| `border-border` / `border-strong`                            | `--color-border` / `--color-border-emphasized`                   |
+| `bg-info` / `bg-success` / `bg-warning` / `bg-error`         | Strong status fills (`--color-<status>`)                         |
+| `text-on-info` / `bg-info-muted` / `text-on-info-muted`      | Strong-fill content, pale fill, pale-fill content                |
+| `text-success` / `text-warning` / `text-error` / `text-info` | Status text on the page (`--color-text-*`; also `text-status-*`) |
+| `border-success` / `border-warning` / `border-error`         | Status borders (`--color-border-*`)                              |
+| `bg-blue-subtle` / `border-blue-ring` / `text-blue-vivid`    | Hue palette (×10 hues)                                           |
+| `rounded-sm` / `rounded-md` / `rounded-lg`                   | `--radius-inner` / `element` / `container`                       |
+| `shadow-sm` / `shadow-md` / `shadow-lg`                      | `--shadow-low` / `med` / `high`                                  |
 
 Spacing references `var(--spacing-1)` as the base unit, so `p-4` = 16px, matching Astryx's `--spacing-4`. Arbitrary values still work as an escape hatch: `bg-[var(--color-background-surface)]`.
 
@@ -252,67 +255,101 @@ Same CSS imports and providers as above. No build plugins needed; Astryx ships p
 ### No build step (CDN)
 
 For prototypes, embeds, or pages without a bundler, load the components straight
-from a public CDN. Two delivery options ship in the published package:
+from a public CDN as ES modules. React 19 removed its UMD builds ("To load React
+19 with a script tag, we recommend using an ESM-based CDN such as esm.sh"), so an
+import map is the way in — there is no `window.React` left for a global bundle to
+bind to.
 
-**1. UMD global (`<script>` tag).** A single pre-bundled file exposes every export
-on `window.Astryx`. React and ReactDOM are peer dependencies — load them yourself.
-Pair it with the precompiled stylesheet.
+The CLI writes this page for you, annotated and pinned to the version you have
+installed:
+
+```bash
+npx @astryxdesign/cli template --cdn   # writes cdn.template.html
+```
 
 ```html
 <!doctype html>
-<html data-astryx-theme="neutral">
+<html lang="en" data-astryx-theme="neutral">
   <head>
+    <meta charset="utf-8" />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@astryxdesign/core/src/reset.css" />
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@astryxdesign/core/dist/astryx.css" />
+      href="https://cdn.jsdelivr.net/npm/@astryxdesign/core@0.4.1/src/reset.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@astryxdesign/core@0.4.1/dist/astryx.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@astryxdesign/theme-neutral@0.4.1/dist/theme.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@19.2.0",
+          "react/jsx-runtime": "https://esm.sh/react@19.2.0/jsx-runtime",
+          "react-dom": "https://esm.sh/react-dom@19.2.0",
+          "react-dom/client": "https://esm.sh/react-dom@19.2.0/client",
+          "@astryxdesign/core": "https://esm.sh/@astryxdesign/core@0.4.1?external=react,react-dom"
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: var(--font-family-body);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script
-      crossorigin
-      src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
-    <script
-      crossorigin
-      src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@astryxdesign/core/dist/astryx.umd.js"></script>
-    <script>
-      const {Button, Card} = window.Astryx;
+    <script type="module">
+      import * as React from 'react';
+      import {createRoot} from 'react-dom/client';
+      import {Card, Stack, Heading, Text, Button} from '@astryxdesign/core';
       const e = React.createElement;
-      ReactDOM.createRoot(document.getElementById('root')).render(
-        e(Card, null, e(Button, {variant: 'primary'}, 'Hello from a CDN')),
+      createRoot(document.getElementById('root')).render(
+        e(
+          Stack,
+          {padding: 6, align: 'start'},
+          e(
+            Card,
+            {maxWidth: 480, elevation: 'low'},
+            e(
+              Stack,
+              {gap: 3, align: 'start'},
+              e(Heading, {level: 1}, 'Hello from a CDN'),
+              e(Text, null, 'No bundler, no install, no build step.'),
+              e(Button, {variant: 'primary', label: 'Try me'}),
+            ),
+          ),
+        ),
       );
     </script>
   </body>
 </html>
 ```
 
-**2. ES modules (no UMD, no globals).** Use [esm.sh](https://esm.sh), which rewrites
-bare imports to browser-resolvable URLs. An import map keeps a single React instance.
+Six details carry the whole recipe:
 
-```html
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@astryxdesign/core/dist/astryx.css" />
-<script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@19",
-      "react-dom/client": "https://esm.sh/react-dom@19/client",
-      "@astryxdesign/core": "https://esm.sh/@astryxdesign/core?external=react,react-dom"
-    }
-  }
-</script>
-<script type="module">
-  import {createRoot} from 'react-dom/client';
-  import {Button} from '@astryxdesign/core';
-  // ...render as usual
-</script>
-```
+- **`data-astryx-theme` on `<html>`.** Theme CSS is scoped to that attribute, so
+  without it the page renders with the built-in defaults instead of the theme you
+  just loaded.
+- **`?external=react,react-dom`.** Without it esm.sh bundles its own React and
+  every hook throws `Cannot read properties of null (reading 'useState')`.
+- **`react/jsx-runtime` in the import map.** The published bundle imports it;
+  omit the entry and the page dies with `Failed to resolve module specifier`.
+- **A font on `body`.** Nothing in the three stylesheets sets a document font:
+  the theme styles prose elements and each component styles itself, and `Button`
+  is `font: inherit`. Without that one declaration its label renders in the
+  browser's default serif.
+- **The webfont itself.** The theme _names_ Figtree; it never loads it. Without
+  the Google Fonts link every viewer silently gets the next family in the stack.
+- **No JSX.** Nothing is compiling this file, so elements are created with
+  `React.createElement`.
 
-> Pin a version in production (e.g. `@astryxdesign/core@0.1.1`) — unversioned CDN URLs
-> resolve to the latest release and are cached aggressively. The raw ESM entry
-> (`dist/index.js`) uses bare `react` imports and will **not** run from a plain
-> `<script src>`; use the UMD global or esm.sh as shown above.
+> Pin every version. Unversioned CDN URLs resolve to the latest release and are
+> cached aggressively (0.4.1 above is a real pin; `astryx template --cdn` writes
+> yours). The raw ESM entry (`dist/index.js`) uses bare `react` imports and will
+> not run from a plain `<script src>` — the import map is what makes those
+> specifiers resolvable.

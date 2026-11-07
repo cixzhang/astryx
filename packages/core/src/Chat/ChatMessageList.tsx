@@ -4,13 +4,15 @@
 
 /**
  * @file ChatMessageList.tsx
- * @input Uses React, StyleX, ChatListContext, theme tokens, spacing step utilities
+ * @input Uses React, StyleX, ChatListContext, theme tokens, spacing step utilities,
+ *   and isRenderable to preserve accepted empty-state content
  * @output Exports ChatMessageList component and ChatMessageListProps
  * @position Presentational message container — holds ChatMessage children
  *
  * Renders a container with role="log" for chat message histories.
  * Handles density context, configurable gap, empty state,
- * a spacer that pushes messages to the bottom, and an infinite scroll sentinel.
+ * a configurable spacer (align) that pushes messages to the bottom,
+ * and an infinite scroll sentinel.
  *
  * Auto-scroll and the scroll-to-bottom button are owned by
  * ChatLayout. When used standalone (without a layout), the list
@@ -24,17 +26,26 @@
 
 import {type ReactNode, useEffect, useMemo, useRef, useTransition} from 'react';
 import * as stylex from '@stylexjs/stylex';
-import {spacingVars} from '../theme/tokens.stylex';
+import {focusVars, spacingVars} from '../theme/tokens.stylex';
+import {focusOutlineStyles} from '../utils/focusOutline.stylex';
 import {
   ChatListContext,
   type ChatDensity,
   useChatLayoutContext,
 } from './ChatContext';
-import {mergeProps} from '../utils';
+import {isRenderable, mergeProps} from '../utils';
 import {Spinner} from '../Spinner';
 import type {BaseProps} from '../BaseProps';
 import type {SpacingStep} from '../utils/types';
 import {themeProps} from '../utils/themeProps';
+import {useBusyAnnouncement} from '../hooks/useBusyAnnouncement';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/Chat/ChatMessageList.generated';
+
+registerEnglishFallback(english);
 
 export interface ChatMessageListProps extends BaseProps<HTMLDivElement> {
   /** Ref forwarded to the root element */
@@ -74,6 +85,24 @@ export interface ChatMessageListProps extends BaseProps<HTMLDivElement> {
   gap?: SpacingStep;
 
   /**
+   * Vertical alignment of messages when the list is shorter than its
+   * container.
+   *
+   * - `'bottom'` (default): a spacer fills the free space and pushes
+   *   messages to the bottom, so a short conversation sits just above the
+   *   composer — the familiar messaging-app layout.
+   * - `'top'`: the spacer is omitted, so messages start at the top and grow
+   *   downward — better for document-style or log-style lists.
+   *
+   * This only changes the resting position of a non-full list. Once messages
+   * overflow the container the spacer collapses to zero in both modes, so
+   * ChatLayout auto-scroll-to-bottom behavior is identical either way.
+   *
+   * @default 'bottom'
+   */
+  align?: 'top' | 'bottom';
+
+  /**
    * Whether an assistant message is actively streaming into the list.
    *
    * The list is a `role="log"` / `aria-live="polite"` region, so while a
@@ -98,6 +127,14 @@ const styles = stylex.create({
     flexDirection: 'column',
     flex: 1,
     minHeight: 0,
+  },
+  // The log fills the area that scrolls it, which clips at its edges, so its
+  // keyboard ring sits inside its own box instead of around it.
+  focusRingInset: {
+    outlineOffset: {
+      default: null,
+      ':focus-visible': `calc(-1 * ${focusVars['--focus-outline-width']})`,
+    },
   },
   inner: {
     display: 'flex',
@@ -183,7 +220,8 @@ const gapStyles = stylex.create({
  *
  * Renders messages in a flex column with density-based spacing.
  * Override gap to tune row spacing separately from density.
- * A spacer pushes content to the bottom when the list isn't full.
+ * By default a spacer pushes content to the bottom when the list isn't full;
+ * set `align='top'` to start messages at the top instead.
  * Supports loading older messages via `scrollToTopAction`.
  *
  * Auto-scroll and the scroll-to-bottom button are owned by
@@ -204,6 +242,7 @@ export function ChatMessageList({
   scrollToTopAction,
   density = 'balanced',
   gap,
+  align = 'bottom',
   isStreaming = false,
   xstyle,
   className,
@@ -216,6 +255,10 @@ export function ChatMessageList({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [isLoadingTop, startTransition] = useTransition();
+  const t = useComponentTranslator();
+  // The top loading Spinner sits inside the log and is silent; the list
+  // announces its loading through the channel (spec:AST-086 FR4, FR8).
+  useBusyAnnouncement(isLoadingTop, t('@astryx.spinner.loading'), innerRef);
 
   // Register inner content element with the layout for height observation
   useEffect(() => {
@@ -226,11 +269,13 @@ export function ChatMessageList({
   }, [layoutContext]);
 
   const hasChildren =
+    // eslint-disable-next-line @astryx/no-nullish-jsx-guard -- component:ChatMessageList FR4 shows the empty state only for nullish, false or an empty top-level array children
     children != null &&
     children !== false &&
     !(Array.isArray(children) && children.length === 0);
 
-  // IntersectionObserver for scroll-to-top infinite scroll
+  // Syncs an IntersectionObserver on the top sentinel with `scrollToTopAction`.
+  // The action runs when the sentinel comes into view.
   useEffect(() => {
     const scrollContainer = layoutContext?.scrollContainerRef?.current;
     if (!scrollToTopAction || !sentinelRef.current) {
@@ -274,7 +319,14 @@ export function ChatMessageList({
         data-testid={testId}
         {...mergeProps(
           themeProps('chat-message-list', {density}),
-          stylex.props(styles.root, xstyle),
+          // A tab stop: the shared ring, which a theme restyles through the
+          // focus-outline tokens.
+          stylex.props(
+            styles.root,
+            focusOutlineStyles.focusVisible,
+            styles.focusRingInset,
+            xstyle,
+          ),
           className,
           style,
         )}>
@@ -287,17 +339,20 @@ export function ChatMessageList({
           {/* Loading spinner at top */}
           {isLoadingTop && (
             <div {...stylex.props(styles.loadingTop)}>
-              <Spinner size="md" />
+              <Spinner size="md" aria-hidden="true" />
             </div>
           )}
 
-          {/* Spacer pushes messages to bottom when list isn't full */}
-          <div {...stylex.props(styles.spacer)} aria-hidden />
+          {/* Spacer pushes messages to bottom when the list isn't full.
+              Omitted for top alignment so messages start at the top. */}
+          {align === 'bottom' && (
+            <div {...stylex.props(styles.spacer)} aria-hidden />
+          )}
 
           {/* Messages or empty state */}
           {hasChildren ? (
             children
-          ) : emptyState ? (
+          ) : isRenderable(emptyState) ? (
             <div {...stylex.props(styles.emptyState)}>{emptyState}</div>
           ) : null}
         </div>

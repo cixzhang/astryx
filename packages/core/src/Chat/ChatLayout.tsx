@@ -33,14 +33,21 @@ import {type ReactNode, useMemo, useRef} from 'react';
 import * as stylex from '@stylexjs/stylex';
 import {spacingVars} from '../theme/tokens.stylex';
 import type {BaseProps} from '../BaseProps';
-import {mergeProps, mergeRefs} from '../utils';
+import {mergeProps} from '../utils';
 import {useChatStreamScroll} from './useChatStreamScroll';
 import {useChatNewMessages} from './useChatNewMessages';
 import {ChatLayoutScrollButton} from './ChatLayoutScrollButton';
 import {ChatLayoutContext} from './ChatContext';
 import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
 
+import {useMergedRefs} from '../hooks/useMergedRefs';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/Chat/ChatLayout.generated';
+
+registerEnglishFallback(english);
 // =============================================================================
 // Types
 // =============================================================================
@@ -118,12 +125,6 @@ const styles = stylex.create({
   rootScrollable: {
     overflowY: 'auto',
     overflowX: 'hidden',
-    // Hide scrollbar during programmatic scroll animation
-    // to prevent flash. Restored when animation settles.
-    scrollbarWidth: {
-      default: null,
-      ':is([data-astryx-scrolling])': 'none',
-    },
   },
 
   messageArea: {
@@ -254,6 +255,7 @@ const styles = stylex.create({
 // =============================================================================
 
 function hasVisibleContent(children: ReactNode): boolean {
+  // eslint-disable-next-line @astryx/no-nullish-jsx-guard -- component:ChatLayout FR5 names exactly null, undefined, false and an empty array as empty children; '' and true are not
   if (children == null || children === false) {
     return false;
   }
@@ -267,6 +269,25 @@ function hasVisibleContent(children: ReactNode): boolean {
 // Component
 // =============================================================================
 
+/**
+ * Layout shell for a full chat interface: messages in page flow, composer
+ * docked to the bottom behind a frosted glass layer, with auto-scroll and a
+ * scroll-to-bottom button wired in.
+ *
+ * @example
+ * ```
+ * <ChatLayout
+ *   density="spacious"
+ *   composer={<ChatComposer onSubmit={send} />}
+ *   emptyState={<EmptyState title="No messages yet" />}>
+ *   <ChatMessageList>
+ *     <ChatMessage sender="assistant">
+ *       <ChatMessageBubble>How can I help?</ChatMessageBubble>
+ *     </ChatMessage>
+ *   </ChatMessageList>
+ * </ChatLayout>
+ * ```
+ */
 export function ChatLayout({
   children,
   composer,
@@ -281,7 +302,7 @@ export function ChatLayout({
   ref,
   ...rest
 }: ChatLayoutProps) {
-  const t = useTranslator();
+  const t = useComponentTranslator();
   const rootRef = useRef<HTMLDivElement>(null);
 
   const scrollContainerRef = externalScrollRef ?? rootRef;
@@ -343,7 +364,7 @@ export function ChatLayout({
     <ChatLayoutContext value={layoutContext}>
       <div
         {...rest}
-        ref={mergeRefs(ref, rootRef)}
+        ref={useMergedRefs(ref, rootRef)}
         data-testid={testId}
         {...mergeProps(
           themeProps('chat-layout', {density}),

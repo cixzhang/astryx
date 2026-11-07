@@ -2,18 +2,40 @@
 
 import type {Preview, Decorator} from '@storybook/react';
 import * as React from 'react';
-import {Theme, LayerProvider, InternationalizationProvider} from '@astryxdesign/core';
+import type {RtlAuditParameters} from '../rtl-audit/story-parameters';
+import {
+  Theme,
+  LayerProvider,
+  InternationalizationProvider,
+} from '@astryxdesign/core';
+import {butterTheme} from '@astryxdesign/theme-butter';
+import {chocolateTheme} from '@astryxdesign/theme-chocolate';
+import {gothicTheme} from '@astryxdesign/theme-gothic';
+import {matchaTheme} from '@astryxdesign/theme-matcha';
 import {neutralTheme} from '@astryxdesign/theme-neutral';
+import {probeTheme} from '@astryxdesign/theme-probe';
 import {stoneTheme} from '@astryxdesign/theme-stone';
 import {y2kTheme} from '@astryxdesign/theme-y2k';
 // Import the base reset stylesheet
 import '@astryxdesign/core/reset.css';
 
+import {storyPadding} from './storyFrame';
+
 /**
- * Map of available themes
+ * Every shipped theme, so the toolbar can reach them and the visual gate can
+ * photograph a component under each theme that overrides it. A theme missing
+ * here is a theme nothing renders and nothing verifies.
  */
 const themes = {
+  butter: butterTheme,
+  chocolate: chocolateTheme,
+  gothic: gothicTheme,
+  matcha: matchaTheme,
   neutral: neutralTheme,
+  // A generated test fixture, not a design: it styles every declared theming
+  // target so the visual gate can prove each one still paints. See
+  // packages/themes/probe/README.md.
+  probe: probeTheme,
   stone: stoneTheme,
   y2k: y2kTheme,
 };
@@ -26,12 +48,16 @@ const themes = {
  * Theme wrapper div.  Without this, the iframe's `<html>` and
  * `<body>` keep the browser-default `color-scheme` (typically "light")
  * and toggling the toolbar has no visible effect.
+ *
+ * Wraps every story in a 16 px gutter, except stories with the `pageFrame`
+ * parameter, which render page frames edge to edge (see `storyPadding`).
  */
 const withTheme: Decorator = (Story, context) => {
   // Get theme selection from toolbar
   const themeKey = (context.globals?.astryxTheme || 'neutral') as string;
   const mode = context.globals?.colorMode === 'dark' ? 'dark' : 'light';
   const direction = context.globals?.direction === 'rtl' ? 'rtl' : 'ltr';
+  const padding = storyPadding(context.parameters);
 
   // Sync color-scheme to the document root so light-dark() works
   // everywhere, including on <html>/<body> backgrounds and any
@@ -48,7 +74,7 @@ const withTheme: Decorator = (Story, context) => {
           dir={direction}
           style={{
             colorScheme: mode,
-            padding: 16,
+            padding,
           }}>
           <Story />
         </div>
@@ -66,7 +92,7 @@ const withTheme: Decorator = (Story, context) => {
             dir={direction}
             style={{
               backgroundColor: 'var(--color-background-surface)',
-              padding: 16,
+              padding,
             }}>
             <Story />
           </div>
@@ -74,6 +100,22 @@ const withTheme: Decorator = (Story, context) => {
       </LayerProvider>
     </Theme>
   );
+};
+
+const withRtlAuditMetadata: Decorator = (Story, context) => {
+  const rtlAudit = context.parameters.rtlAudit as
+    RtlAuditParameters | undefined;
+  React.useEffect(() => {
+    const root = document.getElementById('storybook-root');
+    if (root == null) {
+      return;
+    }
+    root.dataset.astryxRtlAudit = JSON.stringify(rtlAudit ?? {});
+    return () => {
+      delete root.dataset.astryxRtlAudit;
+    };
+  }, [rtlAudit]);
+  return <Story />;
 };
 
 const preview: Preview = {
@@ -99,6 +141,11 @@ const preview: Preview = {
           {value: 'none', title: 'None (base tokens)', icon: 'close'},
           {value: 'neutral', title: 'Neutral', icon: 'circle'},
           {value: 'stone', title: 'Stone', icon: 'circlehollow'},
+          {value: 'butter', title: 'Butter', icon: 'sun'},
+          {value: 'chocolate', title: 'Chocolate', icon: 'circle'},
+          {value: 'gothic', title: 'Gothic', icon: 'moon'},
+          {value: 'matcha', title: 'Matcha', icon: 'circlehollow'},
+          {value: 'probe', title: 'Probe (test fixture)', icon: 'beaker'},
           {value: 'y2k', title: 'Y2K', icon: 'lightning'},
         ],
         dynamicTitle: true,
@@ -134,7 +181,7 @@ const preview: Preview = {
     colorMode: 'light',
     direction: 'ltr',
   },
-  decorators: [withTheme],
+  decorators: [withTheme, withRtlAuditMetadata],
 };
 
 export default preview;

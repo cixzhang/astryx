@@ -16,7 +16,7 @@
  * - /packages/cli/assets/templates/blocks/components/Link/ (showcase blocks)
  */
 
-import type {ReactNode} from 'react';
+import {use, type ReactNode} from 'react';
 import type {BaseProps} from '../BaseProps';
 import * as stylex from '@stylexjs/stylex';
 
@@ -24,12 +24,14 @@ import {
   colorVars,
   durationVars,
   easeVars,
+  focusVars,
   spacingVars,
   typeScaleVars,
 } from '../theme/tokens.stylex';
 import {Icon} from '../Icon';
 import {Tooltip} from '../Tooltip';
 import {Text} from '../Text';
+import {TextClampContext} from '../Text/textClampContext';
 import {VisuallyHidden} from '../VisuallyHidden';
 import type {
   TextType,
@@ -43,8 +45,18 @@ import type {LinkComponentType} from './types';
 import {mergeProps} from '../utils';
 import {computeTargetAndRel} from './computeTargetAndRel';
 import {useInteractiveRole} from '../hooks/useInteractiveRole';
-import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
+import {themeDataAttributes, themeProps} from '../utils/themeProps';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {interactionOverlayStyles} from '../utils/interactionOverlay.stylex';
+import {usePressFeedback} from '../hooks/usePressFeedback';
+import {disabledInteractionProps} from '../utils/disabledInteraction';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/Link/Link.generated';
+
+registerEnglishFallback(english);
 
 /**
  * Base link styles
@@ -60,22 +72,25 @@ const styles = stylex.create({
     fontWeight: 'inherit',
     textDecoration: {
       default: 'none',
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': 'underline',
       },
     },
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     transitionProperty: 'color, text-decoration',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
+  },
+  // A truncating label needs a box that stops at its container: an
+  // inline-flex root otherwise grows to its whole text, so its Text never
+  // overflows and draws no ellipsis (`component:Link` FR6, `component:Text`
+  // FR4).
+  truncating: {
+    maxWidth: '100%',
+    minWidth: 0,
   },
   /**
    * Reset styles for rendering as a <button> when href is undefined.
@@ -85,14 +100,29 @@ const styles = stylex.create({
     backgroundColor: 'transparent',
     borderStyle: 'none',
     padding: 0,
+    // Browsers centre a button's text; a wrapped label lines up as an
+    // anchor's does.
+    textAlign: 'inherit',
     pointerEvents: 'auto',
     position: 'relative',
+  },
+  // Inside a clamped Text the root joins the text's line boxes, so the
+  // clamp can cut through the link. An inline-flex box is atomic: a clamp
+  // cannot truncate it. The clamp also clips at the line edges, so the ring
+  // sits inside each line box.
+  inClampedText: {
+    display: 'inline',
+    outlineOffset: `calc(-1 * ${focusVars['--focus-outline-width']})`,
+  },
+  externalIconInClampedText: {
+    marginInlineStart: spacingVars['--spacing-0-5'],
+    verticalAlign: 'middle',
   },
   hasUnderline: {
     textDecoration: 'underline',
   },
   disabled: {
-    cursor: 'not-allowed',
+    cursor: 'default',
     opacity: 0.5,
     pointerEvents: 'none',
   },
@@ -110,7 +140,7 @@ const linkColorStyles = stylex.create({
   primary: {
     color: {
       default: colorVars['--color-text-primary'],
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-primary']}, ${colorVars['--color-tint-hover']} 15%)`,
       },
     },
@@ -118,7 +148,7 @@ const linkColorStyles = stylex.create({
   secondary: {
     color: {
       default: colorVars['--color-text-secondary'],
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-secondary']}, ${colorVars['--color-tint-hover']} 15%)`,
       },
     },
@@ -132,7 +162,7 @@ const linkColorStyles = stylex.create({
   accent: {
     color: {
       default: colorVars['--color-text-accent'],
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-text-accent']}, ${colorVars['--color-tint-hover']} 15%)`,
       },
     },
@@ -176,9 +206,8 @@ export interface LinkProps extends BaseProps<
   /**
    * Whether the link is disabled.
    * A disabled link renders as a plain anchor without an href (and without
-   * target/rel/onClick), so it cannot be focused or activated — no
-   * navigation and no onClick, even via programmatic focus or assistive
-   * technology activation.
+   * target/rel/onClick), so it cannot navigate or run onClick. It keeps a tab
+   * stop and is announced as a disabled link.
    * @default false
    */
   isDisabled?: boolean;
@@ -267,15 +296,6 @@ export interface LinkProps extends BaseProps<
 }
 
 /**
- * Click handler for disabled links. The disabled anchor renders without an
- * href, so there is no navigation to block in practice; preventDefault is a
- * defensive guard against synthetic/programmatic clicks.
- */
-function preventDefaultClick(event: React.MouseEvent<HTMLAnchorElement>): void {
-  event.preventDefault();
-}
-
-/**
  * A styled anchor link component.
  *
  * Uses Text internally for typography styling.
@@ -319,7 +339,11 @@ export function Link({
   ref,
   ...props
 }: LinkProps) {
-  const t = useTranslator();
+  // Constant marker props; the hook's only effect is installing the shared
+  // document controller once, so the link's output stays a pure function of
+  // its props.
+  const pressable = usePressFeedback();
+  const t = useComponentTranslator();
   const newTabLabel = newTabLabelFromProps ?? t('@astryx.link.newTab');
   const LinkComponent = useLinkComponent(as);
   const role = useInteractiveRole({href, onClick, isDisabled});
@@ -333,6 +357,19 @@ export function Link({
   // render as a <button> with link styling for semantic correctness.
   const renderAsButton =
     role === 'button' || (role === 'inert' && href == null);
+  const isExternalWithIcon = isExternalLink && !renderAsButton;
+  // Link reads the enclosing Text's clamp, never its own children (AV1). A
+  // Link with its own display or clamp keeps its own box.
+  const isInClampedText =
+    use(TextClampContext) && display === 'inline' && maxLines === 0;
+
+  // The reflected theme attributes win over a caller's same-named `data-*`, so
+  // theme targeting always sees the real value (public-component-api INV5).
+  const reflectedAttributes = themeDataAttributes({color});
+  // For a color the root paints, the label inherits it, so the label, the
+  // underline, and the icon keep one color at rest and on hover, whatever a
+  // theme sets on its text targets.
+  const labelColor: TextColor = color in linkColorStyles ? 'inherit' : color;
 
   const sharedContent = (
     <>
@@ -340,14 +377,19 @@ export function Link({
         type={type}
         size={size}
         weight={weight}
-        color={color}
+        color={labelColor}
         display={display}
         maxLines={maxLines}>
         {children}
       </Text>
-      {isExternalLink && !renderAsButton && (
+      {isExternalWithIcon && (
         <>
-          <Icon icon="externalLink" size="xsm" color="inherit" />
+          <Icon
+            icon="externalLink"
+            size="xsm"
+            color="inherit"
+            xstyle={isInClampedText && styles.externalIconInClampedText}
+          />
           <VisuallyHidden>{newTabLabel}</VisuallyHidden>
         </>
       )}
@@ -362,56 +404,66 @@ export function Link({
         ref={ref as React.Ref<HTMLButtonElement>}
         type="button"
         onClick={onClick}
+        {...(isDisabled ? undefined : pressable)}
         aria-label={label || undefined}
         aria-disabled={isDisabled || undefined}
-        tabIndex={isDisabled ? -1 : undefined}
-        disabled={isDisabled}
         {...mergeProps(
           themeProps('link', {color}),
-          stylex.props(
+          focusOutlineProps.focusVisible(
             styles.base,
             styles.buttonReset,
             linkColorStyles[color],
+            // The system's pressed overlay behind the text; the hover stays the
+            // colour change above, so a press is the one background it paints.
+            !isDisabled && interactionOverlayStyles.pressedBackgroundColor,
             hasUnderline && styles.hasUnderline,
             isStandalone && styles.standalone,
             isDisabled && styles.disabled,
+            maxLines > 0 && styles.truncating,
             xstyle,
           ),
           className,
           style,
         )}
-        {...props}>
+        {...props}
+        {...reflectedAttributes}
+        // Focusable while disabled (spec:AST-085 FR1), but inert (FR2).
+        {...(isDisabled ? disabledInteractionProps(props.onKeyDown) : null)}>
         {sharedContent}
       </button>
     );
   } else if (isDisabled) {
-    // A disabled link renders as a plain <a> with no href: an href-less
-    // anchor is not focusable and exposes no link affordance, so programmatic
-    // focus + Enter, AT activation commands, and middle-click cannot navigate
-    // or fire the consumer onClick. The router LinkComponent is deliberately
-    // skipped — a disabled link performs no navigation, and custom router
-    // links may require a live href. target/rel are omitted with the href.
+    // A disabled link renders as an <a> with no href, so nothing can navigate
+    // and the consumer onClick never fires. It keeps a Tab stop and the link
+    // role so keyboard and screen-reader users still find it (spec:AST-085
+    // FR1, FR5). The router LinkComponent is deliberately skipped — a disabled
+    // link performs no navigation, and custom router links may require a live
+    // href. target/rel are omitted with the href.
     linkElement = (
       <a
         ref={ref as React.Ref<HTMLAnchorElement>}
-        onClick={preventDefaultClick}
+        role="link"
         aria-label={label || undefined}
         aria-disabled={true}
-        tabIndex={-1}
+        tabIndex={0}
         {...mergeProps(
           themeProps('link', {color}),
-          stylex.props(
+          focusOutlineProps.focusVisible(
             styles.base,
+            isInClampedText && styles.inClampedText,
             linkColorStyles[color],
             hasUnderline && styles.hasUnderline,
             isStandalone && styles.standalone,
             styles.disabled,
+            maxLines > 0 && styles.truncating,
             xstyle,
           ),
           className,
           style,
         )}
-        {...props}>
+        {...props}
+        {...reflectedAttributes}
+        {...disabledInteractionProps(props.onKeyDown)}>
         {sharedContent}
       </a>
     );
@@ -423,23 +475,28 @@ export function Link({
         target={target}
         rel={rel}
         onClick={onClick}
+        {...(isDisabled ? undefined : pressable)}
         aria-label={label || undefined}
         aria-disabled={isDisabled || undefined}
         tabIndex={isDisabled ? -1 : undefined}
         {...mergeProps(
           themeProps('link', {color}),
-          stylex.props(
+          focusOutlineProps.focusVisible(
             styles.base,
+            isInClampedText && styles.inClampedText,
             linkColorStyles[color],
+            !isDisabled && interactionOverlayStyles.pressedBackgroundColor,
             hasUnderline && styles.hasUnderline,
             isStandalone && styles.standalone,
             isDisabled && styles.disabled,
+            maxLines > 0 && styles.truncating,
             xstyle,
           ),
           className,
           style,
         )}
-        {...props}>
+        {...props}
+        {...reflectedAttributes}>
         {sharedContent}
       </LinkComponent>
     );

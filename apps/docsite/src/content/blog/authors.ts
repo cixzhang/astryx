@@ -46,7 +46,7 @@ export const authors = {
   team: {
     name: 'Astryx team',
     avatar: '/blog/authors/astryx-team.png',
-    href: 'https://github.com/facebook/astryx',
+    href: 'https://github.com/meta/astryx',
   },
   cvkxx: {
     name: 'Catherine',
@@ -70,6 +70,15 @@ export const authors = {
   ernest: {
     name: 'Ernest',
     github: 'ernestt',
+  },
+  nynexman4464: {
+    name: 'Alex',
+    github: 'nynexman4464',
+    role: 'Engineering',
+  },
+  potatowagon: {
+    name: 'Sherry',
+    github: 'potatowagon',
   },
 } as const satisfies Record<string, AuthorProfile>;
 

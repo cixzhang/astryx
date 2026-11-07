@@ -18,12 +18,14 @@ buildSync({
   platform: 'node',
   format: 'esm',
   outfile: 'dist/vite.mjs',
+  // SYNC: keep aligned with the external list in src/vite.test.ts
   external: [
     'vite',
     '@stylexjs/babel-plugin',
     '@stylexjs/unplugin',
     'path',
     'url',
+    'node:fs',
     'node:path',
     'node:url',
   ],
@@ -36,6 +38,11 @@ let content = readFileSync('dist/vite.mjs', 'utf8');
 content = content.replaceAll(
   'resolve(__dirname, "babel.js")',
   'resolve(__dirname, "../src/babel.js")',
+);
+// The marker reader also lives in src/, beside babel.js.
+content = content.replaceAll(
+  'resolve(__dirname, "swizzle-marker.js")',
+  'resolve(__dirname, "../src/swizzle-marker.js")',
 );
 writeFileSync('dist/vite.mjs', content);
 

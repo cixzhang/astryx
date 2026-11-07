@@ -1,64 +1,80 @@
 # @astryxdesign/richtext
 
-Astryx rich text — a Lexical-based rich text editor and viewer.
+Astryx rich text — a Lexical-based rich text editor and read-only viewer, styled
+with Astryx design tokens.
 
-> **Status: empty scaffold.** This package is bootstrapped but does not export
-> anything yet. It will house the rich text editor and viewer that currently
-> live in `@astryxdesign/lab`; that code will move here without a fresh package
-> rollout.
+```tsx
+import {RichTextEditor, RichTextView} from '@astryxdesign/richtext';
 
-It will ship to npm **only under the `@canary` dist-tag** — there is never a
-stable (`latest`) release yet.
-
-## Trying richtext in your own project (canary)
-
-Once components land, `@astryxdesign/richtext` will be published **only** under
-the `@canary` dist-tag, so you must request that tag explicitly. There is no
-`latest` version to install.
-
-```bash
-npm install @astryxdesign/richtext@canary @astryxdesign/core@canary
+<RichTextEditor label="Notes" onChange={setState} />;
+<RichTextView value={serializedState} />;
 ```
 
-> Canary builds track the latest commit on `main` (`0.x.y-canary.<sha>`). They
-> can break between any two versions — pin an exact version if you need
-> stability.
+The editor is deliberately minimal and extensible: pass `nodes` and `plugins` to
+layer richer behaviour (toolbars, mentions, hover cards) on top without forking.
+`RichTextEditorToolbar` is a composable formatting toolbar for the editor's
+`toolbar` slot, and `markdownToEditorStateJSON` / `editorStateJSONToMarkdown`
+convert Markdown to and from serialized editor state headlessly (no mounted
+editor required). The server-safe serializers are also available from
+`@astryxdesign/richtext/markdown`.
 
-## Why no stable release?
+`RichTextView` and core `Markdown` render the same document the same way, and
+Markdown imported into the editor exports back byte for byte when nothing was
+edited.
 
-`package.json` keeps `"private": true` plus an `"astryx": { "canaryOnly": true }`
-marker. The release workflow's stable (`latest`) job skips both private and
-`canaryOnly` packages, while the canary job strips `private` in its ephemeral CI
-checkout only (never in git) to publish the `@canary` tag. The committed
-`private: true` is npm's hard guarantee that no stable publish can ever happen —
-**do not remove it.**
+## Built on Lexical
 
-## Publishing publicly (when the editor/view are ready)
+RichText is built on [Lexical](https://lexical.dev) and does not hide it:
+`nodes` and `transformers` take Lexical types, `plugins` takes Lexical React
+plugins, and `onChange(editorState, editor)` and the editor ref's
+`getEditorState()` report Lexical types, so you extend the editor with Lexical
+directly. The value you store is serialized Lexical editor state;
+`markdownToEditorStateJSON` and `editorStateJSONToMarkdown` convert it to and
+from Markdown.
 
-When maintainers are ready to promote richtext to a stable public release:
+RichText supports one Lexical minor at a time, named by its `lexical` and
+`@lexical/*` peer ranges. Those are **optional** peer dependencies, so your
+package manager does not add them: install them at that minor alongside
+richtext. See the RFC:
+[meta/astryx#3899](https://github.com/meta/astryx/issues/3899).
 
-1. Move the editor/view source from `@astryxdesign/lab` into `src/` and export
-   it from `src/index.ts`. Add the StyleX CSS build wiring (see below).
-2. Remove `"private": true` **and** the `"astryx": { "canaryOnly": true }`
-   marker from `package.json`.
-3. Add a changeset (`pnpm changeset`) selecting `@astryxdesign/richtext` so the
-   release workflow versions and publishes it to the `latest` dist-tag.
-4. The stable (`latest`) release job (`.github/workflows/release.yml`) will then
-   include richtext on the next release.
+## Install
 
-### Adding the StyleX CSS build (deferred until the first component)
+```bash
+npm install @astryxdesign/richtext @astryxdesign/core
+```
 
-This scaffold intentionally omits the `build:css` step. `build-css.mjs` exits
-with an error ("No StyleX rules found") when a package has zero StyleX
-components, which would break CI for an empty package. When the first StyleX
-component lands:
+Then install every `lexical` and `@lexical/*` package listed in richtext's
+`peerDependencies`, at the range shown there (`npm view @astryxdesign/richtext
+peerDependencies` prints them).
 
-1. Register a `richtext` target in `scripts/build-css.mjs` (mirror the `lab` /
-   `charts` entries — same core token alias).
-2. Add `"build:css": "node ../../scripts/build-css.mjs --package richtext"` to
-   the `scripts` block and append `&& pnpm build:css` to the `build` script
-   (before `check-no-dev-jsx`).
-3. Add a `"./richtext.css"` entry to `exports` and add `richtext.css` under
-   `files` if needed.
+`@astryxdesign/richtext` is released together with `@astryxdesign/core` at the
+same version; install matching versions. `lexical` and the `@lexical/*` packages
+are optional peer dependencies, so a project that only uses the headless
+Markdown serializers installs just those.
 
-The babel config is already StyleX-ready, so this is a small, mechanical add.
+RichText ships prebuilt CSS and JS, like `@astryxdesign/core`: import its
+stylesheet beside Core's and your theme's, with no StyleX or Babel setup. Never
+compile richtext's source.
+
+```tsx
+import '@astryxdesign/core/reset.css';
+import '@astryxdesign/core/astryx.css';
+import '@astryxdesign/theme-neutral/theme.css'; // or your theme's CSS
+import '@astryxdesign/richtext/richtext.css';
+```
+
+`richtext.css` emits into `@layer astryx-base`, the layer `astryx.css` opens,
+so your theme's token overrides (`@layer astryx-theme`) win over it, as long
+as Core's `reset.css` (or a `@layer reset, astryx-base, astryx-theme;` line,
+if your app has its own reset) loads first.
+
+## Editing code blocks
+
+Backspace at the very start of a code block turns it into a paragraph of its
+lines, instead of merging the code into the block above.
+
+## Examples
+
+Interactive examples live in Storybook under **RichText/RichTextEditor**
+(`apps/storybook/stories/RichTextEditor.stories.tsx`).

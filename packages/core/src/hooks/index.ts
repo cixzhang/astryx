@@ -11,11 +11,18 @@
  * SYNC: When modified, update this header
  */
 
-export {useFocusTrap} from './useFocusTrap';
+export {hasActiveFocusTrapEscape, useFocusTrap} from './useFocusTrap';
 export type {UseFocusTrapOptions, UseFocusTrapReturn} from './useFocusTrap';
 
 export {useAnnounce} from './useAnnounce';
-export type {AnnounceFn, AnnouncePoliteness} from './useAnnounce';
+export type {
+  AnnounceFn,
+  AnnouncePoliteness,
+  UseAnnounceOptions,
+} from './useAnnounce';
+
+export {useClipboard} from './useClipboard';
+export type {UseClipboardOptions, UseClipboardReturn} from './useClipboard';
 
 export {useGridFocus} from './useGridFocus';
 export type {UseGridFocusOptions, UseGridFocusReturn} from './useGridFocus';
@@ -35,6 +42,21 @@ export type {Hotkey} from './useHotkeys';
 
 export {useTypeahead} from './useTypeahead';
 
+export {
+  useMenuPress,
+  MENU_PRESS_MARKER,
+  isMenuPressActivation,
+} from './useMenuPress';
+export type {UseMenuPressOptions, UseMenuPressReturn} from './useMenuPress';
+export {menuPressStep, MENU_PRESS_SETTLE_MS} from './menuPressGesture';
+export type {
+  MenuPressEffect,
+  MenuPressEvent,
+  MenuPressGesture,
+  MenuPressPointerType,
+  MenuPressStep,
+} from './menuPressGesture';
+
 export {useKeyboardHint} from './useKeyboardHint';
 export type {
   UseKeyboardHintOptions,
@@ -45,13 +67,34 @@ export type {UseTypeaheadOptions, UseTypeaheadReturn} from './useTypeahead';
 
 export {useMediaQuery} from './useMediaQuery';
 
+export {useMergedRefs} from './useMergedRefs';
+
 export {useOverflow} from './useOverflow';
 export type {UseOverflowOptions, UseOverflowReturn} from './useOverflow';
 
 export {useScrollOverflow} from './useScrollOverflow';
 export type {ScrollOverflowState} from './useScrollOverflow';
 
+export {useScrollableArea} from './useScrollableArea';
+export type {
+  ScrollAxis,
+  ScrollAxisState,
+  ScrollOverscroll,
+  ScrollStickyContainment,
+  ScrollKeyboardAccess,
+  ScrollableAreaState,
+  ScrollableElementProps,
+  UseScrollableAreaOptions,
+  UseScrollableAreaResult,
+} from './useScrollableArea';
+
 export {useScrollLock} from './useScrollLock';
+
+export {useAnimatedLayout} from './useAnimatedLayout';
+export type {
+  AnimatedLayout,
+  UseAnimatedLayoutOptions,
+} from './useAnimatedLayout';
 
 export {useEntryAnimation} from './useEntryAnimation';
 export type {EntryAnimationPreset} from './useEntryAnimation';
@@ -67,6 +110,8 @@ export type {ImageSampleRegion, UseImageModeOptions} from './useImageMode';
 export {
   useClickableContainer,
   INTERACTIVE_SELECTORS,
+  hasInteractiveAncestor,
+  hasTextSelection,
 } from './useClickableContainer';
 export type {
   UseClickableContainerOptions,
@@ -88,14 +133,35 @@ export type {
   UseInteractiveRoleOptions,
 } from './useInteractiveRole';
 
+export {useAnimator} from './useAnimator';
+
+export {useDragToSnapPoints} from './useDragToSnapPoints';
+export type {UseDragToSnapPointsResult} from './useDragToSnapPoints';
+export type {
+  DragToSnapPoints,
+  DragToSnapPointsOptions,
+} from '../dragToSnapPoints/createDragToSnapPoints';
+
 export {useLongPress} from './useLongPress';
 export type {UseLongPressOptions, UseLongPressHandlers} from './useLongPress';
 
+export {usePressFeedback} from './usePressFeedback';
+
 export {useDevWarning} from './useDevWarning';
+export {useIndicatorFocusRing} from './useIndicatorFocusRing';
 
 export {useContainerReveal} from './useContainerReveal';
 export type {
   UseContainerRevealOptions,
   UseContainerRevealReturn,
+  ContainerRevealOptions,
   ContentRevealOptions,
 } from './useContainerReveal';
+
+export {usePanGesture} from './usePanGesture';
+export type {
+  PanGesture,
+  PanGestureEvent,
+  PanGestureOptions,
+  PanGestureState,
+} from '../gestures/createPanGesture';

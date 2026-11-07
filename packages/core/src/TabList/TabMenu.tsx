@@ -30,13 +30,18 @@ import {
   fontWeightVars,
   typeScaleVars,
 } from '../theme/tokens.stylex';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
 import {usePopover} from '../Popover/usePopover';
 import {MENU_ITEM_SELECTOR} from '../DropdownMenu/menuItemRoles';
 import {useListFocus} from '../hooks/useListFocus';
+import {useMenuPress} from '../hooks/useMenuPress';
+import {menuTouchActionStyles} from '../DropdownMenu/menuTouchAction.stylex';
+import {useMenuOverflow} from '../DropdownMenu/useMenuOverflow';
 import {useTabListContext} from './TabListContext';
 import type {TabListSize} from './TabListContext';
 import {tabScope} from './tab.markers.stylex';
-import {mergeProps, mergeRefs} from '../utils';
+import {composeEventHandlers, mergeProps} from '../utils';
+import {useMergedRefs} from '../hooks/useMergedRefs';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
 
@@ -49,9 +54,9 @@ export interface TabMenuOption {
   icon?: ReactNode | IconType;
 }
 
-export interface TabMenuProps extends Pick<
+export interface TabMenuProps extends Omit<
   BaseProps<HTMLButtonElement>,
-  'xstyle' | 'className' | 'style'
+  'role' | 'tabIndex' | 'aria-haspopup' | 'aria-expanded' | 'aria-controls'
 > {
   ref?: React.Ref<HTMLButtonElement>;
   /**
@@ -72,6 +77,8 @@ export interface TabMenuProps extends Pick<
 const styles = stylex.create({
   trigger: {
     position: 'relative',
+    // Keeps its label's width in a strip that scrolls, as a hugging tab does.
+    flexShrink: 0,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -86,19 +93,14 @@ const styles = stylex.create({
     lineHeight: typeScaleVars['--text-label-leading'],
     fontWeight: fontWeightVars['--font-weight-normal'],
     color: colorVars['--color-text-secondary'],
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     textDecoration: 'none',
     transitionProperty: 'color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
   },
   triggerSelected: {
     color: colorVars['--color-text-primary'],
@@ -161,6 +163,10 @@ const styles = stylex.create({
     width: spacingVars['--spacing-4'],
     height: spacingVars['--spacing-4'],
     flexShrink: 0,
+  },
+  // Applied to the chevron <Icon> (via `xstyle`) rather than its wrapper, so the
+  // element that rotates is the element a theme targets.
+  chevronIcon: {
     transitionProperty: 'transform',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
@@ -169,6 +175,8 @@ const styles = stylex.create({
     transform: 'rotate(180deg)',
   },
   dropdown: {
+    // A held pointer slides across the items; it selects no text.
+    userSelect: 'none',
     display: 'flex',
     flexDirection: 'column',
     gap: spacingVars['--spacing-0-5'],
@@ -188,19 +196,18 @@ const styles = stylex.create({
     lineHeight: typeScaleVars['--text-label-leading'],
     fontWeight: fontWeightVars['--font-weight-normal'],
     color: colorVars['--color-text-primary'],
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
     transitionProperty: 'background-color',
     transitionDuration: durationVars['--duration-fast'],
     transitionTimingFunction: easeVars['--ease-standard'],
     backgroundColor: {
       default: 'transparent',
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
-    },
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
     },
   },
   menuItemSelected: {
@@ -263,6 +270,8 @@ export function TabMenu({
   xstyle,
   className,
   style,
+  onClick,
+  ...rest
 }: TabMenuProps) {
   const tabListCtx = useTabListContext();
   const menuId = useId();
@@ -297,6 +306,16 @@ export function TabMenu({
     itemSelector: MENU_ITEM_SELECTOR,
     onEscape: () => popover.hide(),
   });
+
+  // A press that slides across the options picks the one it lifts on, the
+  // highlight following the pointer, as DropdownMenu's does
+  // (`family:action-groups` FR1-FR3, FR5); a mouse released outside closes it.
+  const menuPress = useMenuPress({
+    menuRef: listRef,
+    itemSelector: MENU_ITEM_SELECTOR,
+    onDismiss: popover.hide,
+  });
+  const hasOverflow = useMenuOverflow(listRef, options.length, popover.isOpen);
 
   const handleToggle = useCallback(() => {
     if (popover.isOpen) {
@@ -337,7 +356,7 @@ export function TabMenu({
     [tabListCtx, popover],
   );
 
-  const setButtonRef = mergeRefs<HTMLButtonElement>(
+  const setButtonRef = useMergedRefs<HTMLButtonElement>(
     popover.triggerRef,
     buttonRef,
     ref,
@@ -346,6 +365,7 @@ export function TabMenu({
   return (
     <>
       <button
+        {...rest}
         ref={setButtonRef}
         type="button"
         aria-haspopup="menu"
@@ -353,10 +373,10 @@ export function TabMenu({
         aria-controls={menuId}
         data-tab-menu=""
         tabIndex={hasSelectedOption ? 0 : -1}
-        onClick={handleToggle}
+        onClick={composeEventHandlers(handleToggle, onClick)}
         {...mergeProps(
           themeProps('tab-menu'),
-          stylex.props(
+          focusOutlineProps.focusVisible(
             styles.trigger,
             sizeStyles[size],
             hasSelectedOption && styles.triggerSelected,
@@ -376,13 +396,13 @@ export function TabMenu({
             {triggerLabel}
           </span>
         </span>
-        <span
-          aria-hidden="true"
-          {...stylex.props(
-            styles.chevron,
-            popover.isOpen && styles.chevronOpen,
-          )}>
-          <Icon icon="chevronDown" size="sm" color="inherit" />
+        <span aria-hidden="true" {...stylex.props(styles.chevron)}>
+          <Icon
+            icon="chevronDown"
+            size="sm"
+            color="inherit"
+            xstyle={[styles.chevronIcon, popover.isOpen && styles.chevronOpen]}
+          />
         </span>
         {hasSelectedOption && (
           <span
@@ -399,11 +419,17 @@ export function TabMenu({
           id={menuId}
           role="menu"
           aria-label={label}
+          {...menuPress.menuProps}
           onKeyDown={handleMenuKeyDown}
           onFocus={handleFocus}
           {...mergeProps(
             themeProps('tab-menu-dropdown'),
-            stylex.props(styles.dropdown),
+            stylex.props(
+              styles.dropdown,
+              hasOverflow
+                ? menuTouchActionStyles.scrolls
+                : menuTouchActionStyles.fits,
+            ),
           )}>
           <span role="presentation" {...stylex.props(styles.menuHeading)}>
             {label}
@@ -429,7 +455,7 @@ export function TabMenu({
                 }}
                 {...mergeProps(
                   themeProps('tab-menu-item'),
-                  stylex.props(
+                  focusOutlineProps.focusVisible(
                     styles.menuItem,
                     isSelected && styles.menuItemSelected,
                   ),

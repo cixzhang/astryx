@@ -9,13 +9,43 @@
  * SYNC: When MoreMenu.tsx changes, update tests to match new behavior
  */
 
-import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {createRef} from 'react';
+import {describe, it, expect, vi, beforeAll, beforeEach} from 'vitest';
+import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MoreMenu} from './MoreMenu';
+import {DropdownMenu} from '../DropdownMenu/DropdownMenu';
+import {warmMenuBottomSheet} from '../DropdownMenu/__tests__/warmMenuBottomSheet';
+
+// DropdownMenu's touch sheet is loaded lazily; resolve it once up front.
+beforeAll(warmMenuBottomSheet, 20000);
 
 // Mock showPopover and hidePopover methods since they're not implemented in jsdom
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = vi.fn(function (
+    this: HTMLDialogElement,
+  ) {
+    this.setAttribute('open', '');
+  });
+  HTMLDialogElement.prototype.show = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '');
+  });
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open');
+  });
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
   HTMLElement.prototype.showPopover = vi.fn(function (this: HTMLElement) {
     this.setAttribute('popover-open', '');
     const event = new Event('toggle', {bubbles: false});
@@ -84,6 +114,29 @@ describe('MoreMenu', () => {
     expect(HTMLElement.prototype.showPopover).toHaveBeenCalled();
   });
 
+  it('keeps the trigger visually pressed while the menu is open', async () => {
+    const user = userEvent.setup();
+    render(<MoreMenu items={defaultItems} />);
+
+    const trigger = screen.getByRole('button', {name: 'More options'});
+    expect(trigger.className).not.toContain('DropdownMenu__styles.triggerOpen');
+
+    await user.click(trigger);
+
+    expect(trigger.className).toContain('DropdownMenu__styles.triggerOpen');
+  });
+
+  it('forwards BottomSheet presentation to DropdownMenu', async () => {
+    const user = userEvent.setup();
+    render(<MoreMenu items={defaultItems} presentation="bottom-sheet" />);
+
+    await user.click(screen.getByRole('button', {name: 'More options'}));
+    await waitFor(() =>
+      expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce(),
+    );
+    expect(HTMLElement.prototype.showPopover).not.toHaveBeenCalled();
+  });
+
   it('calls onClick when item is clicked', async () => {
     const handleEdit = vi.fn();
     const items = [
@@ -109,6 +162,44 @@ describe('MoreMenu', () => {
     // Button uses aria-disabled (not native disabled) to keep
     // the button focusable for tooltip access
     expect(button).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('keeps the menu closed from every opening key and press while disabled', async () => {
+    const user = userEvent.setup();
+    render(<MoreMenu items={defaultItems} isDisabled />);
+    const button = screen.getByRole('button', {name: 'More options'});
+    button.focus();
+    for (const key of ['{Enter}', ' ', '{ArrowDown}', '{ArrowUp}']) {
+      await user.keyboard(key);
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    }
+    await user.pointer([
+      {keys: '[MouseLeft>]', target: button},
+      {keys: '[/MouseLeft]'},
+    ]);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('does not carry a refused ArrowUp into a later open', async () => {
+    const user = userEvent.setup();
+    const {rerender} = render(<MoreMenu items={defaultItems} isDisabled />);
+    const button = screen.getByRole('button', {name: 'More options'});
+    button.focus();
+    await user.keyboard('{ArrowUp}');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+
+    // Enabled again, a synthesized click (detail 0: screen-reader activation)
+    // opens on the FIRST row; the refused ArrowUp must not have armed "last".
+    rerender(<MoreMenu items={defaultItems} />);
+    fireEvent.click(button, {detail: 0});
+    await waitFor(() => {
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('menuitem', {name: 'Edit', hidden: true}),
+      ).toHaveFocus();
+    });
   });
 
   it('supports custom label', () => {
@@ -166,6 +257,16 @@ describe('MoreMenu', () => {
     expect(handleEdit).not.toHaveBeenCalled();
   });
 
+  it('forwards its ref to the bottom-sheet trigger', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <MoreMenu items={defaultItems} ref={ref} presentation="bottom-sheet" />,
+    );
+    expect(ref.current).toBe(
+      screen.getByRole('button', {name: 'More options'}),
+    );
+  });
+
   it('supports forwardRef', () => {
     const ref = vi.fn();
     render(<MoreMenu items={defaultItems} ref={ref} />);
@@ -196,5 +297,71 @@ describe('MoreMenu', () => {
     render(<MoreMenu items={defaultItems} />);
     const menu = screen.getByRole('menu', {hidden: true});
     expect(menu.className).toContain('astryx-more-menu');
+  });
+
+  it('pointer open focuses the menu container, not the first item (#4477)', async () => {
+    const user = userEvent.setup();
+    render(<MoreMenu items={defaultItems} />);
+
+    await user.click(screen.getByRole('button', {name: 'More options'}));
+
+    const menu = screen.getByRole('menu', {hidden: true});
+    await waitFor(() => expect(menu).toHaveFocus());
+    expect(
+      screen.getByRole('menuitem', {name: 'Edit', hidden: true}),
+    ).not.toHaveFocus();
+  });
+
+  it('first ArrowDown after a pointer open moves focus to the first item (#4477)', async () => {
+    const user = userEvent.setup();
+    render(<MoreMenu items={defaultItems} />);
+
+    await user.click(screen.getByRole('button', {name: 'More options'}));
+    const menu = screen.getByRole('menu', {hidden: true});
+    await waitFor(() => expect(menu).toHaveFocus());
+
+    fireEvent.keyDown(menu, {key: 'ArrowDown'});
+    expect(
+      screen.getByRole('menuitem', {name: 'Edit', hidden: true}),
+    ).toHaveFocus();
+  });
+
+  describe('placement and alignment', () => {
+    const positionAreaOf = (menu: HTMLElement) =>
+      menu
+        .closest('[popover]')
+        ?.getAttribute('style')
+        ?.match(/position-area:[^;]*/)?.[0];
+
+    it('resolves the same default position as DropdownMenu', () => {
+      render(
+        <>
+          <MoreMenu items={defaultItems} />
+          <DropdownMenu button={{label: 'Actions'}} items={defaultItems} />
+        </>,
+      );
+      const [moreMenu, dropdownMenu] = screen.getAllByRole('menu', {
+        hidden: true,
+      });
+
+      expect(positionAreaOf(moreMenu)).toBe(positionAreaOf(dropdownMenu));
+      expect(positionAreaOf(moreMenu)).toBe(
+        'position-area: self-block-end span-self-inline-end',
+      );
+    });
+
+    it('forwards alignment to the menu layer', () => {
+      render(<MoreMenu items={defaultItems} alignment="end" />);
+      expect(positionAreaOf(screen.getByRole('menu', {hidden: true}))).toBe(
+        'position-area: self-block-end span-self-inline-start',
+      );
+    });
+
+    it('forwards placement to the menu layer', () => {
+      render(<MoreMenu items={defaultItems} placement="above" />);
+      expect(positionAreaOf(screen.getByRole('menu', {hidden: true}))).toBe(
+        'position-area: self-block-start span-self-inline-end',
+      );
+    });
   });
 });

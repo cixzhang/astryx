@@ -4,8 +4,8 @@
 
 /**
  * @file Citation.tsx
- * @input Uses React, StyleX, theme tokens
- * @output Exports Citation component for inline citation references
+ * @input Uses React, StyleX, theme tokens, and the shared navigation policy
+ * @output Exports Citation with safe navigation and named inert-reference states
  * @position Core implementation; consumed by index.ts
  *
  * SYNC: When modified, update these files to stay in sync:
@@ -30,10 +30,17 @@ import {
   easeVars,
 } from '../theme/tokens.stylex';
 import {mergeProps} from '../utils';
+import {isSafeUrl} from '../utils/safeUrl';
 import type {BaseProps} from '../BaseProps';
 import {themeProps} from '../utils/themeProps';
-import {useTranslator} from '../i18n';
 import {renderIconSlot} from '../Icon';
+import {
+  registerEnglishFallback,
+  useComponentTranslator,
+} from '../i18n/useComponentTranslator';
+import english from '../i18n/generated-english/Citation/Citation.generated';
+
+registerEnglishFallback(english);
 
 export interface CitationSource {
   title?: string;
@@ -99,11 +106,14 @@ const styles = stylex.create({
     minWidth: 0,
   },
   labelInteractive: {
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
   },
   labelHover: {
     backgroundColor: {
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
@@ -112,7 +122,7 @@ const styles = stylex.create({
       // the base secondary color from `label` (last-wins property merge),
       // leaving linked citations to inherit the surrounding text color.
       default: colorVars['--color-text-secondary'],
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-text-primary'],
       },
     },
@@ -137,7 +147,10 @@ const styles = stylex.create({
     transitionTimingFunction: easeVars['--ease-standard'],
   },
   numberInteractive: {
-    cursor: 'pointer',
+    cursor: {
+      default: 'pointer',
+      ':is(:disabled,[aria-disabled="true"])': 'default',
+    },
   },
   numberHover: {
     backgroundColor: {
@@ -145,7 +158,7 @@ const styles = stylex.create({
       // hover-only conditional replaces the base accent-muted pill from
       // `number` on merge, leaving linked badges transparent.
       default: colorVars['--color-accent-muted'],
-      ':hover': {
+      ':hover:where(:not(:disabled,[aria-disabled="true"]))': {
         '@media (hover: hover)': colorVars['--color-overlay-hover'],
       },
     },
@@ -181,9 +194,10 @@ export function Citation({
   'data-testid': testId,
   ...rest
 }: CitationProps): React.ReactElement {
-  const t = useTranslator();
+  const t = useComponentTranslator();
   const title = source.title ?? String(number);
-  const href = source.url;
+  const href =
+    source.url != null && isSafeUrl(source.url) ? source.url : undefined;
 
   // Resolve the source icon. A non-string `icon` node renders as-is (an Astryx
   // <Icon>, SVG, avatar, etc.). Otherwise fall back to an image URL: `src`, or
@@ -197,10 +211,10 @@ export function Citation({
   const hasIcon = iconNode != null || imageSrc != null;
 
   const Tag = href ? 'a' : 'span';
-  // `doc-noteref` is a reference role — only appropriate on the interactive
-  // link form. On a plain (unlinked) span it is not a permitted role
-  // (axe: aria-allowed-role), so omit it there; the aria-label still names it.
-  const noteRole = href ? ('doc-noteref' as const) : undefined;
+  // `doc-noteref` is a link role and is not permitted on the inert span. Give
+  // that span a supported naming role so the component-authored aria-label
+  // still identifies number-only citations to assistive technology.
+  const noteRole = href ? ('doc-noteref' as const) : ('group' as const);
   const linkProps = href
     ? {
         href,

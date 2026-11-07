@@ -4,6 +4,73 @@
  * @file Shared leaf primitives used across the doc types.
  */
 
+/** Every authored documentation kind accepted by `parseDoc`. */
+export type AuthoredDocKind =
+  | 'component'
+  | 'function'
+  | 'generic'
+  | 'page'
+  | 'block'
+  | 'schema'
+  | 'command'
+  | 'enum'
+  | 'namespace'
+  /**
+   * An icon definition (spec:AST-084 FR4).
+   * @experimental May change or be removed in a patch release.
+   */
+  | 'icon-definition';
+
+/** Visibility of an authored doc in a compiled audience-specific bundle. */
+export type DocAudience = 'public' | 'internal';
+
+/**
+ * Optional canonical placement request. The compiler resolves `parent` as a
+ * stable doc reference. `slot` selects one parent-owned slot, and `order`
+ * provides deterministic sibling ordering inside that slot.
+ */
+export interface DocPlacement {
+  parent: string;
+  slot?: string;
+  order?: number;
+}
+
+/**
+ * Tree metadata shared by every authored doc kind. The docs tree reads
+ * `placement` for every guide, the CLI's and each integration's
+ * (spec:AST-046); nothing reads `aliases` or `audience` yet. A reference topic
+ * outside the docs tree that sets one fails to load.
+ */
+export interface AuthoredDocGraphFields {
+  /** The doc's one parent in the docs tree: a namespace of its own package. */
+  placement?: DocPlacement;
+  /** Reserved: prior routes or names the docs tree will keep resolving.
+   *  Nothing reads it yet. */
+  aliases?: string[];
+  /** Reserved: docs bundle audience; omit for public docs. Nothing reads it
+   *  yet. */
+  audience?: DocAudience;
+  /** Set on the doc of an experimental surface (spec:AST-017 FR21, FR27),
+   *  whose text then says it may change or be removed in a patch release. A
+   *  command's help shows it as `[experimental]`. Omit for stable surfaces. */
+  stability?: 'experimental';
+}
+
+/**
+ * Stable public identity for generated registry resources.
+ *
+ * The converter derives a slug from the doc's stable `name` by default. Set
+ * `slug` only when the public URL must differ from that derived value. When a
+ * published slug changes, keep prior relative paths in `aliases` so existing
+ * install commands continue to work.
+ */
+export interface RegistryDocIdentity {
+  /** Lowercase kebab-case leaf slug override. */
+  slug?: string;
+  /** Prior paths within the item's kind root, without `.json`. */
+  aliases?: string[];
+}
+
 /**
  * Documents one element in a component's anatomy breakdown.
  * Anatomy describes the visual/structural parts that make up a component
@@ -46,6 +113,114 @@ export interface ComponentBestPractice {
    *  Good: `"Convey clear action hierarchy. Each surface should only have 1 primary button."`
    *  Bad:  `"Do use clear action hierarchy."` */
   description: string;
+}
+
+/**
+ * A component-specific accessibility requirement.
+ *
+ * Keep this focused on what a consumer must preserve in the rendered result:
+ * naming, semantics, keyboard behavior, state exposure, contrast, and supported
+ * content combinations. Repository audit procedure belongs in the wiki rubric,
+ * not in this field.
+ *
+ * @example
+ * ```
+ * {name: 'Loading', description: 'Expose aria-busy and prevent duplicate activation unless the action is explicitly interruptible.'}
+ * ```
+ */
+export interface ComponentAccessibilityRequirement {
+  /** Short scannable label, e.g. `"Accessible name"` or `"Loading"`. */
+  name: string;
+  /**
+   * The accessibility contract consumers must preserve. Write at about a
+   * grade-7 reading level with short sentences, common words, and active
+   * voice. For color contrast, put the ratio in `requirement`; name the exact
+   * foreground, background, state, and any overlay in `description`; explain
+   * exceptions in plain language; and include enough detail for a human or
+   * agent to reproduce the check.
+   */
+  description: string;
+  /** Groups related requirements in the docsite Accessibility tab. */
+  category?: 'Color contrast' | 'Keyboard' | 'Semantics' | 'Content';
+  /** Relevant WCAG success criterion, e.g. `"1.4.3 Contrast (Minimum)"`. */
+  criterion?: string;
+  /** Short threshold or rule, e.g. `"4.5:1"`, `"3:1"`, or `"Exempt"`. */
+  requirement?: string;
+  /** Component states covered by this requirement. */
+  states?: string[];
+}
+
+export type ComponentAccessibilityThemeStatus = 'Pass' | 'Fail' | 'Not tested';
+
+export type ComponentAccessibilityThemeApplicability =
+  'Required' | 'Conditional' | 'Supplemental' | 'Decorative';
+
+export interface ComponentAccessibilityThemeMeasurement {
+  /** Column heading, e.g. `"Rest"` or `"Spinner"`. */
+  label: string;
+  /** Display value, e.g. `"15.13:1"`. */
+  value: string;
+  /** Optional supporting detail shown below the value, such as a worst case. */
+  detail?: string;
+  /**
+   * Whether this measurement is required for every use, required only in some
+   * contexts, shown as a supplemental cue, or decorative. Each theme declares
+   * this intent, informed by the component contract. Never infer it from the
+   * measured ratio. Non-required measurements do not determine row status.
+   */
+  applicability?: ComponentAccessibilityThemeApplicability;
+  /** Rendered foreground and background colors used for this measurement. */
+  colorPair?: {
+    foreground: string;
+    background: string;
+  };
+  /** Optional per-variant results shown from a compact details trigger. */
+  breakdown?: Array<{
+    label: string;
+    value: string;
+    detail?: string;
+    colorPair: {
+      foreground: string;
+      background: string;
+    };
+    status?: 'Pass' | 'Fail';
+  }>;
+  /** Mark a failed measurement so the docsite can emphasize it. */
+  status?: 'Pass' | 'Fail';
+}
+
+export interface ComponentAccessibilityThemeResult {
+  /** Row heading, usually a component variant. */
+  name: string;
+  /** Measurements shown between the row heading and status. */
+  measurements: ComponentAccessibilityThemeMeasurement[];
+  /** Overall result for the row. */
+  status: ComponentAccessibilityThemeStatus;
+}
+
+export interface ComponentAccessibilityThemeMode {
+  /** Theme mode covered by these results. */
+  mode: 'Light' | 'Dark';
+  /** Detailed results for the component in this mode. */
+  results: ComponentAccessibilityThemeResult[];
+}
+
+export interface ComponentAccessibilityThemeTable {
+  /** Optional heading for one complete group of measurements. */
+  title?: string;
+  /** Explains the scope of this measurement group. */
+  description?: string;
+  /** Detailed results separated by theme mode. */
+  modes: ComponentAccessibilityThemeMode[];
+}
+
+export interface ComponentAccessibilityThemeCoverage {
+  /** Display name of the audited theme. */
+  theme: string;
+  /** Complete groups of measurements for this theme and component. */
+  tables: ComponentAccessibilityThemeTable[];
+  /** Theme visuals intentionally excluded from measurement, with a reason. */
+  notMeasured?: string[];
 }
 
 /**
@@ -117,6 +292,23 @@ export interface ComponentPlaygroundConfig {
    *  the component is visible on load and knobs stay usable, whereas a real
    *  top-layer modal makes the rest of the page inert (#3657). */
   overlay?: boolean;
+  /** Override the controlled prop and open value used by an overlay preview.
+   *  Use with `overlay: true` when the component does not use `isOpen: true`
+   *  to represent its open state. */
+  overlayControl?: {
+    /** Controlled prop that determines whether the overlay is open. */
+    stateProp: string;
+    /** Value assigned to stateProp when the preview's open button is used. */
+    openValue: unknown;
+  };
+  /** The component reads AppShell mobile context and renders nothing
+   *  without it (e.g. `MobileNavToggle` returns null unless the context
+   *  reports an enabled mobile viewport — the default value outside
+   *  AppShell never does). The interactive preview provides a simulated
+   *  mobile AppShell context so the stage is not an empty box, keeps the
+   *  drawer open state interactive, and notes the simulation under the
+   *  rendered component (#4983). */
+  appShellMobile?: boolean;
   /** Required parent wrapper for sub-components that depend on a parent
    *  context provider (e.g. `Tab` calls `useTabListContext()` and throws
    *  standalone). The preview wraps the component in this parent before
@@ -131,8 +323,10 @@ export interface ComponentPlaygroundConfig {
   wrapper?: {
     /** Parent component name as exported from `@astryxdesign/core`, e.g. `'TabList'`. */
     component: string;
-    /** Props for the wrapper. The previewed sub-component becomes its `children`. */
+    /** Props for the wrapper. The previewed sub-component becomes its `children` unless slotProp is set. */
     props?: Record<string, unknown>;
+    /** Wrapper prop that receives the previewed sub-component instead of `children`. */
+    slotProp?: string;
   };
 }
 
@@ -198,6 +392,12 @@ export interface ComponentPropDoc {
    *  ```
    */
   slotElements?: ComponentSlotElement[];
+  /** Lifecycle marker for a prop outside the stable compatibility promise
+   *  (spec:AST-017 FR21). Set `'experimental'` on a stable component's
+   *  optional `experimental` prop object, and say in `description` that its
+   *  contents may change or be removed in a patch release. Omit for stable
+   *  props. */
+  stability?: 'experimental';
 }
 
 /**
@@ -260,6 +460,8 @@ export interface ComponentSlotElement {
  * { property: 'padding', vars: ['--_card-padding'] },
  * ```
  */
+// SYNC: apps/docsite/scripts/generate-data.mjs (interface DerivedVar) — see the
+// note on ComponentThemingTarget below.
 export interface ComponentThemingDerivedVar {
   /** The standard CSS property name (camelCase) that theme authors write.
    *  e.g. `'borderRadius'`, `'padding'`, `'paddingBlock'` */
@@ -270,6 +472,12 @@ export interface ComponentThemingDerivedVar {
   /** Named expansion strategy instead of specific vars.
    *  `'container'` — expands padding to 7 container layout tokens. */
   expand?: 'container';
+  /** Emit only the internal `vars`, dropping the source property from the
+   *  generated rule. Use when the class-carrying element must not receive the
+   *  standard property itself — the value reaches a child through the var
+   *  (e.g. TextArea's flush wrapper drives the inner textarea's inline
+   *  padding). Without this, the property is emitted alongside the var. */
+  replaces?: boolean;
 }
 
 /**
@@ -285,6 +493,10 @@ export interface ComponentThemingDerivedVar {
  * {className: 'astryx-card'}
  * ```
  */
+// SYNC: When adding a field here, add it to the docsite's generated-registry
+// copy too — apps/docsite/scripts/generate-data.mjs (interface ThemingTarget).
+// `next build` type-checks the emitted componentRegistry.ts against that copy,
+// so a field present in a .doc.mjs but missing there fails the docsite build.
 export interface ComponentThemingTarget {
   /** The stable CSS class name rendered by the component.
    *  Always starts with `astryx-`.
@@ -292,17 +504,16 @@ export interface ComponentThemingTarget {
   className: string;
   /** Visual prop names reflected on this element.
    *  These are the props passed to `themeProps()` as the second argument.
-   *  Use these names to derive preferred data selectors: `variant` →
-   *  `[data-variant="secondary"]`, `level` → `[data-level="2"]`. Legacy bare
-   *  classes are still emitted for compatibility but should not be the primary
-   *  documentation surface. Omit if the component has no visual props (class
-   *  name only). */
+   *  Use these names to derive selectors: `variant` →
+   *  `[data-variant="secondary"]`, `level` → `[data-level="2"]`. Values are
+   *  reflected only as data attributes; the stable target class identifies the
+   *  component or part. Omit if the component has no visual props. */
   visualProps?: string[];
-  /** State names that appear on this element based on component state.
+  /** State names reflected on this element based on component state.
    *  Unlike visualProps (driven by props), these reflect runtime state
-   *  (checked, selected, today, on, expanded, etc.). Use these names to derive preferred data selectors such as
-   *  `[data-checked="checked"]`. Legacy state classes are still emitted for
-   *  compatibility. Omit if the element has no state-driven selectors. */
+   *  (checked, selected, today, on, expanded, etc.). Use these names to derive
+   *  selectors such as `[data-checked="checked"]`. Omit if the element has no
+   *  state-driven selectors. */
   states?: string[];
 }
 
@@ -318,7 +529,7 @@ export interface ComponentThemingTarget {
  * ```
  */
 export interface ComponentThemingVar {
-  /** CSS custom property name, e.g. '--_card-radius' or '--button-press-scale' */
+  /** CSS custom property name, e.g. '--_card-radius' or '--button-focus-offset' */
   name: string;
   /** What this var controls */
   description: string;
@@ -336,6 +547,47 @@ export interface ComponentThemingVar {
    * `astryx theme build` errors if a theme sets a private var directly.
    */
   private?: boolean;
+}
+
+/**
+ * A component icon slot: a themeable icon role the component owns, which a
+ * theme maps to a shared icon name through `defineTheme({componentIcons})`.
+ * Each entry corresponds to a slot in `ComponentIconSlotMap`.
+ *
+ * @example
+ * ```
+ * {
+ *   slot: 'code-block-copy',
+ *   description: 'The copy button icon.',
+ *   fallback: '`copy`; `check` while copied',
+ *   state: [{name: 'copied', type: 'boolean', description: 'True while the copied feedback shows.'}],
+ *   whenNull: 'Hides the glyph. The button keeps its size, name, and tooltip.',
+ * }
+ * ```
+ */
+// SYNC: When adding a field here, add it to the docsite's generated-registry
+// copy too — apps/docsite/scripts/generate-data.mjs (interface ComponentIconSlot).
+export interface ComponentIconSlotDoc {
+  /** The slot name, `<component-kebab>-<semantic-role>`. */
+  slot: string;
+  /** The icon's role in the component. */
+  description: string;
+  /** The icon the component renders when the theme maps nothing, per state. */
+  fallback: string;
+  /** The state a slot function receives. Omit for a stateless slot. */
+  state?: ComponentIconSlotStateDoc[];
+  /** What a slot value of `null` does for this component. */
+  whenNull: string;
+}
+
+/** One field of the state a component passes to a slot function. */
+export interface ComponentIconSlotStateDoc {
+  /** The field name. */
+  name: string;
+  /** The field's TypeScript type. */
+  type: string;
+  /** When the field has each value. */
+  description: string;
 }
 
 /**
@@ -368,8 +620,8 @@ export interface HookReturnDoc {
 }
 
 /**
- * Component usage documentation — a concise summary, design guidance
- * best practices, and optional visual anatomy.
+ * Component usage documentation — a concise summary, design guidance,
+ * component-specific accessibility requirements, and optional visual anatomy.
  *
  * ## description
  * Exactly 2-3 short sentences:
@@ -401,6 +653,11 @@ export interface UsageDoc {
   /** 3-4 do/don't design guidance items. Usually 2 Do's then 1-2 Don'ts.
    *  Focus on how a designer would USE the component, not how it's built. */
   bestPractices?: ComponentBestPractice[];
+  /** Accessibility requirements specific to this component and its supported
+   * content combinations. Generic audit procedure stays in the wiki rubric. */
+  accessibility?: ComponentAccessibilityRequirement[];
+  /** Verified color-accessibility coverage for bundled themes. */
+  accessibilityThemeCoverage?: ComponentAccessibilityThemeCoverage[];
   /** Structural/visual anatomy of the component. Each entry describes one
    *  element that makes up the component (icon slot, label, container, etc.).
    *  Order entries in the visual reading order (leading → trailing, top → bottom). */

@@ -9,19 +9,19 @@ import {VStack, HStack} from '@astryxdesign/core/Stack';
 import {Grid} from '@astryxdesign/core/Grid';
 import {Selector} from '@astryxdesign/core/Selector';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
-import {Switch} from '@astryxdesign/core/Switch';
 import {ToggleButton, ToggleButtonGroup} from '@astryxdesign/core/ToggleButton';
 import {Tooltip} from '@astryxdesign/core/Tooltip';
 import {Icon} from '@astryxdesign/core/Icon';
+import {Banner} from '@astryxdesign/core/Banner';
 import {expandRadiusScale, expandTypeScale} from '@astryxdesign/core/theme';
 import {ColorSwatch} from './ColorSwatch';
 import {SelectableCard} from '@astryxdesign/core/SelectableCard';
 import {FONT_OPTIONS, RATIO_OPTIONS, UNIFIED_PRESETS} from './constants';
+import {getConcentricityWarning, spacingToPx} from './helpers';
+import {useLiveNumberInput} from '@/lib/useLiveNumberInput';
 
 const styles = stylex.create({
   fullWidthField: {width: '100%'},
-  // 4px below the accent header, on top of the section's own gap.
-  headerSpace: {marginBottom: 'var(--spacing-1)'},
 });
 
 interface ScaleOption {
@@ -68,6 +68,16 @@ function ScaleControl({
   step,
   units,
 }: ScaleControlProps) {
+  const liveNumber = useLiveNumberInput(
+    numberValue,
+    nextValue => {
+      if (nextValue != null) {
+        onNumber(nextValue);
+      }
+    },
+    {min, max},
+  );
+
   return (
     <VStack gap={1}>
       <HStack gap={1} vAlign="center">
@@ -96,9 +106,13 @@ function ScaleControl({
         <NumberInput
           label={controlLabel}
           isLabelHidden
-          value={numberValue}
+          value={liveNumber.value}
           placeholder="—"
-          onChange={onNumber}
+          onChange={liveNumber.handleChange}
+          onFocus={liveNumber.handleFocus}
+          onInput={liveNumber.handleInput}
+          onBlur={liveNumber.handleBlur}
+          onKeyDown={liveNumber.handleKeyDown}
           min={min}
           max={max}
           step={step}
@@ -132,7 +146,6 @@ interface BaseStylesPanelProps {
   sizeBase: number;
   durationStep: number;
   activePreset: string | null;
-  autoPickColors: boolean;
   onTokenChange: (name: string, value: string) => void;
   onApplyTypeScale: (base: number, ratio: number) => void;
   onApplyRadiusScale: (base: number) => void;
@@ -140,8 +153,6 @@ interface BaseStylesPanelProps {
   onApplySizeScale: (base: number) => void;
   onApplyDurationScale: (multiplier: number) => void;
   onApplyUnifiedPreset: (key: string) => void;
-  onSetAutoPickColors: (val: boolean) => void;
-  onExpandColorScale: (accent: string) => void;
 }
 
 export function BaseStylesPanel({
@@ -154,7 +165,6 @@ export function BaseStylesPanel({
   sizeBase,
   durationStep,
   activePreset,
-  autoPickColors,
   onTokenChange,
   onApplyTypeScale,
   onApplyRadiusScale,
@@ -162,8 +172,6 @@ export function BaseStylesPanel({
   onApplySizeScale,
   onApplyDurationScale,
   onApplyUnifiedPreset,
-  onSetAutoPickColors,
-  onExpandColorScale,
 }: BaseStylesPanelProps) {
   // Reflect the active token values in the typography controls. Fonts map
   // directly to a token; the type scale ratio is derived from the raw
@@ -230,9 +238,10 @@ export function BaseStylesPanel({
     return keys.every(k => tokens[k] === expected[k]) ? inner : null;
   })();
 
-  // Spacing — linear scale where step N = base × N (base = --spacing-1).
+  // Spacing — linear scale where step N = base × N (base = --spacing-1), read
+  // in px whether a step is written in rem (the defaults) or px (a theme).
   const spacingMatch = (() => {
-    const base = parseInt(tokens['--spacing-1'] ?? '', 10);
+    const base = spacingToPx(tokens['--spacing-1']);
     if (!Number.isFinite(base)) {
       return null;
     }
@@ -254,7 +263,7 @@ export function BaseStylesPanel({
       '--spacing-12': 12,
     };
     const ok = Object.entries(steps).every(
-      ([k, step]) => tokens[k] === `${Math.round(base * step)}px`,
+      ([k, step]) => spacingToPx(tokens[k]) === Math.round(base * step),
     );
     return ok ? base : null;
   })();
@@ -270,68 +279,46 @@ export function BaseStylesPanel({
     return sm === md - 4 && lg === md + 4 ? md : null;
   })();
 
+  // Concentricity couples the radius and spacing bases. Warn — never block —
+  // when they diverge, reading the same values the two controls display. #958
+  const shownRadius = radiusMatch ?? radiusBase;
+  const shownSpacing = spacingMatch ?? spacingBase;
+  const radiusWarning = getConcentricityWarning(
+    'radius',
+    shownRadius,
+    shownSpacing,
+  );
+  const spacingWarning = getConcentricityWarning(
+    'spacing',
+    shownRadius,
+    shownSpacing,
+  );
+
   return (
     <VStack gap={5}>
       {/* Color */}
       <VStack gap={3}>
-        <HStack vAlign="center" justify="between" xstyle={styles.headerSpace}>
-          <Text type="label" color="secondary">
-            Create from accent
-          </Text>
-          <Switch
-            label="Create from accent"
-            isLabelHidden
-            value={autoPickColors}
-            onChange={val => {
-              onSetAutoPickColors(val);
-              if (val) {
-                const accentRaw = tokens['--color-accent'] || '';
-                const parsed = accentRaw.match(
-                  /^light-dark\(([^,]+),\s*([^)]+)\)$/,
-                );
-                const accentHex = parsed ? parsed[1].trim() : accentRaw;
-                if (accentHex && accentHex.startsWith('#')) {
-                  onExpandColorScale(accentHex);
-                }
-              }
-            }}
-          />
-        </HStack>
+        <Text type="label" color="secondary">
+          Colors
+        </Text>
         <VStack gap={0}>
-          <ColorSwatch
-            tokenName="--color-accent"
-            value={tokens['--color-accent'] || ''}
-            onChange={(name, value) => {
-              onTokenChange(name, value);
-              if (autoPickColors) {
-                const parsed = value.match(
-                  /^light-dark\(([^,]+),\s*([^)]+)\)$/,
-                );
-                const hex = parsed ? parsed[1].trim() : value;
-                if (hex && hex.startsWith('#') && hex.length >= 7) {
-                  onExpandColorScale(hex);
-                }
-              }
-            }}
-            mode={mode}
-          />
-          {!autoPickColors &&
-            [
-              '--color-neutral',
-              '--color-background-card',
-              '--color-background-surface',
-              '--color-background-body',
-              '--color-background-muted',
-              '--color-text-primary',
-            ].map(tokenName => (
-              <ColorSwatch
-                key={tokenName}
-                tokenName={tokenName}
-                value={tokens[tokenName] || ''}
-                onChange={onTokenChange}
-                mode={mode}
-              />
-            ))}
+          {[
+            '--color-accent',
+            '--color-neutral',
+            '--color-background-card',
+            '--color-background-surface',
+            '--color-background-body',
+            '--color-background-muted',
+            '--color-text-primary',
+          ].map(tokenName => (
+            <ColorSwatch
+              key={tokenName}
+              tokenName={tokenName}
+              value={tokens[tokenName] || ''}
+              onChange={onTokenChange}
+              mode={mode}
+            />
+          ))}
         </VStack>
       </VStack>
 
@@ -433,7 +420,7 @@ export function BaseStylesPanel({
                 isLabelHidden
                 size="sm"
                 placeholder="Custom"
-                xstyle={styles.fullWidthField}
+                controlXstyle={styles.fullWidthField}
                 options={FONT_OPTIONS}
                 value={fontValue(token)}
                 onChange={(val: string) => onTokenChange(token, val)}
@@ -446,7 +433,7 @@ export function BaseStylesPanel({
               isLabelHidden
               size="sm"
               placeholder="Default"
-              xstyle={styles.fullWidthField}
+              controlXstyle={styles.fullWidthField}
               options={[
                 ...RATIO_OPTIONS.map(opt => ({
                   value: String(opt.value),
@@ -499,44 +486,62 @@ export function BaseStylesPanel({
 
       {/* Shape & Layout */}
       <VStack gap={4}>
-        <ScaleControl
-          label="Corner Radius"
-          tooltip={`Linear scale: inner = ${radiusMatch ?? radiusBase}px, element = ${(radiusMatch ?? radiusBase) * 2}px, container = ${(radiusMatch ?? radiusBase) * 3}px, page = ${Math.round((radiusMatch ?? radiusBase) * 7)}px.`}
-          controlLabel="Radius"
-          options={[
-            {label: 'S', value: '2'},
-            {label: 'M', value: '4'},
-            {label: 'L', value: '6'},
-            {label: 'XL', value: '12'},
-          ]}
-          toggleValue={radiusMatch != null ? String(radiusMatch) : null}
-          onToggle={v => onApplyRadiusScale(Number(v))}
-          numberValue={radiusMatch ?? null}
-          onNumber={v => onApplyRadiusScale(v)}
-          min={0}
-          max={18}
-          step={2}
-          units="px"
-        />
-        <ScaleControl
-          label="Spacing"
-          tooltip={`Linear scale: step N = ${spacingMatch ?? spacingBase}px × N.`}
-          controlLabel="Spacing"
-          options={[
-            {label: 'S', value: '2'},
-            {label: 'M', value: '4'},
-            {label: 'L', value: '6'},
-            {label: 'XL', value: '8'},
-          ]}
-          toggleValue={spacingMatch != null ? String(spacingMatch) : null}
-          onToggle={v => onApplySpacingScale(Number(v))}
-          numberValue={spacingMatch ?? null}
-          onNumber={v => onApplySpacingScale(v)}
-          min={0}
-          max={16}
-          step={2}
-          units="px"
-        />
+        <VStack gap={2}>
+          <ScaleControl
+            label="Corner Radius"
+            tooltip={`Linear scale: inner = ${shownRadius}px, element = ${shownRadius * 2}px, container = ${shownRadius * 3}px, page = ${Math.round(shownRadius * 7)}px.`}
+            controlLabel="Radius"
+            options={[
+              {label: 'S', value: '2'},
+              {label: 'M', value: '4'},
+              {label: 'L', value: '6'},
+              {label: 'XL', value: '8'},
+            ]}
+            toggleValue={radiusMatch != null ? String(radiusMatch) : null}
+            onToggle={v => onApplyRadiusScale(Number(v))}
+            numberValue={radiusMatch ?? null}
+            onNumber={v => onApplyRadiusScale(v)}
+            min={0}
+            max={18}
+            step={2}
+            units="px"
+          />
+          {radiusWarning && (
+            <Banner
+              status="warning"
+              title={radiusWarning.title}
+              description={radiusWarning.description}
+            />
+          )}
+        </VStack>
+        <VStack gap={2}>
+          <ScaleControl
+            label="Spacing"
+            tooltip={`Linear scale: step N = ${shownSpacing}px × N.`}
+            controlLabel="Spacing"
+            options={[
+              {label: 'S', value: '2'},
+              {label: 'M', value: '4'},
+              {label: 'L', value: '6'},
+              {label: 'XL', value: '8'},
+            ]}
+            toggleValue={spacingMatch != null ? String(spacingMatch) : null}
+            onToggle={v => onApplySpacingScale(Number(v))}
+            numberValue={spacingMatch ?? null}
+            onNumber={v => onApplySpacingScale(v)}
+            min={0}
+            max={16}
+            step={2}
+            units="px"
+          />
+          {spacingWarning && (
+            <Banner
+              status="warning"
+              title={spacingWarning.title}
+              description={spacingWarning.description}
+            />
+          )}
+        </VStack>
         <ScaleControl
           label="Element Size"
           tooltip={`sm = ${(sizeMatch ?? sizeBase) - 4}px, md = ${sizeMatch ?? sizeBase}px, lg = ${(sizeMatch ?? sizeBase) + 4}px.`}

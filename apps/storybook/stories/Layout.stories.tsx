@@ -125,6 +125,12 @@ const styles = stylex.create({
     borderRadius: radiusVars['--radius-container'],
     overflow: 'hidden',
   },
+  cwContainerMatrix: {
+    height: 240,
+  },
+  scrollbarProbeContent: {
+    scrollbarGutter: 'stable',
+  },
   cwContainer900: {
     width: 900,
   },
@@ -156,6 +162,25 @@ const NavItem = ({
   <div {...stylex.props(styles.navItem, active && styles.navItemActive)}>
     {children}
   </div>
+);
+
+const ScrollbarProbeContent = ({id, label}: {id: string; label: string}) => (
+  <LayoutContent
+    data-scrollbar-case={id}
+    label={`${label} content`}
+    role="region"
+    tabIndex={0}
+    xstyle={styles.scrollbarProbeContent}>
+    <p {...stylex.props(styles.bodyText)}>
+      Scroll this content to confirm its scrollbar stays on the outer edge of
+      the content area.
+    </p>
+    {Array.from({length: 8}, (_, index) => (
+      <div key={index} {...stylex.props(styles.placeholder)}>
+        {label} content block {index + 1}
+      </div>
+    ))}
+  </LayoutContent>
 );
 
 const meta: Meta<typeof Layout> = {
@@ -738,14 +763,122 @@ export const ContentOnly: Story = {
   ),
 };
 
+interface ClosedRegionsArgs {
+  isOpen: boolean;
+}
+
+/**
+ * A region hidden with `isOpen && <LayoutHeader />` leaves `false` in its
+ * slot. The closed column must match the column that omits the slots: both
+ * set `padding={6}`, so the outer inset differs from the inner one. With
+ * `contentWidth`, a closed end panel must give the no-panel composition.
+ */
+export const ClosedRegions = {
+  name: 'Closed Regions',
+  args: {isOpen: false},
+  argTypes: {
+    isOpen: {
+      control: 'boolean',
+      description: 'Open the regions that the closed examples hide',
+    },
+  },
+  render: ({isOpen}: ClosedRegionsArgs) => (
+    <VStack gap={6} xstyle={styles.storySection}>
+      <HStack gap={4}>
+        <VStack gap={2}>
+          <p {...stylex.props(styles.subheading)}>Slots omitted, padding=6</p>
+          <Card width={300} height={220} data-closed-region="omitted">
+            <Layout
+              padding={6}
+              content={
+                <LayoutContent>
+                  <p {...stylex.props(styles.bodyText)}>Content area.</p>
+                </LayoutContent>
+              }
+            />
+          </Card>
+        </VStack>
+        <VStack gap={2}>
+          <p {...stylex.props(styles.subheading)}>
+            {isOpen ? 'Regions open' : 'Regions closed'}, padding=6
+          </p>
+          <Card width={300} height={220} data-closed-region="closed">
+            <Layout
+              padding={6}
+              header={
+                isOpen && (
+                  <LayoutHeader hasDivider>
+                    <h3 {...stylex.props(styles.heading)}>Header</h3>
+                  </LayoutHeader>
+                )
+              }
+              start={
+                isOpen && (
+                  <LayoutPanel width={100} hasDivider>
+                    <NavItem active>Nav</NavItem>
+                  </LayoutPanel>
+                )
+              }
+              content={
+                <LayoutContent>
+                  <p {...stylex.props(styles.bodyText)}>Content area.</p>
+                </LayoutContent>
+              }
+              footer={
+                isOpen && (
+                  <LayoutFooter hasDivider>
+                    <p {...stylex.props(styles.bodyText)}>Footer</p>
+                  </LayoutFooter>
+                )
+              }
+            />
+          </Card>
+        </VStack>
+      </HStack>
+      <VStack gap={2}>
+        <p {...stylex.props(styles.subheading)}>
+          contentWidth=400 with the end panel closed
+        </p>
+        <div
+          data-closed-region="content-width"
+          {...stylex.props(
+            styles.cwContainer,
+            styles.cwContainer640,
+            styles.cwContainerMatrix,
+          )}>
+          <Layout
+            contentWidth={400}
+            header={
+              <LayoutHeader hasDivider>
+                <HStack hAlign="between">
+                  <span data-header-edge="start">Header start</span>
+                  <span data-header-edge="end">Header end</span>
+                </HStack>
+              </LayoutHeader>
+            }
+            content={
+              <ScrollbarProbeContent id="closed-end" label="Closed end panel" />
+            }
+            end={
+              isOpen && (
+                <LayoutPanel width={120} hasDivider>
+                  <p {...stylex.props(styles.bodyText)}>Details</p>
+                </LayoutPanel>
+              )
+            }
+          />
+        </div>
+      </VStack>
+    </VStack>
+  ),
+};
+
 export const ThemedLayout: Story = {
   name: 'Themed Layout (Neutral vs Stone)',
   render: () => (
     <HStack gap={6} xstyle={styles.storySection}>
       <VStack gap={3}>
-        <p {...stylex.props(styles.sectionLabel)}>
-          Stone Theme
-        </p>
+        <p {...stylex.props(styles.sectionLabel)}>Stone Theme</p>
         <Theme theme={stoneTheme}>
           <Card width={400}>
             <Layout
@@ -779,9 +912,7 @@ export const ThemedLayout: Story = {
       </VStack>
 
       <VStack gap={3}>
-        <p {...stylex.props(styles.sectionLabel)}>
-          Neutral Theme
-        </p>
+        <p {...stylex.props(styles.sectionLabel)}>Neutral Theme</p>
         <Theme theme={neutralTheme}>
           <Card width={400}>
             <Layout
@@ -990,8 +1121,8 @@ export const ContentWidthWithStartPanel: Story = {
   render: () => (
     <VStack gap={4} xstyle={styles.storySection}>
       <p {...stylex.props(styles.sectionLabel)}>
-        contentWidth=640 with a 200px start panel: the middle row (panel +
-        content) is constrained
+        contentWidth=640 with a 200px start panel: the panel stays aligned while
+        content extends to the open end edge
       </p>
       <div {...stylex.props(styles.cwContainer, styles.cwContainer900)}>
         <Layout
@@ -1015,8 +1146,8 @@ export const ContentWidthWithStartPanel: Story = {
               <h4 {...stylex.props(styles.subheading)}>General Settings</h4>
               <br />
               <p {...stylex.props(styles.bodyText)}>
-                The start panel and content area together are constrained to
-                640px and centered within the container.
+                The start panel stays inside the centered 640px frame while the
+                content area extends to the container&apos;s open end edge.
               </p>
             </LayoutContent>
           }
@@ -1084,6 +1215,93 @@ export const ContentWidthWithBothPanels: Story = {
       </div>
     </VStack>
   ),
+};
+
+export const ContentWidthScrollbarPlacement: Story = {
+  name: 'Content Width — Scrollbar Placement',
+  tags: ['visual-baseline'],
+  render: () => {
+    const cases = [
+      {
+        id: 'none',
+        label: 'No panels',
+        start: undefined,
+        end: undefined,
+      },
+      {
+        id: 'start',
+        label: 'Start panel only',
+        start: (
+          <LayoutPanel width={160} hasDivider>
+            <NavItem active>Nav</NavItem>
+          </LayoutPanel>
+        ),
+        end: undefined,
+      },
+      {
+        id: 'both',
+        label: 'Start and end panels',
+        start: (
+          <LayoutPanel width={160} hasDivider>
+            <NavItem active>Nav</NavItem>
+          </LayoutPanel>
+        ),
+        end: (
+          <LayoutPanel width={160} hasDivider>
+            <p {...stylex.props(styles.bodyText)}>Details</p>
+          </LayoutPanel>
+        ),
+      },
+      {
+        id: 'end',
+        label: 'End panel only',
+        start: undefined,
+        end: (
+          <LayoutPanel width={160} hasDivider>
+            <p {...stylex.props(styles.bodyText)}>Details</p>
+          </LayoutPanel>
+        ),
+      },
+    ];
+
+    return (
+      <VStack gap={6} xstyle={styles.storySection}>
+        <p {...stylex.props(styles.sectionLabel)}>
+          contentWidth=640 in a 900px container. With no panels, content spans
+          the container and aligns internally. With exactly one panel, content
+          extends through the opposite open area. The two-panel layout remains
+          constrained. Header markers expose both alignment edges.
+        </p>
+        {cases.map(({id, label, start, end}) => (
+          <VStack key={id} gap={2}>
+            <p {...stylex.props(styles.subheading)}>{label}</p>
+            <div
+              data-scrollbar-layout={id}
+              {...stylex.props(
+                styles.cwContainer,
+                styles.cwContainer900,
+                styles.cwContainerMatrix,
+              )}>
+              <Layout
+                contentWidth={640}
+                header={
+                  <LayoutHeader hasDivider>
+                    <HStack hAlign="between">
+                      <span data-header-edge="start">Header start</span>
+                      <span data-header-edge="end">Header end</span>
+                    </HStack>
+                  </LayoutHeader>
+                }
+                start={start}
+                content={<ScrollbarProbeContent id={id} label={label} />}
+                end={end}
+              />
+            </div>
+          </VStack>
+        ))}
+      </VStack>
+    );
+  },
 };
 
 export const ContentWidthNoDividers: Story = {
@@ -1229,7 +1447,11 @@ export const ContentWidthResponsive: Story = {
                 </LayoutHeader>
               }
               start={
-                <LayoutPanel width={160} hasDivider role="navigation">
+                <LayoutPanel
+                  width={160}
+                  hasDivider
+                  role="navigation"
+                  label="Wide navigation">
                   <NavItem active>Dashboard</NavItem>
                   <NavItem>Settings</NavItem>
                 </LayoutPanel>
@@ -1262,7 +1484,11 @@ export const ContentWidthResponsive: Story = {
                 </LayoutHeader>
               }
               start={
-                <LayoutPanel width={160} hasDivider role="navigation">
+                <LayoutPanel
+                  width={160}
+                  hasDivider
+                  role="navigation"
+                  label="Medium navigation">
                   <NavItem active>Dashboard</NavItem>
                   <NavItem>Settings</NavItem>
                 </LayoutPanel>
@@ -1295,7 +1521,11 @@ export const ContentWidthResponsive: Story = {
                 </LayoutHeader>
               }
               start={
-                <LayoutPanel width={160} hasDivider role="navigation">
+                <LayoutPanel
+                  width={160}
+                  hasDivider
+                  role="navigation"
+                  label="Narrow navigation">
                   <NavItem active>Dashboard</NavItem>
                   <NavItem>Settings</NavItem>
                 </LayoutPanel>
@@ -1363,6 +1593,114 @@ export const ContentWidthInAppShell: Story = {
               </LayoutFooter>
             }
           />
+        </AppShell>
+      </div>
+    </VStack>
+  ),
+};
+
+const nestedStyles = stylex.create({
+  frame390: {
+    width: 390,
+    height: 360,
+  },
+  frame960: {
+    width: 960,
+    height: 360,
+  },
+  frame320: {
+    width: 320,
+  },
+});
+
+/** A page Layout with a details panel, as it sits inside AppShell content. */
+const OrdersPageLayout = ({panelWidth}: {panelWidth: number}) => (
+  <Layout
+    header={
+      <LayoutHeader hasDivider>
+        <h3 {...stylex.props(styles.heading)}>Orders</h3>
+      </LayoutHeader>
+    }
+    end={
+      <LayoutPanel
+        hasDivider
+        width={panelWidth}
+        role="complementary"
+        label="Order details">
+        <VStack gap={2}>
+          <p {...stylex.props(styles.subheading)}>Order #1042</p>
+          <p {...stylex.props(styles.bodyText)}>Shipped · 3 items</p>
+        </VStack>
+      </LayoutPanel>
+    }
+    content={
+      <LayoutContent>
+        <p {...stylex.props(styles.bodyText)}>
+          Select an order to see its shipping and payment details.
+        </p>
+      </LayoutContent>
+    }
+  />
+);
+
+/**
+ * A Layout nested in AppShell content keeps its regions' default inset:
+ * AppShell's own internal Layout is full bleed (`padding={0}`), and a
+ * Layout's `padding` applies only to its own regions. The Card row shows the
+ * unchanged path: a Layout inside a padded Card still takes the Card's inset.
+ * One AppShell per story: each renders a `<main>` landmark.
+ */
+export const NestedInAppShell: Story = {
+  name: 'Nested Layout — Inset in AppShell',
+  render: () => (
+    <VStack gap={4} xstyle={styles.storySection}>
+      <p {...stylex.props(styles.sectionLabel)}>
+        Page Layout with a details panel inside AppShell (no padding props),
+        390px frame
+      </p>
+      <div {...stylex.props(styles.cwContainer, nestedStyles.frame390)}>
+        <AppShell>
+          <OrdersPageLayout panelWidth={150} />
+        </AppShell>
+      </div>
+      <p {...stylex.props(styles.sectionLabel)}>
+        Unchanged: Layout inside Card padding=2 takes the Card inset
+      </p>
+      <div {...stylex.props(nestedStyles.frame320)}>
+        <Card padding={2}>
+          <Layout
+            height="auto"
+            header={
+              <LayoutHeader hasDivider>
+                <h3 {...stylex.props(styles.heading)}>Card title</h3>
+              </LayoutHeader>
+            }
+            content={
+              <LayoutContent>
+                <p {...stylex.props(styles.bodyText)}>
+                  Header and content align to the Card&apos;s 8px inset.
+                </p>
+              </LayoutContent>
+            }
+          />
+        </Card>
+      </div>
+    </VStack>
+  ),
+};
+
+/** The same nested page Layout in a 960px AppShell frame. */
+export const NestedInAppShellWide: Story = {
+  name: 'Nested Layout — Inset in AppShell (960px)',
+  render: () => (
+    <VStack gap={4} xstyle={styles.storySection}>
+      <p {...stylex.props(styles.sectionLabel)}>
+        Page Layout with a details panel inside AppShell (no padding props),
+        960px frame
+      </p>
+      <div {...stylex.props(styles.cwContainer, nestedStyles.frame960)}>
+        <AppShell>
+          <OrdersPageLayout panelWidth={320} />
         </AppShell>
       </div>
     </VStack>

@@ -54,6 +54,11 @@ const meta: Meta<typeof TextInput> = {
       control: 'boolean',
       description: 'Whether the input is disabled',
     },
+    isReadOnly: {
+      control: 'boolean',
+      description:
+        'Whether the input is read-only. The value still submits with the form but cannot be edited. Unlike isDisabled it is not dimmed and keeps its form value.',
+    },
     disabledMessage: {
       control: 'text',
       description:
@@ -227,6 +232,20 @@ export const DescriptionWithOptional: Story = {
     description: 'Tell us about yourself',
     isOptional: true,
     placeholder: 'Your bio here...',
+  },
+};
+
+// Read-only shows a value the user should see and send but not change. Unlike
+// a disabled field it is not dimmed and still submits.
+export const ReadOnly: Story = {
+  render: args => {
+    const [value, setValue] = useState(args.value ?? 'ACCT-4417-9920');
+    return <TextInput {...args} value={value} onChange={setValue} />;
+  },
+  args: {
+    label: 'Account number',
+    isReadOnly: true,
+    value: 'ACCT-4417-9920',
   },
 };
 
@@ -542,6 +561,73 @@ export const StatusVariantComparison: Story = {
           onChange={setC}
           status={{type: 'error', message: 'Enter a valid email'}}
           statusVariant="tooltip"
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * Keyboard traits: what each field tells a touch keyboard. On a phone, focus
+ * each field to see its keyboard and its Return key: a Search key that does
+ * not capitalize, the phone pad, the URL keyboard with Go, the number pad for
+ * a one-time code, and a username field that neither capitalizes nor corrects.
+ */
+export const KeyboardTraits: Story = {
+  render: () => {
+    const [query, setQuery] = useState('');
+    const [phone, setPhone] = useState('');
+    const [website, setWebsite] = useState('');
+    const [code, setCode] = useState('');
+    const [username, setUsername] = useState('');
+    return (
+      <div
+        style={{display: 'flex', flexDirection: 'column', gap: 16, width: 320}}>
+        <TextInput
+          label="Search"
+          type="search"
+          value={query}
+          onChange={setQuery}
+          startIcon={MagnifyingGlassIcon}
+          enterKeyHint="search"
+          autoCapitalize="none"
+          hasAutoCorrect={false}
+          hasClear
+        />
+        <TextInput
+          label="Phone"
+          type="tel"
+          value={phone}
+          onChange={setPhone}
+          autoComplete="tel"
+          enterKeyHint="next"
+        />
+        <TextInput
+          label="Website"
+          type="url"
+          value={website}
+          onChange={setWebsite}
+          autoComplete="url"
+          enterKeyHint="go"
+        />
+        <TextInput
+          label="Verification code"
+          value={code}
+          onChange={setCode}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          enterKeyHint="done"
+        />
+        <TextInput
+          label="Username"
+          value={username}
+          onChange={setUsername}
+          startIcon={UserIcon}
+          autoComplete="username"
+          autoCapitalize="none"
+          hasAutoCorrect={false}
+          hasSpellCheck={false}
+          enterKeyHint="next"
         />
       </div>
     );

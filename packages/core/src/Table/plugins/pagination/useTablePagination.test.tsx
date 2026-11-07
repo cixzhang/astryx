@@ -229,7 +229,7 @@ describe('useTablePagination', () => {
       ).toBeTruthy();
     });
 
-    it('transformTableContext renders Pagination above and below', () => {
+    it('transformTableContext renders distinctly named Pagination above and below', () => {
       render(
         <PaginatedTable
           data={generateItems(30)}
@@ -237,10 +237,40 @@ describe('useTablePagination', () => {
           position="both"
         />,
       );
-      const navs = screen.getAllByRole('navigation', {
-        name: 'Table pagination',
+      const table = screen.getByRole('table');
+      // Each nav landmark gets a unique accessible name (axe landmark-unique)
+      const topNav = screen.getByRole('navigation', {
+        name: 'Table pagination (top)',
       });
-      expect(navs).toHaveLength(2);
+      const bottomNav = screen.getByRole('navigation', {
+        name: 'Table pagination (bottom)',
+      });
+      // Top nav comes before the table, bottom nav after it in DOM order
+      expect(
+        table.compareDocumentPosition(topNav) &
+          Node.DOCUMENT_POSITION_PRECEDING,
+      ).toBeTruthy();
+      expect(
+        table.compareDocumentPosition(bottomNav) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('position="both" interpolates a consumer label into distinct nav names', () => {
+      render(
+        <PaginatedTable
+          data={generateItems(30)}
+          pageSize={10}
+          position="both"
+          label="Users table"
+        />,
+      );
+      expect(
+        screen.getByRole('navigation', {name: 'Users table (top)'}),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('navigation', {name: 'Users table (bottom)'}),
+      ).toBeInTheDocument();
     });
 
     it('transformTableContext does not render Pagination when position is none', () => {
@@ -314,12 +344,16 @@ describe('useTablePagination', () => {
           pageSizeOptions={[10, 25, 50]}
         />,
       );
-      expect(screen.getByLabelText('Items per page')).toBeInTheDocument();
+      expect(
+        screen.getByRole('combobox', {name: 'Items per page'}),
+      ).toBeInTheDocument();
     });
 
     it('paginationProps exclude pageSizeOptions when not provided', () => {
       render(<PaginatedTable data={generateItems(50)} pageSize={10} />);
-      expect(screen.queryByLabelText('Items per page')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('combobox', {name: 'Items per page'}),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -514,7 +548,7 @@ describe('useTablePagination', () => {
       const nextButton = screen.getByRole('button', {
         name: 'Go to next page',
       });
-      expect(nextButton).not.toBeDisabled();
+      expect(nextButton).not.toHaveAttribute('aria-disabled');
     });
 
     it('passes onPageSizeChange and pageSizeOptions', () => {
@@ -576,8 +610,8 @@ describe('useTablePagination', () => {
       const nextButton = screen.getByRole('button', {
         name: 'Go to next page',
       });
-      expect(prevButton).toBeDisabled();
-      expect(nextButton).toBeDisabled();
+      expect(prevButton).toHaveAttribute('aria-disabled', 'true');
+      expect(nextButton).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('handles rapid page changes', async () => {
@@ -630,7 +664,7 @@ describe('useTablePagination', () => {
       const prevButton = screen.getByRole('button', {
         name: 'Go to previous page',
       });
-      expect(prevButton).toBeDisabled();
+      expect(prevButton).toHaveAttribute('aria-disabled', 'true');
     });
   });
 });

@@ -17,6 +17,7 @@
 import {useCallback, useRef} from 'react';
 import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 import {isRtlElement} from './isRtlElement';
+import {findTypeaheadMatch, nextTypeaheadBuffer} from '../utils/typeaheadMatch';
 
 /** Keys handled by the tree keyboard model (used to gate typeahead). */
 const NAVIGATION_KEYS = new Set([
@@ -177,6 +178,28 @@ export interface UseTreeFocusReturn<T extends HTMLElement = HTMLElement> {
 }
 
 /**
+ * The text typeahead matches against. With `matchLabelledBy`, the row's
+ * `aria-labelledby` text (the label alone) when it has one; otherwise, and by
+ * default, its text content.
+ */
+function itemLabelText(item: HTMLElement, matchLabelledBy: boolean): string {
+  const labelledBy = matchLabelledBy
+    ? item.getAttribute('aria-labelledby')
+    : null;
+  if (labelledBy != null) {
+    const label = labelledBy
+      .split(/\s+/)
+      .map(id => item.ownerDocument.getElementById(id)?.textContent ?? '')
+      .join(' ')
+      .trim();
+    if (label !== '') {
+      return label;
+    }
+  }
+  return (item.textContent ?? '').trim();
+}
+
+/**
  * Hook for managing roving-tabindex focus + the WAI-ARIA tree keyboard model.
  *
  * A tree is not a linear list: ArrowUp/ArrowDown/Home/End roam linearly over
@@ -208,9 +231,55 @@ export interface UseTreeFocusReturn<T extends HTMLElement = HTMLElement> {
  * </ul>
  * ```
  */
+
 export function useTreeFocus<T extends HTMLElement = HTMLElement>(
   options: UseTreeFocusOptions = {},
 ): UseTreeFocusReturn<T> {
+  // The flag is pinned off here so an untyped options object cannot smuggle
+  // it through the public hook, and the internal stop move stays internal.
+  const {takeTabStop: _takeTabStop, ...result} = useTreeFocusInternal<T>({
+    ...options,
+    matchLabelledBy: false,
+  });
+  return result;
+}
+
+/**
+ * Options the package's own components can pass beyond the public hook.
+ *
+ * Not exported from the package: TreeList imports this module directly, so
+ * `UseTreeFocusOptions` stays exactly as released.
+ */
+export type UseTreeFocusInternalOptions = UseTreeFocusOptions & {
+  /**
+   * Match typeahead against the item's `aria-labelledby` text (its label
+   * alone) instead of its whole text content, so start content, a chevron
+   * toggle or a description never takes part. TreeList passes this; the
+   * released text match stays the default for direct callers.
+   * @default false
+   */
+  matchLabelledBy?: boolean;
+};
+
+/** What the package's own components get beyond the public hook. */
+export type UseTreeFocusInternalReturn<T extends HTMLElement = HTMLElement> =
+  UseTreeFocusReturn<T> & {
+    /**
+     * With `hasRovingTabIndex`, makes `item` the tree's one Tab stop, by the
+     * same rule the hook's own moves follow: a disabled or hidden row never
+     * takes it, and the stop stays where it is. TreeList calls it when it
+     * moves focus to a collapsing row.
+     */
+    takeTabStop: (item: HTMLElement) => void;
+  };
+
+/**
+ * The implementation behind {@link useTreeFocus}. Not exported from the
+ * package; the public hook calls it without the internal options.
+ */
+export function useTreeFocusInternal<T extends HTMLElement = HTMLElement>(
+  options: UseTreeFocusInternalOptions = {},
+): UseTreeFocusInternalReturn<T> {
   const {
     itemSelector = '[role="treeitem"]',
     isItemDisabled,
@@ -222,6 +291,7 @@ export function useTreeFocus<T extends HTMLElement = HTMLElement>(
     onActivate,
     typeahead = true,
     typeaheadResetMs = DEFAULT_TYPEAHEAD_RESET_MS,
+    matchLabelledBy = false,
     onActiveChange,
     hasRovingTabIndex = false,
   } = options;
@@ -374,28 +444,44 @@ export function useTreeFocus<T extends HTMLElement = HTMLElement>(
       currentIndex: number,
     ): void => {
       const state = typeaheadRef.current;
+      // The same buffer step as useTypeahead: a repeat means "next match", and
+      // a lone combining mark typed first is not a letter to jump to.
+      const nextBuffer = nextTypeaheadBuffer(state.buffer, e.key);
+      if (nextBuffer == null) {
+        return;
+      }
       if (state.timer != null) {
         clearTimeout(state.timer);
       }
-      state.buffer += e.key.toLowerCase();
+      state.buffer = nextBuffer;
       state.timer = setTimeout(() => {
         typeaheadRef.current.buffer = '';
       }, typeaheadResetMs) as unknown as number;
 
       const query = state.buffer;
-      const start = currentIndex < 0 ? 0 : currentIndex;
-      const ordered = [...items.slice(start + 1), ...items.slice(0, start + 1)];
-      const match = ordered.find(
-        item =>
-          !itemDisabled(item) &&
-          (item.textContent ?? '').trim().toLowerCase().startsWith(query),
+      // A longer query is refining, so the current item may still be the match.
+      const hasCurrent = currentIndex >= 0;
+      const start = hasCurrent ? currentIndex : 0;
+      const offset = hasCurrent && query.length === 1 ? 1 : 0;
+      const ordered = [
+        ...items.slice(start + offset),
+        ...items.slice(0, start + offset),
+      ];
+      const enabled = ordered.filter(item => !itemDisabled(item));
+      // Case, accents, stroked letters and Turkish i fold away, and a typed
+      // mark prefers the exact match.
+      const matchIndex = findTypeaheadMatch(
+        enabled.map((_, i) => i),
+        i => itemLabelText(enabled[i], matchLabelledBy),
+        query,
       );
+      const match = matchIndex >= 0 ? enabled[matchIndex] : undefined;
       if (match != null) {
         e.preventDefault();
         focusItem(match);
       }
     },
-    [typeaheadResetMs, itemDisabled, focusItem],
+    [typeaheadResetMs, itemDisabled, focusItem, matchLabelledBy],
   );
 
   const handleKeyDown = useCallback(
@@ -560,11 +646,25 @@ export function useTreeFocus<T extends HTMLElement = HTMLElement>(
     }
   }, [hasRovingTabIndex, syncTabStops]);
 
+  const takeTabStop = useCallback(
+    (item: HTMLElement) => {
+      if (!hasRovingTabIndex || itemDisabled(item)) {
+        return;
+      }
+      const items = getItems();
+      if (items.includes(item)) {
+        moveTabStop(items, item);
+      }
+    },
+    [getItems, hasRovingTabIndex, itemDisabled, moveTabStop],
+  );
+
   return {
     treeRef,
     handleKeyDown,
     handleFocus,
     focusFirst,
     focusLast,
+    takeTabStop,
   };
 }

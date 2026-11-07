@@ -4,13 +4,32 @@
 
 /**
  * @file Dialog.tsx
- * @input Uses React, DialogHTMLAttributes, ReactNode, container (Layout), DialogContext
+ * @input Uses React, DialogHTMLAttributes, ReactNode, container (Layout), DialogContext, layerTextReset,
+ *   layerStructureReset, modalOutlet, interactionModality, chainEventHandlers, holdEntranceInput
  * @output Exports Dialog component, DialogProps, DialogVariant, DialogPurpose types
  * @position Core implementation; consumed by index.ts, tested by Dialog.test.tsx
+ *
+ * The standard variant treats `width` as the preferred surface width, then
+ * clamps it to the dynamic viewport with spacing-token gutters so narrow
+ * viewports keep content and controls on screen without changing the public API.
+ * Fullscreen dialogs add safe-area protection to the default padding fallback
+ * while preserving explicit prop/theme padding overrides, and fade in without
+ * the centered-dialog translate/scale motion.
+ * Initial focus is applied after showModal; an explicit descendant request
+ * takes priority over a header's default title request.
+ *
+ * Under reduced motion the entrance never travels or scales
+ * (docs/design/reduced-motion.md): on a touch screen the dialog fades in
+ * where it lands, in 200 ms or less; with a mouse it appears at once.
+ *
+ * Initial focus and the focus returned on close follow the last input
+ * (docs/architecture/interaction-modality.md INV1): the shared focus indicator
+ * is hidden after a pointer press and shown after a key press.
  *
  * SYNC: When modified, update these files to stay in sync:
  * - /packages/core/src/Dialog/Dialog.doc.mjs (props table, features, implementation notes)
  * - /packages/core/src/Dialog/Dialog.test.tsx (tests for new/changed behavior)
+ * - /packages/core/src/Dialog/__tests__/DialogTouchEntrance.interaction.browser.spec.ts (the touch entrance hold)
  * - /packages/core/src/Dialog/index.ts (exports if types change)
  * - /apps/storybook/stories/Dialog.stories.tsx (storybook stories)
  * - /packages/cli/assets/templates/blocks/components/Dialog/ (showcase blocks)
@@ -20,20 +39,33 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   type ReactNode,
 } from 'react';
+import {useIsHydrating} from '../hooks/useIsHydrating';
+import {useSettledOpen} from '../hooks/useSettledOpen';
 import type {BaseProps} from '../BaseProps';
 import * as stylex from '@stylexjs/stylex';
 import {useScrollLock} from '../hooks/useScrollLock';
-import {hasActiveFocusTrapEscape, isImeKeyEvent} from '../hooks/useFocusTrap';
+import {layerTextReset} from '../Layer/layerTextReset.stylex';
+import {layerStructureReset} from '../Layer/layerStructureReset.stylex';
+import {LayerContentBoundary} from '../Layer/layerScopedContext';
+import {layerClickBoundary} from '../Layer/layerClickBoundary';
+import {LayerDepthProvider} from '../Layer/LayerDepthContext';
+import {holdEntranceInput} from '../Layer/holdEntranceInput';
+import {useLayerDismissal} from '../Layer/useLayerDismissal';
+import {useBackdropPress} from '../Layer/useBackdropPress';
+import {useFocusRegionContainment} from '../hooks/useFocusTrap';
+import {useModalOutlet} from '../Layer/modalOutlet';
 import {
   colorVars,
   radiusVars,
   durationVars,
   easeVars,
   shadowVars,
+  spacingVars,
 } from '../theme/tokens.stylex';
 import {container} from '../Layout/container.stylex';
 import type {SpacingToken} from '../Layout/container.stylex';
@@ -43,14 +75,27 @@ import {
   containerPaddingBlockStartVarStyles,
   containerPaddingBlockEndVarStyles,
   spacingStepToToken,
+  overlayPaddingReset,
 } from '../Layout/padding.stylex';
 import type {SpacingStep} from '../utils/types';
-import {mergeProps, mergeRefs} from '../utils';
+import {mergeProps} from '../utils/mergeProps';
+import {chainEventHandlers} from '../utils/chainEventHandlers';
 import {devWarn} from '../utils/devWarning';
 import {DialogContext} from './DialogContext';
 import {themeProps} from '../utils/themeProps';
 import type {DialogVariantMap} from './index';
+import {focusOutlineProps} from '../utils/focusOutline.stylex';
+import {useInteractionModalityTracking} from '../utils/interactionModality';
+import {
+  focusForLastInput,
+  prepareFocusReturnOnRemoval,
+  returnFocusForLastInput,
+} from '../utils/focusReturn';
+import {ModalAnnounceProvider} from '../hooks/ModalAnnounceProvider';
 
+import {useMergedRefs} from '../hooks/useMergedRefs';
+
+type PointerHandler = (event: React.PointerEvent<HTMLDialogElement>) => void;
 /**
  * Calculate a directional translate offset for dialog entry animation.
  * Returns a normalized vector from the trigger element toward the viewport
@@ -61,8 +106,11 @@ function getDialogDirection(
   distance = 16,
 ): {x: number; y: number} {
   const rect = triggerEl.getBoundingClientRect();
-  const dx = rect.left + rect.width / 2 - window.innerWidth / 2;
-  const dy = rect.top + rect.height / 2 - window.innerHeight / 2;
+  // The trigger's own window: its rect is measured in that window's viewport,
+  // which is not the page's when the dialog renders into a second document.
+  const view = triggerEl.ownerDocument.defaultView ?? window;
+  const dx = rect.left + rect.width / 2 - view.innerWidth / 2;
+  const dy = rect.top + rect.height / 2 - view.innerHeight / 2;
   const dist = Math.sqrt(dx * dx + dy * dy) || 1;
   return {
     x: Math.round((dx / dist) * distance),
@@ -115,6 +163,32 @@ const enterDirectional = stylex.keyframes({
   to: {opacity: 1, transform: 'translate(0, 0) scale(1)'},
 });
 
+const enterFullscreen = stylex.keyframes({
+  from: {opacity: 0},
+  to: {opacity: 1},
+});
+
+const dialogFullscreenSafeAreaBlockStartPadding = `var(--astryx-dialog-padding-block-start, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-top, 0px))))`;
+const dialogFullscreenSafeAreaBlockEndPadding = `var(--astryx-dialog-padding-block-end, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-bottom, 0px))))`;
+const dialogFullscreenSafeAreaInlineStartPaddingLtr = `var(--astryx-dialog-padding-inline-start, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-left, 0px)))))`;
+const dialogFullscreenSafeAreaInlineStartPaddingRtl = `var(--astryx-dialog-padding-inline-start, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-right, 0px)))))`;
+const dialogFullscreenSafeAreaInlineEndPaddingLtr = `var(--astryx-dialog-padding-inline-end, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-right, 0px)))))`;
+const dialogFullscreenSafeAreaInlineEndPaddingRtl = `var(--astryx-dialog-padding-inline-end, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-left, 0px)))))`;
+
+/** @internal Verified by Dialog.test.tsx; not re-exported from the package entry point. */
+export const dialogFullscreenSafeAreaPaddingContract = {
+  blockStart: dialogFullscreenSafeAreaBlockStartPadding,
+  blockEnd: dialogFullscreenSafeAreaBlockEndPadding,
+  inlineStart: {
+    ltr: dialogFullscreenSafeAreaInlineStartPaddingLtr,
+    rtl: dialogFullscreenSafeAreaInlineStartPaddingRtl,
+  },
+  inlineEnd: {
+    ltr: dialogFullscreenSafeAreaInlineEndPaddingLtr,
+    rtl: dialogFullscreenSafeAreaInlineEndPaddingRtl,
+  },
+} as const;
+
 /**
  * Dialog styles using native <dialog> element
  * Uses ::backdrop pseudo-element for overlay
@@ -124,7 +198,22 @@ const styles = stylex.create({
     position: 'fixed',
     margin: 'auto',
     padding: 0,
-    border: 'none',
+    // The backdrop does not blur the page. Forced colors override the
+    // backdrop's colour, so a 1px border keeps the modal separate from the
+    // page. It is a border, not an outline: the focus ring
+    // (focusOutlineProps) owns the outline longhands on this element.
+    borderWidth: {
+      default: 0,
+      '@media (forced-colors: active)': 1,
+    },
+    borderStyle: {
+      default: 'none',
+      '@media (forced-colors: active)': 'solid',
+    },
+    borderColor: {
+      default: null,
+      '@media (forced-colors: active)': 'CanvasText',
+    },
     backgroundColor: colorVars['--color-background-surface'],
     '--_dialog-radius': radiusVars['--radius-container'],
     borderRadius: 'var(--_dialog-radius)',
@@ -134,17 +223,20 @@ const styles = stylex.create({
     height: 'fit-content',
     overscrollBehavior: 'contain',
     opacity: 0,
-    animationDuration: durationVars['--duration-medium-max'],
-    animationTimingFunction: easeVars['--ease-standard'],
+    // Under reduced motion on a touch screen the entrance is the shared
+    // reduced-motion cross-fade, 200 ms on easeInOut whatever the theme's
+    // duration (design:reduced-motion DR2, DR4). Moves to
+    // reducedMotionFadeConsts once that is on main.
+    animationDuration: {
+      default: durationVars['--duration-medium-max'],
+      '@media (prefers-reduced-motion: reduce) and (pointer: coarse)': '200ms',
+    },
+    animationTimingFunction: {
+      default: easeVars['--ease-standard'],
+      '@media (prefers-reduced-motion: reduce) and (pointer: coarse)':
+        'cubic-bezier(0.42, 0, 0.58, 1)',
+    },
     animationFillMode: 'backwards' as const,
-    outline: {
-      default: null,
-      ':focus-visible': `2px solid ${colorVars['--color-accent']}`,
-    },
-    outlineOffset: {
-      default: '0',
-      ':focus-visible': '2px',
-    },
   },
   // Applied via isOpen prop — avoids :where([open]) attribute selectors
   // which have zero specificity and can lose to default styles depending
@@ -152,19 +244,25 @@ const styles = stylex.create({
   open: {
     display: 'flex',
     opacity: 1,
-    // Disable the entry keyframe animation under
-    // `prefers-reduced-motion: reduce` so the dialog appears instantly
-    // instead of translating/scaling in (same pattern as layerAnimations).
+    // Under `prefers-reduced-motion: reduce` the dialog never travels or
+    // scales in (design:reduced-motion DR1): on a touch screen it fades in
+    // where it lands (DR2), and with a mouse it appears at once (DR3).
     animationName: {
       default: enterDirectional,
-      '@media (prefers-reduced-motion: reduce)': 'none',
+      '@media (prefers-reduced-motion: reduce) and (pointer: coarse)':
+        enterFullscreen,
+      '@media (prefers-reduced-motion: reduce) and (not (pointer: coarse))':
+        'none',
     },
   },
-  // Backdrop using ::backdrop pseudo-element
+  // A dialog present on page load opens where it rests (spec:AST-013 FR13).
+  openSettled: {
+    animationName: 'none',
+  },
+  // No backdrop-filter: a full-viewport blur is costly to repaint.
   backdrop: {
     '::backdrop': {
       backgroundColor: colorVars['--color-overlay'],
-      backdropFilter: 'blur(2px)',
     },
   },
   fullscreen: {
@@ -173,8 +271,31 @@ const styles = stylex.create({
     maxWidth: '100dvw',
     maxHeight: '100dvh',
     borderRadius: 0,
+    // Nothing of the page shows around a full-screen dialog: no edge.
+    borderWidth: 0,
     margin: 0,
     inset: 0,
+  },
+  fullscreenOpen: {
+    animationName: {
+      default: enterFullscreen,
+      '@media (prefers-reduced-motion: reduce) and (pointer: coarse)':
+        enterFullscreen,
+      '@media (prefers-reduced-motion: reduce) and (not (pointer: coarse))':
+        'none',
+    },
+  },
+  fullscreenSafeArea: {
+    paddingBlockStart: dialogFullscreenSafeAreaBlockStartPadding,
+    paddingBlockEnd: dialogFullscreenSafeAreaBlockEndPadding,
+    paddingInlineStart: {
+      default: dialogFullscreenSafeAreaInlineStartPaddingLtr,
+      ':is([dir="rtl"] *)': dialogFullscreenSafeAreaInlineStartPaddingRtl,
+    },
+    paddingInlineEnd: {
+      default: dialogFullscreenSafeAreaInlineEndPaddingLtr,
+      ':is([dir="rtl"] *)': dialogFullscreenSafeAreaInlineEndPaddingRtl,
+    },
   },
   inner: {
     display: 'flex',
@@ -187,7 +308,8 @@ const styles = stylex.create({
   // Inline wrapper mirrors the dialog's visual styles without <dialog> behavior
   inlineWrapper: {
     padding: 0,
-    border: 'none',
+    borderWidth: 0,
+    borderStyle: 'none',
     backgroundColor: colorVars['--color-background-surface'],
     '--_dialog-radius': radiusVars['--radius-container'],
     borderRadius: 'var(--_dialog-radius)',
@@ -199,12 +321,30 @@ const styles = stylex.create({
   },
 });
 
-// Dynamic styles for width, maxHeight, and position
+const STANDARD_DIALOG_VIEWPORT_GUTTER = spacingVars['--spacing-4'];
+const STANDARD_DIALOG_VIEWPORT_MAX_WIDTH = `calc(100dvw - ${STANDARD_DIALOG_VIEWPORT_GUTTER} - ${STANDARD_DIALOG_VIEWPORT_GUTTER})`;
+const STANDARD_DIALOG_MAX_WIDTH = `min(100%, ${STANDARD_DIALOG_VIEWPORT_MAX_WIDTH})`;
+
+function formatSizeValue(value: number | string): string {
+  return typeof value === 'number' ? `${value}px` : value;
+}
+
+function resolveDialogSizing(
+  width: number | string,
+  maxHeight: number | string,
+) {
+  return {
+    width: formatSizeValue(width),
+    maxWidth: STANDARD_DIALOG_MAX_WIDTH,
+    maxHeight: formatSizeValue(maxHeight),
+  };
+}
+
 const dynamicStyles = stylex.create({
-  sizing: (width: number | string, maxHeight: number | string) => ({
-    width: typeof width === 'number' ? `${width}px` : width,
-    maxWidth: '90vw',
-    maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+  sizing: (width: string, maxWidth: string, maxHeight: string) => ({
+    width,
+    maxWidth,
+    maxHeight,
   }),
   position: (
     top: string,
@@ -293,7 +433,7 @@ export interface DialogProps extends BaseProps<HTMLDialogElement> {
    * The actual height will be the height of its content.
    * Numbers are treated as pixels, strings are used as-is.
    * Ignored when variant is 'fullscreen'.
-   * @default '75vh'
+   * @default '75dvh'
    */
   maxHeight?: number | string;
 
@@ -357,11 +497,11 @@ export interface DialogProps extends BaseProps<HTMLDialogElement> {
  * ```
  */
 export function Dialog({
-  isOpen,
+  isOpen: isOpenProp,
   isInline = false,
   onOpenChange,
   width = 400,
-  maxHeight = '75vh',
+  maxHeight = '75dvh',
   position,
   variant = 'standard',
   purpose = 'info',
@@ -373,12 +513,26 @@ export function Dialog({
   ref,
   ...props
 }: DialogProps) {
+  // A modal dialog open on the server renders closed until hydration, and
+  // opens in the render after it, the first one that can call showModal(): a
+  // <dialog> painted open with aria-modal before it is modal claims a state it
+  // does not have, over a live page (FR8). An inline dialog is not modal and
+  // renders as it is.
+  const isHydrating = useIsHydrating();
+  const isOpen = isOpenProp && (isInline || !isHydrating);
+  // A dialog open on the server was present on page load, so it opens settled,
+  // with no entry motion; its later opens animate as usual (spec:AST-013 FR13).
+  const [settledOpen] = useSettledOpen(isOpenProp && !isInline, isOpen, false);
+  const opensSettled = settledOpen && isOpen;
   // When no explicit padding prop, use theme default (--astryx-dialog-padding)
   const useThemeDefault = padding == null;
   const effectivePadding = padding ?? 4;
   const paddingToken = spacingStepToToken[effectivePadding] as SpacingToken;
 
   const isFullscreen = variant === 'fullscreen';
+  const standardSizing = isFullscreen
+    ? null
+    : resolveDialogSizing(width, maxHeight);
 
   // Default accessible name: publish a title id through DialogContext so a
   // DialogHeader applies it to its heading (mirrors AlertDialog's explicit
@@ -389,16 +543,14 @@ export function Dialog({
   // would cost at the dialog level.
   const titleId = useId();
 
-  const dialogContextValue = useMemo(
-    () => ({isInline, titleId}),
-    [isInline, titleId],
-  );
-
   // Consumer-provided labels always win over the DialogHeader default.
   const hasConsumerName =
     props['aria-label'] != null || props['aria-labelledby'] != null;
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Native showModal() lets Tab leave for the browser's own UI, so the shared
+  // module wraps it. An inline preview is not modal and contains nothing.
+  useFocusRegionContainment(dialogRef, isOpen && !isInline);
 
   // Callback ref on the <dialog>: sync the default aria-labelledby from the
   // DialogHeader title (if one rendered) in the same commit, with no second
@@ -420,15 +572,59 @@ export function Dialog({
     [titleId, hasConsumerName],
   );
 
-  // Capture the element that was focused when the dialog opened,
-  // for directional animation origin and focus restoration on close.
+  // A composed header whose title renders after the dialog mounted asks the
+  // dialog to look for the title again.
+  const syncDefaultName = useCallback(() => {
+    if (dialogRef.current != null) {
+      attachDialog(dialogRef.current);
+    }
+  }, [attachDialog]);
+
+  const dialogContextValue = useMemo(
+    () => ({isInline, titleId, syncDefaultName}),
+    [isInline, titleId, syncDefaultName],
+  );
+
+  // Input in a second document (a same-origin iframe, a Document
+  // Picture-in-Picture window) never reaches the page's listeners, so the
+  // dialog's own document keeps its own last input for the focus return while
+  // this Dialog is mounted, from before it opens until it unmounts.
+  const {ref: modalityRef} = useInteractionModalityTracking();
+
+  const mergedDialogRef = useMergedRefs(ref, attachDialog, modalityRef);
+
+  // Capture the element that was focused when the dialog opened, for
+  // directional animation origin and focus restoration on close.
   const triggerElementRef = useRef<HTMLElement | null>(null);
+
+  // This runs in a layout effect so the capture lands before any descendant's
+  // passive mount effect: all layout effects run before any passive effect,
+  // while a child's passive effect runs before this parent's passive effect.
+  // Content that mounts in the open commit — e.g. a DialogHeader focusing its
+  // own title on mount — would otherwise move document.activeElement inside
+  // the dialog before the capture ran, and closing would then restore focus
+  // to a detached node, stranding the user's focus on <body>.
+  useLayoutEffect(() => {
+    if (isInline || !isOpen) {
+      return;
+    }
+    // The dialog's own document while it holds focus: an app can render a
+    // dialog into a second document (a same-origin iframe, a Document
+    // Picture-in-Picture window) through a portal, and a control there that
+    // opens it is focused in that document, which the page's document reports
+    // only as the iframe element, or not at all. A control in the page that
+    // opens such a dialog leaves focus in the page.
+    const dialogDocument = dialogRef.current?.ownerDocument ?? document;
+    const doc = dialogDocument.hasFocus() ? dialogDocument : document;
+    triggerElementRef.current = doc.activeElement as HTMLElement | null;
+  }, [isOpen, isInline]);
 
   // Derive dismissal behavior from purpose
   const allowEscape = purpose !== 'required';
   const allowBackdropClick = purpose === 'info';
 
-  // Handle open/close state — skip for inline rendering
+  // Syncs the native dialog with `isOpen` through `showModal()` and `close()`.
+  // An inline dialog is not in the top layer, so it skips this.
   useEffect(() => {
     if (isInline) {
       return;
@@ -439,13 +635,11 @@ export function Dialog({
     }
 
     if (isOpen) {
-      // Capture the currently focused element as the trigger — used for
-      // directional animation origin and focus restoration on close.
-      triggerElementRef.current = document.activeElement as HTMLElement | null;
-
-      // Set directional CSS custom properties before opening
+      // Set directional CSS custom properties before opening. The trigger was
+      // captured by the layout effect above, before any descendant effect
+      // could move focus.
       const trigger = triggerElementRef.current;
-      if (trigger && trigger !== document.body) {
+      if (trigger && trigger !== trigger.ownerDocument.body) {
         const dir = getDialogDirection(trigger);
         dialog.style.setProperty('--dialog-dir-x', `${dir.x}px`);
         dialog.style.setProperty('--dialog-dir-y', `${dir.y}px`);
@@ -458,55 +652,96 @@ export function Dialog({
         dialog.showModal();
         // React's autoFocus calls .focus() during commit, before showModal()
         // makes the dialog visible, so the focus silently fails.
-        // Focus the first element with data-autofocus inside the dialog.
-        const autofocusTarget =
-          dialog.querySelector<HTMLElement>('[data-autofocus]');
-        if (autofocusTarget) {
-          autofocusTarget.focus();
+        // Explicit descendant intent takes priority over a header's default
+        // title. Keep the marker private to the focus-owning components.
+        const autofocusTargets = [
+          ...dialog.querySelectorAll<HTMLElement>(
+            '[data-autofocus]:not([data-autofocus="dialog-title"])',
+          ),
+          ...dialog.querySelectorAll<HTMLElement>(
+            '[data-autofocus="dialog-title"]',
+          ),
+        ];
+        for (const target of autofocusTargets) {
+          // Only hiding inside the dialog makes a request ineligible: the
+          // modal dialog is not part of an inert region around it.
+          const hiddenAncestor = target.closest(
+            '[hidden], [inert], [aria-hidden="true"]',
+          );
+          if (hiddenAncestor != null && dialog.contains(hiddenAncestor)) {
+            continue;
+          }
+          // Disabled and CSS-hidden targets cannot receive focus in the
+          // browser. If a request cannot land, try the next eligible request
+          // and finally the title; otherwise preserve native initial focus.
+          // The dialog's own document reports its focus, also when the dialog
+          // renders in an iframe or a Picture-in-Picture window.
+          focusForLastInput(target);
+          if (target.ownerDocument.activeElement === target) {
+            break;
+          }
         }
       }
+      // Under a coarse primary pointer, a tap or a drag during the entrance
+      // reaches nothing. Keys and assistive technology stay live. The hold
+      // ends with the entrance, or with this effect's cleanup on a close or
+      // unmount.
+      return holdEntranceInput(dialog) ?? undefined;
     } else {
       if (dialog.open) {
         dialog.close();
       }
-      // Return focus to the element that opened the dialog
-      triggerElementRef.current?.focus();
+      // Return focus to the element that opened the dialog, with the ring
+      // the last input in that element's own document calls for.
+      const trigger = triggerElementRef.current;
+      if (trigger) {
+        returnFocusForLastInput(trigger);
+      }
       triggerElementRef.current = null;
     }
   }, [isOpen, isInline]);
+
+  // A dialog that unmounts while open (rendered only while open, or removed
+  // with the rest of a view) never runs the close branch above. Focus the
+  // removal lost goes back to the opener.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (isInline || dialog == null) {
+      return;
+    }
+    const returnFocusOnRemoval = prepareFocusReturnOnRemoval(dialog);
+    return () => returnFocusOnRemoval(triggerElementRef.current);
+  }, [isInline]);
+
+  // Host app-global surfaces (toasts) inside this modal while it is open, so
+  // they stay visible and operable above it.
+  const outletRef = useModalOutlet(dialogRef, isOpen && !isInline);
 
   // Lock body scroll when dialog is open (iOS Safari workaround)
   // Skip for inline rendering — no modal overlay to compensate for.
   useScrollLock(isOpen && !isInline);
 
-  // Handle Escape key — skip for inline rendering
-  useEffect(() => {
-    if (isInline) {
-      return;
-    }
-    const dialog = dialogRef.current;
-    if (!dialog || !isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        // Ignore IME composition-cancel, and defer to any popover/menu layered
-        // on top of this dialog so a single Escape closes only the top-most
-        // layer (the popover's own focus trap handles it and stops propagation).
-        if (isImeKeyEvent(event) || hasActiveFocusTrapEscape()) {
-          return;
-        }
-        event.preventDefault();
-        if (allowEscape) {
-          onOpenChange(false);
-        }
-      }
-    };
-
-    dialog.addEventListener('keydown', handleKeyDown);
-    return () => dialog.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isInline, allowEscape, onOpenChange]);
+  // Join the shared layer dismissal stack. The stack owns the Escape listener
+  // and routes each press to the top-most layer, so this dialog does not listen
+  // itself — that is what stops a modal opened from inside another modal (or a
+  // popover opened inside this one) from closing two layers on one press.
+  //
+  // A `required` dialog registers as `block`: it must not be dismissed, and the
+  // press must not fall through and dismiss a layer behind it either.
+  //
+  // Inline mode opts out — it renders dialog content in normal flow, with
+  // nothing layered over anything.
+  const {shouldDismissOnCloseRequest} = useLayerDismissal({
+    isActive: isOpen,
+    isEnabled: !isInline,
+    escapeBehavior: allowEscape ? 'close' : 'block',
+    onDismiss: () => {
+      onOpenChange(false);
+    },
+    // The dialog's document is this layer's: rendered into an iframe or a
+    // Picture-in-Picture window, it ranks with the layers opened inside it.
+    getContainer: () => dialogRef.current,
+  });
 
   // Dev-time guardrail: an open modal should always have an accessible name.
   // The header-title check reads the DOM, so this stays in an effect; the ref
@@ -531,23 +766,34 @@ export function Dialog({
     }
   }, [isOpen, isInline, hasConsumerName, titleId]);
 
-  // Handle backdrop click — when the user clicks the ::backdrop pseudo-element,
-  // the event target is the <dialog> element itself; clicks on child content
-  // always target the child. This avoids false positives from native browser
+  // A press on the ::backdrop targets the <dialog> itself, so native browser
   // popups (date pickers, selects, color pickers) that render outside the
-  // dialog's bounding rect.
-  const handleClick = (event: React.MouseEvent<HTMLDialogElement>) => {
-    if (event.target === event.currentTarget && allowBackdropClick) {
-      onOpenChange(false);
-    }
-  };
+  // dialog's rect never count. The press must start and end there.
+  const handleBackdropPress = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+  const backdropPress = useBackdropPress(
+    handleBackdropPress,
+    allowBackdropClick,
+  );
 
-  // Handle native cancel event (browser Escape handling)
+  // The native `cancel` event is the browser's own close-watcher firing: an
+  // Android back gesture, or a close request the stack never saw a press for.
+  // Escape presses the stack owns never arrive here — it preventDefault()s
+  // those, which suppresses the close watcher.
+  //
+  // A `cancel` that bubbles up from inside is not a close request for this
+  // dialog: a file input fires one when its picker is dismissed. It is left
+  // alone. Otherwise always preventDefault so the browser cannot close a
+  // controlled <dialog> behind React's back, then answer the request with the
+  // stack's own rules: only the top-most layer dismisses, a `required` dialog
+  // swallows it, and nothing dismisses while an IME composition is in progress.
   const handleCancel = (event: React.SyntheticEvent<HTMLDialogElement>) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
     event.preventDefault();
-    // Defer to a popover/menu layered on top of this dialog; it will dismiss
-    // itself on the same Escape press.
-    if (hasActiveFocusTrapEscape()) {
+    if (!shouldDismissOnCloseRequest()) {
       return;
     }
     if (allowEscape) {
@@ -555,31 +801,23 @@ export function Dialog({
     }
   };
 
-  // Shared inner content wrapper
   const innerContent = (
     <div
+      ref={outletRef}
       {...stylex.props(
         styles.inner,
         ...container(
           useThemeDefault
             ? {
                 useThemeDefault: 'dialog',
-                maxHeight: isFullscreen
-                  ? undefined
-                  : typeof maxHeight === 'number'
-                    ? `${maxHeight}px`
-                    : maxHeight,
+                maxHeight: standardSizing?.maxHeight,
               }
             : {
                 paddingInnerX: paddingToken,
                 paddingInnerY: paddingToken,
                 paddingOuterX: paddingToken,
                 paddingOuterY: paddingToken,
-                maxHeight: isFullscreen
-                  ? undefined
-                  : typeof maxHeight === 'number'
-                    ? `${maxHeight}px`
-                    : maxHeight,
+                maxHeight: standardSizing?.maxHeight,
               },
         ),
         !useThemeDefault &&
@@ -594,14 +832,25 @@ export function Dialog({
         !useThemeDefault &&
           effectivePadding !== 4 &&
           containerPaddingBlockEndVarStyles[effectivePadding],
+        isFullscreen && useThemeDefault && styles.fullscreenSafeArea,
       )}>
       <DialogContext value={dialogContextValue}>{children}</DialogContext>
     </div>
   );
 
-  // Filter out native open to prevent InvalidStateError when accidentally passed
+  // Filter out native open to prevent InvalidStateError when accidentally passed.
+  // Keep the consumer click handler separate so the modal path can compose it
+  // with Dialog-owned behavior without changing the inline preview path.
   const hasPosition = position != null && !isFullscreen;
-  const {open: _open, ...safeProps} = props as Record<string, unknown>;
+  const {onClick: onClickProp, ...propsWithoutClick} = props;
+  const {open: _open, ...safeProps} = propsWithoutClick as Record<
+    string,
+    unknown
+  >;
+  const inlineSafeProps: Record<string, unknown> = {
+    ...safeProps,
+    onClick: onClickProp,
+  };
 
   // --- Inline rendering path (for documentation previews) ---
   if (isInline) {
@@ -611,12 +860,20 @@ export function Dialog({
 
     return (
       <div
-        {...safeProps}
+        {...inlineSafeProps}
         {...mergeProps(
           themeProps('dialog', {variant}),
           stylex.props(
+            layerTextReset.reset,
+            layerStructureReset.reset,
             styles.inlineWrapper,
-            !isFullscreen && dynamicStyles.sizing(width, maxHeight),
+            overlayPaddingReset.reset,
+            standardSizing &&
+              dynamicStyles.sizing(
+                standardSizing.width,
+                standardSizing.maxWidth,
+                standardSizing.maxHeight,
+              ),
             isFullscreen && styles.fullscreen,
             xstyle,
           ),
@@ -627,7 +884,9 @@ export function Dialog({
           (props as Record<string, unknown>)['data-testid'] as
             string | undefined
         }>
-        {innerContent}
+        <LayerDepthProvider>
+          <LayerContentBoundary>{innerContent}</LayerContentBoundary>
+        </LayerDepthProvider>
       </div>
     );
   }
@@ -636,15 +895,23 @@ export function Dialog({
 
   return (
     <dialog
-      ref={mergeRefs(ref, attachDialog)}
+      ref={mergedDialogRef}
       {...safeProps}
       {...mergeProps(
         themeProps('dialog', {variant}),
-        stylex.props(
+        focusOutlineProps.focusVisible(
+          layerTextReset.reset,
+          layerStructureReset.reset,
           styles.dialog,
+          overlayPaddingReset.reset,
           isOpen && styles.open,
           styles.backdrop,
-          !isFullscreen && dynamicStyles.sizing(width, maxHeight),
+          standardSizing &&
+            dynamicStyles.sizing(
+              standardSizing.width,
+              standardSizing.maxWidth,
+              standardSizing.maxHeight,
+            ),
           hasPosition &&
             (() => {
               const o = resolveDialogPositionOffsets(position);
@@ -656,19 +923,42 @@ export function Dialog({
               );
             })(),
           isFullscreen && styles.fullscreen,
+          isFullscreen && isOpen && styles.fullscreenOpen,
+          opensSettled && styles.openSettled,
           xstyle,
         ),
         className,
         style,
       )}
-      onClick={handleClick}
+      // Presses inside the dialog do not reach handlers around where it is
+      // written.
+      {...layerClickBoundary({
+        ...safeProps,
+        onClick: chainEventHandlers(backdropPress.onClick, onClickProp),
+      })}
+      onPointerDownCapture={chainEventHandlers(
+        backdropPress.onPointerDownCapture,
+        safeProps.onPointerDownCapture as PointerHandler | undefined,
+      )}
+      onPointerUpCapture={chainEventHandlers(
+        backdropPress.onPointerUpCapture,
+        safeProps.onPointerUpCapture as PointerHandler | undefined,
+      )}
+      onPointerCancelCapture={chainEventHandlers(
+        backdropPress.onPointerCancelCapture,
+        safeProps.onPointerCancelCapture as PointerHandler | undefined,
+      )}
       onCancel={handleCancel}
-      aria-modal="true"
+      aria-modal={isHydrating ? undefined : 'true'}
       // The default aria-labelledby (from a DialogHeader title) is set
       // imperatively in `attachDialog`; a consumer-provided aria-labelledby
       // flows through {...safeProps} above and wins.
       {...(purpose === 'required' ? {role: 'alertdialog'} : undefined)}>
-      {innerContent}
+      <ModalAnnounceProvider dialogRef={dialogRef} isOpen={isOpen}>
+        <LayerDepthProvider>
+          <LayerContentBoundary>{innerContent}</LayerContentBoundary>
+        </LayerDepthProvider>
+      </ModalAnnounceProvider>
     </dialog>
   );
 }
