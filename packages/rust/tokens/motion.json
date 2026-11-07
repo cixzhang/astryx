@@ -1,0 +1,480 @@
+{
+ "themes": {
+  "astryx": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": false,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 130.0,
+    "fast": 175.0,
+    "fast-max": 230.0,
+    "medium-min": 310.0,
+    "medium": 410.0,
+    "medium-max": 550.0,
+    "slow-min": 730.0,
+    "slow": 975.0,
+    "slow-max": 1300.0,
+    "exit": 175.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "neutral": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 95.0,
+    "fast": 125.0,
+    "fast-max": 165.0,
+    "medium-min": 225.0,
+    "medium": 300.0,
+    "medium-max": 400.0,
+    "slow-min": 525.0,
+    "slow": 700.0,
+    "slow-max": 935.0,
+    "exit": 125.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "stone": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 95.0,
+    "fast": 125.0,
+    "fast-max": 165.0,
+    "medium-min": 225.0,
+    "medium": 300.0,
+    "medium-max": 400.0,
+    "slow-min": 525.0,
+    "slow": 700.0,
+    "slow-max": 935.0,
+    "exit": 125.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "butter": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 95.0,
+    "fast": 125.0,
+    "fast-max": 165.0,
+    "medium-min": 225.0,
+    "medium": 300.0,
+    "medium-max": 400.0,
+    "slow-min": 525.0,
+    "slow": 700.0,
+    "slow-max": 935.0,
+    "exit": 125.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "chocolate": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 95.0,
+    "fast": 125.0,
+    "fast-max": 165.0,
+    "medium-min": 225.0,
+    "medium": 300.0,
+    "medium-max": 400.0,
+    "slow-min": 525.0,
+    "slow": 700.0,
+    "slow-max": 935.0,
+    "exit": 125.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "gothic": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 115.0,
+    "fast": 150.0,
+    "fast-max": 200.0,
+    "medium-min": 265.0,
+    "medium": 350.0,
+    "medium-max": 465.0,
+    "slow-min": 600.0,
+    "slow": 800.0,
+    "slow-max": 1065.0,
+    "exit": 150.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "matcha": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 95.0,
+    "fast": 125.0,
+    "fast-max": 165.0,
+    "medium-min": 225.0,
+    "medium": 300.0,
+    "medium-max": 400.0,
+    "slow-min": 525.0,
+    "slow": 700.0,
+    "slow-max": 935.0,
+    "exit": 125.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  },
+  "y2k": {
+   "knobs": {
+    "tempo": 1.0,
+    "character": "standard",
+    "reducedMotion": "system"
+   },
+   "durationScale": true,
+   "easingOverride": false,
+   "duration": {
+    "fast-min": 80.0,
+    "fast": 100.0,
+    "fast-max": 125.0,
+    "medium-min": 200.0,
+    "medium": 250.0,
+    "medium-max": 315.0,
+    "slow-min": 480.0,
+    "slow": 600.0,
+    "slow-max": 750.0,
+    "exit": 100.0
+   },
+   "ease": {
+    "standard": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "entrance": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "move": [
+     0.24,
+     1.0,
+     0.4,
+     1.0
+    ],
+    "exit": [
+     0.3,
+     0.0,
+     0.6,
+     0.6
+    ]
+   }
+  }
+ },
+ "knobs": {
+  "tempoRange": [
+   0.75,
+   1.5
+  ],
+  "characterEase": {
+   "crisp": [
+    0.0,
+    0.0,
+    0.2,
+    1.0
+   ],
+   "expressive": [
+    0.3,
+    1.2,
+    0.5,
+    1.0
+   ]
+  }
+ },
+ "reducedMotionCrossFade": {
+  "ms": 200.0,
+  "curve": [
+   0.42,
+   0.0,
+   0.58,
+   1.0
+  ]
+ },
+ "press": {
+  "highlightInMs": 0.0,
+  "flashMs": 100.0
+ },
+ "longPress": {
+  "ms": 500.0,
+  "allowableMovementPx": 10.0
+ },
+ "springs": {
+  "contextMenuDismiss": {
+   "response": 0.35,
+   "dampingRatio": 0.85
+  },
+  "contextMenuLift": {
+   "response": 0.32,
+   "dampingRatio": 0.8
+  },
+  "contextMenuMorph": {
+   "response": 0.3,
+   "dampingRatio": 0.8
+  },
+  "directChange": {
+   "response": 0.5,
+   "dampingRatio": 0.825
+  },
+  "emphasis": {
+   "duration": 0.5,
+   "bounce": 0.3
+  },
+  "fingerTracking": {
+   "response": 0.15,
+   "dampingRatio": 0.86
+  },
+  "menuClose": {
+   "response": 0.35,
+   "dampingRatio": 0.85
+  },
+  "menuOpen": {
+   "response": 0.32,
+   "dampingRatio": 0.8
+  },
+  "quickChange": {
+   "duration": 0.5,
+   "bounce": 0.15
+  },
+  "settle": {
+   "duration": 0.5,
+   "bounce": 0.0
+  },
+  "stateChange": {
+   "response": 0.55,
+   "dampingRatio": 1.0
+  },
+  "subMenuBack": {
+   "response": 0.4,
+   "dampingRatio": 1.0
+  },
+  "subMenuOpen": {
+   "response": 0.4,
+   "dampingRatio": 0.85
+  },
+  "timedChange": {
+   "duration": 0.5,
+   "bounce": 0.0
+  },
+  "viewChange": {
+   "mass": 3.0,
+   "stiffness": 1000.0,
+   "damping": 500.0
+  }
+ }
+}

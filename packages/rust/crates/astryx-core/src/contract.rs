@@ -370,6 +370,9 @@ pub struct Preferences {
     pub more_contrast: bool,
     /// The platform forces its own colors, such as Windows contrast themes.
     pub forced_colors: bool,
+    /// The primary pointer is coarse, such as a touch screen. Reduced motion
+    /// then cross-fades instead of changing at once.
+    pub coarse_pointer: bool,
 }
 
 /// What a shell drives, once per frame. The core's runtime implements it for
@@ -401,6 +404,13 @@ pub trait Surface {
     /// Committed text still arrives through `text_input`.
     fn text_compose(&mut self, text: &str, cursor: u32) {
         let _ = (text, cursor);
+    }
+    /// Wheel, trackpad, or touch scrolling at `at`, by `delta` (logical
+    /// points, positive y scrolls content up). Returns true when a scroll
+    /// container moved, so the shell keeps the event from the page.
+    fn scroll(&mut self, at: Point, delta: Point) -> bool {
+        let _ = (at, delta);
+        false
     }
     /// The person's preferences changed, or are known for the first time.
     fn set_preferences(&mut self, preferences: &Preferences) {

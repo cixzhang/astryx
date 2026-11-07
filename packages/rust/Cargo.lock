@@ -192,6 +192,7 @@ checksum = "175571dd1d178ced59193a6fc02dde1b972eb0bc56c892cde9beeceac5bf0f6b"
 name = "astryx-core"
 version = "0.1.0"
 dependencies = [
+ "astryx-motion",
  "astryx-tokens",
  "taffy",
 ]
@@ -234,6 +235,13 @@ version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-render-soft",
+]
+
+[[package]]
+name = "astryx-motion"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]

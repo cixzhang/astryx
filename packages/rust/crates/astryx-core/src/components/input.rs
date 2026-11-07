@@ -252,6 +252,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
         };
         let mut sem = Semantics::new(Role::TextInput, field_name(f));
         sem.value = Some(shown.clone());
+        sem.secure = self.input_type == TextInputType::Password;
         sem.description = field_description(f);
         sem.disabled = f.is_disabled;
         let radius = radii(t.radius.element);

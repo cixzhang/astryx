@@ -37,6 +37,23 @@ pub(crate) struct NodeDesc {
     pub text: Option<String>,
     /// The value of an `<input>`.
     pub input_value: Option<String>,
+    /// The `<input>` selection in UTF-16 offsets: start, end, backward.
+    pub selection: Option<(u32, u32, bool)>,
+}
+
+/// Converts an `(anchor, focus)` pair of UTF-8 byte offsets into `value` to
+/// the UTF-16 start, end, and direction that `setSelectionRange` takes.
+/// Offsets past the end or inside a character move back to a boundary.
+pub(crate) fn utf16_selection(value: &str, anchor: u32, focus: u32) -> (u32, u32, bool) {
+    let to_utf16 = |byte: u32| {
+        let mut byte = (byte as usize).min(value.len());
+        while !value.is_char_boundary(byte) {
+            byte -= 1;
+        }
+        value[..byte].encode_utf16().count() as u32
+    };
+    let (a, f) = (to_utf16(anchor), to_utf16(focus));
+    (a.min(f), a.max(f), f < a)
 }
 
 fn heading_tag(level: u8) -> &'static str {
@@ -157,7 +174,8 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
         }
         Role::TextInput => {
             d.tag = "input";
-            d.attrs.push(("type", "text".into()));
+            let kind = if node.secure { "password" } else { "text" };
+            d.attrs.push(("type", kind.into()));
             // The app draws and owns the text; browser helpers would edit
             // the hidden field behind its back.
             d.attrs.push(("autocomplete", "off".into()));
@@ -166,7 +184,11 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
             if node.disabled {
                 d.attrs.push(("readonly", String::new()));
             }
-            d.input_value = Some(node.value.clone().unwrap_or_default());
+            let value = node.value.clone().unwrap_or_default();
+            d.selection = node
+                .text_selection
+                .map(|(anchor, focus)| utf16_selection(&value, anchor, focus));
+            d.input_value = Some(value);
         }
         Role::List => {
             d.tag = "div";
@@ -376,13 +398,28 @@ impl Mirror {
             ) else {
                 continue;
             };
-            if input.value() != *value {
+            let changed = input.value() != *value;
+            if changed {
                 input.set_value(value);
-                // The app has no caret in the tree yet; keep the browser's at the end.
-                if active.as_ref() == Some(input.as_ref()) {
-                    let end = value.encode_utf16().count() as u32;
-                    let _ = input.set_selection_range(end, end);
-                }
+            }
+            // The caret matters only in the focused field: screen readers echo
+            // from it and input methods place their window at it.
+            if active.as_ref() != Some(input.as_ref()) {
+                continue;
+            }
+            let end = value.encode_utf16().count() as u32;
+            let (start, stop, backward) = match entry.desc.selection {
+                Some(selection) => selection,
+                None if changed => (end, end, false),
+                None => continue,
+            };
+            let current = (
+                input.selection_start().ok().flatten(),
+                input.selection_end().ok().flatten(),
+            );
+            if changed || current != (Some(start), Some(stop)) {
+                let direction = if backward { "backward" } else { "forward" };
+                let _ = input.set_selection_range_with_direction(start, stop, direction);
             }
         }
     }
@@ -635,6 +672,28 @@ mod tests {
         assert_eq!(d.input_value.as_deref(), Some("hello"));
         n.disabled = true;
         assert_eq!(attr(&describe(&n, Some(false)), "readonly"), Some(""));
+    }
+
+    #[test]
+    fn secure_fields_are_password_inputs_with_selection() {
+        let mut n = node(Role::TextInput);
+        n.value = Some("h\u{e9}llo".into());
+        n.secure = true;
+        n.text_selection = Some((6, 1));
+        let d = describe(&n, Some(true));
+        assert_eq!(attr(&d, "type"), Some("password"));
+        assert_eq!(d.selection, Some((1, 5, true)));
+    }
+
+    #[test]
+    fn selection_converts_utf8_bytes_to_utf16() {
+        // "a" is 1 byte, "é" 2 bytes, the emoji 4 bytes and 2 UTF-16 units.
+        let value = "a\u{e9}\u{1F600}b";
+        assert_eq!(utf16_selection(value, 0, 0), (0, 0, false));
+        assert_eq!(utf16_selection(value, 3, 7), (2, 4, false));
+        assert_eq!(utf16_selection(value, 8, 1), (1, 5, true));
+        // Inside a character and past the end.
+        assert_eq!(utf16_selection(value, 2, 99), (1, 5, false));
     }
 
     #[test]

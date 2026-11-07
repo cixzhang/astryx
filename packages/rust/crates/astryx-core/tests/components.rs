@@ -160,8 +160,74 @@ fn pressing_a_paints_the_pressed_overlay_and_release_activates() {
     assert!(rt.app().sent.is_empty(), "activates on release, not press");
     rt.input(Input::A, InputPhase::Released);
     assert_eq!(rt.app().sent, vec!["ok"]);
-    let released = draw(&mut rt, 400, 600);
-    assert!(rect_filled(&released, c(t.color.overlay_pressed)).is_none());
+    // The press fades out on the theme's exit motion after release.
+    let overlay = c(t.color.overlay_pressed);
+    // The overlay paints right after the button's own fill, which shares
+    // its hue in this theme, so it is the second matching rect.
+    let alpha = |l: &DisplayList| {
+        rects(l)
+            .iter()
+            .filter(|r| r.2.r == overlay.r && r.2.g == overlay.g && r.2.b == overlay.b)
+            .nth(1)
+            .map(|r| r.2.a)
+    };
+    let at = |rt: &mut Runtime<View<&str>>, dt: f32| {
+        rt.frame(
+            &FrameInfo {
+                width: 400,
+                height: 600,
+                scale: 1.0,
+                dt,
+            },
+            &measure(),
+        )
+    };
+    let start = at(&mut rt, 0.0);
+    assert_eq!(alpha(&start), Some(overlay.a));
+    assert!(rt.wants_frames());
+    let mid = at(&mut rt, 0.08);
+    assert!(
+        alpha(&mid).is_some_and(|a| a > 0.0 && a < overlay.a),
+        "{:?}",
+        alpha(&mid)
+    );
+    let end = at(&mut rt, 0.3);
+    assert_eq!(alpha(&end), None);
+    assert!(!rt.wants_frames());
+}
+
+#[test]
+fn reduced_motion_ends_a_press_at_once() {
+    let t = light();
+    let mut rt = runtime(|| Button::new("Ok").on_click("ok").into());
+    rt.set_preferences(&Preferences {
+        reduced_motion: true,
+        ..Preferences::default()
+    });
+    draw(&mut rt, 400, 600);
+    rt.input(Input::A, InputPhase::Pressed);
+    rt.input(Input::A, InputPhase::Released);
+    let list = draw(&mut rt, 400, 600);
+    assert!(rect_filled(&list, c(t.color.overlay_pressed)).is_none());
+}
+
+#[test]
+fn a_held_past_the_long_press_does_not_activate() {
+    let mut rt = runtime(|| Button::new("Ok").on_click("ok").into());
+    draw(&mut rt, 400, 600);
+    rt.input(Input::A, InputPhase::Pressed);
+    assert!(rt.wants_frames(), "a held press may become a long press");
+    rt.frame(
+        &FrameInfo {
+            width: 400,
+            height: 600,
+            scale: 1.0,
+            dt: 0.6,
+        },
+        &measure(),
+    );
+    rt.input(Input::A, InputPhase::Released);
+    assert!(rt.app().sent.is_empty());
 }
 
 #[test]
@@ -1359,4 +1425,59 @@ fn editing_keys_from_a_keyboard() {
     tap(&mut rt, Input::Backspace);
     tap(&mut rt, Input::Backspace);
     assert_eq!(rt.app().value, "", "backspace at the start does nothing");
+}
+
+#[test]
+fn composing_text_shows_inline_underlined_and_commits_through_text_input() {
+    let t = light();
+    let mut rt = field("ab");
+    tap(&mut rt, Input::Left);
+    rt.text_compose("xy", 1);
+    let list = draw(&mut rt, 300, 200);
+    let shown = text(&list, "axyb").0;
+    let primary = c(t.color.text_primary);
+    let underline = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == primary && r.0.height == 1.0)
+        .expect("underline");
+    assert_eq!((underline.0.x, underline.0.width), (shown.x + 7.0, 14.0));
+    let caret = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == primary && r.0.width == 1.0 && r.0.height > 1.0)
+        .unwrap();
+    assert_eq!(caret.0.x, shown.x + 14.0, "caret at the composing cursor");
+    assert_eq!(rt.app().value, "ab", "composing does not change the value");
+    rt.text_compose("", 0);
+    rt.text_input("xy");
+    assert_eq!(rt.app().value, "axyb");
+}
+
+#[test]
+fn fields_expose_their_caret_and_secrecy() {
+    let mut rt = field("héllo");
+    tap(&mut rt, Input::Left);
+    draw(&mut rt, 300, 200);
+    let node = &a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.role == Role::TextInput)
+        .unwrap();
+    // Four characters before the caret, "é" taking two bytes.
+    assert_eq!(node.text_selection, Some((5, 5)));
+    assert!(!node.secure);
+    let mut pw = Runtime::new(Field {
+        value: "pw".into(),
+        masked: true,
+        read_only: false,
+    });
+    draw(&mut pw, 300, 200);
+    let node = a11y_nodes(&pw.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.role == Role::TextInput)
+        .unwrap();
+    assert!(node.secure);
+    assert_eq!(
+        node.text_selection,
+        Some((6, 6)),
+        "offsets into the masked value"
+    );
 }

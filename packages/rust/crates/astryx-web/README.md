@@ -53,8 +53,16 @@ Astryx gallery on the core runtime.
 - **Text input.** A focused `TextInput` node's mirror is a real `<input>`.
   Typed characters, Space, paste, drop, dictation, and on-screen keyboards
   arrive as `beforeinput` and go to `Surface::text_input`; input-method text
-  commits on `compositionend`. The app owns the value: the shell cancels the
-  browser's own edit and writes the app's value back after each frame.
+  composes through `Surface::text_compose` and commits on `compositionend`.
+  The app owns the value: the shell cancels the browser's own edit and writes
+  the app's value and `text_selection` back after each frame, so screen
+  readers echo from the right caret and input methods open there. `secure`
+  fields are `type=password`.
+- **Pointer.** A press focuses the focusable node under the pointer (hit
+  test on `A11yNode` bounds); lifting over the same node activates it. The
+  cursor shows a pointer over controls and a text cursor over fields. Wheel
+  and trackpad events are read and normalized, but nothing scrolls yet: the
+  contract has no scroll entry.
 - **Links.** `Command::OpenUrl` opens a new tab with `noopener`, for
   `http`, `https`, `mailto`, and `tel` links only. Browsers allow it during a
   key press or click, not from a gamepad poll.
@@ -125,12 +133,14 @@ Checked in headless Chromium unless the note says otherwise.
 | Browser find (Ctrl+F) | Partial | Finds mirror text; the highlight lands on the canvas text but the canvas does not scroll or highlight itself. |
 | Status announcements (live regions) | Works | `aria-live` and `aria-atomic` are in the AX tree; not yet heard through a screen reader. |
 | Text entry and IME commit | Works | Typing, Space, Backspace, paste, and IME commit verified. |
-| IME preedit, caret and selection, word editing, password fields | Missing | The contract has no preedit, caret, or password flag; uncommitted IME text does not draw, and the hidden field's caret stays at the end. |
+| IME preedit, caret and selection, password fields | Works | Preedit draws in the demo; the hidden field's caret follows `text_selection`; `secure` maps to `type=password` (unit-tested; the runtime does not set it yet). |
+| Word and selection editing | Missing | Waits for a `TextEdit` contract. |
 | Autofill, spellcheck | Missing | Turned off on mirror fields, because the app owns the text. |
 | Text selection and copy | Missing | Canvas text cannot be selected. |
 | Page translation | Missing | Translation changes the mirror, not the pixels. |
 | User font size, text-only zoom | Missing | Canvas text ignores them; page zoom works. |
 | Descriptions, selected | Works | `aria-description`, `aria-selected`. |
 | Expanded, ranges beyond 0..100, relations | Missing | Not in `A11yNode`. |
-| Pointer and touch input | Missing | Not in the contract yet. A click on the canvas only gives the app keyboard focus. |
+| Pointer click and touch tap | Works | Focus, then activate on release, by hit testing the tree. |
+| Wheel, trackpad, and touch scrolling | Missing | No scroll entry in the contract. |
 | Per-node language and text direction | Missing | Not in `A11yNode`; the mirror inherits the page. |

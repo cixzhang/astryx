@@ -3,11 +3,12 @@
 use astryx_core::{ColorScheme, Preferences};
 
 /// Media queries that change a [`Preferences`] field.
-pub(crate) const QUERIES: [&str; 4] = [
+pub(crate) const QUERIES: [&str; 5] = [
     "(prefers-reduced-motion: reduce)",
     "(prefers-color-scheme: dark)",
     "(prefers-contrast: more)",
     "(forced-colors: active)",
+    "(pointer: coarse)",
 ];
 
 /// Reads the person's current preferences. Returns defaults outside a
@@ -33,6 +34,7 @@ pub fn detect_preferences() -> Preferences {
         },
         more_contrast: matches(QUERIES[2]),
         forced_colors: matches(QUERIES[3]),
+        coarse_pointer: matches(QUERIES[4]),
     }
 }
 

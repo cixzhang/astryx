@@ -36,6 +36,8 @@ struct Item {
     checked: bool,
     disabled: bool,
     value: String,
+    /// The caret in a field, as a byte offset into `value`.
+    caret: usize,
 }
 
 struct Palette {
@@ -108,6 +110,8 @@ struct Demo {
     /// Focus ring animation progress, 0 to 1.
     ring: f32,
     preferences: Preferences,
+    /// Input method text not yet committed, drawn at the caret.
+    composing: String,
     tree: Option<A11yNode>,
 }
 
@@ -120,6 +124,7 @@ impl Demo {
             checked,
             disabled,
             value: String::new(),
+            caret: 0,
         };
         Self {
             items: vec![
@@ -134,6 +139,7 @@ impl Demo {
             saves: 0,
             ring: 1.0,
             preferences: Preferences::default(),
+            composing: String::new(),
             tree: None,
         }
     }
@@ -241,7 +247,20 @@ impl Surface for Demo {
             Input::B => self.set_focus(0),
             Input::Backspace => {
                 if let Some(field) = self.field() {
-                    field.value.pop();
+                    if let Some((at, _)) = field.value[..field.caret].char_indices().next_back() {
+                        field.value.remove(at);
+                        field.caret = at;
+                    }
+                }
+            }
+            Input::Home => {
+                if let Some(field) = self.field() {
+                    field.caret = 0;
+                }
+            }
+            Input::End => {
+                if let Some(field) = self.field() {
+                    field.caret = field.value.len();
                 }
             }
             _ => {}
@@ -249,9 +268,14 @@ impl Surface for Demo {
         Command::None
     }
 
+    fn text_compose(&mut self, text: &str, _cursor: u32) {
+        self.composing = text.to_string();
+    }
+
     fn text_input(&mut self, text: &str) -> Command {
         if let Some(field) = self.field() {
-            field.value.push_str(text);
+            field.value.insert_str(field.caret, text);
+            field.caret += text.len();
         }
         Command::None
     }
@@ -433,14 +457,20 @@ impl Surface for Demo {
                     let value_style = text_style(16.0, 400);
                     cmds.push(DrawCmd::Text {
                         rect: Rect::new(field.x + 10.0, rect.y + 13.0, field.width - 20.0, 22.0),
-                        text: item.value.clone(),
+                        text: if self.focus == Some(index) {
+                            let mut shown = item.value.clone();
+                            shown.insert_str(item.caret, &self.composing);
+                            shown
+                        } else {
+                            item.value.clone()
+                        },
                         style: value_style,
                         color: p.text,
                         align: TextAlign::Start,
                     });
                     if self.focus == Some(index) {
-                        let caret =
-                            field.x + 10.0 + text.measure(&item.value, &value_style, None).width;
+                        let before = &item.value[..item.caret];
+                        let caret = field.x + 10.0 + text.measure(before, &value_style, None).width;
                         cmds.push(DrawCmd::Line {
                             from: Point {
                                 x: caret,
@@ -494,6 +524,7 @@ impl Surface for Demo {
             n.checked = matches!(item.kind, Kind::Switch | Kind::Checkbox).then_some(item.checked);
             if item.kind == Kind::Field {
                 n.value = Some(item.value.clone());
+                n.text_selection = Some((item.caret as u32, item.caret as u32));
             }
             children.push(n);
             if item.kind != Kind::Button || button_x > x + width {

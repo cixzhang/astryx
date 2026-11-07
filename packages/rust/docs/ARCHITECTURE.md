@@ -48,6 +48,8 @@ crates/astryx-tokens        build.rs turns themes.json into typed Rust          
 crates/astryx-core          contract.rs (shared, orchestrator-owned), theme,
                             layout (taffy), elements, focus, runtime, a11y tree,
                             components                                          (Lane A)
+crates/astryx-motion        motion tokens (tokens/motion.json), easing, springs,
+                            Animated, enter/exit, reduced motion, gestures      (Lane D)
 crates/astryx-raster        shared text engine, pixel snapping, shadow masks    (Lane B)
 crates/astryx-render-gl     femtovg on glow: OpenGL ES 2/3 and WebGL2           (Lane B)
 crates/astryx-render-soft   CPU renderer (tiny-skia) for headless and no-GPU    (Lane B)

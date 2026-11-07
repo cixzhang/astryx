@@ -387,10 +387,55 @@ def gallery_check(chrome, url, proof, check, summary):
         second = cdp.eval(ACTIVE_ID)
         check("gallery: Tab enters the app and moves focus with the DOM following",
               first is not None and second is not None and first != second, [first, second])
+
         errors = [e for e in cdp.events if e.get("method") == "Runtime.exceptionThrown"
                   or (e.get("method") == "Runtime.consoleAPICalled"
                       and e["params"].get("type") in ("error", "warning"))]
         check("gallery: no console errors or exceptions", not errors, errors[:3])
+        cdp.close()
+
+    # Mouse. A window tall enough for the whole gallery, since the shell has
+    # no wheel scrolling yet.
+    with tempfile.TemporaryDirectory() as user_dir:
+        cdp = open_page(chrome, user_dir, 960, 8000, 1)
+        load(cdp, url)
+        settle(cdp, 300)
+
+        def mouse(kind, x, y):
+            cdp.send("Input.dispatchMouseEvent", {"type": kind, "x": x, "y": y, "button": "left",
+                                                  "buttons": 1 if kind == "mousePressed" else 0, "clickCount": 1})
+
+        def click(selector):
+            x, y, w, h = cdp.eval(f"(() => {{ const r = document.querySelector('{selector}')"
+                                  f".getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }})()")
+            mouse("mouseMoved", x + w / 2, y + h / 2)
+            cursor = cdp.eval("document.querySelector('#app').style.cursor")
+            mouse("mousePressed", x + w / 2, y + h / 2)
+            mouse("mouseReleased", x + w / 2, y + h / 2)
+            settle(cdp, 200)
+            return cursor
+
+        switch = ".astryx-a11y [role=switch]:not([aria-disabled])"
+        before = cdp.eval(f"document.querySelector('{switch}').getAttribute('aria-checked')")
+        switch_id = cdp.eval(f"document.querySelector('{switch}').getAttribute('data-astryx-id')")
+        cursor = click(switch)
+        after = cdp.eval(f"document.querySelector('[data-astryx-id=\"{switch_id}\"]').getAttribute('aria-checked')")
+        check("gallery: a mouse click focuses and toggles a switch (pointer cursor on hover)",
+              cursor == "pointer" and before != after and cdp.eval(ACTIVE_ID) == switch_id,
+              [cursor, before, after, cdp.eval(ACTIVE_ID), switch_id])
+
+        field = ".astryx-a11y input:not([readonly])"
+        field_id = cdp.eval(f"document.querySelector('{field}').getAttribute('data-astryx-id')")
+        value = f"document.querySelector('[data-astryx-id=\"{field_id}\"]').value"
+        cursor = click(field)
+        # The gallery's fields have no change handler, so typing does not edit
+        # them; the demo checks typing.
+        check("gallery: clicking a text field focuses it (text cursor on hover)",
+              cursor == "text" and cdp.eval(ACTIVE_ID) == field_id, [cursor, cdp.eval(ACTIVE_ID), field_id])
+        summary["gallery_password_inputs"] = cdp.eval("document.querySelectorAll('.astryx-a11y input[type=password]').length")
+        shot = Screen(base64.b64decode(cdp.send("Page.captureScreenshot", {"format": "png"})["data"]), 1)
+        with open(os.path.join(proof, "screenshot-gallery-full.png"), "wb") as f:
+            f.write(shot.png)
         cdp.close()
 
 
@@ -533,6 +578,17 @@ def main():
         textbox = ax_find(ax(cdp), "textbox", "Name") or {}
         check("Backspace reaches the app as Input::Backspace", textbox.get("props", {}).get("value") == "Hi",
               textbox)
+        def field_ink():
+            png = Screen(base64.b64decode(cdp.send("Page.captureScreenshot", {"format": "png"})["data"]), 2)
+            x, y, w, h = rect_of(cdp, 16)
+            return sum(1 for px in range(int(x + 120), int(x + w), 1) for py in range(int(y + 8), int(y + h - 8), 2)
+                       if sum(png.pixel(px, py)) < 300)
+        ink_before = field_ink()
+        cdp.send("Input.imeSetComposition", {"text": "ee", "selectionStart": 2, "selectionEnd": 2})
+        settle(cdp)
+        ink_composing = field_ink()
+        check("IME preedit reaches the app through text_compose and draws", ink_composing > ink_before + 5,
+              [ink_before, ink_composing])
         cdp.send("Input.imeSetComposition", {"text": "e", "selectionStart": 1, "selectionEnd": 1})
         composing = cdp.eval(field_value)
         cdp.send("Input.insertText", {"text": "\u1ebf"})
@@ -548,6 +604,21 @@ def main():
         settle(cdp)
         textbox = ax_find(ax(cdp), "textbox", "Name") or {}
         check("paste reaches the app as text", textbox.get("props", {}).get("value") == "Hi\u1ebf web", textbox)
+
+        field_caret = ("(() => { const n = document.querySelector('[data-astryx-id=\"16\"]');"
+                       " return [n.selectionStart, n.selectionEnd]; })()")
+        before_home = cdp.eval(field_caret)
+        key(cdp, "Home", vk=36)
+        settle(cdp)
+        after_home = cdp.eval(field_caret)
+        key(cdp, "X", code="KeyX", vk=88, text="X")
+        settle(cdp)
+        textbox = ax_find(ax(cdp), "textbox", "Name") or {}
+        check("the hidden field's caret follows text_selection (Home, then typing at the caret)",
+              before_home == [7, 7] and after_home == [0, 0] and cdp.eval(field_caret) == [1, 1]
+              and textbox.get("props", {}).get("value") == "XHi\u1ebf web",
+              [before_home, after_home, cdp.eval(field_caret), textbox.get("props", {}).get("value")])
+        key(cdp, "End", vk=35)
 
         key(cdp, "Tab", vk=9)
         check("Tab moves to Save", cdp.eval(ACTIVE_ID) == "13", cdp.eval(ACTIVE_ID))

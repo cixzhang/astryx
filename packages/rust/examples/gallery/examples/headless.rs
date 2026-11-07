@@ -1,6 +1,7 @@
 //! Renders the gallery to PNG files without a window:
 //! `cargo run -p astryx-gallery --example headless -- <out-dir> [scale]`.
-//! Writes one image per section in light and dark mode, and the whole page.
+//! Writes one image per section in light and dark mode, the home screen,
+//! and a section opened from it.
 
 use astryx_core::{Mode, Runtime, Theme};
 use astryx_gallery::{Gallery, Section};
@@ -27,8 +28,16 @@ fn main() -> std::io::Result<()> {
     }
     let mut rt = Runtime::new(Gallery::new());
     std::fs::write(
-        out.join("gallery.png"),
+        out.join("home.png"),
         render_png(&mut rt, 960, 640, scale, &[]),
+    )?;
+    // The home screen after opening its fifth row.
+    use astryx_core::Input::{Down, Next, A};
+    let mut rt = Runtime::new(Gallery::new());
+    let inputs = [Next, Next, Down, Down, Down, Down, A];
+    std::fs::write(
+        out.join("opened.png"),
+        render_png(&mut rt, 960, 640, scale, &inputs),
     )?;
     Ok(())
 }

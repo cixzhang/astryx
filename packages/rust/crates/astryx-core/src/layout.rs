@@ -135,12 +135,17 @@ impl Layout {
 
     /// Applies scroll offsets (keyed by node id) to get painted rects.
     pub fn place<Msg>(&mut self, nodes: &[Node<Msg>], scroll: &HashMap<u64, f32>) {
+        self.rects = self.placed(nodes, scroll);
+    }
+
+    /// The painted rects under the given scroll offsets.
+    pub fn placed<Msg>(&self, nodes: &[Node<Msg>], scroll: &HashMap<u64, f32>) -> Vec<Rect> {
         let mut shift = vec![(0.0f32, 0.0f32); nodes.len()];
-        self.rects = self.boxes.clone();
+        let mut rects = self.boxes.clone();
         for (ix, node) in nodes.iter().enumerate() {
             let (mut dx, mut dy) = node.parent.map_or((0.0, 0.0), |p| shift[p as usize]);
-            self.rects[ix].x -= dx;
-            self.rects[ix].y -= dy;
+            rects[ix].x -= dx;
+            rects[ix].y -= dy;
             if let Some(axis) = node.scroll {
                 let offset = scroll
                     .get(&node.id)
@@ -154,6 +159,7 @@ impl Layout {
             }
             shift[ix] = (dx, dy);
         }
+        rects
     }
 }
 

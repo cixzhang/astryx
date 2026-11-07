@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
 use astryx_core::{
-    A11yAction, Command, DrawCmd, FrameInfo, Input, InputPhase, Preferences, Renderer, Surface,
+    A11yAction, Command, DrawCmd, FrameInfo, Input, InputPhase, Point, Preferences, Renderer,
+    Surface,
 };
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -15,7 +16,7 @@ use web_sys::{
     ResizeObserverEntry, ResizeObserverOptions, ResizeObserverSize, Window,
 };
 
-use crate::focus::{focus_order, focused_id, stepped_within};
+use crate::focus::{focus_order, focused_id, hit_test, stepped_within};
 use crate::fonts::{FontKey, FontPlan};
 use crate::gamepad::{PadTracker, Snapshot};
 use crate::keys::map_key;
@@ -167,6 +168,9 @@ struct Shell {
     font_plan: FontPlan,
     /// First-subset files still loading. The first frame waits for them.
     initial_fonts_pending: usize,
+    /// The node a pointer pressed, activated if the pointer lifts over it.
+    pointer_target: Option<u64>,
+    cursor: &'static str,
 }
 
 impl Shell {
@@ -193,6 +197,35 @@ impl Shell {
         }
         let command = self.surface.text_input(text);
         self.handle(command);
+    }
+
+    fn text_compose(&mut self, text: &str) {
+        if self.stopped {
+            return;
+        }
+        // The input method's own caret is not exposed; it sits at the end.
+        self.surface.text_compose(text, text.len() as u32);
+        self.dirty = true;
+    }
+
+    /// The focusable, enabled node under a pointer event, and its role.
+    fn pointer_hit(&self, event: &web_sys::MouseEvent) -> Option<(u64, astryx_core::Role)> {
+        let rect = self.canvas.get_bounding_client_rect();
+        let x = event.client_x() as f64 - rect.left() - self.canvas.client_left() as f64;
+        let y = event.client_y() as f64 - rect.top() - self.canvas.client_top() as f64;
+        let tree = self.surface.accessibility()?;
+        let node = hit_test(&tree, x as f32, y as f32)?;
+        (!node.disabled).then_some((node.id, node.role))
+    }
+
+    /// Wheel and trackpad scrolling at a point, in logical points. Returns
+    /// true when the app scrolled.
+    fn scroll(&mut self, x: f32, y: f32, dx: f32, dy: f32) -> bool {
+        let moved = self.surface.scroll(Point { x, y }, Point { x: dx, y: dy });
+        if moved {
+            self.dirty = true;
+        }
+        moved
     }
 
     fn handle(&mut self, command: Command) {
@@ -555,12 +588,94 @@ impl Runner {
             shell.mirror.set_composing(true);
             return;
         }
+        if event.type_() == "compositionupdate" {
+            shell.text_compose(&event.data().unwrap_or_default());
+            drop(shell);
+            self.schedule();
+            return;
+        }
+        shell.text_compose("");
         if let Some(text) = event.data() {
             shell.text_input(&text);
         }
         shell.mirror.set_composing(false);
         drop(shell);
         self.schedule();
+    }
+
+    /// A press focuses the node under the pointer; lifting over the same node
+    /// activates it, as a click does.
+    fn on_pointerdown(&self, event: &web_sys::PointerEvent) {
+        if event.pointer_type() == "mouse" && event.button() != 0 {
+            return;
+        }
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        // Keeps DOM focus in the app and stops text selection on the canvas.
+        event.prevent_default();
+        let hit = shell.pointer_hit(event);
+        shell.pointer_target = hit.map(|(id, _)| id);
+        if let Some((id, _)) = hit {
+            shell.a11y_action(id, A11yAction::Focus);
+            shell.render(now(&self.window), false);
+        }
+        shell.mirror.focus_tab_stop();
+        drop(shell);
+        self.schedule();
+    }
+
+    fn on_pointerup(&self, event: &web_sys::PointerEvent) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        let Some(target) = shell.pointer_target.take() else {
+            return;
+        };
+        if shell.pointer_hit(event).map(|(id, _)| id) == Some(target) {
+            shell.a11y_action(target, A11yAction::Activate);
+            drop(shell);
+            self.schedule();
+        }
+    }
+
+    fn on_pointermove(&self, event: &web_sys::PointerEvent) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        let cursor = match shell.pointer_hit(event) {
+            Some((_, astryx_core::Role::TextInput)) => "text",
+            Some(_) => "pointer",
+            None => "default",
+        };
+        if cursor != shell.cursor {
+            shell.cursor = cursor;
+            let _ = shell.canvas.style().set_property("cursor", cursor);
+        }
+    }
+
+    fn on_wheel(&self, event: &web_sys::WheelEvent) {
+        // Ctrl with the wheel is the browser's zoom, and a trackpad pinch.
+        if event.ctrl_key() {
+            return;
+        }
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        let rect = shell.canvas.get_bounding_client_rect();
+        let x = (event.client_x() as f64 - rect.left()) as f32;
+        let y = (event.client_y() as f64 - rect.top()) as f32;
+        let unit = match event.delta_mode() {
+            web_sys::WheelEvent::DOM_DELTA_LINE => 16.0,
+            web_sys::WheelEvent::DOM_DELTA_PAGE => rect.height() as f32,
+            _ => 1.0,
+        };
+        let (dx, dy) = (event.delta_x() as f32 * unit, event.delta_y() as f32 * unit);
+        if shell.scroll(x, y, dx, dy) {
+            event.prevent_default();
+            drop(shell);
+            self.schedule();
+        }
     }
 
     /// Activation from assistive tech arrives as a click on a mirror element.
@@ -752,6 +867,8 @@ fn start(
         }),
         font_plan: FontPlan::new(),
         initial_fonts_pending: 0,
+        pointer_target: None,
+        cursor: "default",
     };
     let runner = Rc::new(Runner {
         window: window.clone(),
@@ -787,14 +904,22 @@ fn start(
         &runner,
         Runner::on_composition,
     )?;
+    listen::<web_sys::CompositionEvent>(
+        &root,
+        "compositionupdate",
+        &runner,
+        Runner::on_composition,
+    )?;
     listen::<web_sys::CompositionEvent>(&root, "compositionend", &runner, Runner::on_composition)?;
-    listen::<web_sys::MouseEvent>(&canvas, "mousedown", &runner, |runner, event| {
-        // Clicking the canvas gives the app keyboard focus.
-        event.prevent_default();
-        if let Ok(shell) = runner.shell.try_borrow() {
-            shell.mirror.focus_tab_stop();
+    listen::<web_sys::PointerEvent>(&canvas, "pointerdown", &runner, Runner::on_pointerdown)?;
+    listen::<web_sys::PointerEvent>(&canvas, "pointerup", &runner, Runner::on_pointerup)?;
+    listen::<web_sys::PointerEvent>(&canvas, "pointermove", &runner, Runner::on_pointermove)?;
+    listen::<web_sys::PointerEvent>(&canvas, "pointercancel", &runner, |runner, _| {
+        if let Ok(mut shell) = runner.shell.try_borrow_mut() {
+            shell.pointer_target = None;
         }
     })?;
+    listen::<web_sys::WheelEvent>(&canvas, "wheel", &runner, Runner::on_wheel)?;
     listen::<web_sys::Event>(&window, "gamepadconnected", &runner, |runner, _| {
         runner.schedule()
     })?;

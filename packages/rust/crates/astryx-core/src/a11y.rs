@@ -56,7 +56,7 @@ fn collect<Msg>(
     };
     let mut a = A11yNode {
         text_selection: None,
-        secure: false,
+        secure: sem.secure,
         id: node.id,
         role: sem.role,
         label: sem.label.clone(),

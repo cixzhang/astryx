@@ -48,6 +48,15 @@ pub(crate) fn stepped_within(
     }
 }
 
+/// The deepest focusable node whose bounds contain `(x, y)`, in logical
+/// points. Later siblings win, as they paint on top.
+pub(crate) fn hit_test(node: &A11yNode, x: f32, y: f32) -> Option<&A11yNode> {
+    let b = &node.bounds;
+    let inside = x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height;
+    let child = node.children.iter().rev().find_map(|c| hit_test(c, x, y));
+    child.or((inside && node.focusable).then_some(node))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,6 +98,25 @@ mod tests {
         ];
         assert_eq!(focus_order(&root), vec![3, 6, 7, 4]);
         assert_eq!(focused_id(&root), Some(6));
+    }
+
+    #[test]
+    fn hit_test_finds_the_deepest_focusable_node() {
+        let mut card = node(5, Role::List, false);
+        card.bounds = Rect::new(0.0, 0.0, 100.0, 100.0);
+        let mut item = node(6, Role::ListItem, false);
+        item.bounds = Rect::new(10.0, 10.0, 50.0, 20.0);
+        let mut button = node(7, Role::Button, false);
+        button.bounds = Rect::new(20.0, 12.0, 10.0, 10.0);
+        item.children = vec![button];
+        card.children = vec![item];
+        let mut root = node(1, Role::Group, false);
+        root.bounds = Rect::new(0.0, 0.0, 200.0, 200.0);
+        root.children = vec![card];
+        assert_eq!(hit_test(&root, 25.0, 15.0).map(|n| n.id), Some(7));
+        assert_eq!(hit_test(&root, 12.0, 15.0).map(|n| n.id), Some(6));
+        assert_eq!(hit_test(&root, 90.0, 90.0).map(|n| n.id), None);
+        assert_eq!(hit_test(&root, 150.0, 150.0).map(|n| n.id), None);
     }
 
     #[test]

@@ -15,6 +15,7 @@
 pub mod a11y;
 pub mod input;
 pub mod platform;
+pub mod pointer;
 
 use std::error::Error;
 use std::ffi::CString;
@@ -22,7 +23,7 @@ use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use astryx_core::{A11yNode, Command, FrameInfo, Input, InputPhase, Surface};
+use astryx_core::{A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, Surface};
 use astryx_render_gl::GlRenderer;
 use astryx_render_soft::tiny_skia::{IntSize, Pixmap};
 use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
@@ -34,11 +35,11 @@ use glutin::surface::{GlSurface, Surface as GlutinSurface, SwapInterval, WindowS
 use glutin_winit::{DisplayBuilder, GlWindow};
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalPosition, LogicalSize};
-use winit::event::{ElementState, Ime, WindowEvent};
+use winit::event::{ElementState, Ime, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::ModifiersState;
 use winit::raw_window_handle::HasWindowHandle;
-use winit::window::{Window, WindowAttributes, WindowId};
+use winit::window::{CursorIcon, Window, WindowAttributes, WindowId};
 
 /// Window and run settings.
 #[derive(Clone, Debug)]
@@ -83,6 +84,9 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         last_frame: None,
         last_tree: None,
         frames: 0,
+        pointer: None,
+        pointer_target: None,
+        cursor: CursorIcon::Default,
         #[cfg(feature = "gamepad")]
         gamepads: gilrs::Gilrs::new().ok(),
     };
@@ -114,6 +118,11 @@ struct Shell<S: Surface> {
     last_frame: Option<Instant>,
     last_tree: Option<Option<A11yNode>>,
     frames: u64,
+    /// The pointer position in logical points, while it is over the window.
+    pointer: Option<Point>,
+    /// The node a press landed on, activated if the release lands on it too.
+    pointer_target: Option<u64>,
+    cursor: CursorIcon,
     #[cfg(feature = "gamepad")]
     gamepads: Option<gilrs::Gilrs>,
 }
@@ -221,6 +230,23 @@ impl<S: Surface> Shell<S> {
         self.handle(event_loop, command);
     }
 
+    /// The node under the pointer in the last frame's tree.
+    fn pointer_hit(&self) -> Option<&A11yNode> {
+        let at = self.pointer?;
+        let tree = self.last_tree.as_ref()?.as_ref()?;
+        pointer::hit_test(tree, at.x, at.y)
+    }
+
+    fn update_cursor(&mut self) {
+        let cursor = pointer::cursor_for(self.pointer_hit());
+        if cursor != self.cursor {
+            self.cursor = cursor;
+            if let Some(gpu) = &self.gpu {
+                gpu.window.set_cursor(cursor);
+            }
+        }
+    }
+
     /// Turns the input method on while a text field has focus and keeps its
     /// candidate window next to that field.
     fn update_text_field(&mut self, tree: Option<&A11yNode>) {
@@ -285,7 +311,9 @@ impl<S: Surface> Shell<S> {
             gpu.adapter
                 .update_if_active(|| a11y::tree_update(tree.as_ref(), &title, scale));
             self.last_tree = Some(tree);
+            self.update_cursor();
         }
+        let Some(gpu) = &mut self.gpu else { return };
         if self.surface.wants_frames() {
             gpu.window.request_redraw();
         } else {
@@ -374,6 +402,49 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
             WindowEvent::Ime(Ime::Commit(text)) => {
                 if !text.is_empty() {
                     self.type_text(event_loop, &text);
+                }
+            }
+            WindowEvent::CursorMoved { position, .. } => {
+                let scale = self.gpu.as_ref().map_or(1.0, |g| g.window.scale_factor());
+                let logical = position.to_logical::<f32>(scale);
+                self.pointer = Some(Point {
+                    x: logical.x,
+                    y: logical.y,
+                });
+                self.update_cursor();
+            }
+            WindowEvent::CursorLeft { .. } => {
+                self.pointer = None;
+                self.update_cursor();
+            }
+            WindowEvent::MouseInput {
+                state,
+                button: MouseButton::Left,
+                ..
+            } => {
+                let hit = self.pointer_hit().map(|n| n.id);
+                match state {
+                    ElementState::Pressed => {
+                        self.pointer_target = hit;
+                        if let Some(id) = hit {
+                            let command = self.surface.a11y_action(id, A11yAction::Focus);
+                            self.handle(event_loop, command);
+                        }
+                    }
+                    ElementState::Released => {
+                        if let Some(id) = self.pointer_target.take().filter(|t| hit == Some(*t)) {
+                            let command = self.surface.a11y_action(id, A11yAction::Activate);
+                            self.handle(event_loop, command);
+                        }
+                    }
+                }
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                if let (Some(at), Some(gpu)) = (self.pointer, &self.gpu) {
+                    let delta = pointer::scroll_delta(delta, gpu.window.scale_factor());
+                    if self.surface.scroll(at, delta) {
+                        gpu.window.request_redraw();
+                    }
                 }
             }
             WindowEvent::RedrawRequested => self.redraw(event_loop),

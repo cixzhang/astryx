@@ -7,4 +7,5 @@ version.workspace = true
 
 [dependencies]
 astryx-tokens.workspace = true
+astryx-motion = { path = "../astryx-motion" }
 taffy = { version = "0.15", default-features = false, features = ["std", "flexbox", "taffy_tree"] }

@@ -1,14 +1,20 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
 use crate::contract::{
-    A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Preferences, Rect,
-    Surface, TextMeasure,
+    A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Point, Preferences,
+    Rect, Surface, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::ThemeChoice;
 use crate::{a11y, focus};
+use astryx_motion::gesture::{
+    Page, PagingGesture, Phase, PressEvent, PressGesture, PressHighlight, RepeatGesture,
+    DPAD_REPEAT,
+};
+use astryx_motion::tokens::{self as motion_tokens, MotionTokens};
+use astryx_motion::{Animated, Change, Motion, MotionPolicy, Pointer};
 use std::collections::HashMap;
 use taffy::{FlexDirection, Style};
 
@@ -61,6 +67,19 @@ pub trait App {
     }
 }
 
+/// How many vanished focus targets the runtime remembers.
+const LOST_FOCUS_MEMORY: usize = 16;
+
+/// A scroll indicator: fully shown until `hold_until_ms`, then fading.
+#[derive(Clone, Copy, Debug)]
+struct ScrollIndicator {
+    opacity: Animated<f32>,
+    hold_until_ms: f64,
+}
+
+/// How long the scroll indicator stays fully shown after a scroll.
+const INDICATOR_HOLD_MS: f64 = 1000.0;
+
 /// Runs an [`App`]: builds its view, lays it out, moves focus, and paints.
 pub struct Runtime<A: App> {
     app: A,
@@ -82,8 +101,30 @@ pub struct Runtime<A: App> {
     measure_generation: u64,
     /// A field's value typed since the last rebuild.
     typed: Option<(u64, String)>,
+    /// Text an input method is composing in a field: the field's id, the
+    /// text, and the cursor as a byte offset into it.
+    composing: Option<(u64, String, u32)>,
     /// The control whose popup is open.
     popup: Option<u64>,
+    /// Focused elements that went away, most recent last.
+    lost: Vec<u64>,
+    /// The scroll container around the focused element.
+    focus_container: Option<u64>,
+    /// Milliseconds since the runtime started, from frame times; drives
+    /// animations and gestures.
+    motion_ms: f64,
+    policy: MotionPolicy,
+    /// The offset each scroll container shows, moving toward `scroll`.
+    shown: HashMap<u64, Animated<f32>>,
+    scroll_indicators: HashMap<u64, ScrollIndicator>,
+    /// A press on the focused element.
+    press: PressGesture,
+    /// The pressed overlay's strength.
+    highlight: PressHighlight,
+    /// D-pad hold-to-repeat.
+    repeats: RepeatGesture<Input>,
+    /// L2 and R2.
+    paging: PagingGesture,
     scroll: HashMap<u64, f32>,
     reveal: bool,
     /// Focus or press changed since the last frame.
@@ -112,7 +153,18 @@ impl<A: App> Runtime<A> {
             carets: HashMap::new(),
             measure_generation: 0,
             typed: None,
+            composing: None,
             popup: None,
+            lost: Vec::new(),
+            focus_container: None,
+            motion_ms: 0.0,
+            policy: MotionPolicy::default(),
+            shown: HashMap::new(),
+            scroll_indicators: HashMap::new(),
+            press: PressGesture::new(),
+            highlight: PressHighlight::new(),
+            repeats: RepeatGesture::new(DPAD_REPEAT),
+            paging: PagingGesture::new(),
             scroll: HashMap::new(),
             reveal: false,
             repaint: true,
@@ -199,15 +251,32 @@ impl<A: App> Runtime<A> {
     fn set_focus(&mut self, stop: usize) {
         let (ix, id) = self.stops[stop];
         if self.focused != Some(id) {
-            self.pressed = None;
+            // Moving focus ends a press without activating.
+            self.end_press();
+            self.composing = None;
         }
         self.focused = Some(id);
         self.focused_box = self.layout.as_ref().map(|l| l.boxes[ix]);
+        self.focus_container = self.scroll_ancestor(ix).map(|a| self.nodes[a].id);
         self.reveal = true;
     }
 
+    /// The nearest scroll container around node `ix`.
+    fn scroll_ancestor(&self, ix: usize) -> Option<usize> {
+        let mut ancestor = self.nodes[ix].parent;
+        while let Some(a) = ancestor {
+            if self.nodes[a as usize].scroll.is_some() {
+                return Some(a as usize);
+            }
+            ancestor = self.nodes[a as usize].parent;
+        }
+        None
+    }
+
     /// Keeps focus on a live stop after a rebuild: the same id when it
-    /// survives, else the stop nearest to where focus was, else the first.
+    /// survives; else an earlier focus target that came back; else, when
+    /// the scrolling page around focus was replaced, the first stop of the
+    /// new page; else the stop nearest to where focus was.
     fn settle_focus(&mut self) {
         let trapped = |nodes: &[Node<A::Msg>], mut ix: usize| loop {
             if nodes[ix].trap {
@@ -233,6 +302,40 @@ impl<A: App> Runtime<A> {
         if let Some(stop) = self.stop_index(self.focused) {
             self.focused_box = self.layout.as_ref().map(|l| l.boxes[self.stops[stop].0]);
             return;
+        }
+        // A held direction stops when its element goes away.
+        self.repeats.cancel();
+        // Focus that went away with its element comes back to it when the
+        // element returns, as going back to a list returns to its row.
+        if let Some(gone) = self.focused {
+            self.lost.retain(|&id| id != gone);
+            self.lost.push(gone);
+            if self.lost.len() > LOST_FOCUS_MEMORY {
+                self.lost.remove(0);
+            }
+        }
+        if let Some(at) = self
+            .lost
+            .iter()
+            .rposition(|&id| self.stop_index(Some(id)).is_some())
+        {
+            let id = self.lost.remove(at);
+            let stop = self.stop_index(Some(id)).expect("checked above");
+            self.set_focus(stop);
+            return;
+        }
+        let page_gone = self
+            .focus_container
+            .is_some_and(|id| !self.nodes.iter().any(|n| n.id == id));
+        if page_gone {
+            if let Some(stop) = self
+                .stops
+                .iter()
+                .position(|&(ix, _)| self.scroll_ancestor(ix).is_some())
+            {
+                self.set_focus(stop);
+                return;
+            }
         }
         if let Some(stop) = self
             .stops
@@ -289,6 +392,7 @@ impl<A: App> Runtime<A> {
                 let next = (self.scroll.get(&id).copied().unwrap_or(0.0) + delta)
                     .clamp(0.0, layout.overflow[a]);
                 self.scroll.insert(id, next);
+                self.shown.remove(&id);
                 layout.place(&self.nodes, &self.scroll);
                 break;
             }
@@ -299,7 +403,7 @@ impl<A: App> Runtime<A> {
 
     /// Scrolls every scroll container around the focused element so the
     /// element and its ring are in view.
-    fn reveal_focus(&mut self) {
+    fn reveal_focus(&mut self, smooth: bool) {
         let Some(stop) = self.stop_index(self.focused) else {
             return;
         };
@@ -334,14 +438,299 @@ impl<A: App> Runtime<A> {
                 } else {
                     0.0
                 };
-                let next = (current + delta).clamp(0.0, layout.overflow[a]);
-                self.scroll.insert(self.nodes[a].id, next);
+                self.set_scroll(a, current + delta, smooth);
             }
             ancestor = self.nodes[a].parent;
+        }
+    }
+
+    /// The scroll offset a container shows now, part way through a scroll.
+    fn shown_offset(&self, id: u64) -> f32 {
+        match self.shown.get(&id) {
+            Some(a) => a.value(),
+            None => self.scroll.get(&id).copied().unwrap_or(0.0),
+        }
+    }
+
+    /// The theme's motion tokens.
+    fn motion_tokens(&self) -> &'static MotionTokens {
+        MotionTokens::by_name(self.theme.theme.name).unwrap_or(motion_tokens::DEFAULT)
+    }
+
+    /// Shows container `id`'s indicator fully for a while, then fades it.
+    fn show_indicator(&mut self, id: u64) {
+        let hold_until_ms = self.motion_ms + INDICATOR_HOLD_MS;
+        let indicator = self.scroll_indicators.entry(id).or_insert(ScrollIndicator {
+            opacity: Animated::new(1.0),
+            hold_until_ms,
+        });
+        indicator.opacity.set(1.0);
+        indicator.hold_until_ms = hold_until_ms;
+    }
+
+    /// Scrolls container `ix` to `offset`. With `smooth` it moves on the
+    /// theme's move curve (instant under reduced motion) and shows the
+    /// indicator; otherwise it jumps, as for focus on the first frame.
+    /// Returns false when it is already there.
+    fn set_scroll(&mut self, ix: usize, offset: f32, smooth: bool) -> bool {
+        let Some(layout) = self.layout.as_mut() else {
+            return false;
+        };
+        let id = self.nodes[ix].id;
+        let target = offset.clamp(0.0, layout.overflow[ix]);
+        let current = self.scroll.get(&id).copied().unwrap_or(0.0);
+        if (target - current).abs() < 0.5 {
+            return false;
+        }
+        let from = self.shown_offset(id);
+        self.scroll.insert(id, target);
+        if smooth {
+            let tokens = self.motion_tokens();
+            let motion = self.policy.travel(
+                Change::Transition,
+                Motion::curve(tokens.durations.fast, tokens.ease_move),
+                tokens,
+            );
+            self.shown
+                .entry(id)
+                .or_insert_with(|| Animated::new(from))
+                .animate_to(target, motion);
+            self.show_indicator(id);
+        } else {
+            self.shown.remove(&id);
         }
         if let Some(layout) = self.layout.as_mut() {
             layout.place(&self.nodes, &self.scroll);
         }
+        true
+    }
+
+    /// Ends a press on the focused element without activating it.
+    fn end_press(&mut self) {
+        let tokens = self.motion_tokens();
+        for event in self.press.cancel() {
+            self.highlight.apply(event, tokens, &self.policy, false);
+        }
+    }
+
+    /// A press event on the focused element: show it, activate on release.
+    fn press_event(&mut self, event: PressEvent) -> Command {
+        let tokens = self.motion_tokens();
+        self.highlight.apply(event, tokens, &self.policy, false);
+        match event {
+            PressEvent::Down => {
+                self.pressed = self.focused;
+                Command::None
+            }
+            PressEvent::Activate => match self.pressed {
+                Some(id) if Some(id) == self.focused => self.activate(id),
+                _ => Command::None,
+            },
+            // The contract has no context request yet, so a long press is a
+            // press that does not activate.
+            PressEvent::LongPress | PressEvent::Up => Command::None,
+        }
+    }
+
+    /// The scroll container the arrows and paging move along `axis`: the
+    /// nearest one around the focused element, else the first one that can
+    /// scroll (inside an open popup, only its own).
+    fn scroll_container(&self, axis: Axis) -> Option<usize> {
+        let layout = self.layout.as_ref()?;
+        let fits = |ix: usize| self.nodes[ix].scroll == Some(axis);
+        if let Some(stop) = self.stop_index(self.focused) {
+            let mut ancestor = self.nodes[self.stops[stop].0].parent;
+            while let Some(a) = ancestor {
+                if fits(a as usize) {
+                    return Some(a as usize);
+                }
+                ancestor = self.nodes[a as usize].parent;
+            }
+        }
+        if self.nodes.iter().any(|n| n.trap) {
+            return None;
+        }
+        (0..self.nodes.len()).find(|&ix| fits(ix) && layout.overflow[ix] > 0.0)
+    }
+
+    /// An arrow press. Focus moves to the next element in that direction
+    /// when it is in view and close; otherwise the nearest scroll container
+    /// scrolls a third of its viewport so content between focus stops can
+    /// be read. At the end of the content, focus moves on.
+    fn directional(&mut self, input: Input) -> Command {
+        let rects = self.stop_rects();
+        let current = self.stop_index(self.focused);
+        let candidate = focus::navigate(&rects, current, input);
+        let axis = if matches!(input, Input::Up | Input::Down) {
+            Axis::Vertical
+        } else {
+            Axis::Horizontal
+        };
+        let forward = matches!(input, Input::Down | Input::Right);
+        if let Some(c) = self.scroll_container(axis) {
+            let layout = self.layout.as_ref().expect("layout");
+            let view = layout.rects[c];
+            let (v0, v1) = match axis {
+                Axis::Vertical => (view.y, view.y + view.height),
+                Axis::Horizontal => (view.x, view.x + view.width),
+            };
+            let span = v1 - v0;
+            let span_of = |r: Rect| match axis {
+                Axis::Vertical => (r.y, r.y + r.height),
+                Axis::Horizontal => (r.x, r.x + r.width),
+            };
+            let near = candidate.is_some_and(|s| {
+                let (c0, c1) = span_of(rects[s]);
+                // Distance is measured from the focused element, or from the
+                // viewport's edge once focus has scrolled out of view.
+                let (f0, f1) = current.map_or((v0, v0), |f| span_of(rects[f]));
+                if forward {
+                    let from = f1.clamp(v0, v1);
+                    c0 >= v0 - 0.5 && c0 < v1 && c0 <= from + span / 3.0
+                } else {
+                    let from = f0.clamp(v0, v1);
+                    c1 <= v1 + 0.5 && c1 > v0 && c1 >= from - span / 3.0
+                }
+            });
+            if !near {
+                let offset = self.scroll.get(&self.nodes[c].id).copied().unwrap_or(0.0);
+                let step = if forward { span / 3.0 } else { -span / 3.0 };
+                if self.set_scroll(c, offset + step, true) {
+                    return Command::None;
+                }
+            }
+        }
+        if let Some(stop) = candidate {
+            self.set_focus(stop);
+            self.reveal_focus(true);
+        }
+        Command::None
+    }
+
+    /// L2 and R2 scroll the nearest vertical scroll container by a viewport,
+    /// keeping a little of the last one in view. Focus that scrolls out of
+    /// view moves to the first focus stop in view.
+    fn page(&mut self, page: Page) -> Command {
+        let Some(c) = self.scroll_container(Axis::Vertical) else {
+            return Command::None;
+        };
+        let overlap = self.theme.tokens(&self.prefs).space.s6;
+        let view = self.layout.as_ref().expect("layout").rects[c];
+        let offset = self.scroll.get(&self.nodes[c].id).copied().unwrap_or(0.0);
+        let step = (view.height - overlap).max(view.height / 2.0);
+        let next = if page == Page::Next {
+            offset + step
+        } else {
+            offset - step
+        };
+        if !self.set_scroll(c, next, true) {
+            return Command::None;
+        }
+        let rects = self.stop_rects();
+        let inside = |r: Rect| r.y >= view.y - 0.5 && r.y + r.height <= view.y + view.height + 0.5;
+        let focus_in_view = self
+            .stop_index(self.focused)
+            .is_some_and(|f| inside(rects[f]));
+        if !focus_in_view {
+            if let Some(stop) = (0..rects.len()).find(|&s| inside(rects[s])) {
+                self.set_focus(stop);
+            }
+        }
+        Command::None
+    }
+
+    /// Thumbs for the scroll containers that scrolled recently.
+    fn indicators(&self, rects: &[Rect]) -> Vec<paint::Indicator> {
+        let Some(layout) = self.layout.as_ref() else {
+            return Vec::new();
+        };
+        let tokens = self.theme.tokens(&self.prefs);
+        // Astryx's scrollbar thumb is the neutral color on a clear track.
+        let (thickness, inset) = (tokens.space.s1, tokens.space.s0_5);
+        let mut out = Vec::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let (Some(axis), Some(indicator)) = (node.scroll, self.scroll_indicators.get(&node.id))
+            else {
+                continue;
+            };
+            let overflow = layout.overflow[ix];
+            let opacity = indicator.opacity.value();
+            if overflow <= 0.0 || opacity <= 0.0 {
+                continue;
+            }
+            let view = rects[ix];
+            let offset = self.shown_offset(node.id);
+            let span = if axis == Axis::Vertical {
+                view.height
+            } else {
+                view.width
+            };
+            let length = (span * span / (span + overflow))
+                .max(tokens.space.s6)
+                .min(span);
+            let start = (span - length) * (offset / overflow);
+            let thumb = match axis {
+                Axis::Vertical => Rect::new(
+                    view.x + view.width - inset - thickness,
+                    view.y + start,
+                    thickness,
+                    length,
+                ),
+                Axis::Horizontal => Rect::new(
+                    view.x + start,
+                    view.y + view.height - inset - thickness,
+                    length,
+                    thickness,
+                ),
+            };
+            out.push(paint::Indicator {
+                thumb,
+                opacity,
+                color: tokens.color.neutral.into(),
+            });
+        }
+        out
+    }
+
+    /// Moves every animation and gesture to `motion_ms`, and runs what a
+    /// held button does over time (repeats, paging, long press).
+    fn tick_motion(&mut self, dt: f32) -> Command {
+        let tokens = self.motion_tokens();
+        self.shown.retain(|_, a| a.tick(dt));
+        let now = self.motion_ms;
+        for indicator in self.scroll_indicators.values_mut() {
+            if now >= indicator.hold_until_ms && indicator.opacity.target() > 0.0 {
+                let fade = Motion::curve(tokens.durations.fast, tokens.ease_exit);
+                indicator
+                    .opacity
+                    .animate_to(0.0, self.policy.travel(Change::Transition, fade, tokens));
+                // The fade starts at the end of the hold, not at this frame's start.
+                indicator
+                    .opacity
+                    .tick(((now - indicator.hold_until_ms) / 1000.0).min(f64::from(dt)) as f32);
+            } else {
+                indicator.opacity.tick(dt);
+            }
+        }
+        self.scroll_indicators
+            .retain(|_, i| i.opacity.value() > 0.0 || i.opacity.is_animating());
+        self.highlight.tick(dt);
+        if !self.press.is_down() && !self.highlight.wants_frames() {
+            self.pressed = None;
+        }
+        let mut command = Command::None;
+        for event in self.press.tick(now) {
+            command = self.press_event(event);
+        }
+        if let Some(input) = self.repeats.poll(now) {
+            if !(matches!(input, Input::Left | Input::Right) && self.move_caret(input)) {
+                command = self.directional(input);
+            }
+        }
+        if let Some(page) = self.paging.poll(now) {
+            self.page(page);
+        }
+        command
     }
 
     fn activate(&mut self, id: u64) -> Command {
@@ -436,31 +825,88 @@ impl<A: App> Runtime<A> {
         let crate::element::Draw::Text(t) = &node.draw else {
             return None;
         };
-        let caret = self.caret(self.nodes[ix].id, &edit.value);
-        let prefix: String = if edit.masked {
-            "\u{2022}".repeat(caret)
-        } else {
-            edit.value.chars().take(caret).collect()
+        let id = self.nodes[ix].id;
+        let value = self.field_value(id, edit);
+        let caret = self.caret(id, &value);
+        let shown = |s: &str| {
+            if edit.masked {
+                "\u{2022}".repeat(s.chars().count())
+            } else {
+                s.to_string()
+            }
         };
-        let x = text.measure(&prefix, &t.style, None).width;
+        let prefix = shown(&value.chars().take(caret).collect::<String>());
+        let suffix = shown(&value.chars().skip(caret).collect::<String>());
+        let width = |s: &str| text.measure(s, &t.style, None).width;
+        // Composing text shows inline at the caret, underlined, with the
+        // caret at the input method's cursor.
+        let composing = match &self.composing {
+            Some((cid, pre, cursor)) if *cid == id => Some((shown(pre), *cursor as usize)),
+            _ => None,
+        };
+        let (x, override_text, underline) = match &composing {
+            Some((pre, cursor)) => {
+                let cut = pre
+                    .char_indices()
+                    .map(|(i, _)| i)
+                    .chain([pre.len()])
+                    .find(|&i| i >= *cursor)
+                    .unwrap_or(pre.len());
+                let all = format!("{prefix}{pre}{suffix}");
+                let start = width(&prefix);
+                (
+                    width(&format!("{prefix}{}", &pre[..cut])),
+                    Some(all),
+                    Some((start, width(&format!("{prefix}{pre}")))),
+                )
+            }
+            None => (width(&prefix), None, None),
+        };
         let area = node
             .parent
             .map_or(layout.rects[ix], |p| layout.rects[p as usize]);
-        let width = 1.0;
-        let shift = (x + width - area.width).max(0.0);
+        let caret_width = 1.0;
+        let shift = (x + caret_width - area.width).max(0.0);
         let rect = layout.rects[edit.text_node as usize];
         let line = (t.style.size * t.style.leading - 0.01).ceil();
+        let top = rect.y + (rect.height - line) / 2.0;
         Some(paint::Caret {
             text_node: edit.text_node as usize,
             shift,
-            rect: Rect::new(
-                (rect.x + x - shift).round(),
-                rect.y + (rect.height - line) / 2.0,
-                width,
-                line,
-            ),
+            rect: Rect::new((rect.x + x - shift).round(), top, caret_width, line),
             color: edit.caret,
+            text: override_text.map(|s| {
+                let w = width(&s);
+                (s, w)
+            }),
+            underline: underline
+                .map(|(a, b)| Rect::new(rect.x + a - shift, top + line - 2.0, b - a, 1.0)),
         })
+    }
+
+    /// Gives the focused field's accessibility node its caret, as a byte
+    /// offset into the value it exposes.
+    fn mark_text_selection(&mut self) {
+        let Some((ix, edit)) = self.focused_edit() else {
+            return;
+        };
+        let id = self.nodes[ix].id;
+        let value = self.field_value(id, edit);
+        let caret = self.caret(id, &value);
+        let bytes: usize = if edit.masked {
+            caret * '\u{2022}'.len_utf8()
+        } else {
+            value.chars().take(caret).map(char::len_utf8).sum()
+        };
+        fn find(n: &mut A11yNode, id: u64) -> Option<&mut A11yNode> {
+            if n.id == id {
+                return Some(n);
+            }
+            n.children.iter_mut().find_map(|c| find(c, id))
+        }
+        if let Some(node) = self.a11y.as_mut().and_then(|root| find(root, id)) {
+            node.text_selection = Some((bytes as u32, bytes as u32));
+        }
     }
 
     /// Closes the open popup and puts focus back on its owner.
@@ -477,20 +923,29 @@ impl<A: App> Surface for Runtime<A> {
     fn input(&mut self, input: Input, phase: InputPhase) -> Command {
         self.repaint = true;
         match (input, phase) {
-            (Input::A, InputPhase::Pressed) => {
-                // A repeat while held keeps the first press.
-                if self.pressed.is_none() {
-                    self.pressed = self.focused;
+            (Input::A, _) => {
+                let mut command = Command::None;
+                for event in self.press.input(gesture_phase(phase), self.motion_ms) {
+                    let c = self.press_event(event);
+                    if c != Command::None {
+                        command = c;
+                    }
+                }
+                command
+            }
+            (Input::Left | Input::Right, InputPhase::Pressed)
+                if self.focused_edit().is_some()
+                    && self
+                        .repeats
+                        .input(input, Phase::Pressed, self.motion_ms)
+                        .is_some() =>
+            {
+                if !self.move_caret(input) {
+                    return self.directional(input);
                 }
                 Command::None
             }
-            (Input::A, InputPhase::Released) => match self.pressed.take() {
-                Some(id) if Some(id) == self.focused => self.activate(id),
-                _ => Command::None,
-            },
-            (Input::Left | Input::Right | Input::Home | Input::End, InputPhase::Pressed)
-                if self.move_caret(input) =>
-            {
+            (Input::Home | Input::End, InputPhase::Pressed) if self.move_caret(input) => {
                 Command::None
             }
             (Input::Backspace, InputPhase::Pressed) if self.focused_edit().is_some() => {
@@ -499,19 +954,34 @@ impl<A: App> Surface for Runtime<A> {
             (Input::Delete, InputPhase::Pressed) if self.focused_edit().is_some() => {
                 self.text_input("\u{7f}")
             }
-            (
-                Input::Up
-                | Input::Down
-                | Input::Left
-                | Input::Right
-                | Input::Next
-                | Input::Previous,
-                InputPhase::Pressed,
-            ) => {
+            (Input::Up | Input::Down | Input::Left | Input::Right, _) => {
+                match self
+                    .repeats
+                    .input(input, gesture_phase(phase), self.motion_ms)
+                {
+                    Some(input) => self.directional(input),
+                    None => Command::None,
+                }
+            }
+            (Input::L2 | Input::R2, _) => {
+                let page = if input == Input::R2 {
+                    Page::Next
+                } else {
+                    Page::Previous
+                };
+                match self
+                    .paging
+                    .input(page, gesture_phase(phase), self.motion_ms)
+                {
+                    Some(page) => self.page(page),
+                    None => Command::None,
+                }
+            }
+            (Input::Next | Input::Previous, InputPhase::Pressed) => {
                 let rects = self.stop_rects();
                 if let Some(stop) = focus::navigate(&rects, self.stop_index(self.focused), input) {
                     self.set_focus(stop);
-                    self.reveal_focus();
+                    self.reveal_focus(true);
                 }
                 Command::None
             }
@@ -532,12 +1002,16 @@ impl<A: App> Surface for Runtime<A> {
         if !self.prefs.reduced_motion {
             self.time += frame.dt;
         }
+        self.motion_ms += f64::from(frame.dt) * 1000.0;
         self.repaint = false;
+        // A command from a long press or repeat has no caller to return to
+        // in a frame; the effect lands in the app's state.
+        let _ = self.tick_motion(frame.dt);
         let size = frame.logical_size();
         let viewport = (size.width, size.height);
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
-        let anchor = self.focused_rect();
+        let anchor = self.focused_rect().zip(self.focused);
         if self.stale || self.app.theme() != self.theme {
             self.rebuild();
         }
@@ -559,31 +1033,105 @@ impl<A: App> Surface for Runtime<A> {
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
             self.settle_focus();
-            if let Some(old) = anchor {
+            // Only the same element stays in place; new focus is revealed.
+            if let Some((old, _)) = anchor.filter(|&(_, id)| self.focused == Some(id)) {
                 self.keep_in_place(old);
             }
         }
         if std::mem::take(&mut self.reveal) {
-            self.reveal_focus();
+            self.reveal_focus(false);
         }
+        self.a11y = a11y::tree(
+            &self.nodes,
+            &self.layout.as_ref().expect("layout").rects,
+            self.focused,
+        );
+        self.mark_text_selection();
         let layout = self.layout.as_ref().expect("layout");
-        self.a11y = a11y::tree(&self.nodes, &layout.rects, self.focused);
+        let rects = if self.shown.is_empty() {
+            layout.rects.clone()
+        } else {
+            let shown: HashMap<u64, f32> = self
+                .scroll
+                .keys()
+                .map(|&id| (id, self.shown_offset(id)))
+                .collect();
+            layout.placed(&self.nodes, &shown)
+        };
+        let caret = self.caret_paint(text);
+        let indicators = self.indicators(&rects);
         let state = PaintState {
             focused: self.focused,
             pressed: self.pressed,
+            press_strength: self.highlight.strength(),
             time: self.time,
-            caret: self.caret_paint(text),
+            caret,
+            indicators,
         };
+        let layout = self.layout.as_ref().expect("layout");
         paint::paint(
             &self.nodes,
             layout,
+            &rects,
             &state,
             self.theme.tokens(&self.prefs).color.background_body.into(),
         )
     }
 
+    fn scroll(&mut self, at: Point, delta: Point) -> bool {
+        self.repaint = true;
+        let Some(layout) = self.layout.as_ref() else {
+            return false;
+        };
+        let inside =
+            |r: Rect| at.x >= r.x && at.x < r.x + r.width && at.y >= r.y && at.y < r.y + r.height;
+        // The innermost scroll container under the point comes last in
+        // reading order; its ancestors follow it outward.
+        let mut chain: Vec<usize> = (0..self.nodes.len())
+            .filter(|&ix| self.nodes[ix].scroll.is_some() && inside(layout.rects[ix]))
+            .collect();
+        chain.reverse();
+        for ix in chain {
+            let along = match self.nodes[ix].scroll {
+                Some(Axis::Vertical) => delta.y,
+                _ => delta.x,
+            };
+            if along == 0.0 {
+                continue;
+            }
+            let id = self.nodes[ix].id;
+            let current = self.scroll.get(&id).copied().unwrap_or(0.0);
+            let target =
+                (current + along).clamp(0.0, self.layout.as_ref().expect("layout").overflow[ix]);
+            if (target - current).abs() < 0.01 {
+                continue;
+            }
+            // Wheels and trackpads already move smoothly, so the offset
+            // follows them directly; the indicator still shows.
+            self.scroll.insert(id, target);
+            self.shown.remove(&id);
+            self.show_indicator(id);
+            if let Some(layout) = self.layout.as_mut() {
+                layout.place(&self.nodes, &self.scroll);
+            }
+            return true;
+        }
+        false
+    }
+
+    fn text_compose(&mut self, text: &str, cursor: u32) {
+        self.repaint = true;
+        let Some((ix, _)) = self.focused_edit() else {
+            return;
+        };
+        let id = self.nodes[ix].id;
+        self.composing =
+            (!text.is_empty()).then(|| (id, text.to_string(), cursor.min(text.len() as u32)));
+    }
+
     fn text_input(&mut self, text: &str) -> Command {
         self.repaint = true;
+        self.composing = None;
         let Some((ix, edit)) = self.focused_edit() else {
             return Command::None;
         };
@@ -622,11 +1170,12 @@ impl<A: App> Surface for Runtime<A> {
 
     fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
         self.repaint = true;
+        self.repeats.cancel();
         let Some(stop) = self.stop_index(Some(id)) else {
             return Command::None;
         };
         self.set_focus(stop);
-        self.reveal_focus();
+        self.reveal_focus(true);
         match action {
             A11yAction::Focus => Command::None,
             A11yAction::Activate => self.activate(id),
@@ -636,6 +1185,14 @@ impl<A: App> Surface for Runtime<A> {
     fn set_preferences(&mut self, preferences: &Preferences) {
         if *preferences != self.prefs {
             self.prefs = *preferences;
+            self.policy = MotionPolicy {
+                prefers_reduced_motion: preferences.reduced_motion,
+                pointer: if preferences.coarse_pointer {
+                    Pointer::Coarse
+                } else {
+                    Pointer::Fine
+                },
+            };
             self.stale = true;
         }
     }
@@ -645,6 +1202,21 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn wants_frames(&self) -> bool {
-        self.animating || self.stale || self.repaint
+        self.animating
+            || self.stale
+            || self.repaint
+            || !self.shown.is_empty()
+            || !self.scroll_indicators.is_empty()
+            || self.highlight.wants_frames()
+            || self.press.wants_frames()
+            || self.repeats.wants_frames()
+            || self.paging.wants_frames()
+    }
+}
+
+fn gesture_phase(phase: InputPhase) -> Phase {
+    match phase {
+        InputPhase::Pressed => Phase::Pressed,
+        InputPhase::Released => Phase::Released,
     }
 }

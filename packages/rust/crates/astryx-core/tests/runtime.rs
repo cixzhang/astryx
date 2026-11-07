@@ -316,7 +316,7 @@ fn focus_scrolls_into_view() {
     });
     draw(&mut rt, 300, 200);
     for _ in 0..20 {
-        tap(&mut rt, Input::Down);
+        tap(&mut rt, Input::Next);
     }
     let list = draw(&mut rt, 300, 200);
     let focused = a11y_nodes(&rt.accessibility().unwrap())
@@ -334,7 +334,7 @@ fn focus_scrolls_into_view() {
     assert!(has(&list, |c| matches!(c, DrawCmd::PushClip { .. })));
     // Back to the top scrolls back.
     for _ in 0..20 {
-        tap(&mut rt, Input::Up);
+        tap(&mut rt, Input::Previous);
     }
     draw(&mut rt, 300, 200);
     assert_eq!(a11y(&rt, Role::Button)[0].bounds.y, 0.0);
@@ -346,7 +346,7 @@ fn wants_frames_only_while_something_changes() {
     assert!(rt.wants_frames());
     draw(&mut rt, 400, 600);
     assert!(!rt.wants_frames());
-    rt.input(Input::Down, InputPhase::Pressed);
+    tap(&mut rt, Input::Down);
     assert!(rt.wants_frames());
     draw(&mut rt, 400, 600);
     assert!(!rt.wants_frames());
@@ -621,4 +621,297 @@ fn a_disabled_focused_control_dims_its_ring() {
         .position(|c| matches!(c, DrawCmd::Rect { stroke: Some((_, w)), fill, .. } if *w == FOCUS_RING_WIDTH && fill.a == 0.0))
         .unwrap();
     assert_eq!(list.commands[ring - 1], DrawCmd::PushOpacity(0.5));
+}
+
+// ---- D-pad scrolling ----
+
+fn offset_of<M: Clone + 'static>(rt: &Runtime<View<M>>, label: &str) -> f32 {
+    a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.label.as_deref() == Some(label))
+        .unwrap()
+        .bounds
+        .y
+}
+
+/// Two buttons with a long text block between them, in a 300 × 200 window.
+fn long_page() -> Runtime<View<&'static str>> {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .is_scrollable(true)
+            .padding(Space::S4)
+            .gap(Space::S4)
+            .child(Button::new("Top").on_click("top"))
+            .children(
+                (0..40).map(|i| Text::new(format!("Paragraph line {i} that cannot take focus"))),
+            )
+            .child(Button::new("Bottom").on_click("bottom"))
+            .into()
+    });
+    draw(&mut rt, 300, 200);
+    rt
+}
+
+#[test]
+fn down_scrolls_through_text_a_third_at_a_time_then_reaches_the_next_button() {
+    let mut rt = long_page();
+    let start = offset_of(&rt, "Paragraph line 0 that cannot take focus");
+    tap(&mut rt, Input::Down);
+    draw(&mut rt, 300, 200);
+    assert_eq!(
+        focused_label(&rt).as_deref(),
+        Some("Top"),
+        "focus stays while the far button is out of view"
+    );
+    let moved = start - offset_of(&rt, "Paragraph line 0 that cannot take focus");
+    assert!(
+        (moved - 200.0 / 3.0).abs() < 1.0,
+        "scrolled a third of the viewport: {moved}"
+    );
+    let mut presses = 1;
+    while focused_label(&rt).as_deref() == Some("Top") {
+        tap(&mut rt, Input::Down);
+        draw(&mut rt, 300, 200);
+        presses += 1;
+        assert!(presses < 100, "never reached the bottom button");
+    }
+    assert_eq!(focused_label(&rt).as_deref(), Some("Bottom"));
+    let bottom = a11y(&rt, Role::Button)[1].bounds;
+    assert!(
+        bottom.y >= 0.0 && bottom.y + bottom.height <= 200.0,
+        "the new focus is in view"
+    );
+    // At the end of the content Down does nothing.
+    let before = offset_of(&rt, "Bottom");
+    tap(&mut rt, Input::Down);
+    draw(&mut rt, 300, 200);
+    assert_eq!(
+        (focused_label(&rt).as_deref(), offset_of(&rt, "Bottom")),
+        (Some("Bottom"), before)
+    );
+    // Up works the same way back.
+    let mut presses = 0;
+    while focused_label(&rt).as_deref() == Some("Bottom") {
+        tap(&mut rt, Input::Up);
+        draw(&mut rt, 300, 200);
+        presses += 1;
+        assert!(presses < 100);
+    }
+    assert_eq!(focused_label(&rt).as_deref(), Some("Top"));
+    assert!(offset_of(&rt, "Top") >= 0.0);
+}
+
+#[test]
+fn close_neighbours_in_view_take_focus_at_once() {
+    let mut rt = runtime(buttons(3));
+    draw(&mut rt, 400, 600);
+    tap(&mut rt, Input::Down);
+    draw(&mut rt, 400, 600);
+    assert_eq!(focused_label(&rt).as_deref(), Some("B1"));
+}
+
+#[test]
+fn paging_scrolls_a_viewport_and_brings_focus_into_view() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .gap(Space::S2)
+            .is_scrollable(true)
+            .children((0..30).map(|i| Button::new(format!("B{i}")).on_click(i)))
+            .into()
+    });
+    draw(&mut rt, 300, 200);
+    let first = offset_of(&rt, "B0");
+    tap(&mut rt, Input::R2);
+    draw(&mut rt, 300, 200);
+    let paged = first - offset_of(&rt, "B0");
+    let overlap = light().space.s6;
+    assert_eq!(paged, 200.0 - overlap, "one viewport less a small overlap");
+    let focused = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.focused)
+        .unwrap();
+    assert!(
+        focused.bounds.y >= 0.0 && focused.bounds.y + focused.bounds.height <= 200.0,
+        "{:?}",
+        focused.bounds
+    );
+    assert_ne!(
+        focused.label.as_deref(),
+        Some("B0"),
+        "the old focus scrolled away"
+    );
+    tap(&mut rt, Input::L2);
+    draw(&mut rt, 300, 200);
+    assert_eq!(offset_of(&rt, "B0"), first);
+    // Paging past the start does nothing.
+    let focus = rt.focused();
+    tap(&mut rt, Input::L2);
+    assert_eq!(rt.focused(), focus);
+}
+
+#[test]
+fn scrolling_is_smooth_and_shows_an_indicator_that_fades() {
+    let neutral = Color::from(light().color.neutral);
+    let mut rt = long_page();
+    let frame = |dt: f32| FrameInfo {
+        width: 300,
+        height: 200,
+        scale: 1.0,
+        dt,
+    };
+    tap(&mut rt, Input::R2);
+    assert!(rt.wants_frames());
+    let line = |list: &DisplayList| {
+        texts(list)
+            .iter()
+            .find(|t| t.1.starts_with("Paragraph line 0"))
+            .map(|t| t.0.y)
+    };
+    let start = line(&rt.frame(&frame(0.0), &measure()));
+    let mid = rt.frame(&frame(0.05), &measure());
+    let end_list = rt.frame(&frame(0.2), &measure());
+    let (y0, y1) = (start.unwrap(), line(&mid).unwrap_or(f32::MIN));
+    assert!(y1 < y0, "moving after 50 ms");
+    assert!(
+        line(&end_list).is_none_or(|y2| y2 < y1),
+        "and further once settled"
+    );
+    let thumb = rects(&end_list)
+        .into_iter()
+        .find(|r| r.2 == neutral && r.0.width == light().space.s1);
+    let thumb = thumb.expect("indicator thumb");
+    assert_eq!(thumb.0.x + thumb.0.width, 300.0 - light().space.s0_5);
+    // It stays a second, then fades and goes; then frames stop.
+    let held = rt.frame(&frame(0.5), &measure());
+    assert!(
+        rects(&held)
+            .iter()
+            .any(|r| r.2 == neutral && r.0.width == light().space.s1),
+        "still shown"
+    );
+    let fading = rt.frame(&frame(0.3), &measure());
+    assert!(fading
+        .commands
+        .iter()
+        .any(|c| matches!(c, DrawCmd::PushOpacity(o) if *o < 1.0)));
+    let gone = rt.frame(&frame(0.2), &measure());
+    assert!(!rects(&gone)
+        .iter()
+        .any(|r| r.2 == neutral && r.0.width == light().space.s1));
+    assert!(!rt.wants_frames());
+}
+
+#[test]
+fn reduced_motion_scrolls_at_once() {
+    let mut rt = long_page();
+    rt.set_preferences(&Preferences {
+        reduced_motion: true,
+        ..Preferences::default()
+    });
+    draw(&mut rt, 300, 200);
+    tap(&mut rt, Input::R2);
+    let list = rt.frame(
+        &FrameInfo {
+            width: 300,
+            height: 200,
+            scale: 1.0,
+            dt: 0.0,
+        },
+        &measure(),
+    );
+    let y = texts(&list)
+        .iter()
+        .find(|t| t.1 == "Bottom" || t.1.starts_with("Paragraph line 8"))
+        .map(|t| t.0.y);
+    assert!(y.is_some());
+    let a11y_y = offset_of(&rt, "Paragraph line 0 that cannot take focus");
+    let painted = texts(&list)
+        .iter()
+        .find(|t| t.1.starts_with("Paragraph line 0"))
+        .map(|t| t.0.y);
+    assert!(
+        painted.is_none_or(|p| p == a11y_y),
+        "painted where it is, not on the way"
+    );
+}
+
+// ---- Wheel scrolling ----
+
+#[test]
+fn wheel_scrolls_the_innermost_container_that_can_move() {
+    let mut rt = runtime(|| {
+        VStack::<()>::new()
+            .is_scrollable(true)
+            .child(
+                HStack::new()
+                    .is_scrollable(true)
+                    .gap(Space::S2)
+                    .children((0..30).map(|i| Text::new(format!("chip{i}")))),
+            )
+            .children((0..40).map(|i| Text::new(format!("row {i}"))))
+            .into()
+    });
+    draw(&mut rt, 300, 200);
+    let x_of = |rt: &Runtime<View<()>>| offset_of_x(rt, "chip0");
+    // Over the chips, a horizontal wheel moves the chips; a vertical one
+    // passes to the page, which can move that way.
+    assert!(rt.scroll(Point { x: 10.0, y: 5.0 }, Point { x: 50.0, y: 0.0 }));
+    draw(&mut rt, 300, 200);
+    assert_eq!(x_of(&rt), -50.0);
+    assert!(rt.scroll(Point { x: 10.0, y: 5.0 }, Point { x: 0.0, y: 30.0 }));
+    draw(&mut rt, 300, 200);
+    assert_eq!(offset_of(&rt, "row 0"), 20.0 - 30.0);
+    assert!(rt.wants_frames(), "the indicator shows");
+    // Clamped at the start: scrolling further up does nothing.
+    assert!(rt.scroll(Point { x: 10.0, y: 100.0 }, Point { x: 0.0, y: -1000.0 }));
+    assert!(!rt.scroll(Point { x: 10.0, y: 100.0 }, Point { x: 0.0, y: -10.0 }));
+    // Outside every container nothing moves.
+    assert!(!rt.scroll(Point { x: 500.0, y: 500.0 }, Point { x: 0.0, y: 10.0 }));
+}
+
+fn offset_of_x<M: Clone + 'static>(rt: &Runtime<View<M>>, label: &str) -> f32 {
+    a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.label.as_deref() == Some(label))
+        .unwrap()
+        .bounds
+        .x
+}
+
+#[test]
+fn a_held_direction_repeats_after_a_delay() {
+    let mut rt = runtime(buttons(10));
+    let frame = |dt: f32| FrameInfo {
+        width: 400,
+        height: 600,
+        scale: 1.0,
+        dt,
+    };
+    rt.frame(&frame(0.0), &measure());
+    rt.input(Input::Down, InputPhase::Pressed);
+    // A platform key repeat for the held key is ignored.
+    rt.input(Input::Down, InputPhase::Pressed);
+    rt.frame(&frame(0.0), &measure());
+    assert_eq!(focused_label(&rt).as_deref(), Some("B1"));
+    rt.frame(&frame(0.3), &measure());
+    assert_eq!(
+        focused_label(&rt).as_deref(),
+        Some("B1"),
+        "no repeat before 400 ms"
+    );
+    rt.frame(&frame(0.15), &measure());
+    rt.frame(&frame(0.0), &measure());
+    assert_eq!(focused_label(&rt).as_deref(), Some("B2"));
+    rt.frame(&frame(0.1), &measure());
+    rt.frame(&frame(0.0), &measure());
+    assert_eq!(
+        focused_label(&rt).as_deref(),
+        Some("B3"),
+        "then every 90 ms"
+    );
+    rt.input(Input::Down, InputPhase::Released);
+    rt.frame(&frame(0.5), &measure());
+    rt.frame(&frame(0.0), &measure());
+    assert_eq!(focused_label(&rt).as_deref(), Some("B3"));
+    assert!(!rt.wants_frames());
 }

@@ -14,9 +14,20 @@ pub const FOCUS_RING_OFFSET: f32 = 3.0;
 pub(crate) struct PaintState {
     pub focused: Option<u64>,
     pub pressed: Option<u64>,
+    /// The pressed overlay's strength, 0 to 1.
+    pub press_strength: f32,
     /// Seconds since the runtime started, for spinners.
     pub time: f32,
     pub caret: Option<Caret>,
+    /// Scroll indicators, drawn above everything.
+    pub indicators: Vec<Indicator>,
+}
+
+/// A scroll container's position thumb.
+pub(crate) struct Indicator {
+    pub thumb: Rect,
+    pub opacity: f32,
+    pub color: Color,
 }
 
 /// The focused text field's caret.
@@ -27,6 +38,10 @@ pub(crate) struct Caret {
     pub shift: f32,
     pub rect: Rect,
     pub color: Color,
+    /// The value with composing text in it, and its width, while composing.
+    pub text: Option<(String, f32)>,
+    /// The line under the composing text.
+    pub underline: Option<Rect>,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -48,6 +63,7 @@ struct Ctx {
 pub(crate) fn paint<Msg>(
     nodes: &[Node<Msg>],
     layout: &Layout,
+    rects: &[Rect],
     state: &PaintState,
     clear: Color,
 ) -> DisplayList {
@@ -64,41 +80,65 @@ pub(crate) fn paint<Msg>(
             viewport: None,
             opacity: 1.0,
         };
-        paint_node(
+        let scene = Scene {
             nodes,
             layout,
+            rects,
             state,
-            0,
-            ctx,
-            &mut list.commands,
-            &mut overlay,
-        );
+        };
+        paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
     }
     list.commands.extend(overlay);
+    for indicator in &state.indicators {
+        let faded = indicator.opacity < 1.0;
+        if faded {
+            list.commands.push(DrawCmd::PushOpacity(indicator.opacity));
+        }
+        list.commands.push(DrawCmd::Rect {
+            rect: indicator.thumb,
+            radii: clamp_radii(
+                indicator.thumb.width,
+                indicator.thumb.height,
+                Radii::all(9999.0),
+            ),
+            fill: indicator.color,
+            stroke: None,
+        });
+        if faded {
+            list.commands.push(DrawCmd::PopOpacity);
+        }
+    }
     list
 }
 
+/// What every node's painting reads.
+struct Scene<'a, Msg> {
+    nodes: &'a [Node<Msg>],
+    layout: &'a Layout,
+    rects: &'a [Rect],
+    state: &'a PaintState,
+}
+
 fn paint_node<Msg>(
-    nodes: &[Node<Msg>],
-    layout: &Layout,
-    state: &PaintState,
+    scene: &Scene<'_, Msg>,
     ix: usize,
     ctx: Ctx,
     out: &mut Vec<DrawCmd>,
     overlay: &mut Vec<DrawCmd>,
 ) {
+    let (nodes, layout, rects, state) = (scene.nodes, scene.layout, scene.rects, scene.state);
     let node = &nodes[ix];
     let owner = ctx.owner;
-    let mut rect = layout.rects[ix];
+    let mut rect = rects[ix];
     if node.centered {
         if let Some(p) = node.parent {
-            let parent = layout.rects[p as usize];
+            let parent = rects[p as usize];
             rect.x = parent.x + (parent.width - rect.width) / 2.0;
             rect.y = parent.y + (parent.height - rect.height) / 2.0;
         }
     }
     if let (Some(period), Some(p)) = (node.slide, node.parent) {
-        let parent = layout.rects[p as usize];
+        let parent = rects[p as usize];
         let phase = (state.time % period) / period;
         rect.x = parent.x + rect.width * (-1.0 + 3.5 * phase);
     }
@@ -139,19 +179,27 @@ fn paint_node<Msg>(
         }
         _ => {}
     }
-    if let (Some(ind), true) = (node.indicator, owner.pressed) {
+    if let (Some(ind), true) = (node.indicator, owner.pressed && state.press_strength > 0.0) {
         if let Some(overlay) = ind.overlay {
             out.push(DrawCmd::Rect {
                 rect,
                 radii: clamp_radii(rect.width, rect.height, ind.radii),
-                fill: overlay,
+                fill: overlay.with_alpha(overlay.a * state.press_strength),
                 stroke: None,
             });
         }
     }
     match &node.draw {
         Draw::Text(t) => {
-            let text = layout.texts[ix].clone().unwrap_or_else(|| t.text.clone());
+            let mut text = layout.texts[ix].clone().unwrap_or_else(|| t.text.clone());
+            let mut rect = rect;
+            let mut color = t.color;
+            if let Some((composed, width)) = caret.and_then(|c| c.text.as_ref()) {
+                text = composed.clone();
+                rect.width = rect.width.max(*width);
+                color = caret.map_or(color, |c| c.color);
+            }
+            let t = &crate::element::TextDraw { color, ..t.clone() };
             if t.color.a > 0.0 {
                 out.push(DrawCmd::Text {
                     rect,
@@ -208,6 +256,14 @@ fn paint_node<Msg>(
         Draw::Spinner(color) => out.push(spinner(rect, *color, state.time)),
         _ => {}
     }
+    if let Some(line) = caret.and_then(|c| c.underline) {
+        out.push(DrawCmd::Rect {
+            rect: line,
+            radii: Radii::default(),
+            fill: caret.map_or(Color::TRANSPARENT, |c| c.color),
+            stroke: None,
+        });
+    }
     if let Some(c) = caret {
         out.push(DrawCmd::Rect {
             rect: c.rect,
@@ -234,7 +290,7 @@ fn paint_node<Msg>(
         opacity: ctx.opacity * node.opacity,
     };
     for &child in &node.children {
-        paint_node(nodes, layout, state, child as usize, inner, out, overlay);
+        paint_node(scene, child as usize, inner, out, overlay);
     }
     if clip.is_some() {
         out.push(DrawCmd::PopClip);

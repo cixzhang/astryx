@@ -64,6 +64,27 @@ impl Section {
         }
     }
 
+    /// What the section shows, in a few words.
+    pub fn summary(self) -> &'static str {
+        match self {
+            Section::Typography => "Type styles, headings, colors, and truncation",
+            Section::Stacks => "Gaps, alignment, wrapping, and scrolling",
+            Section::Buttons => "Variants, sizes, elevation, loading, and disabled",
+            Section::Cards => "Grounds, elevation, and padding",
+            Section::Switches => "On and off, sizes, descriptions, and status",
+            Section::ListItems => "Selectable, static, disabled, and with content",
+            Section::Items => "Density, layout, and alignment",
+            Section::Badges => "Status and palette colors",
+            Section::Dividers => "Subtle, strong, labeled, vertical, full bleed",
+            Section::Avatars => "Sizes, shapes, and status dots",
+            Section::Icons => "Every built-in icon, sizes, and colors",
+            Section::ProgressBars => "Variants, marks, and indeterminate",
+            Section::TextInputs => "Editing, states, and status",
+            Section::Selectors => "Variants, menus, and status",
+            Section::Thumbnails => "Open, remove, loading, and disabled",
+        }
+    }
+
     /// A file-friendly name, such as `"list-items"`.
     pub fn slug(self) -> &'static str {
         match self {
@@ -101,6 +122,12 @@ pub enum Msg {
     SelectRow(usize),
     Remove(usize),
     Back,
+    /// Opens a section page from the home screen.
+    Open(Section),
+    /// Returns to the home screen.
+    Home,
+    /// A text field's new value, by label.
+    Field(&'static str, String),
 }
 
 /// The gallery's state.
@@ -109,8 +136,10 @@ pub struct Gallery {
     pub theme: &'static Theme,
     /// `None` follows the person's light or dark preference.
     pub mode: Option<Mode>,
-    /// Shows one section instead of all of them.
+    /// Shows one section alone, without the header, for screenshots.
     pub only: Option<Section>,
+    /// The open section page; `None` is the home screen.
+    pub page: Option<Section>,
     pub switches: [bool; 4],
     pub last: Option<&'static str>,
     pub fruit: Option<String>,
@@ -118,6 +147,8 @@ pub struct Gallery {
     pub removed: Vec<usize>,
     /// A shortcut just changed the theme, so the header names it.
     pub announced: bool,
+    /// The text field values, by label.
+    pub fields: std::collections::BTreeMap<&'static str, String>,
 }
 
 impl Default for Gallery {
@@ -126,12 +157,28 @@ impl Default for Gallery {
             theme: Theme::ASTRYX,
             mode: None,
             only: None,
+            page: None,
             switches: [false, true, false, true],
             last: None,
             fruit: Some("apple".into()),
             selected_row: 1,
             removed: Vec::new(),
             announced: false,
+            fields: [
+                ("Email", "ada@example.com"),
+                ("Password", "hunter22"),
+                ("Small", "sm"),
+                ("Large", "lg"),
+                ("Disabled", "Can't edit"),
+                ("Read only", "Fixed value"),
+                ("Loading", "Checking"),
+                ("Username", "ada"),
+                ("Phone", "555 0100"),
+                ("Code", "4242"),
+            ]
+            .into_iter()
+            .map(|(k, v)| (k, v.to_string()))
+            .collect(),
         }
     }
 }
@@ -160,27 +207,14 @@ impl App for Gallery {
     type Msg = Msg;
 
     fn view(&self) -> Element<Msg> {
-        let sections = match self.only {
-            Some(s) => vec![s],
-            None => Section::ALL.to_vec(),
+        if let Some(section) = self.only {
+            return self.section_page(section, false);
+        }
+        let body = match self.page {
+            Some(section) => self.section_page(section, true),
+            None => self.home(),
         };
-        let mut page = VStack::new()
-            .gap(Space::S6)
-            .padding(Space::S6)
-            .is_scrollable(true);
-        for section in sections {
-            page = page.child(
-                VStack::new()
-                    .gap(Space::S3)
-                    .id(section.slug())
-                    .child(Heading::new(2, section.title()))
-                    .child(self.section_body(section)),
-            );
-        }
-        if self.only.is_some() {
-            return page.into();
-        }
-        // The header stays put while the sections scroll, so the theme
+        // The header stays put while the page scrolls, so the theme
         // controls and the shortcut label are always in view.
         VStack::new()
             .child(
@@ -189,7 +223,7 @@ impl App for Gallery {
                     .padding_block_end(Space::S0)
                     .child(self.header()),
             )
-            .child(page)
+            .child(body)
             .into()
     }
 
@@ -219,6 +253,11 @@ impl App for Gallery {
             Msg::SelectRow(i) => self.selected_row = i,
             Msg::Remove(i) => self.removed.push(i),
             Msg::Back => self.last = None,
+            Msg::Open(section) => self.page = Some(section),
+            Msg::Home => self.page = None,
+            Msg::Field(label, value) => {
+                self.fields.insert(label, value);
+            }
         }
         Command::None
     }
@@ -237,6 +276,8 @@ impl App for Gallery {
             Input::R1 => Some(Msg::ShiftTheme(1)),
             Input::L1 => Some(Msg::ShiftTheme(-1)),
             Input::Select => Some(Msg::CycleMode),
+            // B leaves a section page; on the home screen it clears the last action.
+            Input::B if self.page.is_some() => Some(Msg::Home),
             Input::B => Some(Msg::Back),
             _ => None,
         }
@@ -320,6 +361,107 @@ impl Gallery {
             .into()
     }
 
+    /// A text field labeled `label` that edits the gallery's value for it.
+    fn field(&self, label: &'static str) -> TextInput<Msg> {
+        let value = self.fields.get(label).cloned().unwrap_or_default();
+        TextInput::new(label, value).on_change(move |v| Msg::Field(label, v))
+    }
+
+    fn text_inputs(&self) -> Element<Msg> {
+        let grid = |items: Vec<TextInput<Msg>>| {
+            HStack::new()
+                .gap(Space::S4)
+                .wrap(StackWrap::Wrap)
+                .children(items.into_iter().map(|i| VStack::new().child(i)))
+        };
+        vstack![
+            group(
+                "Empty, filled, password, sizes",
+                grid(vec![
+                    self.field("Name")
+                        .placeholder("Ada Lovelace")
+                        .description("As it appears on your badge"),
+                    self.field("Email")
+                        .r#type(TextInputType::Email)
+                        .has_clear(true),
+                    self.field("Password").r#type(TextInputType::Password),
+                    self.field("Small").size(FieldSize::Sm),
+                    self.field("Large").size(FieldSize::Lg),
+                ]),
+            ),
+            group(
+                "Disabled, read only, loading, required, optional",
+                grid(vec![
+                    self.field("Disabled").is_disabled(true),
+                    self.field("Read only").is_read_only(true),
+                    self.field("Loading").is_loading(true),
+                    self.field("Required")
+                        .is_required(true)
+                        .placeholder("Required field"),
+                    self.field("Optional").is_optional(true),
+                ]),
+            ),
+            group(
+                "Status",
+                grid(vec![
+                    self.field("Username")
+                        .status(Status::error("That name is taken")),
+                    self.field("Phone")
+                        .status(Status::warning("Check the area code")),
+                    self.field("Code").status(Status::success("Code accepted")),
+                ]),
+            ),
+        ]
+        .gap(Space::S4)
+        .into()
+    }
+
+    /// Every section as a row; A opens one.
+    fn home(&self) -> Element<Msg> {
+        let mut list = VStack::new().gap(Space::S0_5);
+        for section in Section::ALL {
+            list = list.child(
+                ListItem::new(section.title())
+                    .description(section.summary())
+                    .end_content(Icon::new("chevronRight").color(IconColor::Secondary))
+                    .on_click(Msg::Open(section))
+                    .id(section.slug()),
+            );
+        }
+        VStack::new()
+            .gap(Space::S3)
+            .padding(Space::S6)
+            .is_scrollable(true)
+            // Its own identity keeps its scroll position apart from the pages'.
+            .id("home")
+            .child(Heading::new(2, "Components"))
+            .child(Card::new().padding(Space::S1).child(list))
+            .into()
+    }
+
+    /// One section as its own scrolling page, with a way back when it was
+    /// opened from the home screen.
+    fn section_page(&self, section: Section, has_back: bool) -> Element<Msg> {
+        let mut page = VStack::new()
+            .gap(Space::S3)
+            .padding(Space::S6)
+            .is_scrollable(true)
+            .id(section.slug());
+        if has_back {
+            page = page.child(
+                HStack::new().child(
+                    Button::new("All components")
+                        .variant(ButtonVariant::Ghost)
+                        .on_click(Msg::Home)
+                        .id("back"),
+                ),
+            );
+        }
+        page.child(Heading::new(2, section.title()))
+            .child(self.section_body(section))
+            .into()
+    }
+
     fn section_body(&self, section: Section) -> Element<Msg> {
         match section {
             Section::Typography => typography(),
@@ -334,7 +476,7 @@ impl Gallery {
             Section::Avatars => avatars(),
             Section::Icons => icons(),
             Section::ProgressBars => progress_bars(),
-            Section::TextInputs => text_inputs(),
+            Section::TextInputs => self.text_inputs(),
             Section::Selectors => self.selectors(),
             Section::Thumbnails => self.thumbnails(),
         }
@@ -665,9 +807,33 @@ fn stacks() -> Element<Msg> {
             )
         ),
         group(
-            "Scrollable HStack",
+            "Scrollable HStack of avatars",
+            // Buttons shrink to fit a row, as in Astryx; fixed-size avatars
+            // show the scroll instead.
             HStack::new().gap(Space::S2).is_scrollable(true).children(
-                (1..=12).map(|i| Button::new(format!("Chip {i}")).id(format!("chip-{i}")))
+                [
+                    "Ada Lovelace",
+                    "Grace Hopper",
+                    "Alan Turing",
+                    "Katherine Johnson",
+                    "Edsger Dijkstra",
+                    "Barbara Liskov",
+                    "Donald Knuth",
+                    "Frances Allen",
+                    "John Backus",
+                    "Radia Perlman",
+                    "Ken Thompson",
+                    "Margaret Hamilton",
+                    "Dennis Ritchie",
+                    "Hedy Lamarr",
+                    "Tim Berners-Lee",
+                    "Shafi Goldwasser"
+                ]
+                .map(|name| Avatar::new()
+                    .name(name)
+                    .size(AvatarSize::Lg)
+                    .on_click(Msg::Pressed("avatar"))
+                    .id(name)),
             )
         ),
         group(
@@ -1082,54 +1248,6 @@ fn progress_bars() -> Element<Msg> {
                         .has_value_label(true)
                 )
                 .child(ProgressBar::new("Indeterminate").is_indeterminate(true)),
-        ),
-    ]
-    .gap(Space::S4)
-    .into()
-}
-
-fn text_inputs() -> Element<Msg> {
-    let grid = |items: Vec<TextInput<Msg>>| {
-        HStack::new()
-            .gap(Space::S4)
-            .wrap(StackWrap::Wrap)
-            .children(items.into_iter().map(|i| VStack::new().child(i)))
-    };
-    vstack![
-        group(
-            "Empty, filled, password, sizes",
-            grid(vec![
-                TextInput::new("Name", "")
-                    .placeholder("Ada Lovelace")
-                    .description("As it appears on your badge"),
-                TextInput::new("Email", "ada@example.com")
-                    .r#type(TextInputType::Email)
-                    .has_clear(true)
-                    .on_change(|_| Msg::Pressed("clear")),
-                TextInput::new("Password", "hunter22").r#type(TextInputType::Password),
-                TextInput::new("Small", "sm").size(FieldSize::Sm),
-                TextInput::new("Large", "lg").size(FieldSize::Lg),
-            ]),
-        ),
-        group(
-            "Disabled, read only, loading, required, optional",
-            grid(vec![
-                TextInput::new("Disabled", "Can't edit").is_disabled(true),
-                TextInput::new("Read only", "Fixed value").is_read_only(true),
-                TextInput::new("Loading", "Checking").is_loading(true),
-                TextInput::new("Required", "")
-                    .is_required(true)
-                    .placeholder("Required field"),
-                TextInput::new("Optional", "").is_optional(true),
-            ]),
-        ),
-        group(
-            "Status",
-            grid(vec![
-                TextInput::new("Username", "ada").status(Status::error("That name is taken")),
-                TextInput::new("Phone", "555 0100").status(Status::warning("Check the area code")),
-                TextInput::new("Code", "4242").status(Status::success("Code accepted")),
-            ]),
         ),
     ]
     .gap(Space::S4)

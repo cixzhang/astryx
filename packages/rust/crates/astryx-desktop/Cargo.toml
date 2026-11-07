@@ -34,3 +34,7 @@ harness = false
 [[test]]
 name = "window_text"
 harness = false
+
+[[test]]
+name = "window_pointer"
+harness = false

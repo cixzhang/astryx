@@ -289,6 +289,8 @@ pub(crate) struct Semantics {
     pub description: Option<String>,
     pub checked: Option<bool>,
     pub selected: Option<bool>,
+    /// The value is secret, such as a password.
+    pub secure: bool,
     pub disabled: bool,
     /// Changes to the label are announced. Such a node is always in the
     /// accessibility tree, even inside a labeled control.
@@ -304,6 +306,7 @@ impl Semantics {
             description: None,
             checked: None,
             selected: None,
+            secure: false,
             disabled: false,
             live: None,
         }
