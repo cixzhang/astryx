@@ -97,12 +97,9 @@ pub fn run_with(
 #[cfg(target_arch = "wasm32")]
 fn create_renderer(canvas: &HtmlCanvasElement) -> Result<GlRenderer, JsValue> {
     use astryx_render_gl::astryx_raster::text::FontSet;
-    use astryx_render_gl::femtovg::renderer::OpenGl;
-    let backend = OpenGl::new_from_html_canvas(canvas)
-        .map_err(|e| format!("astryx-web: no WebGL2: {e:?}"))?;
     // Faces arrive as they load; see `Shell::add_font`.
-    GlRenderer::with_fonts(backend, FontSet::new())
-        .map_err(|e| format!("astryx-web: renderer: {e:?}").into())
+    GlRenderer::from_html_canvas(canvas, FontSet::new())
+        .map_err(|e| format!("astryx-web: renderer: {e}").into())
 }
 
 #[cfg(not(target_arch = "wasm32"))]

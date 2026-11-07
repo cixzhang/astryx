@@ -1,6 +1,6 @@
 [package]
 name = "astryx-render-gl"
-description = "GPU renderer for Astryx display lists: femtovg on glow, for OpenGL ES 2/3 and WebGL2"
+description = "GPU renderer for Astryx display lists on glow: OpenGL ES 2/3, WebGL2, and desktop OpenGL 3.3"
 edition.workspace = true
 license.workspace = true
 version.workspace = true
@@ -14,10 +14,14 @@ embedded-fonts = ["dep:astryx-fonts"]
 astryx-core.workspace = true
 astryx-raster = { path = "../astryx-raster" }
 astryx-fonts = { path = "../astryx-fonts", optional = true }
-femtovg = { version = "0.28.0", default-features = false }
 glow = "0.18.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["HtmlCanvasElement", "WebGl2RenderingContext", "WebGlContextAttributes"] }
 
 [dev-dependencies]
 astryx-headless = { path = "../astryx-headless" }
 astryx-render-soft = { path = "../astryx-render-soft" }
 glutin = { version = "0.32.3", default-features = false, features = ["egl"] }
+astryx-gallery = { path = "../../examples/gallery" }

@@ -915,3 +915,22 @@ fn a_held_direction_repeats_after_a_delay() {
     assert_eq!(focused_label(&rt).as_deref(), Some("B3"));
     assert!(!rt.wants_frames());
 }
+
+#[test]
+fn spinners_off_screen_cost_no_frames() {
+    let list = |n: usize| {
+        move || {
+            let mut stack = VStack::new();
+            for i in 0..n {
+                stack = stack.child(Button::new(format!("Item {i}")).on_click(i));
+            }
+            stack.child(Button::new("Saving").is_loading(true)).into()
+        }
+    };
+    let mut rt = runtime(list(1));
+    draw(&mut rt, 400, 600);
+    assert!(rt.wants_frames(), "a visible spinner animates");
+    let mut rt = runtime(list(60));
+    draw(&mut rt, 400, 600);
+    assert!(!rt.wants_frames(), "a spinner below the viewport does not");
+}

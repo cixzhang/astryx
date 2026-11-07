@@ -4,5 +4,6 @@
 //! GPU or OS dependency; builds for `wasm32-unknown-unknown`.
 
 pub mod geom;
+pub mod path;
 pub mod shadow;
 pub mod text;

@@ -58,7 +58,59 @@ impl ShadowKey {
 }
 
 /// Computes the mask for a key. Returns `None` when nothing is visible.
+///
+/// Far from the corners a shadow's cross-section does not change along the
+/// box, so a large box is computed at a reduced size and its middle row or
+/// column repeated. The result is the same, at a cost that does not grow
+/// with the box.
 pub fn shadow_mask(key: &ShadowKey) -> Option<ShadowMask> {
+    let radius = key.radii().iter().fold(0.0f32, |a, &r| a.max(r));
+    let reach = radius
+        + 1.5 * f32::from_bits(key.blur)
+        + f32::from_bits(key.spread).abs()
+        + f32::from_bits(key.x).abs().max(f32::from_bits(key.y).abs());
+    // Half of the reduced size: everything a corner can influence, and margin.
+    let k = reach.ceil() as u32 + 4;
+    let (rw, rh) = (2 * k + 1, 2 * k + 1);
+    if key.width <= rw + 2 && key.height <= rh + 2 {
+        return direct_mask(key);
+    }
+    let reduced = ShadowKey {
+        width: key.width.min(rw),
+        height: key.height.min(rh),
+        ..*key
+    };
+    let small = direct_mask(&reduced)?;
+    let (extra_w, extra_h) = (key.width - reduced.width, key.height - reduced.height);
+    let (w, h) = (small.width + extra_w, small.height + extra_h);
+    // Mask columns and rows of the reduced box's center line.
+    let cx = (reduced.width / 2) as i32 - small.x;
+    let cy = (reduced.height / 2) as i32 - small.y;
+    let source = |full: i32, center: i32, extra: u32| -> usize {
+        if full <= center {
+            full as usize
+        } else if full >= center + extra as i32 {
+            (full - extra as i32) as usize
+        } else {
+            center as usize
+        }
+    };
+    let cols: Vec<usize> = (0..w as i32).map(|c| source(c, cx, extra_w)).collect();
+    let mut data = Vec::with_capacity((w * h) as usize);
+    for row in 0..h as i32 {
+        let src = source(row, cy, extra_h) * small.width as usize;
+        data.extend(cols.iter().map(|&c| small.data[src + c]));
+    }
+    Some(ShadowMask {
+        x: small.x,
+        y: small.y,
+        width: w,
+        height: h,
+        data,
+    })
+}
+
+fn direct_mask(key: &ShadowKey) -> Option<ShadowMask> {
     let b = PxRect {
         x0: 0.0,
         y0: 0.0,
@@ -438,6 +490,38 @@ mod tests {
         let (ax, ay) = (8.0 - 8.0 * 0.5f32.sqrt(), 8.0 - 8.0 * 0.5f32.sqrt());
         let v = c[ay as usize * 20 + ax as usize];
         assert!((40..=230).contains(&v), "{v}");
+    }
+
+    #[test]
+    fn large_boxes_match_the_direct_computation() {
+        for (l, radii) in [
+            (layer(0.0, 4.0, 24.0, 0.0, false), [24.0; 4]),
+            (layer(3.0, -2.0, 6.0, 4.0, false), [0.0, 12.0, 30.0, 4.0]),
+            (layer(0.0, 3.0, 6.0, 1.0, true), [8.0; 4]),
+            (layer(6.0, 6.0, 0.0, 0.0, false), [0.0; 4]),
+        ] {
+            let rect = PxRect {
+                x0: 0.0,
+                y0: 0.0,
+                x1: 700.0,
+                y1: 300.0,
+            };
+            let key = ShadowKey::new(&rect, radii, &l, 2.0);
+            let fast = shadow_mask(&key).unwrap();
+            let slow = direct_mask(&key).unwrap();
+            assert_eq!(
+                (fast.x, fast.y, fast.width, fast.height),
+                (slow.x, slow.y, slow.width, slow.height)
+            );
+            let worst = fast
+                .data
+                .iter()
+                .zip(&slow.data)
+                .map(|(a, b)| a.abs_diff(*b))
+                .max()
+                .unwrap();
+            assert!(worst <= 1, "{l:?}: differs by {worst}");
+        }
     }
 
     #[test]

@@ -4,7 +4,7 @@ use crate::contract::{
     A11yAction, A11yNode, Command, DisplayList, FrameInfo, Input, InputPhase, Point, Preferences,
     Rect, Surface, TextMeasure,
 };
-use crate::element::{Axis, BuildCx, Edit, Element, Node, PopupAction};
+use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction};
 use crate::layout::Layout;
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::ThemeChoice;
@@ -64,6 +64,41 @@ pub trait App {
     fn on_input(&self, input: Input) -> Option<Self::Msg> {
         let _ = input;
         None
+    }
+}
+
+/// How long the phases of the last frame took, for profiling shells.
+/// All zero on targets without a clock (WebAssembly).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct FrameTimings {
+    pub rebuild: std::time::Duration,
+    pub layout: std::time::Duration,
+    pub a11y: std::time::Duration,
+    pub paint: std::time::Duration,
+}
+
+/// A stopwatch that reads zero where `Instant` is unavailable.
+struct Stopwatch(#[cfg(not(target_arch = "wasm32"))] std::time::Instant);
+
+impl Stopwatch {
+    fn start() -> Self {
+        Stopwatch(
+            #[cfg(not(target_arch = "wasm32"))]
+            std::time::Instant::now(),
+        )
+    }
+
+    /// Time since the last lap, restarting the watch.
+    fn lap(&mut self) -> std::time::Duration {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let now = std::time::Instant::now();
+            let d = now - self.0;
+            self.0 = now;
+            d
+        }
+        #[cfg(target_arch = "wasm32")]
+        std::time::Duration::ZERO
     }
 }
 
@@ -130,8 +165,11 @@ pub struct Runtime<A: App> {
     /// Focus or press changed since the last frame.
     repaint: bool,
     animating: bool,
+    /// Something that animates is on screen in the last frame.
+    animating_visible: bool,
     time: f32,
     a11y: Option<A11yNode>,
+    timings: FrameTimings,
 }
 
 impl<A: App> Runtime<A> {
@@ -169,8 +207,10 @@ impl<A: App> Runtime<A> {
             reveal: false,
             repaint: true,
             animating: false,
+            animating_visible: false,
             time: 0.0,
             a11y: None,
+            timings: FrameTimings::default(),
         }
     }
 
@@ -189,6 +229,11 @@ impl<A: App> Runtime<A> {
         let command = self.app.update(msg);
         self.stale = true;
         command
+    }
+
+    /// Phase timings of the last frame.
+    pub fn timings(&self) -> FrameTimings {
+        self.timings
     }
 
     /// The accessibility id of the focused element.
@@ -235,6 +280,47 @@ impl<A: App> Runtime<A> {
         self.layout = Some(Layout::new(&self.nodes));
         self.stale = false;
         self.relayout = true;
+    }
+
+    /// True when a spinner or sliding fill is inside the viewport and not
+    /// clipped away by a scroll container or clip, so off-screen animations
+    /// cost no frames.
+    fn animation_visible(&self) -> bool {
+        if !self.animating {
+            return false;
+        }
+        let Some(layout) = &self.layout else {
+            return false;
+        };
+        let intersect = |a: Rect, b: Rect| {
+            let x0 = a.x.max(b.x);
+            let y0 = a.y.max(b.y);
+            let x1 = (a.x + a.width).min(b.x + b.width);
+            let y1 = (a.y + a.height).min(b.y + b.height);
+            (x1 > x0 && y1 > y0).then(|| Rect::new(x0, y0, x1 - x0, y1 - y0))
+        };
+        let viewport = Rect::new(0.0, 0.0, self.viewport.0, self.viewport.1);
+        self.nodes.iter().enumerate().any(|(ix, node)| {
+            if !matches!(node.draw, Draw::Spinner(_)) && node.slide.is_none() {
+                return false;
+            }
+            let Some(mut visible) = layout.rects.get(ix).and_then(|&r| intersect(r, viewport))
+            else {
+                return false;
+            };
+            let mut ancestor = node.parent;
+            while let Some(a) = ancestor {
+                let a = a as usize;
+                if self.nodes[a].clip.is_some() || self.nodes[a].scroll.is_some() {
+                    match intersect(visible, layout.rects[a]) {
+                        Some(r) => visible = r,
+                        None => return false,
+                    }
+                }
+                ancestor = self.nodes[a].parent;
+            }
+            true
+        })
     }
 
     fn stop_index(&self, id: Option<u64>) -> Option<usize> {
@@ -1009,6 +1095,8 @@ impl<A: App> Surface for Runtime<A> {
         let _ = self.tick_motion(frame.dt);
         let size = frame.logical_size();
         let viewport = (size.width, size.height);
+        let mut watch = Stopwatch::start();
+        self.timings = FrameTimings::default();
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
@@ -1021,6 +1109,7 @@ impl<A: App> Surface for Runtime<A> {
             self.layout = Some(Layout::new(&self.nodes));
             self.relayout = true;
         }
+        self.timings.rebuild = watch.lap();
         if self.relayout || viewport != self.viewport {
             self.viewport = viewport;
             self.layout
@@ -1041,11 +1130,14 @@ impl<A: App> Surface for Runtime<A> {
         if std::mem::take(&mut self.reveal) {
             self.reveal_focus(false);
         }
+        self.animating_visible = self.animation_visible();
+        self.timings.layout = watch.lap();
         self.a11y = a11y::tree(
             &self.nodes,
             &self.layout.as_ref().expect("layout").rects,
             self.focused,
         );
+        self.timings.a11y = watch.lap();
         self.mark_text_selection();
         let layout = self.layout.as_ref().expect("layout");
         let rects = if self.shown.is_empty() {
@@ -1069,13 +1161,15 @@ impl<A: App> Surface for Runtime<A> {
             indicators,
         };
         let layout = self.layout.as_ref().expect("layout");
-        paint::paint(
+        let list = paint::paint(
             &self.nodes,
             layout,
             &rects,
             &state,
             self.theme.tokens(&self.prefs).color.background_body.into(),
-        )
+        );
+        self.timings.paint = watch.lap();
+        list
     }
 
     fn scroll(&mut self, at: Point, delta: Point) -> bool {
@@ -1202,7 +1296,7 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn wants_frames(&self) -> bool {
-        self.animating
+        self.animating_visible
             || self.stale
             || self.repaint
             || !self.shown.is_empty()

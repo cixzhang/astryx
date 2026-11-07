@@ -1,6 +1,8 @@
 //! An offscreen GL context for tests: EGL on a device display with no
 //! window (Mesa's software rasterizer works), rendering into a framebuffer
 //! object.
+// Each test binary uses a different part of this module.
+#![allow(dead_code)]
 
 use std::ffi::CStr;
 
@@ -23,6 +25,7 @@ pub struct OffscreenGl {
     size: (u32, u32),
     pub description: String,
     _context: PossiblyCurrentContext,
+    display: Display,
 }
 
 impl OffscreenGl {
@@ -98,6 +101,7 @@ impl OffscreenGl {
                 size: (0, 0),
                 description,
                 _context: context,
+                display: display.clone(),
             };
             out.renderer.set_framebuffer(Some(fbo));
             return Ok(out);
@@ -140,6 +144,15 @@ impl OffscreenGl {
                 glow::FRAMEBUFFER_COMPLETE
             );
         }
+    }
+
+    /// Replaces the renderer with a fresh one, with empty caches.
+    pub fn reset_renderer(&mut self) {
+        let display = self.display.clone();
+        // SAFETY: the context is current on this thread.
+        self.renderer = unsafe { GlRenderer::from_loader(|s: &CStr| display.get_proc_address(s)) }
+            .expect("renderer");
+        self.renderer.set_framebuffer(Some(self.fbo));
     }
 
     /// Renders one frame and returns straight-alpha RGBA rows, top first.
