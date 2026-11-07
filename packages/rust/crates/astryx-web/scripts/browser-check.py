@@ -458,7 +458,7 @@ def fetched_fonts(cdp):
 
 
 def pixel_check(chrome, base, dist, proof, check, summary):
-    """The pixel theme: Latin draws with Silkscreen alone; other scripts load
+    """The pixel theme: Latin draws with the bundled Galmuri alone; other scripts load
     the theme's pixel fallbacks, and only those."""
     with tempfile.TemporaryDirectory() as user_dir:
         cdp = open_page(chrome, user_dir, 960, 900, 2)
@@ -493,7 +493,7 @@ def pixel_check(chrome, base, dist, proof, check, summary):
         check("pixel text loads the theme's fallbacks for each script, not the shared subsets",
               all(n in fonts for n in wanted) and not shared and "galmuri7-latin-ext-400.ttf" not in fonts, fonts)
         rows = cdp.eval("[...document.querySelectorAll('.astryx-a11y [data-astryx-id]')]"
-                        ".filter(e => /^(Silkscreen|Vietnamese|Greek|Cyrillic|Kana|Hangul|Han):/.test(e.textContent))"
+                        ".filter(e => /^(Latin|Vietnamese|Greek|Cyrillic|Kana|Hangul|Han):/.test(e.textContent))"
                         ".map(e => { const r = e.getBoundingClientRect(); return [e.textContent.split(':')[0], r.x, r.y, r.width, r.height]; })")
         inks = {}
         for name, x, y, w, h in rows:

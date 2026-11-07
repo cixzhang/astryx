@@ -2,7 +2,9 @@
 //! dark, at scale 3 (a 400 ppi handheld), plus a few scripted states. Set
 //! `ASTRYX_UPDATE_GOLDENS=1` to rewrite them after an intended change.
 
-use astryx_core::{Input, Mode};
+use astryx_core::{
+    App, Command, Element, Heading, Input, Mode, Space, Text, TextType, ThemeChoice, VStack,
+};
 use astryx_gallery::{Gallery, Section};
 use astryx_headless::golden::{assert_golden, Tolerance};
 use astryx_headless::render_png;
@@ -192,6 +194,53 @@ fn pages_stay_on_the_grid() {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests/goldens")
             .join(name);
+        assert_golden(&png, path, TOLERANCE);
+    }
+}
+
+/// A heading over a paragraph, as an app's feature text reads.
+struct Article(Mode);
+
+impl App for Article {
+    type Msg = ();
+    fn view(&self) -> Element<()> {
+        VStack::new()
+            .padding(Space::S6)
+            .gap(Space::S3)
+            .child(Heading::new(1, "Saved searches"))
+            .child(Heading::new(2, "Stay on top of new matches"))
+            .child(Text::new(
+                "Save a search to see new matches without searching again. Saved searches stay in \
+                 sync on every device, and you can turn alerts off for any of them at any time.",
+            ))
+            .child(Text::new("Updated 2 minutes ago, 12 new matches").r#type(TextType::Supporting))
+            .child(Heading::new(4, "Alerts"))
+            .child(Text::new(
+                "Alerts arrive once a day. Choose a quieter schedule in Settings, or pause them \
+                 while you travel.",
+            ))
+            .into()
+    }
+    fn update(&mut self, _: ()) -> Command {
+        Command::None
+    }
+    fn theme(&self) -> ThemeChoice {
+        ThemeChoice::new(Palette::Garden.theme(), self.0)
+    }
+}
+
+/// Paragraph-length text at the handheld's scale 2: Galmuri9 headings in
+/// size steps above Galmuri7 body text.
+#[test]
+fn paragraphs_at_scale_two() {
+    for (mode, name) in [(Mode::Light, "light"), (Mode::Dark, "dark")] {
+        let mut rt = astryx_core::Runtime::new(Article(mode));
+        let png = render_png(&mut rt, 512, 384, 2.0, &[]);
+        let bad = off_grid(&png, 2);
+        assert!(bad.is_empty(), "{} edges off the grid", bad.len());
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/goldens")
+            .join(format!("garden-paragraphs-{name}@2x.png"));
         assert_golden(&png, path, TOLERANCE);
     }
 }

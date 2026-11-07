@@ -1,7 +1,8 @@
 //! Shows how pixel fallbacks for other scripts join the runtime font set:
-//! `cargo run -p astryx-theme-pixel --example fallback -- <out.png> [font files...]`.
-//! Each file is added with `add_fallback_font`, after Silkscreen, which
-//! the theme loads itself.
+//! `cargo run -p astryx-theme-pixel --example fallback -- <out.png> [font files...]`,
+//! for example the full Galmuri7 from `tools/pixel-tokens/fetch-fonts.sh`.
+//! Each file is added with `add_fallback_font`; the theme loads its own
+//! Latin cuts of Galmuri7 and Galmuri9 itself.
 
 use astryx_core::{App, Command, Element, Mode, Runtime, Text, ThemeChoice, VStack};
 use astryx_headless::{astryx_render_soft::SoftRenderer, render_pixmap};
@@ -10,7 +11,7 @@ use astryx_theme_pixel::Palette;
 struct Scripts;
 
 const LINES: [&str; 6] = [
-    "Silkscreen: Pixel perfect",
+    "Latin: Pixel perfect",
     "Vietnamese: Tiếng Việt",
     "Greek: Ελληνικά",
     "Cyrillic: Русский",

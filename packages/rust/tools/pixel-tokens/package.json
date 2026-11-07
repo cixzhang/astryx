@@ -2,12 +2,13 @@
   "name": "astryx-pixel-token-export",
   "private": true,
   "type": "module",
-  "description": "Resolves the pixel theme with Astryx's own resolver; see export.mjs",
+  "description": "Resolves the pixel theme with Astryx's own resolver and cuts its bundled fonts; see export.mjs and subset-fonts.mjs",
   "dependencies": {
     "@astryxdesign/core": "0.7.11",
     "@stylexjs/stylex": "0.19.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "vite": "8.3.0"
+    "vite": "8.3.0",
+    "subset-font": "2.9.0"
   }
 }

@@ -505,10 +505,14 @@ impl SoftRenderer {
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
                 match self.grids.last() {
-                    Some(&cell) if snap => {
-                        self.text
-                            .place_on_grid(&layout, (rect.x, rect.y), s, cell, &mut placed)
-                    }
+                    Some(&cell) if snap => self.text.place_on_grid(
+                        &layout,
+                        (rect.x, rect.y),
+                        s,
+                        cell,
+                        own_family(style),
+                        &mut placed,
+                    ),
                     _ => self
                         .text
                         .place(&layout, (rect.x, rect.y), s, snap, &mut placed),
@@ -691,6 +695,14 @@ impl Renderer for SoftRenderer {
 
     fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
         SoftRenderer::set_image(self, id, data);
+    }
+}
+
+/// The family a pixel theme's text is set in, which draws on the grid.
+fn own_family(style: &astryx_core::TextStyle) -> Option<&'static str> {
+    match style.family {
+        astryx_core::FontFamily::Theme(font) => Some(font.family),
+        _ => None,
     }
 }
 

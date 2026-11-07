@@ -9,9 +9,10 @@ use astryx_theme_pixel::Palette;
 use astryx_web::Options;
 use wasm_bindgen::prelude::*;
 
-/// One line per script. Silkscreen draws the first; fallbacks draw the rest.
+/// One line per script. The theme's bundled Galmuri cuts draw Latin,
+/// Vietnamese, Greek, and Cyrillic; fallbacks draw the rest.
 pub const LINES: [&str; 7] = [
-    "Silkscreen: Pixel perfect",
+    "Latin: Pixel perfect",
     "Vietnamese: Ti\u{1ebf}ng Vi\u{1ec7}t",
     "Greek: \u{395}\u{3bb}\u{3bb}\u{3b7}\u{3bd}\u{3b9}\u{3ba}\u{3ac}",
     "Cyrillic: \u{420}\u{443}\u{441}\u{441}\u{43a}\u{438}\u{439}",

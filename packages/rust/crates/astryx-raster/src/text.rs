@@ -145,17 +145,27 @@ impl FontSet {
         self.families.iter().any(|(family, _)| family == name)
     }
 
-    /// One face per family for a CSS weight, in fallback order, with the
-    /// families named in `first` moved to the front in that order.
+    /// The faces of each family that best match a CSS weight, in fallback
+    /// order, with the families named in `first` moved to the front in that
+    /// order. A family can hold several faces of one weight, such as a
+    /// bundled subset and the full file added later; all of them are
+    /// candidates, in the order they were added.
     fn candidates(&self, weight: u16, first: &[&str]) -> Vec<usize> {
         let names: Vec<&str> = self.families.iter().map(|(n, _)| n.as_str()).collect();
-        family_order(&names, first)
-            .into_iter()
-            .filter_map(|f| {
-                let faces = &self.families[f].1;
-                match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
-            })
-            .collect()
+        let mut out = Vec::new();
+        for f in family_order(&names, first) {
+            let faces = &self.families[f].1;
+            let weight_of = |i: usize| self.faces[i].weight;
+            if let Some(best) = match_weight(faces.iter().map(|&i| (i, weight_of(i))), weight) {
+                out.extend(
+                    faces
+                        .iter()
+                        .copied()
+                        .filter(|&i| weight_of(i) == weight_of(best)),
+                );
+            }
+        }
+        out
     }
 }
 
@@ -642,14 +652,30 @@ impl TextEngine {
     /// When a cell is a whole number of device pixels, glyphs are sampled
     /// once per cell and scaled up, so a pixel font's design pixels fill
     /// whole cells even where its outlines leave its grid.
+    ///
+    /// Only faces of `family`, the text's own pixel font, are sampled per
+    /// cell. Fallback faces may have another grid, which per-cell sampling
+    /// would break apart, so they draw at full resolution, still without
+    /// antialiasing.
     pub fn place_on_grid(
         &self,
         layout: &TextLayout,
         origin: (f32, f32),
         scale: f32,
         cell: f32,
+        family: Option<&str>,
         out: &mut Vec<GlyphDraw>,
     ) {
+        let own: Vec<u16> = {
+            let inner = self.inner.borrow();
+            inner
+                .fonts
+                .families
+                .iter()
+                .filter(|(name, _)| Some(name.as_str()) == family)
+                .flat_map(|(_, faces)| faces.iter().map(|&f| f as u16))
+                .collect()
+        };
         let snap = |v: f32| (v / cell).round() * cell;
         let px = cell * scale;
         let k = if (px - px.round()).abs() < 0.01 && (2.0..=64.0).contains(&px.round()) {
@@ -657,17 +683,25 @@ impl TextEngine {
         } else {
             1.0
         };
-        let size = (layout.size * scale / k).to_bits();
+        let full = (layout.size * scale).to_bits();
         for line in &layout.lines {
-            let baseline = (snap(origin.1 + line.baseline) * scale).round();
+            // A baseline half a cell off rounds up, so descenders stay
+            // inside the line box.
+            let baseline = ((origin.1 + line.baseline) / cell - 0.5).ceil() * cell;
+            let baseline = (baseline * scale).round();
             let line_x = snap(origin.0 + line.x);
             for g in &line.glyphs {
+                let k = if own.contains(&g.face) { k } else { 1.0 };
                 let pen_x = ((line_x + g.x) * scale / k).round() * k;
                 let pen_y = ((baseline - g.y * scale) / k).round() * k;
                 let key = GlyphKey {
                     face: g.face,
                     id: g.id,
-                    size,
+                    size: if k > 1.0 {
+                        (layout.size * scale / k).to_bits()
+                    } else {
+                        full
+                    },
                     subpixel: 0,
                     cell: k as u8,
                 };
@@ -1047,7 +1081,7 @@ mod tests {
             "Galmuri7",
             "Galmuri70",
         ];
-        let order = family_order(&loaded, &["Silkscreen", "Galmuri7", "Galmuri9"]);
+        let order = family_order(&loaded, &["Pixel Sans", "Galmuri7", "Galmuri9"]);
         let names: Vec<&str> = order.iter().map(|&i| loaded[i]).collect();
         assert_eq!(
             names,
@@ -1061,6 +1095,19 @@ mod tests {
             ]
         );
         assert_eq!(family_order(&loaded, &[]), [0, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn every_face_of_the_matched_weight_is_a_candidate() {
+        let set = FontSet::new()
+            .with(REGULAR)
+            .unwrap()
+            .with(BOLD)
+            .unwrap()
+            .with(REGULAR)
+            .unwrap();
+        assert_eq!(set.candidates(400, &[]), [0, 2]);
+        assert_eq!(set.candidates(700, &[]), [1]);
     }
 
     #[test]

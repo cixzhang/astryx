@@ -56,7 +56,7 @@ crates/astryx-render-gl     batched GL renderer on glow: OpenGL ES 2/3, WebGL2  
 crates/astryx-render-soft   CPU renderer (tiny-skia) for headless and no-GPU    (Lane B)
 crates/astryx-desktop       shell: winit + glutin + accesskit_winit             (Lane B)
 crates/astryx-headless      shell: Surface -> PNG, scripted input, golden tests (Lane B)
-crates/astryx-theme-pixel   retro pixel theme: 5 palettes, pixel grid, Silkscreen,
+crates/astryx-theme-pixel   retro pixel theme: 5 palettes, pixel grid, Galmuri,   
                             bitmap icons (tokens/pixel-*.json)                 (Lane E)
 crates/astryx-web           shell: wasm-bindgen + WebGL2 + DOM a11y mirror      (Lane C)
 examples/gallery            one app showing every component, run by every shell

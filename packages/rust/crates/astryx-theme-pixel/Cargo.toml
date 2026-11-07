@@ -1,8 +1,8 @@
 [package]
 name = "astryx-theme-pixel"
-description = "A retro pixel theme for Astryx: Silkscreen type, stepped corners, and hard shadows on a pixel grid"
+description = "A retro pixel theme for Astryx: Galmuri pixel type, stepped corners, and hard shadows on a pixel grid"
 edition.workspace = true
-# The code is MIT; the bundled Silkscreen font is under the SIL Open Font License 1.1.
+# The code is MIT; the bundled Galmuri fonts are under the SIL Open Font License 1.1.
 license = "MIT AND OFL-1.1"
 version.workspace = true
 

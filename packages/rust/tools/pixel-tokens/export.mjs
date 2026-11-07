@@ -212,9 +212,14 @@ function tokens(vars, mode) {
       leading: round(Number(get(`--text-${css}-leading`))),
     };
   }
-  const family = (role) =>
-    get(`--font-family-${role}`).split(',').map((f) => f.trim().replace(/^['"]|['"]$/g, ''));
-  font.family = {body: family('body'), code: family('code'), heading: family('heading')};
+  // The source theme sets every family to Silkscreen. The Rust port draws
+  // all text in Galmuri instead: Galmuri7 for body text and controls, and
+  // the larger Galmuri9 for headings, both on the pixel grid.
+  font.family = {
+    body: ['Galmuri7', 'monospace'],
+    code: ['Galmuri7', 'monospace'],
+    heading: ['Galmuri9', 'monospace'],
+  };
   font.size = {};
   for (const [member, css] of Object.entries(FONT_SIZES)) font.size[member] = units(get(`--font-size-${css}`));
   font.weight = {...WEIGHTS};

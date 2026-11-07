@@ -3,10 +3,10 @@
 //!
 //! Everything is a function of one number, the pixel size `P` in points:
 //!
-//! - Type is Silkscreen, whose design pixel is one eighth of its size, so
-//!   every text size is a multiple of `8P` and every line height a whole
-//!   number of pixels. The theme draws on a grid of `P`, so each design
-//!   pixel lands on whole device pixels.
+//! - Type is Galmuri: Galmuri7 (eight design pixels per em) at 8P for body
+//!   text and controls, and Galmuri9 (ten per em) at 10P, 20P, and 30P for
+//!   headings and display text. Each design pixel is a whole number of
+//!   theme pixels, and every line height is a whole number of pixels.
 //! - Spacing, borders (`P`), element heights, and hard zero-blur shadows
 //!   are whole multiples of `P`.
 //! - Corners and circles are staircases on the grid, and icons are 12 by
@@ -35,22 +35,31 @@ include!(concat!(env!("OUT_DIR"), "/pixel.rs"));
 /// Astryx's 14 point body. It stays whole at scales 1, 1.5, 2, and 3.
 pub const DEFAULT_PIXEL: f32 = 2.0;
 
-/// Silkscreen Regular and Bold, under the SIL Open Font License 1.1
-/// (`fonts/OFL.txt`). Latin only.
-pub static SILKSCREEN: ThemeFont = ThemeFont {
-    family: "Silkscreen",
-    files: &[
-        include_bytes!("../fonts/Silkscreen-Regular.ttf"),
-        include_bytes!("../fonts/Silkscreen-Bold.ttf"),
-    ],
+/// Galmuri7, a pixel font with eight design pixels per em, for body text,
+/// labels, and controls. A Latin, Latin Extended, and Vietnamese cut of the
+/// `galmuri` package (SIL Open Font License 1.1, `fonts/OFL.txt`), made by
+/// `tools/pixel-tokens/fetch-fonts.sh`.
+pub static GALMURI7: ThemeFont = ThemeFont {
+    family: "Galmuri7",
+    files: &[include_bytes!("../fonts/Galmuri7-Latin.ttf")],
     em_pixels: 8,
     fallbacks: &FALLBACKS,
 };
 
-/// Pixel families for scripts Silkscreen lacks, tried in this order when
-/// an app adds their files to the renderer (see `examples/fallback.rs`).
-/// Galmuri7 and Fusion Pixel 8px share Silkscreen's grid of eight pixels
-/// per em; Galmuri9 (Greek, Cyrillic) does not, so it comes last.
+/// Galmuri9, ten design pixels per em, for headings. Its cut also keeps
+/// Greek and Cyrillic, so it draws them for Galmuri7 text too.
+pub static GALMURI9: ThemeFont = ThemeFont {
+    family: "Galmuri9",
+    files: &[include_bytes!("../fonts/Galmuri9-Latin.ttf")],
+    em_pixels: 10,
+    fallbacks: &FALLBACKS,
+};
+
+/// Families tried next, in this order, for characters a text's own family
+/// lacks. The full Galmuri7 (Korean, kana, some CJK) and Fusion Pixel 8px
+/// (CJK) join when an app adds their files to the renderer (see
+/// `examples/fallback.rs`); both share Galmuri7's grid. Galmuri9, bundled,
+/// draws Greek and Cyrillic on its own ten-pixel grid, so it comes last.
 pub const FALLBACKS: [&str; 7] = [
     "Galmuri7",
     "Fusion Pixel 8px Prop latin",
@@ -131,11 +140,14 @@ pub fn theme(palette: Palette, pixel: f32) -> &'static Theme {
         dark: tokens(dark, pixel),
         grid: Some(pixel),
         icons: ICONS,
-        fonts: std::slice::from_ref(&SILKSCREEN),
+        fonts: &FONTS,
     }));
     cache.push((key, theme));
     theme
 }
+
+/// The theme's fonts: body text first, then headings.
+static FONTS: [ThemeFont; 2] = [GALMURI7, GALMURI9];
 
 fn tokens(unit: &Tokens, pixel: f32) -> Tokens {
     let mut t = scale(unit, pixel);
@@ -150,6 +162,26 @@ fn tokens(unit: &Tokens, pixel: f32) -> Tokens {
     // Every box of the source theme draws its frame in the emphasized
     // border color (an inset ring), so borders take that color here.
     t.color.border = t.color.border_emphasized;
+    // Headings and display text are Galmuri9 at whole steps of its ten
+    // design pixels: one step for headings 2 to 6, two for heading 1 and the
+    // smaller displays, three for display 1. Body text is Galmuri7 at 8P, so
+    // every heading reads above it.
+    let f = &mut t.font;
+    let steps = [
+        (&mut f.heading2, 1.0),
+        (&mut f.heading3, 1.0),
+        (&mut f.heading4, 1.0),
+        (&mut f.heading5, 1.0),
+        (&mut f.heading6, 1.0),
+        (&mut f.heading1, 2.0),
+        (&mut f.display2, 2.0),
+        (&mut f.display3, 2.0),
+        (&mut f.display1, 3.0),
+    ];
+    for (style, n) in steps {
+        style.size = n * 10.0 * pixel;
+        style.leading = (style.size + 2.0 * pixel) / style.size;
+    }
     t
 }
 
@@ -188,8 +220,10 @@ mod tests {
                         assert!(whole(v));
                     }
                     let f = &tokens.font;
-                    for style in [f.body, f.label, f.supporting, f.heading1, f.display1] {
-                        assert_eq!((style.size / (8.0 * p)).fract(), 0.0, "on the font grid");
+                    let galmuri7 = [f.body, f.label, f.supporting, f.code].map(|s| (s, 8.0));
+                    let galmuri9 = [f.heading1, f.heading4, f.display1].map(|s| (s, 10.0));
+                    for (style, em) in galmuri7.into_iter().chain(galmuri9) {
+                        assert_eq!((style.size / (em * p)).fract(), 0.0, "on the font grid");
                         let line = style.size * style.leading / p;
                         assert!((line - line.round()).abs() < 1e-3, "line height {line}");
                     }
@@ -208,9 +242,12 @@ mod tests {
         assert_eq!(t.grid, Some(2.0));
         assert_eq!(t.light.size.border_width, 2.0);
         assert_eq!(t.light.font.body.size, 16.0);
-        assert_eq!(t.light.font.display1.size, 48.0);
+        assert_eq!(t.light.font.heading2.size, 20.0);
+        assert_eq!(t.light.font.heading1.size, 40.0);
+        assert_eq!(t.light.font.display1.size, 60.0);
         assert!(std::ptr::eq(t, theme(Palette::Garden, 2.0)), "cached");
-        assert_eq!(t.light.font.family.body, &["Silkscreen", "monospace"]);
+        assert_eq!(t.light.font.family.body, &["Galmuri7", "monospace"]);
+        assert_eq!(t.light.font.family.heading, &["Galmuri9", "monospace"]);
     }
 
     #[test]
