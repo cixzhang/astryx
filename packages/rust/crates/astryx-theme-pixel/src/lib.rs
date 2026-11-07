@@ -11,22 +11,29 @@
 //!   are whole multiples of `P`.
 //! - Corners and circles are staircases on the grid, and icons are 12 by
 //!   12 bitmaps with one icon pixel per theme pixel.
-//! - Five palettes (garden, Game Boy, NES, C64, PICO-8) in light and dark,
-//!   resolved by Astryx's own theme resolver.
+//! - Terrace draws every color from one fixed palette, [`PALETTE`]. Five
+//!   older retro palettes (garden, Game Boy, NES, C64, PICO-8), resolved by
+//!   Astryx's own theme resolver, stay as they are.
 //!
 //! ```
-//! use astryx_theme_pixel::Palette;
-//! let theme = Palette::GameBoy.theme();
+//! use astryx_theme_pixel::PixelTheme;
+//! let theme = PixelTheme::Terrace.theme();
 //! assert_eq!(theme.grid, Some(2.0));
 //! assert_eq!(theme.light.font.body.size, 16.0);
 //! ```
 
+use astryx_core::tokens::Rgba;
 use astryx_core::tokens::{
     BitmapIcon, ColorTokens, FontFamilyTokens, FontSizeTokens, FontTokens, FontWeightTokens,
     RadiusTokens, ShadowLayer, ShadowTokens, SizeTokens, SpaceTokens, Theme, ThemeFont, Tokens,
     TypeStyle,
 };
 use std::sync::{Mutex, OnceLock};
+
+mod palette;
+mod terrace;
+
+pub use palette::{contrast, Import, OffPalette, Palette, Swatch, PALETTE};
 
 include!(concat!(env!("OUT_DIR"), "/pixel.rs"));
 
@@ -70,10 +77,13 @@ pub const FALLBACKS: [&str; 7] = [
     "Galmuri9",
 ];
 
-/// The five retro palettes of the pixel theme.
+/// The pixel themes: Terrace, drawn only from the fixed [`PALETTE`], and the
+/// five retro palettes of the source theme, which predate it and are not
+/// held to it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum Palette {
+pub enum PixelTheme {
     #[default]
+    Terrace,
     Garden,
     GameBoy,
     Nes,
@@ -81,51 +91,64 @@ pub enum Palette {
     Pico8,
 }
 
-impl Palette {
-    pub const ALL: [Palette; 5] = [
-        Palette::Garden,
-        Palette::GameBoy,
-        Palette::Nes,
-        Palette::C64,
-        Palette::Pico8,
+impl PixelTheme {
+    pub const ALL: [PixelTheme; 6] = [
+        PixelTheme::Terrace,
+        PixelTheme::Garden,
+        PixelTheme::GameBoy,
+        PixelTheme::Nes,
+        PixelTheme::C64,
+        PixelTheme::Pico8,
     ];
 
-    /// The palette's name in the source theme, such as `"gameboy"`. It is
-    /// also the theme's name, short enough for a theme picker.
+    /// The theme's name, such as `"gameboy"`: the palette's name in the
+    /// source theme, short enough for a theme picker.
     pub fn name(self) -> &'static str {
         match self {
-            Palette::Garden => "garden",
-            Palette::GameBoy => "gameboy",
-            Palette::Nes => "nes",
-            Palette::C64 => "c64",
-            Palette::Pico8 => "pico8",
+            PixelTheme::Terrace => "terrace",
+            PixelTheme::Garden => "garden",
+            PixelTheme::GameBoy => "gameboy",
+            PixelTheme::Nes => "nes",
+            PixelTheme::C64 => "c64",
+            PixelTheme::Pico8 => "pico8",
         }
     }
 
-    /// The palette with this name, such as `"nes"`.
-    pub fn by_name(name: &str) -> Option<Palette> {
-        Palette::ALL.into_iter().find(|p| p.name() == name)
+    /// The theme with this name, such as `"nes"`.
+    pub fn by_name(name: &str) -> Option<PixelTheme> {
+        PixelTheme::ALL.into_iter().find(|p| p.name() == name)
     }
 
-    /// The pixel theme in this palette at [`DEFAULT_PIXEL`].
+    /// The theme at [`DEFAULT_PIXEL`].
     pub fn theme(self) -> &'static Theme {
         theme(self, DEFAULT_PIXEL)
     }
 
-    fn index(self) -> usize {
-        self as usize
+    /// True when every color the theme paints is a [`PALETTE`] swatch, or
+    /// a swatch at partial alpha.
+    pub fn uses_palette(self) -> bool {
+        self == PixelTheme::Terrace
+    }
+
+    /// The source theme's tokens this theme starts from: Terrace takes
+    /// Garden's sizes and type and replaces every color.
+    fn source(self) -> &'static [Tokens; 2] {
+        match self {
+            PixelTheme::Terrace | PixelTheme::Garden => &UNIT[0],
+            other => &UNIT[other as usize - 1],
+        }
     }
 }
 
-/// The pixel theme in `palette` with pixel size `pixel` points. Each
-/// palette and size is made once and kept for the life of the program.
+/// The pixel theme `which` with pixel size `pixel` points. Each theme and
+/// size is made once and kept for the life of the program.
 /// Pick a size that is a whole number of device pixels on the target
 /// screen, such as 2 points at scale 3.
-pub fn theme(palette: Palette, pixel: f32) -> &'static Theme {
-    type Made = Vec<((Palette, u32), &'static Theme)>;
+pub fn theme(which: PixelTheme, pixel: f32) -> &'static Theme {
+    type Made = Vec<((PixelTheme, u32), &'static Theme)>;
     static CACHE: OnceLock<Mutex<Made>> = OnceLock::new();
     let pixel = if pixel > 0.0 { pixel } else { DEFAULT_PIXEL };
-    let key = (palette, pixel.to_bits());
+    let key = (which, pixel.to_bits());
     let mut cache = CACHE
         .get_or_init(Default::default)
         .lock()
@@ -133,11 +156,16 @@ pub fn theme(palette: Palette, pixel: f32) -> &'static Theme {
     if let Some(&(_, theme)) = cache.iter().find(|(k, _)| *k == key) {
         return theme;
     }
-    let [light, dark] = &UNIT[palette.index()];
+    let [light, dark] = which.source();
+    let (mut light, mut dark) = (tokens(light, pixel), tokens(dark, pixel));
+    if which.uses_palette() {
+        terrace::paint(&mut light, false);
+        terrace::paint(&mut dark, true);
+    }
     let theme: &'static Theme = Box::leak(Box::new(Theme {
-        name: palette.name(),
-        light: tokens(light, pixel),
-        dark: tokens(dark, pixel),
+        name: which.name(),
+        light,
+        dark,
         grid: Some(pixel),
         icons: ICONS,
         fonts: &FONTS,
@@ -205,9 +233,9 @@ mod tests {
 
     #[test]
     fn every_length_is_a_whole_number_of_pixels() {
-        for palette in Palette::ALL {
+        for which in PixelTheme::ALL {
             for p in [1.0, 2.0, 3.0] {
-                let t = theme(palette, p);
+                let t = theme(which, p);
                 assert_eq!(t.grid, Some(p));
                 for tokens in [&t.light, &t.dark] {
                     let whole = |v: f32| (v / p).fract() == 0.0;
@@ -238,14 +266,14 @@ mod tests {
 
     #[test]
     fn the_default_is_two_points_and_border_is_one_pixel() {
-        let t = Palette::Garden.theme();
+        let t = PixelTheme::Garden.theme();
         assert_eq!(t.grid, Some(2.0));
         assert_eq!(t.light.size.border_width, 2.0);
         assert_eq!(t.light.font.body.size, 16.0);
         assert_eq!(t.light.font.heading2.size, 20.0);
         assert_eq!(t.light.font.heading1.size, 40.0);
         assert_eq!(t.light.font.display1.size, 60.0);
-        assert!(std::ptr::eq(t, theme(Palette::Garden, 2.0)), "cached");
+        assert!(std::ptr::eq(t, theme(PixelTheme::Garden, 2.0)), "cached");
         assert_eq!(t.light.font.family.body, &["Galmuri7", "monospace"]);
         assert_eq!(t.light.font.family.heading, &["Galmuri9", "monospace"]);
     }
@@ -253,7 +281,7 @@ mod tests {
     #[test]
     fn palettes_pin_their_own_colors() {
         // DMG greens: body #9BBC0F light, #0F380F dark.
-        let gb = Palette::GameBoy.theme();
+        let gb = PixelTheme::GameBoy.theme();
         let close = |a: [f32; 4], hex: u32| {
             let b = [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255].map(|v| v as f32 / 255.0);
             (0..3).all(|i| (a[i] - b[i]).abs() < 0.002)
@@ -263,7 +291,7 @@ mod tests {
         assert!(close(gb.light.color.text_primary, 0x0F380F));
         // Accents are generated from the palette's seed by HCT, so only
         // their hue is checked.
-        let a = Palette::Pico8.theme().light.color.accent;
+        let a = PixelTheme::Pico8.theme().light.color.accent;
         assert!(a[0] > a[1] && a[0] > a[2]);
     }
 
@@ -275,10 +303,13 @@ mod tests {
             assert!(icon.rows.iter().all(|r| r.len() == 12), "{}", icon.name);
         }
         for name in astryx_core::BUILT_IN_ICONS {
-            assert!(Palette::Nes.theme().icon(name).is_some(), "no pixel {name}");
+            assert!(
+                PixelTheme::Nes.theme().icon(name).is_some(),
+                "no pixel {name}"
+            );
         }
-        assert!(Palette::ALL
+        assert!(PixelTheme::ALL
             .iter()
-            .all(|p| Palette::by_name(p.name()) == Some(*p)));
+            .all(|p| PixelTheme::by_name(p.name()) == Some(*p)));
     }
 }

@@ -7,13 +7,14 @@ use std::fmt::Write as _;
 use std::{env, fs, path::PathBuf};
 
 const THEMES: &str = "../../tokens/pixel-themes.json";
+const PALETTE: &str = "../../tokens/pixel-palette.json";
 const ICONS: &str = "../../tokens/pixel-icons.json";
 /// Icons the source theme lacks, drawn for this port in the same style.
 const EXTRA_ICONS: &str = "extra-icons.json";
 const PALETTES: [&str; 5] = ["garden", "gameboy", "nes", "c64", "pico8"];
 
 fn main() {
-    for path in [THEMES, ICONS, EXTRA_ICONS, "build.rs"] {
+    for path in [THEMES, PALETTE, ICONS, EXTRA_ICONS, "build.rs"] {
         println!("cargo:rerun-if-changed={path}");
     }
     let themes: Map<String, Value> =
@@ -66,6 +67,12 @@ fn main() {
         .unwrap();
     }
     out.push_str("];\n");
+
+    write_colors_mut(&mut out, &themes[PALETTES[0]]["light"]);
+    let palette: Value =
+        serde_json::from_str(&fs::read_to_string(PALETTE).expect("read pixel-palette.json"))
+            .expect("parse pixel-palette.json");
+    write_palette(&mut out, &palette);
 
     let dest = PathBuf::from(env::var("OUT_DIR").unwrap()).join("pixel.rs");
     fs::write(dest, out).expect("write generated pixel tokens");
@@ -202,4 +209,52 @@ fn write_scale(out: &mut String, tokens: &Value) {
         .unwrap();
     }
     out.push_str("    t\n}\n\n");
+}
+
+/// `fn colors_mut(c) -> [(name, &mut Rgba); N]`: every color token with its
+/// Astryx member name, so the palette lock can visit them all.
+fn write_colors_mut(out: &mut String, tokens: &Value) {
+    let members: Vec<&String> = obj(&tokens["color"]).keys().collect();
+    writeln!(
+        out,
+        "/// Every color token with its Astryx member name.\nfn colors_mut(c: &mut ColorTokens) -> [(&'static str, &mut Rgba); {}] {{\n    [",
+        members.len()
+    )
+    .unwrap();
+    for m in members {
+        writeln!(out, "        ({m:?}, &mut c.{}),", snake(m)).unwrap();
+    }
+    out.push_str("    ]\n}\n\n");
+}
+
+/// The fixed palette: its name and its swatches in order.
+fn write_palette(out: &mut String, palette: &Value) {
+    let swatches = palette["swatches"].as_array().expect("palette swatches");
+    assert!(!swatches.is_empty(), "the palette has no swatches");
+    let mut names = Vec::new();
+    out.push_str("/// The swatches of `tokens/pixel-palette.json`, in order.\nstatic SWATCHES: &[Swatch] = &[\n");
+    for s in swatches {
+        let name = s["name"].as_str().expect("swatch name");
+        let hex = s["rgb"]
+            .as_str()
+            .expect("swatch rgb")
+            .trim_start_matches('#');
+        let v = u32::from_str_radix(hex, 16).expect("swatch hex");
+        writeln!(
+            out,
+            "    Swatch {{ name: {name:?}, rgb: [{}, {}, {}] }},",
+            v >> 16,
+            (v >> 8) & 255,
+            v & 255
+        )
+        .unwrap();
+        names.push(name.to_string());
+    }
+    out.push_str("];\n\n");
+    writeln!(
+        out,
+        "/// The palette's name.\nstatic PALETTE_NAME: &str = {:?};\n",
+        palette["name"].as_str().unwrap_or("")
+    )
+    .unwrap();
 }

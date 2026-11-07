@@ -8,6 +8,15 @@ version.workspace = true
 
 [dependencies]
 astryx-core.workspace = true
+astryx-image = { path = "../astryx-image", optional = true }
+
+[features]
+# The `check-palette` command line tool, which decodes PNG files.
+cli = ["dep:astryx-image"]
+
+[[bin]]
+name = "check-palette"
+required-features = ["cli"]
 
 [build-dependencies]
 serde_json = "1"

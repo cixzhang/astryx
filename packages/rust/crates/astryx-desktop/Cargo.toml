@@ -6,8 +6,10 @@ license.workspace = true
 version.workspace = true
 
 [features]
-default = ["gamepad"]
+default = ["gamepad", "audio"]
 gamepad = ["dep:gilrs"]
+# Sound effects through the system's default output.
+audio = ["dep:cpal", "dep:astryx-audio"]
 
 [dependencies]
 astryx-core.workspace = true
@@ -16,6 +18,8 @@ astryx-render-soft = { path = "../astryx-render-soft" }
 accesskit = "0.25.2"
 accesskit_winit = "0.34.2"
 gilrs = { version = "0.11.2", optional = true }
+astryx-audio = { path = "../astryx-audio", optional = true }
+cpal = { version = "0.16", optional = true }
 glutin = "0.32.3"
 glutin-winit = "0.5.0"
 winit = "0.30.13"

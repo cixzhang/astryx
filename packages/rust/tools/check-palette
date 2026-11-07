@@ -1,0 +1,8 @@
+#!/bin/sh
+# Checks PNG art against the pixel palette (tokens/pixel-palette.json):
+#   tools/check-palette <png...>
+# Exits with 1 when any pixel is not an opaque swatch or fully clear.
+set -eu
+root=$(cd "$(dirname "$0")/.." && pwd)
+exec cargo run --quiet --release --manifest-path "$root/Cargo.toml" \
+    -p astryx-theme-pixel --features cli --bin check-palette -- "$@"

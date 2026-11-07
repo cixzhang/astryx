@@ -5,7 +5,7 @@
 
 use astryx_core::Mode;
 use astryx_gallery::Gallery;
-use astryx_theme_pixel::Palette;
+use astryx_theme_pixel::PixelTheme;
 use astryx_web::Options;
 use wasm_bindgen::prelude::*;
 
@@ -18,7 +18,7 @@ pub fn start() -> Result<(), JsValue> {
     let mut gallery = Gallery::new();
     let hash = web_sys::window().and_then(|w| w.location().hash().ok());
     if hash.as_deref() == Some("#pixel") {
-        gallery = gallery.with_theme(Palette::GameBoy.theme(), Mode::Light);
+        gallery = gallery.with_theme(PixelTheme::GameBoy.theme(), Mode::Light);
     }
     astryx_web::run_with("#app", astryx_gallery::runtime(gallery), options)
 }

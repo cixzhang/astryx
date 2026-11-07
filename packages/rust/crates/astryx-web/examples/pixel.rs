@@ -5,7 +5,7 @@
 //! crates/astryx-web/scripts/build.sh` and open `pixel.html`.
 
 use astryx_core::{App, Command, Element, Mode, Runtime, Space, Text, ThemeChoice, VStack};
-use astryx_theme_pixel::Palette;
+use astryx_theme_pixel::PixelTheme;
 use astryx_web::Options;
 use wasm_bindgen::prelude::*;
 
@@ -38,7 +38,7 @@ impl App for Scripts {
         Command::None
     }
     fn theme(&self) -> ThemeChoice {
-        ThemeChoice::new(Palette::GameBoy.theme(), Mode::Light)
+        ThemeChoice::new(PixelTheme::GameBoy.theme(), Mode::Light)
     }
 }
 

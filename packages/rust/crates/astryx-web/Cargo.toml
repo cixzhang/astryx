@@ -5,8 +5,22 @@ edition.workspace = true
 license.workspace = true
 version.workspace = true
 
+[features]
+# Sound effects through WebAudio. Off by default to keep the bundle small.
+audio = [
+  "dep:astryx-audio",
+  "web-sys/AudioBuffer",
+  "web-sys/AudioBufferSourceNode",
+  "web-sys/AudioContext",
+  "web-sys/AudioDestinationNode",
+  "web-sys/AudioNode",
+  "web-sys/AudioScheduledSourceNode",
+  "web-sys/BaseAudioContext",
+]
+
 [dependencies]
 astryx-core.workspace = true
+astryx-audio = { path = "../astryx-audio", optional = true }
 # Fonts load at runtime as script subsets, so the wasm embeds none.
 astryx-render-gl = { path = "../astryx-render-gl", default-features = false }
 # Keep this version equal to the installed wasm-bindgen CLI.

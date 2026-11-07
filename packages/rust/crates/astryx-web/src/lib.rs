@@ -16,6 +16,8 @@
 //! [`Surface`]: astryx_core::Surface
 //! [`Input`]: astryx_core::Input
 
+#[cfg(feature = "audio")]
+mod audio;
 mod focus;
 mod fonts;
 mod gamepad;

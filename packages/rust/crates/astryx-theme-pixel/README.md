@@ -5,12 +5,61 @@ theme of the Astryx pixel gallery (`cixzhang/astryx-pixel-gallery`). Apps
 switch to it like any other theme:
 
 ```rust
-use astryx_theme_pixel::{theme, Palette};
+use astryx_theme_pixel::{theme, PixelTheme};
 
 // In `App::theme`:
-ThemeChoice::system(Palette::GameBoy.theme()); // P = 2 points
-ThemeChoice::new(theme(Palette::Nes, 3.0), Mode::Dark); // P = 3 points
+ThemeChoice::system(PixelTheme::Terrace.theme()); // P = 2 points
+ThemeChoice::new(theme(PixelTheme::Nes, 3.0), Mode::Dark); // P = 3 points
 ```
+
+## One fixed palette
+
+Apps in the pixel and world style draw from one palette of 32 named
+swatches, `tokens/pixel-palette.json` (`PALETTE`). Changing the palette is a
+one-file change: put the design session's swatches in
+`tools/pixel-tokens/palette.json` and run
+`tools/pixel-tokens/export-palette.py tools/pixel-tokens/palette.json`,
+which checks names and colors and writes the tokens file.
+
+- **Terrace** (`PixelTheme::Terrace`, the default) is the theme on that
+  palette: Garden's sizes, type, and shapes with every color a swatch, or a
+  swatch at partial alpha (overlays, muted fills, shadows). UI ink is
+  `ink`, paper is `paper` and `paper-2`, the accent is `green-2`, errors are
+  `rose-2`, shadows are `ink`, and dark mode sits on `soil-4` and `ink` with
+  `paper` text. A test fails on any off-palette token.
+- **The older themes** (garden, gameboy, nes, c64, pico8) predate the
+  palette and keep their colors; they are not checked.
+- **World art.** `PALETTE.register` and `PALETTE.sprite_sheet` take art
+  under `Import::Exact`, where any pixel that is not an opaque swatch or
+  fully clear is an error in debug builds and tests, with its coordinates,
+  or under `Import::Quantize`, which moves pixels to the nearest swatch
+  (in Oklab) for art made elsewhere. The core stays palette-agnostic.
+- **In repositories,** `tools/check-palette <png...>` checks art files and
+  exits with 1 on any off-palette pixel, for CI.
+- **Lighting is exempt.** The rule covers authored colors. A lighting pass
+  multiplies colors (dusk, night, lights), so its output is not
+  palette-exact: night is a tint toward `ink` and `blue-3`, not extra
+  pixel colors. Blending at partial alpha, such as an overlay over a
+  surface, is not exact either.
+
+Contrast of Terrace text and controls against WCAG AA, checked by a test:
+
+| Pair | Light | Dark |
+|---|---|---|
+| Text on body, on surface | 11.35, 14.19 | 16.78, 14.19 |
+| Secondary text on body, on surface | 5.69, 7.11 | 10.46, 8.84 |
+| Error text on body, on surface | 9.89, 12.36 (ink-plum) | 7.12, 6.01 (rose-2) |
+| Text on error fill (ink on rose-2) | 6.01 | 6.01 |
+| Text on warning fill (ink on straw-2) | 11.00 | 11.00 |
+| **Text on accent (paper on green-2)** | **4.09, fails** | **4.09, fails** |
+| Accent control on body, on surface (3:1) | 3.27, 4.09 | 4.11, 3.47 |
+
+Two choices follow from the palette. Rose text on paper reads at 1.9:1, so
+light-mode error text, icons, and borders are `ink-plum` and `rose-2`
+stays the error fill. No palette text color reaches 4.5:1 on `green-2`
+(paper is 4.09, ink 3.47), so primary buttons pass only the large-text
+level; a `green-2` a little darker, such as `#1b7d53`, would pass with
+paper text.
 
 ## The one idea
 
@@ -40,6 +89,8 @@ gives 8 point text, too small to read there. P = 2 stays a whole number of
 device pixels at scales 1, 1.5, 2, and 3.
 
 ## Tokens
+
+`tokens/pixel-palette.json` holds the palette (see above).
 
 `tokens/pixel-themes.json` (same shape as `tokens/themes.json`, lengths in
 pixel units) and `tokens/pixel-icons.json` are made by one script:
@@ -119,42 +170,47 @@ Items of the source `LEAKAGE.md` that only existed because of CSS:
 
 ## Remaining differences
 
-1. **Galmuri, not Silkscreen.** The port sets all text in Galmuri for
+1. **Two kinds of pixel theme.** Terrace is held to the fixed palette;
+   the five themes from the source keep their generated colors.
+   The gallery's World section draws its own sample art in code, which is
+   not on the palette yet (`tools/check-palette` flags it), so its Terrace
+   goldens are not palette-exact.
+2. **Galmuri, not Silkscreen.** The port sets all text in Galmuri for
    readability. Text is mixed case, and Galmuri has no bold, so weight
    tokens draw regular; hierarchy comes from size steps and color.
-2. **Not compared in a browser.** The goldens were checked against the
+3. **Not compared in a browser.** The goldens were checked against the
    theme source and its generated `pixel.css`, not against live pixels of
    the demo.
-3. **Spacing scales with P.** Rust multiplies the P = 3 design by P. CSS
+4. **Spacing scales with P.** Rust multiplies the P = 3 design by P. CSS
    snaps pixel spacing to P, so at P = 2 CSS spacing is about 1.5 times the
    Rust spacing. At P = 3 they match.
-4. **Shapes from radii, not per-component clips.** Badges are pixel pills
+5. **Shapes from radii, not per-component clips.** Badges are pixel pills
    (CSS: two-step boxes), the Switch thumb is a pixel circle (CSS: square),
    and ProgressBar ends step (CSS: square).
-5. **All borders are emphasized**, dividers included (CSS keeps dividers
+6. **All borders are emphasized**, dividers included (CSS keeps dividers
    faint).
-6. **Clips are square on the grid.** Content that overflows a stepped
+7. **Clips are square on the grid.** Content that overflows a stepped
    corner, such as a highlighted row at a menu's corner, shows a square
    corner.
-7. **Small icons draw at half theme pixels.** Only icons of 12P and more
+8. **Small icons draw at half theme pixels.** Only icons of 12P and more
    have one icon pixel per theme pixel.
-8. **Vector symbols without pixel art** (the Avatar person, the Thumbnail
+9. **Vector symbols without pixel art** (the Avatar person, the Thumbnail
    image placeholder) draw without antialiasing but are not pixel art.
-9. **Radio and checkbox indicators are not ported**: Astryx Rust has no
+10. **Radio and checkbox indicators are not ported**: Astryx Rust has no
    radio or checkbox yet. Chosen menu rows use the pixel check.
-10. **Photos are not baked to the grid.** Images get stepped corners and
+11. **Photos are not baked to the grid.** Images get stepped corners and
     nearest sampling on the grid, but they are not first reduced to one
     image pixel per theme pixel, as the source bakes its avatars. The
     runtime keeps no copy of image pixels, so baking would belong in the
     renderers.
-11. **Status and categorical colors are not pinned** to the palettes, as
+12. **Status and categorical colors are not pinned** to the palettes, as
     in the source (`LEAKAGE.md` #7).
-12. **Few text sizes**, by design: 8P body, 10P, 20P, and 30P headings.
-13. **Uneven Greek and Cyrillic.** No open pixel font with Greek and
+13. **Few text sizes**, by design: 8P body, 10P, 20P, and 30P headings.
+14. **Uneven Greek and Cyrillic.** No open pixel font with Greek and
     Cyrillic on an 8 px/em grid was found, so Galmuri9 draws them on its
     own grid inside 8P text.
-14. **A smooth theme nested in a pixel theme** (`Element::themed`) still
+15. **A smooth theme nested in a pixel theme** (`Element::themed`) still
     draws without antialiasing.
-15. **Motion on the grid moves in whole pixels.** Press scale is left out
+16. **Motion on the grid moves in whole pixels.** Press scale is left out
     (0.98 has no pixel form), and moving elements, such as the Switch thumb,
     step by whole theme pixels.

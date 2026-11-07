@@ -164,6 +164,8 @@ struct Shell {
     pending_transition: Option<astryx_core::Transition>,
     /// The frame on screen, where a transition starts from.
     last_list: Option<astryx_core::DisplayList>,
+    #[cfg(feature = "audio")]
+    audio: crate::audio::Audio,
     runner: Weak<Runner>,
     font_base: Option<String>,
     font_plan: FontPlan,
@@ -238,14 +240,27 @@ impl Shell {
             // A page cannot close itself, so the app stops taking input and frames.
             Command::Quit => self.stopped = true,
             Command::OpenUrl(url) => open_url(&self.window, &url),
-            // Reduced motion shows the new frame at once.
-            Command::Transition(t) if !self.preferences.reduced_motion => {
-                self.pending_transition = Some(t)
+            Command::Transition(t) => {
+                if let Some(id) = t.sound {
+                    self.play(id);
+                }
+                // Reduced motion shows the new frame at once.
+                if !self.preferences.reduced_motion {
+                    self.pending_transition = Some(t);
+                }
             }
-            // No audio output on the web yet.
-            Command::Transition(_) | Command::PlaySound(_) => {}
+            Command::PlaySound(id) => self.play(id),
         }
         self.dirty = true;
+    }
+
+    fn play(&mut self, id: astryx_core::SoundId) {
+        #[cfg(feature = "audio")]
+        if !self.preferences.sound_off {
+            self.audio.play(id);
+        }
+        #[cfg(not(feature = "audio"))]
+        let _ = id;
     }
 
     fn focused(&self) -> Option<u64> {
@@ -267,6 +282,13 @@ impl Shell {
         for (id, data) in self.surface.take_image_updates() {
             self.renderer.set_image(id, data.as_ref());
         }
+        let sounds = self.surface.take_sound_updates();
+        #[cfg(feature = "audio")]
+        for (id, wav) in sounds {
+            self.audio.set_sound(id, wav.as_deref());
+        }
+        #[cfg(not(feature = "audio"))]
+        drop(sounds);
         let list = self.surface.frame(&info, self.renderer.measurer());
         if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
             self.renderer.begin_transition(&t, from, &info);
@@ -902,6 +924,8 @@ fn start(
         preferences,
         pending_transition: None,
         last_list: None,
+        #[cfg(feature = "audio")]
+        audio: Default::default(),
         runner: Weak::new(),
         font_base: options.fonts_url.map(|url| {
             if url.is_empty() || url.ends_with('/') {

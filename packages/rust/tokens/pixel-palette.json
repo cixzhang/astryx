@@ -1,0 +1,133 @@
+{
+ "name": "palette v1.1",
+ "swatches": [
+  {
+   "name": "ink",
+   "rgb": "#122953"
+  },
+  {
+   "name": "ink-plum",
+   "rgb": "#542437"
+  },
+  {
+   "name": "soil-4",
+   "rgb": "#231B17"
+  },
+  {
+   "name": "blue-3",
+   "rgb": "#30569B"
+  },
+  {
+   "name": "soil-3",
+   "rgb": "#332720"
+  },
+  {
+   "name": "water-2",
+   "rgb": "#9FD3EA"
+  },
+  {
+   "name": "water-1",
+   "rgb": "#D8F0FF"
+  },
+  {
+   "name": "paper",
+   "rgb": "#FEFEFE"
+  },
+  {
+   "name": "paper-2",
+   "rgb": "#ECE5CE"
+  },
+  {
+   "name": "skin-1",
+   "rgb": "#FFE0BD"
+  },
+  {
+   "name": "rose-1",
+   "rgb": "#F6C4D2"
+  },
+  {
+   "name": "rose-2",
+   "rgb": "#F5898A"
+  },
+  {
+   "name": "rose-3",
+   "rgb": "#E08E79"
+  },
+  {
+   "name": "leaf-4",
+   "rgb": "#2E5A48"
+  },
+  {
+   "name": "straw-1",
+   "rgb": "#FDEFBD"
+  },
+  {
+   "name": "straw-2",
+   "rgb": "#FFE06F"
+  },
+  {
+   "name": "straw-3",
+   "rgb": "#EAC086"
+  },
+  {
+   "name": "sand",
+   "rgb": "#E3D3A8"
+  },
+  {
+   "name": "wood-1",
+   "rgb": "#C49A6C"
+  },
+  {
+   "name": "wood-2",
+   "rgb": "#5F4933"
+  },
+  {
+   "name": "soil-1",
+   "rgb": "#4F3D32"
+  },
+  {
+   "name": "soil-2",
+   "rgb": "#443329"
+  },
+  {
+   "name": "leaf-1",
+   "rgb": "#D6F0A0"
+  },
+  {
+   "name": "leaf-2",
+   "rgb": "#A9D18E"
+  },
+  {
+   "name": "leaf-3",
+   "rgb": "#6FAE7A"
+  },
+  {
+   "name": "mint",
+   "rgb": "#7FDCC0"
+  },
+  {
+   "name": "green-1",
+   "rgb": "#21BD7C"
+  },
+  {
+   "name": "green-2",
+   "rgb": "#1F8E5F"
+  },
+  {
+   "name": "teal-1",
+   "rgb": "#2FA3B8"
+  },
+  {
+   "name": "teal-2",
+   "rgb": "#1F6F88"
+  },
+  {
+   "name": "stone-1",
+   "rgb": "#D6CCB8"
+  },
+  {
+   "name": "stone-2",
+   "rgb": "#A39883"
+  }
+ ]
+}

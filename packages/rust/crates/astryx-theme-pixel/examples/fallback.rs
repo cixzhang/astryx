@@ -6,7 +6,7 @@
 
 use astryx_core::{App, Command, Element, Mode, Runtime, Text, ThemeChoice, VStack};
 use astryx_headless::{astryx_render_soft::SoftRenderer, render_pixmap};
-use astryx_theme_pixel::Palette;
+use astryx_theme_pixel::PixelTheme;
 
 struct Scripts;
 
@@ -33,7 +33,7 @@ impl App for Scripts {
         Command::None
     }
     fn theme(&self) -> ThemeChoice {
-        ThemeChoice::new(Palette::GameBoy.theme(), Mode::Light)
+        ThemeChoice::new(PixelTheme::GameBoy.theme(), Mode::Light)
     }
 }
 

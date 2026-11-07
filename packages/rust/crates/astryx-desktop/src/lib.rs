@@ -13,6 +13,8 @@
 //! ```
 
 pub mod a11y;
+#[cfg(feature = "audio")]
+mod audio;
 pub mod input;
 pub mod platform;
 pub mod pointer;
@@ -91,6 +93,10 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         gamepads: gilrs::Gilrs::new().ok(),
         pending_transition: None,
         last_list: None,
+        #[cfg(feature = "audio")]
+        audio: audio::Audio::open()
+            .map_err(|e| eprintln!("astryx-desktop: no sound: {e}"))
+            .ok(),
     };
     event_loop.run_app(&mut shell)?;
     match shell.error.take() {
@@ -131,6 +137,8 @@ struct Shell<S: Surface> {
     pending_transition: Option<astryx_core::Transition>,
     /// The frame on screen, where a transition starts from.
     last_list: Option<astryx_core::DisplayList>,
+    #[cfg(feature = "audio")]
+    audio: Option<audio::Audio>,
 }
 
 fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
@@ -220,13 +228,41 @@ impl<S: Surface> Shell<S> {
                     eprintln!("astryx-desktop: cannot open {url:?}: {e}");
                 }
             }
-            Command::Transition(t) => self.pending_transition = Some(t),
-            // No audio output on desktop yet.
-            Command::PlaySound(_) => {}
+            Command::Transition(t) => {
+                if let Some(id) = t.sound {
+                    self.play(id);
+                }
+                self.pending_transition = Some(t);
+            }
+            Command::PlaySound(id) => self.play(id),
         }
         if let Some(gpu) = &self.gpu {
             gpu.window.request_redraw();
         }
+    }
+
+    fn play(&self, id: astryx_core::SoundId) {
+        #[cfg(feature = "audio")]
+        if let Some(a) = &self.audio {
+            a.control.play(id);
+        }
+        #[cfg(not(feature = "audio"))]
+        let _ = id;
+    }
+
+    /// Hands sounds the app registered to the audio output.
+    fn take_sounds(&mut self) {
+        let updates = self.surface.take_sound_updates();
+        #[cfg(feature = "audio")]
+        if let Some(a) = &self.audio {
+            for (id, wav) in updates {
+                if let Err(e) = a.control.set_sound(id, wav.as_deref()) {
+                    eprintln!("astryx-desktop: sound {id:?}: {e}");
+                }
+            }
+        }
+        #[cfg(not(feature = "audio"))]
+        drop(updates);
     }
 
     fn send(&mut self, event_loop: &ActiveEventLoop, input: Input, phase: InputPhase) {
@@ -276,6 +312,7 @@ impl<S: Surface> Shell<S> {
     }
 
     fn redraw(&mut self, event_loop: &ActiveEventLoop) {
+        self.take_sounds();
         let Some(gpu) = &mut self.gpu else { return };
         let size = gpu.window.inner_size();
         if size.width == 0 || size.height == 0 {

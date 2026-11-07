@@ -8,7 +8,7 @@ use astryx_core::{
 use astryx_gallery::{Gallery, Section};
 use astryx_headless::golden::{assert_golden, Tolerance};
 use astryx_headless::render_png;
-use astryx_theme_pixel::{Palette, DEFAULT_PIXEL};
+use astryx_theme_pixel::{PixelTheme, DEFAULT_PIXEL};
 use std::path::PathBuf;
 
 // Nothing is antialiased on a pixel grid, so images match exactly.
@@ -34,7 +34,7 @@ fn check_at(gallery: Gallery, scale: f32, inputs: &[Input], golden: &str) {
 
 #[test]
 fn every_section_in_two_palettes_light_and_dark() {
-    for palette in [Palette::Garden, Palette::GameBoy] {
+    for palette in [PixelTheme::Garden, PixelTheme::GameBoy] {
         for section in Section::ALL {
             for (mode, name) in [(Mode::Light, "light"), (Mode::Dark, "dark")] {
                 let gallery = Gallery::section(section).with_theme(palette.theme(), mode);
@@ -49,7 +49,7 @@ fn every_section_in_two_palettes_light_and_dark() {
 fn scripted_states() {
     use Input::{Down, Next, A};
     let garden =
-        |section| Gallery::section(section).with_theme(Palette::Garden.theme(), Mode::Light);
+        |section| Gallery::section(section).with_theme(PixelTheme::Garden.theme(), Mode::Light);
     // The first switch toggled on, with the stepped focus ring on it.
     check(
         garden(Section::Switches),
@@ -70,8 +70,8 @@ fn scripted_states() {
     );
     // The whole gallery page in the NES and PICO-8 palettes.
     for (palette, mode, name) in [
-        (Palette::Nes, Mode::Light, "light"),
-        (Palette::Pico8, Mode::Dark, "dark"),
+        (PixelTheme::Nes, Mode::Light, "light"),
+        (PixelTheme::Pico8, Mode::Dark, "dark"),
     ] {
         let gallery = Gallery::new().with_theme(palette.theme(), mode);
         check(
@@ -88,8 +88,8 @@ fn scale_two_tooltip_and_right_to_left() {
     // The handheld's default scale: 4 device pixels per theme pixel.
     for section in [Section::Buttons, Section::Switches] {
         for (palette, mode, name) in [
-            (Palette::Garden, Mode::Light, "light"),
-            (Palette::GameBoy, Mode::Dark, "dark"),
+            (PixelTheme::Garden, Mode::Light, "light"),
+            (PixelTheme::GameBoy, Mode::Dark, "dark"),
         ] {
             let gallery = Gallery::section(section).with_theme(palette.theme(), mode);
             let golden = format!("{}-{}-{name}@2x.png", palette.name(), section.slug());
@@ -99,11 +99,11 @@ fn scale_two_tooltip_and_right_to_left() {
     // Twenty-one stops reach the Share button and its tooltip.
     let to_share: Vec<Input> = std::iter::repeat_n(Input::Next, 21).collect();
     let buttons =
-        Gallery::section(Section::Buttons).with_theme(Palette::Garden.theme(), Mode::Light);
+        Gallery::section(Section::Buttons).with_theme(PixelTheme::Garden.theme(), Mode::Light);
     check(buttons, &to_share, "garden-tooltip@3x.png");
     for section in [Section::Switches, Section::ListItems] {
         let gallery = Gallery::section(section)
-            .with_theme(Palette::Garden.theme(), Mode::Light)
+            .with_theme(PixelTheme::Garden.theme(), Mode::Light)
             .with_direction(Direction::Rtl);
         check(
             gallery,
@@ -131,7 +131,7 @@ fn edges_fall_on_the_pixel_grid() {
     {
         let step = (scale * DEFAULT_PIXEL / 2.0) as u32;
         let gallery = Gallery::section(section)
-            .with_theme(Palette::Garden.theme(), Mode::Light)
+            .with_theme(PixelTheme::Garden.theme(), Mode::Light)
             .with_direction(direction);
         let mut rt = astryx_gallery::runtime(gallery);
         let png = render_png(&mut rt, SIZE.0, SIZE.1, scale, &[]);
@@ -181,7 +181,7 @@ fn pages_stay_on_the_grid() {
             page: Some(Section::Buttons),
             ..Gallery::new()
         }
-        .with_theme(Palette::Garden.theme(), Mode::Light);
+        .with_theme(PixelTheme::Garden.theme(), Mode::Light);
         let mut rt = astryx_gallery::runtime(gallery);
         let png = render_png(&mut rt, 512, 384, 2.0, &inputs);
         let bad = off_grid(&png, 2);
@@ -225,7 +225,7 @@ impl App for Article {
         Command::None
     }
     fn theme(&self) -> ThemeChoice {
-        ThemeChoice::new(Palette::Garden.theme(), self.0)
+        ThemeChoice::new(PixelTheme::Garden.theme(), self.0)
     }
 }
 
