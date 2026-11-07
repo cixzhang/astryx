@@ -1,0 +1,9 @@
+[package]
+name = "astryx-audio"
+description = "Sound effects for Astryx shells: WAV decoding and a small voice mixer any audio output can pull from"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true

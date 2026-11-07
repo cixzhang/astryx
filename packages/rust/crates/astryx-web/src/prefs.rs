@@ -37,6 +37,7 @@ pub fn detect_preferences() -> Preferences {
         coarse_pointer: matches(QUERIES[4]),
         // The browser does not say; apps that light scenes read their own clock.
         day_phase: DayPhase::Day,
+        sound_off: false,
     }
 }
 

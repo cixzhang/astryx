@@ -8,3 +8,4 @@ pub mod light;
 pub mod path;
 pub mod shadow;
 pub mod text;
+pub mod transition;

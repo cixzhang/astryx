@@ -24,6 +24,7 @@ use astryx_raster::geom::{
 use astryx_raster::light::{light_map, PlacedLight, MAP_DIVISOR};
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
+use astryx_raster::transition::{turn, Moment};
 
 fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
@@ -132,6 +133,14 @@ pub struct SoftRenderer {
     images: HashMap<ImageId, Pixmap>,
     /// The open lighting pass, if any.
     lighting: Option<LightingPass>,
+    transition: Option<Running>,
+}
+
+/// A transition in progress: the old frame and the time so far.
+struct Running {
+    transition: astryx_core::Transition,
+    elapsed: f32,
+    old: Pixmap,
 }
 
 /// A lighting pass collecting its lights and emissive rects until it closes.
@@ -181,6 +190,7 @@ impl SoftRenderer {
             grids: Vec::new(),
             images: HashMap::new(),
             lighting: None,
+            transition: None,
         }
     }
 
@@ -761,6 +771,90 @@ impl SoftRenderer {
         }
         self.finish_lighting(scale);
         while self.pop_group().is_some() {}
+        self.compose_transition(frame, scale);
+    }
+
+    /// Starts a transition from `from` to the frames rendered next.
+    pub fn begin_transition(
+        &mut self,
+        transition: &astryx_core::Transition,
+        from: &DisplayList,
+        frame: &FrameInfo,
+    ) {
+        self.transition = None;
+        if transition.duration_ms == 0 {
+            return;
+        }
+        self.render_list(from, frame);
+        self.transition = Some(Running {
+            transition: *transition,
+            elapsed: 0.0,
+            old: self.base.clone(),
+        });
+    }
+
+    /// A transition is running.
+    pub fn transitioning(&self) -> bool {
+        self.transition.is_some()
+    }
+
+    /// Blends the old frame into the one just rendered, by the transition's
+    /// progress after this frame's time.
+    fn compose_transition(&mut self, frame: &FrameInfo, scale: f32) {
+        let Some(run) = &mut self.transition else {
+            return;
+        };
+        run.elapsed += frame.dt.max(0.0);
+        let t = run.elapsed * 1000.0 / run.transition.duration_ms as f32;
+        if t >= 1.0
+            || run.old.width() != self.base.width()
+            || run.old.height() != self.base.height()
+        {
+            self.transition = None;
+            return;
+        }
+        let (w, h) = (self.base.width(), self.base.height());
+        let moment = Moment::new(
+            run.transition.kind,
+            run.transition.easing,
+            t,
+            w as f32,
+            h as f32,
+            scale,
+        );
+        let lattice = astryx_raster::light::lattice();
+        let new = self.base.data().to_vec();
+        let old = run.old.data();
+        let center = (w as f32 / 2.0, h as f32 / 2.0);
+        let read = |data: &[u8], x: f32, y: f32| -> [f32; 4] {
+            // Outside the frame, the nearest edge pixel, as the GPU clamps.
+            let xi = (x.floor() as i64).clamp(0, w as i64 - 1) as u32;
+            let yi = (y.floor() as i64).clamp(0, h as i64 - 1) as u32;
+            let at = ((yi * w + xi) * 4) as usize;
+            [0, 1, 2, 3].map(|c| f32::from(data[at + c]))
+        };
+        let out = self.base.data_mut();
+        for y in 0..h {
+            for x in 0..w {
+                let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
+                let m = moment.at(px, py, &lattice);
+                let (ox, oy) = turn(px, py, center, m.old_turn);
+                let a = read(old, ox, oy);
+                let b = if m.new > 0.0 {
+                    read(&new, px + m.new_offset.0, py + m.new_offset.1)
+                } else {
+                    [0.0; 4]
+                };
+                let at = ((y * w + x) * 4) as usize;
+                for c in 0..4 {
+                    let mut v = a[c] + (b[c] - a[c]) * m.new;
+                    v += (255.0 - v) * m.white;
+                    let black = if c == 3 { 255.0 } else { 0.0 };
+                    v += (black - v) * m.black;
+                    out[at + c] = v.round().clamp(0.0, 255.0) as u8;
+                }
+            }
+        }
     }
 }
 
@@ -775,6 +869,19 @@ impl Renderer for SoftRenderer {
 
     fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
         SoftRenderer::set_image(self, id, data);
+    }
+
+    fn begin_transition(
+        &mut self,
+        transition: &astryx_core::Transition,
+        from: &DisplayList,
+        frame: &FrameInfo,
+    ) {
+        SoftRenderer::begin_transition(self, transition, from, frame);
+    }
+
+    fn transitioning(&self) -> bool {
+        SoftRenderer::transitioning(self)
     }
 }
 

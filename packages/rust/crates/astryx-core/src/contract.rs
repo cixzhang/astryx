@@ -457,6 +457,16 @@ pub trait Renderer {
     fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
         let _ = (id, data);
     }
+    /// Starts a transition from `from`, the frame on screen now, to the
+    /// frames rendered next. Renderers without transitions show the new
+    /// frame at once.
+    fn begin_transition(&mut self, transition: &Transition, from: &DisplayList, frame: &FrameInfo) {
+        let _ = (transition, from, frame);
+    }
+    /// A transition is running: shells keep drawing frames until it ends.
+    fn transitioning(&self) -> bool {
+        false
+    }
 }
 
 /// One logical input. Shells map keys, gamepads, and device buttons to these.
@@ -523,7 +533,7 @@ impl FrameInfo {
 }
 
 /// What an app asks its shell to do after an update.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub enum Command {
     #[default]
     None,
@@ -531,7 +541,94 @@ pub enum Command {
     /// Open a link with the platform: the browser on desktop, a new tab or
     /// navigation on the web.
     OpenUrl(String),
+    /// Show the change to the next frame as a transition from the frame on
+    /// screen now. Shells show the new frame at once under reduced motion,
+    /// and still play the sound unless sound is off.
+    Transition(Transition),
+    /// Play a registered sound once, mixed with any already playing. Silent
+    /// when sound is off.
+    PlaySound(SoundId),
 }
+
+/// See [`Command::Transition`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Transition {
+    pub kind: TransitionKind,
+    pub duration_ms: u32,
+    pub easing: Easing,
+    /// A sound to play as it starts.
+    pub sound: Option<SoundId>,
+}
+
+/// How the new frame replaces the old one.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TransitionKind {
+    /// The old frame fades into the new one.
+    Fade,
+    /// The new frame uncovers from this edge across the screen.
+    Wipe(Edge),
+    /// A doorway opens from the center: the new frame shows inside a
+    /// rectangle inset from half the screen to nothing.
+    Door,
+    /// A circle opening from this point, in points, shows the new frame.
+    Iris(Point),
+    /// The new frame slides in from this offset, in points, and fades in.
+    Slide(Point),
+    /// The new frame appears in square cells of this many points, in a
+    /// fixed random order.
+    PixelDissolve(f32),
+    /// The old frame twists about the center as it fades into the new one.
+    Swirl,
+    /// Two white flashes over the old frame in the first half, then bars
+    /// close from the top and bottom, then the new frame.
+    Encounter,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Edge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+/// Progress over time, as CSS timing functions.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Easing {
+    Linear,
+    EaseIn,
+    EaseOut,
+    /// Jumps in this many equal steps, as CSS `steps(n)`.
+    Steps(u8),
+    /// Passes the end once and settles back.
+    Overshoot,
+}
+
+impl Easing {
+    /// Progress at time `t`, both from 0 to 1.
+    pub fn apply(self, t: f32) -> f32 {
+        let t = t.clamp(0.0, 1.0);
+        match self {
+            Easing::Linear => t,
+            Easing::EaseIn => t * t * t,
+            Easing::EaseOut => 1.0 - (1.0 - t).powi(3),
+            Easing::Steps(n) => {
+                let n = f32::from(n.max(1));
+                ((t * n).floor() / n).min(1.0)
+            }
+            Easing::Overshoot => {
+                // easeOutBack: about 10% past the end at 70% of the time.
+                let (c1, c3) = (1.70158, 2.70158);
+                let u = t - 1.0;
+                1.0 + c3 * u * u * u + c1 * u * u
+            }
+        }
+    }
+}
+
+/// A sound an app registers with [`Runtime::register_sound`](crate::Runtime::register_sound).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct SoundId(pub u32);
 
 /// The accessibility role of a node, named after ARIA roles.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -621,6 +718,8 @@ pub struct Preferences {
     pub coarse_pointer: bool,
     /// The time of day where the person is, for shells that know it.
     pub day_phase: DayPhase,
+    /// The person turned sounds off.
+    pub sound_off: bool,
 }
 
 /// The time of day, for scenes lit to match it. Shells that read a clock
@@ -674,6 +773,11 @@ pub trait Surface {
     /// Images added, replaced, or freed (`None`) since the last call. Shells
     /// drain it every frame, before drawing, into their renderer.
     fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
+        Vec::new()
+    }
+    /// Sounds added, replaced, or freed (`None`) since the last call, as
+    /// WAV file bytes. Shells drain it into their audio output.
+    fn take_sound_updates(&mut self) -> Vec<(SoundId, Option<std::sync::Arc<[u8]>>)> {
         Vec::new()
     }
     /// The person's preferences changed, or are known for the first time.

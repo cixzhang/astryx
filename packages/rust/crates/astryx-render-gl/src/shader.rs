@@ -256,6 +256,125 @@ pub unsafe fn compile_light(gl: &glow::Context, dialect: Dialect) -> Result<Ligh
     })
 }
 
+/// Attributes of the transition program: one vec4 slot.
+pub const TRANSITION_ATTRIBUTES: [&str; 1] = ["a_pos"];
+
+const TRANSITION_VERTEX: &str = r#"
+ATTR vec4 a_pos;
+uniform vec2 u_size;
+VARY vec2 v_pos;
+void main() {
+    gl_Position = vec4(a_pos.x / u_size.x * 2.0 - 1.0, 1.0 - a_pos.y / u_size.y * 2.0, 0.0, 1.0);
+    v_pos = a_pos.xy;
+}
+"#;
+
+// Matches astryx_raster::transition::Moment::at. The renderer works out
+// everything that is the same for every pixel; this compares and samples.
+const TRANSITION_FRAGMENT: &str = r#"
+VARY vec2 v_pos;
+uniform sampler2D u_old;
+uniform sampler2D u_new;
+uniform sampler2D u_lattice;
+uniform vec2 u_size;
+// Target size over texture size.
+uniform vec2 u_extent;
+uniform float u_kind;
+uniform float u_p;
+// Per kind: wipe (edge, limit); door (x0, y0, x1, y1); iris (cx, cy, r);
+// slide (dx, dy); dissolve (cell); swirl (cx, cy, far); encounter
+// (white, bars).
+uniform vec4 u_param;
+vec4 read(sampler2D t, vec2 p) {
+    vec2 cell = clamp(floor(p), vec2(0.0), u_size - 1.0) + 0.5;
+    return TEX(t, vec2(cell.x / u_size.x * u_extent.x, (u_size.y - cell.y) / u_size.y * u_extent.y));
+}
+void main() {
+    vec2 p = v_pos;
+    float n = 0.0;
+    vec2 off = vec2(0.0);
+    vec2 q = p;
+    float white = 0.0;
+    float black = 0.0;
+    if (u_kind < 0.5) {
+        n = u_p;
+    } else if (u_kind < 1.5) {
+        float e = u_param.x;
+        float l = u_param.y;
+        bool inside = e < 0.5 ? p.x < l : e < 1.5 ? p.x > l : e < 2.5 ? p.y < l : p.y > l;
+        n = inside ? 1.0 : 0.0;
+    } else if (u_kind < 2.5) {
+        n = (p.x > u_param.x && p.x < u_param.z && p.y > u_param.y && p.y < u_param.w) ? 1.0 : 0.0;
+    } else if (u_kind < 3.5) {
+        n = length(p - u_param.xy) < u_param.z ? 1.0 : 0.0;
+    } else if (u_kind < 4.5) {
+        off = -u_param.xy;
+        vec2 s = p - u_param.xy;
+        n = (s.x >= 0.0 && s.y >= 0.0 && s.x < u_size.x && s.y < u_size.y) ? u_p : 0.0;
+    } else if (u_kind < 5.5) {
+        vec2 i = floor(p / u_param.x);
+        float threshold = (TEX(u_lattice, (i + 0.5) / 16.0).r * 255.0 + 0.5) / 256.0;
+        n = threshold < u_p ? 1.0 : 0.0;
+    } else if (u_kind < 6.5) {
+        vec2 c = u_param.xy;
+        float a = u_p * 3.14159265 * max(1.0 - length(p - c) / u_param.z, 0.0);
+        vec2 d = p - c;
+        q = c + vec2(d.x * cos(a) - d.y * sin(a), d.x * sin(a) + d.y * cos(a));
+        n = u_p;
+    } else {
+        white = u_param.x;
+        black = (p.y < u_param.y || p.y > u_size.y - u_param.y) ? 1.0 : 0.0;
+    }
+    vec4 a = read(u_old, q);
+    vec4 b = n > 0.0 ? read(u_new, p + off) : vec4(0.0);
+    vec4 c = mix(a, b, n);
+    c = mix(c, vec4(1.0), white);
+    c = mix(c, vec4(0.0, 0.0, 0.0, 1.0), black);
+    FRAG = c;
+}
+"#;
+
+pub struct TransitionProgram {
+    pub program: glow::Program,
+    pub size: Option<glow::UniformLocation>,
+    pub extent: Option<glow::UniformLocation>,
+    pub old: Option<glow::UniformLocation>,
+    pub new: Option<glow::UniformLocation>,
+    pub lattice: Option<glow::UniformLocation>,
+    pub kind: Option<glow::UniformLocation>,
+    pub p: Option<glow::UniformLocation>,
+    pub param: Option<glow::UniformLocation>,
+}
+
+/// Compiles and links the transition program.
+///
+/// # Safety
+/// `gl` must be current.
+pub unsafe fn compile_transition(
+    gl: &glow::Context,
+    dialect: Dialect,
+) -> Result<TransitionProgram, String> {
+    let program = link(
+        gl,
+        dialect,
+        TRANSITION_VERTEX,
+        TRANSITION_FRAGMENT,
+        &TRANSITION_ATTRIBUTES,
+    )?;
+    let at = |name: &str| gl.get_uniform_location(program, name);
+    Ok(TransitionProgram {
+        size: at("u_size"),
+        extent: at("u_extent"),
+        old: at("u_old"),
+        new: at("u_new"),
+        lattice: at("u_lattice"),
+        kind: at("u_kind"),
+        p: at("u_p"),
+        param: at("u_param"),
+        program,
+    })
+}
+
 unsafe fn link(
     gl: &glow::Context,
     dialect: Dialect,

@@ -2,8 +2,8 @@
 
 use crate::contract::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
-    ImageId, Input, InputPhase, Live, Point, Preferences, Radii, Rect, Role, Size, Surface,
-    TextAlign, TextDirection, TextMeasure,
+    ImageId, Input, InputPhase, Live, Point, Preferences, Radii, Rect, Role, Size, SoundId,
+    Surface, TextAlign, TextDirection, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction, Semantics};
 use crate::layout::{self, Layout};
@@ -257,6 +257,7 @@ pub struct Runtime<A: App> {
     images: std::sync::Arc<HashMap<ImageId, bool>>,
     /// Image changes the shell has not taken yet.
     image_updates: Vec<(ImageId, Option<ImageData>)>,
+    sound_updates: Vec<(SoundId, Option<std::sync::Arc<[u8]>>)>,
 }
 
 impl<A: App> Runtime<A> {
@@ -310,6 +311,7 @@ impl<A: App> Runtime<A> {
             timings: FrameTimings::default(),
             images: Default::default(),
             image_updates: Vec::new(),
+            sound_updates: Vec::new(),
         }
     }
 
@@ -324,6 +326,20 @@ impl<A: App> Runtime<A> {
         self.image_updates.retain(|(i, _)| *i != id);
         self.image_updates.push((id, data));
         self.stale = true;
+    }
+
+    /// Adds or replaces a sound (WAV file bytes) the app plays with
+    /// [`Command::PlaySound`] or a transition; `None` frees it. The bytes go
+    /// to the shell through [`Surface::take_sound_updates`].
+    pub fn register_sound(&mut self, id: SoundId, wav: Option<std::sync::Arc<[u8]>>) {
+        self.sound_updates.retain(|(i, _)| *i != id);
+        self.sound_updates.push((id, wav));
+    }
+
+    /// [`Self::register_sound`] as a builder.
+    pub fn with_sound(mut self, id: SoundId, wav: std::sync::Arc<[u8]>) -> Self {
+        self.register_sound(id, Some(wav));
+        self
     }
 
     /// [`Self::register_image`] as a builder.
@@ -2181,6 +2197,10 @@ impl<A: App> Surface for Runtime<A> {
 
     fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {
         std::mem::take(&mut self.image_updates)
+    }
+
+    fn take_sound_updates(&mut self) -> Vec<(SoundId, Option<std::sync::Arc<[u8]>>)> {
+        std::mem::take(&mut self.sound_updates)
     }
 
     fn set_preferences(&mut self, preferences: &Preferences) {

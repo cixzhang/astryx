@@ -33,6 +33,7 @@ use astryx_raster::light::{self, PlacedLight};
 use astryx_raster::path::{self, PathKey, PathStyle};
 use astryx_raster::shadow::{shadow_mask, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
+use astryx_raster::transition::Moment;
 use glow::HasContext;
 
 use atlas::{Atlas, MaskKey, Region};
@@ -98,6 +99,14 @@ fn since(t: Option<Clock>) -> std::time::Duration {
 #[cfg(target_arch = "wasm32")]
 fn since(_: Option<Clock>) -> std::time::Duration {
     std::time::Duration::ZERO
+}
+
+/// A transition in progress: the old frame and the time so far.
+struct Running {
+    transition: astryx_core::Transition,
+    elapsed: f32,
+    old: Layer,
+    size: (i32, i32),
 }
 
 /// A lighting pass collecting its lights and emissive rects until it closes.
@@ -362,6 +371,8 @@ pub struct GlRenderer {
     lattice: glow::Texture,
     /// The open lighting pass, if any.
     lighting: Option<LightingPass>,
+    transition_program: shader::TransitionProgram,
+    transition: Option<Running>,
     vbo: glow::Buffer,
     ibo: glow::Buffer,
     white: glow::Texture,
@@ -452,6 +463,7 @@ impl GlRenderer {
             );
             let white = atlas::mask_texture(&gl, dialect, 1, 1, Some(&[255]));
             let light_program = shader::compile_light(&gl, dialect).map_err(GlError)?;
+            let transition_program = shader::compile_transition(&gl, dialect).map_err(GlError)?;
             let light_vbo = gl.create_buffer().map_err(GlError)?;
             let lattice = atlas::mask_texture(
                 &gl,
@@ -472,6 +484,8 @@ impl GlRenderer {
                 light_vbo,
                 lattice,
                 lighting: None,
+                transition_program,
+                transition: None,
                 vbo,
                 ibo,
                 white,
@@ -1938,8 +1952,161 @@ impl GlRenderer {
         }
     }
 
-    /// Draws one frame into the current framebuffer.
+    /// Draws one frame into the current framebuffer, through the running
+    /// transition, if any.
     pub fn render_list(&mut self, list: &DisplayList, frame: &FrameInfo) {
+        let Some(mut run) = self.transition.take() else {
+            return self.render_frame(list, frame);
+        };
+        run.elapsed += frame.dt.max(0.0);
+        let t = run.elapsed * 1000.0 / run.transition.duration_ms as f32;
+        let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
+        if t >= 1.0 || run.size != size {
+            self.layers_in_use.push(run.old);
+            return self.render_frame(list, frame);
+        }
+        let new = self.layer(size);
+        let saved = self.framebuffer;
+        self.framebuffer = Some(new.framebuffer);
+        self.render_frame(list, frame);
+        self.framebuffer = saved;
+        let start = now();
+        let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
+        self.draw_transition(&run, &new, t, scale);
+        self.stats.flush += since(start);
+        self.layers_in_use.push(new);
+        self.transition = Some(run);
+    }
+
+    /// Starts a transition from `from`, the frame on screen now, to the
+    /// frames rendered next.
+    pub fn begin_transition(
+        &mut self,
+        transition: &astryx_core::Transition,
+        from: &DisplayList,
+        frame: &FrameInfo,
+    ) {
+        if let Some(run) = self.transition.take() {
+            self.layers.push(run.old);
+        }
+        if transition.duration_ms == 0 {
+            return;
+        }
+        let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
+        let old = self.layer(size);
+        let saved = self.framebuffer;
+        self.framebuffer = Some(old.framebuffer);
+        self.render_frame(from, frame);
+        self.framebuffer = saved;
+        // Kept out of the pool until the transition ends.
+        self.layers_in_use.retain(|l| l.texture != old.texture);
+        self.transition = Some(Running {
+            transition: *transition,
+            elapsed: 0.0,
+            old,
+            size,
+        });
+    }
+
+    /// A transition is running.
+    pub fn transitioning(&self) -> bool {
+        self.transition.is_some()
+    }
+
+    /// Composites the old and new frames of `run` at time `t` into the
+    /// framebuffer.
+    fn draw_transition(&mut self, run: &Running, new: &Layer, t: f32, scale: f32) {
+        use astryx_core::{Edge, TransitionKind as K};
+        let (w, h) = (run.size.0 as f32, run.size.1 as f32);
+        let m = Moment::new(run.transition.kind, run.transition.easing, t, w, h, scale);
+        let p = m.p;
+        let (kind, param) = match run.transition.kind {
+            K::Fade => (0.0, [0.0; 4]),
+            K::Wipe(edge) => {
+                let (e, l) = match edge {
+                    Edge::Left => (0.0, p * w),
+                    Edge::Right => (1.0, (1.0 - p) * w),
+                    Edge::Top => (2.0, p * h),
+                    Edge::Bottom => (3.0, (1.0 - p) * h),
+                };
+                (1.0, [e, l, 0.0, 0.0])
+            }
+            K::Door => {
+                let inset = 0.5 * (1.0 - p);
+                (
+                    2.0,
+                    [inset * w, inset * h, (1.0 - inset) * w, (1.0 - inset) * h],
+                )
+            }
+            K::Iris(c) => {
+                let (cx, cy) = (c.x * scale, c.y * scale);
+                let far = [(0.0, 0.0), (w, 0.0), (0.0, h), (w, h)]
+                    .iter()
+                    .map(|(x, y)| ((x - cx).powi(2) + (y - cy).powi(2)).sqrt())
+                    .fold(0.0, f32::max);
+                (3.0, [cx, cy, p * far, 0.0])
+            }
+            K::Slide(o) => (
+                4.0,
+                [o.x * scale * (1.0 - p), o.y * scale * (1.0 - p), 0.0, 0.0],
+            ),
+            K::PixelDissolve(cell) => (5.0, [(cell * scale).max(1.0), 0.0, 0.0, 0.0]),
+            K::Swirl => {
+                let (cx, cy) = (w / 2.0, h / 2.0);
+                (6.0, [cx, cy, (cx * cx + cy * cy).sqrt(), 0.0])
+            }
+            K::Encounter => {
+                let (white, bars) = m.encounter();
+                (7.0, [white, bars, 0.0, 0.0])
+            }
+        };
+        let data: [f32; 16] = [
+            0.0, 0.0, 0.0, 0.0, w, 0.0, 0.0, 0.0, w, h, 0.0, 0.0, 0.0, h, 0.0, 0.0,
+        ];
+        let gl = self.gl.clone();
+        let tp = &self.transition_program;
+        // SAFETY: the context is current while rendering; the objects belong to it.
+        unsafe {
+            gl.bind_framebuffer(glow::FRAMEBUFFER, self.framebuffer);
+            gl.viewport(0, 0, run.size.0, run.size.1);
+            gl.disable(glow::SCISSOR_TEST);
+            gl.disable(glow::BLEND);
+            gl.use_program(Some(tp.program));
+            gl.uniform_2_f32(tp.size.as_ref(), w, h);
+            gl.uniform_2_f32(
+                tp.extent.as_ref(),
+                w / run.old.size.0 as f32,
+                h / run.old.size.1 as f32,
+            );
+            gl.uniform_1_f32(tp.kind.as_ref(), kind);
+            gl.uniform_1_f32(tp.p.as_ref(), p);
+            gl.uniform_4_f32(tp.param.as_ref(), param[0], param[1], param[2], param[3]);
+            for (unit, texture, at) in [
+                (0, run.old.texture, &tp.old),
+                (1, new.texture, &tp.new),
+                (2, self.lattice, &tp.lattice),
+            ] {
+                gl.active_texture(glow::TEXTURE0 + unit);
+                gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+                gl.uniform_1_i32(at.as_ref(), unit as i32);
+            }
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_vertex_array(self.vao);
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ibo));
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.light_vbo));
+            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, as_bytes(&data), glow::STREAM_DRAW);
+            gl.enable_vertex_attrib_array(0);
+            gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, 16, 0);
+            for i in 1..7u32 {
+                gl.disable_vertex_attrib_array(i);
+            }
+            gl.draw_elements(glow::TRIANGLES, 6, glow::UNSIGNED_SHORT, 0);
+            self.stats.draw_calls += 1;
+        }
+    }
+
+    /// Draws one frame into the current framebuffer.
+    fn render_frame(&mut self, list: &DisplayList, frame: &FrameInfo) {
         let start = now();
         let (w, h) = (frame.width.max(1) as i32, frame.height.max(1) as i32);
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
@@ -2220,6 +2387,11 @@ impl Drop for GlRenderer {
             }
             gl.delete_program(self.program.program);
             gl.delete_program(self.light_program.program);
+            gl.delete_program(self.transition_program.program);
+            if let Some(run) = self.transition.take() {
+                gl.delete_texture(run.old.texture);
+                gl.delete_framebuffer(run.old.framebuffer);
+            }
             gl.delete_buffer(self.light_vbo);
             gl.delete_texture(self.lattice);
         }
@@ -2293,6 +2465,19 @@ impl Renderer for GlRenderer {
 
     fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
         GlRenderer::set_image(self, id, data);
+    }
+
+    fn begin_transition(
+        &mut self,
+        transition: &astryx_core::Transition,
+        from: &DisplayList,
+        frame: &FrameInfo,
+    ) {
+        GlRenderer::begin_transition(self, transition, from, frame);
+    }
+
+    fn transitioning(&self) -> bool {
+        GlRenderer::transitioning(self)
     }
 }
 

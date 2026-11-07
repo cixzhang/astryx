@@ -160,6 +160,10 @@ struct Shell {
     /// Clicks before this time come from a key the shell already handled.
     suppress_click_until: f64,
     preferences: Preferences,
+    /// A transition the app asked for, started with the next frame.
+    pending_transition: Option<astryx_core::Transition>,
+    /// The frame on screen, where a transition starts from.
+    last_list: Option<astryx_core::DisplayList>,
     runner: Weak<Runner>,
     font_base: Option<String>,
     font_plan: FontPlan,
@@ -234,6 +238,12 @@ impl Shell {
             // A page cannot close itself, so the app stops taking input and frames.
             Command::Quit => self.stopped = true,
             Command::OpenUrl(url) => open_url(&self.window, &url),
+            // Reduced motion shows the new frame at once.
+            Command::Transition(t) if !self.preferences.reduced_motion => {
+                self.pending_transition = Some(t)
+            }
+            // No audio output on the web yet.
+            Command::Transition(_) | Command::PlaySound(_) => {}
         }
         self.dirty = true;
     }
@@ -258,6 +268,9 @@ impl Shell {
             self.renderer.set_image(id, data.as_ref());
         }
         let list = self.surface.frame(&info, self.renderer.measurer());
+        if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
+            self.renderer.begin_transition(&t, from, &info);
+        }
         self.renderer.render(&list, &info);
         self.request_fonts_for(&list.commands);
         self.request_missing_scripts();
@@ -265,6 +278,7 @@ impl Shell {
         if had_focus {
             self.mirror.focus_tab_stop();
         }
+        self.last_list = Some(list);
         self.last_frame_ms = self.surface.wants_frames().then_some(now_ms);
         self.dirty = false;
         self.frames += 1;
@@ -488,10 +502,11 @@ impl Runner {
             if shell.stopped {
                 return;
             }
-            if shell.dirty || shell.surface.wants_frames() {
+            let moving = shell.surface.wants_frames() || shell.renderer.transitioning();
+            if shell.dirty || moving {
                 shell.render(now_ms, true);
             }
-            shell.surface.wants_frames() || pads
+            moving || pads
         };
         if keep_going {
             self.schedule();
@@ -885,6 +900,8 @@ fn start(
         pads: HashMap::new(),
         suppress_click_until: 0.0,
         preferences,
+        pending_transition: None,
+        last_list: None,
         runner: Weak::new(),
         font_base: options.fonts_url.map(|url| {
             if url.is_empty() || url.ends_with('/') {

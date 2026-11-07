@@ -89,6 +89,8 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         cursor: CursorIcon::Default,
         #[cfg(feature = "gamepad")]
         gamepads: gilrs::Gilrs::new().ok(),
+        pending_transition: None,
+        last_list: None,
     };
     event_loop.run_app(&mut shell)?;
     match shell.error.take() {
@@ -125,6 +127,10 @@ struct Shell<S: Surface> {
     cursor: CursorIcon,
     #[cfg(feature = "gamepad")]
     gamepads: Option<gilrs::Gilrs>,
+    /// A transition the app asked for, started with the next frame.
+    pending_transition: Option<astryx_core::Transition>,
+    /// The frame on screen, where a transition starts from.
+    last_list: Option<astryx_core::DisplayList>,
 }
 
 fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
@@ -214,6 +220,9 @@ impl<S: Surface> Shell<S> {
                     eprintln!("astryx-desktop: cannot open {url:?}: {e}");
                 }
             }
+            Command::Transition(t) => self.pending_transition = Some(t),
+            // No audio output on desktop yet.
+            Command::PlaySound(_) => {}
         }
         if let Some(gpu) = &self.gpu {
             gpu.window.request_redraw();
@@ -285,7 +294,11 @@ impl<S: Surface> Shell<S> {
             gpu.renderer.set_image(id, data.as_ref());
         }
         let list = self.surface.frame(&frame, gpu.renderer.text());
+        if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
+            gpu.renderer.begin_transition(&t, from, &frame);
+        }
         gpu.renderer.render_list(&list, &frame);
+        self.last_list = Some(list);
         self.frames += 1;
         if self.frames == 1 {
             if let Some(path) = self.options.screenshot.clone() {
@@ -317,7 +330,7 @@ impl<S: Surface> Shell<S> {
             self.update_cursor();
         }
         let Some(gpu) = &mut self.gpu else { return };
-        if self.surface.wants_frames() {
+        if self.surface.wants_frames() || gpu.renderer.transitioning() {
             gpu.window.request_redraw();
         } else {
             self.last_frame = None;
