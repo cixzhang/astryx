@@ -6,7 +6,8 @@
 #
 # Needs: cargo with the wasm32-unknown-unknown target, wasm-bindgen-cli at the
 # same version as the wasm-bindgen crate and Python fontTools for the font
-# subsets. Optional: wasm-opt (binaryen).
+# subsets. Optional: wasm-opt (binaryen), and PIXEL_FONTS_DIR with Galmuri7.ttf
+# and Galmuri9.ttf for the pixel theme's fallback subsets.
 set -euo pipefail
 
 python="${PYTHON:-python3}"
@@ -31,7 +32,7 @@ fi
 
 rm -rf "$out"
 mkdir -p "$out"
-for example in demo gallery; do
+for example in demo gallery pixel; do
   cargo build --manifest-path "$workspace/Cargo.toml" -p astryx-web --example "$example" \
     --target wasm32-unknown-unknown --profile "$profile"
   wasm-bindgen --target web --no-typescript --out-dir "$out" \
@@ -46,7 +47,7 @@ for example in demo gallery; do
   fi
 done
 
-cp "$crate/web/index.html" "$crate/web/gallery.html" "$out/"
+cp "$crate/web/index.html" "$crate/web/gallery.html" "$crate/web/pixel.html" "$out/"
 "$python" "$crate/scripts/subset-fonts.py" "$out/fonts"
 
 echo "built $out"

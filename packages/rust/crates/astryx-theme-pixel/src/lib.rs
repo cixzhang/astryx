@@ -81,7 +81,8 @@ impl Palette {
         Palette::Pico8,
     ];
 
-    /// The palette's name in the source theme, such as `"gameboy"`.
+    /// The palette's name in the source theme, such as `"gameboy"`. It is
+    /// also the theme's name, short enough for a theme picker.
     pub fn name(self) -> &'static str {
         match self {
             Palette::Garden => "garden",
@@ -92,22 +93,9 @@ impl Palette {
         }
     }
 
-    /// The theme's name, such as `"pixel-gameboy"`.
-    pub fn theme_name(self) -> &'static str {
-        match self {
-            Palette::Garden => "pixel-garden",
-            Palette::GameBoy => "pixel-gameboy",
-            Palette::Nes => "pixel-nes",
-            Palette::C64 => "pixel-c64",
-            Palette::Pico8 => "pixel-pico8",
-        }
-    }
-
     /// The palette with this name, such as `"nes"`.
     pub fn by_name(name: &str) -> Option<Palette> {
-        Palette::ALL
-            .into_iter()
-            .find(|p| p.name() == name || p.theme_name() == name)
+        Palette::ALL.into_iter().find(|p| p.name() == name)
     }
 
     /// The pixel theme in this palette at [`DEFAULT_PIXEL`].
@@ -138,7 +126,7 @@ pub fn theme(palette: Palette, pixel: f32) -> &'static Theme {
     }
     let [light, dark] = &UNIT[palette.index()];
     let theme: &'static Theme = Box::leak(Box::new(Theme {
-        name: palette.theme_name(),
+        name: palette.name(),
         light: tokens(light, pixel),
         dark: tokens(dark, pixel),
         grid: Some(pixel),

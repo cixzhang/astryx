@@ -452,6 +452,64 @@ def gallery_check(chrome, url, proof, check, summary):
         cdp.close()
 
 
+def fetched_fonts(cdp):
+    return cdp.eval("performance.getEntriesByType('resource').filter(e => e.name.endsWith('.ttf'))"
+                    ".map(e => e.name.split('/').pop())")
+
+
+def pixel_check(chrome, base, dist, proof, check, summary):
+    """The pixel theme: Latin draws with Silkscreen alone; other scripts load
+    the theme's pixel fallbacks, and only those."""
+    with tempfile.TemporaryDirectory() as user_dir:
+        cdp = open_page(chrome, user_dir, 960, 900, 2)
+        load(cdp, base + "gallery.html#pixel")
+        settle(cdp, 400)
+        shot = cdp.send("Page.captureScreenshot", {"format": "png"})["data"]
+        with open(os.path.join(proof, "screenshot-gallery-pixel.png"), "wb") as f:
+            f.write(base64.b64decode(shot))
+        fonts = fetched_fonts(cdp)
+        theme = cdp.eval("[...document.querySelectorAll('.astryx-a11y [role=combobox]')]"
+                         ".map(e => e.textContent || e.getAttribute('aria-label')).join(' | ')")
+        check("pixel gallery: Latin needs no fallback font files",
+              not any(n.startswith("galmuri") for n in fonts), [fonts, theme])
+        cdp.close()
+
+    if not os.path.exists(os.path.join(dist, "fonts", "galmuri7-kana-400.ttf")):
+        print("SKIP  pixel fallbacks: built without PIXEL_FONTS_DIR")
+        return
+    with tempfile.TemporaryDirectory() as user_dir:
+        cdp = open_page(chrome, user_dir, 960, 900, 2)
+        load(cdp, base + "pixel.html")
+        settle(cdp, 800)
+        png = base64.b64decode(cdp.send("Page.captureScreenshot", {"format": "png"})["data"])
+        with open(os.path.join(proof, "screenshot-pixel-scripts.png"), "wb") as f:
+            f.write(png)
+        shot = Screen(png, 2)
+        fonts = sorted(fetched_fonts(cdp))
+        summary["pixel_fonts"] = fonts
+        wanted = ["galmuri7-han-400.ttf", "galmuri7-hangul-400.ttf", "galmuri7-kana-400.ttf",
+                  "galmuri7-vietnamese-400.ttf", "galmuri9-cyrillic-400.ttf", "galmuri9-greek-400.ttf"]
+        shared = [n for n in fonts if n.split("-")[0] in ("cyrillic", "greek", "vietnamese")]
+        check("pixel text loads the theme's fallbacks for each script, not the shared subsets",
+              all(n in fonts for n in wanted) and not shared and "galmuri7-latin-ext-400.ttf" not in fonts, fonts)
+        rows = cdp.eval("[...document.querySelectorAll('.astryx-a11y [data-astryx-id]')]"
+                        ".filter(e => /^(Silkscreen|Vietnamese|Greek|Cyrillic|Kana|Hangul|Han):/.test(e.textContent))"
+                        ".map(e => { const r = e.getBoundingClientRect(); return [e.textContent.split(':')[0], r.x, r.y, r.width, r.height]; })")
+        inks = {}
+        for name, x, y, w, h in rows:
+            # The script's own text is the last third of each inked line.
+            ink = [(px, py) for px in range(int(x), int(x + w)) for py in range(int(y), int(y + h))
+                   if shot.pixel(px, py) != shot.pixel(4, 4)]
+            if not ink:
+                inks[name] = 0
+                continue
+            left, right = min(p[0] for p in ink), max(p[0] for p in ink)
+            inks[name] = sum(1 for px, _ in ink if px >= right - (right - left) / 3)
+        check("each script's row draws glyphs after its label", len(inks) == 7 and all(v > 20 for v in inks.values()),
+              inks)
+        cdp.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dist", default=os.path.join(CRATE, "dist"))
@@ -760,6 +818,8 @@ def main():
         cdp.close()
 
     gallery_check(chrome, url.replace("index.html", "gallery.html"), args.proof, check, summary)
+    if os.path.exists(os.path.join(args.dist, "pixel.html")):
+        pixel_check(chrome, url.replace("index.html", ""), args.dist, args.proof, check, summary)
 
     summary["checks"] = check.results
     summary["passed"] = sum(r["ok"] for r in check.results)

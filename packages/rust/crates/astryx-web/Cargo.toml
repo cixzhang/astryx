@@ -67,5 +67,10 @@ crate-type = ["cdylib"]
 name = "gallery"
 crate-type = ["cdylib"]
 
+[[example]]
+name = "pixel"
+crate-type = ["cdylib"]
+
 [dev-dependencies]
 astryx-gallery = { path = "../../examples/gallery" }
+astryx-theme-pixel = { path = "../astryx-theme-pixel" }

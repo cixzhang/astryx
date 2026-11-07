@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
 use astryx_core::{
-    A11yAction, Command, DrawCmd, FrameInfo, Input, InputPhase, Point, Preferences, Renderer,
-    Surface,
+    A11yAction, Command, DrawCmd, FontFamily, FrameInfo, Input, InputPhase, Point, Preferences,
+    Renderer, Surface,
 };
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -165,6 +165,9 @@ struct Shell {
     font_plan: FontPlan,
     /// First-subset files still loading. The first frame waits for them.
     initial_fonts_pending: usize,
+    /// Fallback families of the theme font text last drew with. Scripts the
+    /// text engine reports missing load from these first.
+    theme_fallbacks: &'static [&'static str],
     /// The node a pointer pressed, activated if the pointer lifts over it.
     pointer_target: Option<u64>,
     cursor: &'static str,
@@ -282,7 +285,14 @@ impl Shell {
         let mut keys = Vec::new();
         for cmd in commands {
             if let DrawCmd::Text { text, style, .. } = cmd {
-                keys.extend(self.font_plan.request_for(text, style.weight));
+                let fallbacks = match style.family {
+                    FontFamily::Theme(font) => {
+                        self.theme_fallbacks = font.fallbacks;
+                        font.fallbacks
+                    }
+                    _ => &[],
+                };
+                keys.extend(self.font_plan.request_for(text, style.weight, fallbacks));
             }
         }
         self.fetch_fonts(keys);
@@ -297,7 +307,10 @@ impl Shell {
         }
         let keys = missing
             .iter()
-            .filter_map(|script| self.font_plan.request_script(script.name()))
+            .filter_map(|script| {
+                self.font_plan
+                    .request_script(script.name(), self.theme_fallbacks)
+            })
             .collect();
         self.fetch_fonts(keys);
     }
@@ -882,6 +895,7 @@ fn start(
         }),
         font_plan: FontPlan::new(),
         initial_fonts_pending: 0,
+        theme_fallbacks: &[],
         pointer_target: None,
         cursor: "default",
     };

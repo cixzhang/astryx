@@ -346,7 +346,7 @@ impl Gallery {
             .map(|t| SelectorOption::new(t.name).label(capitalize(t.name)))
             .collect();
         if Theme::by_name(self.theme.name).is_none() {
-            themes.push(SelectorOption::new(self.theme.name));
+            themes.push(SelectorOption::new(self.theme.name).label(capitalize(self.theme.name)));
         }
         let modes = [("light", "Light"), ("dark", "Dark"), ("system", "System")]
             .map(|(value, label)| SelectorOption::new(value).label(label));
@@ -360,6 +360,9 @@ impl Gallery {
         let mut controls = HStack::new()
             .gap(Space::S4)
             .v_align(StackAlign::End)
+            // Wide type, such as a pixel font, wraps the pickers instead of
+            // cutting their values short.
+            .wrap(StackWrap::Wrap)
             .child(
                 Selector::new("Theme", themes)
                     .value(self.theme.name)

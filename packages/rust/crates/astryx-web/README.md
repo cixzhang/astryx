@@ -80,6 +80,13 @@ Astryx gallery on the core runtime.
   drawn text needs them, only for the faces that text uses, and the next frame
   re-lays out. Each subset is its own font family for the renderer, so it
   becomes a per-character fallback. The wasm embeds no fonts.
+- **Theme fallback fonts.** Subsets marked `theme:` in `fonts/ranges.txt`
+  load only for text whose theme font names their family as a fallback, such
+  as the pixel theme's Galmuri7 and Galmuri9, and win over the shared
+  subsets for that text. Their files are not in the repository: set
+  `PIXEL_FONTS_DIR` to a folder with `Galmuri7.ttf` and `Galmuri9.ttf` (SIL
+  OFL 1.1, from the Galmuri release) when building, or those subsets are
+  skipped. `pixel.html` shows the pixel theme with seven scripts.
 
 ## Accessibility: the DOM mirror
 

@@ -29,6 +29,10 @@ pub(crate) fn face_for_weight(weight: u16) -> usize {
 
 pub(crate) struct Subset {
     pub name: String,
+    /// The family the subset is cut from, such as "Roboto" or "Galmuri7".
+    source: String,
+    /// Loaded only for text whose theme font names `source` as a fallback.
+    theme_only: bool,
     ranges: Vec<(u32, u32)>,
 }
 
@@ -36,18 +40,47 @@ impl Subset {
     fn covers(&self, c: u32) -> bool {
         self.ranges.iter().any(|(lo, hi)| (*lo..=*hi).contains(&c))
     }
+
+    /// Whether text drawn with a theme font that has `fallbacks` may use it.
+    fn serves(&self, fallbacks: &[&str]) -> bool {
+        !self.theme_only || fallbacks.contains(&self.source.as_str())
+    }
+
+    /// Theme subsets come in one weight.
+    fn face(&self, weight: u16) -> usize {
+        if self.theme_only {
+            0
+        } else {
+            face_for_weight(weight)
+        }
+    }
+
+    /// Whether the subset is named after `script` ("Arabic", "Hiragana"):
+    /// its name is the script, or ends with "-" and the script.
+    fn is_for_script(&self, script: &str) -> bool {
+        let script = script.to_ascii_lowercase();
+        let script = match script.as_str() {
+            "hiragana" | "katakana" => "kana",
+            other => other,
+        };
+        self.name == script || self.name.ends_with(&format!("-{script}"))
+    }
 }
 
-/// Parses `<name> U+0000-00FF, U+0131, ...` lines. `#` starts a comment.
+/// Parses `<name> [theme:]<source> U+0000-00FF, U+0131, ...` lines. `#`
+/// starts a comment.
 pub(crate) fn parse_ranges(text: &str) -> Vec<Subset> {
     let hex = |s: &str| u32::from_str_radix(s.trim().trim_start_matches("U+"), 16).ok();
     text.lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .filter_map(|line| {
-            // The source family only matters to the subset script.
             let (name, rest) = line.split_once(' ')?;
-            let (_, list) = rest.split_once(' ')?;
+            let (source, list) = rest.split_once(' ')?;
+            let (theme_only, source) = match source.strip_prefix("theme:") {
+                Some(source) => (true, source),
+                None => (false, source),
+            };
             let ranges = list
                 .split(',')
                 .filter_map(|part| match part.split_once('-') {
@@ -57,6 +90,8 @@ pub(crate) fn parse_ranges(text: &str) -> Vec<Subset> {
                 .collect();
             Some(Subset {
                 name: name.to_string(),
+                source: source.to_string(),
+                theme_only,
                 ranges,
             })
         })
@@ -108,15 +143,32 @@ impl FontPlan {
             .collect()
     }
 
-    /// Files that `text` drawn at `weight` needs and nobody requested yet.
+    /// The subset that draws `c` for text with these theme `fallbacks`: the
+    /// theme's own subsets first, then the shared ones.
+    fn subset_for(&self, c: u32, fallbacks: &[&str]) -> Option<usize> {
+        let find = |theme: bool| {
+            self.subsets
+                .iter()
+                .position(|s| s.theme_only == theme && s.serves(fallbacks) && s.covers(c))
+        };
+        find(true).or_else(|| find(false))
+    }
+
+    /// Files that `text` drawn at `weight`, with a theme font naming
+    /// `fallbacks` (empty without one), needs and nobody requested yet.
     /// Marks them requested.
-    pub(crate) fn request_for(&mut self, text: &str, weight: u16) -> Vec<FontKey> {
-        let face = face_for_weight(weight);
+    pub(crate) fn request_for(
+        &mut self,
+        text: &str,
+        weight: u16,
+        fallbacks: &[&str],
+    ) -> Vec<FontKey> {
         let mut out = Vec::new();
         for c in text.chars() {
-            let Some(subset) = self.subsets.iter().position(|s| s.covers(c as u32)) else {
+            let Some(subset) = self.subset_for(c as u32, fallbacks) else {
                 continue;
             };
+            let face = self.subsets[subset].face(weight);
             if let Some(key) = self.take((subset, face)) {
                 out.push(key);
             }
@@ -125,12 +177,15 @@ impl FontPlan {
     }
 
     /// The regular-weight file of the subset named after a script, such as
-    /// "Arabic", for a script the text engine reported without a face.
-    pub(crate) fn request_script(&mut self, script: &str) -> Option<FontKey> {
-        let subset = self
-            .subsets
-            .iter()
-            .position(|s| s.name.eq_ignore_ascii_case(script))?;
+    /// "Arabic", for a script the text engine reported without a face. A
+    /// theme's own subset wins over the shared one.
+    pub(crate) fn request_script(&mut self, script: &str, fallbacks: &[&str]) -> Option<FontKey> {
+        let find = |theme: bool| {
+            self.subsets.iter().position(|s| {
+                s.theme_only == theme && s.serves(fallbacks) && s.is_for_script(script)
+            })
+        };
+        let subset = find(true).or_else(|| find(false))?;
         self.take((subset, 0))
     }
 
@@ -180,12 +235,15 @@ mod tests {
 latin Roboto U+0000-00FF, U+2000-206F
 cyrillic Roboto U+0400-045F, U+2116
 greek Roboto U+0370-03FF
+pixel-cyrillic theme:Galmuri9 U+0400-045F
+pixel-kana theme:Galmuri7 U+3040-30FF
 ";
 
     #[test]
     fn parses_ranges() {
         let subsets = parse_ranges(RANGES);
-        assert_eq!(subsets.len(), 3);
+        assert_eq!(subsets.len(), 5);
+        assert!(subsets[3].theme_only && subsets[3].source == "Galmuri9");
         assert_eq!(subsets[1].name, "cyrillic");
         assert!(subsets[1].covers(0x2116));
         assert!(subsets[0].covers(0x41));
@@ -216,27 +274,53 @@ greek Roboto U+0370-03FF
     fn text_requests_only_new_subsets_for_its_face() {
         let mut plan = FontPlan::from_ranges(RANGES);
         plan.request_initial();
-        assert_eq!(plan.request_for("Hello", 400), vec![]);
-        assert_eq!(plan.request_for("Привет и Γειά", 400), vec![(1, 0), (2, 0)]);
-        assert_eq!(plan.request_for("Ещё", 400), vec![]);
-        assert_eq!(plan.request_for("Ещё", 700), vec![(1, 2)]);
-        assert_eq!(plan.request_for("\u{4e2d}", 400), vec![]);
+        assert_eq!(plan.request_for("Hello", 400, &[]), vec![]);
+        assert_eq!(
+            plan.request_for("Привет и Γειά", 400, &[]),
+            vec![(1, 0), (2, 0)]
+        );
+        assert_eq!(plan.request_for("Ещё", 400, &[]), vec![]);
+        assert_eq!(plan.request_for("Ещё", 700, &[]), vec![(1, 2)]);
+        assert_eq!(plan.request_for("\u{4e2d}", 400, &[]), vec![]);
         plan.finish((1, 0));
-        assert_eq!(plan.request_for("Ж", 400), vec![]);
+        assert_eq!(plan.request_for("Ж", 400, &[]), vec![]);
     }
 
     #[test]
     fn missing_scripts_map_to_subsets_by_name() {
         let mut plan = FontPlan::new();
-        let arabic = plan.request_script("Arabic").expect("arabic subset");
+        let arabic = plan.request_script("Arabic", &[]).expect("arabic subset");
         assert_eq!(plan.file_name(arabic), "arabic-400.ttf");
-        assert_eq!(plan.request_script("Arabic"), None);
-        assert!(plan.request_script("Hebrew").is_some());
-        assert_eq!(plan.request_script("Han"), None);
+        assert_eq!(plan.request_script("Arabic", &[]), None);
+        assert!(plan.request_script("Hebrew", &[]).is_some());
+        assert_eq!(plan.request_script("Han", &[]), None);
         assert_eq!(
-            plan.request_for("\u{5e9}\u{5dc}\u{5d5}\u{5dd}", 700).len(),
+            plan.request_for("\u{5e9}\u{5dc}\u{5d5}\u{5dd}", 700, &[])
+                .len(),
             1
         );
+    }
+
+    #[test]
+    fn theme_text_prefers_its_fallback_subsets() {
+        let pixel = ["Galmuri7", "Galmuri9"];
+        let mut plan = FontPlan::from_ranges(RANGES);
+        plan.request_initial();
+        // Theme subsets come in one weight, so bold asks for the same file.
+        assert_eq!(plan.request_for("Ж", 700, &pixel), vec![(3, 0)]);
+        assert_eq!(plan.request_for("Ж", 400, &pixel), vec![]);
+        // Text without the theme uses the shared subset.
+        assert_eq!(plan.request_for("Ж", 400, &[]), vec![(1, 0)]);
+        // Kana has only a theme subset.
+        assert_eq!(plan.request_for("\u{3072}", 400, &[]), vec![]);
+        assert_eq!(plan.request_for("\u{3072}", 400, &pixel), vec![(4, 0)]);
+        // Greek has no theme subset and falls back to the shared one.
+        assert_eq!(plan.request_for("Γ", 400, &pixel), vec![(2, 0)]);
+        let mut plan = FontPlan::from_ranges(RANGES);
+        assert_eq!(plan.request_script("Katakana", &pixel), Some((4, 0)));
+        assert_eq!(plan.request_script("Cyrillic", &pixel), Some((3, 0)));
+        assert_eq!(plan.request_script("Cyrillic", &[]), Some((1, 0)));
+        assert_eq!(plan.request_script("Hiragana", &[]), None);
     }
 
     #[test]

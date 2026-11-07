@@ -72,6 +72,19 @@ that the text engine tries next, when an app adds their files with
 No open 8 px/em family with Greek and Cyrillic was found; Galmuri9 is
 last in the list and draws them with uneven pixels.
 
+Galmuri7 and Galmuri9 are a build input, never committed. Fetch them from
+the `galmuri` npm package at a pinned version, checked by SHA-256:
+
+```sh
+tools/pixel-tokens/fetch-fonts.sh            # into target/pixel-fonts
+export PIXEL_FONTS_DIR=$PWD/target/pixel-fonts
+```
+
+The web build reads `PIXEL_FONTS_DIR` and loads per-script subsets as text
+needs them. Desktop and handheld apps add the files with
+`add_fallback_font`. The text engine sorts a fallback's subsets, families
+named `"Galmuri7 <anything>"`, in the theme's order too.
+
 ## Leakage eliminated
 
 Items of the source `LEAKAGE.md` that only existed because of CSS:

@@ -148,20 +148,39 @@ impl FontSet {
     /// One face per family for a CSS weight, in fallback order, with the
     /// families named in `first` moved to the front in that order.
     fn candidates(&self, weight: u16, first: &[&str]) -> Vec<usize> {
-        let pick = |faces: &Vec<usize>| {
-            match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
-        };
-        let lead = first
-            .iter()
-            .filter_map(|want| self.families.iter().find(|(name, _)| name == want));
-        let rest = self
-            .families
-            .iter()
-            .filter(|(name, _)| !first.contains(&name.as_str()));
-        lead.chain(rest)
-            .filter_map(|(_, faces)| pick(faces))
+        let names: Vec<&str> = self.families.iter().map(|(n, _)| n.as_str()).collect();
+        family_order(&names, first)
+            .into_iter()
+            .filter_map(|f| {
+                let faces = &self.families[f].1;
+                match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
+            })
             .collect()
     }
+}
+
+/// The order to try `families` in: those named in `first` lead, in that
+/// order, then the rest in their own order. A name in `first` also takes
+/// its subsets, families named `"<name> <anything>"`, such as a web
+/// shell's per-script files.
+fn family_order(families: &[&str], first: &[&str]) -> Vec<usize> {
+    let of = |want: &str, name: &str| {
+        name == want
+            || name
+                .strip_prefix(want)
+                .is_some_and(|rest| rest.starts_with(' '))
+    };
+    let mut order: Vec<usize> = Vec::with_capacity(families.len());
+    for want in first {
+        for (i, name) in families.iter().enumerate() {
+            if of(want, name) && !order.contains(&i) {
+                order.push(i);
+            }
+        }
+    }
+    let rest: Vec<usize> = (0..families.len()).filter(|i| !order.contains(i)).collect();
+    order.extend(rest);
+    order
 }
 
 /// CSS font-weight matching: the closest face, searching heavier first for
@@ -1016,6 +1035,32 @@ mod tests {
             weight,
             leading: 1.5,
         }
+    }
+
+    #[test]
+    fn theme_fallbacks_lead_with_their_subsets_in_theme_order() {
+        let loaded = [
+            "Roboto",
+            "Galmuri9 galmuri9-cyrillic",
+            "Noto Sans Arabic",
+            "Galmuri7 galmuri7-kana",
+            "Galmuri7",
+            "Galmuri70",
+        ];
+        let order = family_order(&loaded, &["Silkscreen", "Galmuri7", "Galmuri9"]);
+        let names: Vec<&str> = order.iter().map(|&i| loaded[i]).collect();
+        assert_eq!(
+            names,
+            [
+                "Galmuri7 galmuri7-kana",
+                "Galmuri7",
+                "Galmuri9 galmuri9-cyrillic",
+                "Roboto",
+                "Noto Sans Arabic",
+                "Galmuri70"
+            ]
+        );
+        assert_eq!(family_order(&loaded, &[]), [0, 1, 2, 3, 4, 5]);
     }
 
     #[test]

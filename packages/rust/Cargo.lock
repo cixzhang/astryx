@@ -315,6 +315,7 @@ dependencies = [
  "astryx-core",
  "astryx-gallery",
  "astryx-render-gl",
+ "astryx-theme-pixel",
  "js-sys",
  "wasm-bindgen",
  "wasm-bindgen-futures",
