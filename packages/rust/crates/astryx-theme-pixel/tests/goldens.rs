@@ -133,23 +133,7 @@ fn edges_fall_on_the_pixel_grid() {
             .with_direction(direction);
         let mut rt = astryx_gallery::runtime(gallery);
         let png = render_png(&mut rt, SIZE.0, SIZE.1, scale, &[]);
-        let (rgba, w, h) = astryx_headless::golden::decode_png(&png).unwrap();
-        let px = |x: u32, y: u32| &rgba[((y * w + x) * 4) as usize..][..4];
-        let mut off_grid = Vec::new();
-        for y in 0..h {
-            for x in 1..w {
-                if px(x, y) != px(x - 1, y) && x % step != 0 {
-                    off_grid.push((x, y));
-                }
-            }
-        }
-        for y in 1..h {
-            for x in 0..w {
-                if px(x, y) != px(x, y - 1) && y % step != 0 {
-                    off_grid.push((x, y));
-                }
-            }
-        }
+        let off_grid = off_grid(&png, step);
         assert!(
             off_grid.is_empty(),
             "{} at {scale}x {direction:?} has {} edges off the grid, first at {:?}",
@@ -157,5 +141,57 @@ fn edges_fall_on_the_pixel_grid() {
             off_grid.len(),
             &off_grid[..off_grid.len().min(8)]
         );
+    }
+}
+
+/// Pixels where the color changes across a column or row that is not a
+/// multiple of `step`.
+fn off_grid(png: &[u8], step: u32) -> Vec<(u32, u32)> {
+    let (rgba, w, h) = astryx_headless::golden::decode_png(png).unwrap();
+    let px = |x: u32, y: u32| &rgba[((y * w + x) * 4) as usize..][..4];
+    let mut out = Vec::new();
+    for y in 0..h {
+        for x in 1..w {
+            if px(x, y) != px(x - 1, y) && x % step != 0 {
+                out.push((x, y));
+            }
+        }
+    }
+    for y in 1..h {
+        for x in 0..w {
+            if px(x, y) != px(x, y - 1) && y % step != 0 {
+                out.push((x, y));
+            }
+        }
+    }
+    out
+}
+
+/// A section paged on a 1024 by 768, scale 2 screen: its dots, and a page
+/// mid-slide after R2, stay on the grid.
+#[test]
+fn pages_stay_on_the_grid() {
+    for (inputs, name) in [
+        (vec![], "garden-buttons-page-1@2x.png"),
+        (vec![Input::R2], "garden-buttons-page-sliding@2x.png"),
+    ] {
+        let gallery = Gallery {
+            page: Some(Section::Buttons),
+            ..Gallery::new()
+        }
+        .with_theme(Palette::Garden.theme(), Mode::Light);
+        let mut rt = astryx_gallery::runtime(gallery);
+        let png = render_png(&mut rt, 512, 384, 2.0, &inputs);
+        let bad = off_grid(&png, 2);
+        assert!(
+            bad.is_empty(),
+            "{name}: {} edges off the grid, first at {:?}",
+            bad.len(),
+            &bad[..bad.len().min(8)]
+        );
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/goldens")
+            .join(name);
+        assert_golden(&png, path, TOLERANCE);
     }
 }

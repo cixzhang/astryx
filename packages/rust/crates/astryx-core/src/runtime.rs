@@ -72,6 +72,27 @@ pub trait App {
         let _ = input;
         None
     }
+
+    /// Experimental. Called after focus moves, by input, an accessibility
+    /// action, or a rebuild, with the `id` prop of the focused element (or
+    /// its nearest ancestor that has one), or `None` when nothing has
+    /// focus. Return a message to follow focus, such as to show details of
+    /// the focused item. A message returned during a frame cannot return a
+    /// command.
+    fn on_focus(&self, id: Option<&str>) -> Option<Self::Msg> {
+        let _ = id;
+        None
+    }
+}
+
+/// The overlap of two rects, if any.
+fn intersect(a: Rect, b: Rect) -> Option<Rect> {
+    let (x0, y0) = (a.x.max(b.x), a.y.max(b.y));
+    let (x1, y1) = (
+        (a.x + a.width).min(b.x + b.width),
+        (a.y + a.height).min(b.y + b.height),
+    );
+    (x1 > x0 && y1 > y0).then(|| Rect::new(x0, y0, x1 - x0, y1 - y0))
 }
 
 /// A pager's pages: each page's offset and the height it shows.
@@ -204,6 +225,8 @@ pub struct Runtime<A: App> {
     pagers: HashMap<u64, Pager>,
     /// The pager whose page has no focus stop, while focus rests on it.
     bare_page: Option<u64>,
+    /// The focus last reported to `App::on_focus`.
+    reported_focus: Option<Option<u64>>,
     /// Each camera's offset (x, y), moving toward its target.
     cameras: HashMap<u64, Animated<(f32, f32)>>,
     scroll: HashMap<u64, f32>,
@@ -260,6 +283,7 @@ impl<A: App> Runtime<A> {
             moving: HashMap::new(),
             pagers: HashMap::new(),
             bare_page: None,
+            reported_focus: None,
             cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
@@ -314,6 +338,28 @@ impl<A: App> Runtime<A> {
     pub fn app_mut(&mut self) -> &mut A {
         self.stale = true;
         &mut self.app
+    }
+
+    /// Tells the app where focus went, once per change.
+    fn report_focus(&mut self) -> Command {
+        if self.reported_focus == Some(self.focused) {
+            return Command::None;
+        }
+        self.reported_focus = Some(self.focused);
+        let name = self.focused.and_then(|id| {
+            let mut ix = Some(self.nodes.iter().position(|n| n.id == id)?);
+            while let Some(i) = ix {
+                if let Some(name) = &self.nodes[i].name {
+                    return Some(name.clone());
+                }
+                ix = self.nodes[i].parent.map(|p| p as usize);
+            }
+            None
+        });
+        match self.app.on_focus(name.as_deref()) {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        }
     }
 
     /// Sends a message as a control would.
@@ -654,6 +700,10 @@ impl<A: App> Runtime<A> {
         let mut clips = HashMap::new();
         let mut marks = Vec::new();
         let t = self.theme.tokens(&self.prefs);
+        let grid = self.theme.theme.grid;
+        if let Some(cell) = grid {
+            marks.push(DrawCmd::PushPixelGrid { cell });
+        }
         for (ix, node) in self.nodes.iter().enumerate() {
             let Some(pager) = node.pager.then(|| self.pagers.get(&node.id)).flatten() else {
                 continue;
@@ -703,16 +753,29 @@ impl<A: App> Runtime<A> {
                     } else {
                         t.color.neutral.into()
                     };
-                    marks.push(DrawCmd::Rect {
-                        rect: Rect::new(x0 + slot as f32 * (side + gap), y, side, side),
-                        radii: Radii::all(side / 2.0),
-                        fill,
-                        stroke: None,
-                    });
+                    let rect = Rect::new(x0 + slot as f32 * (side + gap), y, side, side);
+                    let radii = Radii::all(side / 2.0);
+                    match grid {
+                        // Stepped dots, as a pixel circle that small draws.
+                        Some(cell) => crate::pixel::push_rects(
+                            &mut marks,
+                            crate::pixel::fill(crate::pixel::snap_rect(rect, cell), radii, cell),
+                            fill,
+                        ),
+                        None => marks.push(DrawCmd::Rect {
+                            rect,
+                            radii,
+                            fill,
+                            stroke: None,
+                        }),
+                    }
                 }
             } else {
-                let mut style =
-                    crate::components::text::type_style(t.font.supporting, FontFamily::Body);
+                let mut style = crate::element::themed_text(
+                    self.theme.theme,
+                    t,
+                    crate::components::text::type_style(t.font.supporting, FontFamily::Body),
+                );
                 style.direction = Some(if node.rtl {
                     TextDirection::Rtl
                 } else {
@@ -725,6 +788,13 @@ impl<A: App> Runtime<A> {
                     color: t.color.text_secondary.into(),
                     align: TextAlign::Center,
                 });
+            }
+        }
+        if grid.is_some() {
+            if marks.len() == 1 {
+                marks.clear();
+            } else {
+                marks.push(DrawCmd::PopPixelGrid);
             }
         }
         (clips, marks)
@@ -769,41 +839,48 @@ impl<A: App> Runtime<A> {
                     b.max(bx.y + bx.height - view.y),
                 )
             });
-            let max = (
-                (right - view.width).max(0.0),
-                (bottom - view.height).max(0.0),
-            );
+            // The part of the camera on screen: its own box, cut by the
+            // window and by every clipping box around it, such as when a
+            // parent could not shrink it to the space its siblings leave.
+            let painted = layout.rects[ix];
+            let window = Rect::new(0.0, 0.0, self.viewport.0, self.viewport.1);
+            let mut shown = intersect(painted, window);
+            let mut ancestor = self.nodes[ix].parent;
+            while let Some(a) = ancestor {
+                let n = &self.nodes[a as usize];
+                if n.clip.is_some() || n.scroll.is_some() || n.camera {
+                    shown = shown.and_then(|r| intersect(r, layout.rects[a as usize]));
+                }
+                ancestor = n.parent;
+            }
             let camera = self
                 .cameras
                 .entry(id)
                 .or_insert_with(|| Animated::new((0.0, 0.0)));
-            let Some(f) = focused.filter(|f| inside.contains(f)) else {
+            let (Some(shown), Some(f)) = (shown, focused.filter(|f| inside.contains(f))) else {
                 continue;
             };
+            // The band on screen, measured from the camera box's edges.
+            let band_x = (shown.x - painted.x, shown.x - painted.x + shown.width);
+            let band_y = (shown.y - painted.y, shown.y - painted.y + shown.height);
             let b = layout.boxes[f];
             let (mut tx, mut ty) = camera.target();
-            let follow = |t: &mut f32, lo: f32, hi: f32, span: f32, max: f32| {
-                let zone = span / 4.0;
-                if lo - *t < zone {
-                    *t = lo - zone;
-                } else if hi - *t > span - zone {
-                    *t = hi - (span - zone);
+            let follow = |t: &mut f32, lo: f32, hi: f32, band: (f32, f32), end: f32| {
+                let zone = (band.1 - band.0) / 4.0;
+                if lo - *t < band.0 + zone {
+                    *t = lo - band.0 - zone;
+                } else if hi - *t > band.1 - zone {
+                    *t = hi - (band.1 - zone);
                 }
-                *t = t.clamp(0.0, max);
+                *t = t.clamp(0.0, (end - band.1).max(0.0));
             };
-            follow(
-                &mut tx,
-                b.x - view.x,
-                b.x + b.width - view.x,
-                view.width,
-                max.0,
-            );
+            follow(&mut tx, b.x - view.x, b.x + b.width - view.x, band_x, right);
             follow(
                 &mut ty,
                 b.y - view.y,
                 b.y + b.height - view.y,
-                view.height,
-                max.1,
+                band_y,
+                bottom,
             );
             if (tx, ty) != camera.target() {
                 camera.animate_to((tx, ty), motion);
@@ -1047,7 +1124,11 @@ impl<A: App> Runtime<A> {
     /// The scroll offset a container shows now, part way through a scroll.
     fn shown_offset(&self, id: u64) -> f32 {
         match self.shown.get(&id) {
-            Some(a) => a.value(),
+            // On a pixel grid, scrolls and page slides move by whole cells.
+            Some(a) => match self.theme.theme.grid {
+                Some(cell) => crate::pixel::snap(a.value(), cell),
+                None => a.value(),
+            },
             None => self.scroll.get(&id).copied().unwrap_or(0.0),
         }
     }
@@ -1737,8 +1818,8 @@ impl<A: App> Runtime<A> {
     }
 }
 
-impl<A: App> Surface for Runtime<A> {
-    fn input(&mut self, input: Input, phase: InputPhase) -> Command {
+impl<A: App> Runtime<A> {
+    fn handle_input(&mut self, input: Input, phase: InputPhase) -> Command {
         self.repaint = true;
         match (input, phase) {
             (Input::A, _) => {
@@ -1820,6 +1901,42 @@ impl<A: App> Surface for Runtime<A> {
         }
     }
 
+    fn handle_a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
+        self.repaint = true;
+        self.repeats.cancel();
+        let Some(stop) = self.stop_index(Some(id)) else {
+            return Command::None;
+        };
+        self.set_focus(stop);
+        self.reveal_focus(true);
+        match action {
+            A11yAction::Focus => Command::None,
+            A11yAction::Activate => self.activate(id),
+        }
+    }
+}
+
+impl<A: App> Surface for Runtime<A> {
+    fn input(&mut self, input: Input, phase: InputPhase) -> Command {
+        let command = self.handle_input(input, phase);
+        let followed = self.report_focus();
+        if command == Command::None {
+            followed
+        } else {
+            command
+        }
+    }
+
+    fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
+        let command = self.handle_a11y_action(id, action);
+        let followed = self.report_focus();
+        if command == Command::None {
+            followed
+        } else {
+            command
+        }
+    }
+
     fn frame(&mut self, frame: &FrameInfo, text: &dyn TextMeasure) -> DisplayList {
         // Under reduced motion spinners hold still.
         if !self.prefs.reduced_motion {
@@ -1869,6 +1986,8 @@ impl<A: App> Surface for Runtime<A> {
             self.reveal_focus(false);
         }
         self.follow_cameras();
+        // A rebuild can move focus; the app hears of it too.
+        let _ = self.report_focus();
         self.update_moving();
         self.animating_visible = self.animation_visible();
         self.timings.layout = watch.lap();
@@ -2010,20 +2129,6 @@ impl<A: App> Surface for Runtime<A> {
         // Keystrokes before the next frame build on this value.
         self.typed = Some((id, value));
         self.send(msg)
-    }
-
-    fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
-        self.repaint = true;
-        self.repeats.cancel();
-        let Some(stop) = self.stop_index(Some(id)) else {
-            return Command::None;
-        };
-        self.set_focus(stop);
-        self.reveal_focus(true);
-        match action {
-            A11yAction::Focus => Command::None,
-            A11yAction::Activate => self.activate(id),
-        }
     }
 
     fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {

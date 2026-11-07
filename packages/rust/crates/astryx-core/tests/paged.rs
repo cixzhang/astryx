@@ -373,3 +373,75 @@ fn the_camera_never_shows_past_the_board() {
     // The board is 624 wide; the camera stops with its right edge at the view's.
     assert_eq!(avatar_x(&rt, "0,9") + 48.0, 400.0);
 }
+
+#[test]
+fn the_camera_keeps_focus_inside_its_own_box_above_a_sibling() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(board())
+            .child(
+                Card::new()
+                    .padding(Space::S4)
+                    .child(Text::new("A caption card under the board")),
+            )
+            .into()
+    });
+    settle(&mut rt);
+    let nodes = a11y_nodes(&rt.accessibility().unwrap());
+    let caption = nodes
+        .iter()
+        .find(|n| n.label.as_deref() == Some("A caption card under the board"))
+        .unwrap()
+        .bounds;
+    // The camera's own box ends where the card begins.
+    let view_bottom = caption.y - light().space.s4;
+    for _ in 0..9 {
+        tap(&mut rt, Input::Down);
+        settle(&mut rt);
+        let f = a11y_nodes(&rt.accessibility().unwrap())
+            .into_iter()
+            .find(|n| n.focused)
+            .unwrap()
+            .bounds;
+        assert!(
+            f.y + f.height <= view_bottom + 0.5,
+            "focus {f:?} hidden under the card at {view_bottom}"
+        );
+    }
+    let f = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.focused)
+        .unwrap();
+    assert_eq!(f.label.as_deref(), Some("9,0"));
+}
+
+/// A camera whose parent cannot shrink it, so its own box runs past the
+/// window: focus stays inside the part of the box on screen.
+#[test]
+fn the_camera_keeps_focus_on_screen_when_its_box_runs_past_the_window() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .padding(Space::S4)
+            .child(
+                VStack::new()
+                    .gap(Space::S4)
+                    .child(board())
+                    .child(Card::new().padding(Space::S4).child(Text::new("Caption"))),
+            )
+            .into()
+    });
+    settle(&mut rt);
+    for _ in 0..9 {
+        tap(&mut rt, Input::Down);
+        settle(&mut rt);
+        let f = a11y_nodes(&rt.accessibility().unwrap())
+            .into_iter()
+            .find(|n| n.focused)
+            .unwrap()
+            .bounds;
+        assert!(
+            f.y >= 16.0 && f.y + f.height <= H as f32,
+            "focus {f:?} off screen"
+        );
+    }
+}

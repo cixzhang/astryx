@@ -438,6 +438,8 @@ pub(crate) struct Node<Msg> {
     /// The built-in icon this node draws, and its side in points, so a
     /// theme can draw its own icon instead.
     pub icon: Option<(&'static str, f32)>,
+    /// The element's `id` prop, when it has one.
+    pub name: Option<String>,
     /// A `paged::Paged` viewport: its scroll offset rests on page starts.
     pub pager: bool,
     /// A `paged::CameraFollow` viewport, offset in both directions.
@@ -468,6 +470,7 @@ impl<Msg> Node<Msg> {
             moves: false,
             grid: None,
             icon: None,
+            name: None,
             pager: false,
             camera: false,
         }
@@ -562,6 +565,8 @@ pub(crate) struct BuildCx<Msg> {
     pub images: std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, bool>>,
     open: Vec<u32>,
     key: Option<u64>,
+    /// The `id` prop behind `key`, for the node `begin` opens next.
+    name: Option<String>,
 }
 
 impl<Msg> BuildCx<Msg> {
@@ -581,6 +586,7 @@ impl<Msg> BuildCx<Msg> {
             images: Default::default(),
             open: Vec::new(),
             key: None,
+            name: None,
         }
     }
 
@@ -597,6 +603,7 @@ impl<Msg> BuildCx<Msg> {
     /// Gives the next node an identity from an Astryx base `id`.
     pub fn key(&mut self, id: Option<&str>) {
         self.key = id.map(|id| fnv1a(id.as_bytes()));
+        self.name = id.map(String::from);
     }
 
     /// Applies what the theme adds beyond tokens: its grid, fonts, and icons.
@@ -650,6 +657,7 @@ impl<Msg> BuildCx<Msg> {
             None => (0, 0),
         };
         let local = self.key.take().map_or(sibling, |k| k ^ KEYED);
+        node.name = self.name.take();
         node.id = mix(parent_id, local);
         node.parent = parent;
         if self.direction.is_rtl() {

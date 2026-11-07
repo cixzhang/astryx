@@ -1146,3 +1146,58 @@ fn text_takes_its_paragraph_direction_from_its_region() {
     assert_eq!(dir("Astryx שלום"), Some(Some(TextDirection::Rtl)));
     assert_eq!(dir("plain"), Some(Some(TextDirection::Ltr)));
 }
+
+struct Follow {
+    seen: Vec<Option<String>>,
+    removed: bool,
+}
+
+impl App for Follow {
+    type Msg = Option<String>;
+    fn view(&self) -> Element<Self::Msg> {
+        let mut stack = VStack::new().child(Button::new("One").on_click(None).id("one"));
+        if !self.removed {
+            stack = stack.child(Button::new("Two").on_click(None).id("two"));
+        }
+        stack.child(Button::new("Plain").on_click(None)).into()
+    }
+    fn update(&mut self, msg: Self::Msg) -> Command {
+        self.seen.push(msg);
+        Command::None
+    }
+    fn on_focus(&self, id: Option<&str>) -> Option<Self::Msg> {
+        Some(id.map(String::from))
+    }
+}
+
+#[test]
+fn on_focus_reports_each_focus_change_with_the_id_prop() {
+    let mut rt = Runtime::new(Follow {
+        seen: Vec::new(),
+        removed: false,
+    });
+    draw(&mut rt, 300, 300);
+    assert_eq!(rt.app().seen, [Some("one".to_string())], "launch focus");
+    tap(&mut rt, Input::Down);
+    tap(&mut rt, Input::Down);
+    draw(&mut rt, 300, 300);
+    // An element without an id reports None; no change, no report.
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        rt.app().seen,
+        [Some("one".into()), Some("two".into()), None]
+    );
+    // An accessibility action moves focus too.
+    let two = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.label.as_deref() == Some("Two"))
+        .unwrap()
+        .id;
+    rt.a11y_action(two, A11yAction::Focus);
+    assert_eq!(rt.app().seen.last(), Some(&Some("two".to_string())));
+    // A rebuild that removes the focused element moves focus and reports it.
+    rt.app_mut().removed = true;
+    draw(&mut rt, 300, 300);
+    let last = rt.app().seen.last().cloned().flatten();
+    assert_ne!(last.as_deref(), Some("two"));
+}
