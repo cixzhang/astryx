@@ -297,13 +297,25 @@ struct ShapedText {
 struct ShapeKey {
     text: String,
     weight: u16,
-    size: u32,
     family: Option<&'static str>,
     direction: Option<TextDirection>,
 }
 
 const SHAPE_CACHE_LIMIT: usize = 4096;
-const GLYPH_CACHE_LIMIT: usize = 8192;
+const MEASURE_CACHE_LIMIT: usize = 16384;
+
+#[derive(Clone, PartialEq, Eq, Hash)]
+struct MeasureKey {
+    text: String,
+    weight: u16,
+    family: FontFamily,
+    size: u32,
+    leading: u32,
+    direction: Option<TextDirection>,
+    max_width: Option<u32>,
+}
+// Room for a prewarmed character set across every theme's text sizes.
+const GLYPH_CACHE_LIMIT: usize = 32768;
 
 /// Shapes, measures, lays out, and rasterizes text. Implements
 /// [`TextMeasure`], so a renderer hands this to layout and draws with the
@@ -318,8 +330,11 @@ struct EngineInner {
     shaper: ShapeContext,
     scaler: ScaleContext,
     shapes: HashMap<ShapeKey, Rc<ShapedText>>,
+    measures: HashMap<MeasureKey, Size>,
     glyphs: HashMap<GlyphKey, Rc<GlyphBitmap>>,
     provider: Option<FallbackProvider>,
+    /// Glyphs rasterized on the calling thread since the last read.
+    rasterized: usize,
     /// Scripts already asked for, whether or not a face came back.
     requested: Vec<Script>,
     /// Scripts asked for that no provider answered, for shells that load
@@ -342,8 +357,10 @@ impl TextEngine {
                 shaper: ShapeContext::new(),
                 scaler: ScaleContext::new(),
                 shapes: HashMap::new(),
+                measures: HashMap::new(),
                 glyphs: HashMap::new(),
                 provider: None,
+                rasterized: 0,
                 requested: Vec::new(),
                 missing: Vec::new(),
             }),
@@ -359,8 +376,143 @@ impl TextEngine {
         // Shapes picked faces from the old set. Glyph bitmaps stay valid
         // because face indices never change.
         inner.shapes.clear();
+        inner.measures.clear();
         inner.generation += 1;
         Ok(())
+    }
+
+    /// Every glyph bitmap in the cache, for renderers that upload ahead of use.
+    pub fn cached_glyphs(&self) -> Vec<(GlyphKey, Rc<GlyphBitmap>)> {
+        self.inner
+            .borrow()
+            .glyphs
+            .iter()
+            .map(|(k, b)| (*k, b.clone()))
+            .collect()
+    }
+
+    /// Glyphs rasterized on demand since the last call, for profiling.
+    pub fn take_rasterized(&self) -> usize {
+        std::mem::take(&mut self.inner.borrow_mut().rasterized)
+    }
+
+    /// Starts rasterizing `chars` for each text style, at `scale`, on
+    /// another thread: at every horizontal subpixel position, or on a pixel
+    /// grid of the given cell in points, as [`Self::place_on_grid`] draws.
+    /// Theme fonts the styles name are loaded now. Feed the result back
+    /// with [`Self::install_prewarmed`]; until then drawing works as
+    /// before. Sizes above `max_px` pixels are skipped.
+    pub fn prewarm(
+        &self,
+        styles: &[(TextStyle, Option<f32>)],
+        scale: f32,
+        chars: &str,
+        max_px: f32,
+    ) -> GlyphPrewarm {
+        // (face, font data, offset, cache key, glyph pixel size, cell)
+        let mut jobs: Vec<(u16, FontData, u32, CacheKey, f32, u8)> = Vec::new();
+        for (style, grid) in styles {
+            let px = style.size * scale;
+            if px > max_px || px <= 0.0 {
+                continue;
+            }
+            let mut first: Vec<&str> = Vec::new();
+            if let FontFamily::Theme(font) = style.family {
+                self.load_theme_font(font);
+                first.push(font.family);
+                first.extend_from_slice(font.fallbacks);
+            }
+            let inner = self.inner.borrow();
+            let Some(&face) = inner.fonts.candidates(style.weight, &first).first() else {
+                continue;
+            };
+            // As place_on_grid: a theme font's own faces take one sample per
+            // cell; other faces draw at full size without antialiasing.
+            let own = match style.family {
+                FontFamily::Theme(font) => inner
+                    .fonts
+                    .families
+                    .iter()
+                    .any(|(name, faces)| name == font.family && faces.contains(&face)),
+                _ => false,
+            };
+            let (px, cell) = match grid {
+                Some(cell) if own => {
+                    let k = grid_step(*cell, scale);
+                    (px / k, k as u8)
+                }
+                Some(_) => (px, 1),
+                None => (px, 0),
+            };
+            let f = &inner.fonts.faces[face];
+            if !jobs
+                .iter()
+                .any(|j| j.0 == face as u16 && j.4 == px && j.5 == cell)
+            {
+                jobs.push((face as u16, f.data.clone(), f.offset, f.key, px, cell));
+            }
+        }
+        let chars: Vec<char> = chars.chars().filter(|c| !c.is_whitespace()).collect();
+        let (tx, rx) = std::sync::mpsc::channel();
+        #[cfg(not(target_arch = "wasm32"))]
+        std::thread::spawn(move || {
+            let mut scaler = ScaleContext::new();
+            for (face, data, offset, key, px, cell) in jobs {
+                let font = FontRef {
+                    data: data.bytes(),
+                    offset,
+                    key,
+                };
+                let charmap = font.charmap();
+                let mut batch = Vec::new();
+                for &c in &chars {
+                    let id = charmap.map(c);
+                    if id == 0 {
+                        continue;
+                    }
+                    let steps = if cell > 0 { 1 } else { SUBPIXEL_STEPS as u8 };
+                    for sub in 0..steps {
+                        let key = GlyphKey {
+                            face,
+                            id,
+                            size: px.to_bits(),
+                            subpixel: sub,
+                            cell,
+                        };
+                        batch.push((key, rasterize(&mut scaler, font, key)));
+                    }
+                }
+                if tx.send(batch).is_err() {
+                    return;
+                }
+            }
+        });
+        #[cfg(target_arch = "wasm32")]
+        drop((tx, jobs, chars));
+        GlyphPrewarm { rx, done: false }
+    }
+
+    /// Takes whatever the prewarm thread has finished, without waiting.
+    /// Returns true once everything is installed.
+    pub fn install_prewarmed(&self, prewarm: &mut GlyphPrewarm) -> bool {
+        if prewarm.done {
+            return true;
+        }
+        let mut inner = self.inner.borrow_mut();
+        loop {
+            match prewarm.rx.try_recv() {
+                Ok(batch) => {
+                    for (key, bitmap) in batch {
+                        inner.glyphs.entry(key).or_insert_with(|| Rc::new(bitmap));
+                    }
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => return false,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    prewarm.done = true;
+                    return true;
+                }
+            }
+        }
     }
 
     /// Sets where faces for uncovered scripts come from. It is asked once per
@@ -399,11 +551,16 @@ impl TextEngine {
         }
         if added {
             inner.shapes.clear();
+            inner.measures.clear();
             inner.generation += 1;
         }
     }
 
-    fn shaped(&self, text: &str, style: &TextStyle, size: f32) -> Rc<ShapedText> {
+    /// Shapes `text` at a size of one point. Unhinted outlines scale
+    /// linearly, so every size reuses one shaping, and a theme with other
+    /// text sizes only wraps again.
+    fn shaped(&self, text: &str, style: &TextStyle) -> Rc<ShapedText> {
+        let size = 1.0;
         let font = match style.family {
             FontFamily::Theme(font) => {
                 self.load_theme_font(font);
@@ -416,7 +573,6 @@ impl TextEngine {
         let key = ShapeKey {
             text: text.to_owned(),
             weight,
-            size: size.to_bits(),
             family: font.map(|f| f.family),
             direction,
         };
@@ -428,6 +584,7 @@ impl TextEngine {
         if inner.request_faces(text) {
             // Earlier shapes drew these characters as missing glyphs.
             inner.shapes.clear();
+            inner.measures.clear();
             inner.generation += 1;
         }
         let mut first: Vec<&str> = font.map_or(Vec::new(), |f| f.fallbacks.to_vec());
@@ -486,13 +643,17 @@ impl TextEngine {
                 bounds: Size::default(),
             };
         }
-        let shaped = self.shaped(text, style, size);
-        let half_leading = (line_height - (shaped.ascent + shaped.descent)) / 2.0;
+        let shaped = self.shaped(text, style);
+        let (ascent, descent) = (shaped.ascent * size, shaped.descent * size);
+        let half_leading = (line_height - (ascent + descent)) / 2.0;
         let mut lines = Vec::new();
         let mut max_width: f32 = 0.0;
         for paragraph in &shaped.paragraphs {
-            for (start, end, line_width) in wrap(paragraph, width) {
-                let baseline = lines.len() as f32 * line_height + half_leading + shaped.ascent;
+            for (start, end, line_width) in
+                wrap(paragraph, width.map(|w| w / size), WRAP_EPSILON / size)
+            {
+                let line_width = line_width * size;
+                let baseline = lines.len() as f32 * line_height + half_leading + ascent;
                 let mut pen = 0.0;
                 let mut glyphs = Vec::new();
                 for ix in visual_order(&paragraph.clusters, start, end) {
@@ -503,8 +664,8 @@ impl TextEngine {
                         glyphs.push(PlacedGlyph {
                             face: g.face,
                             id: g.id,
-                            x: pen + g.x,
-                            y: g.y,
+                            x: (pen + g.x) * size,
+                            y: g.y * size,
                         });
                     }
                     pen += cluster.advance;
@@ -545,47 +706,9 @@ impl TextEngine {
             return found.clone();
         }
         let inner = &mut *inner;
+        inner.rasterized += 1;
         let face = &inner.fonts.faces[key.face as usize];
-        let mut scaler = inner
-            .scaler
-            .builder(face.font())
-            .size(f32::from_bits(key.size))
-            .hint(false)
-            .build();
-        // Low four bits step right, high four bits step down; font space points up.
-        let steps = SUBPIXEL_STEPS as f32;
-        let offset = Vector::new(
-            (key.subpixel & 15) as f32 / steps,
-            -((key.subpixel >> 4) as f32) / steps,
-        );
-        let mut bitmap = match Render::new(&[Source::Outline])
-            .format(Format::Alpha)
-            .offset(offset)
-            .render(&mut scaler, key.id)
-        {
-            Some(image) => GlyphBitmap {
-                left: image.placement.left,
-                top: image.placement.top,
-                width: image.placement.width,
-                height: image.placement.height,
-                data: image.data,
-            },
-            None => GlyphBitmap {
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0,
-                data: Vec::new(),
-            },
-        };
-        if key.cell > 0 {
-            for v in &mut bitmap.data {
-                *v = if *v >= 128 { 255 } else { 0 };
-            }
-        }
-        if key.cell > 1 {
-            bitmap = bitmap.upscaled(u32::from(key.cell));
-        }
+        let bitmap = rasterize(&mut inner.scaler, face.font(), key);
         if inner.glyphs.len() >= GLYPH_CACHE_LIMIT {
             inner.glyphs.clear();
         }
@@ -646,6 +769,59 @@ impl TextEngine {
     }
 }
 
+/// Glyphs rasterized on another thread, handed back in batches.
+pub struct GlyphPrewarm {
+    rx: std::sync::mpsc::Receiver<Vec<(GlyphKey, GlyphBitmap)>>,
+    done: bool,
+}
+
+/// Rasterizes one glyph without hinting, so its shape only depends on pixel
+/// size and subpixel offset.
+fn rasterize(scaler: &mut ScaleContext, font: FontRef<'_>, key: GlyphKey) -> GlyphBitmap {
+    let mut scaler = scaler
+        .builder(font)
+        .size(f32::from_bits(key.size))
+        .hint(false)
+        .build();
+    // Low four bits step right, high four bits step down; font space points up.
+    let steps = SUBPIXEL_STEPS as f32;
+    let offset = Vector::new(
+        (key.subpixel & 15) as f32 / steps,
+        -((key.subpixel >> 4) as f32) / steps,
+    );
+    let mut bitmap = match Render::new(&[Source::Outline])
+        .format(Format::Alpha)
+        .offset(offset)
+        .render(&mut scaler, key.id)
+    {
+        Some(image) => GlyphBitmap {
+            left: image.placement.left,
+            top: image.placement.top,
+            width: image.placement.width,
+            height: image.placement.height,
+            data: image.data,
+        },
+        None => GlyphBitmap {
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            data: Vec::new(),
+        },
+    };
+    // On a pixel grid coverage is all or nothing, and each pixel may stand
+    // for a cell of several.
+    if key.cell > 0 {
+        for v in &mut bitmap.data {
+            *v = if *v >= 128 { 255 } else { 0 };
+        }
+    }
+    if key.cell > 1 {
+        bitmap = bitmap.upscaled(u32::from(key.cell));
+    }
+    bitmap
+}
+
 impl TextEngine {
     /// [`Self::place`] on a pixel grid of `cell` points: line origins and
     /// baselines snap to whole cells and glyphs draw without antialiasing.
@@ -677,12 +853,7 @@ impl TextEngine {
                 .collect()
         };
         let snap = |v: f32| (v / cell).round() * cell;
-        let px = cell * scale;
-        let k = if (px - px.round()).abs() < 0.01 && (2.0..=64.0).contains(&px.round()) {
-            px.round()
-        } else {
-            1.0
-        };
+        let k = grid_step(cell, scale);
         let full = (layout.size * scale).to_bits();
         for line in &layout.lines {
             // A baseline half a cell off rounds up, so descenders stay
@@ -717,6 +888,26 @@ impl TextEngine {
                 });
             }
         }
+    }
+}
+
+/// The pixel size glyphs of text `size` points tall are rasterized at:
+/// on a pixel grid of `grid` points, one sample per cell.
+pub fn glyph_size(size: f32, scale: f32, grid: Option<f32>) -> f32 {
+    match grid {
+        Some(cell) => size * scale / grid_step(cell, scale),
+        None => size * scale,
+    }
+}
+
+/// Device pixels per grid cell when glyphs are sampled once per cell and
+/// scaled up: a whole number of pixels, else 1.
+fn grid_step(cell: f32, scale: f32) -> f32 {
+    let px = cell * scale;
+    if (px - px.round()).abs() < 0.01 && (2.0..=64.0).contains(&px.round()) {
+        px.round()
+    } else {
+        1.0
     }
 }
 
@@ -761,8 +952,44 @@ impl EngineInner {
 }
 
 impl TextMeasure for TextEngine {
+    /// The same size [`TextEngine::layout`] gives, without placing glyphs.
+    /// Layout asks for the same sizes many times, so answers are cached
+    /// until the font set changes.
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> Size {
-        self.layout(text, style, max_width, TextAlign::Start).bounds
+        let size = style.size.max(0.0);
+        if text.is_empty() || size == 0.0 {
+            return Size::default();
+        }
+        let key = MeasureKey {
+            text: text.to_owned(),
+            weight: style.weight,
+            family: style.family,
+            size: size.to_bits(),
+            leading: style.leading.to_bits(),
+            direction: style.direction,
+            max_width: max_width.map(f32::to_bits),
+        };
+        if let Some(found) = self.inner.borrow().measures.get(&key) {
+            return *found;
+        }
+        let shaped = self.shaped(text, style);
+        let (mut lines, mut widest) = (0usize, 0.0f32);
+        for paragraph in &shaped.paragraphs {
+            for (_, _, width) in wrap(paragraph, max_width.map(|w| w / size), WRAP_EPSILON / size) {
+                lines += 1;
+                widest = widest.max(width * size);
+            }
+        }
+        let result = Size {
+            width: widest,
+            height: lines as f32 * size * style.leading,
+        };
+        let mut inner = self.inner.borrow_mut();
+        if inner.measures.len() >= MEASURE_CACHE_LIMIT {
+            inner.measures.clear();
+        }
+        inner.measures.insert(key, result);
+        result
     }
 
     fn generation(&self) -> u64 {
@@ -936,7 +1163,7 @@ fn visual_order(clusters: &[Cluster], start: usize, end: usize) -> Vec<usize> {
 
 /// Greedy line breaking at Unicode line break opportunities. Returns cluster
 /// ranges with their widths. A word longer than the box overflows, as in CSS.
-fn wrap(p: &Shaped, max_width: Option<f32>) -> Vec<(usize, usize, f32)> {
+fn wrap(p: &Shaped, max_width: Option<f32>, epsilon: f32) -> Vec<(usize, usize, f32)> {
     if p.clusters.is_empty() {
         return vec![(0, 0, 0.0)];
     }
@@ -956,7 +1183,7 @@ fn wrap(p: &Shaped, max_width: Option<f32>) -> Vec<(usize, usize, f32)> {
         if !c.whitespace {
             let end = pen + c.advance;
             if let (Some(limit), Some((b, b_visible))) = (max_width, last_break) {
-                if end > limit + WRAP_EPSILON {
+                if end > limit + epsilon {
                     lines.push((start, b, b_visible));
                     // Re-scan from the new line start so its break opportunities are found again.
                     start = b;
@@ -1178,6 +1405,23 @@ mod tests {
     }
 
     #[test]
+    fn measure_agrees_with_layout() {
+        let engine = engine();
+        let text = "The quick brown fox jumps over the lazy dog\nsecond line";
+        for (size, width) in [
+            (14.0, None),
+            (14.0, Some(120.0)),
+            (21.5, Some(77.0)),
+            (9.0, Some(1.0)),
+        ] {
+            let st = style(size, 400);
+            let laid = engine.layout(text, &st, width, TextAlign::Start).bounds;
+            assert_eq!(engine.measure(text, &st, width), laid);
+            assert_eq!(engine.measure(text, &st, width), laid, "cached");
+        }
+    }
+
+    #[test]
     fn line_height_is_size_times_leading() {
         let engine = engine();
         let s = engine.measure("Hello", &style(16.0, 400), None);
@@ -1353,6 +1597,45 @@ mod tests {
         };
         let moved = ink_y(0.25) - ink_y(0.0);
         assert!((moved - 0.5).abs() < 0.1, "moved {moved} px");
+    }
+
+    #[test]
+    fn prewarmed_glyphs_need_no_rasterizing_later() {
+        let engine = engine();
+        let mut warm = engine.prewarm(&[(style(16.0, 400), None)], 2.0, "Hello", 64.0);
+        let start = std::time::Instant::now();
+        while !engine.install_prewarmed(&mut warm) {
+            assert!(start.elapsed().as_secs() < 10);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        engine.take_rasterized();
+        let layout = engine.layout("Hello", &style(16.0, 400), None, TextAlign::Start);
+        let mut out = Vec::new();
+        engine.place(&layout, (0.3, 0.0), 2.0, true, &mut out);
+        assert_eq!(out.len(), 5);
+        assert_eq!(engine.take_rasterized(), 0);
+        // Sizes above the limit are skipped.
+        let mut big = engine.prewarm(&[(style(40.0, 400), None)], 2.0, "H", 64.0);
+        while !engine.install_prewarmed(&mut big) {}
+        let layout = engine.layout("H", &style(40.0, 400), None, TextAlign::Start);
+        engine.place(&layout, (0.0, 0.0), 2.0, true, &mut out);
+        assert_eq!(engine.take_rasterized(), 1);
+    }
+
+    #[test]
+    fn prewarm_covers_pixel_grid_placement() {
+        let engine = engine();
+        let st = style(16.0, 400);
+        let mut warm = engine.prewarm(&[(st, Some(1.0))], 2.0, "Grid", 64.0);
+        while !engine.install_prewarmed(&mut warm) {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        engine.take_rasterized();
+        let layout = engine.layout("Grid", &st, None, TextAlign::Start);
+        let mut out = Vec::new();
+        engine.place_on_grid(&layout, (0.0, 0.0), 2.0, 1.0, None, &mut out);
+        assert_eq!(out.len(), 4);
+        assert_eq!(engine.take_rasterized(), 0);
     }
 
     #[test]

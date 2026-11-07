@@ -7,12 +7,13 @@ use astryx_core::paged::Paged;
 use astryx_core::*;
 
 pub mod images;
+mod world;
 
 /// Runs `gallery` with its sample images registered. Every shell starts the
 /// gallery this way.
 pub fn runtime(gallery: Gallery) -> Runtime<Gallery> {
     let mut rt = Runtime::new(gallery);
-    for (id, data) in images::samples() {
+    for (id, data) in images::samples().into_iter().chain(world::images()) {
         rt.register_image(id, data);
     }
     rt
@@ -36,10 +37,11 @@ pub enum Section {
     TextInputs,
     Selectors,
     Thumbnails,
+    World,
 }
 
 impl Section {
-    pub const ALL: [Section; 15] = [
+    pub const ALL: [Section; 16] = [
         Section::Typography,
         Section::Stacks,
         Section::Buttons,
@@ -55,6 +57,7 @@ impl Section {
         Section::TextInputs,
         Section::Selectors,
         Section::Thumbnails,
+        Section::World,
     ];
 
     pub fn title(self) -> &'static str {
@@ -74,6 +77,7 @@ impl Section {
             Section::TextInputs => "TextInput",
             Section::Selectors => "Selector",
             Section::Thumbnails => "Thumbnail",
+            Section::World => "World",
         }
     }
 
@@ -95,6 +99,7 @@ impl Section {
             Section::TextInputs => "Editing, states, and status",
             Section::Selectors => "Variants, menus, and status",
             Section::Thumbnails => "Open, remove, loading, and disabled",
+            Section::World => "Board, sprites, and a camera that follows focus (experimental)",
         }
     }
 
@@ -116,6 +121,7 @@ impl Section {
             Section::TextInputs => "text-inputs",
             Section::Selectors => "selectors",
             Section::Thumbnails => "thumbnails",
+            Section::World => "world",
         }
     }
 }
@@ -141,6 +147,8 @@ pub enum Msg {
     Home,
     /// A text field's new value, by label.
     Field(&'static str, String),
+    /// Focus moved to a thing on the World board, by id.
+    WorldFocus(String),
     /// `"ltr"` or `"rtl"`.
     Direction(String),
 }
@@ -165,6 +173,8 @@ pub struct Gallery {
     pub announced: bool,
     /// The text field values, by label.
     pub fields: std::collections::BTreeMap<&'static str, String>,
+    /// The World board's focused thing, which the hero walks to.
+    pub world_at: Option<String>,
 }
 
 impl Default for Gallery {
@@ -196,6 +206,7 @@ impl Default for Gallery {
             .into_iter()
             .map(|(k, v)| (k, v.to_string()))
             .collect(),
+            world_at: None,
         }
     }
 }
@@ -286,6 +297,7 @@ impl App for Gallery {
                     Direction::Ltr
                 }
             }
+            Msg::WorldFocus(id) => self.world_at = Some(id),
             Msg::Field(label, value) => {
                 self.fields.insert(label, value);
             }
@@ -316,6 +328,12 @@ impl App for Gallery {
             Input::B => Some(Msg::Back),
             _ => None,
         }
+    }
+
+    /// On the World board, the hero walks to whatever has focus.
+    fn on_focus(&self, id: Option<&str>) -> Option<Msg> {
+        let id = id.filter(|id| id.starts_with("world-"))?;
+        (self.world_at.as_deref() != Some(id)).then(|| Msg::WorldFocus(id.to_string()))
     }
 }
 
@@ -512,12 +530,26 @@ impl Gallery {
     /// when it was opened from the home screen. A single section shown for
     /// goldens scrolls instead, so one image holds all of it.
     fn section_page(&self, section: Section, has_back: bool) -> Element<Msg> {
-        if self.only.is_some() {
-            return VStack::new()
+        // The World board needs the space left on screen for its camera,
+        // so it does not page; nor does a single section shown for goldens.
+        let back = || {
+            HStack::new().child(
+                Button::new("All components")
+                    .variant(ButtonVariant::Ghost)
+                    .on_click(Msg::Home)
+                    .id("back"),
+            )
+        };
+        if self.only.is_some() || section == Section::World {
+            let mut page = VStack::new()
                 .gap(Space::S3)
                 .padding(Space::S6)
                 .is_scrollable(true)
-                .id(section.slug())
+                .id(section.slug());
+            if has_back {
+                page = page.child(back());
+            }
+            return page
                 .child(Heading::new(2, section.title()))
                 .child(self.section_body(section))
                 .into();
@@ -527,14 +559,7 @@ impl Gallery {
             .padding(Space::S6)
             .id(section.slug());
         if has_back {
-            page = page.child(
-                HStack::new().child(
-                    Button::new("All components")
-                        .variant(ButtonVariant::Ghost)
-                        .on_click(Msg::Home)
-                        .id("back"),
-                ),
-            );
+            page = page.child(back());
         }
         page.child(Heading::new(2, section.title()))
             .child(self.section_body(section))
@@ -558,6 +583,7 @@ impl Gallery {
             Section::TextInputs => self.text_inputs(),
             Section::Selectors => self.selectors(),
             Section::Thumbnails => self.thumbnails(),
+            Section::World => world::world(self.world_at.as_deref()),
         }
     }
 

@@ -21,6 +21,7 @@ mod pixel;
 mod runtime;
 pub mod testing;
 mod theme;
+pub mod world;
 
 pub use components::*;
 pub use element::{Element, Space};

@@ -52,9 +52,76 @@ impl ShadowKey {
         }
     }
 
+    /// How a large box's shadow is built from a small one: the mask of
+    /// `tile` with its center column repeated `extra.0` more times and its
+    /// center row `extra.1` more times. Boxes small enough to compute
+    /// directly have no extra. Every box of one size class and style shares
+    /// a tile, so tiles are few and cheap to keep.
+    pub fn tiling(&self) -> ShadowTiling {
+        let radius = self.radii().iter().fold(0.0f32, |a, &r| a.max(r));
+        let reach = radius
+            + 1.5 * f32::from_bits(self.blur)
+            + f32::from_bits(self.spread).abs()
+            + f32::from_bits(self.x)
+                .abs()
+                .max(f32::from_bits(self.y).abs());
+        // Half of the reduced size: everything a corner can influence, and margin.
+        let k = reach.ceil() as u32 + 4;
+        let side = 2 * k + 1;
+        if self.width <= side + 2 && self.height <= side + 2 {
+            return ShadowTiling {
+                tile: *self,
+                extra: (0, 0),
+            };
+        }
+        let tile = ShadowKey {
+            width: self.width.min(side),
+            height: self.height.min(side),
+            ..*self
+        };
+        ShadowTiling {
+            tile,
+            extra: (self.width - tile.width, self.height - tile.height),
+        }
+    }
+
+    /// The column and row of `mask` (this key's mask) that a tiled shadow
+    /// repeats: the center line of the box.
+    pub fn center(&self, mask: &ShadowMask) -> (i32, i32) {
+        (
+            (self.width / 2) as i32 - mask.x,
+            (self.height / 2) as i32 - mask.y,
+        )
+    }
+
     fn radii(&self) -> [f32; 4] {
         self.radii.map(f32::from_bits)
     }
+}
+
+/// See [`ShadowKey::tiling`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ShadowTiling {
+    pub tile: ShadowKey,
+    pub extra: (u32, u32),
+}
+
+/// Computes masks on another thread, for example every theme's shadow
+/// tiles at start. Results arrive in batches through the receiver.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn prewarm(
+    keys: Vec<ShadowKey>,
+) -> std::sync::mpsc::Receiver<Vec<(ShadowKey, Option<ShadowMask>)>> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        for chunk in keys.chunks(4) {
+            let batch = chunk.iter().map(|k| (*k, shadow_mask(k))).collect();
+            if tx.send(batch).is_err() {
+                return;
+            }
+        }
+    });
+    rx
 }
 
 /// Computes the mask for a key. Returns `None` when nothing is visible.
@@ -64,28 +131,15 @@ impl ShadowKey {
 /// column repeated. The result is the same, at a cost that does not grow
 /// with the box.
 pub fn shadow_mask(key: &ShadowKey) -> Option<ShadowMask> {
-    let radius = key.radii().iter().fold(0.0f32, |a, &r| a.max(r));
-    let reach = radius
-        + 1.5 * f32::from_bits(key.blur)
-        + f32::from_bits(key.spread).abs()
-        + f32::from_bits(key.x).abs().max(f32::from_bits(key.y).abs());
-    // Half of the reduced size: everything a corner can influence, and margin.
-    let k = reach.ceil() as u32 + 4;
-    let (rw, rh) = (2 * k + 1, 2 * k + 1);
-    if key.width <= rw + 2 && key.height <= rh + 2 {
+    let tiling = key.tiling();
+    if tiling.extra == (0, 0) {
         return direct_mask(key);
     }
-    let reduced = ShadowKey {
-        width: key.width.min(rw),
-        height: key.height.min(rh),
-        ..*key
-    };
+    let reduced = tiling.tile;
     let small = direct_mask(&reduced)?;
-    let (extra_w, extra_h) = (key.width - reduced.width, key.height - reduced.height);
+    let (extra_w, extra_h) = tiling.extra;
     let (w, h) = (small.width + extra_w, small.height + extra_h);
-    // Mask columns and rows of the reduced box's center line.
-    let cx = (reduced.width / 2) as i32 - small.x;
-    let cy = (reduced.height / 2) as i32 - small.y;
+    let (cx, cy) = reduced.center(&small);
     let source = |full: i32, center: i32, extra: u32| -> usize {
         if full <= center {
             full as usize

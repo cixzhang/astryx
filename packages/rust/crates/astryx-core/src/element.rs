@@ -193,6 +193,8 @@ pub(crate) enum Draw {
     Bitmap(&'static [&'static str], Color),
     Spinner(Color),
     Image(ImageDraw),
+    /// A sprite: square pixels, possibly playing frames.
+    Sprite(crate::world::SpriteDraw),
 }
 
 /// A registered image filling the node's box.
@@ -601,6 +603,12 @@ impl<Msg> BuildCx<Msg> {
     }
 
     /// Gives the next node an identity from an Astryx base `id`.
+    /// Keys the next node by a number, such as its slot in a list.
+    pub fn key_slot(&mut self, slot: u64) {
+        self.key = Some(slot);
+        self.name = None;
+    }
+
     pub fn key(&mut self, id: Option<&str>) {
         self.key = id.map(|id| fnv1a(id.as_bytes()));
         self.name = id.map(String::from);

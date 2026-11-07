@@ -111,13 +111,24 @@ void main() {
     float mode = v_params.x;
     vec4 color = v_color;
     float cov = 1.0;
+    // Fragments well inside a shape, away from its corners, skip the
+    // distance math: most of a large box is interior.
+    float rmax = max(max(v_radii.x, v_radii.y), max(v_radii.z, v_radii.w));
+    vec2 depth = v_half - abs(v_local) - rmax;
+    bool interior = min(depth.x, depth.y) > 0.5;
     if (mode < 0.5) {
-        cov = clamp(0.5 - sd(v_local, v_half, v_radii), 0.0, 1.0);
+        if (!interior) {
+            cov = clamp(0.5 - sd(v_local, v_half, v_radii), 0.0, 1.0);
+        }
     } else if (mode < 1.5) {
         float w = v_params.y;
-        float outer = sd(v_local, v_half, v_radii);
-        float inner = sd(v_local, v_half - w, max(v_radii - w, 0.0));
-        cov = clamp(0.5 - outer, 0.0, 1.0) * clamp(0.5 + inner, 0.0, 1.0);
+        if (interior && min(depth.x, depth.y) > w + 0.5) {
+            cov = 0.0;
+        } else {
+            float outer = sd(v_local, v_half, v_radii);
+            float inner = sd(v_local, v_half - w, max(v_radii - w, 0.0));
+            cov = clamp(0.5 - outer, 0.0, 1.0) * clamp(0.5 + inner, 0.0, 1.0);
+        }
     } else if (mode < 2.5) {
         cov = TEX(u_tex, v_uv).r;
     } else if (mode < 3.5) {
@@ -126,7 +137,10 @@ void main() {
         color = TEX(u_tex, v_uv) * v_color.a;
         cov = clamp(0.5 - sd(v_local, v_half, v_radii), 0.0, 1.0);
     }
-    float clip = clamp(0.5 - sd(v_pos - v_clip.xy, v_clip.zw, v_clip_radii), 0.0, 1.0);
+    float clip = 1.0;
+    if (v_params.z > 0.5) {
+        clip = clamp(0.5 - sd(v_pos - v_clip.xy, v_clip.zw, v_clip_radii), 0.0, 1.0);
+    }
     FRAG = color * (cov * clip);
 }
 "#;

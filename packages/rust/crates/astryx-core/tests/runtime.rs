@@ -1201,3 +1201,75 @@ fn on_focus_reports_each_focus_change_with_the_id_prop() {
     let last = rt.app().seen.last().cloned().flatten();
     assert_ne!(last.as_deref(), Some("two"));
 }
+
+struct Themed {
+    choice: ThemeChoice,
+    extra: bool,
+}
+
+impl App for Themed {
+    type Msg = ();
+    fn view(&self) -> Element<()> {
+        let mut stack = VStack::new()
+            .gap(Space::S2)
+            .child(Text::new("Hello"))
+            .child(Button::new("Go").on_click(()));
+        if self.extra {
+            stack = stack.child(Button::new("More").on_click(()));
+        }
+        stack.into()
+    }
+    fn update(&mut self, _: ()) -> Command {
+        Command::None
+    }
+    fn theme(&self) -> ThemeChoice {
+        self.choice
+    }
+}
+
+#[test]
+fn a_colors_only_switch_keeps_the_layout() {
+    let mut rt = Runtime::new(Themed {
+        choice: ThemeChoice::new(Theme::ASTRYX, Mode::Light),
+        extra: false,
+    });
+    draw(&mut rt, 400, 300);
+    assert!(rt.timings().laid_out, "the first frame lays out");
+    draw(&mut rt, 400, 300);
+    assert!(!rt.timings().laid_out, "nothing changed");
+    // Light to dark changes only colors.
+    rt.app_mut().choice = ThemeChoice::new(Theme::ASTRYX, Mode::Dark);
+    let dark = draw(&mut rt, 400, 300);
+    assert!(!rt.timings().laid_out, "colors only: layout kept");
+    let t = Theme::ASTRYX.dark;
+    assert_eq!(
+        dark.clear,
+        Color::from(t.color.background_body),
+        "repainted in the new colors"
+    );
+    let buttons = |rt: &Runtime<Themed>| {
+        a11y_nodes(&rt.accessibility().unwrap())
+            .into_iter()
+            .filter(|n| n.role == Role::Button)
+            .collect::<Vec<_>>()
+    };
+    assert!(buttons(&rt)[0].focused, "focus kept");
+    // A theme with other sizes lays out again.
+    // Text size, spacing, and control height all move this view's boxes.
+    let base = &Theme::ASTRYX.light;
+    let other = Theme::ALL.iter().copied().find(|th| {
+        let t = &th.light;
+        t.font.body.size != base.font.body.size
+            || t.space.s2 != base.space.s2
+            || t.size.element_md != base.size.element_md
+    });
+    let other = other.expect("a theme with other sizes");
+    rt.app_mut().choice = ThemeChoice::new(other, Mode::Dark);
+    draw(&mut rt, 400, 300);
+    assert!(rt.timings().laid_out, "{} has other sizes", other.name);
+    // So does a change of content.
+    rt.app_mut().extra = true;
+    draw(&mut rt, 400, 300);
+    assert!(rt.timings().laid_out);
+    assert_eq!(buttons(&rt).len(), 2);
+}

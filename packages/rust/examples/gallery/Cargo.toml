@@ -12,3 +12,4 @@ astryx-core.workspace = true
 [dev-dependencies]
 astryx-desktop = { path = "../../crates/astryx-desktop" }
 astryx-headless = { path = "../../crates/astryx-headless" }
+astryx-render-soft = { path = "../../crates/astryx-render-soft" }

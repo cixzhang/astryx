@@ -52,6 +52,18 @@ fn gl_matches_soft() {
             soft.render_list(&list, &frame);
             let expected = soft.rgba();
             let actual = gl.render(&list, &frame);
+            // A repeated frame reuses its layers and draws the same pixels.
+            // Scaled text uses the per-frame mask page, so its layers redraw.
+            let drawn = gl.renderer.last_stats().layers;
+            let again = gl.render(&list, &frame);
+            if name != "transforms" {
+                assert_eq!(
+                    gl.renderer.last_stats().layers,
+                    0,
+                    "{name}: {drawn} layers redrawn on an unchanged frame"
+                );
+            }
+            assert!(again == actual, "{name}: a cached layer changed the frame");
             let cmp = compare_rgba(&actual, &expected, frame.width, frame.height, 16);
             let total = (frame.width * frame.height) as usize;
             let share = cmp.differing as f64 / total as f64;

@@ -6,7 +6,7 @@ use crate::contract::{
     TextAlign, TextDirection, TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction, Semantics};
-use crate::layout::Layout;
+use crate::layout::{self, Layout};
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::{Direction, ThemeChoice};
 use crate::{a11y, focus, paged};
@@ -127,6 +127,9 @@ pub struct FrameTimings {
     pub layout: std::time::Duration,
     pub a11y: std::time::Duration,
     pub paint: std::time::Duration,
+    /// Whether the frame recomputed layout; a rebuild that changes only
+    /// colors, such as most theme and mode switches, keeps the last one.
+    pub laid_out: bool,
 }
 
 /// A stopwatch that reads zero where `Instant` is unavailable.
@@ -225,6 +228,8 @@ pub struct Runtime<A: App> {
     pagers: HashMap<u64, Pager>,
     /// The pager whose page has no focus stop, while focus rests on it.
     bare_page: Option<u64>,
+    /// The view was rebuilt since the last frame.
+    rebuilt: bool,
     /// The focus last reported to `App::on_focus`.
     reported_focus: Option<Option<u64>>,
     /// Each camera's offset (x, y), moving toward its target.
@@ -284,6 +289,7 @@ impl<A: App> Runtime<A> {
             pagers: HashMap::new(),
             bare_page: None,
             reported_focus: None,
+            rebuilt: false,
             cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
@@ -404,7 +410,7 @@ impl<A: App> Runtime<A> {
         }
         cx.end();
         self.animating = cx.animating;
-        self.nodes = cx.nodes;
+        let old = std::mem::replace(&mut self.nodes, cx.nodes);
         self.typed = None;
         // The app's root may shrink to the window, so a scrolling view inside
         // it scrolls instead of growing past the bottom edge.
@@ -419,9 +425,23 @@ impl<A: App> Runtime<A> {
                 self.popup = None;
             }
         }
-        self.layout = Some(Layout::new(&self.nodes));
         self.stale = false;
-        self.relayout = true;
+        self.rebuilt = true;
+        // A rebuild that changes only paint, such as a switch to a theme
+        // with the same sizes, keeps the layout it already has; one that
+        // changes a few boxes lays out only what they touch.
+        let change = match self.layout.as_mut() {
+            Some(layout) => layout.update(&old, &self.nodes),
+            None => layout::Change::Shape,
+        };
+        match change {
+            layout::Change::None => {}
+            layout::Change::Some => self.relayout = true,
+            layout::Change::Shape => {
+                self.layout = Some(Layout::new(&self.nodes));
+                self.relayout = true;
+            }
+        }
     }
 
     /// True when a spinner or sliding fill is inside the viewport and not
@@ -443,7 +463,12 @@ impl<A: App> Runtime<A> {
         };
         let viewport = Rect::new(0.0, 0.0, self.viewport.0, self.viewport.1);
         self.nodes.iter().enumerate().any(|(ix, node)| {
-            if !matches!(node.draw, Draw::Spinner(_)) && node.slide.is_none() {
+            let plays = match &node.draw {
+                Draw::Spinner(_) => true,
+                Draw::Sprite(s) => s.frames > 1,
+                _ => false,
+            };
+            if !plays && node.slide.is_none() {
                 return false;
             }
             let Some(mut visible) = layout.rects.get(ix).and_then(|&r| intersect(r, viewport))
@@ -1964,7 +1989,8 @@ impl<A: App> Surface for Runtime<A> {
             self.relayout = true;
         }
         self.timings.rebuild = watch.lap();
-        if self.relayout || viewport != self.viewport {
+        let laid_out = self.relayout || viewport != self.viewport;
+        if laid_out {
             self.viewport = viewport;
             self.layout
                 .as_mut()
@@ -1975,8 +2001,15 @@ impl<A: App> Surface for Runtime<A> {
                 .as_mut()
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
+        }
+        // New nodes need their page labels and focus stops even when the
+        // geometry they share with the old ones is kept.
+        if laid_out || std::mem::take(&mut self.rebuilt) {
             self.update_pagers();
             self.settle_focus();
+        }
+        self.timings.laid_out = laid_out;
+        if laid_out {
             // Only the same element stays in place; new focus is revealed.
             if let Some((old, _)) = anchor.filter(|&(_, id)| self.focused == Some(id)) {
                 self.keep_in_place(old);
@@ -2019,6 +2052,7 @@ impl<A: App> Surface for Runtime<A> {
             pressed: self.pressed,
             press_strength: self.highlight.strength(),
             time: self.time,
+            scale: frame.scale,
             caret,
             indicators,
             tooltip,

@@ -30,7 +30,7 @@ use astryx_raster::geom::{
     fit_radii, line_rect, path_segs, rect_px, snap_rect, width_px, Affine, PxRect, Seg,
 };
 use astryx_raster::path::{self, PathKey, PathStyle};
-use astryx_raster::shadow::{ShadowCache, ShadowKey};
+use astryx_raster::shadow::{shadow_mask, ShadowKey};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
 use glow::HasContext;
 
@@ -66,6 +66,16 @@ pub struct RenderStats {
     pub quads: usize,
     pub draw_calls: usize,
     pub layers: usize,
+    /// Glyphs rasterized during the frame (not prewarmed).
+    pub glyphs: usize,
+    /// Shadow masks computed during the frame.
+    pub shadows: usize,
+    /// Masks uploaded to textures during the frame.
+    pub uploads: usize,
+    /// Textures created during the frame.
+    pub textures: usize,
+    /// Time spent in texture uploads, part of `encode`.
+    pub upload_time: std::time::Duration,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -88,6 +98,22 @@ fn since(t: Option<Clock>) -> std::time::Duration {
 fn since(_: Option<Clock>) -> std::time::Duration {
     std::time::Duration::ZERO
 }
+
+/// Where a shadow tile's mask sits relative to its box, and the center
+/// column and row a stretched shadow repeats.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ShadowPlace {
+    x: i32,
+    y: i32,
+    w: u32,
+    h: u32,
+    cx: i32,
+    cy: i32,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+type ShadowPrewarm =
+    std::sync::mpsc::Receiver<Vec<(ShadowKey, Option<astryx_raster::shadow::ShadowMask>)>>;
 
 /// A rectangle in whole pixels: left, top, right, bottom.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -324,7 +350,13 @@ pub struct GlRenderer {
     white: glow::Texture,
     framebuffer: Option<glow::Framebuffer>,
     text: TextEngine,
-    shadows: ShadowCache,
+    /// Where each cached shadow mask sits relative to its box, so a mask
+    /// already in the atlas is never computed again.
+    shadow_places: HashMap<ShadowKey, Option<ShadowPlace>>,
+    /// Masks computed ahead of use on another thread, not yet uploaded.
+    prewarmed_shadows: HashMap<ShadowKey, Option<astryx_raster::shadow::ShadowMask>>,
+    #[cfg(not(target_arch = "wasm32"))]
+    shadow_prewarm: Option<ShadowPrewarm>,
     paths: HashMap<PathKey, Option<(i32, i32, u32, u32)>>,
     /// Paths drawn once, by the frame they were last drawn in. A path seen
     /// again in a later frame earns a place in the atlas; animated paths
@@ -333,6 +365,12 @@ pub struct GlRenderer {
     atlas: Atlas,
     layers: Vec<Layer>,
     layers_in_use: Vec<Layer>,
+    /// Layers drawn last frame, by a hash of their content. A layer whose
+    /// content did not change is composited again without redrawing it, so
+    /// steady frames switch framebuffers no more than needed; on tiled GPUs
+    /// each switch costs a full tile flush.
+    layer_cache: HashMap<u64, Layer>,
+    layer_cache_next: HashMap<u64, Layer>,
     frame: u64,
     frame_size: (i32, i32),
     targets: Vec<Target>,
@@ -396,7 +434,7 @@ impl GlRenderer {
                 glow::STATIC_DRAW,
             );
             let white = atlas::mask_texture(&gl, dialect, 1, 1, Some(&[255]));
-            Ok(GlRenderer {
+            let mut renderer = GlRenderer {
                 gl: Rc::new(gl),
                 dialect,
                 program,
@@ -406,12 +444,17 @@ impl GlRenderer {
                 white,
                 framebuffer: None,
                 text: TextEngine::new(fonts),
-                shadows: ShadowCache::default(),
+                shadow_places: HashMap::new(),
+                prewarmed_shadows: HashMap::new(),
+                #[cfg(not(target_arch = "wasm32"))]
+                shadow_prewarm: None,
                 paths: HashMap::new(),
                 paths_seen: HashMap::new(),
                 atlas: Atlas::default(),
                 layers: Vec::new(),
                 layers_in_use: Vec::new(),
+                layer_cache: HashMap::new(),
+                layer_cache_next: HashMap::new(),
                 frame: 0,
                 frame_size: (1, 1),
                 targets: Vec::new(),
@@ -425,7 +468,9 @@ impl GlRenderer {
                 grids: Vec::new(),
                 nearest: std::collections::HashSet::new(),
                 images: HashMap::new(),
-            })
+            };
+            renderer.warm_up();
+            Ok(renderer)
         }
     }
 
@@ -531,6 +576,36 @@ impl GlRenderer {
         }
     }
 
+    /// Uploads every glyph the text engine holds that is not on the GPU yet,
+    /// for example after a prewarm, so text first shown later costs no
+    /// upload. Returns the number of glyph pages in use.
+    /// Only glyphs of these text styles (each with its pixel grid, if any)
+    /// are uploaded.
+    pub fn preload_glyphs(
+        &mut self,
+        styles: &[(astryx_core::TextStyle, Option<f32>)],
+        scale: f32,
+    ) -> usize {
+        let sizes: Vec<f32> = styles
+            .iter()
+            .map(|(s, grid)| astryx_raster::text::glyph_size(s.size, scale, *grid))
+            .collect();
+        let mut glyphs = self.text.cached_glyphs();
+        glyphs.retain(|(k, _)| sizes.contains(&f32::from_bits(k.size)));
+        // By height, so shelves pack tightly; a run of one size stays close.
+        glyphs.sort_by_key(|(k, b)| (b.height, k.size, k.face, k.id, k.subpixel));
+        for (key, b) in glyphs {
+            let mk = MaskKey::Glyph(key);
+            if b.width == 0 || b.height == 0 || self.atlas.get(&mk).is_some() {
+                continue;
+            }
+            self.atlas
+                .preload(&self.gl, self.dialect, mk, b.width, b.height, &b.data);
+        }
+        self.atlas.flush(&self.gl, self.dialect);
+        self.atlas.pages()
+    }
+
     /// Timings and counts of the last frame.
     pub fn last_stats(&self) -> RenderStats {
         self.stats
@@ -580,6 +655,207 @@ impl GlRenderer {
             y1: (y + h as i32) as f32,
         };
         self.mask_area(area, region, color);
+    }
+
+    /// The atlas region and placement of a shadow mask, computing and
+    /// uploading it on first use.
+    fn shadow(&mut self, key: ShadowKey) -> Option<(Region, ShadowPlace)> {
+        let mk = MaskKey::Shadow(key);
+        if let (Some(place), Some(region)) = (self.shadow_places.get(&key), self.atlas.get(&mk)) {
+            return place.map(|p| (region, p));
+        }
+        let mask = match self.prewarmed_shadows.remove(&key) {
+            Some(mask) => mask,
+            None => {
+                self.stats.shadows += 1;
+                shadow_mask(&key)
+            }
+        };
+        let Some(mask) = mask else {
+            self.shadow_places.insert(key, None);
+            return None;
+        };
+        let (cx, cy) = key.center(&mask);
+        let place = ShadowPlace {
+            x: mask.x,
+            y: mask.y,
+            w: mask.width,
+            h: mask.height,
+            cx,
+            cy,
+        };
+        let region = self.atlas.insert(
+            &self.gl,
+            self.dialect,
+            mk,
+            mask.width,
+            mask.height,
+            &mask.data,
+        );
+        self.shadow_places.insert(key, Some(place));
+        Some((region, place))
+    }
+
+    /// Draws one shadow layer of the box `r` (frame pixels before the
+    /// transform `k`, `off`) from its shared tile: the tile's corners as
+    /// they are and its center line stretched along the box.
+    #[allow(clippy::too_many_arguments)]
+    fn draw_shadow(
+        &mut self,
+        key: ShadowKey,
+        r: &PxRect,
+        k: f32,
+        off: (f32, f32),
+        inset: bool,
+        radii: [f32; 4],
+        color: Color,
+    ) {
+        let tiling = key.tiling();
+        let Some((region, p)) = self.shadow(tiling.tile) else {
+            return;
+        };
+        let (ew, eh) = (tiling.extra.0 as i32, tiling.extra.1 as i32);
+        let map = |x: f32, y: f32| (x * k + off.0, y * k + off.1);
+        let (o0, o1) = map(r.x0 + p.x as f32, r.y0 + p.y as f32);
+        let reach = PxRect {
+            x0: o0,
+            y0: o1,
+            x1: o0 + (p.w as i32 + ew) as f32 * k,
+            y1: o1 + (p.h as i32 + eh) as f32 * k,
+        };
+        if !self.visible(IRect::outer(&reach)) {
+            return;
+        }
+        let hole = (!inset).then(|| {
+            let h = r.outset(-(rmax(radii) + 1.0));
+            let (x0, y0) = map(h.x0, h.y0);
+            let (x1, y1) = map(h.x1, h.y1);
+            PxRect { x0, y0, x1, y1 }
+        });
+        let [u0, v0, u1, v1] = region.uv;
+        let (du, dv) = ((u1 - u0) / p.w as f32, (v1 - v0) / p.h as f32);
+        // Spans along one axis: start and end in pixels of the full shadow,
+        // and the texels they show; the stretched span shows one texel.
+        let spans = |center: i32, extra: i32, size: i32| {
+            [
+                (0, center, 0.0, center as f32),
+                (
+                    center,
+                    center + extra + 1,
+                    center as f32 + 0.5,
+                    center as f32 + 0.5,
+                ),
+                (
+                    center + extra + 1,
+                    size + extra,
+                    center as f32 + 1.0,
+                    size as f32,
+                ),
+            ]
+        };
+        for (y0, y1, ty0, ty1) in spans(p.cy, eh, p.h as i32) {
+            if y1 <= y0 {
+                continue;
+            }
+            for (x0, x1, tx0, tx1) in spans(p.cx, ew, p.w as i32) {
+                if x1 <= x0 {
+                    continue;
+                }
+                let area = PxRect {
+                    x0: o0 + x0 as f32 * k,
+                    y0: o1 + y0 as f32 * k,
+                    x1: o0 + x1 as f32 * k,
+                    y1: o1 + y1 as f32 * k,
+                };
+                let uv = [u0 + tx0 * du, v0 + ty0 * dv, u0 + tx1 * du, v0 + ty1 * dv];
+                self.mask_hollow(area, Region { uv, ..region }, color, hole);
+            }
+        }
+    }
+
+    /// Starts computing the shadow tiles of these box styles on another
+    /// thread: corner radii in points and the layers drawn under them.
+    /// Tiles do not depend on box size, so any large box with these styles
+    /// later draws without computing a mask.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn prewarm_shadows(
+        &mut self,
+        styles: &[([f32; 4], Vec<astryx_core::ShadowLayer>)],
+        scale: f32,
+    ) {
+        let big = PxRect {
+            x0: 0.0,
+            y0: 0.0,
+            x1: 4096.0,
+            y1: 4096.0,
+        };
+        let mut keys: Vec<ShadowKey> = Vec::new();
+        for (radii, layers) in styles {
+            let radii = radii.map(|r| r * scale);
+            for layer in layers {
+                let tile = ShadowKey::new(&big, radii, layer, scale).tiling().tile;
+                if !keys.contains(&tile) {
+                    keys.push(tile);
+                }
+            }
+        }
+        self.shadow_prewarm = Some(astryx_raster::shadow::prewarm(keys));
+    }
+
+    /// A mask quad with a hole where the mask is known to be empty, so the
+    /// GPU shades only the ring around it. Outer shadows are empty under
+    /// their box, which is most of their area.
+    fn mask_hollow(&mut self, area: PxRect, region: Region, color: Color, hole: Option<PxRect>) {
+        let hole = hole.map(|h| PxRect {
+            x0: h.x0.ceil(),
+            y0: h.y0.ceil(),
+            x1: h.x1.floor(),
+            y1: h.y1.floor(),
+        });
+        let Some(h) = hole.filter(|h| {
+            !h.is_empty()
+                && h.x0 >= area.x0
+                && h.y0 >= area.y0
+                && h.x1 <= area.x1
+                && h.y1 <= area.y1
+        }) else {
+            return self.mask_area(area, region, color);
+        };
+        let [u0, v0, u1, v1] = region.uv;
+        let u = |x: f32| u0 + (x - area.x0) / area.width() * (u1 - u0);
+        let v = |y: f32| v0 + (y - area.y0) / area.height() * (v1 - v0);
+        for strip in [
+            PxRect {
+                x0: area.x0,
+                y0: area.y0,
+                x1: area.x1,
+                y1: h.y0,
+            },
+            PxRect {
+                x0: area.x0,
+                y0: h.y1,
+                x1: area.x1,
+                y1: area.y1,
+            },
+            PxRect {
+                x0: area.x0,
+                y0: h.y0,
+                x1: h.x0,
+                y1: h.y1,
+            },
+            PxRect {
+                x0: h.x1,
+                y0: h.y0,
+                x1: area.x1,
+                y1: h.y1,
+            },
+        ] {
+            if strip.is_empty() {
+                continue;
+            }
+            let uv = [u(strip.x0), v(strip.y0), u(strip.x1), v(strip.y1)];
+            self.mask_area(strip, Region { uv, ..region }, color);
+        }
     }
 
     fn mask_area(&mut self, area: PxRect, region: Region, color: Color) {
@@ -741,34 +1017,10 @@ impl GlRenderer {
         }
         let radii = fit_radii(radii, s, &r);
         let t = self.transform;
-        let map = |x: f32, y: f32| (x * t.scale + t.offset.x * s, y * t.scale + t.offset.y * s);
         for layer in layers.iter().rev() {
             let key = ShadowKey::new(&r, radii, layer, s);
-            let mk = MaskKey::Shadow(key);
-            let Some(mask) = self.shadows.get(&key) else {
-                continue;
-            };
-            let (x0, y0) = map(r.x0 + mask.x as f32, r.y0 + mask.y as f32);
-            let (x1, y1) = map(
-                r.x0 + (mask.x + mask.width as i32) as f32,
-                r.y0 + (mask.y + mask.height as i32) as f32,
-            );
-            let area = PxRect { x0, y0, x1, y1 };
-            if !self.visible(IRect::outer(&area)) {
-                continue;
-            }
-            let region = match self.atlas.get(&mk) {
-                Some(region) => region,
-                None => self.atlas.insert(
-                    &self.gl,
-                    self.dialect,
-                    mk,
-                    mask.width,
-                    mask.height,
-                    &mask.data,
-                ),
-            };
-            self.mask_area(area, region, layer.color);
+            let off = (t.offset.x * s, t.offset.y * s);
+            self.draw_shadow(key, &r, t.scale, off, layer.inset, radii, layer.color);
         }
     }
 
@@ -819,23 +1071,7 @@ impl GlRenderer {
                 // CSS paints the first layer on top.
                 for layer in layers.iter().rev() {
                     let key = ShadowKey::new(&r, radii, layer, s);
-                    let mk = MaskKey::Shadow(key);
-                    let Some(mask) = self.shadows.get(&key) else {
-                        continue;
-                    };
-                    let region = match self.atlas.get(&mk) {
-                        Some(region) => region,
-                        None => self.atlas.insert(
-                            &self.gl,
-                            self.dialect,
-                            mk,
-                            mask.width,
-                            mask.height,
-                            &mask.data,
-                        ),
-                    };
-                    let (x, y) = (r.x0 as i32 + mask.x, r.y0 as i32 + mask.y);
-                    self.mask(x, y, mask.width, mask.height, region, layer.color);
+                    self.draw_shadow(key, &r, 1.0, (0.0, 0.0), layer.inset, radii, layer.color);
                 }
             }
             DrawCmd::Text {
@@ -1196,18 +1432,24 @@ impl GlRenderer {
                 return;
             }
         }
-        let layer = self.layer((bounds.x1 - bounds.x0, bounds.y1 - bounds.y0));
-        let origin = (bounds.x0, bounds.y0);
-        let t = now();
-        self.draw_items(
-            &target.items,
-            Some(layer.framebuffer),
-            layer.size,
-            origin,
-            Some([0.0; 4]),
-        );
-        self.stats.flush += since(t);
-        self.stats.layers += 1;
+        let key = self.layer_key(&target.items, bounds);
+        let layer = match key.and_then(|k| self.layer_cache.remove(&k)) {
+            Some(layer) => layer,
+            None => {
+                let layer = self.layer((bounds.x1 - bounds.x0, bounds.y1 - bounds.y0));
+                let t = now();
+                self.draw_items(
+                    &target.items,
+                    Some(layer.framebuffer),
+                    layer.size,
+                    (bounds.x0, bounds.y0),
+                    Some([0.0; 4]),
+                );
+                self.stats.flush += since(t);
+                self.stats.layers += 1;
+                layer
+            }
+        };
         let (w, h) = (bounds.x1 - bounds.x0, bounds.y1 - bounds.y0);
         let (tw, th) = (layer.size.0 as f32, layer.size.1 as f32);
         let area = PxRect {
@@ -1228,7 +1470,14 @@ impl GlRenderer {
             border: 0.0,
             texture: Some(layer.texture),
         };
-        self.layers_in_use.push(layer);
+        match key {
+            Some(k) => {
+                if let Some(old) = self.layer_cache_next.insert(k, layer) {
+                    self.layers_in_use.push(old);
+                }
+            }
+            None => self.layers_in_use.push(layer),
+        }
         let saved = self.clip;
         self.clip = composite_clip;
         self.push(quad);
@@ -1236,6 +1485,44 @@ impl GlRenderer {
         if let Some(parent) = self.targets.last_mut() {
             parent.composited = true;
         }
+    }
+
+    /// A hash of everything a layer's pixels depend on, or `None` when they
+    /// use the per-frame mask page, whose content changes every frame.
+    fn layer_key(&self, items: &[Item], bounds: IRect) -> Option<u64> {
+        use std::hash::{Hash, Hasher};
+
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (bounds.x0, bounds.y0, bounds.x1, bounds.y1).hash(&mut h);
+        let bits = |h: &mut std::collections::hash_map::DefaultHasher, v: &[f32]| {
+            v.iter().for_each(|f| f.to_bits().hash(h))
+        };
+        for item in items {
+            let q = &item.quad;
+            if q.texture.is_some_and(|t| self.atlas.is_transient(t)) {
+                return None;
+            }
+            bits(
+                &mut h,
+                &[
+                    q.area.x0, q.area.y0, q.area.x1, q.area.y1, q.shape.x0, q.shape.y0, q.shape.x1,
+                    q.shape.y1,
+                ],
+            );
+            bits(&mut h, &q.radii);
+            bits(&mut h, &q.uv);
+            bits(&mut h, &[q.mode, q.border]);
+            q.color.hash(&mut h);
+            q.texture.hash(&mut h);
+            let c = &item.clip;
+            (c.scissor.x0, c.scissor.y0, c.scissor.x1, c.scissor.y1).hash(&mut h);
+            if let Some(shape) = c.shape {
+                let (a, b) = shape.encode();
+                bits(&mut h, &a);
+                bits(&mut h, &b);
+            }
+        }
+        Some(h.finish())
     }
 
     /// A pooled offscreen texture at least `size` large.
@@ -1271,6 +1558,7 @@ impl GlRenderer {
                 glow::UNSIGNED_BYTE,
                 glow::PixelUnpackData::Slice(None),
             );
+            self.stats.textures += 1;
             let framebuffer = gl.create_framebuffer().expect("layer framebuffer");
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(framebuffer));
             gl.framebuffer_texture_2d(
@@ -1300,6 +1588,7 @@ impl GlRenderer {
         clear: Option<[f32; 4]>,
     ) {
         let gl = self.gl.clone();
+        self.atlas.flush(&gl, self.dialect);
         // SAFETY: the context is current while rendering; buffers and
         // textures belong to it.
         unsafe {
@@ -1382,6 +1671,9 @@ impl GlRenderer {
                     s.x1 - s.x0,
                     s.y1 - s.y0,
                 );
+                if let Some(t) = texture {
+                    self.atlas.mark_used(*t);
+                }
                 gl.bind_texture(glow::TEXTURE_2D, Some(texture.unwrap_or(self.white)));
                 let base = (*first * 4) as i32 * STRIDE;
                 let float = |index: u32, offset: i32| {
@@ -1426,10 +1718,26 @@ impl GlRenderer {
             commands: list.commands.len(),
             ..RenderStats::default()
         };
-        self.shadows.begin_frame();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(rx) = &self.shadow_prewarm {
+            loop {
+                match rx.try_recv() {
+                    Ok(batch) => self.prewarmed_shadows.extend(batch),
+                    Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                    Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                        self.shadow_prewarm = None;
+                        break;
+                    }
+                }
+            }
+        }
         if self.atlas.begin_frame(&self.gl) {
             self.paths.clear();
             self.paths_seen.clear();
+            // New mask textures may reuse old names, so cached layers could match wrongly.
+            self.layers.extend(self.layer_cache.drain().map(|(_, l)| l));
+            self.shadow_places.clear();
         }
         let frame_no = self.frame;
         let gl = self.gl.clone();
@@ -1475,11 +1783,116 @@ impl GlRenderer {
             Some(clear),
         );
         self.layers.append(&mut self.layers_in_use);
+        // Cached layers not used this frame go back to the pool.
+        self.layers.extend(self.layer_cache.drain().map(|(_, l)| l));
+        std::mem::swap(&mut self.layer_cache, &mut self.layer_cache_next);
+        let frame_no = self.frame;
+        for l in self.layer_cache.values_mut() {
+            l.last_used = frame_no;
+        }
         let flushed = since(encoded);
         self.stats.encode = since(start)
             .saturating_sub(flushed)
             .saturating_sub(self.stats.flush);
         self.stats.flush += flushed;
+        self.stats.glyphs = self.text.take_rasterized();
+        self.stats.uploads = self.atlas.uploads;
+        self.stats.upload_time = self.atlas.upload_time;
+        self.stats.textures += self.atlas.textures;
+    }
+
+    /// Draws one small frame with every kind of draw offscreen, so the
+    /// driver compiles its shader variants and allocates its first textures
+    /// before the first real frame.
+    fn warm_up(&mut self) {
+        use astryx_core::{FontFamily, Point, Radii, Rect, ShadowLayer, TextStyle};
+        self.atlas.prepare(&self.gl, self.dialect);
+        let r = |x, y| Rect::new(x, y, 24.0, 24.0);
+        let red = Color::rgba(1.0, 0.0, 0.0, 1.0);
+        let list = DisplayList {
+            clear: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            commands: vec![
+                DrawCmd::Shadow {
+                    rect: r(4.0, 4.0),
+                    radii: Radii::all(6.0),
+                    layers: vec![ShadowLayer {
+                        x: 0.0,
+                        y: 2.0,
+                        blur: 4.0,
+                        spread: 0.0,
+                        inset: false,
+                        color: red,
+                    }],
+                },
+                DrawCmd::Rect {
+                    rect: r(4.0, 4.0),
+                    radii: Radii::all(6.0),
+                    fill: red,
+                    stroke: Some((red, 1.0)),
+                },
+                DrawCmd::Text {
+                    rect: r(0.0, 0.0),
+                    text: "A".into(),
+                    style: TextStyle {
+                        family: FontFamily::Body,
+                        size: 12.0,
+                        weight: 400,
+                        leading: 1.4,
+                        direction: None,
+                    },
+                    color: red,
+                    align: TextAlign::Start,
+                },
+                DrawCmd::PushClip {
+                    rect: r(2.0, 2.0),
+                    radii: Radii::all(8.0),
+                },
+                DrawCmd::PushClip {
+                    rect: r(12.0, 12.0),
+                    radii: Radii::all(8.0),
+                },
+                DrawCmd::PushOpacity(0.5),
+                DrawCmd::Rect {
+                    rect: r(8.0, 8.0),
+                    radii: Radii::all(0.0),
+                    fill: red,
+                    stroke: None,
+                },
+                DrawCmd::Rect {
+                    rect: r(10.0, 10.0),
+                    radii: Radii::all(0.0),
+                    fill: red,
+                    stroke: None,
+                },
+                DrawCmd::PopOpacity,
+                DrawCmd::PopClip,
+                DrawCmd::PopClip,
+                DrawCmd::Line {
+                    from: Point { x: 0.0, y: 0.0 },
+                    to: Point { x: 30.0, y: 20.0 },
+                    color: red,
+                    width: 1.0,
+                },
+            ],
+        };
+        let target = self.layer((64, 64));
+        let saved = self.framebuffer;
+        self.framebuffer = Some(target.framebuffer);
+        self.render_list(
+            &list,
+            &FrameInfo {
+                width: 64,
+                height: 64,
+                scale: 1.0,
+                dt: 0.0,
+            },
+        );
+        self.framebuffer = saved;
+        // SAFETY: the context is current while the renderer is created.
+        unsafe { self.gl.finish() };
+        self.layers.push(target);
+        self.layer_cache.clear();
+        self.frame = 0;
     }
 
     /// Reads back the frame just drawn as straight-alpha RGBA rows, top row
@@ -1526,7 +1939,18 @@ impl Drop for GlRenderer {
         // SAFETY: the objects belong to this context; the shell keeps it
         // alive until the renderer is gone.
         unsafe {
-            for l in self.layers.drain(..).chain(self.layers_in_use.drain(..)) {
+            let cached: Vec<Layer> = self
+                .layer_cache
+                .drain()
+                .chain(self.layer_cache_next.drain())
+                .map(|(_, l)| l)
+                .collect();
+            for l in self
+                .layers
+                .drain(..)
+                .chain(self.layers_in_use.drain(..))
+                .chain(cached)
+            {
                 gl.delete_texture(l.texture);
                 gl.delete_framebuffer(l.framebuffer);
             }
@@ -1542,6 +1966,10 @@ impl Drop for GlRenderer {
             gl.delete_program(self.program.program);
         }
     }
+}
+
+fn rmax(radii: [f32; 4]) -> f32 {
+    radii.iter().fold(0.0f32, |a, &r| a.max(r))
 }
 
 fn overlapping(items: &[Item]) -> bool {
@@ -1573,7 +2001,12 @@ fn push_vertices(out: &mut Vec<Vertex>, item: &Item) {
             half_uv: [half[0], half[1], u, v],
             radii: q.radii,
             color: q.color,
-            params: [q.mode, q.border, 0.0, 0.0],
+            params: [
+                q.mode,
+                q.border,
+                item.clip.shape.is_some() as u8 as f32,
+                0.0,
+            ],
             clip,
             clip_radii,
         });

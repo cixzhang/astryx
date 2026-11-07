@@ -24,19 +24,72 @@ pub(crate) struct Layout {
     pub camera: HashMap<u64, (f32, f32)>,
 }
 
+/// How a rebuilt node list differs from the last one, for layout.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Change {
+    /// Same boxes: only paint changed.
+    None,
+    /// Same tree, with some styles or text changed.
+    Some,
+    /// Another tree.
+    Shape,
+}
+
+/// The style taffy lays a node out with.
+fn taffy_style<Msg>(node: &Node<Msg>) -> taffy::Style {
+    let mut style = node.style.clone();
+    // Every node is a containing block for its absolute children, so an
+    // overlay sits on the component that owns it.
+    if style.position == taffy::Position::Static {
+        style.position = taffy::Position::Relative;
+    }
+    style
+}
+
 impl Layout {
+    /// Brings the tree up to date with `new`, which replaces `old`. When
+    /// the tree's shape is the same, changed styles are set and leaves whose
+    /// text changed are marked, so taffy lays out only what they touch.
+    pub fn update<Msg>(&mut self, old: &[Node<Msg>], new: &[Node<Msg>]) -> Change {
+        fn text<Msg>(n: &Node<Msg>) -> Option<(&str, crate::contract::TextStyle, Option<u32>)> {
+            match &n.draw {
+                Draw::Text(t) => Some((&t.text, t.style, t.max_lines)),
+                _ => None,
+            }
+        }
+        let same_shape = old.len() == new.len()
+            && self.ids.len() == new.len()
+            && old.iter().zip(new).all(|(a, b)| {
+                a.id == b.id && a.children == b.children && text(a).is_some() == text(b).is_some()
+            });
+        if !same_shape {
+            return Change::Shape;
+        }
+        let mut change = Change::None;
+        for (ix, (a, b)) in old.iter().zip(new).enumerate() {
+            if a.scroll != b.scroll || a.pager != b.pager || a.camera != b.camera {
+                change = Change::Some;
+            }
+            if a.style != b.style {
+                self.tree
+                    .set_style(self.ids[ix], taffy_style(b))
+                    .expect("taffy style");
+                change = Change::Some;
+            } else if text(a) != text(b) {
+                self.tree.mark_dirty(self.ids[ix]).expect("taffy node");
+                change = Change::Some;
+            }
+        }
+        change
+    }
+
     pub fn new<Msg>(nodes: &[Node<Msg>]) -> Self {
         let mut tree = TaffyTree::with_capacity(nodes.len());
         let mut ids = vec![NodeId::new(0); nodes.len()];
         // Children follow their parents, so building back to front sees
         // every child before its parent.
         for (ix, node) in nodes.iter().enumerate().rev() {
-            let mut style = node.style.clone();
-            // Every node is a containing block for its absolute children, so
-            // an overlay sits on the component that owns it.
-            if style.position == taffy::Position::Static {
-                style.position = taffy::Position::Relative;
-            }
+            let style = taffy_style(node);
             ids[ix] = if node.children.is_empty() {
                 match node.draw {
                     Draw::Text(_) => tree.new_leaf_with_context(style, ix as u32),

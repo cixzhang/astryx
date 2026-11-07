@@ -21,6 +21,8 @@ pub(crate) struct PaintState {
     pub press_strength: f32,
     /// Seconds since the runtime started, for spinners.
     pub time: f32,
+    /// Device pixels per point, for sprites on whole device pixels.
+    pub scale: f32,
     pub caret: Option<Caret>,
     /// Scroll indicators, drawn above everything.
     pub indicators: Vec<Indicator>,
@@ -323,6 +325,31 @@ fn paint_node<Msg>(
                     out.push(image.clone());
                     out.push(DrawCmd::PopClip);
                 }
+            }
+        }
+        (Draw::Sprite(sprite), grid) => {
+            // Square pixels on whole units: the theme's cells, or else
+            // device pixels, where the grid also turns off smoothing.
+            let unit = grid.unwrap_or(1.0 / state.scale.max(0.01));
+            let snap = |v: f32| (v / unit).round() * unit;
+            let (x0, y0) = (snap(rect.x), snap(rect.y));
+            let r = Rect::new(
+                x0,
+                y0,
+                (snap(rect.x + rect.width) - x0).max(unit),
+                (snap(rect.y + rect.height) - y0).max(unit),
+            );
+            if grid.is_none() {
+                out.push(DrawCmd::PushPixelGrid { cell: unit });
+            }
+            out.push(DrawCmd::Image {
+                rect: r,
+                radii: Radii::default(),
+                image: sprite.image_at(state.time),
+                fit: crate::contract::ImageFit::Fill,
+            });
+            if grid.is_none() {
+                out.push(DrawCmd::PopPixelGrid);
             }
         }
         (Draw::Image(i), None) => out.push(DrawCmd::Image {

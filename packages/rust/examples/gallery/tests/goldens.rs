@@ -201,3 +201,18 @@ fn brick_pages() {
         assert_golden(&png, dir.join(name), TOLERANCE);
     }
 }
+
+/// The World board at Brick size, after walking focus onto it: the hero
+/// stands by the focused thing and the camera keeps both in view.
+#[test]
+fn brick_world() {
+    use Input::Down;
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
+    let gallery = Gallery {
+        page: Some(Section::World),
+        ..Gallery::new()
+    };
+    let mut rt = astryx_gallery::runtime(gallery);
+    let png = render_png(&mut rt, 1024, 768, 2.0, &[Down, Down, Down, Down, Down]);
+    assert_golden(&png, dir.join("brick-world.png"), TOLERANCE);
+}
