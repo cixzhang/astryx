@@ -1,0 +1,10 @@
+[package]
+name = "astryx-raster"
+description = "What every Astryx renderer shares: the text engine, pixel-snapped geometry, and CSS box-shadow masks"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+swash = "0.2.10"

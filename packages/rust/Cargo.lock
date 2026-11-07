@@ -220,11 +220,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "astryx-raster"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "swash",
+]
+
+[[package]]
 name = "astryx-render-gl"
 version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-headless",
+ "astryx-raster",
  "astryx-render-soft",
  "femtovg",
  "glow",
@@ -236,7 +245,7 @@ name = "astryx-render-soft"
 version = "0.1.0"
 dependencies = [
  "astryx-core",
- "swash",
+ "astryx-raster",
  "tiny-skia 0.12.0",
 ]
 

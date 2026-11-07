@@ -338,14 +338,13 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 self.last_tree = Some(tree);
             }
             accesskit_winit::WindowEvent::ActionRequested(request) => {
-                // The contract can only activate the focused element, so a click on
-                // that element confirms it. Other targets are ignored.
-                let focused = self.surface.accessibility().and_then(|t| find_focused(&t));
-                if request.action == accesskit::Action::Click
-                    && focused == Some(request.target_node.0)
-                {
-                    self.send(event_loop, Input::A, InputPhase::Pressed);
-                    self.send(event_loop, Input::A, InputPhase::Released);
+                if let Some((id, action)) = a11y::action(&request) {
+                    if self.surface.a11y_action(id, action) == Command::Quit {
+                        event_loop.exit();
+                    }
+                    if let Some(gpu) = &self.gpu {
+                        gpu.window.request_redraw();
+                    }
                 }
             }
             accesskit_winit::WindowEvent::AccessibilityDeactivated => {}
@@ -385,11 +384,4 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
         }
         event_loop.set_control_flow(ControlFlow::Wait);
     }
-}
-
-fn find_focused(node: &A11yNode) -> Option<u64> {
-    if node.focused {
-        return Some(node.id);
-    }
-    node.children.iter().find_map(find_focused)
 }

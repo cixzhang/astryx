@@ -1,9 +1,10 @@
 //! Bridges the Astryx [`A11yNode`] tree to AccessKit.
 
 use accesskit::{
-    Action, Node, NodeId, Rect, Role as AkRole, Toggled, TreeId, TreeInfo, TreeUpdate,
+    Action, ActionRequest, Node, NodeId, Rect, Role as AkRole, Toggled, TreeId, TreeInfo,
+    TreeUpdate,
 };
-use astryx_core::{A11yNode, Role};
+use astryx_core::{A11yAction, A11yNode, Role};
 
 /// The id of the window node that holds the app's tree. App ids never use it.
 pub const WINDOW_ID: NodeId = NodeId(u64::MAX);
@@ -48,7 +49,12 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
     if node.disabled {
         ak.set_disabled();
     }
-    if matches!(node.role, Role::Button | Role::Switch | Role::Checkbox) && !node.disabled {
+    if matches!(
+        node.role,
+        Role::Button | Role::Switch | Role::Checkbox | Role::TextInput
+    ) && !node.disabled
+    {
+        ak.add_action(Action::Focus);
         ak.add_action(Action::Click);
     }
     if node.focused {
@@ -84,6 +90,19 @@ pub fn tree_update(root: Option<&A11yNode>, title: &str, scale: f64) -> TreeUpda
         tree_id: TreeId::ROOT,
         focus: focus.unwrap_or(WINDOW_ID),
     }
+}
+
+/// The Astryx action for an AccessKit request, if the contract has one.
+pub fn action(request: &ActionRequest) -> Option<(u64, A11yAction)> {
+    if request.target_node == WINDOW_ID {
+        return None;
+    }
+    let action = match request.action {
+        Action::Click => A11yAction::Activate,
+        Action::Focus => A11yAction::Focus,
+        _ => return None,
+    };
+    Some((request.target_node.0, action))
 }
 
 #[cfg(test)]
@@ -148,6 +167,26 @@ mod tests {
             .unwrap()
             .1;
         assert_eq!(group.children(), &[NodeId(2), NodeId(3)]);
+    }
+
+    #[test]
+    fn click_and_focus_requests_map_to_actions() {
+        let request = |action, node| ActionRequest {
+            action,
+            target_tree: TreeId::ROOT,
+            target_node: node,
+            data: None,
+        };
+        assert_eq!(
+            action(&request(Action::Click, NodeId(7))),
+            Some((7, A11yAction::Activate))
+        );
+        assert_eq!(
+            action(&request(Action::Focus, NodeId(7))),
+            Some((7, A11yAction::Focus))
+        );
+        assert_eq!(action(&request(Action::ScrollUp, NodeId(7))), None);
+        assert_eq!(action(&request(Action::Click, WINDOW_ID)), None);
     }
 
     #[test]

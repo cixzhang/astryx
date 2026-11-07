@@ -2,8 +2,8 @@
 //! into the current OpenGL ES 2/3 or WebGL2 context.
 //!
 //! Text and shadows go through the same code as the CPU renderer: glyphs are
-//! shaped and rasterized by [`astryx_render_soft::text`] and shadow masks
-//! come from [`astryx_render_soft::shadow`]; this renderer uploads them as
+//! shaped and rasterized by [`astryx_raster::text`] and shadow masks
+//! come from [`astryx_raster::shadow`]; this renderer uploads them as
 //! textures and caches them. Vector shapes, rounded clips, and opacity
 //! groups use femtovg directly. So layout is identical and pixels match the
 //! CPU renderer closely.
@@ -11,11 +11,11 @@
 use std::collections::HashMap;
 
 use astryx_core::{Color, DisplayList, DrawCmd, FrameInfo, Renderer, TextMeasure};
-use astryx_render_soft::geom::{
+use astryx_raster::geom::{
     border_ring, fit_radii, path_segs, rounded_rect, snap_line, snap_rect, snap_width, PxRect, Seg,
 };
-use astryx_render_soft::shadow::{ShadowCache, ShadowKey};
-use astryx_render_soft::text::{GlyphBitmap, GlyphDraw, GlyphKey, GlyphRasterizer, TextEngine};
+use astryx_raster::shadow::{ShadowCache, ShadowKey};
+use astryx_raster::text::{GlyphBitmap, GlyphDraw, GlyphKey, GlyphRasterizer, TextEngine};
 use femtovg::imgref::Img;
 use femtovg::renderer::OpenGl;
 use femtovg::rgb::FromSlice;

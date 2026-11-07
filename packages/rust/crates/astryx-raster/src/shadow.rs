@@ -9,9 +9,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use astryx_core::ShadowLayer;
-use tiny_skia::{FillRule, Mask, PathBuilder, Transform};
 
-use crate::geom::{rounded_rect, spread_radius, PxRect, Seg};
+use crate::geom::{spread_radius, PxRect};
 
 /// Coverage of one shadow layer, positioned relative to the top left of the
 /// pixel-snapped box that casts it.
@@ -141,20 +140,68 @@ fn to_u8(v: f32) -> u8 {
 }
 
 /// Antialiased coverage of a rounded rectangle in a `w`×`h` buffer whose top
-/// left sits at (`x0`, `y0`).
+/// left sits at (`x0`, `y0`). Straight edges get the exact pixel overlap;
+/// corners use the distance from each pixel center to the arc.
 fn coverage_u8(rect: &PxRect, radii: [f32; 4], x0: i32, y0: i32, w: u32, h: u32) -> Vec<u8> {
-    let mut mask = Mask::new(w, h).expect("non-empty mask");
-    let mut segs = Vec::new();
-    rounded_rect(rect, radii, &mut segs);
-    if let Some(path) = to_skia_path(&segs) {
-        mask.fill_path(
-            &path,
-            FillRule::Winding,
-            true,
-            Transform::from_translate(-x0 as f32, -y0 as f32),
-        );
+    let overlap = |lo: f32, hi: f32, p: f32| (hi.min(p + 1.0) - lo.max(p)).clamp(0.0, 1.0);
+    let cols: Vec<f32> = (0..w)
+        .map(|c| overlap(rect.x0, rect.x1, (x0 + c as i32) as f32))
+        .collect();
+    let mut out = vec![0u8; (w * h) as usize];
+    let [tl, tr, br, bl] = radii;
+    for row in 0..h {
+        let py = (y0 + row as i32) as f32;
+        let cy = overlap(rect.y0, rect.y1, py);
+        if cy == 0.0 {
+            continue;
+        }
+        let center_y = py + 0.5;
+        for col in 0..w {
+            let mut c = cols[col as usize] * cy;
+            if c == 0.0 {
+                continue;
+            }
+            let center_x = (x0 + col as i32) as f32 + 0.5;
+            let corner = |r: f32, ax: f32, ay: f32, inside_x: bool, inside_y: bool| {
+                if r > 0.0 && inside_x && inside_y {
+                    (r + 0.5 - (center_x - ax).hypot(center_y - ay)).clamp(0.0, 1.0)
+                } else {
+                    1.0
+                }
+            };
+            c = c
+                .min(corner(
+                    tl,
+                    rect.x0 + tl,
+                    rect.y0 + tl,
+                    center_x < rect.x0 + tl,
+                    center_y < rect.y0 + tl,
+                ))
+                .min(corner(
+                    tr,
+                    rect.x1 - tr,
+                    rect.y0 + tr,
+                    center_x > rect.x1 - tr,
+                    center_y < rect.y0 + tr,
+                ))
+                .min(corner(
+                    br,
+                    rect.x1 - br,
+                    rect.y1 - br,
+                    center_x > rect.x1 - br,
+                    center_y > rect.y1 - br,
+                ))
+                .min(corner(
+                    bl,
+                    rect.x0 + bl,
+                    rect.y1 - bl,
+                    center_x < rect.x0 + bl,
+                    center_y > rect.y1 - bl,
+                ));
+            out[(row * w + col) as usize] = to_u8(c);
+        }
     }
-    mask.take()
+    out
 }
 
 fn coverage(
@@ -177,21 +224,6 @@ fn coverage(
             }
         })
         .collect()
-}
-
-/// Converts shared segments to a tiny-skia path.
-pub fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
-    let mut pb = PathBuilder::new();
-    for seg in segs {
-        match *seg {
-            Seg::Move(x, y) => pb.move_to(x, y),
-            Seg::Line(x, y) => pb.line_to(x, y),
-            Seg::Quad(a, b, x, y) => pb.quad_to(a, b, x, y),
-            Seg::Cubic(a, b, c, d, x, y) => pb.cubic_to(a, b, c, d, x, y),
-            Seg::Close => pb.close(),
-        }
-    }
-    pb.finish()
 }
 
 /// Gaussian blur with standard deviation `sigma`, edges clamped. Large blurs
@@ -387,6 +419,25 @@ mod tests {
         assert!(at(&m, 20, 0) > 100);
         assert!(at(&m, 20, 19) < 40);
         assert!(at(&m, 20, 10) < 3);
+    }
+
+    #[test]
+    fn coverage_is_exact_on_edges_and_round_in_corners() {
+        let r = PxRect {
+            x0: 0.0,
+            y0: 0.0,
+            x1: 20.0,
+            y1: 10.5,
+        };
+        let c = coverage_u8(&r, [8.0, 0.0, 0.0, 0.0], 0, 0, 20, 11);
+        assert_eq!(c[5 * 20 + 10], 255);
+        assert_eq!(c[10 * 20 + 10], 128);
+        assert_eq!(c[19], 255);
+        assert_eq!(c[0], 0);
+        // Halfway along the arc the edge crosses the pixel center.
+        let (ax, ay) = (8.0 - 8.0 * 0.5f32.sqrt(), 8.0 - 8.0 * 0.5f32.sqrt());
+        let v = c[ay as usize * 20 + ax as usize];
+        assert!((40..=230).contains(&v), "{v}");
     }
 
     #[test]

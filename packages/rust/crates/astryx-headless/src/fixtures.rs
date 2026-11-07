@@ -3,8 +3,9 @@
 //! use these instead of a real app.
 
 use astryx_core::{
-    A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, Input, InputPhase,
-    PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface, TextAlign, TextMeasure, TextStyle,
+    A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, Input,
+    InputPhase, PathCmd, Point, Radii, Rect, Role, ShadowLayer, Surface, TextAlign, TextMeasure,
+    TextStyle,
 };
 
 /// Logical size every fixture is designed for.
@@ -758,6 +759,18 @@ impl Surface for FixtureSurface {
     fn wants_frames(&self) -> bool {
         false
     }
+
+    fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
+        // Accessibility ids 3..=6 are the gallery controls in focus order.
+        if self.name != "gallery" || !(3..=6).contains(&id) {
+            return Command::None;
+        }
+        self.focus = (id - 3) as usize;
+        if action == A11yAction::Activate && self.focus == 2 {
+            self.toggled = !self.toggled;
+        }
+        Command::None
+    }
 }
 
 #[cfg(test)]
@@ -802,6 +815,23 @@ mod tests {
             }
             assert_eq!(depth, 0, "{name}");
         }
+    }
+
+    #[test]
+    fn accessibility_actions_focus_and_activate() {
+        let mut s = FixtureSurface::new("gallery").unwrap();
+        s.a11y_action(5, A11yAction::Activate);
+        let tree = s.accessibility().unwrap();
+        let switch = tree
+            .children
+            .iter()
+            .find(|n| n.role == Role::Switch)
+            .unwrap();
+        assert!(switch.focused);
+        assert_eq!(switch.checked, Some(true));
+        s.a11y_action(4, A11yAction::Focus);
+        let tree = s.accessibility().unwrap();
+        assert!(tree.children.iter().find(|n| n.id == 4).unwrap().focused);
     }
 
     #[test]

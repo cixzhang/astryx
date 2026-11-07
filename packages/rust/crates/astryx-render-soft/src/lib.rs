@@ -2,24 +2,36 @@
 //! with `tiny-skia`, deterministically, for headless tests, screenshots, and
 //! screens without a GPU.
 //!
-//! It also hosts what every Astryx renderer shares so their pixels and
-//! layout agree: the [`text`] engine, pixel-snapped [`geom`]etry, and CSS
-//! [`shadow`] masks.
-
-pub mod geom;
-pub mod shadow;
-pub mod text;
+//! Text, pixel snapping, and shadow masks come from [`astryx_raster`], the
+//! same code the GPU renderer uses.
 
 use astryx_core::{Color, DisplayList, DrawCmd, FrameInfo, Renderer, TextMeasure};
-use tiny_skia::{FillRule, LineCap, LineJoin, Mask, Paint, Pixmap, PixmapPaint, Stroke, Transform};
+use tiny_skia::{
+    FillRule, LineCap, LineJoin, Mask, Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform,
+};
 
+pub use astryx_raster;
 pub use tiny_skia;
 
-use geom::{
+use astryx_raster::geom::{
     border_ring, fit_radii, path_segs, rounded_rect, snap_line, snap_rect, snap_width, PxRect, Seg,
 };
-use shadow::{to_skia_path, ShadowCache, ShadowKey};
-use text::{GlyphDraw, GlyphRasterizer, TextEngine};
+use astryx_raster::shadow::{ShadowCache, ShadowKey};
+use astryx_raster::text::{GlyphDraw, GlyphRasterizer, TextEngine};
+
+fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
+    let mut pb = PathBuilder::new();
+    for seg in segs {
+        match *seg {
+            Seg::Move(x, y) => pb.move_to(x, y),
+            Seg::Line(x, y) => pb.line_to(x, y),
+            Seg::Quad(a, b, x, y) => pb.quad_to(a, b, x, y),
+            Seg::Cubic(a, b, c, d, x, y) => pb.cubic_to(a, b, c, d, x, y),
+            Seg::Close => pb.close(),
+        }
+    }
+    pb.finish()
+}
 
 /// A color as premultiplied 8-bit channels.
 fn premultiplied(c: Color) -> [u8; 4] {

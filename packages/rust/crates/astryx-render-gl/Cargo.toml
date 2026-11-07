@@ -7,10 +7,11 @@ version.workspace = true
 
 [dependencies]
 astryx-core.workspace = true
-astryx-render-soft = { path = "../astryx-render-soft" }
+astryx-raster = { path = "../astryx-raster" }
 femtovg = { version = "0.28.0", default-features = false }
 glow = "0.18.0"
 
 [dev-dependencies]
 astryx-headless = { path = "../astryx-headless" }
+astryx-render-soft = { path = "../astryx-render-soft" }
 glutin = { version = "0.32.3", default-features = false, features = ["egl"] }

@@ -26,3 +26,7 @@ astryx-headless = { path = "../astryx-headless" }
 [[test]]
 name = "window_smoke"
 harness = false
+
+[[test]]
+name = "window_keys"
+harness = false
