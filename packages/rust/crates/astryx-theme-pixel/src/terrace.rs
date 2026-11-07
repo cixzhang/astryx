@@ -1,8 +1,9 @@
 //! Terrace: the pixel theme drawn only from [`PALETTE`]. Garden's sizes,
 //! type, and shapes, with every color a palette swatch: UI ink is `ink`,
-//! UI paper is `paper` and `paper-2`, the accent is `green-2`, errors are
-//! `rose-2`, and dark mode sits on `soil-4`, `ink`, and `blue-3` with
-//! `paper` text. Shadows and dark lines are `ink`, never black.
+//! UI paper is `paper` and `paper-2`, the UI accent is `green-2` in light
+//! and `green-1` with `ink` text in dark, errors are `rose-2`, and dark
+//! mode sits on `soil-4`, `ink`, and `blue-3` with `paper` text. Shadows
+//! and dark lines are `ink`, never black.
 
 use crate::palette::PALETTE;
 use crate::{colors_mut, Rgba};
@@ -39,9 +40,11 @@ pub(crate) const ROLES: &[(&str, &str, &str)] = &[
     ("iconSuccess", "green-2", "green-1"),
     ("iconWarning", "wood-2", "straw-2"),
     ("iconInfo", "blue-3", "water-2"),
-    ("accent", "green-2", "green-2"),
-    ("accentMuted", "green-2", "green-2"),
-    ("onAccent", "paper", "paper"),
+    // Green-2 is too dark to stand out on the dark surfaces, so dark mode
+    // takes the lighter green-1 with ink text on it.
+    ("accent", "green-2", "green-1"),
+    ("accentMuted", "green-2", "green-1"),
+    ("onAccent", "paper", "ink"),
     ("border", "ink", "stone-2"),
     ("borderEmphasized", "ink", "stone-2"),
     ("borderError", "ink-plum", "rose-2"),
@@ -253,11 +256,8 @@ mod tests {
                 3.0,
             ),
         ];
-        // Pairs palette v1 cannot meet, with the ratio they reach.
-        let known: [(&str, &str, f32); 2] = [
-            ("light", "on-accent text on accent", 4.09),
-            ("dark", "on-accent text on accent", 4.09),
-        ];
+        // Pairs the palette cannot meet, with the ratio they reach.
+        let known: [(&str, &str, f32); 0] = [];
         let mut failing = Vec::new();
         for (mode, tokens) in [("light", &t.light), ("dark", &t.dark)] {
             for (name, fg, bg, need) in pairs {

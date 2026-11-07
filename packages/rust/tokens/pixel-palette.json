@@ -1,5 +1,5 @@
 {
- "name": "palette v1.1",
+ "name": "palette v1.2",
  "swatches": [
   {
    "name": "ink",
@@ -111,7 +111,7 @@
   },
   {
    "name": "green-2",
-   "rgb": "#1F8E5F"
+   "rgb": "#1B7D53"
   },
   {
    "name": "teal-1",

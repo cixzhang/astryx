@@ -24,9 +24,10 @@ which checks names and colors and writes the tokens file.
 - **Terrace** (`PixelTheme::Terrace`, the default) is the theme on that
   palette: Garden's sizes, type, and shapes with every color a swatch, or a
   swatch at partial alpha (overlays, muted fills, shadows). UI ink is
-  `ink`, paper is `paper` and `paper-2`, the accent is `green-2`, errors are
-  `rose-2`, shadows are `ink`, and dark mode sits on `soil-4` and `ink` with
-  `paper` text. A test fails on any off-palette token.
+  `ink`, paper is `paper` and `paper-2`, the UI accent is `green-2` in
+  light and `green-1` with `ink` text in dark, errors are `rose-2`, shadows
+  are `ink`, and dark mode sits on `soil-4` and `ink` with `paper` text. A
+  test fails on any off-palette token.
 - **The older themes** (garden, gameboy, nes, c64, pico8) predate the
   palette and keep their colors; they are not checked.
 - **World art.** `PALETTE.register` and `PALETTE.sprite_sheet` take art
@@ -51,15 +52,14 @@ Contrast of Terrace text and controls against WCAG AA, checked by a test:
 | Error text on body, on surface | 9.89, 12.36 (ink-plum) | 7.12, 6.01 (rose-2) |
 | Text on error fill (ink on rose-2) | 6.01 | 6.01 |
 | Text on warning fill (ink on straw-2) | 11.00 | 11.00 |
-| **Text on accent (paper on green-2)** | **4.09, fails** | **4.09, fails** |
-| Accent control on body, on surface (3:1) | 3.27, 4.09 | 4.11, 3.47 |
+| Text on accent (paper on green-2; ink on green-1) | 5.07 | 5.88 |
+| Accent control on body, on surface (3:1) | 4.06, 5.07 | 6.96, 5.88 |
 
-Two choices follow from the palette. Rose text on paper reads at 1.9:1, so
-light-mode error text, icons, and borders are `ink-plum` and `rose-2`
-stays the error fill. No palette text color reaches 4.5:1 on `green-2`
-(paper is 4.09, ink 3.47), so primary buttons pass only the large-text
-level; a `green-2` a little darker, such as `#1b7d53`, would pass with
-paper text.
+Rose text on paper reads at 1.9:1, so light-mode error text, icons, and
+borders are `ink-plum`, and `rose-2` stays the error fill. Palette v1.2
+darkens `green-2` to `#1b7d53` so paper text on primary buttons passes.
+That green is too dark for the dark surfaces (2.8:1 on `ink`), so dark
+mode's accent is `green-1` with `ink` text on it. Every pair passes.
 
 ## The one idea
 
