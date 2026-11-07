@@ -28,6 +28,11 @@ pub(crate) struct PaintState {
     pub tooltip: Option<Tooltip>,
     /// Transforms by node index: the press scale and moving nodes on their way.
     pub transforms: HashMap<usize, Transform>,
+    /// The band each resting pager shows (top and bottom, from its top
+    /// edge), by node index.
+    pub page_clips: HashMap<usize, (f32, f32)>,
+    /// Page indicators, drawn after content.
+    pub page_marks: Vec<DrawCmd>,
 }
 
 /// A node's transform: scale about `origin`, then translate.
@@ -148,6 +153,7 @@ pub(crate) fn paint<Msg>(
         };
         paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
     }
+    list.commands.extend(state.page_marks.iter().cloned());
     list.commands.extend(overlay);
     let grid = nodes.first().and_then(|n| n.grid);
     if let Some(tip) = &state.tooltip {
@@ -469,13 +475,26 @@ fn paint_node<Msg>(
         (None, Some(_)) => Some(Radii::default()),
         (None, None) => None,
     };
+    // A resting pager shows its page only, never the top of the next.
+    let clip_rect = match state.page_clips.get(&ix) {
+        Some(&(top, bottom)) => Rect::new(
+            rect.x,
+            rect.y + top,
+            rect.width,
+            bottom.min(rect.height) - top,
+        ),
+        None => rect,
+    };
     if let Some(radii) = clip {
-        out.push(DrawCmd::PushClip { rect, radii });
+        out.push(DrawCmd::PushClip {
+            rect: clip_rect,
+            radii,
+        });
     }
     let inner = Ctx {
         owner,
-        viewport: if node.scroll.is_some() {
-            Some(rect)
+        viewport: if node.scroll.is_some() || node.camera {
+            Some(clip_rect)
         } else {
             ctx.viewport
         },

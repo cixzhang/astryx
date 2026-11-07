@@ -3,6 +3,7 @@
 //! last action. The theme selector and the dark mode switch at the top
 //! change the theme at run time.
 
+use astryx_core::paged::Paged;
 use astryx_core::*;
 
 pub mod images;
@@ -476,7 +477,16 @@ impl Gallery {
 
     /// Every section as a row; A opens one.
     fn home(&self) -> Element<Msg> {
-        let mut list = VStack::new().gap(Space::S0_5);
+        // Rows go straight into the pager, so a page breaks between rows.
+        let mut list = Paged::new()
+            .gap(Space::S0_5)
+            .padding(Space::S6)
+            .id("home")
+            .child(
+                VStack::new()
+                    .padding_block_end(Space::S2)
+                    .child(Heading::new(2, "Components")),
+            );
         for section in Section::ALL {
             list = list.child(
                 ListItem::new(section.title())
@@ -495,24 +505,26 @@ impl Gallery {
                     .id(section.slug()),
             );
         }
-        VStack::new()
-            .gap(Space::S3)
-            .padding(Space::S6)
-            .is_scrollable(true)
-            // Its own identity keeps its scroll position apart from the pages'.
-            .id("home")
-            .child(Heading::new(2, "Components"))
-            .child(Card::new().padding(Space::S1).child(list))
-            .into()
+        list.into()
     }
 
-    /// One section as its own scrolling page, with a way back when it was
-    /// opened from the home screen.
+    /// One section as its own screen, laid out into pages, with a way back
+    /// when it was opened from the home screen. A single section shown for
+    /// goldens scrolls instead, so one image holds all of it.
     fn section_page(&self, section: Section, has_back: bool) -> Element<Msg> {
-        let mut page = VStack::new()
+        if self.only.is_some() {
+            return VStack::new()
+                .gap(Space::S3)
+                .padding(Space::S6)
+                .is_scrollable(true)
+                .id(section.slug())
+                .child(Heading::new(2, section.title()))
+                .child(self.section_body(section))
+                .into();
+        }
+        let mut page = Paged::new()
             .gap(Space::S3)
             .padding(Space::S6)
-            .is_scrollable(true)
             .id(section.slug());
         if has_back {
             page = page.child(

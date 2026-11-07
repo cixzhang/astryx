@@ -182,3 +182,22 @@ fn right_to_left_sections() {
         TOLERANCE,
     );
 }
+
+/// A section on a Brick-sized screen, laid out into pages: page 1, then
+/// page 2 after R2.
+#[test]
+fn brick_pages() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
+    for (inputs, name) in [
+        (vec![], "brick-buttons-page-1.png"),
+        (vec![Input::R2], "brick-buttons-page-2.png"),
+    ] {
+        let gallery = Gallery {
+            page: Some(Section::Buttons),
+            ..Gallery::new()
+        };
+        let mut rt = Runtime::new(gallery);
+        let png = render_png(&mut rt, 1024, 768, 2.0, &inputs);
+        assert_golden(&png, dir.join(name), TOLERANCE);
+    }
+}

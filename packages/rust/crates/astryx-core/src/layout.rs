@@ -20,6 +20,8 @@ pub(crate) struct Layout {
     pub overflow: Vec<f32>,
     /// Text as painted, when it differs from the node's own (truncated).
     pub texts: Vec<Option<String>>,
+    /// Each camera viewport's offset (x, y), by node id.
+    pub camera: HashMap<u64, (f32, f32)>,
 }
 
 impl Layout {
@@ -54,6 +56,7 @@ impl Layout {
             rects: Vec::new(),
             overflow: Vec::new(),
             texts: Vec::new(),
+            camera: HashMap::new(),
         }
     }
 
@@ -141,6 +144,12 @@ impl Layout {
         self.rects = self.placed(nodes, scroll);
     }
 
+    /// The padding of node `ix`: (top, bottom).
+    pub fn padding_block(&self, ix: usize) -> (f32, f32) {
+        let p = self.tree.layout(self.ids[ix]).expect("layout").padding;
+        (p.top, p.bottom)
+    }
+
     /// The painted rects under the given scroll offsets.
     pub fn placed<Msg>(&self, nodes: &[Node<Msg>], scroll: &HashMap<u64, f32>) -> Vec<Rect> {
         let mut shift = vec![(0.0f32, 0.0f32); nodes.len()];
@@ -160,6 +169,12 @@ impl Layout {
                     // Scrolling toward inline end moves the content right.
                     Axis::Horizontal if node.rtl => dx -= offset,
                     Axis::Horizontal => dx += offset,
+                }
+            }
+            if node.camera {
+                if let Some(&(x, y)) = self.camera.get(&node.id) {
+                    dx += x;
+                    dy += y;
                 }
             }
             shift[ix] = (dx, dy);

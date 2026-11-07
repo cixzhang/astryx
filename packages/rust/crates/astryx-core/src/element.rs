@@ -438,6 +438,10 @@ pub(crate) struct Node<Msg> {
     /// The built-in icon this node draws, and its side in points, so a
     /// theme can draw its own icon instead.
     pub icon: Option<(&'static str, f32)>,
+    /// A `paged::Paged` viewport: its scroll offset rests on page starts.
+    pub pager: bool,
+    /// A `paged::CameraFollow` viewport, offset in both directions.
+    pub camera: bool,
 }
 
 impl<Msg> Node<Msg> {
@@ -464,6 +468,8 @@ impl<Msg> Node<Msg> {
             moves: false,
             grid: None,
             icon: None,
+            pager: false,
+            camera: false,
         }
     }
     pub fn draw(mut self, draw: Draw) -> Self {

@@ -15,6 +15,7 @@ mod components;
 mod element;
 mod focus;
 mod layout;
+pub mod paged;
 mod paint;
 mod pixel;
 mod runtime;

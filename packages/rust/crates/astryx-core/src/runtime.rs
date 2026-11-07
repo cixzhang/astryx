@@ -1,14 +1,15 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
 use crate::contract::{
-    A11yAction, A11yNode, Command, DisplayList, FontFamily, FrameInfo, ImageData, ImageId, Input,
-    InputPhase, Point, Preferences, Radii, Rect, Size, Surface, TextDirection, TextMeasure,
+    A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
+    ImageId, Input, InputPhase, Live, Point, Preferences, Radii, Rect, Role, Size, Surface,
+    TextAlign, TextDirection, TextMeasure,
 };
-use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction};
+use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction, Semantics};
 use crate::layout::Layout;
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::{Direction, ThemeChoice};
-use crate::{a11y, focus};
+use crate::{a11y, focus, paged};
 use astryx_motion::gesture::{
     Page, PagingGesture, Phase, PressEvent, PressGesture, PressHighlight, RepeatGesture,
     DPAD_REPEAT,
@@ -72,6 +73,18 @@ pub trait App {
         None
     }
 }
+
+/// A pager's pages: each page's offset and the height it shows.
+#[derive(Clone, Debug, Default)]
+struct Pager {
+    pages: Vec<(f32, f32)>,
+    page: usize,
+    /// A wheel moved it off a page start; the D-pad snaps it back.
+    free: bool,
+}
+
+/// Pages with more dots than this show "Page X of Y" instead.
+const MAX_PAGE_DOTS: usize = 12;
 
 /// Astryx's press scale for a standalone Button.
 const PRESS_SCALE: f32 = 0.98;
@@ -187,6 +200,12 @@ pub struct Runtime<A: App> {
     scaled: Option<u64>,
     /// Offset from its target place (x, y) and size, for each moving node.
     moving: HashMap<u64, Moving>,
+    /// Each pager's pages and the page it shows, by node id.
+    pagers: HashMap<u64, Pager>,
+    /// The pager whose page has no focus stop, while focus rests on it.
+    bare_page: Option<u64>,
+    /// Each camera's offset (x, y), moving toward its target.
+    cameras: HashMap<u64, Animated<(f32, f32)>>,
     scroll: HashMap<u64, f32>,
     reveal: bool,
     /// Focus or press changed since the last frame.
@@ -239,6 +258,9 @@ impl<A: App> Runtime<A> {
             press_scale: Animated::new(1.0),
             scaled: None,
             moving: HashMap::new(),
+            pagers: HashMap::new(),
+            bare_page: None,
+            cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
             repaint: true,
@@ -405,10 +427,403 @@ impl<A: App> Runtime<A> {
         let Some(layout) = &self.layout else {
             return Vec::new();
         };
-        self.stops.iter().map(|&(ix, _)| layout.rects[ix]).collect()
+        // Stops on other pages of a pager are out of reach of the arrows.
+        self.stops
+            .iter()
+            .map(|&(ix, _)| match self.pager_of(ix) {
+                Some(p) if !self.on_current_page(p, ix) => Rect::new(0.0, 0.0, 0.0, 0.0),
+                _ => layout.rects[ix],
+            })
+            .collect()
+    }
+
+    /// The nearest pager around node `ix`.
+    fn pager_of(&self, ix: usize) -> Option<usize> {
+        let mut ancestor = self.nodes[ix].parent;
+        while let Some(a) = ancestor {
+            if self.nodes[a as usize].pager {
+                return Some(a as usize);
+            }
+            ancestor = self.nodes[a as usize].parent;
+        }
+        None
+    }
+
+    /// Node `ix`'s extent inside pager `p`, from the pager's top edge.
+    fn page_span(&self, p: usize, ix: usize) -> (f32, f32) {
+        let layout = self.layout.as_ref().expect("layout");
+        let (view, b) = (layout.boxes[p], layout.boxes[ix]);
+        (b.y - view.y, b.y + b.height - view.y)
+    }
+
+    fn on_current_page(&self, p: usize, ix: usize) -> bool {
+        let Some(pager) = self.pagers.get(&self.nodes[p].id) else {
+            return true;
+        };
+        if pager.free {
+            return true;
+        }
+        let (top, bottom) = self.page_span(p, ix);
+        pager
+            .pages
+            .get(pager.page)
+            .is_none_or(|&page| paged::on_page(page, top, bottom))
+    }
+
+    /// The focus stops of pager `p` on page `page`, in reading order.
+    fn stops_on_page(&self, p: usize, page: usize) -> Vec<usize> {
+        let Some(&range) = self
+            .pagers
+            .get(&self.nodes[p].id)
+            .and_then(|g| g.pages.get(page))
+        else {
+            return Vec::new();
+        };
+        (0..self.stops.len())
+            .filter(|&s| {
+                let ix = self.stops[s].0;
+                self.pager_of(ix) == Some(p) && {
+                    let (top, bottom) = self.page_span(p, ix);
+                    paged::on_page(range, top, bottom)
+                }
+            })
+            .collect()
+    }
+
+    /// Recomputes every pager's pages after layout, keeps each on its page
+    /// (or the page holding its old offset), and names the page for
+    /// assistive technology.
+    fn update_pagers(&mut self) {
+        let Some(layout) = self.layout.as_mut() else {
+            return;
+        };
+        let mut seen = HashSet::new();
+        for ix in 0..self.nodes.len() {
+            if !self.nodes[ix].pager {
+                continue;
+            }
+            let id = self.nodes[ix].id;
+            seen.insert(id);
+            let pages = paged::pages(&self.nodes, &layout.boxes, ix, layout.padding_block(ix));
+            let pager = self.pagers.entry(id).or_default();
+            pager.page = pager.page.min(pages.len() - 1);
+            let last = pages.last().map_or(0.0, |p| p.0);
+            // The last page starts at its first item, which may be past the
+            // content's plain scroll end.
+            layout.overflow[ix] = layout.overflow[ix].max(last);
+            if !pager.free && self.scroll.get(&id).copied().unwrap_or(0.0) != pages[pager.page].0 {
+                self.scroll.insert(id, pages[pager.page].0);
+                self.shown.remove(&id);
+            }
+            pager.pages = pages;
+            let label = (pager.pages.len() > 1)
+                .then(|| format!("Page {} of {}", pager.page + 1, pager.pages.len()));
+            if let Some(&strip) = self.nodes[ix]
+                .parent
+                .and_then(|o| self.nodes[o as usize].children.get(1))
+            {
+                self.nodes[strip as usize].sem = label.map(|l| {
+                    let mut sem = Semantics::new(Role::Text, l);
+                    sem.live = Some(Live::Polite);
+                    sem
+                });
+            }
+        }
+        self.pagers.retain(|id, _| seen.contains(id));
+        if self.bare_page.is_some_and(|id| !seen.contains(&id)) {
+            self.bare_page = None;
+        }
+        layout.place(&self.nodes, &self.scroll);
+    }
+
+    /// Shows page `page` of pager `p`, sliding to it with `smooth`.
+    fn set_page(&mut self, p: usize, page: usize, smooth: bool) {
+        let id = self.nodes[p].id;
+        let Some(pager) = self.pagers.get_mut(&id) else {
+            return;
+        };
+        let Some(&(offset, _)) = pager.pages.get(page) else {
+            return;
+        };
+        pager.page = page;
+        pager.free = false;
+        self.repaint = true;
+        self.update_page_label(p);
+        self.set_scroll(p, offset, smooth);
+    }
+
+    fn update_page_label(&mut self, p: usize) {
+        let Some(pager) = self.pagers.get(&self.nodes[p].id) else {
+            return;
+        };
+        let label = format!("Page {} of {}", pager.page + 1, pager.pages.len());
+        if let Some(&strip) = self.nodes[p]
+            .parent
+            .and_then(|o| self.nodes[o as usize].children.get(1))
+        {
+            if let Some(sem) = self.nodes[strip as usize].sem.as_mut() {
+                sem.label = Some(label);
+            }
+        }
+    }
+
+    /// Flips pager `p` to `page` and puts focus on its first stop, or its
+    /// last when going back; a page without stops holds focus itself.
+    fn flip(&mut self, p: usize, page: usize, first: bool) {
+        self.set_page(p, page, true);
+        let stops = self.stops_on_page(p, page);
+        let pick = if first { stops.first() } else { stops.last() };
+        match pick {
+            Some(&stop) => self.set_focus(stop),
+            None => {
+                self.end_press();
+                self.focused = None;
+                self.bare_page = Some(self.nodes[p].id);
+            }
+        }
+    }
+
+    /// The pager focus is in: around the focused stop, or the one whose
+    /// page without stops holds focus.
+    fn focus_pager(&self) -> Option<usize> {
+        match self.stop_index(self.focused) {
+            Some(stop) => self.pager_of(self.stops[stop].0),
+            None => self
+                .bare_page
+                .and_then(|id| self.nodes.iter().position(|n| n.id == id)),
+        }
+    }
+
+    /// An arrow inside a pager. Focus moves within the page; past the last
+    /// stop in that direction the page flips: Down and Up always, Right and
+    /// Left from the page's last or first stop.
+    fn paged_directional(&mut self, p: usize, input: Input) -> Command {
+        let id = self.nodes[p].id;
+        if self.pagers.get(&id).is_some_and(|g| g.free) {
+            // After a wheel, the D-pad first returns to the page focus is on.
+            let page = match self.stop_index(self.focused) {
+                Some(stop) => {
+                    let top = self.page_span(p, self.stops[stop].0).0;
+                    paged::page_at(&self.pagers[&id].pages, top)
+                }
+                None => paged::page_at(
+                    &self.pagers[&id].pages,
+                    self.scroll.get(&id).copied().unwrap_or(0.0),
+                ),
+            };
+            self.set_page(p, page, true);
+        }
+        let Some(pager) = self.pagers.get(&id) else {
+            return Command::None;
+        };
+        let (page, count) = (pager.page, pager.pages.len());
+        let rects = self.stop_rects();
+        let current = self.stop_index(self.focused);
+        let candidate = current.and_then(|c| focus::navigate(&rects, Some(c), input));
+        if let Some(s) = candidate.filter(|&s| self.pager_of(self.stops[s].0) == Some(p)) {
+            self.set_focus(s);
+            return Command::None;
+        }
+        let on_page = self.stops_on_page(p, page);
+        let flips = match input {
+            Input::Down | Input::Up => true,
+            Input::Right => current.is_none() || current == on_page.last().copied(),
+            _ => current.is_none() || current == on_page.first().copied(),
+        };
+        let forward = matches!(input, Input::Down | Input::Right);
+        let target = if forward {
+            (page + 1 < count).then_some(page + 1)
+        } else {
+            page.checked_sub(1)
+        };
+        match (flips, target) {
+            (true, Some(next)) => self.flip(p, next, forward),
+            _ => {
+                if let Some(s) = candidate {
+                    self.set_focus(s);
+                    self.reveal_focus(true);
+                }
+            }
+        }
+        Command::None
+    }
+
+    /// Page dots (or "Page X of Y") under each pager, and the height each
+    /// pager's page shows, so no part of the next page peeks in.
+    fn pager_paint(&self, rects: &[Rect]) -> (HashMap<usize, (f32, f32)>, Vec<DrawCmd>) {
+        let mut clips = HashMap::new();
+        let mut marks = Vec::new();
+        let t = self.theme.tokens(&self.prefs);
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(pager) = node.pager.then(|| self.pagers.get(&node.id)).flatten() else {
+                continue;
+            };
+            let sliding = self.shown.get(&node.id).is_some_and(|a| a.is_animating());
+            if !pager.free && !sliding {
+                if let Some(&(offset, h)) = pager.pages.get(pager.page) {
+                    // Above a later page's first item is the end of the page
+                    // before it, which stays hidden too.
+                    let top = match pager.page.checked_sub(1) {
+                        Some(prev) => {
+                            let (o, ph) = pager.pages[prev];
+                            (o + ph - offset).max(0.0)
+                        }
+                        None => 0.0,
+                    };
+                    clips.insert(ix, (top, h));
+                }
+            }
+            let count = pager.pages.len();
+            let Some(&strip) = node
+                .parent
+                .and_then(|o| self.nodes[o as usize].children.get(1))
+            else {
+                continue;
+            };
+            if count < 2 {
+                continue;
+            }
+            let strip = rects[strip as usize];
+            let page = if pager.free {
+                paged::page_at(&pager.pages, self.shown_offset(node.id))
+            } else {
+                pager.page
+            };
+            if count <= MAX_PAGE_DOTS {
+                // Astryx Pagination's small dots: neutral, the current one
+                // accent, a step apart, in reading order.
+                let (side, gap) = (t.space.s1_5, t.space.s1);
+                let width = count as f32 * side + (count - 1) as f32 * gap;
+                let x0 = strip.x + (strip.width - width) / 2.0;
+                let y = strip.y + (strip.height - side) / 2.0;
+                for i in 0..count {
+                    let slot = if node.rtl { count - 1 - i } else { i };
+                    let fill: Color = if i == page {
+                        t.color.accent.into()
+                    } else {
+                        t.color.neutral.into()
+                    };
+                    marks.push(DrawCmd::Rect {
+                        rect: Rect::new(x0 + slot as f32 * (side + gap), y, side, side),
+                        radii: Radii::all(side / 2.0),
+                        fill,
+                        stroke: None,
+                    });
+                }
+            } else {
+                let mut style =
+                    crate::components::text::type_style(t.font.supporting, FontFamily::Body);
+                style.direction = Some(if node.rtl {
+                    TextDirection::Rtl
+                } else {
+                    TextDirection::Ltr
+                });
+                marks.push(DrawCmd::Text {
+                    rect: strip,
+                    text: format!("Page {} of {}", page + 1, count),
+                    style,
+                    color: t.color.text_secondary.into(),
+                    align: TextAlign::Center,
+                });
+            }
+        }
+        (clips, marks)
+    }
+
+    /// Moves each camera so the focused item inside it stays out of the
+    /// quarter of the viewport nearest each edge, on the theme's medium
+    /// move motion (instant under reduced motion), within the content.
+    fn follow_cameras(&mut self) {
+        let Some(layout) = self.layout.as_ref() else {
+            return;
+        };
+        let focused = self.stop_index(self.focused).map(|s| self.stops[s].0);
+        let tokens = self.motion_tokens();
+        let motion = self.policy.travel(
+            Change::Transition,
+            Motion::curve(tokens.durations.medium, tokens.ease_move),
+            tokens,
+        );
+        let mut seen = HashSet::new();
+        for ix in 0..self.nodes.len() {
+            if !self.nodes[ix].camera {
+                continue;
+            }
+            let id = self.nodes[ix].id;
+            seen.insert(id);
+            let view = layout.boxes[ix];
+            let mut inside = Vec::new();
+            let mut stack: Vec<usize> = self.nodes[ix]
+                .children
+                .iter()
+                .map(|&c| c as usize)
+                .collect();
+            while let Some(n) = stack.pop() {
+                inside.push(n);
+                stack.extend(self.nodes[n].children.iter().map(|&c| c as usize));
+            }
+            let (right, bottom) = inside.iter().fold((0.0f32, 0.0f32), |(r, b), &n| {
+                let bx = layout.boxes[n];
+                (
+                    r.max(bx.x + bx.width - view.x),
+                    b.max(bx.y + bx.height - view.y),
+                )
+            });
+            let max = (
+                (right - view.width).max(0.0),
+                (bottom - view.height).max(0.0),
+            );
+            let camera = self
+                .cameras
+                .entry(id)
+                .or_insert_with(|| Animated::new((0.0, 0.0)));
+            let Some(f) = focused.filter(|f| inside.contains(f)) else {
+                continue;
+            };
+            let b = layout.boxes[f];
+            let (mut tx, mut ty) = camera.target();
+            let follow = |t: &mut f32, lo: f32, hi: f32, span: f32, max: f32| {
+                let zone = span / 4.0;
+                if lo - *t < zone {
+                    *t = lo - zone;
+                } else if hi - *t > span - zone {
+                    *t = hi - (span - zone);
+                }
+                *t = t.clamp(0.0, max);
+            };
+            follow(
+                &mut tx,
+                b.x - view.x,
+                b.x + b.width - view.x,
+                view.width,
+                max.0,
+            );
+            follow(
+                &mut ty,
+                b.y - view.y,
+                b.y + b.height - view.y,
+                view.height,
+                max.1,
+            );
+            if (tx, ty) != camera.target() {
+                camera.animate_to((tx, ty), motion);
+            }
+        }
+        self.cameras.retain(|id, _| seen.contains(id));
+        let offsets: HashMap<u64, (f32, f32)> = self
+            .cameras
+            .iter()
+            .map(|(&id, a)| (id, a.value()))
+            .collect();
+        let layout = self.layout.as_mut().expect("layout");
+        if !offsets.is_empty() || !layout.camera.is_empty() {
+            layout.camera = offsets;
+            layout.place(&self.nodes, &self.scroll);
+        }
     }
 
     fn set_focus(&mut self, stop: usize) {
+        self.bare_page = None;
         let (ix, id) = self.stops[stop];
         if self.focused != Some(id) {
             // Moving focus ends a press without activating.
@@ -458,6 +873,10 @@ impl<A: App> Runtime<A> {
             .collect();
         if self.stops.is_empty() {
             self.focused = None;
+            return;
+        }
+        // Focus rests on a page that has no stops.
+        if self.focused.is_none() && self.bare_page.is_some() {
             return;
         }
         if let Some(stop) = self.stop_index(self.focused) {
@@ -542,7 +961,8 @@ impl<A: App> Runtime<A> {
         let mut ancestor = self.nodes[self.stops[stop].0].parent;
         while let Some(a) = ancestor {
             let a = a as usize;
-            if let Some(axis) = self.nodes[a].scroll {
+            // A pager stays on its page; the page holding focus shows.
+            if let (Some(axis), false) = (self.nodes[a].scroll, self.nodes[a].pager) {
                 let id = self.nodes[a].id;
                 let delta = if axis == Axis::Vertical {
                     new.y - old.y
@@ -573,7 +993,15 @@ impl<A: App> Runtime<A> {
         let mut ancestor = self.nodes[target].parent;
         while let Some(a) = ancestor {
             let a = a as usize;
-            if let Some(axis) = self.nodes[a].scroll {
+            if self.nodes[a].pager {
+                let top = self.page_span(a, target).0;
+                if let Some(pager) = self.pagers.get(&self.nodes[a].id) {
+                    let page = paged::page_at(&pager.pages, top);
+                    if pager.free || page != pager.page {
+                        self.set_page(a, page, smooth);
+                    }
+                }
+            } else if let Some(axis) = self.nodes[a].scroll {
                 let layout = self.layout.as_mut().expect("layout");
                 layout.place(&self.nodes, &self.scroll);
                 let (view, item) = (layout.rects[a], layout.rects[target]);
@@ -658,16 +1086,25 @@ impl<A: App> Runtime<A> {
         self.scroll.insert(id, target);
         if smooth {
             let tokens = self.motion_tokens();
+            // A page flip slides a whole page, a longer travel than a step.
+            let pager = self.nodes[ix].pager;
+            let duration = if pager {
+                tokens.durations.medium
+            } else {
+                tokens.durations.fast
+            };
             let motion = self.policy.travel(
                 Change::Transition,
-                Motion::curve(tokens.durations.fast, tokens.ease_move),
+                Motion::curve(duration, tokens.ease_move),
                 tokens,
             );
             self.shown
                 .entry(id)
                 .or_insert_with(|| Animated::new(from))
                 .animate_to(target, motion);
-            self.show_indicator(id);
+            if !pager {
+                self.show_indicator(id);
+            }
         } else {
             self.shown.remove(&id);
         }
@@ -730,7 +1167,7 @@ impl<A: App> Runtime<A> {
     /// scroll (inside an open popup, only its own).
     fn scroll_container(&self, axis: Axis) -> Option<usize> {
         let layout = self.layout.as_ref()?;
-        let fits = |ix: usize| self.nodes[ix].scroll == Some(axis);
+        let fits = |ix: usize| self.nodes[ix].scroll == Some(axis) && !self.nodes[ix].pager;
         if let Some(stop) = self.stop_index(self.focused) {
             let mut ancestor = self.nodes[self.stops[stop].0].parent;
             while let Some(a) = ancestor {
@@ -751,6 +1188,9 @@ impl<A: App> Runtime<A> {
     /// scrolls a third of its viewport so content between focus stops can
     /// be read. At the end of the content, focus moves on.
     fn directional(&mut self, input: Input) -> Command {
+        if let Some(p) = self.focus_pager() {
+            return self.paged_directional(p, input);
+        }
         let rects = self.stop_rects();
         let current = self.stop_index(self.focused);
         let candidate = focus::navigate(&rects, current, input);
@@ -804,6 +1244,23 @@ impl<A: App> Runtime<A> {
     /// keeping a little of the last one in view. Focus that scrolls out of
     /// view moves to the first focus stop in view.
     fn page(&mut self, page: Page) -> Command {
+        // L2 and R2 flip the pager focus is in, or the first one on screen.
+        if let Some(p) = self
+            .focus_pager()
+            .or_else(|| self.nodes.iter().position(|n| n.pager))
+        {
+            let id = self.nodes[p].id;
+            if let Some(pager) = self.pagers.get(&id) {
+                let target = match page {
+                    Page::Next => (pager.page + 1 < pager.pages.len()).then_some(pager.page + 1),
+                    Page::Previous => pager.page.checked_sub(1),
+                };
+                if let Some(target) = target {
+                    self.flip(p, target, true);
+                }
+            }
+            return Command::None;
+        }
         let Some(c) = self.scroll_container(Axis::Vertical) else {
             return Command::None;
         };
@@ -1065,6 +1522,9 @@ impl<A: App> Runtime<A> {
         }
         for m in self.moving.values_mut() {
             m.shown.tick(dt);
+        }
+        for camera in self.cameras.values_mut() {
+            camera.tick(dt);
         }
         let mut command = Command::None;
         for event in self.press.tick(now) {
@@ -1398,6 +1858,7 @@ impl<A: App> Surface for Runtime<A> {
                 .as_mut()
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
+            self.update_pagers();
             self.settle_focus();
             // Only the same element stays in place; new focus is revealed.
             if let Some((old, _)) = anchor.filter(|&(_, id)| self.focused == Some(id)) {
@@ -1407,6 +1868,7 @@ impl<A: App> Surface for Runtime<A> {
         if std::mem::take(&mut self.reveal) {
             self.reveal_focus(false);
         }
+        self.follow_cameras();
         self.update_moving();
         self.animating_visible = self.animation_visible();
         self.timings.layout = watch.lap();
@@ -1432,6 +1894,7 @@ impl<A: App> Surface for Runtime<A> {
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
         let transforms = self.transforms(&rects);
+        let (page_clips, page_marks) = self.pager_paint(&rects);
         let state = PaintState {
             focused: self.focused,
             pressed: self.pressed,
@@ -1441,6 +1904,8 @@ impl<A: App> Surface for Runtime<A> {
             indicators,
             tooltip,
             transforms,
+            page_clips,
+            page_marks,
         };
         let layout = self.layout.as_ref().expect("layout");
         let list = paint::paint(
@@ -1487,6 +1952,9 @@ impl<A: App> Surface for Runtime<A> {
             self.scroll.insert(id, target);
             self.shown.remove(&id);
             self.show_indicator(id);
+            if let Some(pager) = self.pagers.get_mut(&id) {
+                pager.free = true;
+            }
             if let Some(layout) = self.layout.as_mut() {
                 layout.place(&self.nodes, &self.scroll);
             }
@@ -1590,6 +2058,7 @@ impl<A: App> Surface for Runtime<A> {
             || self.highlight.wants_frames()
             || self.press_scale.is_animating()
             || self.moving.values().any(|m| m.shown.is_animating())
+            || self.cameras.values().any(|c| c.is_animating())
             || self.press.wants_frames()
             || self.repeats.wants_frames()
             || self.paging.wants_frames()
