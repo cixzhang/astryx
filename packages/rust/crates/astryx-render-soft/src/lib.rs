@@ -17,7 +17,7 @@ use astryx_raster::geom::{
     border_ring, fit_radii, path_segs, rounded_rect, snap_line, snap_rect, snap_width, PxRect, Seg,
 };
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
-use astryx_raster::text::{GlyphDraw, GlyphRasterizer, TextEngine};
+use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
 
 fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
@@ -109,7 +109,6 @@ enum Group {
 /// The CPU renderer. Owns its pixel buffer; read it with [`Self::pixmap`].
 pub struct SoftRenderer {
     text: TextEngine,
-    glyphs: GlyphRasterizer,
     shadows: ShadowCache,
     base: Pixmap,
     layers: Vec<(Pixmap, f32)>,
@@ -127,10 +126,20 @@ impl Default for SoftRenderer {
 }
 
 impl SoftRenderer {
+    /// A renderer with the embedded Roboto faces, or with no faces when the
+    /// `embedded-fonts` feature is off.
     pub fn new() -> Self {
+        #[cfg(feature = "embedded-fonts")]
+        let fonts = astryx_fonts::roboto();
+        #[cfg(not(feature = "embedded-fonts"))]
+        let fonts = FontSet::new();
+        Self::with_fonts(fonts)
+    }
+
+    /// A renderer that draws text with `fonts`, in their fallback order.
+    pub fn with_fonts(fonts: FontSet) -> Self {
         Self {
-            text: TextEngine::new(),
-            glyphs: GlyphRasterizer::new(),
+            text: TextEngine::new(fonts),
             shadows: ShadowCache::default(),
             base: Pixmap::new(1, 1).expect("1x1 pixmap"),
             layers: Vec::new(),
@@ -140,6 +149,11 @@ impl SoftRenderer {
             segs: Vec::new(),
             placed: Vec::new(),
         }
+    }
+
+    /// Adds a face after creation. Layout picks it up on the next frame.
+    pub fn add_fallback_font(&mut self, data: impl Into<FontData>) -> Result<(), FontError> {
+        self.text.add_fallback_font(data)
     }
 
     /// The text engine used for drawing; hand it to layout.
@@ -335,7 +349,7 @@ impl SoftRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.glyphs.place(&layout, (rect.x, rect.y), s, &mut placed);
+                self.text.place(&layout, (rect.x, rect.y), s, &mut placed);
                 let color = premultiplied(*color);
                 let (target, clip) = self.target();
                 for g in &placed {
@@ -571,6 +585,33 @@ mod tests {
         r.render(&list, &frame(10, 10, 1.0));
         assert_eq!(px(&r, 8, 8), [255, 255, 255, 255]);
         assert_ne!(px(&r, 2, 2), [255, 255, 255, 255]);
+    }
+
+    #[cfg(feature = "embedded-fonts")]
+    #[test]
+    fn text_appears_on_the_next_frame_after_a_face_arrives() {
+        let list = DisplayList {
+            clear: WHITE,
+            commands: vec![DrawCmd::Text {
+                rect: Rect::new(0.0, 0.0, 100.0, 20.0),
+                text: "Late".into(),
+                style: astryx_core::TextStyle {
+                    family: astryx_core::FontFamily::Body,
+                    size: 14.0,
+                    weight: 400,
+                    leading: 1.4,
+                },
+                color: RED,
+                align: astryx_core::TextAlign::Start,
+            }],
+        };
+        let inked = |r: &SoftRenderer| r.pixmap().pixels().iter().any(|p| p.green() < 128);
+        let mut r = SoftRenderer::with_fonts(FontSet::new());
+        r.render(&list, &frame(100, 20, 1.0));
+        assert!(!inked(&r));
+        r.add_fallback_font(astryx_fonts::ROBOTO_REGULAR).unwrap();
+        r.render(&list, &frame(100, 20, 1.0));
+        assert!(inked(&r));
     }
 
     #[test]

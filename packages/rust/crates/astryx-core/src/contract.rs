@@ -202,6 +202,11 @@ pub struct DisplayList {
 pub trait TextMeasure {
     /// The size of `text` wrapped at `max_width` (no wrapping when `None`).
     fn measure(&self, text: &str, style: &TextStyle, max_width: Option<f32>) -> Size;
+    /// Changes whenever earlier measurements may be wrong, for example after
+    /// a font face loads. Layout caches compare it before reusing sizes.
+    fn generation(&self) -> u64 {
+        0
+    }
 }
 
 /// Draws display lists. GPU renderers draw into the shell's current GL
@@ -272,6 +277,9 @@ pub enum Command {
     #[default]
     None,
     Quit,
+    /// Open a link with the platform: the browser on desktop, a new tab or
+    /// navigation on the web.
+    OpenUrl(String),
 }
 
 /// The accessibility role of a node, named after ARIA roles.
@@ -288,6 +296,13 @@ pub enum Role {
     List,
     ListItem,
     Image,
+    Separator,
+    /// A control that opens a list of options, such as a select.
+    ComboBox,
+    /// The open list of a `ComboBox`.
+    ListBox,
+    /// One choice in a `ListBox`. `selected` tells whether it is chosen.
+    ListBoxOption,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to
@@ -298,13 +313,49 @@ pub struct A11yNode {
     pub id: u64,
     pub role: Role,
     pub label: Option<String>,
+    /// Extra help text, as ARIA `aria-description`.
+    pub description: Option<String>,
     pub value: Option<String>,
     pub bounds: Rect,
     pub focused: bool,
     pub disabled: bool,
     /// `Some(true|false)` for toggles.
     pub checked: Option<bool>,
+    /// `Some(true|false)` for choices that can be selected.
+    pub selected: Option<bool>,
+    /// True when the node takes keyboard focus.
+    pub focusable: bool,
+    /// Set when changes to the node's text must be announced.
+    pub live: Option<Live>,
     pub children: Vec<A11yNode>,
+}
+
+/// How assistive technology announces changes, as ARIA `aria-live`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Live {
+    /// Announce when the person is idle.
+    Polite,
+    /// Announce at once, interrupting. Use only for urgent messages.
+    Assertive,
+}
+
+/// The color scheme the person asked for.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ColorScheme {
+    #[default]
+    Light,
+    Dark,
+}
+
+/// What the person asked their OS or browser for. Shells read it from the
+/// platform and pass changes to `Surface::set_preferences`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Preferences {
+    pub reduced_motion: bool,
+    pub color_scheme: ColorScheme,
+    pub more_contrast: bool,
+    /// The platform forces its own colors, such as Windows contrast themes.
+    pub forced_colors: bool,
 }
 
 /// What a shell drives, once per frame. The core's runtime implements it for
@@ -324,6 +375,16 @@ pub trait Surface {
     fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
         let _ = (id, action);
         Command::None
+    }
+    /// Text the person typed or committed from an input method, for the
+    /// focused text field.
+    fn text_input(&mut self, text: &str) -> Command {
+        let _ = text;
+        Command::None
+    }
+    /// The person's preferences changed, or are known for the first time.
+    fn set_preferences(&mut self, preferences: &Preferences) {
+        let _ = preferences;
     }
 }
 

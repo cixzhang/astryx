@@ -22,6 +22,10 @@ fn role(role: Role) -> AkRole {
         Role::List => AkRole::List,
         Role::ListItem => AkRole::ListItem,
         Role::Image => AkRole::Image,
+        Role::Separator => AkRole::Splitter,
+        Role::ComboBox => AkRole::ComboBox,
+        Role::ListBox => AkRole::ListBox,
+        Role::ListBoxOption => AkRole::ListBoxOption,
     }
 }
 
@@ -112,6 +116,10 @@ mod tests {
 
     fn node(id: u64, role: Role, focused: bool, children: Vec<A11yNode>) -> A11yNode {
         A11yNode {
+            description: None,
+            selected: None,
+            focusable: false,
+            live: None,
             id,
             role,
             label: Some(format!("n{id}")),

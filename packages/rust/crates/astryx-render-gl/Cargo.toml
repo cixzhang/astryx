@@ -5,9 +5,15 @@ edition.workspace = true
 license.workspace = true
 version.workspace = true
 
+[features]
+# Embeds Roboto so `new` draws text with no setup. Turn off to supply fonts.
+default = ["embedded-fonts"]
+embedded-fonts = ["dep:astryx-fonts"]
+
 [dependencies]
 astryx-core.workspace = true
 astryx-raster = { path = "../astryx-raster" }
+astryx-fonts = { path = "../astryx-fonts", optional = true }
 femtovg = { version = "0.28.0", default-features = false }
 glow = "0.18.0"
 

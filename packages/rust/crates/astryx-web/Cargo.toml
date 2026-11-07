@@ -1,0 +1,56 @@
+[package]
+name = "astryx-web"
+description = "Web shell for Astryx Rust: canvas, input, and a DOM accessibility mirror"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core.workspace = true
+astryx-render-gl = { path = "../astryx-render-gl" }
+# Keep this version equal to the installed wasm-bindgen CLI.
+wasm-bindgen = "=0.2.130"
+js-sys = "0.3"
+wasm-bindgen-futures = "0.4"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "AddEventListenerOptions",
+  "CssStyleDeclaration",
+  "Document",
+  "DomRect",
+  "DomRectReadOnly",
+  "DomTokenList",
+  "Element",
+  "Event",
+  "EventTarget",
+  "FocusEvent",
+  "FocusOptions",
+  "Gamepad",
+  "GamepadButton",
+  "GamepadMappingType",
+  "HtmlCanvasElement",
+  "HtmlCollection",
+  "HtmlElement",
+  "HtmlHeadElement",
+  "HtmlInputElement",
+  "KeyboardEvent",
+  "MediaQueryList",
+  "MouseEvent",
+  "Navigator",
+  "Node",
+  "Performance",
+  "ResizeObserver",
+  "ResizeObserverBoxOptions",
+  "ResizeObserverEntry",
+  "ResizeObserverOptions",
+  "ResizeObserverSize",
+  "Response",
+  "Window",
+  "console",
+]
+
+[[example]]
+name = "demo"
+crate-type = ["cdylib"]

@@ -1,6 +1,27 @@
-//! Astryx Rust core: tokens, layout, focus, components, and the shared
-//! contract every renderer and shell builds on.
+//! Astryx Rust core: tokens, theme, layout, elements, focus, the runtime,
+//! the accessibility tree, and the Astryx components.
+//!
+//! An app is an [`App`]: a `view` that returns an [`Element`] tree built from
+//! components, and an `update` for each message. [`Runtime`] runs it as a
+//! [`Surface`], which every shell drives.
 
 pub mod contract;
 pub use astryx_tokens as tokens;
+pub use astryx_tokens::{Theme, Tokens};
 pub use contract::*;
+
+mod a11y;
+mod components;
+mod element;
+mod focus;
+mod layout;
+mod paint;
+mod runtime;
+pub mod testing;
+mod theme;
+
+pub use components::*;
+pub use element::{Element, Space};
+pub use paint::{FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
+pub use runtime::{App, Runtime};
+pub use theme::{Mode, ThemeChoice};

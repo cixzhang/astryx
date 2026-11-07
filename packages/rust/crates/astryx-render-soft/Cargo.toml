@@ -5,7 +5,13 @@ edition.workspace = true
 license.workspace = true
 version.workspace = true
 
+[features]
+# Embeds Roboto so `new` draws text with no setup. Turn off to supply fonts.
+default = ["embedded-fonts"]
+embedded-fonts = ["dep:astryx-fonts"]
+
 [dependencies]
 astryx-core.workspace = true
 astryx-raster = { path = "../astryx-raster" }
+astryx-fonts = { path = "../astryx-fonts", optional = true }
 tiny-skia = { version = "0.12.0", default-features = false, features = ["std", "simd", "png-format"] }

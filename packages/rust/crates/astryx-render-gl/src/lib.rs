@@ -15,7 +15,9 @@ use astryx_raster::geom::{
     border_ring, fit_radii, path_segs, rounded_rect, snap_line, snap_rect, snap_width, PxRect, Seg,
 };
 use astryx_raster::shadow::{ShadowCache, ShadowKey};
-use astryx_raster::text::{GlyphBitmap, GlyphDraw, GlyphKey, GlyphRasterizer, TextEngine};
+use astryx_raster::text::{
+    FontData, FontError, FontSet, GlyphBitmap, GlyphDraw, GlyphKey, TextEngine,
+};
 use femtovg::imgref::Img;
 use femtovg::renderer::OpenGl;
 use femtovg::rgb::FromSlice;
@@ -24,6 +26,7 @@ use femtovg::{
     LayerEffects, LineCap, LineJoin, Paint, Path, Quad,
 };
 
+pub use astryx_raster;
 pub use femtovg;
 pub use glow;
 
@@ -170,7 +173,6 @@ enum Group {
 pub struct GlRenderer {
     canvas: Canvas<OpenGl>,
     text: TextEngine,
-    glyphs: GlyphRasterizer,
     atlas: Atlas,
     shadows: ShadowCache,
     shadow_textures: HashMap<ShadowKey, (ImageId, u64)>,
@@ -182,12 +184,22 @@ pub struct GlRenderer {
 
 impl GlRenderer {
     /// Wraps a femtovg OpenGL backend. On the web, create it with
-    /// `OpenGl::new_from_html_canvas`.
+    /// `OpenGl::new_from_html_canvas`. Uses the embedded Roboto faces, or no
+    /// faces when the `embedded-fonts` feature is off; add them later with
+    /// [`Self::add_fallback_font`].
     pub fn new(backend: OpenGl) -> Result<Self, femtovg::ErrorKind> {
+        #[cfg(feature = "embedded-fonts")]
+        let fonts = astryx_fonts::roboto();
+        #[cfg(not(feature = "embedded-fonts"))]
+        let fonts = FontSet::new();
+        Self::with_fonts(backend, fonts)
+    }
+
+    /// Wraps a backend and draws text with `fonts`, in their fallback order.
+    pub fn with_fonts(backend: OpenGl, fonts: FontSet) -> Result<Self, femtovg::ErrorKind> {
         Ok(Self {
             canvas: Canvas::new(backend)?,
-            text: TextEngine::new(),
-            glyphs: GlyphRasterizer::new(),
+            text: TextEngine::new(fonts),
             atlas: Atlas::default(),
             shadows: ShadowCache::default(),
             shadow_textures: HashMap::new(),
@@ -217,6 +229,12 @@ impl GlRenderer {
         framebuffer: Option<<glow::Context as glow::HasContext>::Framebuffer>,
     ) {
         self.canvas.renderer_mut().set_screen_target(framebuffer);
+    }
+
+    /// Adds a face after creation, for example one loaded over the network.
+    /// Layout picks it up on the next frame; request one.
+    pub fn add_fallback_font(&mut self, data: impl Into<FontData>) -> Result<(), FontError> {
+        self.text.add_fallback_font(data)
     }
 
     pub fn text(&self) -> &TextEngine {
@@ -370,7 +388,7 @@ impl GlRenderer {
                 let layout = self.text.layout(text, style, Some(rect.width), *align);
                 let mut placed = std::mem::take(&mut self.placed);
                 placed.clear();
-                self.glyphs.place(&layout, (rect.x, rect.y), s, &mut placed);
+                self.text.place(&layout, (rect.x, rect.y), s, &mut placed);
                 let mut per_page: Vec<Vec<Quad>> = Vec::new();
                 let inv = 1.0 / ATLAS_SIZE as f32;
                 for g in &placed {

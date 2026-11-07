@@ -1,0 +1,9 @@
+[package]
+name = "astryx-fonts"
+description = "Roboto Regular, Medium, and Bold embedded for Astryx renderers that need fonts with no setup"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-raster = { path = "../astryx-raster" }

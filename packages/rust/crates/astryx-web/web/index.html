@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Astryx web demo</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  /* The shell places its accessibility mirror relative to this box. */
+  main { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+</style>
+<link rel="modulepreload" href="./demo.js">
+<link rel="preload" href="./demo_bg.wasm" as="fetch" type="application/wasm" crossorigin>
+<!-- The first frame waits for the Latin subsets; fetch them with the wasm. -->
+<link rel="preload" href="./fonts/Roboto-Regular.latin.ttf" as="fetch" crossorigin>
+<link rel="preload" href="./fonts/Roboto-Medium.latin.ttf" as="fetch" crossorigin>
+<link rel="preload" href="./fonts/Roboto-Bold.latin.ttf" as="fetch" crossorigin>
+</head>
+<body>
+<main>
+  <canvas id="app"></canvas>
+</main>
+<script type="module">
+  import init from "./demo.js";
+  init();
+</script>
+</body>
+</html>

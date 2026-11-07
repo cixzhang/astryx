@@ -1,52 +1,181 @@
-//! The one text engine every Astryx renderer uses: font selection, shaping,
-//! wrapping, and glyph rasterization. Layout and pixels agree because every
-//! renderer measures and draws through this module with the same font data.
+//! The one text engine every Astryx renderer uses: font selection with
+//! fallback, shaping, wrapping, and glyph rasterization. Layout and pixels
+//! agree because every renderer measures and draws through this module.
+//!
+//! Fonts arrive at runtime in a [`FontSet`]. Faces can be added later with
+//! [`TextEngine::add_fallback_font`]; text measured after that uses them, so
+//! layout is correct again on the next frame.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use astryx_core::{Size, TextAlign, TextMeasure, TextStyle};
 use swash::scale::{Render, ScaleContext, Source};
 use swash::shape::ShapeContext;
 use swash::text::cluster::Boundary;
-use swash::text::Script;
+use swash::text::{Codepoint, Script};
 use swash::zeno::{Format, Vector};
-use swash::FontRef;
+use swash::{CacheKey, FontRef, StringId};
 
-static ROBOTO_REGULAR: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Regular.ttf");
-static ROBOTO_MEDIUM: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Medium.ttf");
-static ROBOTO_BOLD: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Bold.ttf");
+/// Font file bytes, borrowed for the program's lifetime or shared.
+#[derive(Clone, Debug)]
+pub enum FontData {
+    Static(&'static [u8]),
+    Shared(Arc<[u8]>),
+}
 
-/// One of the bundled faces.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Face {
-    Regular,
-    Medium,
-    Bold,
+impl FontData {
+    pub fn bytes(&self) -> &[u8] {
+        match self {
+            FontData::Static(b) => b,
+            FontData::Shared(b) => b,
+        }
+    }
+}
+
+impl From<&'static [u8]> for FontData {
+    fn from(bytes: &'static [u8]) -> Self {
+        FontData::Static(bytes)
+    }
+}
+
+impl From<Vec<u8>> for FontData {
+    fn from(bytes: Vec<u8>) -> Self {
+        FontData::Shared(bytes.into())
+    }
+}
+
+/// The bytes are not a font this engine can read.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FontError;
+
+impl std::fmt::Display for FontError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("not a readable OpenType or TrueType font")
+    }
+}
+
+impl std::error::Error for FontError {}
+
+#[derive(Clone, Debug)]
+struct Face {
+    data: FontData,
+    offset: u32,
+    key: CacheKey,
+    weight: u16,
 }
 
 impl Face {
-    /// Picks the face for a style. Body, heading, and code share Roboto.
-    pub fn for_style(style: &TextStyle) -> Face {
-        match style.weight {
-            0..=499 => Face::Regular,
-            500..=599 => Face::Medium,
-            _ => Face::Bold,
+    fn font(&self) -> FontRef<'_> {
+        FontRef {
+            data: self.data.bytes(),
+            offset: self.offset,
+            key: self.key,
         }
     }
+}
 
-    pub fn data(self) -> &'static [u8] {
-        match self {
-            Face::Regular => ROBOTO_REGULAR,
-            Face::Medium => ROBOTO_MEDIUM,
-            Face::Bold => ROBOTO_BOLD,
+/// Faces grouped by family. Families are tried in the order they were
+/// first added: the first is the primary font, the rest are fallbacks for
+/// characters it lacks. Within a family the face is picked by weight, as CSS
+/// font matching does.
+#[derive(Clone, Debug, Default)]
+pub struct FontSet {
+    faces: Vec<Face>,
+    families: Vec<(String, Vec<usize>)>,
+}
+
+impl FontSet {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds the first face of a font file. A face whose family is already
+    /// in the set joins it as another weight; otherwise its family becomes
+    /// the last fallback.
+    pub fn add(&mut self, data: impl Into<FontData>) -> Result<(), FontError> {
+        let data = data.into();
+        let font = FontRef::from_index(data.bytes(), 0).ok_or(FontError)?;
+        let strings = font.localized_strings();
+        let family = strings
+            .find_by_id(StringId::TypographicFamily, None)
+            .or_else(|| strings.find_by_id(StringId::Family, None))
+            .map(|s| s.chars().collect::<String>())
+            .unwrap_or_default();
+        let face = Face {
+            offset: font.offset,
+            key: font.key,
+            weight: font.attributes().weight().0,
+            data,
+        };
+        self.faces.push(face);
+        let index = self.faces.len() - 1;
+        match self.families.iter_mut().find(|(name, _)| *name == family) {
+            Some((_, faces)) => faces.push(index),
+            None => self.families.push((family, vec![index])),
         }
+        Ok(())
     }
 
-    fn font(self) -> FontRef<'static> {
-        FontRef::from_index(self.data(), 0).expect("bundled font parses")
+    /// Builder form of [`Self::add`].
+    pub fn with(mut self, data: impl Into<FontData>) -> Result<Self, FontError> {
+        self.add(data)?;
+        Ok(self)
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.faces.is_empty()
+    }
+
+    /// Family names in fallback order.
+    pub fn families(&self) -> impl Iterator<Item = &str> {
+        self.families.iter().map(|(name, _)| name.as_str())
+    }
+
+    /// One face per family for a CSS weight, in fallback order.
+    fn candidates(&self, weight: u16) -> Vec<usize> {
+        self.families
+            .iter()
+            .filter_map(|(_, faces)| {
+                match_weight(faces.iter().map(|&i| (i, self.faces[i].weight)), weight)
+            })
+            .collect()
+    }
+}
+
+/// CSS font-weight matching: the closest face, searching heavier first for
+/// bold requests and lighter first for light ones.
+fn match_weight(faces: impl Iterator<Item = (usize, u16)>, want: u16) -> Option<usize> {
+    let faces: Vec<(usize, u16)> = faces.collect();
+    let rank = |w: u16| -> (u8, u16) {
+        if w == want {
+            (0, 0)
+        } else if (400..=500).contains(&want) {
+            if w > want && w <= 500 {
+                (1, w - want)
+            } else if w < want {
+                (2, want - w)
+            } else {
+                (3, w - want)
+            }
+        } else if want < 400 {
+            if w < want {
+                (1, want - w)
+            } else {
+                (2, w - want)
+            }
+        } else if w > want {
+            (1, w - want)
+        } else {
+            (2, want - w)
+        }
+    };
+    faces
+        .into_iter()
+        .min_by_key(|&(_, w)| rank(w))
+        .map(|(i, _)| i)
 }
 
 /// Width differences smaller than this do not wrap, so text measured
@@ -56,6 +185,8 @@ const WRAP_EPSILON: f32 = 0.01;
 /// One positioned glyph, in points from the left of its line and its baseline.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PlacedGlyph {
+    /// Index of the face in the engine's font set. Stable once added.
+    pub face: u16,
     pub id: u16,
     pub x: f32,
     pub y: f32,
@@ -76,7 +207,6 @@ pub struct TextLine {
 /// A paragraph laid out for drawing.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextLayout {
-    pub face: Face,
     pub size: f32,
     pub lines: Vec<TextLine>,
     pub bounds: Size,
@@ -93,6 +223,7 @@ struct Cluster {
 
 #[derive(Clone, Copy, Debug)]
 struct Glyph {
+    face: u16,
     id: u16,
     x: f32,
     y: f32,
@@ -115,64 +246,105 @@ struct ShapedText {
 #[derive(Clone, PartialEq, Eq, Hash)]
 struct ShapeKey {
     text: String,
-    face: Face,
+    weight: u16,
     size: u32,
 }
 
 const SHAPE_CACHE_LIMIT: usize = 4096;
+const GLYPH_CACHE_LIMIT: usize = 8192;
 
-/// Shapes, measures, and lays out text. Implements [`TextMeasure`], so a
-/// renderer hands this to layout and draws with the same instance.
+/// Shapes, measures, lays out, and rasterizes text. Implements
+/// [`TextMeasure`], so a renderer hands this to layout and draws with the
+/// same instance.
 pub struct TextEngine {
     inner: RefCell<EngineInner>,
 }
 
 struct EngineInner {
+    fonts: FontSet,
+    generation: u64,
     shaper: ShapeContext,
-    cache: HashMap<ShapeKey, Rc<ShapedText>>,
+    scaler: ScaleContext,
+    shapes: HashMap<ShapeKey, Rc<ShapedText>>,
+    glyphs: HashMap<GlyphKey, Rc<GlyphBitmap>>,
 }
 
 impl Default for TextEngine {
     fn default() -> Self {
-        Self::new()
+        Self::new(FontSet::new())
     }
 }
 
 impl TextEngine {
-    pub fn new() -> Self {
+    pub fn new(fonts: FontSet) -> Self {
         Self {
             inner: RefCell::new(EngineInner {
+                fonts,
+                generation: 0,
                 shaper: ShapeContext::new(),
-                cache: HashMap::new(),
+                scaler: ScaleContext::new(),
+                shapes: HashMap::new(),
+                glyphs: HashMap::new(),
             }),
         }
     }
 
-    fn shaped(&self, text: &str, face: Face, size: f32) -> Rc<ShapedText> {
+    /// Adds a face after creation, for example one the web shell loaded.
+    /// Measurements made from now on use it; ask for a new frame so layout
+    /// runs again.
+    pub fn add_fallback_font(&self, data: impl Into<FontData>) -> Result<(), FontError> {
+        let mut inner = self.inner.borrow_mut();
+        inner.fonts.add(data)?;
+        // Shapes picked faces from the old set. Glyph bitmaps stay valid
+        // because face indices never change.
+        inner.shapes.clear();
+        inner.generation += 1;
+        Ok(())
+    }
+
+    /// Changes whenever the font set changes, so callers that cache
+    /// measurements know to drop them.
+    pub fn generation(&self) -> u64 {
+        self.inner.borrow().generation
+    }
+
+    pub fn has_fonts(&self) -> bool {
+        !self.inner.borrow().fonts.is_empty()
+    }
+
+    fn shaped(&self, text: &str, weight: u16, size: f32) -> Rc<ShapedText> {
         let key = ShapeKey {
             text: text.to_owned(),
-            face,
+            weight,
             size: size.to_bits(),
         };
         let mut inner = self.inner.borrow_mut();
-        if let Some(found) = inner.cache.get(&key) {
+        if let Some(found) = inner.shapes.get(&key) {
             return found.clone();
         }
-        let font = face.font();
-        let metrics = font.metrics(&[]).scale(size);
+        let inner = &mut *inner;
+        let candidates = inner.fonts.candidates(weight);
+        let (ascent, descent) = match candidates.first() {
+            Some(&primary) => {
+                let m = inner.fonts.faces[primary].font().metrics(&[]).scale(size);
+                (m.ascent, m.descent)
+            }
+            // Typical proportions until a face arrives.
+            None => (size * 0.8, size * 0.2),
+        };
         let paragraphs = text
             .split('\n')
-            .map(|p| shape_paragraph(&mut inner.shaper, font, size, p))
+            .map(|p| shape_paragraph(&mut inner.shaper, &inner.fonts, &candidates, size, p))
             .collect();
         let shaped = Rc::new(ShapedText {
             paragraphs,
-            ascent: metrics.ascent,
-            descent: metrics.descent,
+            ascent,
+            descent,
         });
-        if inner.cache.len() >= SHAPE_CACHE_LIMIT {
-            inner.cache.clear();
+        if inner.shapes.len() >= SHAPE_CACHE_LIMIT {
+            inner.shapes.clear();
         }
-        inner.cache.insert(key, shaped.clone());
+        inner.shapes.insert(key, shaped.clone());
         shaped
     }
 
@@ -185,18 +357,16 @@ impl TextEngine {
         width: Option<f32>,
         align: TextAlign,
     ) -> TextLayout {
-        let face = Face::for_style(style);
         let size = style.size.max(0.0);
         let line_height = size * style.leading;
         if text.is_empty() || size == 0.0 {
             return TextLayout {
-                face,
                 size,
                 lines: Vec::new(),
                 bounds: Size::default(),
             };
         }
-        let shaped = self.shaped(text, face, size);
+        let shaped = self.shaped(text, style.weight, size);
         let half_leading = (line_height - (shaped.ascent + shaped.descent)) / 2.0;
         let mut lines = Vec::new();
         let mut max_width: f32 = 0.0;
@@ -210,6 +380,7 @@ impl TextEngine {
                         [cluster.first_glyph..cluster.first_glyph + cluster.glyph_count]
                     {
                         glyphs.push(PlacedGlyph {
+                            face: g.face,
                             id: g.id,
                             x: pen + g.x,
                             y: g.y,
@@ -239,10 +410,94 @@ impl TextEngine {
             height: lines.len() as f32 * line_height,
         };
         TextLayout {
-            face,
             size,
             lines,
             bounds,
+        }
+    }
+
+    /// The coverage bitmap of one glyph, rasterized without hinting so its
+    /// shape only depends on pixel size and subpixel offset.
+    pub fn glyph(&self, key: GlyphKey) -> Rc<GlyphBitmap> {
+        let mut inner = self.inner.borrow_mut();
+        if let Some(found) = inner.glyphs.get(&key) {
+            return found.clone();
+        }
+        let inner = &mut *inner;
+        let face = &inner.fonts.faces[key.face as usize];
+        let mut scaler = inner
+            .scaler
+            .builder(face.font())
+            .size(f32::from_bits(key.size))
+            .hint(false)
+            .build();
+        let offset = Vector::new(key.subpixel as f32 / SUBPIXEL_STEPS as f32, 0.0);
+        let bitmap = match Render::new(&[Source::Outline])
+            .format(Format::Alpha)
+            .offset(offset)
+            .render(&mut scaler, key.id)
+        {
+            Some(image) => GlyphBitmap {
+                left: image.placement.left,
+                top: image.placement.top,
+                width: image.placement.width,
+                height: image.placement.height,
+                data: image.data,
+            },
+            None => GlyphBitmap {
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0,
+                data: Vec::new(),
+            },
+        };
+        if inner.glyphs.len() >= GLYPH_CACHE_LIMIT {
+            inner.glyphs.clear();
+        }
+        let bitmap = Rc::new(bitmap);
+        inner.glyphs.insert(key, bitmap.clone());
+        bitmap
+    }
+
+    /// Places every glyph of a layout drawn with its box at `origin` (logical
+    /// points) and `scale` physical pixels per point. Baselines snap to whole
+    /// pixels; horizontal positions keep subpixel precision.
+    pub fn place(
+        &self,
+        layout: &TextLayout,
+        origin: (f32, f32),
+        scale: f32,
+        out: &mut Vec<GlyphDraw>,
+    ) {
+        let size = (layout.size * scale).to_bits();
+        for line in &layout.lines {
+            let baseline = ((origin.1 + line.baseline) * scale).round();
+            for g in &line.glyphs {
+                let x = (origin.0 + line.x + g.x) * scale;
+                let mut pen_x = x.floor();
+                let mut subpixel = ((x - pen_x) * SUBPIXEL_STEPS as f32).round() as u32;
+                if subpixel == SUBPIXEL_STEPS {
+                    pen_x += 1.0;
+                    subpixel = 0;
+                }
+                let key = GlyphKey {
+                    face: g.face,
+                    id: g.id,
+                    size,
+                    subpixel: subpixel as u8,
+                };
+                let bitmap = self.glyph(key);
+                if bitmap.width == 0 || bitmap.height == 0 {
+                    continue;
+                }
+                out.push(GlyphDraw {
+                    key,
+                    bitmap,
+                    pen_x: pen_x as i32,
+                    pen_y: (baseline - g.y * scale).round() as i32,
+                });
+            }
         }
     }
 }
@@ -253,9 +508,36 @@ impl TextMeasure for TextEngine {
     }
 }
 
-fn shape_paragraph(ctx: &mut ShapeContext, font: FontRef<'_>, size: f32, text: &str) -> Shaped {
+/// Picks the face for each character: the current run's face when it has
+/// the glyph (spaces and combining marks always stay), else the first
+/// candidate that has it, else the primary face.
+fn pick_face(
+    c: char,
+    current: Option<usize>,
+    candidates: &[usize],
+    covers: impl Fn(usize, char) -> bool,
+) -> usize {
+    if let Some(face) = current {
+        if c.is_whitespace() || c.script() == Script::Inherited || covers(face, c) {
+            return face;
+        }
+    }
+    candidates
+        .iter()
+        .copied()
+        .find(|&f| covers(f, c))
+        .unwrap_or(candidates[0])
+}
+
+fn shape_paragraph(
+    ctx: &mut ShapeContext,
+    fonts: &FontSet,
+    candidates: &[usize],
+    size: f32,
+    text: &str,
+) -> Shaped {
     let mut out = Shaped::default();
-    if text.is_empty() {
+    if text.is_empty() || candidates.is_empty() {
         return out;
     }
     // Byte offsets where a line may break before the character.
@@ -266,34 +548,53 @@ fn shape_paragraph(ctx: &mut ShapeContext, font: FontRef<'_>, size: f32, text: &
         breaks[offset] = matches!(boundary, Boundary::Line | Boundary::Mandatory) && offset > 0;
         whitespace[offset] = ch.is_whitespace();
     }
-    let script = text
-        .chars()
-        .map(swash::text::Codepoint::script)
-        .find(|s| !matches!(s, Script::Common | Script::Inherited | Script::Unknown))
-        .unwrap_or(Script::Latin);
-    let mut shaper = ctx.builder(font).script(script).size(size).build();
-    shaper.add_str(text);
-    shaper.shape_with(|cluster| {
-        let start = cluster.source.start as usize;
-        let end = (cluster.source.end as usize).min(text.len());
-        let first_glyph = out.glyphs.len();
-        let mut advance = 0.0;
-        for g in cluster.glyphs {
-            out.glyphs.push(Glyph {
-                id: g.id,
-                x: advance + g.x,
-                y: g.y,
-            });
-            advance += g.advance;
+    let covers = |face: usize, c: char| fonts.faces[face].font().charmap().map(c) != 0;
+    // Runs of text that share one face.
+    let mut runs: Vec<(usize, usize, usize)> = Vec::new();
+    for (offset, ch) in text.char_indices() {
+        let current = runs.last().map(|r| r.2);
+        let face = pick_face(ch, current, candidates, covers);
+        match runs.last_mut() {
+            Some(run) if run.2 == face => run.1 = offset + ch.len_utf8(),
+            _ => runs.push((offset, offset + ch.len_utf8(), face)),
         }
-        out.clusters.push(Cluster {
-            advance,
-            first_glyph,
-            glyph_count: cluster.glyphs.len(),
-            whitespace: (start..end).all(|i| !text.is_char_boundary(i) || whitespace[i]),
-            break_before: breaks[start],
+    }
+    for (start, end, face) in runs {
+        let run = &text[start..end];
+        let script = run
+            .chars()
+            .map(Codepoint::script)
+            .find(|s| !matches!(s, Script::Common | Script::Inherited | Script::Unknown))
+            .unwrap_or(Script::Latin);
+        let mut shaper = ctx
+            .builder(fonts.faces[face].font())
+            .script(script)
+            .size(size)
+            .build();
+        shaper.add_str(run);
+        shaper.shape_with(|cluster| {
+            let cs = start + cluster.source.start as usize;
+            let ce = (start + cluster.source.end as usize).min(end);
+            let first_glyph = out.glyphs.len();
+            let mut advance = 0.0;
+            for g in cluster.glyphs {
+                out.glyphs.push(Glyph {
+                    face: face as u16,
+                    id: g.id,
+                    x: advance + g.x,
+                    y: g.y,
+                });
+                advance += g.advance;
+            }
+            out.clusters.push(Cluster {
+                advance,
+                first_glyph,
+                glyph_count: cluster.glyphs.len(),
+                whitespace: (cs..ce).all(|i| !text.is_char_boundary(i) || whitespace[i]),
+                break_before: breaks[cs],
+            });
         });
-    });
+    }
     out
 }
 
@@ -357,7 +658,7 @@ pub const SUBPIXEL_STEPS: u32 = 4;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct GlyphKey {
-    pub face: Face,
+    pub face: u16,
     pub id: u16,
     /// Pixel size as `f32` bits.
     pub size: u32,
@@ -372,115 +673,28 @@ pub struct GlyphDraw {
     pub pen_y: i32,
 }
 
-const GLYPH_CACHE_LIMIT: usize = 8192;
-
-/// Rasterizes glyphs without hinting, so shapes only depend on pixel size and
-/// subpixel offset. Shared by the CPU and GPU renderers for identical text.
-pub struct GlyphRasterizer {
-    scaler: ScaleContext,
-    cache: HashMap<GlyphKey, Rc<GlyphBitmap>>,
-}
-
-impl Default for GlyphRasterizer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl GlyphRasterizer {
-    pub fn new() -> Self {
-        Self {
-            scaler: ScaleContext::new(),
-            cache: HashMap::new(),
-        }
-    }
-
-    pub fn glyph(&mut self, key: GlyphKey) -> Rc<GlyphBitmap> {
-        if let Some(found) = self.cache.get(&key) {
-            return found.clone();
-        }
-        let size = f32::from_bits(key.size);
-        let mut scaler = self
-            .scaler
-            .builder(key.face.font())
-            .size(size)
-            .hint(false)
-            .build();
-        let offset = Vector::new(key.subpixel as f32 / SUBPIXEL_STEPS as f32, 0.0);
-        let bitmap = match Render::new(&[Source::Outline])
-            .format(Format::Alpha)
-            .offset(offset)
-            .render(&mut scaler, key.id)
-        {
-            Some(image) => GlyphBitmap {
-                left: image.placement.left,
-                top: image.placement.top,
-                width: image.placement.width,
-                height: image.placement.height,
-                data: image.data,
-            },
-            None => GlyphBitmap {
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0,
-                data: Vec::new(),
-            },
-        };
-        if self.cache.len() >= GLYPH_CACHE_LIMIT {
-            self.cache.clear();
-        }
-        let bitmap = Rc::new(bitmap);
-        self.cache.insert(key, bitmap.clone());
-        bitmap
-    }
-
-    /// Places every glyph of a layout drawn with its box at `origin` (logical
-    /// points) and `scale` physical pixels per point. Baselines snap to whole
-    /// pixels; horizontal positions keep subpixel precision.
-    pub fn place(
-        &mut self,
-        layout: &TextLayout,
-        origin: (f32, f32),
-        scale: f32,
-        out: &mut Vec<GlyphDraw>,
-    ) {
-        let size = (layout.size * scale).to_bits();
-        for line in &layout.lines {
-            let baseline = ((origin.1 + line.baseline) * scale).round();
-            for g in &line.glyphs {
-                let x = (origin.0 + line.x + g.x) * scale;
-                let mut pen_x = x.floor();
-                let mut subpixel = ((x - pen_x) * SUBPIXEL_STEPS as f32).round() as u32;
-                if subpixel == SUBPIXEL_STEPS {
-                    pen_x += 1.0;
-                    subpixel = 0;
-                }
-                let key = GlyphKey {
-                    face: layout.face,
-                    id: g.id,
-                    size,
-                    subpixel: subpixel as u8,
-                };
-                let bitmap = self.glyph(key);
-                if bitmap.width == 0 || bitmap.height == 0 {
-                    continue;
-                }
-                out.push(GlyphDraw {
-                    key,
-                    bitmap,
-                    pen_x: pen_x as i32,
-                    pen_y: (baseline - g.y * scale).round() as i32,
-                });
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use astryx_core::FontFamily;
+
+    static REGULAR: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Regular.ttf");
+    static MEDIUM: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Medium.ttf");
+    static BOLD: &[u8] = include_bytes!("../../../assets/fonts/Roboto-Bold.ttf");
+
+    fn roboto() -> FontSet {
+        FontSet::new()
+            .with(REGULAR)
+            .unwrap()
+            .with(MEDIUM)
+            .unwrap()
+            .with(BOLD)
+            .unwrap()
+    }
+
+    fn engine() -> TextEngine {
+        TextEngine::new(roboto())
+    }
 
     fn style(size: f32, weight: u16) -> TextStyle {
         TextStyle {
@@ -492,16 +706,74 @@ mod tests {
     }
 
     #[test]
-    fn weights_map_to_faces() {
-        assert_eq!(Face::for_style(&style(14.0, 400)), Face::Regular);
-        assert_eq!(Face::for_style(&style(14.0, 500)), Face::Medium);
-        assert_eq!(Face::for_style(&style(14.0, 600)), Face::Bold);
-        assert_eq!(Face::for_style(&style(14.0, 900)), Face::Bold);
+    fn faces_group_into_one_family() {
+        let set = roboto();
+        assert_eq!(set.families().collect::<Vec<_>>(), vec!["Roboto"]);
+        assert_eq!(set.candidates(400).len(), 1);
+    }
+
+    #[test]
+    fn weights_match_like_css() {
+        let faces = [(0, 400), (1, 500), (2, 700)];
+        let pick = |w| match_weight(faces.iter().copied(), w).unwrap();
+        assert_eq!(pick(400), 0);
+        assert_eq!(pick(500), 1);
+        assert_eq!(pick(600), 2);
+        assert_eq!(pick(900), 2);
+        assert_eq!(pick(300), 0);
+        assert_eq!(pick(450), 1);
+        assert!(match_weight(std::iter::empty(), 400).is_none());
+    }
+
+    #[test]
+    fn fallback_uses_the_first_face_with_the_glyph() {
+        // Face 0 has only ASCII letters, face 1 has everything.
+        let covers = |f: usize, c: char| f == 1 || c.is_ascii_alphabetic();
+        assert_eq!(pick_face('a', None, &[0, 1], covers), 0);
+        assert_eq!(pick_face('Ж', Some(0), &[0, 1], covers), 1);
+        assert_eq!(pick_face(' ', Some(1), &[0, 1], covers), 1);
+        // A combining mark stays with its base character's face.
+        assert_eq!(pick_face('\u{301}', Some(0), &[0, 1], covers), 0);
+        // Nothing covers it: the primary face draws its missing-glyph box.
+        assert_eq!(pick_face('Ж', None, &[0], covers), 0);
+    }
+
+    #[test]
+    fn cyrillic_greek_and_vietnamese_have_real_glyphs() {
+        let layout = engine().layout(
+            "Привет мир · Γειά σου · Tiếng Việt",
+            &style(16.0, 400),
+            None,
+            TextAlign::Start,
+        );
+        let glyphs = &layout.lines[0].glyphs;
+        assert!(!glyphs.is_empty());
+        assert!(glyphs.iter().all(|g| g.id != 0), "missing glyphs");
+    }
+
+    #[test]
+    fn layout_updates_when_a_face_arrives_later() {
+        let engine = TextEngine::default();
+        let st = style(16.0, 400);
+        let before = engine.measure("Hello", &st, None);
+        assert_eq!(
+            before,
+            Size {
+                width: 0.0,
+                height: 24.0
+            }
+        );
+        let generation = engine.generation();
+        engine.add_fallback_font(REGULAR.to_vec()).unwrap();
+        assert_ne!(engine.generation(), generation);
+        let after = engine.measure("Hello", &st, None);
+        assert!(after.width > 30.0, "{after:?}");
+        assert!(engine.add_fallback_font(vec![1, 2, 3]).is_err());
     }
 
     #[test]
     fn line_height_is_size_times_leading() {
-        let engine = TextEngine::new();
+        let engine = engine();
         let s = engine.measure("Hello", &style(16.0, 400), None);
         assert_eq!(s.height, 24.0);
         assert!(s.width > 30.0 && s.width < 45.0, "{s:?}");
@@ -512,14 +784,14 @@ mod tests {
     #[test]
     fn empty_text_has_no_size() {
         assert_eq!(
-            TextEngine::new().measure("", &style(16.0, 400), None),
+            engine().measure("", &style(16.0, 400), None),
             Size::default()
         );
     }
 
     #[test]
     fn wraps_at_width_and_never_wraps_at_its_own_width() {
-        let engine = TextEngine::new();
+        let engine = engine();
         let st = style(14.0, 400);
         let text = "The quick brown fox jumps over the lazy dog";
         let one = engine.measure(text, &st, None);
@@ -527,7 +799,6 @@ mod tests {
         let narrow = engine.measure(text, &st, Some(one.width / 2.5));
         assert!(narrow.height >= 3.0 * 21.0, "{narrow:?}");
         assert!(narrow.width <= one.width / 2.5 + WRAP_EPSILON);
-        // Each wrapped line fits and lays out the same words.
         let layout = engine.layout(text, &st, Some(one.width / 2.5), TextAlign::Start);
         let glyphs: usize = layout.lines.iter().map(|l| l.glyphs.len()).sum();
         let unwrapped: usize = engine.layout(text, &st, None, TextAlign::Start).lines[0]
@@ -538,15 +809,14 @@ mod tests {
 
     #[test]
     fn long_words_overflow_like_css() {
-        let engine = TextEngine::new();
-        let s = engine.measure("Supercalifragilistic", &style(14.0, 400), Some(10.0));
+        let s = engine().measure("Supercalifragilistic", &style(14.0, 400), Some(10.0));
         assert_eq!(s.height, 21.0);
         assert!(s.width > 10.0);
     }
 
     #[test]
     fn alignment_offsets_lines() {
-        let engine = TextEngine::new();
+        let engine = engine();
         let st = style(14.0, 400);
         let w = engine.measure("Hi", &st, None).width;
         let c = engine.layout("Hi", &st, Some(100.0), TextAlign::Center);
@@ -557,7 +827,7 @@ mod tests {
 
     #[test]
     fn bolder_text_is_wider() {
-        let engine = TextEngine::new();
+        let engine = engine();
         let r = engine.measure("Settings", &style(14.0, 400), None).width;
         let b = engine.measure("Settings", &style(14.0, 700), None).width;
         assert!(b > r);
@@ -565,11 +835,10 @@ mod tests {
 
     #[test]
     fn glyphs_rasterize() {
-        let engine = TextEngine::new();
+        let engine = engine();
         let layout = engine.layout("Ag", &style(16.0, 400), None, TextAlign::Start);
-        let mut raster = GlyphRasterizer::new();
         let mut out = Vec::new();
-        raster.place(&layout, (0.0, 0.0), 2.0, &mut out);
+        engine.place(&layout, (0.0, 0.0), 2.0, &mut out);
         assert_eq!(out.len(), 2);
         assert!(out.iter().all(|g| g.bitmap.data.iter().any(|&a| a > 200)));
     }

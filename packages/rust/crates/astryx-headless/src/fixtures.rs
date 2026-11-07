@@ -680,6 +680,10 @@ impl Surface for FixtureSurface {
 
     fn accessibility(&self) -> Option<A11yNode> {
         let node = |id, role, label: &str, bounds, focused, checked| A11yNode {
+            description: None,
+            selected: None,
+            focusable: false,
+            live: None,
             id,
             role,
             label: Some(label.to_owned()),
@@ -741,6 +745,10 @@ impl Surface for FixtureSurface {
                     Some(true),
                 ),
                 A11yNode {
+                    description: None,
+                    selected: None,
+                    focusable: false,
+                    live: None,
                     value: Some("65%".into()),
                     ..node(
                         7,

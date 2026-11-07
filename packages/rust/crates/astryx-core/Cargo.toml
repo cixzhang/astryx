@@ -7,3 +7,4 @@ version.workspace = true
 
 [dependencies]
 astryx-tokens.workspace = true
+taffy = { version = "0.15", default-features = false, features = ["std", "flexbox", "taffy_tree"] }
