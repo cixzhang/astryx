@@ -67,23 +67,25 @@ fn all_nodes(rt: &Runtime<Pad>) -> Vec<A11yNode> {
 fn the_gamepad_types_into_the_focused_field() {
     let mut rt = Runtime::new(Pad::default());
     frame(&mut rt, 600, 500, 1.0, 0.0);
-    // Hold down, press A then X; let go; tap up, press A.
-    press(&mut rt, Input::Down);
+    // Hold left, press A then X; let go; tap up, press A; tap down, A
+    // for a space.
+    press(&mut rt, Input::Left);
     tap(&mut rt, Input::A);
     tap(&mut rt, Input::X);
-    release(&mut rt, Input::Down);
+    release(&mut rt, Input::Left);
     tap(&mut rt, Input::Up);
     tap(&mut rt, Input::A);
-    tap(&mut rt, Input::R1);
+    tap(&mut rt, Input::Down);
+    tap(&mut rt, Input::A);
     frame(&mut rt, 600, 500, 1.0, 0.0);
-    assert_eq!(rt.app().text, "ale ");
+    assert_eq!(rt.app().text, "are ");
     let field = all_nodes(&rt)
         .into_iter()
         .find(|n| n.role == Role::TextInput)
         .unwrap();
     assert_eq!(
         (field.label.as_deref(), field.value.as_deref()),
-        (Some("Message"), Some("ale "))
+        (Some("Message"), Some("are "))
     );
     assert!(field.focused, "the field is the focus stop");
     tap(&mut rt, Input::Start);
@@ -105,7 +107,7 @@ fn choosing_a_group_announces_its_letters() {
         .filter(|n| n.live.is_some())
         .filter_map(|n| n.label.or(n.value))
         .collect();
-    assert_eq!(live, ["right: t, n, d, m"]);
+    assert_eq!(live, ["right: t, i, h, l"]);
 }
 
 #[test]
@@ -132,7 +134,7 @@ fn l1_and_r1_together_switch_layouts_with_a_toast_that_hides() {
         rt.app().actions,
         [KeyboardAction::Switched(KeyboardKind::Grid)]
     );
-    assert_eq!(rt.app().text, "", "no delete, no space");
+    assert_eq!(rt.app().state.layer, 0, "no layer change");
     assert!(
         texts(&list).iter().any(|t| t.1 == "Grid keyboard"),
         "the toast names it"

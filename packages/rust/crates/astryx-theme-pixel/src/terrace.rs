@@ -361,13 +361,13 @@ mod tests {
             ),
             (
                 "destructive focus ring on body",
-                |c| c.error,
+                |c| c.border_error,
                 |c| c.background_body,
                 3.0,
             ),
             (
                 "destructive focus ring on surface",
-                |c| c.error,
+                |c| c.border_error,
                 |c| c.background_surface,
                 3.0,
             ),
@@ -451,14 +451,9 @@ mod tests {
                 3.0,
             ),
         ];
-        // Pairs the palette cannot meet, with the ratio they reach.
-        // A light error fill cannot also be a 3:1 focus ring on light
-        // ground; Button rings Destructive in `error` (it was 1.89 with
-        // rose-2). Ringing it in `borderError` (ink-plum, 9.89) would pass.
-        let known: [(&str, &str, f32); 2] = [
-            ("light", "destructive focus ring on body", 2.0),
-            ("light", "destructive focus ring on surface", 2.5),
-        ];
+        // Pairs the palette cannot meet, with the ratio they reach. Button
+        // rings Destructive in the error border color.
+        let known: [(&str, &str, f32); 0] = [];
         // Status messages: text on a muted fill, a swatch at partial alpha
         // over the body or a surface.
         let muted: [(&str, Get, Get); 4] = [

@@ -34,7 +34,7 @@ pub use media::{
     Avatar, AvatarShape, AvatarSize, AvatarStatus, AvatarStatusDot, AvatarStatusDotVariant,
     Thumbnail, ThumbnailShowRemoveOn,
 };
-pub use stack::{HStack, StackAlign, StackJustify, StackWrap, VStack};
+pub use stack::{HStack, SizeValue, StackAlign, StackJustify, StackWrap, VStack};
 pub use switch::{Switch, SwitchSize};
 pub use text::{
     Heading, HeadingType, Text, TextColor, TextJustify, TextSize, TextType, TextWeight,

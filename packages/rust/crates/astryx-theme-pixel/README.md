@@ -63,13 +63,13 @@ Contrast of Terrace text and controls against WCAG AA, checked by a test:
 | Text on accent (paper on ink-plum; soil-4 on plum-1) | 12.36 | 8.25 |
 | Accent text, controls, focus ring on body, on surface | 9.89, 12.36 | 8.25, 7.05 |
 | Status message text on its muted fill, over body and surface | 4.87 or more | 5.69 or more |
-| **Delete focus ring on body, on surface (3:1)** | **2.00, 2.50, fails** | 6.70, 5.73 |
+| Delete focus ring on body, on surface (ink-plum; rose-2) | 9.89, 12.36 | 7.12, 6.08 |
 
 Rose text on paper reads at 1.9:1, so light-mode error text, icons, and
 borders are `ink-plum` too; errors rely on their rose fills and icons to
 stand apart from the accent. Dark mode's accent is `plum-1` (palette v1.3
-adds it in place of `soil-2`), where `ink-plum` would vanish. The light
-Delete focus ring fails until Button rings Destructive in `borderError`.
+adds it in place of `soil-2`), where `ink-plum` would vanish. Every pair
+passes.
 
 ## The one idea
 

@@ -2,7 +2,9 @@
 
 use super::into_elements;
 use crate::element::{base_props, Axis, Base, Build, BuildCx, Element, Node, Space};
-use taffy::{AlignContent, AlignItems, FlexDirection, FlexWrap, JustifyContent, Overflow, Style};
+use taffy::{
+    AlignContent, AlignItems, Dimension, FlexDirection, FlexWrap, JustifyContent, Overflow, Style,
+};
 
 /// Main-axis distribution: `hAlign` on HStack, `vAlign` on VStack, and `justify`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -33,8 +35,28 @@ pub enum StackWrap {
     WrapReverse,
 }
 
+/// A size for a stack's width or height, as Astryx's `SizeValue`: points,
+/// or a percent of the parent's size.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SizeValue {
+    Points(f32),
+    Percent(f32),
+}
+
+impl SizeValue {
+    fn dimension(self) -> Dimension {
+        match self {
+            SizeValue::Points(v) => Dimension::length(v),
+            SizeValue::Percent(v) => Dimension::percent(v / 100.0),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 struct StackProps {
+    width: Option<SizeValue>,
+    height: Option<SizeValue>,
+    min_height: Option<SizeValue>,
     gap: Option<Space>,
     padding: Option<Space>,
     padding_inline: Option<Space>,
@@ -140,6 +162,19 @@ fn build_stack<Msg>(
             AlignContent::NORMAL
         } else {
             AlignContent::FLEX_START
+        },
+        size: taffy::Size {
+            width: p.width.map_or(Dimension::auto(), SizeValue::dimension),
+            height: p.height.map_or(Dimension::auto(), SizeValue::dimension),
+        },
+        min_size: taffy::Size {
+            width: taffy::LengthPercentageAuto::auto(),
+            height: p
+                .min_height
+                .map_or(taffy::LengthPercentageAuto::auto(), |v| match v {
+                    SizeValue::Points(v) => taffy::LengthPercentageAuto::length(v),
+                    SizeValue::Percent(v) => taffy::LengthPercentageAuto::percent(v / 100.0),
+                }),
         },
         overflow: if p.is_scrollable {
             scroll
@@ -269,6 +304,21 @@ macro_rules! stack {
             }
             pub fn wrap(mut self, wrap: StackWrap) -> Self {
                 self.props.wrap = wrap;
+                self
+            }
+            /// Width of the stack. A percent is of the parent's width.
+            pub fn width(mut self, width: SizeValue) -> Self {
+                self.props.width = Some(width);
+                self
+            }
+            /// Height of the stack. A percent is of the parent's height;
+            /// the app's root is the window, so `Percent(100.0)` fills it.
+            pub fn height(mut self, height: SizeValue) -> Self {
+                self.props.height = Some(height);
+                self
+            }
+            pub fn min_height(mut self, height: SizeValue) -> Self {
+                self.props.min_height = Some(height);
                 self
             }
         }

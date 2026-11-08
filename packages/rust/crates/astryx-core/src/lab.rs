@@ -13,8 +13,8 @@
 //!   grid.
 
 pub use crate::components::keyboard::{
-    ChordLayer, ChordLayout, GridLayout, KeyboardAction, KeyboardKind, KeyboardState,
-    KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
+    ChordKey, ChordLayer, ChordLayout, ChordView, GridLayout, KeyboardAction, KeyboardKind,
+    KeyboardState, KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
 };
 use crate::components::text::{text_node, type_style};
 use crate::components::{
@@ -196,7 +196,7 @@ const BOLT_BITS: &[&str] = &[
 
 /// A status icon. Its name lets a theme with its own icon of that name
 /// draw it instead; a pixel theme without one gets the built-in bitmap.
-fn status_icon<Msg>(
+pub(crate) fn named_icon<Msg>(
     cx: &BuildCx<Msg>,
     (name, bits): (&'static str, &'static [&'static str]),
     paths: Vec<PathCmd>,
@@ -283,7 +283,7 @@ impl<Msg> Build<Msg> for StatusBar {
         } else {
             WIFI_BITS
         };
-        let icon = status_icon(cx, (wifi, bits), paths, side, wifi_color.into(), false);
+        let icon = named_icon(cx, (wifi, bits), paths, side, wifi_color.into(), false);
         cx.leaf(icon);
         if device.bluetooth != Radio::Off {
             let color = if device.bluetooth == Radio::Connected {
@@ -291,7 +291,7 @@ impl<Msg> Build<Msg> for StatusBar {
             } else {
                 c.icon_secondary
             };
-            let icon = status_icon(
+            let icon = named_icon(
                 cx,
                 ("bluetooth", BLUETOOTH_BITS),
                 BLUETOOTH.to_vec(),
@@ -393,7 +393,7 @@ fn battery<Msg>(
         .draw(Draw::Box(BoxDraw::fill(c.icon_primary.into(), radii(0.0)))),
     );
     if charging {
-        let icon = status_icon(cx, ("bolt", BOLT_BITS), BOLT.to_vec(), 12.0, fill, true);
+        let icon = named_icon(cx, ("bolt", BOLT_BITS), BOLT.to_vec(), 12.0, fill, true);
         cx.leaf(icon);
     }
     cx.end();

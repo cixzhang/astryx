@@ -23,6 +23,10 @@ pub struct Kbd {
     caps: Vec<Cap>,
     /// The caps are alternatives ("L1 or R1"), not a chord.
     either: bool,
+    /// Gamepad buttons show "+" between buttons pressed together and "/"
+    /// between alternatives; keyboard keys show only the gap, as Astryx's
+    /// Kbd does.
+    gamepad: bool,
 }
 
 impl Kbd {
@@ -35,6 +39,7 @@ impl Kbd {
             base: Base::default(),
             caps: segments(keys).map(|key| keyboard_cap(&key)).collect(),
             either: false,
+            gamepad: false,
         }
     }
 
@@ -59,6 +64,7 @@ impl Kbd {
             base: Base::default(),
             caps,
             either,
+            gamepad: true,
         }
     }
 
@@ -186,7 +192,13 @@ impl<Msg> Build<Msg> for Kbd {
             })
             .sem(Semantics::new(Role::Image, spoken)),
         );
-        for key in self.caps {
+        let between = if self.either { "/" } else { "+" };
+        for (i, key) in self.caps.into_iter().enumerate() {
+            if self.gamepad && i > 0 {
+                let mut sep = text_node(between, style, c.text_secondary.into());
+                sep.sem = None;
+                cx.leaf(sep);
+            }
             // The face is the translucent neutral over whatever is behind
             // the cap; a bar of the emphasized border color draws its
             // bottom edge, as CSS draws a bottom border.

@@ -156,7 +156,7 @@ pub enum Msg {
     Theme(String),
     /// `"light"`, `"dark"`, or `"system"`.
     Mode(String),
-    /// Moves through `Theme::ALL` by this many steps (R1, L1).
+    /// Moves through the picker's themes by this many steps (R1, L1).
     ShiftTheme(i32),
     /// Light, then dark, then system (Select).
     CycleMode,
@@ -213,6 +213,11 @@ pub struct Gallery {
     pub typed: String,
     /// What the keyboard last finished with: "Done" or "Cancelled".
     pub finished: Option<&'static str>,
+    /// Themes outside the published set, such as pixel themes, listed
+    /// before them in the picker and on R1 and L1.
+    pub extra_themes: Vec<&'static Theme>,
+    /// The heading at the top, "Astryx gallery" unless a shell names it.
+    pub title: &'static str,
 }
 
 impl Default for Gallery {
@@ -250,6 +255,8 @@ impl Default for Gallery {
             keyboard: KeyboardState::default(),
             typed: String::new(),
             finished: None,
+            extra_themes: Vec::new(),
+            title: "Astryx gallery",
         }
     }
 }
@@ -270,6 +277,26 @@ impl Gallery {
     pub fn with_direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
+    }
+
+    pub fn with_title(mut self, title: &'static str) -> Self {
+        self.title = title;
+        self
+    }
+
+    /// Adds `themes` to the picker, before the published ones.
+    pub fn with_extra_themes(mut self, themes: impl IntoIterator<Item = &'static Theme>) -> Self {
+        self.extra_themes.extend(themes);
+        self
+    }
+
+    /// Every theme the picker offers, extra themes first.
+    fn themes(&self) -> Vec<&'static Theme> {
+        self.extra_themes
+            .iter()
+            .copied()
+            .chain(Theme::ALL.iter().copied())
+            .collect()
     }
 
     pub fn with_theme(mut self, theme: &'static Theme, mode: Mode) -> Self {
@@ -307,15 +334,22 @@ impl App for Gallery {
         self.announced = matches!(msg, Msg::ShiftTheme(_) | Msg::CycleMode);
         match msg {
             Msg::Theme(name) if name == self.theme.name => {}
-            Msg::Theme(name) => self.theme = Theme::by_name(&name).unwrap_or(Theme::ASTRYX),
+            Msg::Theme(name) => {
+                self.theme = self
+                    .themes()
+                    .into_iter()
+                    .find(|t| t.name == name)
+                    .unwrap_or(Theme::ASTRYX)
+            }
             Msg::Mode(mode) => self.mode = mode_from(&mode),
             Msg::ShiftTheme(by) => {
-                let n = Theme::ALL.len() as i32;
-                let at = Theme::ALL
+                let themes = self.themes();
+                let n = themes.len() as i32;
+                let at = themes
                     .iter()
                     .position(|t| std::ptr::eq(*t, self.theme))
                     .unwrap_or(0) as i32;
-                self.theme = Theme::ALL[(at + by).rem_euclid(n) as usize];
+                self.theme = themes[(at + by).rem_euclid(n) as usize];
             }
             Msg::CycleMode => {
                 self.mode = match self.mode {
@@ -415,16 +449,17 @@ impl Gallery {
     fn header(&self) -> Element<Msg> {
         // A theme from outside the published set, such as a pixel theme,
         // is listed too, so the selector shows it.
-        let mut themes: Vec<SelectorOption> = Theme::ALL
+        let listed = self.themes();
+        let mut themes: Vec<SelectorOption> = listed
             .iter()
             .map(|t| SelectorOption::new(t.name).label(capitalize(t.name)))
             .collect();
-        if Theme::by_name(self.theme.name).is_none() {
+        if !listed.iter().any(|t| std::ptr::eq(*t, self.theme)) {
             themes.push(SelectorOption::new(self.theme.name).label(capitalize(self.theme.name)));
         }
         let modes = [("light", "Light"), ("dark", "Dark"), ("system", "System")]
             .map(|(value, label)| SelectorOption::new(value).label(label));
-        let mut title = VStack::new().gap(Space::S1).child(Heading::new(1, "Astryx gallery")).child(caption(
+        let mut title = VStack::new().gap(Space::S1).child(Heading::new(1, self.title)).child(caption(
             "Arrows and Tab move focus, A activates, B goes back. R1 and L1 change the theme, Select the mode.",
         ));
         title = title.child(caption(&format!(
@@ -1016,28 +1051,12 @@ impl Gallery {
             None if grid => "Move with the D-pad, press A to type".to_string(),
             None => "Hold or tap a direction, then A, B, X, or Y".to_string(),
         };
-        let hints = if grid {
-            astryx_core::lab::KeyHints::new()
-                .key("B", "Delete")
-                .key("X", "Space")
-                .key("Y", "Capitals")
-                .key("L2 R2", "Symbols")
-        } else {
-            astryx_core::lab::KeyHints::new()
-                .key("L1", "Delete")
-                .key("R1", "Space")
-                .key("L2 R2", "Layer")
-        };
         vstack![
             OnScreenKeyboard::new("Message", self.typed.clone(), self.keyboard.clone())
                 .on_change(Msg::Keyboard),
             Text::new(finished)
                 .size(TextSize::Sm)
                 .color(TextColor::Secondary),
-            hints
-                .key("Start", "Done")
-                .key("Select", "Cancel")
-                .key("L1+R1", "Switch keyboard"),
         ]
         .gap(Space::S3)
         .into()

@@ -1798,3 +1798,31 @@ fn selector_clear_is_a_focus_stop_that_sends_an_empty_value() {
         );
     }
 }
+
+#[test]
+fn a_full_height_stack_pins_its_last_child_to_the_bottom() {
+    let mut rt = runtime(|| {
+        VStack::<()>::new()
+            .height(SizeValue::Percent(100.0))
+            .justify(StackJustify::Between)
+            .child(Text::new("Content"))
+            .child(Text::new("Hints"))
+            .into()
+    });
+    let list = rt.frame(
+        &FrameInfo {
+            width: 400,
+            height: 300,
+            scale: 1.0,
+            dt: 0.0,
+        },
+        &measure(),
+    );
+    let (hints, ..) = text(&list, "Hints");
+    assert_eq!(
+        hints.y + hints.height,
+        300.0,
+        "the last child sits on the bottom edge"
+    );
+    assert_eq!(text(&list, "Content").0.y, 0.0);
+}

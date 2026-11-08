@@ -125,6 +125,9 @@ enum Message {
     Set(SoundId, Option<Arc<[f32]>>),
     Play(SoundId),
     Mute(bool),
+    Loop(SoundId, f32),
+    StopLoop(SoundId),
+    PauseLoops(bool),
 }
 
 /// The shell's side: registers sounds, plays them, mutes. Cheap to call
@@ -155,6 +158,23 @@ impl Controller {
     pub fn set_muted(&self, muted: bool) {
         let _ = self.tx.send(Message::Mute(muted));
     }
+
+    /// Plays `id` over and over at `volume` (0 to 1) until
+    /// [`Controller::stop_loop`], for ambient beds. Calling it again for a
+    /// looping sound changes its volume. Loops do not take voices from
+    /// one-shot sounds.
+    pub fn loop_sound(&self, id: SoundId, volume: f32) {
+        let _ = self.tx.send(Message::Loop(id, volume.clamp(0.0, 1.0)));
+    }
+
+    pub fn stop_loop(&self, id: SoundId) {
+        let _ = self.tx.send(Message::StopLoop(id));
+    }
+
+    /// Holds every loop where it is, silent, until resumed.
+    pub fn pause_loops(&self, paused: bool) {
+        let _ = self.tx.send(Message::PauseLoops(paused));
+    }
 }
 
 /// The audio thread's side: mixes the playing voices into output buffers.
@@ -163,6 +183,9 @@ pub struct Mixer {
     sounds: HashMap<SoundId, Arc<[f32]>>,
     /// Playing sounds and how far each is, oldest first.
     voices: Vec<(Arc<[f32]>, usize)>,
+    /// Looping sounds: id, samples, position, volume.
+    loops: Vec<(SoundId, Arc<[f32]>, usize, f32)>,
+    loops_paused: bool,
     muted: bool,
 }
 
@@ -175,6 +198,8 @@ impl Mixer {
                 rx,
                 sounds: HashMap::new(),
                 voices: Vec::new(),
+                loops: Vec::new(),
+                loops_paused: false,
                 muted: false,
             },
             Controller { tx, rate },
@@ -206,6 +231,15 @@ impl Mixer {
                         self.voices.clear();
                     }
                 }
+                Message::Loop(id, volume) => {
+                    if let Some(l) = self.loops.iter_mut().find(|l| l.0 == id) {
+                        l.3 = volume;
+                    } else if let Some(s) = self.sounds.get(&id).filter(|s| !s.is_empty()) {
+                        self.loops.push((id, s.clone(), 0, volume));
+                    }
+                }
+                Message::StopLoop(id) => self.loops.retain(|l| l.0 != id),
+                Message::PauseLoops(p) => self.loops_paused = p,
             }
         }
         out.fill(0.0);
@@ -220,6 +254,17 @@ impl Mixer {
             }
         }
         self.voices.retain(|(s, pos)| *pos < s.len());
+        if !(self.muted || self.loops_paused) {
+            for (_, samples, pos, volume) in &mut self.loops {
+                for frame in out.chunks_exact_mut(channels) {
+                    let v = samples[*pos] * *volume;
+                    *pos = (*pos + 1) % samples.len();
+                    for s in frame {
+                        *s += v;
+                    }
+                }
+            }
+        }
         for s in out {
             *s = s.clamp(-1.0, 1.0);
         }
@@ -228,6 +273,11 @@ impl Mixer {
     /// Voices playing now.
     pub fn playing(&self) -> usize {
         self.voices.len()
+    }
+
+    /// Loops playing (or paused) now.
+    pub fn looping(&self) -> usize {
+        self.loops.len()
     }
 }
 
@@ -273,6 +323,37 @@ mod tests {
         let r = resample(&s, 44100);
         assert_eq!(r.len(), 4410);
         assert!(r.iter().all(|&v| (v - 0.5).abs() < 1e-6));
+    }
+
+    #[test]
+    fn loops_repeat_change_volume_pause_and_stop() {
+        let (mut mixer, control) = Mixer::new(8000);
+        let bed = SoundId(9);
+        control
+            .set_sound(bed, Some(&wav(8000, 1, &[16384, -16384, 8192])))
+            .unwrap();
+        control.loop_sound(bed, 1.0);
+        let mut out = vec![0f32; 7];
+        mixer.fill(&mut out, 1);
+        assert_eq!(mixer.looping(), 1);
+        assert_eq!(mixer.playing(), 0, "a loop takes no voice");
+        assert!(
+            (out[0] - 0.5).abs() < 0.01 && (out[3] - 0.5).abs() < 0.01,
+            "{out:?}"
+        );
+        assert!((out[6] - 0.5).abs() < 0.01, "it wraps around");
+        control.loop_sound(bed, 0.5);
+        mixer.fill(&mut out, 1);
+        assert!(out.iter().all(|s| s.abs() <= 0.26), "half volume: {out:?}");
+        control.pause_loops(true);
+        mixer.fill(&mut out, 1);
+        assert!(out.iter().all(|&s| s == 0.0), "paused");
+        assert_eq!(mixer.looping(), 1);
+        control.pause_loops(false);
+        control.stop_loop(bed);
+        mixer.fill(&mut out, 1);
+        assert!(out.iter().all(|&s| s == 0.0));
+        assert_eq!(mixer.looping(), 0);
     }
 
     #[test]
