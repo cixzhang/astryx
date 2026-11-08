@@ -190,6 +190,11 @@ fn tokens(unit: &Tokens, pixel: f32) -> Tokens {
     // Every box of the source theme draws its frame in the emphasized
     // border color (an inset ring), so borders take that color here.
     t.color.border = t.color.border_emphasized;
+    // Garden's hover tint (5%) does not show on paper-like surfaces at a
+    // pixel's size, so hover is 12% and pressed, which must read stronger,
+    // is 20%.
+    t.color.overlay_hover[3] = 0.12;
+    t.color.overlay_pressed[3] = 0.20;
     // Headings and display text are Galmuri9 at whole steps of its ten
     // design pixels: one step for headings 2 to 6, two for heading 1 and the
     // smaller displays, three for display 1. Body text is Galmuri7 at 8P, so
@@ -293,6 +298,18 @@ mod tests {
         // their hue is checked.
         let a = PixelTheme::Pico8.theme().light.color.accent;
         assert!(a[0] > a[1] && a[0] > a[2]);
+    }
+
+    #[test]
+    fn hover_shows_and_pressed_reads_stronger() {
+        for which in PixelTheme::ALL {
+            let t = which.theme();
+            for tokens in [&t.light, &t.dark] {
+                let c = &tokens.color;
+                assert_eq!(c.overlay_hover[3], 0.12, "{}", t.name);
+                assert!(c.overlay_pressed[3] > c.overlay_hover[3], "{}", t.name);
+            }
+        }
     }
 
     #[test]
