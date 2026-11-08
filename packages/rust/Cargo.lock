@@ -309,6 +309,7 @@ dependencies = [
  "astryx-headless",
  "astryx-raster",
  "astryx-render-soft",
+ "astryx-theme-pixel",
  "glow",
  "glutin",
  "wasm-bindgen",

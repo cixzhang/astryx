@@ -327,8 +327,9 @@ struct MeasureKey {
     direction: Option<TextDirection>,
     max_width: Option<u32>,
 }
-// Room for a prewarmed character set across every theme's text sizes.
-const GLYPH_CACHE_LIMIT: usize = 32768;
+// Room for a prewarmed character set across every theme's text sizes,
+// which a shell may load at start (about 35,000 glyphs, 10 MB).
+const GLYPH_CACHE_LIMIT: usize = 65536;
 
 /// Shapes, measures, lays out, and rasterizes text. Implements
 /// [`TextMeasure`], so a renderer hands this to layout and draws with the
@@ -404,6 +405,11 @@ impl TextEngine {
             .collect()
     }
 
+    /// Glyph bitmaps in the cache.
+    pub fn cached_glyph_count(&self) -> usize {
+        self.inner.borrow().glyphs.len()
+    }
+
     /// Glyphs rasterized on demand since the last call, for profiling.
     pub fn take_rasterized(&self) -> usize {
         std::mem::take(&mut self.inner.borrow_mut().rasterized)
@@ -414,7 +420,7 @@ impl TextEngine {
     /// grid of the given cell in points, as [`Self::place_on_grid`] draws.
     /// Theme fonts the styles name are loaded now. Feed the result back
     /// with [`Self::install_prewarmed`]; until then drawing works as
-    /// before. Sizes above `max_px` pixels are skipped.
+    /// before. Glyphs that would rasterize above `max_px` pixels are skipped.
     pub fn prewarm(
         &self,
         styles: &[(TextStyle, Option<f32>)],
@@ -426,7 +432,7 @@ impl TextEngine {
         let mut jobs: Vec<(u16, FontData, u32, CacheKey, f32, u8)> = Vec::new();
         for (style, grid) in styles {
             let px = style.size * scale;
-            if px > max_px || px <= 0.0 {
+            if px <= 0.0 {
                 continue;
             }
             let mut first: Vec<&str> = Vec::new();
@@ -457,6 +463,10 @@ impl TextEngine {
                 Some(_) => (px, 1),
                 None => (px, 0),
             };
+            // The size glyphs are rasterized at: on a grid, one sample per cell.
+            if px > max_px {
+                continue;
+            }
             let f = &inner.fonts.faces[face];
             if !jobs
                 .iter()
@@ -465,7 +475,12 @@ impl TextEngine {
                 jobs.push((face as u16, f.data.clone(), f.offset, f.key, px, cell));
             }
         }
-        let chars: Vec<char> = chars.chars().filter(|c| !c.is_whitespace()).collect();
+        // The space too: its empty bitmap is looked up like any glyph.
+        let chars: Vec<char> = chars
+            .chars()
+            .chain([' '])
+            .filter(|c| !c.is_control())
+            .collect();
         let (tx, rx) = std::sync::mpsc::channel();
         #[cfg(not(target_arch = "wasm32"))]
         std::thread::spawn(move || {

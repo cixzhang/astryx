@@ -25,3 +25,4 @@ astryx-headless = { path = "../astryx-headless" }
 astryx-render-soft = { path = "../astryx-render-soft" }
 glutin = { version = "0.32.3", default-features = false, features = ["egl"] }
 astryx-gallery = { path = "../../examples/gallery" }
+astryx-theme-pixel = { path = "../astryx-theme-pixel" }
