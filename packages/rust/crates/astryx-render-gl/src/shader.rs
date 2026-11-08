@@ -1,4 +1,4 @@
-//! The one shader program, compiled for whichever GL dialect is current.
+//! The shader programs, compiled for whichever GL dialect is current.
 
 use glow::HasContext;
 
@@ -163,6 +163,69 @@ pub unsafe fn compile(gl: &glow::Context, dialect: Dialect) -> Result<Program, S
         origin: gl.get_uniform_location(program, "u_origin"),
         tex: gl.get_uniform_location(program, "u_tex"),
         program,
+    })
+}
+
+// The fast programs read the same vertices as the full one (same attribute
+// names, so the same slots) but interpolate two values and do no coverage
+// math: for quads whose coverage is 1 everywhere, they give the same
+// pixels for far less GPU work per pixel.
+const FAST_VERTEX: &str = r#"
+ATTR vec4 a_pos_local;
+ATTR vec4 a_half_uv;
+ATTR vec4 a_color;
+uniform vec2 u_size;
+uniform vec2 u_origin;
+VARY vec2 v_uv;
+VARY vec4 v_color;
+void main() {
+    vec2 p = a_pos_local.xy - u_origin;
+    gl_Position = vec4(p.x / u_size.x * 2.0 - 1.0, 1.0 - p.y / u_size.y * 2.0, 0.0, 1.0);
+    v_uv = a_half_uv.zw;
+    v_color = a_color;
+}
+"#;
+
+const SOLID_FRAGMENT: &str = r#"
+VARY vec2 v_uv;
+VARY vec4 v_color;
+void main() {
+    FRAG = v_color;
+}
+"#;
+
+const TEXTURED_FRAGMENT: &str = r#"
+uniform sampler2D u_tex;
+VARY vec2 v_uv;
+VARY vec4 v_color;
+void main() {
+    FRAG = TEX(u_tex, v_uv) * v_color.a;
+}
+"#;
+
+/// The solid-color and textured fast programs.
+pub struct FastPrograms {
+    pub solid: Program,
+    pub textured: Program,
+}
+
+/// Compiles the fast programs.
+///
+/// # Safety
+/// `gl` must be current.
+pub unsafe fn compile_fast(gl: &glow::Context, dialect: Dialect) -> Result<FastPrograms, String> {
+    let make = |fragment: &str| -> Result<Program, String> {
+        let program = link(gl, dialect, FAST_VERTEX, fragment, &ATTRIBUTES)?;
+        Ok(Program {
+            size: gl.get_uniform_location(program, "u_size"),
+            origin: gl.get_uniform_location(program, "u_origin"),
+            tex: gl.get_uniform_location(program, "u_tex"),
+            program,
+        })
+    };
+    Ok(FastPrograms {
+        solid: make(SOLID_FRAGMENT)?,
+        textured: make(TEXTURED_FRAGMENT)?,
     })
 }
 

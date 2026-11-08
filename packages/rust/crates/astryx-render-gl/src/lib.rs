@@ -376,6 +376,10 @@ pub struct GlRenderer {
     gl: Rc<glow::Context>,
     dialect: Dialect,
     program: Program,
+    fast: shader::FastPrograms,
+    /// Draws coverage-1 quads with the fast programs (on unless a test
+    /// compares against the full program).
+    fast_paths: bool,
     vao: Option<glow::VertexArray>,
     light_program: shader::LightProgram,
     light_vbo: glow::Buffer,
@@ -458,6 +462,7 @@ impl GlRenderer {
         // SAFETY: the caller made the context current on this thread.
         unsafe {
             let program = shader::compile(&gl, dialect).map_err(GlError)?;
+            let fast = shader::compile_fast(&gl, dialect).map_err(GlError)?;
             let vao = match dialect {
                 Dialect::Es2 => None,
                 _ => Some(gl.create_vertex_array().map_err(GlError)?),
@@ -494,6 +499,8 @@ impl GlRenderer {
                 gl: Rc::new(gl),
                 dialect,
                 program,
+                fast,
+                fast_paths: true,
                 vao,
                 light_program,
                 light_vbo,
@@ -1963,7 +1970,11 @@ impl GlRenderer {
             gl.disable(glow::SCISSOR_TEST);
             if let Some([r, g, b, a]) = clear {
                 gl.clear_color(r, g, b, a);
-                gl.clear(glow::COLOR_BUFFER_BIT);
+                // Depth and stencil too, if the target has them: a tiled
+                // GPU then skips loading them from memory.
+                gl.clear(
+                    glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT | glow::STENCIL_BUFFER_BIT,
+                );
             }
             if items.is_empty() {
                 return;
@@ -1989,15 +2000,22 @@ impl GlRenderer {
             // Batches: runs of items that share a texture and scissor.
             let mut vertices = std::mem::take(&mut self.vertices);
             vertices.clear();
-            let mut batches: Vec<(usize, usize, Option<glow::Texture>, IRect, bool)> = Vec::new();
+            let mut batches: Vec<(usize, usize, Option<glow::Texture>, IRect, bool, Pick)> =
+                Vec::new();
             for item in items {
                 let q = &item.quad;
+                let pick = if self.fast_paths {
+                    pick(item)
+                } else {
+                    Pick::Full
+                };
                 let start = vertices.len() / 4;
                 let joins = match batches.last_mut() {
-                    Some((first, count, texture, scissor, multiply))
+                    Some((first, count, texture, scissor, multiply, p))
                         if *scissor == item.clip.scissor
                             && *count < BATCH_QUADS
                             && *multiply == q.multiply
+                            && *p == pick
                             && (q.texture.is_none()
                                 || texture.is_none()
                                 || *texture == q.texture) =>
@@ -2012,7 +2030,7 @@ impl GlRenderer {
                     _ => false,
                 };
                 if !joins {
-                    batches.push((start, 1, q.texture, item.clip.scissor, q.multiply));
+                    batches.push((start, 1, q.texture, item.clip.scissor, q.multiply, pick));
                 }
                 push_vertices(&mut vertices, item);
             }
@@ -2022,7 +2040,20 @@ impl GlRenderer {
                 gl.enable_vertex_attrib_array(i as u32);
             }
             let mut multiplying = false;
-            for (first, count, texture, scissor, multiply) in &batches {
+            let mut current = Pick::Full;
+            for (first, count, texture, scissor, multiply, pick) in &batches {
+                if *pick != current {
+                    current = *pick;
+                    let p = match current {
+                        Pick::Full => &self.program,
+                        Pick::Solid => &self.fast.solid,
+                        Pick::Textured => &self.fast.textured,
+                    };
+                    gl.use_program(Some(p.program));
+                    gl.uniform_2_f32(p.size.as_ref(), size.0 as f32, size.1 as f32);
+                    gl.uniform_2_f32(p.origin.as_ref(), origin.0 as f32, origin.1 as f32);
+                    gl.uniform_1_i32(p.tex.as_ref(), 0);
+                }
                 if *multiply != multiplying {
                     multiplying = *multiply;
                     if multiplying {
@@ -2531,6 +2562,44 @@ impl GlRenderer {
 
     /// Reads back the frame just drawn as straight-alpha RGBA rows, top row
     /// first. Call after [`Renderer::render`] and before swapping buffers.
+    /// Draws every quad with the full program, for comparing against the
+    /// fast programs in tests.
+    pub fn set_fast_paths(&mut self, on: bool) {
+        self.fast_paths = on;
+    }
+
+    /// Renders `list` `times` times into an offscreen layer and waits for
+    /// the GPU, for measuring GPU time per frame without the display's
+    /// pacing. Returns the time per render. Diagnostics only.
+    pub fn time_offscreen(
+        &mut self,
+        list: &DisplayList,
+        frame: &FrameInfo,
+        times: u32,
+    ) -> std::time::Duration {
+        let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
+        let layer = self.layer(size);
+        let saved = self.framebuffer;
+        self.framebuffer = Some(layer.framebuffer);
+        self.finish_gpu();
+        let start = std::time::Instant::now();
+        for _ in 0..times.max(1) {
+            self.render_frame(list, frame);
+        }
+        self.finish_gpu();
+        let took = start.elapsed() / times.max(1);
+        self.framebuffer = saved;
+        self.layers_in_use.push(layer);
+        took
+    }
+
+    /// Waits until the GPU has done every command so far, for measuring
+    /// GPU time per frame. Slows rendering; diagnostics only.
+    pub fn finish_gpu(&self) {
+        // SAFETY: the context is current while rendering.
+        unsafe { self.gl.finish() };
+    }
+
     pub fn read_pixels(&mut self) -> Result<Vec<u8>, GlError> {
         let (w, h) = self.frame_size;
         let mut pixels = vec![0u8; (w * h * 4) as usize];
@@ -2621,6 +2690,38 @@ fn overlapping(items: &[Item]) -> bool {
         .iter()
         .enumerate()
         .any(|(i, a)| rects[i + 1..].iter().any(|b| a.overlaps(*b)))
+}
+
+/// Which program draws an item.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Pick {
+    Full,
+    /// A solid color: coverage 1 everywhere.
+    Solid,
+    /// A texture times alpha: coverage 1 everywhere.
+    Textured,
+}
+
+/// The fast program for `item` when its coverage is 1 at every pixel it
+/// covers, so the full program's coverage math would change nothing.
+fn pick(item: &Item) -> Pick {
+    let q = &item.quad;
+    if item.clip.shape.is_some() {
+        return Pick::Full;
+    }
+    let square = q.radii == [0.0; 4];
+    // On whole pixels, and covering only its shape: no partial edge pixels.
+    let aligned = q.area == q.shape
+        && [q.shape.x0, q.shape.y0, q.shape.x1, q.shape.y1]
+            .iter()
+            .all(|v| v.fract() == 0.0);
+    if q.mode == MODE_LAYER || (q.mode == MODE_IMAGE && square && aligned) {
+        Pick::Textured
+    } else if q.mode == MODE_FILL && square && aligned && q.texture.is_none() {
+        Pick::Solid
+    } else {
+        Pick::Full
+    }
 }
 
 fn push_vertices(out: &mut Vec<Vertex>, item: &Item) {
