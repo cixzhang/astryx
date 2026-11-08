@@ -10,6 +10,8 @@
 //!
 //! None of this is an Astryx component yet; names and behavior may change.
 
+pub use crate::light::{Emissive, LightSource, Lit};
+
 use crate::contract::{ImageData, ImageId, Rect, Role};
 use crate::element::{
     base_props, Base, Build, BuildCx, Draw, Element, Indicator, Interact, Node, Semantics,

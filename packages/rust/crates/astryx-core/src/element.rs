@@ -195,6 +195,8 @@ pub(crate) enum Draw {
     Image(ImageDraw),
     /// A sprite: square pixels, possibly playing frames.
     Sprite(crate::world::SpriteDraw),
+    /// A light pass, a light, or a glowing rect.
+    Light(crate::light::LightDraw),
 }
 
 /// A registered image filling the node's box.

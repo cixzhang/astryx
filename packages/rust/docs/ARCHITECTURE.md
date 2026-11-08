@@ -54,7 +54,8 @@ crates/astryx-image         PNG/JPEG/WebP decoding and downscaling              
 crates/astryx-raster        shared text engine, pixel snapping, shadow masks    (Lane B)
 crates/astryx-render-gl     batched GL renderer on glow: OpenGL ES 2/3, WebGL2   (Lane B)
 crates/astryx-render-soft   CPU renderer (tiny-skia) for headless and no-GPU    (Lane B)
-crates/astryx-desktop       shell: winit + glutin + accesskit_winit             (Lane B)
+crates/astryx-audio         WAV decoding and a small voice mixer for shells      (Lane B)
+crates/astryx-desktop       shell: winit + glutin + accesskit_winit, cpal sound (Lane B)
 crates/astryx-headless      shell: Surface -> PNG, scripted input, golden tests (Lane B)
 crates/astryx-theme-pixel   retro pixel theme: 5 palettes, pixel grid, Galmuri,   
                             bitmap icons (tokens/pixel-*.json)                 (Lane E)
@@ -77,6 +78,82 @@ tools/                      token export and helper scripts
 - Images: `DrawCmd::Image`, `Renderer::set_image`, and `Surface::take_image_updates`.
   A `Surface` wrapper must forward every `Surface` method, including the ones
   with defaults; a missed `take_image_updates` drops images without an error.
+
+- Light, transitions, sound, and the person's state, below.
+
+### Light
+
+A light pass darkens a scene and lights it again. `DrawCmd::PushLighting(Lighting)`
+opens it, and `DrawCmd::PopLighting` closes it. `DrawCmd::Light(Light)` adds a light
+inside the pass. `DrawCmd::Emissive { rect, color }` draws after the light map, so
+it is never darkened. Commands after `PopLighting`, such as the UI, are not lit.
+Passes do not nest. Transforms move lights and emissive rects like any shape.
+
+- `Lighting { ambient, strength, time, dapple: Option<Dapple> }`. The light map
+  starts at white mixed toward `ambient` by `strength`; 0 skips the pass.
+- `Dapple { cell, velocity, bands, depth }`: leaf shade, a tiling noise pattern
+  in 2 or 3 flat bands, scrolled by `velocity * time`.
+- `Light { center, radius_x, radius_y, color, intensity, flicker: Flicker, pulse: Pulse }`:
+  an ellipse whose falloff is `(1 - d)^2` in four flat bands.
+  `Flicker { amplitude, hz }`, `Pulse { period, min }`, and `Light::intensity_at(time)`.
+- The map is a quarter of the target's resolution, upsampled nearest-neighbor
+  and multiplied over the scene. The math lives in `astryx-raster::light`, so
+  the GL and CPU renderers match.
+- Elements, experimental, in `astryx_core::world`: `Lit::new(lighting)` lights its
+  children and takes its time from the runtime, which holds still under
+  reduced motion. `LightSource::new(light)` is a zero-size light that layout
+  places, so a `Board`, the camera, and glides carry it with its sprite.
+  `Emissive::new(color).size(w, h)` is a glowing rect. Lights out of view are
+  not painted.
+
+### Day cycle
+
+- `Preferences.day_phase: DayPhase { Day, Dusk, Night }` is for coarse
+  choices, such as a dark scheme or lanterns on.
+- `Preferences.day_time: Option<f32>` is minutes after local midnight.
+  Shells with a clock set it every minute; the web leaves `None`.
+- `Lighting::at(minutes, time)` blends night, dawn, day, golden hour, sunset,
+  and dusk from Terrace palette tints, in eased steps too small to see.
+  `None` means daylight.
+- `Lighting::lamp_level(minutes)` fades lamps in through dusk and out
+  through dawn.
+- `Lighting::for_phase(phase, time)` is the older three-step version.
+
+### Transitions
+
+- `Command::Transition(Transition { kind, duration_ms, easing, sound })` shows
+  the change to the next frame as a transition from the frame on screen.
+- `TransitionKind`: `Fade`, `Wipe(Edge)`, `Door`, `Iris(Point)`,
+  `Slide(Point)`, `PixelDissolve(cell)`, `Swirl`, `Encounter`.
+- `Easing`: `Linear`, `EaseIn`, `EaseOut`, `Steps(n)`, `Overshoot`, with
+  `Easing::apply(t)`.
+- Shells keep the last `DisplayList` and call
+  `Renderer::begin_transition(&t, &old, frame)`. They keep drawing while
+  `Renderer::transitioning()`.
+- The GL renderer composites both frames in one shader. It keeps two
+  frame-sized textures ready (`GlRenderer::prepare_transitions`). The CPU
+  renderer does every kind with the same math (`astryx-raster::transition`).
+- Under reduced motion, shells show the new frame at once or a quick fade.
+
+### Sound
+
+- `Command::PlaySound(SoundId)` plays a sound once.
+- `Runtime::register_sound(id, wav)` registers one, and shells drain
+  `Surface::take_sound_updates()`.
+- `Preferences.sound_off` silences everything.
+- `astryx-audio` decodes WAV files (8- or 16-bit PCM, 32-bit float) and mixes
+  up to four voices. A `Controller` on the UI thread feeds a `Mixer` that the
+  audio thread pulls from.
+- Desktop plays through cpal (default feature `audio`). The web uses WebAudio
+  (feature `audio`, off by default). The Brick shell uses SDL.
+
+### Idle
+
+- `Preferences.idle: Idle { Active, Dim, Asleep }` tells apps how long the
+  person has been away.
+- Shells that save power set it; the web and desktop leave `Active`.
+- The Brick shell dims to about 8 frames a second after 30 seconds without
+  input. It stops drawing after 2 minutes, and any input wakes it at once.
 
 App model (Lane A owns it): Elm style. `view(&self) -> Element<Msg>`,
 `update(&mut self, msg) -> Command`. An app is a library crate; each shell

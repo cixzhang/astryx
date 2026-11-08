@@ -496,12 +496,20 @@ impl<A: App> Runtime<A> {
             let plays = match &node.draw {
                 Draw::Spinner(_) => true,
                 Draw::Sprite(s) => s.frames > 1,
+                Draw::Light(l) => l.plays(),
                 _ => false,
             };
             if !plays && node.slide.is_none() {
                 return false;
             }
-            let Some(mut visible) = layout.rects.get(ix).and_then(|&r| intersect(r, viewport))
+            let area = |r: Rect| match &node.draw {
+                Draw::Light(l) => l.reach(r),
+                _ => r,
+            };
+            let Some(mut visible) = layout
+                .rects
+                .get(ix)
+                .and_then(|&r| intersect(area(r), viewport))
             else {
                 return false;
             };

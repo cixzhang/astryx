@@ -2,9 +2,12 @@
 
 use std::collections::HashMap;
 
-use crate::contract::{Color, DisplayList, DrawCmd, PathCmd, Point, Radii, Rect, TextAlign};
+use crate::contract::{
+    Color, DisplayList, DrawCmd, Lighting, PathCmd, Point, Radii, Rect, TextAlign,
+};
 use crate::element::{BoxDraw, Draw, Node};
 use crate::layout::{line_height, Layout};
+use crate::light::LightDraw;
 use crate::pixel;
 use crate::theme::{clamp_radii, shadow_layers};
 
@@ -124,6 +127,46 @@ struct Ctx {
     opacity: f32,
     /// The pixel grid already open around this node.
     grid: Option<f32>,
+}
+
+/// A light element's commands. A light whose reach misses the viewport is
+/// left out, so a camera over many lights pays only for the visible ones.
+fn paint_light(
+    draw: &LightDraw,
+    rect: Rect,
+    state: &PaintState,
+    viewport: Option<Rect>,
+    out: &mut Vec<DrawCmd>,
+) {
+    match draw {
+        LightDraw::Pass { lighting, still } => out.push(DrawCmd::PushLighting(Lighting {
+            time: if *still { 0.0 } else { state.time },
+            ..*lighting
+        })),
+        LightDraw::Source(source) => {
+            let light = crate::light::placed(
+                source,
+                Point {
+                    x: rect.x,
+                    y: rect.y,
+                },
+            );
+            let reach = draw.reach(rect);
+            let seen = viewport.is_none_or(|v| {
+                reach.x < v.x + v.width
+                    && v.x < reach.x + reach.width
+                    && reach.y < v.y + v.height
+                    && v.y < reach.y + reach.height
+            });
+            if seen {
+                out.push(DrawCmd::Light(light));
+            }
+        }
+        LightDraw::Emissive(color) => out.push(DrawCmd::Emissive {
+            rect,
+            color: *color,
+        }),
+    }
 }
 
 pub(crate) fn paint<Msg>(
@@ -358,6 +401,7 @@ fn paint_node<Msg>(
             image: i.image,
             fit: i.fit,
         }),
+        (Draw::Light(l), _) => paint_light(l, rect, state, ctx.viewport, out),
         _ => {}
     }
     let pressed = owner.pressed && state.press_strength > 0.0;
@@ -530,6 +574,9 @@ fn paint_node<Msg>(
     };
     for &child in &node.children {
         paint_node(scene, child as usize, inner, out, overlay);
+    }
+    if let Draw::Light(LightDraw::Pass { .. }) = node.draw {
+        out.push(DrawCmd::PopLighting);
     }
     if clip.is_some() {
         out.push(DrawCmd::PopClip);

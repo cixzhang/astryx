@@ -295,10 +295,11 @@ pub enum DrawCmd {
     /// Strength 0 skips the map. Commands after `PopLighting`, such as the
     /// UI, are not lit. Lighting does not nest.
     PushLighting(Lighting),
-    /// A light of the enclosing lighting pass.
+    /// A light of the enclosing lighting pass. Open transforms move and
+    /// scale its center and radii like any shape.
     Light(Light),
     /// A rect drawn after the light map of the enclosing lighting pass, not
-    /// darkened: a lit window, a glow.
+    /// darkened: a lit window, a glow. Open transforms apply to it.
     Emissive {
         rect: Rect,
         color: Color,
