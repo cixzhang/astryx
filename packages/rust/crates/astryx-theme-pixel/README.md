@@ -23,15 +23,16 @@ which checks names and colors and writes the tokens file.
 
 - **Terrace** (`PixelTheme::Terrace`, the default) is the theme on that
   palette: Garden's sizes, type, and shapes with every color a swatch, or a
-  swatch at partial alpha (overlays, muted fills, shadows). UI ink is
-  `ink`, paper is `paper` and `paper-2`, the UI accent is plum (`ink-plum`
-  with `paper` text in light, `plum-1` with `ink` text in dark), errors are
-  `rose-2` (message boxes, hearts) with `rose-3` error fills such as the
-  Delete button, secondary buttons and neutral badges are opaque `stone-1`
-  (light) and `soil-1` (dark), secondary text and labels are the warm grays `wood-2` and
-  `stone-1` (color is kept for attention and status), shadows
-  are `ink`, and dark mode sits on `soil-4` and `ink` with `paper` text. A
-  test fails on any off-palette token.
+  swatch at partial alpha (overlays, muted fills, shadows), and no blue.
+  UI ink is the dark brown `soil-4`, paper is `paper` and `paper-2`, the
+  accent is plum (`ink-plum` with `paper` text in light, `plum-1` with dark
+  text in dark), secondary text and labels are the warm grays `wood-2` and
+  `stone-1`, info is brown (`wood-2`, `wood-1`), success green, warning
+  gold, and errors rose (`rose-3` fills such as the Delete button, `rose-2`
+  message boxes and hearts). Secondary buttons are opaque `stone-1` and
+  `soil-1`. Dark mode sits on `soil-4` and `soil-3` with `paper` text.
+  Tests fail on any off-palette token and on any blue one; blue swatches
+  (`ink`, `blue-3`, `water-*`, `teal-*`) are for world art only.
 - **The older themes** (garden, gameboy, nes, c64, pico8) predate the
   palette and keep their colors; they are not checked.
 - **World art.** `PALETTE.register` and `PALETTE.sprite_sheet` take art
@@ -51,24 +52,24 @@ Contrast of Terrace text and controls against WCAG AA, checked by a test:
 
 | Pair | Light | Dark |
 |---|---|---|
-| Text on body, on surface | 11.35, 14.19 | 16.78, 14.19 |
-| Secondary text, labels, captions on body, on surface | 6.70, 8.37 (wood-2) | 10.63, 8.99 (stone-1) |
-| Error text on body, on surface | 9.89, 12.36 (ink-plum) | 7.12, 6.01 (rose-2) |
-| Text on error fill, the Delete button (ink on rose-3) | 5.66 | 5.66 |
-| Text on secondary button (ink on stone-1; paper on soil-1) | 8.99 | 10.18 |
-| **Delete focus ring on body, on surface (3:1)** | **2.00, 2.50, fails** | 6.70, 5.66 |
-| Text on warning fill (ink on straw-2) | 11.00 | 11.00 |
+| Text on body, on surface | 13.43, 16.78 | 16.78, 14.34 |
+| Secondary text, labels, captions on body, on surface | 6.70, 8.37 | 10.63, 9.08 |
+| Info text on body, on surface (wood-2; wood-1) | 6.70, 8.37 | 6.60, 5.64 |
+| Text on info fill (paper on wood-2; soil-4 on wood-1) | 8.37 | 6.60 |
+| Warning text on body (soil-1; straw-2) | 8.15 | 13.01 |
+| Error text on body, on surface | 9.89, 12.36 (ink-plum) | 7.12, 6.08 (rose-2) |
+| Text on error fill, the Delete button (soil-4 on rose-3) | 6.70 | 6.70 |
+| Text on secondary button (soil-4 on stone-1; paper on soil-1) | 10.63 | 10.18 |
+| Text on accent (paper on ink-plum; soil-4 on plum-1) | 12.36 | 8.25 |
+| Accent text, controls, focus ring on body, on surface | 9.89, 12.36 | 8.25, 7.05 |
 | Status message text on its muted fill, over body and surface | 4.87 or more | 5.69 or more |
-| Text on accent (paper on ink-plum; ink on plum-1) | 12.36 | 6.98 |
-| Accent text on body, on surface | 9.89, 12.36 | 8.25, 6.98 |
-| Accent control and focus ring on body, on surface (3:1) | 9.89, 12.36 | 8.25, 6.98 |
+| **Delete focus ring on body, on surface (3:1)** | **2.00, 2.50, fails** | 6.70, 5.73 |
 
 Rose text on paper reads at 1.9:1, so light-mode error text, icons, and
-borders are `ink-plum`, and `rose-2` stays the error fill. The accent is plum: `ink-plum` with `paper` text in light, and the light
-`plum-1` with `ink` text in dark, where `ink-plum` would vanish on the dark
-surfaces. Palette v1.3 adds `plum-1` in place of `soil-2`, which was
-nearly the same color as `soil-1`. Light error text is `ink-plum` too, so errors rely on their
-`rose-2` fill and icons to stand apart. Every pair passes.
+borders are `ink-plum` too; errors rely on their rose fills and icons to
+stand apart from the accent. Dark mode's accent is `plum-1` (palette v1.3
+adds it in place of `soil-2`), where `ink-plum` would vanish. The light
+Delete focus ring fails until Button rings Destructive in `borderError`.
 
 ## The one idea
 

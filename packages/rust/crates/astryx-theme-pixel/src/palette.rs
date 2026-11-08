@@ -72,6 +72,11 @@ impl Palette {
         self.nearest_rgb(to_u8(color), &[])
     }
 
+    /// The Oklab lightness of `color`, 0 to 1.
+    pub fn lightness(&self, color: Color) -> f32 {
+        oklab(to_u8(color))[0]
+    }
+
     /// [`Self::nearest`], leaving out the swatches named in `except`.
     pub fn nearest_except(&self, color: Color, except: &[&str]) -> &'static Swatch {
         self.nearest_rgb(to_u8(color), except)
