@@ -116,6 +116,9 @@ struct Running {
     elapsed: f32,
     old: Layer,
     size: (i32, i32),
+    /// The frame that started it drew the old frame into `old`; the next
+    /// shows that copy and starts the clock, so no one frame pays for both.
+    fresh: bool,
 }
 
 /// A lighting pass collecting its lights and emissive rects until it closes.
@@ -895,6 +898,58 @@ impl GlRenderer {
     /// no more masks.
     pub fn finish_preload(&mut self) {
         self.atlas.seal_preloaded(&self.gl, self.dialect);
+        self.touch_pages();
+    }
+
+    /// Draws one pixel from every mask page into a scratch layer and waits.
+    /// Tiled GPU drivers finish a texture's upload when it is first drawn
+    /// from, so this moves that cost out of the first frame that needs it.
+    fn touch_pages(&mut self) {
+        let one = PxRect {
+            x0: 0.0,
+            y0: 0.0,
+            x1: 1.0,
+            y1: 1.0,
+        };
+        let clip = ClipState {
+            scissor: IRect {
+                x0: 0,
+                y0: 0,
+                x1: 64,
+                y1: 64,
+            },
+            shape: None,
+        };
+        let items: Vec<Item> = self
+            .atlas
+            .page_textures()
+            .into_iter()
+            .map(|texture| Item {
+                quad: Quad {
+                    area: one,
+                    shape: one,
+                    radii: [0.0; 4],
+                    uv: [0.0, 0.0, 1.0, 1.0],
+                    color: [255; 4],
+                    mode: MODE_MASK,
+                    border: 0.0,
+                    texture: Some(texture),
+                    multiply: false,
+                },
+                clip,
+            })
+            .collect();
+        let target = self.layer((64, 64));
+        self.draw_items(
+            &items,
+            Some(target.framebuffer),
+            target.size,
+            (0, 0),
+            Some([0.0; 4]),
+        );
+        // SAFETY: the context is current while the shell drives the renderer.
+        unsafe { self.gl.finish() };
+        self.layers.push(target);
     }
 
     /// Starts computing the shadow tiles of these box styles on another
@@ -2033,9 +2088,26 @@ impl GlRenderer {
         let Some(mut run) = self.transition.take() else {
             return self.render_frame(list, frame);
         };
+        let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
+        if run.fresh && run.size == size {
+            run.fresh = false;
+            let start = now();
+            self.stats = RenderStats::default();
+            let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
+            // The old frame as it is.
+            self.draw_transition(
+                &run,
+                astryx_core::TransitionKind::Fade,
+                &run.old,
+                0.0,
+                scale,
+            );
+            self.stats.flush = since(start);
+            self.transition = Some(run);
+            return;
+        }
         run.elapsed += frame.dt.max(0.0);
         let t = run.elapsed * 1000.0 / run.transition.duration_ms as f32;
-        let size = (frame.width.max(1) as i32, frame.height.max(1) as i32);
         if t >= 1.0 || run.size != size {
             self.keep_frame_layer(run.old);
             return self.render_frame(list, frame);
@@ -2047,7 +2119,7 @@ impl GlRenderer {
         self.framebuffer = saved;
         let start = now();
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
-        self.draw_transition(&run, &new, t, scale);
+        self.draw_transition(&run, run.transition.kind, &new, t, scale);
         self.stats.flush += since(start);
         self.keep_frame_layer(new);
         self.transition = Some(run);
@@ -2078,6 +2150,7 @@ impl GlRenderer {
             elapsed: 0.0,
             old,
             size,
+            fresh: true,
         });
     }
 
@@ -2132,12 +2205,19 @@ impl GlRenderer {
 
     /// Composites the old and new frames of `run` at time `t` into the
     /// framebuffer.
-    fn draw_transition(&mut self, run: &Running, new: &Layer, t: f32, scale: f32) {
+    fn draw_transition(
+        &mut self,
+        run: &Running,
+        kind: astryx_core::TransitionKind,
+        new: &Layer,
+        t: f32,
+        scale: f32,
+    ) {
         use astryx_core::{Edge, TransitionKind as K};
         let (w, h) = (run.size.0 as f32, run.size.1 as f32);
-        let m = Moment::new(run.transition.kind, run.transition.easing, t, w, h, scale);
+        let m = Moment::new(kind, run.transition.easing, t, w, h, scale);
         let p = m.p;
-        let (kind, param) = match run.transition.kind {
+        let (kind, param) = match kind {
             K::Fade => (0.0, [0.0; 4]),
             K::Wipe(edge) => {
                 let (e, l) = match edge {

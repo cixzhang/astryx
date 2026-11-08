@@ -80,11 +80,25 @@ fn transitions_match_soft_halfway() {
             let mut soft = SoftRenderer::new();
             soft.render_list(&old, &still);
             soft.begin_transition(&t, &old, &still);
+            // The GPU renderer shows the old frame once before the clock starts.
+            soft.render_list(&new, &still);
             soft.render_list(&new, &half);
             assert!(soft.transitioning(), "{name}");
             let want = soft.rgba();
-            gl.render(&old, &still);
+            let shown = gl.render(&old, &still);
             gl.renderer.begin_transition(&t, &old, &still);
+            let first = gl.render(&new, &still);
+            let off = first
+                .iter()
+                .zip(&shown)
+                .map(|(a, b)| a.abs_diff(*b))
+                .max()
+                .unwrap();
+            let moved = first.iter().zip(&shown).filter(|(a, b)| a != b).count();
+            assert!(
+                off <= 1,
+                "{name}: the first frame shows the old frame (off by {off} in {moved} bytes)"
+            );
             let got = gl.render(&new, &half);
             assert!(gl.renderer.transitioning(), "{name}");
             let diff = got

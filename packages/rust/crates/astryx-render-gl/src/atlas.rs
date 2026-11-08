@@ -286,6 +286,15 @@ impl Atlas {
         }
     }
 
+    /// The textures of every page, lasting and per-frame.
+    pub fn page_textures(&self) -> Vec<glow::Texture> {
+        self.pages
+            .iter()
+            .chain(&self.transients)
+            .map(|p| p.texture)
+            .collect()
+    }
+
     /// Lasting pages in use.
     pub fn pages(&self) -> usize {
         self.pages.len()
