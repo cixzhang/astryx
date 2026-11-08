@@ -1,7 +1,7 @@
 //! The Lab section: experimental components Astryx does not define yet.
 
 use crate::{group, images, row, Gallery, Msg};
-use astryx_core::lab::{HoldButton, Image, SelectableCardGroup, StatusBar};
+use astryx_core::lab::{HoldButton, HoldCard, Image, SelectableCardGroup, StatusBar};
 use astryx_core::*;
 
 /// Sample device states for the status bar.
@@ -90,6 +90,27 @@ pub(crate) fn lab(gallery: &Gallery) -> Element<Msg> {
         group(
             "SelectableCardGroup: one choice, arrows move, A chooses",
             plans
+        ),
+        group(
+            "HoldCard: hold A on the card to send",
+            Card::new()
+                .variant(CardVariant::Transparent)
+                .padding(Space::S0)
+                .width(260.0)
+                .child(
+                    HoldCard::new(
+                        SelectableCard::new("Send the plan to Ada", gallery.cards[3])
+                            .on_change(|on| Msg::Card(3, on))
+                            .child(
+                                vstack![
+                                    Heading::new(4, "Send to Ada"),
+                                    Text::new("Hold A to send").r#type(TextType::Supporting),
+                                ]
+                                .gap(Space::S1)
+                            ),
+                    )
+                    .duration_ms(1000)
+                )
         ),
         group(
             "Image: cover, contain, and pixel-perfect",

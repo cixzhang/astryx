@@ -260,6 +260,8 @@ pub(crate) struct Indicator {
     /// A text field's focus: its border in the first color and a 2 point
     /// ring of the second inside it, in place of the outline ring.
     pub field: Option<(Color, Color)>,
+    /// A hold-to-confirm fill in place of the stronger pressed tint.
+    pub hold_fill: Option<Color>,
 }
 
 impl Indicator {
@@ -269,6 +271,7 @@ impl Indicator {
             radii,
             overlay,
             field: None,
+            hold_fill: None,
         }
     }
 }

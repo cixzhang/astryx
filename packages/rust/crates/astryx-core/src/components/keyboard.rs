@@ -32,7 +32,9 @@
 
 use super::text::{text_draw, text_node, type_style};
 use super::{len, radii};
-use crate::contract::{Color, FontFamily, Input, InputPhase, Live, PathCmd, Point, Role};
+use crate::contract::{
+    Color, FaceLayout, FontFamily, Input, InputPhase, Live, PathCmd, Point, Role,
+};
 use crate::element::{
     base_props, Base, BoxDraw, Build, BuildCx, Draw, Edit, Indicator, Interact, Node, Semantics,
 };
@@ -809,28 +811,17 @@ pub struct OnScreenKeyboard<Msg> {
     chord: Rc<ChordLayout>,
     grid: Rc<GridLayout>,
     on_change: Option<Rc<dyn Fn(KeyboardUpdate) -> Msg>>,
-    faces: FaceLayout,
+    faces: Option<FaceLayout>,
 }
 
-/// Where the face buttons sit on the gamepad, so a group's four keys sit
-/// in the same places as the buttons that press them and no key needs a
-/// button label. Shells name buttons by their printed labels.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum FaceLayout {
-    /// A right, B bottom, X top, Y left, as on the TrimUI Brick.
-    #[default]
-    Nintendo,
-    /// A at the bottom, B right, X left, Y top.
-    Xbox,
-}
-
-impl FaceLayout {
-    /// Each face button's place, in `FACE_BUTTONS` order, as (x, y) steps
-    /// from the diamond's middle: y grows downward.
-    fn offsets(self) -> [(f32, f32); 4] {
-        match self {
-            FaceLayout::Xbox => [(0.0, 1.0), (1.0, 0.0), (-1.0, 0.0), (0.0, -1.0)],
-            FaceLayout::Nintendo => [(1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (-1.0, 0.0)],
+/// Each face button's place, in `FACE_BUTTONS` order, as (x, y) steps from
+/// a diamond's middle (y grows downward), so a group's keys sit where the
+/// buttons that press them sit and no key needs a button label.
+fn offsets(layout: FaceLayout) -> [(f32, f32); 4] {
+    match layout {
+        FaceLayout::Xbox => [(0.0, 1.0), (1.0, 0.0), (-1.0, 0.0), (0.0, -1.0)],
+        FaceLayout::Nintendo | FaceLayout::Unknown => {
+            [(1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (-1.0, 0.0)]
         }
     }
 }
@@ -846,12 +837,13 @@ impl<Msg> OnScreenKeyboard<Msg> {
             chord: Rc::new(ChordLayout::english()),
             grid: Rc::new(GridLayout::qwerty()),
             on_change: None,
-            faces: FaceLayout::default(),
+            faces: None,
         }
     }
-    /// Where the gamepad's face buttons sit; see [`FaceLayout`].
+    /// Where the gamepad's face buttons sit, in place of the shell's
+    /// `Preferences::face_layout`.
     pub fn face_layout(mut self, faces: FaceLayout) -> Self {
-        self.faces = faces;
+        self.faces = Some(faces);
         self
     }
     pub fn chord_layout(mut self, layout: ChordLayout) -> Self {
@@ -962,6 +954,7 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
             radii: field_radius,
             overlay: None,
             field: Some((c.accent.into(), c.accent_muted.into())),
+            hold_fill: None,
         })
         .sem(sem);
         if let Some(f) = on_change.clone() {
@@ -1019,7 +1012,10 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
             Live::Polite,
         );
         match self.state.kind {
-            KeyboardKind::Chord => chord_view(cx, &self.state, &self.chord, self.faces, &snap),
+            KeyboardKind::Chord => {
+                let faces = self.faces.unwrap_or(cx.prefs.face_layout);
+                chord_view(cx, &self.state, &self.chord, faces, &snap)
+            }
             KeyboardKind::Grid => grid_view(cx, &self.state, &self.grid, &snap),
         }
         if let Some((name, _)) = &self.state.toast {
@@ -1217,7 +1213,7 @@ fn chord_view<Msg>(
         let (mid_x, mid_y) = ((cw - row) / 2.0, (ch - row) / 2.0);
         let (reach_x, reach_y) = (mid_x - pad, mid_y - pad);
         // Each key sits where its face button sits.
-        for (key, (dx, dy)) in chars.iter().zip(faces.offsets()) {
+        for (key, (dx, dy)) in chars.iter().zip(offsets(faces)) {
             let (lx, ly) = (mid_x + dx * reach_x, mid_y + dy * reach_y);
             let ink: Color = if *key == ChordKey::Shift && state.shift {
                 c.accent.into()
@@ -1324,7 +1320,7 @@ fn big_diamond<Msg>(
     let slot = (w.min(h) / 3.0).floor();
     // As large as a slot allows, up to the display size.
     style.size = style.size.min((slot / style.leading).floor());
-    for (key, (dx, dy)) in keys.iter().zip(faces.offsets()) {
+    for (key, (dx, dy)) in keys.iter().zip(offsets(faces)) {
         // Inside the border, with room for a pixel font's larger cells.
         let inset = snap(t.space.s2);
         let sx = (w - slot) / 2.0 + dx * ((w - slot) / 2.0 - inset);

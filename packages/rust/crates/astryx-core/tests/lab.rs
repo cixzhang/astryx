@@ -2,7 +2,7 @@
 
 mod common;
 
-use astryx_core::lab::{HoldButton, Image, SelectableCardGroup, StatusBar};
+use astryx_core::lab::{HoldButton, HoldCard, Image, SelectableCardGroup, StatusBar};
 use astryx_core::testing::*;
 use astryx_core::*;
 use common::*;
@@ -617,4 +617,185 @@ fn the_pointer_hovers_the_control_under_it() {
         rect_filled(&list, hover).is_none(),
         "leaving the window ends hover"
     );
+}
+
+// ---- Cue commands, HoldCard, and blocked moves ----
+
+/// An app that answers each cue with a sound and logs the cues.
+struct Sounds<F: Fn() -> Element<String>> {
+    view: F,
+    cues: Vec<FeedbackKind>,
+    sent: Vec<String>,
+}
+
+impl<F: Fn() -> Element<String>> App for Sounds<F> {
+    type Msg = String;
+    fn view(&self) -> Element<String> {
+        (self.view)()
+    }
+    fn update(&mut self, msg: String) -> Command {
+        if let Some(kind) = msg.strip_prefix("cue:") {
+            let kind = match kind {
+                "Move" => FeedbackKind::Move,
+                "Select" => FeedbackKind::Select,
+                "Blocked" => FeedbackKind::Blocked,
+                "Progress" => FeedbackKind::Progress,
+                "Success" => FeedbackKind::Success,
+                _ => FeedbackKind::Back,
+            };
+            self.cues.push(kind);
+            return Command::PlaySound(SoundId(kind as u32));
+        }
+        self.sent.push(msg);
+        Command::None
+    }
+    fn on_feedback(&self, kind: FeedbackKind) -> Option<String> {
+        Some(format!("cue:{kind:?}"))
+    }
+}
+
+fn sounds<F: Fn() -> Element<String>>(view: F) -> Runtime<Sounds<F>> {
+    Runtime::new(Sounds {
+        view,
+        cues: Vec::new(),
+        sent: Vec::new(),
+    })
+}
+
+#[test]
+fn a_cues_command_comes_back_with_the_input_or_after_the_frame() {
+    let mut rt = sounds(|| Button::new("Go").on_click("go".to_string()).into());
+    step(&mut rt, 0.0);
+    rt.input(Input::A, InputPhase::Pressed);
+    let command = rt.input(Input::A, InputPhase::Released);
+    assert_eq!(
+        command,
+        Command::PlaySound(SoundId(FeedbackKind::Select as u32))
+    );
+    assert_eq!(rt.app().sent, ["go"]);
+    // A hold completing in a frame: the shell takes the command after it.
+    let mut rt = sounds(|| {
+        HoldButton::new("Hold")
+            .duration_ms(100)
+            .on_confirm("held".to_string())
+            .into()
+    });
+    step(&mut rt, 0.0);
+    rt.input(Input::A, InputPhase::Pressed);
+    for _ in 0..12 {
+        step(&mut rt, 1.0 / 60.0);
+    }
+    let Command::Batch(commands) = rt.take_command() else {
+        panic!("a batch of the cues' sounds");
+    };
+    assert_eq!(
+        commands.last(),
+        Some(&Command::PlaySound(SoundId(FeedbackKind::Success as u32)))
+    );
+    assert_eq!(rt.take_command(), Command::None, "taken once");
+    assert_eq!(Command::None.and(Command::Quit), Command::Quit);
+}
+
+#[test]
+fn a_hold_card_fills_in_the_accent_and_changes_only_when_held_out() {
+    let t = light();
+    let card = || {
+        HoldCard::new(
+            SelectableCard::new("Send", false)
+                .on_change(|on| format!("send {on}"))
+                .child(Text::new("Send it")),
+        )
+        .duration_ms(400)
+        .into()
+    };
+    let mut rt = sounds(card);
+    step(&mut rt, 0.0);
+    let node = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find(|n| n.role == Role::Checkbox)
+        .unwrap();
+    assert_eq!(node.description.as_deref(), Some("Hold to confirm"));
+    rt.input(Input::A, InputPhase::Pressed);
+    let mut list = step(&mut rt, 0.0);
+    for _ in 0..12 {
+        list = step(&mut rt, 1.0 / 60.0);
+    }
+    let fill = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.accent_muted))
+        .expect("an accent fill");
+    assert!(fill.0.width > 0.0 && fill.0.width < node.bounds.width);
+    rt.input(Input::A, InputPhase::Released);
+    for _ in 0..30 {
+        step(&mut rt, 1.0 / 60.0);
+    }
+    assert!(rt.app().sent.is_empty(), "let go early: nothing sent");
+    rt.input(Input::A, InputPhase::Pressed);
+    for _ in 0..30 {
+        step(&mut rt, 1.0 / 60.0);
+    }
+    rt.input(Input::A, InputPhase::Released);
+    assert_eq!(rt.app().sent, ["send true"]);
+    let after_release = rt
+        .app()
+        .cues
+        .iter()
+        .skip_while(|k| **k != FeedbackKind::Progress)
+        .copied()
+        .collect::<Vec<_>>();
+    assert!(after_release.ends_with(&[
+        FeedbackKind::Progress,
+        FeedbackKind::Progress,
+        FeedbackKind::Progress,
+        FeedbackKind::Success
+    ]));
+}
+
+#[test]
+fn edges_of_a_card_group_and_a_pager_are_blocked() {
+    use astryx_core::paged::Paged;
+    let mut rt = sounds(plans_view);
+    step(&mut rt, 0.0);
+    // Focus starts on Free; right moves to Pro and Team, then nothing is
+    // to the right.
+    for _ in 0..3 {
+        rt.input(Input::Right, InputPhase::Pressed);
+        rt.input(Input::Right, InputPhase::Released);
+        step(&mut rt, 0.0);
+    }
+    assert_eq!(
+        rt.app().cues,
+        [
+            FeedbackKind::Move,
+            FeedbackKind::Move,
+            FeedbackKind::Blocked
+        ]
+    );
+    let mut rt = sounds(|| {
+        Paged::new()
+            .children((0..12).map(|i| Button::new(format!("B{i}")).on_click(format!("{i}"))))
+            .into()
+    });
+    step(&mut rt, 0.0);
+    rt.input(Input::Up, InputPhase::Pressed);
+    rt.input(Input::Up, InputPhase::Released);
+    rt.input(Input::L2, InputPhase::Pressed);
+    rt.input(Input::L2, InputPhase::Released);
+    step(&mut rt, 0.0);
+    assert_eq!(
+        rt.app().cues,
+        [FeedbackKind::Blocked, FeedbackKind::Blocked],
+        "first page: up and previous page go nowhere"
+    );
+}
+
+fn plans_view() -> Element<String> {
+    let mut group = SelectableCardGroup::new("Plan")
+        .on_change(|v| v)
+        .value("pro")
+        .is_horizontal(true);
+    for (v, label) in [("free", "Free"), ("pro", "Pro"), ("team", "Team")] {
+        group = group.option(v, SelectableCard::new(label, false).child(Text::new(label)));
+    }
+    group.into()
 }

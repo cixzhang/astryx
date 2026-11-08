@@ -195,6 +195,9 @@ pub struct SelectableCard<Msg> {
     children: Vec<Element<Msg>>,
     /// Inside a single-choice group: the message choosing this card.
     pub(crate) choice: Option<Msg>,
+    /// Experimental (`lab::HoldCard`): a press must be held this long, in
+    /// milliseconds, and the card fills in the accent meanwhile.
+    pub(crate) hold: Option<f32>,
 }
 
 impl<Msg> SelectableCard<Msg> {
@@ -210,6 +213,7 @@ impl<Msg> SelectableCard<Msg> {
             elevation: Elevation::None,
             children: Vec::new(),
             choice: None,
+            hold: None,
         }
     }
     /// Called with the new selection when the card is toggled.
@@ -296,13 +300,18 @@ impl<Msg> Build<Msg> for SelectableCard<Msg> {
         );
         sem.checked = Some(selected);
         sem.disabled = self.is_disabled;
+        if self.hold.is_some() {
+            sem.description = Some(super::strings::HOLD_TO_CONFIRM.into());
+        }
+        let mut indicator =
+            Indicator::ring(c.accent.into(), radius, Some(c.overlay_pressed.into()));
+        indicator.hold_fill = self.hold.map(|_| c.accent_muted.into());
         let mut node = node
-            .interact(Interact::new(msg, self.is_disabled))
-            .indicator(Indicator::ring(
-                c.accent.into(),
-                radius,
-                Some(c.overlay_pressed.into()),
-            ))
+            .interact(Interact {
+                hold: self.hold,
+                ..Interact::new(msg, self.is_disabled)
+            })
+            .indicator(indicator)
             .sem(sem)
             .opacity(if self.is_disabled { 0.5 } else { 1.0 });
         node.group_entry = in_group && selected;

@@ -618,6 +618,27 @@ pub enum Command {
     /// Play a registered sound once, mixed with any already playing. Silent
     /// when sound is off.
     PlaySound(SoundId),
+    /// Several commands, carried out in order.
+    Batch(Vec<Command>),
+}
+
+impl Command {
+    /// This command, then `next`: the one that is not `None` when the other
+    /// is, else both in a batch.
+    pub fn and(self, next: Command) -> Command {
+        match (self, next) {
+            (Command::None, c) | (c, Command::None) => c,
+            (Command::Batch(mut a), Command::Batch(b)) => {
+                a.extend(b);
+                Command::Batch(a)
+            }
+            (Command::Batch(mut a), c) => {
+                a.push(c);
+                Command::Batch(a)
+            }
+            (a, b) => Command::Batch(vec![a, b]),
+        }
+    }
 }
 
 /// See [`Command::Transition`].
@@ -778,6 +799,20 @@ pub enum ColorScheme {
     Dark,
 }
 
+/// Where a gamepad's face buttons sit. Inputs are named by printed label
+/// (see `Input::A`), so components that draw buttons by place read this.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum FaceLayout {
+    /// No gamepad seen yet. Components treat it as `Nintendo`, the Brick's.
+    #[default]
+    Unknown,
+    /// A right, B bottom, X top, Y left, as on the TrimUI Brick and
+    /// Nintendo pads.
+    Nintendo,
+    /// A bottom, B right, X left, Y top, as on Xbox-style pads.
+    Xbox,
+}
+
 /// What the person asked their OS or browser for. Shells read it from the
 /// platform and pass changes to `Surface::set_preferences`.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -801,6 +836,10 @@ pub struct Preferences {
     pub idle: Idle,
     /// The person turned sounds off.
     pub sound_off: bool,
+    /// The face-button layout of the gamepad in use. The Brick shell sets
+    /// `Nintendo`; desktop and web set it from the pad that last sent
+    /// input.
+    pub face_layout: FaceLayout,
     /// The device's radios, battery and clock, for a status bar. Shells
     /// that read them set it, refreshed every 30 seconds; others leave
     /// `None`.
@@ -897,6 +936,11 @@ pub trait Surface {
     /// element under it can show hover; touch never sends it.
     fn pointer_move(&mut self, at: Option<Point>) {
         let _ = at;
+    }
+    /// A command the app returned outside an input, such as while a held
+    /// press completes during a frame. Shells take it after each frame.
+    fn take_command(&mut self) -> Command {
+        Command::None
     }
     /// Images added, replaced, or freed (`None`) since the last call. Shells
     /// drain it every frame, before drawing, into their renderer.

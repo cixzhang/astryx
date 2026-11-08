@@ -41,6 +41,8 @@ pub fn detect_preferences() -> Preferences {
         idle: astryx_core::Idle::Active,
         device: None,
         sound_off: false,
+        // The shell sets it from the gamepad that sends input.
+        face_layout: astryx_core::FaceLayout::Unknown,
     }
 }
 

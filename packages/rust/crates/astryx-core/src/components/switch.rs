@@ -216,6 +216,7 @@ impl<Msg> Build<Msg> for Switch<Msg> {
                 radii: pill,
                 overlay,
                 field: None,
+                hold_fill: None,
             }),
         );
         // The busy start is announced politely.

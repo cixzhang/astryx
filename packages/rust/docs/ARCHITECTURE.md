@@ -155,9 +155,11 @@ bottom, B right, X left, and Y top; on a Nintendo-style pad, such as the
 TrimUI Brick, A is right, B bottom, X top, and Y left. The Brick shell reads
 the labels from its input table. The desktop shell gets places from gilrs
 and swaps A with B, and X with Y, for Nintendo pads (USB vendor 0x057e); the
-web shell does the same for pads whose id names Nintendo. Components that
-draw buttons by place, such as the on-screen keyboard's diamonds, take a
-`FaceLayout` (Nintendo by default, for the Brick).
+web shell does the same for pads whose id names Nintendo. Each shell also
+sets `Preferences::face_layout`: the Brick always `Nintendo`, desktop and
+web from the pad that last sent input (`Unknown` until one does).
+Components that draw buttons by place, such as the on-screen keyboard's
+diamonds, read it, and treat `Unknown` as `Nintendo`.
 
 ### Idle
 

@@ -237,6 +237,11 @@ impl Shell {
     fn handle(&mut self, command: Command) {
         match command {
             Command::None => {}
+            Command::Batch(commands) => {
+                for command in commands {
+                    self.handle(command);
+                }
+            }
             // A page cannot close itself, so the app stops taking input and frames.
             Command::Quit => self.stopped = true,
             Command::OpenUrl(url) => open_url(&self.window, &url),
@@ -311,6 +316,9 @@ impl Shell {
         if self.frames == 1 {
             mark(&self.window, "astryx-first-frame");
         }
+        // Commands the app returned during the frame, such as a hold completing.
+        let deferred = self.surface.take_command();
+        self.handle(deferred);
     }
 
     /// Starts loading the font subsets that this frame's text needs.
@@ -442,6 +450,7 @@ impl Shell {
         };
         let mut seen = Vec::new();
         let mut events = Vec::new();
+        let mut layout = None;
         for value in list.iter() {
             if value.is_null() || value.is_undefined() {
                 continue;
@@ -463,18 +472,27 @@ impl Shell {
                 .map(|a| a.as_f64().unwrap_or(0.0))
                 .collect();
             let id = pad.id().to_lowercase();
+            let nintendo = id.contains("057e") || id.contains("nintendo");
             let snapshot = Snapshot {
                 standard: pad.mapping() == GamepadMappingType::Standard,
-                nintendo: id.contains("057e") || id.contains("nintendo"),
+                nintendo,
                 buttons: &buttons,
                 axes: &axes,
             };
-            events.extend(
-                self.pads
-                    .entry(index)
-                    .or_default()
-                    .update(now_ms, &snapshot),
-            );
+            let from_pad = self
+                .pads
+                .entry(index)
+                .or_default()
+                .update(now_ms, &snapshot);
+            // The pad that sends input sets the face-button layout.
+            if !from_pad.is_empty() {
+                layout = Some(if nintendo {
+                    astryx_core::FaceLayout::Nintendo
+                } else {
+                    astryx_core::FaceLayout::Xbox
+                });
+            }
+            events.extend(from_pad);
         }
         let gone: Vec<u32> = self
             .pads
@@ -486,6 +504,13 @@ impl Shell {
             if let Some(mut pad) = self.pads.remove(&index) {
                 events.extend(pad.release_all());
             }
+        }
+        if let Some(layout) = layout.filter(|l| *l != self.preferences.face_layout) {
+            self.preferences.face_layout = layout;
+            if !self.stopped {
+                self.surface.set_preferences(&self.preferences);
+            }
+            self.dirty = true;
         }
         for (input, phase) in events {
             self.input(input, phase);
@@ -840,7 +865,8 @@ impl Runner {
         let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
-        let preferences = detect_preferences();
+        let mut preferences = detect_preferences();
+        preferences.face_layout = shell.preferences.face_layout;
         if preferences == shell.preferences {
             return;
         }

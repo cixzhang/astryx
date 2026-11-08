@@ -228,7 +228,7 @@ fn new_components_in_every_theme() {
                 (Section::SelectableCards, 320),
                 (Section::Kbd, 260),
                 (Section::Keyboard, 480),
-                (Section::Lab, 620),
+                (Section::Lab, 760),
             ] {
                 let mut rt =
                     astryx_gallery::runtime(Gallery::section(section).with_theme(theme, mode));

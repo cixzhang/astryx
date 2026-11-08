@@ -286,6 +286,8 @@ pub struct Runtime<A: App> {
     fired_timers: HashSet<(u64, u64)>,
     /// Where the mouse or pen pointer is, if over the window.
     pointer: Option<Point>,
+    /// Commands from cues and frames not yet handed to the shell.
+    pending: Command,
     /// The focus last reported to `App::on_focus`.
     reported_focus: Option<Option<u64>>,
     /// Each camera's offset (x, y), moving toward its target.
@@ -352,6 +354,7 @@ impl<A: App> Runtime<A> {
             rebuilt: false,
             fired_timers: HashSet::new(),
             pointer: None,
+            pending: Command::None,
             cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
@@ -477,10 +480,12 @@ impl<A: App> Runtime<A> {
         Some(command)
     }
 
-    /// Hands a feedback cue to the app.
+    /// Hands a feedback cue to the app. A command it returns joins the
+    /// input's, or waits for `take_command` when the cue came in a frame.
     fn cue(&mut self, kind: FeedbackKind) {
         if let Some(msg) = self.app.on_feedback(kind) {
-            let _ = self.send(msg);
+            let command = self.send(msg);
+            self.pending = std::mem::take(&mut self.pending).and(command);
         }
     }
 
@@ -845,6 +850,7 @@ impl<A: App> Runtime<A> {
         let candidate = current.and_then(|c| focus::navigate(&rects, Some(c), input));
         if let Some(s) = candidate.filter(|&s| self.pager_of(self.stops[s].0) == Some(p)) {
             self.set_focus(s);
+            self.cue(FeedbackKind::Move);
             return Command::None;
         }
         let on_page = self.stops_on_page(p, page);
@@ -860,13 +866,19 @@ impl<A: App> Runtime<A> {
             page.checked_sub(1)
         };
         match (flips, target) {
-            (true, Some(next)) => self.flip(p, next, forward),
-            _ => {
-                if let Some(s) = candidate {
+            (true, Some(next)) => {
+                self.flip(p, next, forward);
+                self.cue(FeedbackKind::Move);
+            }
+            _ => match candidate {
+                Some(s) => {
                     self.set_focus(s);
                     self.reveal_focus(true);
+                    self.cue(FeedbackKind::Move);
                 }
-            }
+                // At the first or last page with nowhere to go.
+                None => self.cue(FeedbackKind::Blocked),
+            },
         }
         Command::None
     }
@@ -1614,8 +1626,12 @@ impl<A: App> Runtime<A> {
                     Page::Next => (pager.page + 1 < pager.pages.len()).then_some(pager.page + 1),
                     Page::Previous => pager.page.checked_sub(1),
                 };
-                if let Some(target) = target {
-                    self.flip(p, target, true);
+                match target {
+                    Some(target) => {
+                        self.flip(p, target, true);
+                        self.cue(FeedbackKind::Move);
+                    }
+                    None => self.cue(FeedbackKind::Blocked),
                 }
             }
             return Command::None;
@@ -2263,21 +2279,27 @@ impl<A: App> Surface for Runtime<A> {
             None => self.handle_input(input, phase),
         };
         let followed = self.report_focus();
-        if command == Command::None {
+        let command = if command == Command::None {
             followed
         } else {
             command
-        }
+        };
+        command.and(std::mem::take(&mut self.pending))
+    }
+
+    fn take_command(&mut self) -> Command {
+        std::mem::take(&mut self.pending)
     }
 
     fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
         let command = self.handle_a11y_action(id, action);
         let followed = self.report_focus();
-        if command == Command::None {
+        let command = if command == Command::None {
             followed
         } else {
             command
-        }
+        };
+        command.and(std::mem::take(&mut self.pending))
     }
 
     fn frame(&mut self, frame: &FrameInfo, text: &dyn TextMeasure) -> DisplayList {
@@ -2289,7 +2311,8 @@ impl<A: App> Surface for Runtime<A> {
         self.repaint = false;
         // A command from a long press or repeat has no caller to return to
         // in a frame; the effect lands in the app's state.
-        let _ = self.tick_motion(frame.dt);
+        let command = self.tick_motion(frame.dt);
+        self.pending = std::mem::take(&mut self.pending).and(command);
         let size = frame.logical_size();
         let viewport = (size.width, size.height);
         let mut watch = Stopwatch::start();

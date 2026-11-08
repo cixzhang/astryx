@@ -338,6 +338,16 @@ pub const COMPONENTS: &[ComponentSpec] = &[
         ],
     },
     ComponentSpec {
+        name: "HoldCard",
+        variants: &["default"],
+        props: &[
+            text("label", "Send the plan"),
+            text("title", "Send to Ada"),
+            text("body", "Hold A to send"),
+            flag("is_selected", false),
+        ],
+    },
+    ComponentSpec {
         name: "ChoiceTile",
         variants: &["default"],
         props: &[
@@ -907,6 +917,20 @@ pub fn build<Msg: Clone + 'static>(
             "keyboard" => Kbd::new(&p.text("keys")).into(),
             _ => Kbd::gamepad(&p.text("keys")).into(),
         },
+        "HoldCard" => {
+            let selected = state.toggled.unwrap_or(p.flag("is_selected"));
+            lab::HoldCard::new(
+                SelectableCard::new(p.text("label"), selected)
+                    .on_change(move |v| on(DemoEvent::Toggled(v)))
+                    .child(
+                        VStack::new()
+                            .gap(Space::S1)
+                            .child(Heading::new(4, p.text("title")))
+                            .child(Text::new(p.text("body")).r#type(TextType::Supporting)),
+                    ),
+            )
+            .into()
+        }
         "SelectableCard" => {
             let selected = state.toggled.unwrap_or(p.flag("is_selected"));
             SelectableCard::new(p.text("label"), selected)

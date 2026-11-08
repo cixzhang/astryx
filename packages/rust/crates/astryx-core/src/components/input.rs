@@ -295,6 +295,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
             radii: radius,
             overlay: None,
             field: Some((c.accent.into(), c.accent_muted.into())),
+            hold_fill: None,
         })
         .sem(sem)
         .tooltip(if f.is_disabled {
@@ -643,6 +644,7 @@ impl<Msg: Clone + 'static> Build<Msg> for Selector<Msg> {
                 radii: radius,
                 overlay: None,
                 field: Some((c.accent.into(), c.accent_muted.into())),
+                hold_fill: None,
             },
             _ => Indicator::ring(c.accent.into(), radius, Some(c.overlay_pressed.into())),
         };

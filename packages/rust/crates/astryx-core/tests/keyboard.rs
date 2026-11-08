@@ -203,3 +203,29 @@ fn each_key_sits_where_its_face_button_sits() {
     assert!(r.1 < a.1 && r.1 < c.1, "X is at the top");
     assert!(c.0 < r.0 && c.0 < a.0, "Y is left");
 }
+
+#[test]
+fn the_shells_face_layout_places_the_keys() {
+    let mut rt = Runtime::new(Pad::default());
+    rt.set_preferences(&Preferences {
+        face_layout: FaceLayout::Xbox,
+        ..Preferences::default()
+    });
+    frame(&mut rt, 1024, 768, 2.0, 0.0);
+    tap(&mut rt, Input::Left);
+    let list = frame(&mut rt, 1024, 768, 2.0, 0.0);
+    let big = light().font.heading1.size;
+    let at = |ch: &str| {
+        texts(&list)
+            .into_iter()
+            .find(|t| t.1 == ch && t.2.size >= big)
+            .map(|t| (t.0.x + t.0.width / 2.0, t.0.y + t.0.height / 2.0))
+            .unwrap_or_else(|| panic!("{ch} drawn large"))
+    };
+    // On an Xbox-style pad A is at the bottom, B right, X left, Y top.
+    let (a, n, r, c) = (at("a"), at("n"), at("r"), at("c"));
+    assert!(a.1 > n.1 && a.1 > c.1, "A is at the bottom");
+    assert!(n.0 > r.0 && n.0 > a.0, "B is right");
+    assert!(r.0 < n.0 && r.0 < c.0, "X is left");
+    assert!(c.1 < a.1 && c.1 < n.1, "Y is at the top");
+}

@@ -229,4 +229,21 @@ mod tests {
         assert_eq!(pad.release_all(), vec![(Input::A, Released)]);
         assert_eq!(pad.update(1.0, &snap(&b, &[])), vec![(Input::A, Pressed)]);
     }
+
+    #[test]
+    fn a_nintendo_pad_maps_by_its_printed_labels() {
+        let mut pad = PadTracker::default();
+        // Standard index 1 is the right button, printed A on a Nintendo pad.
+        let b = buttons(&[1]);
+        let out = pad.update(
+            0.0,
+            &Snapshot {
+                standard: true,
+                nintendo: true,
+                buttons: &b,
+                axes: &[],
+            },
+        );
+        assert_eq!(out, vec![(Input::A, Pressed)]);
+    }
 }

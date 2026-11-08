@@ -9,12 +9,14 @@
 //! - [`SelectableCardGroup`]: a single choice among `SelectableCard`s, as a
 //!   radio group of cards.
 //! - [`KeyHints`]: a row of gamepad keys and what they do.
+//! - [`HoldCard`]: a `SelectableCard` that confirms on a held press, filling
+//!   in the accent.
 //! - [`OnScreenKeyboard`]: text entry with a gamepad, as a chord ring or a
 //!   grid.
 
 pub use crate::components::keyboard::{
-    ChordKey, ChordLayer, ChordLayout, FaceLayout, GridLayout, KeyboardAction, KeyboardKind,
-    KeyboardState, KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
+    ChordKey, ChordLayer, ChordLayout, GridLayout, KeyboardAction, KeyboardKind, KeyboardState,
+    KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
 };
 use crate::components::text::{text_node, type_style};
 use crate::components::{
@@ -579,6 +581,7 @@ pub struct SelectableCardGroup<Msg> {
     is_horizontal: bool,
     gap: Space,
     options: Vec<(String, SelectableCard<Msg>)>,
+    hold_ms: Option<f32>,
 }
 
 impl<Msg> SelectableCardGroup<Msg> {
@@ -592,6 +595,7 @@ impl<Msg> SelectableCardGroup<Msg> {
             is_horizontal: false,
             gap: Space::S3,
             options: Vec::new(),
+            hold_ms: None,
         }
     }
     /// The chosen card's value.
@@ -618,6 +622,46 @@ impl<Msg> SelectableCardGroup<Msg> {
     pub fn option(mut self, value: impl Into<String>, card: SelectableCard<Msg>) -> Self {
         self.options.push((value.into(), card));
         self
+    }
+    /// Choosing a card takes a press held this long, as on a [`HoldCard`].
+    pub fn hold_ms(mut self, ms: u32) -> Self {
+        self.hold_ms = Some(ms as f32);
+        self
+    }
+}
+
+// ---- HoldCard ----
+
+/// A `SelectableCard` that changes only on a held press (`HoldCard`): the
+/// card fills in the accent from inline start over the hold's time (in
+/// quarter steps under reduced motion), letting go early empties it and
+/// sends nothing, and a completed hold sends the card's change once. It
+/// says "Hold to confirm"; assistive technology activates it at once.
+/// Feedback cues: Progress at each quarter, Success at the end.
+pub struct HoldCard<Msg> {
+    card: SelectableCard<Msg>,
+    duration_ms: f32,
+}
+
+impl<Msg> HoldCard<Msg> {
+    /// `card` held for 1 second.
+    pub fn new(card: SelectableCard<Msg>) -> Self {
+        HoldCard {
+            card,
+            duration_ms: 1000.0,
+        }
+    }
+    pub fn duration_ms(mut self, ms: u32) -> Self {
+        self.duration_ms = ms as f32;
+        self
+    }
+}
+
+impl<Msg: Clone + 'static> From<HoldCard<Msg>> for crate::element::Element<Msg> {
+    fn from(h: HoldCard<Msg>) -> Self {
+        let mut card = h.card;
+        card.hold = Some(h.duration_ms);
+        card.into()
     }
 }
 
@@ -654,6 +698,7 @@ impl<Msg: Clone + 'static> Build<Msg> for SelectableCardGroup<Msg> {
         for (value, mut card) in self.options {
             card.is_selected = self.value.as_deref() == Some(value.as_str());
             card.choice = self.on_change.as_ref().map(|f| f(value.clone()));
+            card.hold = card.hold.or(self.hold_ms);
             let first = cx.nodes.len();
             cx.child(card.into());
             if let Some(node) = cx.nodes.get_mut(first) {

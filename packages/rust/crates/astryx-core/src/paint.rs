@@ -453,9 +453,13 @@ fn paint_node<Msg>(
         .map(|(_, p)| p);
     // A hold shows its fill instead of the pressed paint.
     let pressed = owner.pressed && state.press_strength > 0.0 && holding.is_none();
-    if let (Some(p), Some(pressed_tint)) = (holding, node.indicator.and_then(|i| i.overlay)) {
+    let hold_color = node.indicator.and_then(|i| {
         // Stronger than the pressed tint, so the fill reads in every theme.
-        let overlay = pressed_tint.with_alpha((pressed_tint.a * 3.0).clamp(0.25, 0.5));
+        i.hold_fill.or(i
+            .overlay
+            .map(|o| o.with_alpha((o.a * 3.0).clamp(0.25, 0.5))))
+    });
+    if let (Some(p), Some(overlay)) = (holding, hold_color) {
         // The fill grows from inline start, inside the control's corners.
         let radii = node.indicator.map_or(Radii::default(), |i| i.radii);
         let width = rect.width * p;

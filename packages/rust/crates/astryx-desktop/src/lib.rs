@@ -91,6 +91,8 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         cursor: CursorIcon::Default,
         #[cfg(feature = "gamepad")]
         gamepads: gilrs::Gilrs::new().ok(),
+        #[cfg(feature = "gamepad")]
+        preferences: astryx_core::Preferences::default(),
         pending_transition: None,
         last_list: None,
         #[cfg(feature = "audio")]
@@ -133,6 +135,9 @@ struct Shell<S: Surface> {
     cursor: CursorIcon,
     #[cfg(feature = "gamepad")]
     gamepads: Option<gilrs::Gilrs>,
+    /// What the shell last passed to `Surface::set_preferences`.
+    #[cfg(feature = "gamepad")]
+    preferences: astryx_core::Preferences,
     /// A transition the app asked for, started with the next frame.
     pending_transition: Option<astryx_core::Transition>,
     /// The frame on screen, where a transition starts from.
@@ -222,6 +227,11 @@ impl<S: Surface> Shell<S> {
     fn handle(&mut self, event_loop: &ActiveEventLoop, command: Command) {
         match command {
             Command::None => {}
+            Command::Batch(commands) => {
+                for command in commands {
+                    self.handle(event_loop, command);
+                }
+            }
             Command::Quit => event_loop.exit(),
             Command::OpenUrl(url) => {
                 if let Err(e) = platform::open_url(&url) {
@@ -544,6 +554,9 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        // Commands the app returned during frames, such as a hold completing.
+        let deferred = self.surface.take_command();
+        self.handle(event_loop, deferred);
         #[cfg(feature = "gamepad")]
         {
             let mut events = Vec::new();
@@ -551,6 +564,21 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 while let Some(ev) = gilrs.next_event() {
                     let nintendo = gilrs.gamepad(ev.id).vendor_id() == Some(input::NINTENDO_VENDOR);
                     events.push((ev.event, nintendo));
+                }
+            }
+            // The pad that sends input sets the face-button layout.
+            if let Some(&(_, nintendo)) = events.last() {
+                let layout = if nintendo {
+                    astryx_core::FaceLayout::Nintendo
+                } else {
+                    astryx_core::FaceLayout::Xbox
+                };
+                if layout != self.preferences.face_layout {
+                    self.preferences.face_layout = layout;
+                    self.surface.set_preferences(&self.preferences);
+                    if let Some(gpu) = &self.gpu {
+                        gpu.window.request_redraw();
+                    }
                 }
             }
             for (ev, nintendo) in events {
