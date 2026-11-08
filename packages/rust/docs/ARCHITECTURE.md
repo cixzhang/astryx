@@ -147,6 +147,18 @@ Passes do not nest. Transforms move lights and emissive rects like any shape.
 - Desktop plays through cpal (default feature `audio`). The web uses WebAudio
   (feature `audio`, off by default). The Brick shell uses SDL.
 
+### Gamepad face buttons
+
+Every shell names face buttons by their printed label: `Input::A` is the
+button printed A, wherever it sits. On an Xbox-style pad A is at the
+bottom, B right, X left, and Y top; on a Nintendo-style pad, such as the
+TrimUI Brick, A is right, B bottom, X top, and Y left. The Brick shell reads
+the labels from its input table. The desktop shell gets places from gilrs
+and swaps A with B, and X with Y, for Nintendo pads (USB vendor 0x057e); the
+web shell does the same for pads whose id names Nintendo. Components that
+draw buttons by place, such as the on-screen keyboard's diamonds, take a
+`FaceLayout` (Nintendo by default, for the Brick).
+
 ### Idle
 
 - `Preferences.idle: Idle { Active, Dim, Asleep }` tells apps how long the

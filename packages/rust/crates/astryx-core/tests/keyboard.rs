@@ -180,3 +180,26 @@ fn both_layouts_fit_1024_by_768_at_scale_2() {
         assert!(field.bounds.y < 60.0, "the field is above the keys");
     }
 }
+
+#[test]
+fn each_key_sits_where_its_face_button_sits() {
+    let mut rt = Runtime::new(Pad::default());
+    frame(&mut rt, 1024, 768, 2.0, 0.0);
+    tap(&mut rt, Input::Left);
+    let list = frame(&mut rt, 1024, 768, 2.0, 0.0);
+    // The left group, large: a on A, n on B, r on X, c on Y. On the Brick
+    // (Nintendo layout) A is right, B bottom, X top, Y left.
+    let big = light().font.heading1.size;
+    let at = |ch: &str| {
+        texts(&list)
+            .into_iter()
+            .find(|t| t.1 == ch && t.2.size >= big)
+            .map(|t| (t.0.x + t.0.width / 2.0, t.0.y + t.0.height / 2.0))
+            .unwrap_or_else(|| panic!("{ch} drawn large"))
+    };
+    let (a, n, r, c) = (at("a"), at("n"), at("r"), at("c"));
+    assert!(a.0 > r.0 && a.0 > c.0, "A is right");
+    assert!(n.1 > r.1 && n.1 > a.1, "B is at the bottom");
+    assert!(r.1 < a.1 && r.1 < c.1, "X is at the top");
+    assert!(c.0 < r.0 && c.0 < a.0, "Y is left");
+}

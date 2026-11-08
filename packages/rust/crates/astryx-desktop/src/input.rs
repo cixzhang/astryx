@@ -44,14 +44,30 @@ pub fn typed_text(text: Option<&str>, modifiers: ModifiersState) -> Option<Strin
     (!text.is_empty()).then_some(text)
 }
 
+/// Nintendo's USB vendor id. Its pads print A on the right, B at the
+/// bottom, X at the top, and Y on the left.
+pub const NINTENDO_VENDOR: u16 = 0x057e;
+
+/// The input for a gamepad button. Face buttons map by their printed label,
+/// as the Brick shell maps them: gilrs names them by position, so on a
+/// Nintendo-style pad (`nintendo`) the right button is A and the bottom
+/// one B.
 #[cfg(feature = "gamepad")]
-pub fn gamepad_input(button: gilrs::Button) -> Option<Input> {
+pub fn gamepad_input(button: gilrs::Button, nintendo: bool) -> Option<Input> {
+    use gilrs::Button as B;
+    Some(match (button, nintendo) {
+        (B::South, false) | (B::East, true) => Input::A,
+        (B::East, false) | (B::South, true) => Input::B,
+        (B::West, false) | (B::North, true) => Input::X,
+        (B::North, false) | (B::West, true) => Input::Y,
+        (button, _) => return gamepad_other(button),
+    })
+}
+
+#[cfg(feature = "gamepad")]
+fn gamepad_other(button: gilrs::Button) -> Option<Input> {
     use gilrs::Button as B;
     Some(match button {
-        B::South => Input::A,
-        B::East => Input::B,
-        B::West => Input::X,
-        B::North => Input::Y,
         B::DPadUp => Input::Up,
         B::DPadDown => Input::Down,
         B::DPadLeft => Input::Left,
@@ -124,8 +140,14 @@ mod tests {
     #[cfg(feature = "gamepad")]
     #[test]
     fn gamepad_buttons_map_to_inputs() {
-        assert_eq!(gamepad_input(gilrs::Button::South), Some(Input::A));
-        assert_eq!(gamepad_input(gilrs::Button::East), Some(Input::B));
-        assert_eq!(gamepad_input(gilrs::Button::DPadUp), Some(Input::Up));
+        use gilrs::Button as B;
+        assert_eq!(gamepad_input(B::South, false), Some(Input::A));
+        assert_eq!(gamepad_input(B::East, false), Some(Input::B));
+        assert_eq!(gamepad_input(B::DPadUp, false), Some(Input::Up));
+        // A Nintendo pad maps by its printed labels.
+        assert_eq!(gamepad_input(B::East, true), Some(Input::A));
+        assert_eq!(gamepad_input(B::South, true), Some(Input::B));
+        assert_eq!(gamepad_input(B::North, true), Some(Input::X));
+        assert_eq!(gamepad_input(B::West, true), Some(Input::Y));
     }
 }

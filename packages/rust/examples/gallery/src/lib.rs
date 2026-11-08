@@ -4,7 +4,7 @@
 //! change the theme at run time.
 
 use astryx_core::lab::{
-    KeyboardAction, KeyboardKind, KeyboardState, KeyboardUpdate, OnScreenKeyboard,
+    FaceLayout, KeyboardAction, KeyboardKind, KeyboardState, KeyboardUpdate, OnScreenKeyboard,
 };
 use astryx_core::paged::Paged;
 use astryx_core::*;
@@ -210,6 +210,8 @@ pub struct Gallery {
     /// The chosen plan in the Lab section's card group.
     pub plan: String,
     pub keyboard: KeyboardState,
+    /// Where the gamepad's face buttons sit: Nintendo-style on the Brick.
+    pub faces: FaceLayout,
     pub typed: String,
     /// What the keyboard last finished with: "Done" or "Cancelled".
     pub finished: Option<&'static str>,
@@ -253,6 +255,7 @@ impl Default for Gallery {
             cards: [true, false, true, false],
             plan: "pro".into(),
             keyboard: KeyboardState::default(),
+            faces: FaceLayout::default(),
             typed: String::new(),
             finished: None,
             extra_themes: Vec::new(),
@@ -1053,6 +1056,7 @@ impl Gallery {
         };
         vstack![
             OnScreenKeyboard::new("Message", self.typed.clone(), self.keyboard.clone())
+                .face_layout(self.faces)
                 .on_change(Msg::Keyboard),
             Text::new(finished)
                 .size(TextSize::Sm)

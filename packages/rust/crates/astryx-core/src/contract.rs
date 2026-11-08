@@ -546,6 +546,11 @@ pub enum Input {
     Next,
     Previous,
     /// Confirm / activate the focused element (Enter, Space, A).
+    ///
+    /// Face buttons are named by their printed label, not their place:
+    /// on an Xbox-style pad A is at the bottom, B right, X left, and Y top;
+    /// on a Nintendo-style pad, such as the TrimUI Brick, A is right, B
+    /// bottom, X top, and Y left.
     A,
     /// Back / cancel (Escape, B).
     B,
@@ -886,6 +891,12 @@ pub trait Surface {
     fn scroll(&mut self, at: Point, delta: Point) -> bool {
         let _ = (at, delta);
         false
+    }
+    /// Where a mouse or pen pointer is, in logical points, or `None` when
+    /// it left the window. Shells send it as the pointer moves so the
+    /// element under it can show hover; touch never sends it.
+    fn pointer_move(&mut self, at: Option<Point>) {
+        let _ = at;
     }
     /// Images added, replaced, or freed (`None`) since the last call. Shells
     /// drain it every frame, before drawing, into their renderer.

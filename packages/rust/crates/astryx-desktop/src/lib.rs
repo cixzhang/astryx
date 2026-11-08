@@ -282,6 +282,14 @@ impl<S: Surface> Shell<S> {
         pointer::hit_test(tree, at.x, at.y)
     }
 
+    /// Tells the surface where the mouse is, for hover, and repaints.
+    fn hover(&mut self) {
+        self.surface.pointer_move(self.pointer);
+        if let Some(gpu) = &self.gpu {
+            gpu.window.request_redraw();
+        }
+    }
+
     fn update_cursor(&mut self) {
         let cursor = pointer::cursor_for(self.pointer_hit());
         if cursor != self.cursor {
@@ -465,10 +473,12 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                     y: logical.y,
                 });
                 self.update_cursor();
+                self.hover();
             }
             WindowEvent::CursorLeft { .. } => {
                 self.pointer = None;
                 self.update_cursor();
+                self.hover();
             }
             WindowEvent::MouseInput {
                 state,
@@ -539,17 +549,18 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
             let mut events = Vec::new();
             if let Some(gilrs) = &mut self.gamepads {
                 while let Some(ev) = gilrs.next_event() {
-                    events.push(ev.event);
+                    let nintendo = gilrs.gamepad(ev.id).vendor_id() == Some(input::NINTENDO_VENDOR);
+                    events.push((ev.event, nintendo));
                 }
             }
-            for ev in events {
+            for (ev, nintendo) in events {
                 let (button, phase) = match ev {
                     gilrs::EventType::ButtonPressed(b, _) => (b, InputPhase::Pressed),
                     gilrs::EventType::ButtonRepeated(b, _) => (b, InputPhase::Pressed),
                     gilrs::EventType::ButtonReleased(b, _) => (b, InputPhase::Released),
                     _ => continue,
                 };
-                if let Some(input) = input::gamepad_input(button) {
+                if let Some(input) = input::gamepad_input(button, nintendo) {
                     self.send(event_loop, input, phase);
                 }
             }

@@ -412,9 +412,14 @@ pub(crate) enum Axis {
 }
 
 /// Takes an input, its phase, and the runtime's clock in milliseconds; may
-/// return the app's message.
-pub(crate) type Capture<Msg> =
-    std::rc::Rc<dyn Fn(crate::contract::Input, crate::contract::InputPhase, f64) -> Option<Msg>>;
+/// return the app's message and a feedback cue.
+pub(crate) type Capture<Msg> = std::rc::Rc<
+    dyn Fn(
+        crate::contract::Input,
+        crate::contract::InputPhase,
+        f64,
+    ) -> (Option<Msg>, Option<crate::runtime::FeedbackKind>),
+>;
 
 /// One built node. Children always follow their parent in the node list.
 pub(crate) struct Node<Msg> {

@@ -372,6 +372,12 @@ impl Shell {
         }
     }
 
+    fn pointer_move(&mut self, at: Option<astryx_core::Point>) {
+        if !self.stopped {
+            self.surface.pointer_move(at);
+        }
+    }
+
     fn a11y_action(&mut self, id: u64, action: A11yAction) {
         if self.stopped {
             return;
@@ -456,8 +462,10 @@ impl Shell {
                 .iter()
                 .map(|a| a.as_f64().unwrap_or(0.0))
                 .collect();
+            let id = pad.id().to_lowercase();
             let snapshot = Snapshot {
                 standard: pad.mapping() == GamepadMappingType::Standard,
+                nintendo: id.contains("057e") || id.contains("nintendo"),
                 buttons: &buttons,
                 axes: &axes,
             };
@@ -722,6 +730,26 @@ impl Runner {
             shell.cursor = cursor;
             let _ = shell.canvas.style().set_property("cursor", cursor);
         }
+        // Touch never hovers.
+        if event.pointer_type() == "touch" {
+            return;
+        }
+        let rect = shell.canvas.get_bounding_client_rect();
+        shell.pointer_move(Some(astryx_core::Point {
+            x: (event.client_x() as f64 - rect.left()) as f32,
+            y: (event.client_y() as f64 - rect.top()) as f32,
+        }));
+        drop(shell);
+        self.schedule();
+    }
+
+    fn on_pointerleave(&self) {
+        let Ok(mut shell) = self.shell.try_borrow_mut() else {
+            return;
+        };
+        shell.pointer_move(None);
+        drop(shell);
+        self.schedule();
     }
 
     fn on_wheel(&self, event: &web_sys::WheelEvent) {
@@ -989,6 +1017,9 @@ fn start(
     listen::<web_sys::PointerEvent>(&canvas, "pointerdown", &runner, Runner::on_pointerdown)?;
     listen::<web_sys::PointerEvent>(&canvas, "pointerup", &runner, Runner::on_pointerup)?;
     listen::<web_sys::PointerEvent>(&canvas, "pointermove", &runner, Runner::on_pointermove)?;
+    listen::<web_sys::PointerEvent>(&canvas, "pointerleave", &runner, |runner, _| {
+        runner.on_pointerleave()
+    })?;
     listen::<web_sys::PointerEvent>(&canvas, "pointercancel", &runner, |runner, _| {
         if let Ok(mut shell) = runner.shell.try_borrow_mut() {
             shell.pointer_target = None;

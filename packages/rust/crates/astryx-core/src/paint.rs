@@ -20,6 +20,11 @@ pub const FOCUS_RING_OFFSET: f32 = 3.0;
 pub(crate) struct PaintState {
     pub focused: Option<u64>,
     pub pressed: Option<u64>,
+    /// The focus stop under a mouse or pen pointer, and the hover overlay.
+    pub hovered: Option<u64>,
+    pub hover_fill: Color,
+    /// A hovered text field's border.
+    pub hover_border: Color,
     /// The pressed overlay's strength, 0 to 1.
     pub press_strength: f32,
     /// A hold-to-confirm fill: the node index and how full, 0 to 1.
@@ -117,6 +122,7 @@ pub(crate) struct Caret {
 struct Owner {
     focused: bool,
     pressed: bool,
+    hovered: bool,
 }
 
 /// What a node inherits from its ancestors while painting.
@@ -311,6 +317,7 @@ fn paint_node<Msg>(
         Some(i) => Owner {
             focused: state.focused == Some(node.id),
             pressed: state.pressed == Some(node.id) && !i.disabled && !i.busy,
+            hovered: state.hovered == Some(node.id),
         },
         None => owner,
     };
@@ -446,7 +453,9 @@ fn paint_node<Msg>(
         .map(|(_, p)| p);
     // A hold shows its fill instead of the pressed paint.
     let pressed = owner.pressed && state.press_strength > 0.0 && holding.is_none();
-    if let (Some(p), Some(overlay)) = (holding, node.indicator.and_then(|i| i.overlay)) {
+    if let (Some(p), Some(pressed_tint)) = (holding, node.indicator.and_then(|i| i.overlay)) {
+        // Stronger than the pressed tint, so the fill reads in every theme.
+        let overlay = pressed_tint.with_alpha((pressed_tint.a * 3.0).clamp(0.25, 0.5));
         // The fill grows from inline start, inside the control's corners.
         let radii = node.indicator.map_or(Radii::default(), |i| i.radii);
         let width = rect.width * p;
@@ -477,6 +486,34 @@ fn paint_node<Msg>(
                     stroke: None,
                 });
                 out.push(DrawCmd::PopClip);
+            }
+        }
+    }
+    // A hovered text field that is not focused shows a stronger border.
+    if let Some(ind) = node.indicator.filter(|i| i.field.is_some()) {
+        if owner.hovered && !owner.focused {
+            out.push(DrawCmd::Rect {
+                rect,
+                radii: clamp_radii(rect.width, rect.height, ind.radii),
+                fill: Color::TRANSPARENT,
+                stroke: Some((state.hover_border, grid.unwrap_or(1.0).max(1.0))),
+            });
+        }
+    }
+    // Hover tints a pressable control as Astryx's overlay-hover does; a
+    // press replaces it.
+    if let (Some(ind), true, false) = (node.indicator, owner.hovered, pressed) {
+        if ind.overlay.is_some() && holding.is_none() {
+            match grid {
+                Some(cell) => {
+                    pixel::push_rects(out, pixel::fill(rect, ind.radii, cell), state.hover_fill)
+                }
+                None => out.push(DrawCmd::Rect {
+                    rect,
+                    radii: clamp_radii(rect.width, rect.height, ind.radii),
+                    fill: state.hover_fill,
+                    stroke: None,
+                }),
             }
         }
     }

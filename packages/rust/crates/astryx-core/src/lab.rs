@@ -13,7 +13,7 @@
 //!   grid.
 
 pub use crate::components::keyboard::{
-    ChordKey, ChordLayer, ChordLayout, ChordView, GridLayout, KeyboardAction, KeyboardKind,
+    ChordKey, ChordLayer, ChordLayout, FaceLayout, GridLayout, KeyboardAction, KeyboardKind,
     KeyboardState, KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
 };
 use crate::components::text::{text_node, type_style};

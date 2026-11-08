@@ -25,6 +25,12 @@ fn step<A: App>(rt: &mut Runtime<A>, dt: f32) -> DisplayList {
     )
 }
 
+/// The hold fill: the pressed tint, made stronger.
+fn hold_fill(t: &Tokens) -> Color {
+    let p = c(t.color.overlay_pressed);
+    p.with_alpha((p.a * 3.0).clamp(0.25, 0.5))
+}
+
 // ---- SelectableCard ----
 
 #[test]
@@ -171,7 +177,7 @@ fn a_hold_button_confirms_only_when_held_to_the_end() {
     let half = step(&mut rt, 0.5);
     let fill = rects(&half)
         .into_iter()
-        .find(|r| r.2 == c(t.color.overlay_pressed))
+        .find(|r| r.2 == hold_fill(t))
         .expect("a fill");
     assert!(
         (fill.0.width - button.bounds.width / 2.0).abs() < button.bounds.width * 0.05,
@@ -210,7 +216,7 @@ fn reduced_motion_fills_a_hold_in_quarter_steps() {
     let list = step(&mut rt, 0.6);
     let fill = rects(&list)
         .into_iter()
-        .find(|r| r.2 == c(t.color.overlay_pressed))
+        .find(|r| r.2 == hold_fill(t))
         .expect("a fill");
     assert!(
         (fill.0.width - width / 2.0).abs() < 0.01,
@@ -499,4 +505,116 @@ fn click_and_hold_confirms_a_hold_button_and_a_quick_click_does_not() {
     // Assistive technology activates at once.
     rt.a11y_action(id, A11yAction::Activate);
     assert_eq!(rt.app().sent, ["deleted", "deleted"]);
+}
+
+// ---- Hover and feedback ----
+
+#[derive(Default)]
+struct Cues {
+    cues: Vec<FeedbackKind>,
+    pressed: u32,
+}
+
+#[derive(Clone, Debug)]
+enum CueMsg {
+    Cue(FeedbackKind),
+    Press,
+}
+
+impl App for Cues {
+    type Msg = CueMsg;
+    fn view(&self) -> Element<CueMsg> {
+        VStack::new()
+            .gap(Space::S2)
+            .child(Button::new("One").on_click(CueMsg::Press))
+            .child(Button::new("Off").is_disabled(true).on_click(CueMsg::Press))
+            .child(
+                HoldButton::new("Hold")
+                    .duration_ms(400)
+                    .on_confirm(CueMsg::Press),
+            )
+            .into()
+    }
+    fn update(&mut self, msg: CueMsg) -> Command {
+        match msg {
+            CueMsg::Cue(k) => self.cues.push(k),
+            CueMsg::Press => self.pressed += 1,
+        }
+        Command::None
+    }
+    fn on_feedback(&self, kind: FeedbackKind) -> Option<CueMsg> {
+        Some(CueMsg::Cue(kind))
+    }
+}
+
+#[test]
+fn interactions_send_feedback_cues() {
+    use FeedbackKind::*;
+    let mut rt = Runtime::new(Cues::default());
+    step(&mut rt, 0.0);
+    let tap = |rt: &mut Runtime<Cues>, input: Input| {
+        rt.input(input, InputPhase::Pressed);
+        rt.input(input, InputPhase::Released);
+        step(rt, 0.0);
+    };
+    tap(&mut rt, Input::A);
+    tap(&mut rt, Input::Up);
+    tap(&mut rt, Input::Down);
+    tap(&mut rt, Input::A);
+    tap(&mut rt, Input::Down);
+    rt.input(Input::A, InputPhase::Pressed);
+    for _ in 0..30 {
+        step(&mut rt, 1.0 / 60.0);
+    }
+    rt.input(Input::A, InputPhase::Released);
+    assert_eq!(
+        rt.app().cues,
+        [Select, Blocked, Move, Blocked, Move, Progress, Progress, Progress, Success],
+        "press, top edge, down, disabled press, down, three quarters of the hold, done"
+    );
+    assert_eq!(rt.app().pressed, 2);
+}
+
+#[test]
+fn the_pointer_hovers_the_control_under_it() {
+    let t = light();
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(
+                Button::new("One")
+                    .variant(ButtonVariant::Secondary)
+                    .on_click("one"),
+            )
+            .child(
+                Button::new("Off")
+                    .variant(ButtonVariant::Secondary)
+                    .is_disabled(true)
+                    .on_click("off"),
+            )
+            .into()
+    });
+    let list = draw(&mut rt, 300, 200);
+    let buttons = a11y(&rt, Role::Button);
+    let hover = c(t.color.overlay_hover);
+    assert!(rect_filled(&list, hover).is_none());
+    let at = |r: Rect| Point {
+        x: r.x + r.width / 2.0,
+        y: r.y + r.height / 2.0,
+    };
+    rt.pointer_move(Some(at(buttons[0].bounds)));
+    let list = draw(&mut rt, 300, 200);
+    let tint = rect_filled(&list, hover).expect("a hover tint");
+    assert_eq!(tint.0, buttons[0].bounds);
+    rt.pointer_move(Some(at(buttons[1].bounds)));
+    let list = draw(&mut rt, 300, 200);
+    assert!(
+        rect_filled(&list, hover).is_none(),
+        "a disabled control does not hover"
+    );
+    rt.pointer_move(None);
+    let list = draw(&mut rt, 300, 200);
+    assert!(
+        rect_filled(&list, hover).is_none(),
+        "leaving the window ends hover"
+    );
 }

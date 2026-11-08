@@ -40,6 +40,9 @@ const FALLBACK_BUTTONS: [(usize, Input); 4] =
 /// One gamepad snapshot.
 pub(crate) struct Snapshot<'a> {
     pub standard: bool,
+    /// A Nintendo-style pad: its face buttons are named by position in the
+    /// mapping, so A and B, and X and Y, swap to follow the printed labels.
+    pub nintendo: bool,
     pub buttons: &'a [bool],
     pub axes: &'a [f64],
 }
@@ -69,7 +72,13 @@ impl PadTracker {
         let mut now: Vec<Input> = table
             .iter()
             .filter(|(index, _)| pad.buttons.get(*index).copied().unwrap_or(false))
-            .map(|(_, input)| *input)
+            .map(|(_, input)| match (pad.nintendo, *input) {
+                (true, Input::A) => Input::B,
+                (true, Input::B) => Input::A,
+                (true, Input::X) => Input::Y,
+                (true, Input::Y) => Input::X,
+                (_, input) => input,
+            })
             .collect();
         let x = pad.axes.first().copied().unwrap_or(0.0);
         let y = pad.axes.get(1).copied().unwrap_or(0.0);
@@ -137,6 +146,7 @@ mod tests {
     fn snap<'a>(b: &'a [bool], axes: &'a [f64]) -> Snapshot<'a> {
         Snapshot {
             standard: true,
+            nintendo: false,
             buttons: b,
             axes,
         }
@@ -203,6 +213,7 @@ mod tests {
             0.0,
             &Snapshot {
                 standard: false,
+                nintendo: false,
                 buttons: &b,
                 axes: &[],
             },

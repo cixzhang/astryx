@@ -92,6 +92,34 @@ pub trait App {
         let _ = preferences;
         None
     }
+
+    /// Called with a cue for each interaction the person makes, so the app
+    /// can answer with a sound or a rumble. Components stay silent; return
+    /// a message to play something.
+    fn on_feedback(&self, kind: FeedbackKind) -> Option<Self::Msg> {
+        let _ = kind;
+        None
+    }
+}
+
+/// What just happened, for an app to answer with sound or rumble.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum FeedbackKind {
+    /// Focus moved, a list scrolled, or a keyboard group or layer changed.
+    Move,
+    /// A control was pressed or a key typed.
+    Select,
+    /// B closed a layer or went back, or a keyboard was cancelled.
+    Back,
+    /// An action failed. The core sends none; components and apps may.
+    Error,
+    /// Nothing happened: a disabled control was pressed, focus is at an
+    /// edge, or there is nothing to delete.
+    Blocked,
+    /// A held press passed a quarter of its time.
+    Progress,
+    /// A held press completed, or a keyboard finished.
+    Success,
 }
 
 /// The overlap of two rects, if any.
@@ -124,6 +152,8 @@ struct Hold {
     duration_ms: f32,
     /// It reached its end and activated; it stays full until released.
     done: bool,
+    /// The quarters of its time already cued.
+    quarter: u8,
 }
 
 /// Astryx's press scale for a standalone Button.
@@ -254,6 +284,8 @@ pub struct Runtime<A: App> {
     rebuilt: bool,
     /// Node timers already sent, by node id and time.
     fired_timers: HashSet<(u64, u64)>,
+    /// Where the mouse or pen pointer is, if over the window.
+    pointer: Option<Point>,
     /// The focus last reported to `App::on_focus`.
     reported_focus: Option<Option<u64>>,
     /// Each camera's offset (x, y), moving toward its target.
@@ -319,6 +351,7 @@ impl<A: App> Runtime<A> {
             reported_focus: None,
             rebuilt: false,
             fired_timers: HashSet::new(),
+            pointer: None,
             cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
@@ -433,10 +466,22 @@ impl<A: App> Runtime<A> {
         self.repaint = true;
         // The keyboard edits at the end of the text, so the caret goes there.
         self.carets.remove(&id);
-        Some(match capture(input, phase, self.motion_ms) {
+        let (msg, cue) = capture(input, phase, self.motion_ms);
+        let command = match msg {
             Some(msg) => self.send(msg),
             None => Command::None,
-        })
+        };
+        if let Some(kind) = cue {
+            self.cue(kind);
+        }
+        Some(command)
+    }
+
+    /// Hands a feedback cue to the app.
+    fn cue(&mut self, kind: FeedbackKind) {
+        if let Some(msg) = self.app.on_feedback(kind) {
+            let _ = self.send(msg);
+        }
     }
 
     /// Tells the app where focus went, once per change.
@@ -1439,6 +1484,7 @@ impl<A: App> Runtime<A> {
                         started_ms: self.motion_ms,
                         duration_ms,
                         done: false,
+                        quarter: 0,
                     });
                 }
                 let scales = self
@@ -1538,6 +1584,7 @@ impl<A: App> Runtime<A> {
                 let offset = self.scroll.get(&self.nodes[c].id).copied().unwrap_or(0.0);
                 let step = if forward { span / 3.0 } else { -span / 3.0 };
                 if self.set_scroll(c, offset + step * self.scroll_sign(c), true) {
+                    self.cue(FeedbackKind::Move);
                     return Command::None;
                 }
             }
@@ -1545,6 +1592,9 @@ impl<A: App> Runtime<A> {
         if let Some(stop) = candidate {
             self.set_focus(stop);
             self.reveal_focus(true);
+            self.cue(FeedbackKind::Move);
+        } else if current.is_some() {
+            self.cue(FeedbackKind::Blocked);
         }
         Command::None
     }
@@ -1845,6 +1895,16 @@ impl<A: App> Runtime<A> {
             command = self.press_event(event);
         }
         command = self.fire_timers(now).unwrap_or(command);
+        // A cue at each quarter of a hold's time, before the end.
+        if let Some(h) = self.hold.filter(|h| !h.done) {
+            let quarter = (((now - h.started_ms) as f32 / h.duration_ms) * 4.0)
+                .floor()
+                .clamp(0.0, 3.0) as u8;
+            if quarter > h.quarter {
+                self.hold = Some(Hold { quarter, ..h });
+                self.cue(FeedbackKind::Progress);
+            }
+        }
         let held_out = self
             .hold
             .filter(|h| !h.done && (now - h.started_ms) as f32 >= h.duration_ms);
@@ -1874,11 +1934,22 @@ impl<A: App> Runtime<A> {
             return Command::None;
         };
         if interact.disabled || interact.busy {
+            self.cue(FeedbackKind::Blocked);
             return Command::None;
         }
+        let completed_hold =
+            interact.hold.is_some() && self.hold.is_some_and(|h| h.id == id && h.done);
         let msg = interact.on_activate.clone();
         let href = interact.href.clone();
-        match interact.popup {
+        let popup = interact.popup;
+        self.cue(if completed_hold {
+            FeedbackKind::Success
+        } else {
+            FeedbackKind::Select
+        });
+        let (msg, href) = (msg, href);
+        let interact_popup = popup;
+        match interact_popup {
             PopupAction::None => {}
             PopupAction::Toggle => {
                 self.popup = if self.popup == Some(id) {
@@ -2124,20 +2195,28 @@ impl<A: App> Runtime<A> {
                 if let Some(stop) = self.next_in_order(input) {
                     self.set_focus(stop);
                     self.reveal_focus(true);
+                    self.cue(FeedbackKind::Move);
                 }
                 Command::None
             }
             (Input::B, InputPhase::Pressed) if self.popup.is_some() => {
                 self.close_popup();
+                self.cue(FeedbackKind::Back);
                 Command::None
             }
             // A shown tooltip takes B first, as the topmost layer takes Escape.
             (Input::B, InputPhase::Pressed) if self.tooltip_text().is_some() => {
                 self.tooltip_dismissed = self.focused;
+                self.cue(FeedbackKind::Back);
                 Command::None
             }
             (_, InputPhase::Pressed) => match self.app.on_input(input) {
-                Some(msg) => self.send(msg),
+                Some(msg) => {
+                    if input == Input::B {
+                        self.cue(FeedbackKind::Back);
+                    }
+                    self.send(msg)
+                }
                 None => Command::None,
             },
             _ => Command::None,
@@ -2171,6 +2250,13 @@ impl<A: App> Runtime<A> {
 }
 
 impl<A: App> Surface for Runtime<A> {
+    fn pointer_move(&mut self, at: Option<Point>) {
+        if self.pointer != at {
+            self.pointer = at;
+            self.repaint = true;
+        }
+    }
+
     fn input(&mut self, input: Input, phase: InputPhase) -> Command {
         let command = match self.capture(input, phase) {
             Some(command) => command,
@@ -2279,9 +2365,30 @@ impl<A: App> Surface for Runtime<A> {
         let tooltip = self.tooltip_paint(&rects, text);
         let transforms = self.transforms(&rects);
         let (page_clips, page_marks) = self.pager_paint(&rects);
+        // The topmost enabled focus stop under the pointer shows hover.
+        let hovered = self.pointer.and_then(|p| {
+            self.stops.iter().rev().find_map(|&(ix, _)| {
+                let r = rects.get(ix)?;
+                let enabled = self.nodes[ix]
+                    .interact
+                    .as_ref()
+                    .is_some_and(|i| !i.disabled && !i.busy);
+                let inside =
+                    p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height;
+                (enabled && inside).then_some(self.nodes[ix].id)
+            })
+        });
         let state = PaintState {
             focused: self.focused,
             pressed: self.pressed,
+            hovered,
+            hover_fill: self.theme.tokens(&self.prefs).color.overlay_hover.into(),
+            hover_border: self
+                .theme
+                .tokens(&self.prefs)
+                .color
+                .border_emphasized
+                .into(),
             press_strength: self.highlight.strength(),
             hold: self.hold_fill().and_then(|(id, p)| {
                 let ix = self.nodes.iter().position(|n| n.id == id)?;

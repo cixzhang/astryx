@@ -6,7 +6,8 @@
 //!
 //! - **Chord** (the default): a 3×3 grid placed as the D-pad is. Each of
 //!   the eight directions chooses a group of four keys, and A, B, X, or Y
-//!   presses one of them, laid out as the face buttons are. Hold a
+//!   presses one of them. The four keys sit where their buttons sit (see
+//!   [`FaceLayout`]), so a key carries no button label. Hold a
 //!   direction and press a face button, or tap a direction to choose its
 //!   group and then press a face button. One group (down, in the English
 //!   layout) holds Space, Delete, Shift (a capital for the next letter),
@@ -244,6 +245,8 @@ pub struct KeyboardState {
     latched: Option<usize>,
     /// The next letter is a capital (chord Shift).
     pub shift: bool,
+    /// A chord key was pressed at least once.
+    pub typed_once: bool,
     /// L1 and R1 while held, and whether the pair made a chord since both
     /// were last up.
     l1: bool,
@@ -414,6 +417,7 @@ impl KeyboardState {
             self.typed_in_hold = true;
         }
         self.latched = None;
+        self.typed_once = true;
         match key {
             ChordKey::Char(ch) => {
                 let ch = if std::mem::take(&mut self.shift) {
@@ -764,6 +768,35 @@ fn key_face<Msg>(
     cx.leaf(node);
 }
 
+/// The cue for one keyboard input: typing and pressing keys select,
+/// choosing groups and layers moves, finishing succeeds, cancelling goes
+/// back, and a key press that changes nothing is blocked.
+fn feedback(
+    (was, had): &(KeyboardState, String),
+    now: &KeyboardState,
+    value: &str,
+    action: Option<KeyboardAction>,
+    input: Input,
+    phase: InputPhase,
+) -> Option<crate::runtime::FeedbackKind> {
+    use crate::runtime::FeedbackKind as F;
+    match action {
+        Some(KeyboardAction::Done) => return Some(F::Success),
+        Some(KeyboardAction::Cancel) => return Some(F::Back),
+        Some(KeyboardAction::Switched(_)) => return Some(F::Select),
+        None => {}
+    }
+    if value != had || now.shift != was.shift || now.caps != was.caps {
+        return Some(F::Select);
+    }
+    if now.group() != was.group() || now.layer != was.layer || now.cursor != was.cursor {
+        return Some(F::Move);
+    }
+    let key_press = phase == InputPhase::Pressed
+        && (FACE_BUTTONS.contains(&input) || matches!(input, Input::Backspace | Input::Delete));
+    key_press.then_some(F::Blocked)
+}
+
 /// A text field with an on-screen keyboard under it, for gamepads and
 /// remotes (`OnScreenKeyboard`). The app keeps the [`KeyboardState`] and
 /// the text, and replaces both from each [`KeyboardUpdate`]. While the
@@ -776,19 +809,30 @@ pub struct OnScreenKeyboard<Msg> {
     chord: Rc<ChordLayout>,
     grid: Rc<GridLayout>,
     on_change: Option<Rc<dyn Fn(KeyboardUpdate) -> Msg>>,
-    view: ChordView,
+    faces: FaceLayout,
 }
 
-/// How the chord keyboard shows the held group. Two designs under review;
-/// one will remain.
+/// Where the face buttons sit on the gamepad, so a group's four keys sit
+/// in the same places as the buttons that press them and no key needs a
+/// button label. Shells name buttons by their printed labels.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum ChordView {
-    /// The held cell grows into a large diamond over the grid.
+pub enum FaceLayout {
+    /// A right, B bottom, X top, Y left, as on the TrimUI Brick.
     #[default]
-    Expand,
-    /// The held cell is highlighted and a large diamond shows beside the
-    /// grid.
-    Side,
+    Nintendo,
+    /// A at the bottom, B right, X left, Y top.
+    Xbox,
+}
+
+impl FaceLayout {
+    /// Each face button's place, in `FACE_BUTTONS` order, as (x, y) steps
+    /// from the diamond's middle: y grows downward.
+    fn offsets(self) -> [(f32, f32); 4] {
+        match self {
+            FaceLayout::Xbox => [(0.0, 1.0), (1.0, 0.0), (-1.0, 0.0), (0.0, -1.0)],
+            FaceLayout::Nintendo => [(1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (-1.0, 0.0)],
+        }
+    }
 }
 
 impl<Msg> OnScreenKeyboard<Msg> {
@@ -802,11 +846,12 @@ impl<Msg> OnScreenKeyboard<Msg> {
             chord: Rc::new(ChordLayout::english()),
             grid: Rc::new(GridLayout::qwerty()),
             on_change: None,
-            view: ChordView::default(),
+            faces: FaceLayout::default(),
         }
     }
-    pub fn chord_view(mut self, view: ChordView) -> Self {
-        self.view = view;
+    /// Where the gamepad's face buttons sit; see [`FaceLayout`].
+    pub fn face_layout(mut self, faces: FaceLayout) -> Self {
+        self.faces = faces;
         self
     }
     pub fn chord_layout(mut self, layout: ChordLayout) -> Self {
@@ -932,20 +977,22 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
             let latest = Rc::new(std::cell::RefCell::new((state, value)));
             field.capture = Some(Rc::new(move |input: Input, phase: InputPhase, now: f64| {
                 if matches!(input, Input::Next | Input::Previous) {
-                    return None;
+                    return (None, None);
                 }
                 let mut latest = latest.borrow_mut();
                 let (state, value) = &mut *latest;
                 let before = (state.clone(), value.clone());
                 let action = state.input(&chord, &grid, value, input, phase, now);
+                let cue = feedback(&before, state, value, action, input, phase);
                 if action.is_none() && (state.clone(), value.clone()) == before {
-                    return None;
+                    return (None, cue);
                 }
-                Some(capture_change(KeyboardUpdate {
+                let update = KeyboardUpdate {
                     state: state.clone(),
                     value: value.clone(),
                     action,
-                }))
+                };
+                (Some(capture_change(update)), cue)
             }));
             // The toast hides on time.
             if let Some((_, until)) = &self.state.toast {
@@ -972,7 +1019,7 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
             Live::Polite,
         );
         match self.state.kind {
-            KeyboardKind::Chord => chord_view(cx, &self.state, &self.chord, self.view, &snap),
+            KeyboardKind::Chord => chord_view(cx, &self.state, &self.chord, self.faces, &snap),
             KeyboardKind::Grid => grid_view(cx, &self.state, &self.grid, &snap),
         }
         if let Some((name, _)) = &self.state.toast {
@@ -1102,7 +1149,7 @@ fn chord_view<Msg>(
     cx: &mut BuildCx<Msg>,
     state: &KeyboardState,
     layout: &ChordLayout,
-    view: ChordView,
+    faces: FaceLayout,
     snap: &dyn Fn(f32) -> f32,
 ) {
     let t = cx.tokens;
@@ -1161,21 +1208,17 @@ fn chord_view<Msg>(
     };
     for (g, &(col, rw)) in GRID_CELLS.iter().enumerate() {
         let (x, y) = (col * (cw + gap), rw * (ch + gap));
-        let on = view == ChordView::Side && group == Some(g);
         cx.begin(
             Node::new(placed(x, y, cw, ch))
-                .draw(Draw::Box(surface(on)))
+                .draw(Draw::Box(surface(false)))
                 .opacity(dim(g)),
         );
         let chars = layout.layers[layer].groups[g];
         let (mid_x, mid_y) = ((cw - row) / 2.0, (ch - row) / 2.0);
-        let (far_x, far_y) = (cw - pad - row, ch - pad - row);
-        // A, B, X, Y as the face buttons sit: bottom, right, left, top.
-        for (key, (lx, ly)) in
-            chars
-                .iter()
-                .zip([(mid_x, far_y), (far_x, mid_y), (pad, mid_y), (mid_x, pad)])
-        {
+        let (reach_x, reach_y) = (mid_x - pad, mid_y - pad);
+        // Each key sits where its face button sits.
+        for (key, (dx, dy)) in chars.iter().zip(faces.offsets()) {
+            let (lx, ly) = (mid_x + dx * reach_x, mid_y + dy * reach_y);
             let ink: Color = if *key == ChordKey::Shift && state.shift {
                 c.accent.into()
             } else {
@@ -1199,7 +1242,7 @@ fn chord_view<Msg>(
     cx.leaf(name);
     cx.end();
     // The held group, grown over the grid toward its own cell.
-    if let (Some(g), ChordView::Expand) = (group, view) {
+    if let Some(g) = group {
         let (big_w, big_h) = (2.0 * cw + gap, 2.0 * ch + gap);
         let (col, rw) = GRID_CELLS[g];
         let at = |v: f32, cell: f32, all: f32, big: f32| {
@@ -1209,6 +1252,7 @@ fn chord_view<Msg>(
             cx,
             layout.layers[layer].groups[g],
             state.shift,
+            faces,
             (
                 snap(at(col, cw, side_w, big_w)),
                 snap(at(rw, ch, side, big_h)),
@@ -1218,7 +1262,7 @@ fn chord_view<Msg>(
         );
     }
     cx.end();
-    // Beside the grid: the held group large (side view), then the hints.
+    // Beside the grid: the hints.
     cx.begin(Node::new(Style {
         flex_direction: FlexDirection::Column,
         gap: Size {
@@ -1233,27 +1277,6 @@ fn chord_view<Msg>(
         },
         ..Style::default()
     }));
-    if view == ChordView::Side {
-        cx.begin(Node::new(Style {
-            size: Size {
-                width: length(side_w),
-                height: length(side - row - gap),
-            },
-            flex_shrink: 0.0,
-            ..Style::default()
-        }));
-        if let Some(g) = group {
-            big_diamond(
-                cx,
-                layout.layers[layer].groups[g],
-                state.shift,
-                (0.0, 0.0),
-                (side_w, side - row - gap),
-                snap,
-            );
-        }
-        cx.end();
-    }
     Build::build(
         Box::new(
             crate::lab::KeyHints::new()
@@ -1264,6 +1287,16 @@ fn chord_view<Msg>(
         ),
         cx,
     );
+    // Until the first key, one line says how a key is chosen.
+    if !state.typed_once {
+        let mut first = text_node(
+            "Press the button in the same spot",
+            type_style(t.font.supporting, FontFamily::Body),
+            c.text_secondary.into(),
+        );
+        first.sem = None;
+        cx.leaf(first);
+    }
     cx.end();
     cx.end();
 }
@@ -1275,36 +1308,28 @@ fn big_diamond<Msg>(
     cx: &mut BuildCx<Msg>,
     keys: [ChordKey; 4],
     shift: bool,
+    faces: FaceLayout,
     (x, y): (f32, f32),
     (w, h): (f32, f32),
     snap: &dyn Fn(f32) -> f32,
 ) {
     let t = cx.tokens;
     let c = &t.color;
-    let mut style = type_style(t.font.heading2, FontFamily::Body);
+    let mut style = type_style(t.font.display3, FontFamily::Body);
     style.weight = t.font.weight.medium;
     cx.begin(Node::new(placed(x, y, w, h)).draw(Draw::Box(BoxDraw {
         border: Some((c.accent.into(), t.size.border_width)),
         ..BoxDraw::fill(c.background_surface.into(), radii(t.radius.container))
     })));
-    let slot_w = w / 2.0;
-    let slot_h = h / 3.0;
-    let places = [
-        ((w - slot_w) / 2.0, h - slot_h),
-        (w - slot_w, (h - slot_h) / 2.0),
-        (0.0, (h - slot_h) / 2.0),
-        ((w - slot_w) / 2.0, 0.0),
-    ];
-    for ((key, button), (sx, sy)) in keys.iter().zip(["A", "B", "X", "Y"]).zip(places) {
-        cx.begin(Node::new(Style {
-            flex_direction: FlexDirection::Row,
-            gap: Size {
-                width: len(snap(t.space.s1)),
-                height: len(0.0),
-            },
-            ..placed(snap(sx), snap(sy), slot_w, slot_h)
-        }));
-        Build::build(Box::new(super::Kbd::gamepad(button)), cx);
+    let slot = (w.min(h) / 3.0).floor();
+    // As large as a slot allows, up to the display size.
+    style.size = style.size.min((slot / style.leading).floor());
+    for (key, (dx, dy)) in keys.iter().zip(faces.offsets()) {
+        // Inside the border, with room for a pixel font's larger cells.
+        let inset = snap(t.space.s2);
+        let sx = (w - slot) / 2.0 + dx * ((w - slot) / 2.0 - inset);
+        let sy = (h - slot) / 2.0 + dy * ((h - slot) / 2.0 - inset);
+        cx.begin(Node::new(placed(snap(sx), snap(sy), slot, slot)));
         let ink: Color = if *key == ChordKey::Shift && shift {
             c.accent.into()
         } else {
