@@ -332,6 +332,7 @@ fn image_fill<Msg>(src: &str, corner: Radii) -> Node<Msg> {
         image: ImageId::of(src),
         fit: ImageFit::Cover,
         radii: corner,
+        pixel: None,
     }))
 }
 

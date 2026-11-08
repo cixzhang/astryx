@@ -198,3 +198,55 @@ fn the_spec_json_lists_every_component_and_prop() {
         .flat_map(|c| c.props)
         .all(|p| !matches!(p.kind, PropKind::Text { max } if max > 60)));
 }
+
+#[test]
+fn lab_demos_confirm_and_describe_themselves() {
+    let mut rt = demo(
+        "HoldButton",
+        Some("destructive"),
+        json!({"label": "Hold to delete", "duration_ms": 500}),
+    );
+    let frame = FrameInfo {
+        width: 400,
+        height: 300,
+        scale: 1.0,
+        dt: 0.0,
+    };
+    let m = astryx_core::testing::FixedMeasure::default();
+    rt.frame(&frame, &m);
+    rt.input(Input::A, InputPhase::Pressed);
+    rt.frame(&frame, &m);
+    rt.frame(&FrameInfo { dt: 0.6, ..frame }, &m);
+    assert_eq!(rt.app().state.presses, 1, "held past 500 ms");
+    rt.input(Input::A, InputPhase::Released);
+
+    let mut rt = demo(
+        "StatusBar",
+        None,
+        json!({"wifi": "on", "battery": 15, "hour": 9, "minute": 5}),
+    );
+    draw(&mut rt, 400, 100);
+    let tree = rt.accessibility().unwrap();
+    assert!(tree
+        .children
+        .iter()
+        .any(|n| n.label.as_deref() == Some("Wi-Fi on, not connected, battery 15%, 9:05 AM")));
+
+    let mut rt = demo(
+        "ChoiceTile",
+        None,
+        json!({"title": "Pro", "is_recommended": true}),
+    );
+    draw(&mut rt, 400, 300);
+    tap(&mut rt, Input::A);
+    assert_eq!(rt.app().state.toggled, Some(true));
+    assert!(
+        catalog::validate(
+            "Image",
+            None,
+            &props(json!({"image": "https://example.com/a.png"}))
+        )
+        .is_err(),
+        "images are named samples, not links"
+    );
+}

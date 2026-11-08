@@ -1,0 +1,450 @@
+//! SelectableCard and the experimental lab components.
+
+mod common;
+
+use astryx_core::lab::{HoldButton, Image, SelectableCardGroup, StatusBar};
+use astryx_core::testing::*;
+use astryx_core::*;
+use common::*;
+
+fn focused<M: Clone + 'static>(rt: &Runtime<View<M>>) -> Option<A11yNode> {
+    a11y_nodes(&rt.accessibility()?)
+        .into_iter()
+        .find(|n| n.focused)
+}
+
+fn step<A: App>(rt: &mut Runtime<A>, dt: f32) -> DisplayList {
+    rt.frame(
+        &FrameInfo {
+            width: 400,
+            height: 300,
+            scale: 1.0,
+            dt,
+        },
+        &measure(),
+    )
+}
+
+// ---- SelectableCard ----
+
+#[test]
+fn a_selectable_card_is_a_checkbox_with_an_inset_ring() {
+    let t = light();
+    let mut rt = runtime(|| {
+        VStack::new()
+            .gap(Space::S4)
+            .padding(Space::S4)
+            .child(
+                SelectableCard::new("Pro plan", true)
+                    .on_change(|on| on)
+                    .child(Text::new("Pro")),
+            )
+            .child(
+                SelectableCard::new("Free plan", false)
+                    .on_change(|on| on)
+                    .child(Text::new("Free")),
+            )
+            .into()
+    });
+    let list = draw(&mut rt, 400, 300);
+    let cards = a11y(&rt, Role::Checkbox);
+    assert_eq!(cards.len(), 2);
+    assert_eq!(
+        (cards[0].label.as_deref(), cards[0].checked),
+        (Some("Pro plan"), Some(true))
+    );
+    assert_eq!(cards[1].checked, Some(false));
+    // The selected card draws a 2pt ring in the accent over its content.
+    let ring = rects(&list)
+        .into_iter()
+        .find(|r| r.3 == Some((c(t.color.accent), 2.0)));
+    assert_eq!(ring.map(|r| r.0), Some(cards[0].bounds));
+    // Both cards are the same height: the ring takes no layout.
+    assert_eq!(cards[0].bounds.height, cards[1].bounds.height);
+    tap(&mut rt, Input::Down);
+    tap(&mut rt, Input::A);
+    assert_eq!(rt.app().sent, [true], "the free card toggles on");
+}
+
+#[test]
+fn a_disabled_selectable_card_keeps_focus_and_does_not_toggle() {
+    let mut rt = runtime(|| {
+        SelectableCard::new("Pro", false)
+            .is_disabled(true)
+            .on_change(|on| on)
+            .child(Text::new("Pro"))
+            .into()
+    });
+    draw(&mut rt, 300, 200);
+    assert!(focused(&rt).is_some_and(|n| n.disabled));
+    tap(&mut rt, Input::A);
+    assert!(rt.app().sent.is_empty());
+}
+
+// ---- SelectableCardGroup ----
+
+fn plans(value: Option<&'static str>) -> impl Fn() -> Element<String> {
+    move || {
+        let mut group = SelectableCardGroup::new("Plan").on_change(|v| v);
+        if let Some(v) = value {
+            group = group.value(v);
+        }
+        for (v, label) in [("free", "Free"), ("pro", "Pro"), ("team", "Team")] {
+            group = group.option(v, SelectableCard::new(label, false).child(Text::new(label)));
+        }
+        VStack::new()
+            .gap(Space::S4)
+            .child(Button::new("Before").on_click("before".to_string()))
+            .child(group)
+            .child(Button::new("After").on_click("after".to_string()))
+            .into()
+    }
+}
+
+#[test]
+fn a_card_group_chooses_one_and_is_one_step_for_next() {
+    let mut rt = runtime(plans(Some("pro")));
+    draw(&mut rt, 400, 600);
+    let group = a11y(&rt, Role::ListBox);
+    assert_eq!(group[0].label.as_deref(), Some("Plan"));
+    let options = a11y(&rt, Role::ListBoxOption);
+    assert_eq!(
+        options.iter().map(|o| o.selected).collect::<Vec<_>>(),
+        [Some(false), Some(true), Some(false)]
+    );
+    // Next from Before lands on the chosen card; Next again leaves the group.
+    tap(&mut rt, Input::Next);
+    draw(&mut rt, 400, 600);
+    assert_eq!(focused(&rt).and_then(|n| n.label).as_deref(), Some("Pro"));
+    tap(&mut rt, Input::Next);
+    draw(&mut rt, 400, 600);
+    assert_eq!(focused(&rt).and_then(|n| n.label).as_deref(), Some("After"));
+    tap(&mut rt, Input::Previous);
+    draw(&mut rt, 400, 600);
+    assert_eq!(
+        focused(&rt).and_then(|n| n.label).as_deref(),
+        Some("Pro"),
+        "back to the chosen card"
+    );
+    // The arrows move between cards; A chooses.
+    tap(&mut rt, Input::Down);
+    draw(&mut rt, 400, 600);
+    assert_eq!(focused(&rt).and_then(|n| n.label).as_deref(), Some("Team"));
+    tap(&mut rt, Input::A);
+    assert_eq!(rt.app().sent, ["team"]);
+}
+
+#[test]
+fn with_nothing_chosen_the_group_is_entered_at_its_edge() {
+    let mut rt = runtime(plans(None));
+    draw(&mut rt, 400, 600);
+    tap(&mut rt, Input::Next);
+    draw(&mut rt, 400, 600);
+    assert_eq!(focused(&rt).and_then(|n| n.label).as_deref(), Some("Free"));
+    tap(&mut rt, Input::Next);
+    tap(&mut rt, Input::Previous);
+    draw(&mut rt, 400, 600);
+    assert_eq!(
+        focused(&rt).and_then(|n| n.label).as_deref(),
+        Some("Team"),
+        "entered from below at the last card"
+    );
+}
+
+// ---- HoldButton ----
+
+#[test]
+fn a_hold_button_confirms_only_when_held_to_the_end() {
+    let t = light();
+    let mut rt = runtime(|| {
+        HoldButton::new("Delete")
+            .duration_ms(1000)
+            .on_confirm("deleted")
+            .into()
+    });
+    step(&mut rt, 0.0);
+    let button = a11y(&rt, Role::Button)[0].clone();
+    assert_eq!(button.description.as_deref(), Some("Hold to confirm"));
+    // Let go early: nothing is sent, and the fill drains.
+    rt.input(Input::A, InputPhase::Pressed);
+    step(&mut rt, 0.0);
+    let half = step(&mut rt, 0.5);
+    let fill = rects(&half)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.overlay_pressed))
+        .expect("a fill");
+    assert!(
+        (fill.0.width - button.bounds.width / 2.0).abs() < button.bounds.width * 0.05,
+        "{:?}",
+        fill.0
+    );
+    assert_eq!(fill.0.x, button.bounds.x, "it grows from inline start");
+    rt.input(Input::A, InputPhase::Released);
+    step(&mut rt, 1.0);
+    assert!(rt.app().sent.is_empty(), "released early");
+    assert!(!rt.wants_frames());
+    // Held to the end: sent once, at the end, not on release.
+    rt.input(Input::A, InputPhase::Pressed);
+    step(&mut rt, 0.0);
+    step(&mut rt, 0.6);
+    assert!(rt.app().sent.is_empty());
+    step(&mut rt, 0.5);
+    assert_eq!(rt.app().sent, ["deleted"]);
+    rt.input(Input::A, InputPhase::Released);
+    step(&mut rt, 0.1);
+    assert_eq!(rt.app().sent, ["deleted"], "release sends nothing more");
+}
+
+#[test]
+fn reduced_motion_fills_a_hold_in_quarter_steps() {
+    let t = light();
+    let mut rt = runtime(|| HoldButton::new("Delete").on_confirm(()).into());
+    rt.set_preferences(&Preferences {
+        reduced_motion: true,
+        ..Preferences::default()
+    });
+    step(&mut rt, 0.0);
+    let width = a11y(&rt, Role::Button)[0].bounds.width;
+    rt.input(Input::A, InputPhase::Pressed);
+    step(&mut rt, 0.0);
+    let list = step(&mut rt, 0.6);
+    let fill = rects(&list)
+        .into_iter()
+        .find(|r| r.2 == c(t.color.overlay_pressed))
+        .expect("a fill");
+    assert!(
+        (fill.0.width - width / 2.0).abs() < 0.01,
+        "0.6 s shows the half step: {}",
+        fill.0.width
+    );
+}
+
+// ---- StatusBar ----
+
+#[test]
+fn the_status_bar_shows_the_device_and_reads_as_one_line() {
+    let mut rt = runtime(|| Element::<()>::from(StatusBar::new()));
+    let device = DeviceStatus {
+        wifi: Radio::Connected,
+        battery_percent: Some(82),
+        charging: true,
+        time: (19, 42),
+        ..DeviceStatus::default()
+    };
+    let list = draw(&mut rt, 400, 100);
+    assert!(
+        list.commands.is_empty() || a11y_nodes(&rt.accessibility().unwrap()).len() == 1,
+        "nothing without a device"
+    );
+    rt.set_preferences(&Preferences {
+        device: Some(device),
+        ..Preferences::default()
+    });
+    let list = draw(&mut rt, 400, 100);
+    let nodes = a11y_nodes(&rt.accessibility().unwrap());
+    let bar = nodes
+        .iter()
+        .find(|n| n.label.as_deref().is_some_and(|l| l.starts_with("Wi-Fi")))
+        .expect("a status bar");
+    assert_eq!(
+        bar.label.as_deref(),
+        Some("Wi-Fi connected, battery 82% charging, 7:42 PM")
+    );
+    assert_eq!(
+        nodes
+            .iter()
+            .filter(|n| n.label.as_deref() == Some("82%"))
+            .count(),
+        0,
+        "one line, not its parts"
+    );
+    assert!(texts(&list).iter().any(|t| t.1 == "7:42 PM"));
+    assert!(texts(&list).iter().any(|t| t.1 == "82%"));
+    let t = light();
+    assert!(
+        rects(&list).iter().any(|r| r.2 == c(t.color.icon_success)),
+        "a charging gauge is green"
+    );
+}
+
+#[test]
+fn a_low_battery_gauge_turns_to_the_error_color() {
+    let t = light();
+    let device = DeviceStatus {
+        battery_percent: Some(12),
+        time: (9, 0),
+        ..DeviceStatus::default()
+    };
+    let list = paint(move || Element::<()>::from(StatusBar::new().device(device.clone())));
+    assert!(rects(&list).iter().any(|r| r.2 == c(t.color.icon_error)));
+}
+
+// ---- Image ----
+
+#[test]
+fn images_fill_the_width_at_their_aspect_ratio() {
+    let id = ImageId(42);
+    let mut rt = runtime(move || {
+        VStack::<()>::new()
+            .padding(Space::S4)
+            .child(Image::new(id, "A beach at sunset").fit(ImageFit::Contain))
+            .child(Image::new(ImageId(43), ""))
+            .into()
+    })
+    .with_image(
+        id,
+        Some(ImageData {
+            width: 4,
+            height: 2,
+            rgba: vec![255; 32].into(),
+        }),
+    );
+    let list = draw(&mut rt, 400, 600);
+    let images = a11y(&rt, Role::Image);
+    assert_eq!(images.len(), 1, "the decorative image is not read");
+    assert_eq!(images[0].label.as_deref(), Some("A beach at sunset"));
+    assert_eq!(
+        images[0].bounds,
+        Rect::new(16.0, 16.0, 368.0, 184.0),
+        "full width at the image's 2:1"
+    );
+    let drawn = list.commands.iter().find_map(|c| match c {
+        DrawCmd::Image { rect, fit, .. } => Some((*rect, *fit)),
+        _ => None,
+    });
+    assert_eq!(drawn, Some((images[0].bounds, ImageFit::Contain)));
+    // The unregistered one is a 16:9 placeholder.
+    let t = light();
+    let placeholder = rect_filled(&list, c(t.color.background_muted)).unwrap().0;
+    assert_eq!(placeholder.height, 207.0);
+}
+
+#[test]
+fn pixel_perfect_images_scale_by_whole_pixels() {
+    let id = ImageId(44);
+    let mut rt = runtime(move || {
+        Element::<()>::from(
+            Image::new(id, "Sprite")
+                .aspect_ratio(1.0)
+                .pixel_perfect(true),
+        )
+    })
+    .with_image(
+        id,
+        Some(ImageData {
+            width: 16,
+            height: 16,
+            rgba: vec![255; 16 * 16 * 4].into(),
+        }),
+    );
+    let list = rt.frame(
+        &FrameInfo {
+            width: 200,
+            height: 300,
+            scale: 2.0,
+            dt: 0.0,
+        },
+        &measure(),
+    );
+    let drawn = list.commands.iter().find_map(|c| match c {
+        DrawCmd::Image { rect, .. } => Some(*rect),
+        _ => None,
+    });
+    // 100 x 100 points is 200 device pixels: 12 whole copies of 16 pixels.
+    let r = drawn.unwrap();
+    assert_eq!((r.width, r.height), (96.0, 96.0));
+    assert!(list
+        .commands
+        .iter()
+        .any(|c| matches!(c, DrawCmd::PushPixelGrid { cell } if *cell == 0.5)));
+}
+
+// ---- Kbd and contained rows ----
+
+#[test]
+fn kbd_draws_a_keycap_per_key_and_reads_as_one_name() {
+    let t = light();
+    let mut rt = runtime(|| {
+        HStack::<()>::new()
+            .child(Kbd::gamepad("B"))
+            .child(Text::new("Back"))
+            .into()
+    });
+    let list = draw(&mut rt, 300, 100);
+    let caps = a11y(&rt, Role::Image);
+    assert_eq!(caps[0].label.as_deref(), Some("B button"));
+    assert!(
+        a11y_nodes(&rt.accessibility().unwrap())
+            .iter()
+            .all(|n| n.label.as_deref() != Some("B")),
+        "the glyph is not read twice"
+    );
+    let face = rect_filled(&list, c(t.color.neutral)).expect("a face");
+    let edge = rect_filled(&list, c(t.color.border_emphasized)).expect("a bottom edge");
+    assert_eq!(
+        edge.0.y + edge.0.height,
+        face.0.y + face.0.height,
+        "the edge runs along the bottom"
+    );
+    assert_eq!(edge.0.height, 2.0);
+    assert!(face.0.width >= t.space.s5 && face.0.height >= t.space.s5);
+    let (glyph, style, color) = text(&list, "B");
+    assert_eq!(
+        (style.size, style.weight, color),
+        (
+            t.font.supporting.size,
+            t.font.weight.medium,
+            c(t.color.text_primary)
+        )
+    );
+    assert!(
+        glyph.x > face.0.x && glyph.x + glyph.width < face.0.x + face.0.width,
+        "padded inside the cap"
+    );
+    let list = paint(|| Element::<()>::from(Kbd::gamepad("L1 R1")));
+    assert_eq!(
+        rects(&list)
+            .iter()
+            .filter(|r| r.2 == c(t.color.neutral))
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn contained_rows_keep_their_surface_and_border_when_unselected() {
+    let t = light();
+    let mut rt = runtime(|| {
+        VStack::new()
+            .gap(Space::S2)
+            .child(ListItem::new("Basil").is_contained(true).on_click(0))
+            .child(
+                ListItem::new("Tomato")
+                    .is_contained(true)
+                    .is_selected(true)
+                    .on_click(1),
+            )
+            .child(ListItem::new("Plain").on_click(2))
+            .into()
+    });
+    let list = draw(&mut rt, 300, 300);
+    let rows = a11y(&rt, Role::Button);
+    let at = |r: Rect| {
+        rects(&list)
+            .into_iter()
+            .find(|p| p.0 == r)
+            .expect("a row surface")
+    };
+    let unselected = at(rows[0].bounds);
+    assert_eq!(unselected.2, c(t.color.background_card));
+    assert_eq!(unselected.3, Some((c(t.color.border), t.size.border_width)));
+    let selected = at(rows[1].bounds);
+    assert_eq!(
+        (selected.2, selected.3.map(|b| b.0)),
+        (c(t.color.accent_muted), Some(c(t.color.accent)))
+    );
+    assert_eq!(
+        rows[0].bounds.height, rows[2].bounds.height,
+        "the border takes no extra room"
+    );
+}

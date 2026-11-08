@@ -116,6 +116,16 @@ struct Pager {
 /// Pages with more dots than this show "Page X of Y" instead.
 const MAX_PAGE_DOTS: usize = 12;
 
+/// A press on a hold-to-confirm control, from when A went down.
+#[derive(Clone, Copy, Debug)]
+struct Hold {
+    id: u64,
+    started_ms: f64,
+    duration_ms: f32,
+    /// It reached its end and activated; it stays full until released.
+    done: bool,
+}
+
 /// Astryx's press scale for a standalone Button.
 const PRESS_SCALE: f32 = 0.98;
 
@@ -228,6 +238,9 @@ pub struct Runtime<A: App> {
     repeats: RepeatGesture<Input>,
     /// L2 and R2.
     paging: PagingGesture,
+    /// A hold in progress, and the fill draining after a hold let go early.
+    hold: Option<Hold>,
+    hold_release: Option<(u64, Animated<f32>)>,
     /// The press scale, and the element it applies to until it is back at 1.
     press_scale: Animated<f32>,
     scaled: Option<u64>,
@@ -255,6 +268,7 @@ pub struct Runtime<A: App> {
     timings: FrameTimings,
     /// Registered images: true when ready, false when failed.
     images: std::sync::Arc<HashMap<ImageId, bool>>,
+    image_sizes: std::sync::Arc<HashMap<ImageId, (u32, u32)>>,
     /// Image changes the shell has not taken yet.
     image_updates: Vec<(ImageId, Option<ImageData>)>,
     sound_updates: Vec<(SoundId, Option<std::sync::Arc<[u8]>>)>,
@@ -293,6 +307,8 @@ impl<A: App> Runtime<A> {
             highlight: PressHighlight::new(),
             repeats: RepeatGesture::new(DPAD_REPEAT),
             paging: PagingGesture::new(),
+            hold: None,
+            hold_release: None,
             press_scale: Animated::new(1.0),
             scaled: None,
             moving: HashMap::new(),
@@ -310,6 +326,7 @@ impl<A: App> Runtime<A> {
             a11y: None,
             timings: FrameTimings::default(),
             images: Default::default(),
+            image_sizes: Default::default(),
             image_updates: Vec::new(),
             sound_updates: Vec::new(),
         }
@@ -323,6 +340,11 @@ impl<A: App> Runtime<A> {
     /// Use [`ImageId::of`] for an image a component names by `src`.
     pub fn register_image(&mut self, id: ImageId, data: Option<ImageData>) {
         std::sync::Arc::make_mut(&mut self.images).insert(id, data.is_some());
+        let sizes = std::sync::Arc::make_mut(&mut self.image_sizes);
+        match &data {
+            Some(d) => sizes.insert(id, (d.width, d.height)),
+            None => sizes.remove(&id),
+        };
         self.image_updates.retain(|(i, _)| *i != id);
         self.image_updates.push((id, data));
         self.stale = true;
@@ -425,6 +447,7 @@ impl<A: App> Runtime<A> {
         self.direction = self.app.direction();
         cx.direction = self.direction;
         cx.images = self.images.clone();
+        cx.image_sizes = self.image_sizes.clone();
         cx.popup = self.popup.and_then(|id| {
             let ix = self.nodes.iter().position(|n| n.id == id)?;
             Some((id, self.layout.as_ref()?.rects.get(ix).copied()?))
@@ -1260,6 +1283,7 @@ impl<A: App> Runtime<A> {
 
     /// Ends a press on the focused element without activating it.
     fn end_press(&mut self) {
+        self.release_hold();
         let tokens = self.motion_tokens();
         for event in self.press.cancel() {
             self.highlight.apply(event, tokens, &self.policy, false);
@@ -1268,6 +1292,83 @@ impl<A: App> Runtime<A> {
                 Motion::curve(tokens.durations.fast, tokens.ease_standard),
             );
         }
+    }
+
+    /// The stop Next or Previous moves to. A group of stops, such as a
+    /// single-choice group, is one step: it is entered at its entry stop
+    /// (the chosen one), or at its first stop going forward and its last
+    /// going back when none is chosen, and left in one step.
+    fn next_in_order(&self, input: Input) -> Option<usize> {
+        let rects = self.stop_rects();
+        let group = |s: usize| self.nodes[self.stops[s].0].group;
+        let current = self.stop_index(self.focused);
+        let from = current.and_then(group);
+        let forward = input == Input::Next;
+        let mut at = current;
+        for _ in 0..self.stops.len() {
+            let s = focus::navigate(&rects, at, input)?;
+            at = Some(s);
+            let Some(g) = group(s) else {
+                return Some(s);
+            };
+            if Some(g) == from {
+                continue;
+            }
+            let members: Vec<usize> = (0..self.stops.len())
+                .filter(|&m| group(m) == Some(g))
+                .collect();
+            let entry = members
+                .iter()
+                .copied()
+                .find(|&m| self.nodes[self.stops[m].0].group_entry);
+            let edge = if forward {
+                members.first()
+            } else {
+                members.last()
+            };
+            if Some(s) == entry.or(edge.copied()) {
+                return Some(s);
+            }
+        }
+        None
+    }
+
+    fn is_hold(&self, id: Option<u64>) -> bool {
+        id.and_then(|id| self.nodes.iter().find(|n| n.id == id))
+            .and_then(|n| n.interact.as_ref())
+            .is_some_and(|i| i.hold.is_some())
+    }
+
+    /// The hold's fill now, 0 to 1, for the node it fills.
+    fn hold_fill(&self) -> Option<(u64, f32)> {
+        if let Some(h) = self.hold {
+            let p = if h.done {
+                1.0
+            } else {
+                ((self.motion_ms - h.started_ms) as f32 / h.duration_ms).clamp(0.0, 1.0)
+            };
+            return Some((h.id, p));
+        }
+        self.hold_release.as_ref().map(|(id, a)| (*id, a.value()))
+    }
+
+    /// Ends a hold. One let go before its end drains its fill on the
+    /// theme's exit motion (at once under reduced motion) and does nothing.
+    fn release_hold(&mut self) {
+        let Some((id, fill)) = self.hold_fill().filter(|_| self.hold.is_some()) else {
+            return;
+        };
+        let done = self.hold.take().is_some_and(|h| h.done);
+        let tokens = self.motion_tokens();
+        let drain = self.policy.travel(
+            Change::Transition,
+            Motion::curve(tokens.durations.exit, tokens.ease_exit),
+            tokens,
+        );
+        let mut a = Animated::new(if done { 0.0 } else { fill });
+        a.animate_to(0.0, drain);
+        self.hold_release = a.is_animating().then_some((id, a));
+        self.repaint = true;
     }
 
     /// A press event on the focused element: show it, activate on release.
@@ -1280,6 +1381,20 @@ impl<A: App> Runtime<A> {
         match event {
             PressEvent::Down => {
                 self.pressed = self.focused;
+                let hold = self.focused.and_then(|id| {
+                    let n = self.nodes.iter().find(|n| n.id == id)?;
+                    let i = n.interact.as_ref().filter(|i| !i.disabled && !i.busy)?;
+                    Some((id, i.hold?))
+                });
+                if let Some((id, duration_ms)) = hold {
+                    self.hold_release = None;
+                    self.hold = Some(Hold {
+                        id,
+                        started_ms: self.motion_ms,
+                        duration_ms,
+                        done: false,
+                    });
+                }
                 let scales = self
                     .focused
                     .and_then(|id| self.nodes.iter().find(|n| n.id == id))
@@ -1294,8 +1409,12 @@ impl<A: App> Runtime<A> {
             }
             PressEvent::Up => {
                 self.press_scale.animate_to(1.0, scale_motion);
+                self.release_hold();
                 Command::None
             }
+            // A hold-to-confirm control activates when its hold ends, not on
+            // release.
+            PressEvent::Activate if self.is_hold(self.pressed) => Command::None,
             PressEvent::Activate => match self.pressed {
                 Some(id) if Some(id) == self.focused => self.activate(id),
                 _ => Command::None,
@@ -1660,6 +1779,11 @@ impl<A: App> Runtime<A> {
         if !self.press.is_down() && !self.highlight.wants_frames() {
             self.pressed = None;
         }
+        if let Some((_, a)) = self.hold_release.as_mut() {
+            if !a.tick(dt) {
+                self.hold_release = None;
+            }
+        }
         self.press_scale.tick(dt);
         if !self.press_scale.is_animating() && self.press_scale.value() == 1.0 {
             self.scaled = None;
@@ -1673,6 +1797,16 @@ impl<A: App> Runtime<A> {
         let mut command = Command::None;
         for event in self.press.tick(now) {
             command = self.press_event(event);
+        }
+        let held_out = self
+            .hold
+            .filter(|h| !h.done && (now - h.started_ms) as f32 >= h.duration_ms);
+        if let Some(h) = held_out {
+            self.hold = Some(Hold { done: true, ..h });
+            self.repaint = true;
+            if self.focused == Some(h.id) {
+                command = self.activate(h.id);
+            }
         }
         if let Some(input) = self.repeats.poll(now) {
             if !(matches!(input, Input::Left | Input::Right) && self.move_caret(input)) {
@@ -1940,8 +2074,7 @@ impl<A: App> Runtime<A> {
                 }
             }
             (Input::Next | Input::Previous, InputPhase::Pressed) => {
-                let rects = self.stop_rects();
-                if let Some(stop) = focus::navigate(&rects, self.stop_index(self.focused), input) {
+                if let Some(stop) = self.next_in_order(input) {
                     self.set_focus(stop);
                     self.reveal_focus(true);
                 }
@@ -2089,6 +2222,16 @@ impl<A: App> Surface for Runtime<A> {
             focused: self.focused,
             pressed: self.pressed,
             press_strength: self.highlight.strength(),
+            hold: self.hold_fill().and_then(|(id, p)| {
+                let ix = self.nodes.iter().position(|n| n.id == id)?;
+                // Under reduced motion the fill moves in quarter steps.
+                let p = if self.policy.reduces(self.motion_tokens()) {
+                    (p * 4.0).floor() / 4.0
+                } else {
+                    p
+                };
+                Some((ix, p))
+            }),
             time: self.time,
             scale: frame.scale,
             caret,
@@ -2243,6 +2386,8 @@ impl<A: App> Surface for Runtime<A> {
             || !self.scroll_indicators.is_empty()
             || self.highlight.wants_frames()
             || self.press_scale.is_animating()
+            || self.hold.is_some_and(|h| !h.done)
+            || self.hold_release.is_some()
             || self.moving.values().any(|m| m.shown.is_animating())
             || self.cameras.values().any(|c| c.is_animating())
             || self.press.wants_frames()

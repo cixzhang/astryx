@@ -20,6 +20,7 @@
 //! assert!(element.is_ok());
 //! ```
 
+use astryx_core::lab;
 use astryx_core::*;
 use serde_json::{Map, Value};
 use std::fmt;
@@ -158,6 +159,10 @@ const fn choice(
 }
 
 const SIZES: &[&str] = &["sm", "md", "lg"];
+const RADIOS: &[&str] = &["off", "on", "connected"];
+/// The gallery's sample images, by name. Apps register them with
+/// `astryx_gallery::images::samples()`.
+const SAMPLE_IMAGES: &[&str] = &["beach", "hills", "city", "sticker"];
 const BADGES: &[&str] = &[
     "neutral", "info", "success", "warning", "error", "blue", "cyan", "green", "orange", "pink",
     "purple", "red",
@@ -270,6 +275,7 @@ pub const COMPONENTS: &[ComponentSpec] = &[
             text("label", "List item"),
             text("description", ""),
             flag("is_selected", false),
+            flag("is_contained", false),
         ],
     },
     ComponentSpec {
@@ -308,6 +314,93 @@ pub const COMPONENTS: &[ComponentSpec] = &[
         props: &[
             choice("icon", &BUILT_IN_ICONS, "check"),
             choice("color", ICON_COLORS, "primary"),
+        ],
+    },
+    ComponentSpec {
+        name: "Kbd",
+        variants: &["gamepad", "keyboard"],
+        props: &[text("keys", "B")],
+    },
+    ComponentSpec {
+        name: "SelectableCard",
+        variants: CARDS,
+        props: &[
+            text("label", "Pro plan"),
+            text("title", "Pro plan"),
+            text("body", "Every garden, unlimited plots"),
+            flag("is_selected", false),
+            flag("is_disabled", false),
+        ],
+    },
+    ComponentSpec {
+        name: "ChoiceTile",
+        variants: &["default"],
+        props: &[
+            text("title", "Pro"),
+            text("body", "Every garden, unlimited plots"),
+            flag("is_selected", false),
+            flag("is_recommended", false),
+            choice(
+                "image",
+                &["none", "beach", "hills", "city", "sticker"],
+                "none",
+            ),
+        ],
+    },
+    ComponentSpec {
+        name: "HoldButton",
+        variants: &["primary", "secondary", "ghost", "destructive"],
+        props: &[
+            text("label", "Hold to confirm"),
+            PropSpec {
+                name: "duration_ms",
+                kind: PropKind::Int {
+                    min: 300,
+                    max: 3000,
+                },
+                required: false,
+                default: PropDefault::Int(1000),
+            },
+            flag("is_disabled", false),
+        ],
+    },
+    ComponentSpec {
+        name: "StatusBar",
+        variants: &["default"],
+        props: &[
+            choice("wifi", RADIOS, "connected"),
+            choice("bluetooth", RADIOS, "off"),
+            flag("has_battery", true),
+            PropSpec {
+                name: "battery",
+                kind: PropKind::Int { min: 0, max: 100 },
+                required: false,
+                default: PropDefault::Int(82),
+            },
+            flag("charging", false),
+            PropSpec {
+                name: "hour",
+                kind: PropKind::Int { min: 0, max: 23 },
+                required: false,
+                default: PropDefault::Int(19),
+            },
+            PropSpec {
+                name: "minute",
+                kind: PropKind::Int { min: 0, max: 59 },
+                required: false,
+                default: PropDefault::Int(42),
+            },
+        ],
+    },
+    ComponentSpec {
+        name: "Image",
+        variants: &["default"],
+        props: &[
+            choice("image", SAMPLE_IMAGES, "beach"),
+            text("alt", "A beach at sunset"),
+            choice("fit", &["cover", "contain"], "cover"),
+            choice("aspect", &["16:9", "4:3", "3:2", "1:1"], "16:9"),
+            flag("pixel_perfect", false),
         ],
     },
     ComponentSpec {
@@ -691,7 +784,9 @@ pub fn build<Msg: Clone + 'static>(
             .has_value_label(p.flag("has_value_label"))
             .into(),
         "ListItem" => {
-            let mut item = ListItem::new(p.text("label")).is_selected(p.flag("is_selected"));
+            let mut item = ListItem::new(p.text("label"))
+                .is_selected(p.flag("is_selected"))
+                .is_contained(p.flag("is_contained"));
             let description = p.text("description");
             if !description.is_empty() {
                 item = item.description(description);
@@ -781,20 +876,7 @@ pub fn build<Msg: Clone + 'static>(
             })
             .into(),
         "Card" => Card::new()
-            .variant(match variant {
-                "transparent" => CardVariant::Transparent,
-                "muted" => CardVariant::Muted,
-                "blue" => CardVariant::Blue,
-                "cyan" => CardVariant::Cyan,
-                "gray" => CardVariant::Gray,
-                "green" => CardVariant::Green,
-                "orange" => CardVariant::Orange,
-                "pink" => CardVariant::Pink,
-                "purple" => CardVariant::Purple,
-                "red" => CardVariant::Red,
-                "teal" => CardVariant::Teal,
-                _ => CardVariant::Default,
-            })
+            .variant(card_variant(variant))
             .padding(match p.choice("padding") {
                 "s2" => Space::S2,
                 "s6" => Space::S6,
@@ -802,8 +884,121 @@ pub fn build<Msg: Clone + 'static>(
             })
             .child(Text::new(p.text("text")))
             .into(),
+        "Kbd" => match variant {
+            "keyboard" => Kbd::new(&p.text("keys")).into(),
+            _ => Kbd::gamepad(&p.text("keys")).into(),
+        },
+        "SelectableCard" => {
+            let selected = state.toggled.unwrap_or(p.flag("is_selected"));
+            SelectableCard::new(p.text("label"), selected)
+                .variant(card_variant(variant))
+                .is_disabled(p.flag("is_disabled"))
+                .on_change(move |v| on(DemoEvent::Toggled(v)))
+                .child(
+                    VStack::new()
+                        .gap(Space::S1)
+                        .child(Heading::new(4, p.text("title")))
+                        .child(Text::new(p.text("body")).r#type(TextType::Supporting)),
+                )
+                .into()
+        }
+        "ChoiceTile" => {
+            let selected = state.toggled.unwrap_or(p.flag("is_selected"));
+            let mut title = HStack::new()
+                .gap(Space::S2)
+                .v_align(StackAlign::Center)
+                .child(Heading::new(4, p.text("title")));
+            if p.flag("is_recommended") {
+                title = title.child(Badge::new("Recommended").variant(BadgeVariant::Info));
+            }
+            let mut body = VStack::new().gap(Space::S1);
+            if let Some(src) = sample_image(p.choice("image")) {
+                body = body.child(lab::Image::new(ImageId::of(src), "").aspect_ratio(16.0 / 9.0));
+            }
+            body = body
+                .child(title)
+                .child(Text::new(p.text("body")).r#type(TextType::Supporting));
+            SelectableCard::new(p.text("title"), selected)
+                .on_change(move |v| on(DemoEvent::Toggled(v)))
+                .child(body)
+                .into()
+        }
+        "HoldButton" => lab::HoldButton::new(p.text("label"))
+            .variant(match variant {
+                "secondary" => ButtonVariant::Secondary,
+                "ghost" => ButtonVariant::Ghost,
+                "destructive" => ButtonVariant::Destructive,
+                _ => ButtonVariant::Primary,
+            })
+            .duration_ms(p.int("duration_ms") as u32)
+            .is_disabled(p.flag("is_disabled"))
+            .on_confirm(on(DemoEvent::Pressed))
+            .into(),
+        "StatusBar" => {
+            let radio = |name: &str| match p.choice(name) {
+                "on" => Radio::On,
+                "connected" => Radio::Connected,
+                _ => Radio::Off,
+            };
+            lab::StatusBar::new()
+                .device(DeviceStatus {
+                    wifi: radio("wifi"),
+                    wifi_name: None,
+                    bluetooth: radio("bluetooth"),
+                    battery_percent: p.flag("has_battery").then(|| p.int("battery") as u8),
+                    charging: p.flag("charging"),
+                    time: (p.int("hour") as u8, p.int("minute") as u8),
+                })
+                .into()
+        }
+        "Image" => {
+            let src = sample_image(p.choice("image")).unwrap_or(crate::images::BEACH);
+            let ratio = match p.choice("aspect") {
+                "4:3" => 4.0 / 3.0,
+                "3:2" => 1.5,
+                "1:1" => 1.0,
+                _ => 16.0 / 9.0,
+            };
+            lab::Image::new(ImageId::of(src), p.text("alt"))
+                .fit(if p.choice("fit") == "contain" {
+                    ImageFit::Contain
+                } else {
+                    ImageFit::Cover
+                })
+                .aspect_ratio(ratio)
+                .pixel_perfect(p.flag("pixel_perfect"))
+                .into()
+        }
         _ => return Err(CatalogError::UnknownComponent(name.to_string())),
     })
+}
+
+fn sample_image(name: &str) -> Option<&'static str> {
+    use crate::images::{BEACH, CITY, HILLS, STICKER};
+    match name {
+        "beach" => Some(BEACH),
+        "hills" => Some(HILLS),
+        "city" => Some(CITY),
+        "sticker" => Some(STICKER),
+        _ => None,
+    }
+}
+
+fn card_variant(name: &str) -> CardVariant {
+    match name {
+        "transparent" => CardVariant::Transparent,
+        "muted" => CardVariant::Muted,
+        "blue" => CardVariant::Blue,
+        "cyan" => CardVariant::Cyan,
+        "gray" => CardVariant::Gray,
+        "green" => CardVariant::Green,
+        "orange" => CardVariant::Orange,
+        "pink" => CardVariant::Pink,
+        "purple" => CardVariant::Purple,
+        "red" => CardVariant::Red,
+        "teal" => CardVariant::Teal,
+        _ => CardVariant::Default,
+    }
 }
 
 /// Parses `props_json` and calls [`build`].

@@ -1,5 +1,5 @@
 {
- "name": "palette v1.2",
+ "name": "palette v1.3",
  "swatches": [
   {
    "name": "ink",
@@ -86,8 +86,8 @@
    "rgb": "#4F3D32"
   },
   {
-   "name": "soil-2",
-   "rgb": "#443329"
+   "name": "plum-1",
+   "rgb": "#D9A6C8"
   },
   {
    "name": "leaf-1",

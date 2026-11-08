@@ -8,6 +8,7 @@ use astryx_core::*;
 
 pub mod catalog;
 pub mod images;
+mod lab;
 mod world;
 
 /// Runs `gallery` with its sample images registered. Every shell starts the
@@ -38,11 +39,14 @@ pub enum Section {
     TextInputs,
     Selectors,
     Thumbnails,
+    SelectableCards,
+    Kbd,
+    Lab,
     World,
 }
 
 impl Section {
-    pub const ALL: [Section; 16] = [
+    pub const ALL: [Section; 19] = [
         Section::Typography,
         Section::Stacks,
         Section::Buttons,
@@ -58,6 +62,9 @@ impl Section {
         Section::TextInputs,
         Section::Selectors,
         Section::Thumbnails,
+        Section::SelectableCards,
+        Section::Kbd,
+        Section::Lab,
         Section::World,
     ];
 
@@ -78,6 +85,9 @@ impl Section {
             Section::TextInputs => "TextInput",
             Section::Selectors => "Selector",
             Section::Thumbnails => "Thumbnail",
+            Section::SelectableCards => "SelectableCard",
+            Section::Kbd => "Kbd",
+            Section::Lab => "Lab",
             Section::World => "World",
         }
     }
@@ -100,6 +110,9 @@ impl Section {
             Section::TextInputs => "Editing, states, and status",
             Section::Selectors => "Variants, menus, and status",
             Section::Thumbnails => "Open, remove, loading, and disabled",
+            Section::SelectableCards => "Selected, unselected, variants, and disabled",
+            Section::Kbd => "Keyboard shortcuts, gamepad buttons, and key hints",
+            Section::Lab => "StatusBar, HoldButton, Image, and card choices (experimental)",
             Section::World => "Board, sprites, and a camera that follows focus (experimental)",
         }
     }
@@ -122,6 +135,9 @@ impl Section {
             Section::TextInputs => "text-inputs",
             Section::Selectors => "selectors",
             Section::Thumbnails => "thumbnails",
+            Section::SelectableCards => "selectable-cards",
+            Section::Kbd => "kbd",
+            Section::Lab => "lab",
             Section::World => "world",
         }
     }
@@ -152,6 +168,10 @@ pub enum Msg {
     WorldFocus(String),
     /// `"ltr"` or `"rtl"`.
     Direction(String),
+    /// A selectable card toggled, by index.
+    Card(usize, bool),
+    /// A plan chosen in the card group.
+    Plan(String),
 }
 
 /// The gallery's state.
@@ -176,6 +196,10 @@ pub struct Gallery {
     pub fields: std::collections::BTreeMap<&'static str, String>,
     /// The World board's focused thing, which the hero walks to.
     pub world_at: Option<String>,
+    /// The selectable cards' selection, by index.
+    pub cards: [bool; 4],
+    /// The chosen plan in the Lab section's card group.
+    pub plan: String,
 }
 
 impl Default for Gallery {
@@ -208,6 +232,8 @@ impl Default for Gallery {
             .map(|(k, v)| (k, v.to_string()))
             .collect(),
             world_at: None,
+            cards: [true, false, true, false],
+            plan: "pro".into(),
         }
     }
 }
@@ -299,6 +325,8 @@ impl App for Gallery {
                 }
             }
             Msg::WorldFocus(id) => self.world_at = Some(id),
+            Msg::Card(i, on) => self.cards[i] = on,
+            Msg::Plan(plan) => self.plan = plan,
             Msg::Field(label, value) => {
                 self.fields.insert(label, value);
             }
@@ -584,6 +612,9 @@ impl Gallery {
             Section::TextInputs => self.text_inputs(),
             Section::Selectors => self.selectors(),
             Section::Thumbnails => self.thumbnails(),
+            Section::SelectableCards => self.selectable_cards(),
+            Section::Kbd => kbd(),
+            Section::Lab => lab::lab(self),
             Section::World => world::world(self.world_at.as_deref()),
         }
     }
@@ -658,8 +689,19 @@ impl Gallery {
                     .on_click(Msg::SelectRow(i)),
             );
         }
+        let mut contained = VStack::new().gap(Space::S2);
+        for (i, label) in ["Sunflower", "Tomato", "Basil"].iter().enumerate() {
+            contained = contained.child(
+                ListItem::new(*label)
+                    .description(["Tall, needs sun", "Water daily", "Grows in pots"][i])
+                    .is_contained(true)
+                    .is_selected(self.selected_row == i)
+                    .on_click(Msg::SelectRow(i)),
+            );
+        }
         vstack![
             group("Selectable rows", list),
+            group("Contained rows: a surface and border in every state", contained),
             group(
                 "Static, disabled, end content",
                 VStack::new()
@@ -732,6 +774,53 @@ impl Gallery {
                         pick(Selector::new("Required", options))
                             .is_required(true)
                             .status(Status::error("Pick a fruit"))
+                    ),
+            ),
+        ]
+        .gap(Space::S4)
+        .into()
+    }
+
+    fn selectable_cards(&self) -> Element<Msg> {
+        let addon = |i: usize, name: &'static str, body: &'static str| {
+            SelectableCard::new(name, self.cards[i])
+                .on_change(move |on| Msg::Card(i, on))
+                .child(
+                    VStack::new()
+                        .gap(Space::S1)
+                        .child(Heading::new(4, name))
+                        .child(Text::new(body).r#type(TextType::Supporting)),
+                )
+        };
+        vstack![
+            group(
+                "Several can be on",
+                row()
+                    .child(addon(0, "Backups", "Daily, kept 30 days"))
+                    .child(addon(1, "Analytics", "Weekly reports"))
+                    .child(addon(2, "Support", "Replies within a day")),
+            ),
+            group(
+                "Variants, elevation, and disabled",
+                row()
+                    .child(addon(3, "Blue", "Rings in its border color").variant(CardVariant::Blue))
+                    .child(
+                        SelectableCard::new("Green", true)
+                            .variant(CardVariant::Green)
+                            .on_change(|_| Msg::Pressed("green"))
+                            .child(Text::new("Selected, green")),
+                    )
+                    .child(
+                        SelectableCard::new("Raised", true)
+                            .elevation(Elevation::Med)
+                            .on_change(|_| Msg::Pressed("raised"))
+                            .child(Text::new("With a shadow")),
+                    )
+                    .child(
+                        SelectableCard::new("Disabled", false)
+                            .is_disabled(true)
+                            .on_change(|_| Msg::Pressed("disabled"))
+                            .child(Text::new("Not available")),
                     ),
             ),
         ]
@@ -886,6 +975,52 @@ fn typography() -> Element<Msg> {
                 .child(Text::new("End aligned").justify(TextJustify::End))
                 .child(Text::new("One line only: this sentence is long enough that it cannot fit on a single line of the gallery and ends with an ellipsis instead of wrapping onto the next line").max_lines(1))
                 .child(Text::new("Wrapping text flows onto as many lines as it needs. Astryx text wraps at the width its container offers, and its height is a whole number of lines of the type style's line height.")),
+        ),
+    ]
+    .gap(Space::S4)
+    .into()
+}
+
+fn kbd() -> Element<Msg> {
+    let hint = |keys: Kbd, words: &str| {
+        HStack::new()
+            .gap(Space::S2)
+            .v_align(StackAlign::Center)
+            .child(keys)
+            .child(Text::new(words))
+    };
+    vstack![
+        group(
+            "Keyboard shortcuts",
+            row()
+                .child(hint(Kbd::new("mod+k"), "Search"))
+                .child(hint(Kbd::new("shift+enter"), "New line"))
+                .child(hint(Kbd::new("esc"), "Close"))
+                .child(hint(Kbd::new("up"), "Previous")),
+        ),
+        group(
+            "Gamepad buttons",
+            row()
+                .child(Kbd::gamepad("A"))
+                .child(Kbd::gamepad("B"))
+                .child(Kbd::gamepad("X"))
+                .child(Kbd::gamepad("Y"))
+                .child(Kbd::gamepad("L1"))
+                .child(Kbd::gamepad("R1"))
+                .child(Kbd::gamepad("L2"))
+                .child(Kbd::gamepad("R2"))
+                .child(Kbd::gamepad("Start"))
+                .child(Kbd::gamepad("Select"))
+                .child(Kbd::gamepad("Menu"))
+                .child(Kbd::gamepad("dpad")),
+        ),
+        group(
+            "Key hints (experimental)",
+            astryx_core::lab::KeyHints::new()
+                .key("A", "Open")
+                .key("B", "Back")
+                .key("L1 R1", "Pages")
+                .key("Select", "Mode"),
         ),
     ]
     .gap(Space::S4)

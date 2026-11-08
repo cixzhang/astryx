@@ -22,6 +22,8 @@ pub(crate) struct PaintState {
     pub pressed: Option<u64>,
     /// The pressed overlay's strength, 0 to 1.
     pub press_strength: f32,
+    /// A hold-to-confirm fill: the node index and how full, 0 to 1.
+    pub hold: Option<(usize, f32)>,
     /// Seconds since the runtime started, for spinners.
     pub time: f32,
     /// Device pixels per point, for sprites on whole device pixels.
@@ -348,6 +350,40 @@ fn paint_node<Msg>(
                 });
             }
         }
+        (Draw::Image(i), grid) if i.pixel.is_some() => {
+            // Square pixels at the largest whole multiple of the image's
+            // own pixel size that fits, centered: in theme cells under a
+            // pixel grid, else in device pixels.
+            let (w, h) = i.pixel.expect("checked");
+            let unit = grid.unwrap_or(1.0 / state.scale.max(0.01));
+            let (pw, ph) = (w.max(1) as f32 * unit, h.max(1) as f32 * unit);
+            let k = (rect.width / pw).min(rect.height / ph).floor().max(1.0);
+            let (dw, dh) = (pw * k, ph * k);
+            let snap = |v: f32| (v / unit).round() * unit;
+            let at = Rect::new(
+                snap(rect.x + (rect.width - dw) / 2.0),
+                snap(rect.y + (rect.height - dh) / 2.0),
+                dw,
+                dh,
+            );
+            out.push(DrawCmd::PushClip {
+                rect,
+                radii: clamp_radii(rect.width, rect.height, i.radii),
+            });
+            if grid.is_none() {
+                out.push(DrawCmd::PushPixelGrid { cell: unit });
+            }
+            out.push(DrawCmd::Image {
+                rect: at,
+                radii: Radii::default(),
+                image: i.image,
+                fit: crate::contract::ImageFit::Fill,
+            });
+            if grid.is_none() {
+                out.push(DrawCmd::PopPixelGrid);
+            }
+            out.push(DrawCmd::PopClip);
+        }
         (Draw::Image(i), Some(cell)) => {
             // Stepped corners: the image drawn once per row band of its
             // stepped shape, each clipped square.
@@ -404,7 +440,46 @@ fn paint_node<Msg>(
         (Draw::Light(l), _) => paint_light(l, rect, state, ctx.viewport, out),
         _ => {}
     }
-    let pressed = owner.pressed && state.press_strength > 0.0;
+    let holding = state
+        .hold
+        .filter(|&(h, p)| h == ix && p > 0.0)
+        .map(|(_, p)| p);
+    // A hold shows its fill instead of the pressed paint.
+    let pressed = owner.pressed && state.press_strength > 0.0 && holding.is_none();
+    if let (Some(p), Some(overlay)) = (holding, node.indicator.and_then(|i| i.overlay)) {
+        // The fill grows from inline start, inside the control's corners.
+        let radii = node.indicator.map_or(Radii::default(), |i| i.radii);
+        let width = rect.width * p;
+        let x = if node.rtl {
+            rect.x + rect.width - width
+        } else {
+            rect.x
+        };
+        let band = Rect::new(x, rect.y, width, rect.height);
+        match grid {
+            Some(cell) => {
+                out.push(DrawCmd::PushClip {
+                    rect: band,
+                    radii: Radii::default(),
+                });
+                pixel::push_rects(out, pixel::fill(rect, radii, cell), overlay);
+                out.push(DrawCmd::PopClip);
+            }
+            None => {
+                out.push(DrawCmd::PushClip {
+                    rect,
+                    radii: clamp_radii(rect.width, rect.height, radii),
+                });
+                out.push(DrawCmd::Rect {
+                    rect: band,
+                    radii: Radii::default(),
+                    fill: overlay,
+                    stroke: None,
+                });
+                out.push(DrawCmd::PopClip);
+            }
+        }
+    }
     if let (Some(ind), true, Some(cell)) = (node.indicator, pressed, grid) {
         if let Some(overlay) = ind.overlay {
             let fill = overlay.with_alpha(overlay.a * state.press_strength);

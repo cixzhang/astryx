@@ -10,13 +10,14 @@ pub(crate) mod field;
 pub(crate) mod icon_paths;
 pub(crate) mod input;
 pub(crate) mod item;
+pub(crate) mod kbd;
 pub(crate) mod media;
 pub(crate) mod stack;
 pub(crate) mod switch;
 pub(crate) mod text;
 
 pub use button::{Button, ButtonSize, ButtonVariant, ButtonWidth};
-pub use card::{Card, CardVariant};
+pub use card::{Card, CardVariant, SelectableCard};
 pub use display::{
     Badge, BadgeVariant, Divider, DividerOrientation, DividerVariant, Icon, IconColor, IconSize,
     ProgressBar, ProgressBarMark, ProgressBarVariant, BUILT_IN_ICONS,
@@ -27,6 +28,7 @@ pub use input::{
     TextInput, TextInputType,
 };
 pub use item::{Item, ItemAlign, ItemDensity, ItemLayout, ListItem};
+pub use kbd::Kbd;
 pub use media::{
     Avatar, AvatarShape, AvatarSize, AvatarStatus, AvatarStatusDot, AvatarStatusDotVariant,
     Thumbnail, ThumbnailShowRemoveOn,
@@ -72,6 +74,8 @@ pub(crate) mod strings {
     pub const OPTIONAL: &str = "Optional";
     /// `@astryx.field.required`
     pub const REQUIRED: &str = "Required";
+    /// How a hold-to-confirm control is used.
+    pub const HOLD_TO_CONFIRM: &str = "Hold to confirm";
 }
 
 pub(crate) fn len(points: f32) -> LengthPercentage {

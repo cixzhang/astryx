@@ -24,8 +24,12 @@ which checks names and colors and writes the tokens file.
 - **Terrace** (`PixelTheme::Terrace`, the default) is the theme on that
   palette: Garden's sizes, type, and shapes with every color a swatch, or a
   swatch at partial alpha (overlays, muted fills, shadows). UI ink is
-  `ink`, paper is `paper` and `paper-2`, the UI accent is `green-2` in
-  light and `green-1` with `ink` text in dark, errors are `rose-2`, shadows
+  `ink`, paper is `paper` and `paper-2`, the UI accent is plum (`ink-plum`
+  with `paper` text in light, `plum-1` with `ink` text in dark), errors are
+  `rose-2` (message boxes, hearts) with `rose-3` error fills such as the
+  Delete button, secondary buttons and neutral badges are opaque `stone-1`
+  (light) and `soil-1` (dark), secondary text and labels are the warm grays `wood-2` and
+  `stone-1` (color is kept for attention and status), shadows
   are `ink`, and dark mode sits on `soil-4` and `ink` with `paper` text. A
   test fails on any off-palette token.
 - **The older themes** (garden, gameboy, nes, c64, pico8) predate the
@@ -48,18 +52,23 @@ Contrast of Terrace text and controls against WCAG AA, checked by a test:
 | Pair | Light | Dark |
 |---|---|---|
 | Text on body, on surface | 11.35, 14.19 | 16.78, 14.19 |
-| Secondary text on body, on surface | 5.69, 7.11 | 10.46, 8.84 |
+| Secondary text, labels, captions on body, on surface | 6.70, 8.37 (wood-2) | 10.63, 8.99 (stone-1) |
 | Error text on body, on surface | 9.89, 12.36 (ink-plum) | 7.12, 6.01 (rose-2) |
-| Text on error fill (ink on rose-2) | 6.01 | 6.01 |
+| Text on error fill, the Delete button (ink on rose-3) | 5.66 | 5.66 |
+| Text on secondary button (ink on stone-1; paper on soil-1) | 8.99 | 10.18 |
+| **Delete focus ring on body, on surface (3:1)** | **2.00, 2.50, fails** | 6.70, 5.66 |
 | Text on warning fill (ink on straw-2) | 11.00 | 11.00 |
-| Text on accent (paper on green-2; ink on green-1) | 5.07 | 5.88 |
-| Accent control on body, on surface (3:1) | 4.06, 5.07 | 6.96, 5.88 |
+| Status message text on its muted fill, over body and surface | 4.87 or more | 5.69 or more |
+| Text on accent (paper on ink-plum; ink on plum-1) | 12.36 | 6.98 |
+| Accent text on body, on surface | 9.89, 12.36 | 8.25, 6.98 |
+| Accent control and focus ring on body, on surface (3:1) | 9.89, 12.36 | 8.25, 6.98 |
 
 Rose text on paper reads at 1.9:1, so light-mode error text, icons, and
-borders are `ink-plum`, and `rose-2` stays the error fill. Palette v1.2
-darkens `green-2` to `#1b7d53` so paper text on primary buttons passes.
-That green is too dark for the dark surfaces (2.8:1 on `ink`), so dark
-mode's accent is `green-1` with `ink` text on it. Every pair passes.
+borders are `ink-plum`, and `rose-2` stays the error fill. The accent is plum: `ink-plum` with `paper` text in light, and the light
+`plum-1` with `ink` text in dark, where `ink-plum` would vanish on the dark
+surfaces. Palette v1.3 adds `plum-1` in place of `soil-2`, which was
+nearly the same color as `soil-1`. Light error text is `ink-plum` too, so errors rely on their
+`rose-2` fill and icons to stand apart. Every pair passes.
 
 ## The one idea
 

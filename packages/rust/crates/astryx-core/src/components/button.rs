@@ -51,6 +51,8 @@ pub struct Button<Msg> {
     tooltip: Option<String>,
     href: Option<String>,
     on_click: Option<Msg>,
+    /// Activates only after a press held this many milliseconds.
+    pub(crate) hold: Option<f32>,
 }
 
 impl<Msg> Button<Msg> {
@@ -68,6 +70,7 @@ impl<Msg> Button<Msg> {
             tooltip: None,
             href: None,
             on_click: None,
+            hold: None,
         }
     }
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
@@ -183,16 +186,20 @@ impl<Msg> Build<Msg> for Button<Msg> {
         let mut sem = Semantics::new(Role::Button, self.label.clone());
         sem.disabled = self.is_disabled;
         sem.value = self.is_loading.then(|| strings::LOADING.to_string());
+        if self.hold.is_some() {
+            sem.description = Some(strings::HOLD_TO_CONFIRM.to_string());
+        }
         let node = Node::new(style)
             .draw(Draw::Box(BoxDraw {
                 shadow: self.elevation.layers(t),
                 ..BoxDraw::fill(bg, radius)
             }))
-            .interact(
-                Interact::new(self.on_click, self.is_disabled)
+            .interact(Interact {
+                hold: self.hold,
+                ..Interact::new(self.on_click, self.is_disabled)
                     .busy(busy)
-                    .href(self.href.as_deref()),
-            )
+                    .href(self.href.as_deref())
+            })
             .indicator(Indicator::ring(
                 ring.into(),
                 radius,

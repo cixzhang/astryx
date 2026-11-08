@@ -14,6 +14,7 @@ mod a11y;
 mod components;
 mod element;
 mod focus;
+pub mod lab;
 mod layout;
 mod light;
 pub mod paged;

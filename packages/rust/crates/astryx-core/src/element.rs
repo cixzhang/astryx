@@ -205,6 +205,9 @@ pub(crate) struct ImageDraw {
     pub image: crate::contract::ImageId,
     pub fit: crate::contract::ImageFit,
     pub radii: Radii,
+    /// Draws the image's pixels square at a whole multiple of their size:
+    /// its width and height in pixels.
+    pub pixel: Option<(u32, u32)>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -283,6 +286,8 @@ pub(crate) struct Interact<Msg> {
     pub href: Option<String>,
     /// Makes the node a text field that takes typed text.
     pub edit: Option<Edit<Msg>>,
+    /// Activates only after A is held this many milliseconds.
+    pub hold: Option<f32>,
 }
 
 /// A text field's value and how to report a new one.
@@ -316,6 +321,7 @@ impl<Msg> Interact<Msg> {
             popup: PopupAction::None,
             href: None,
             edit: None,
+            hold: None,
         }
     }
     /// Opens `href` on activation, unless Astryx's navigation rules refuse it.
@@ -444,6 +450,10 @@ pub(crate) struct Node<Msg> {
     pub icon: Option<(&'static str, f32)>,
     /// The element's `id` prop, when it has one.
     pub name: Option<String>,
+    /// A group of focus stops reached as one by Next and Previous, such as
+    /// a single-choice group; `group_entry` marks the stop they land on.
+    pub group: Option<u64>,
+    pub group_entry: bool,
     /// A `paged::Paged` viewport: its scroll offset rests on page starts.
     pub pager: bool,
     /// A `paged::CameraFollow` viewport, offset in both directions.
@@ -475,6 +485,8 @@ impl<Msg> Node<Msg> {
             grid: None,
             icon: None,
             name: None,
+            group: None,
+            group_entry: false,
             pager: false,
             camera: false,
         }
@@ -567,6 +579,9 @@ pub(crate) struct BuildCx<Msg> {
     pub overlays: Vec<Overlay<Msg>>,
     /// The images the app registered: true when ready, false when failed.
     pub images: std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, bool>>,
+    /// The pixel size of each ready image.
+    pub image_sizes:
+        std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, (u32, u32)>>,
     open: Vec<u32>,
     key: Option<u64>,
     /// The `id` prop behind `key`, for the node `begin` opens next.
@@ -588,6 +603,7 @@ impl<Msg> BuildCx<Msg> {
             viewport: (0.0, 0.0),
             overlays: Vec::new(),
             images: Default::default(),
+            image_sizes: Default::default(),
             open: Vec::new(),
             key: None,
             name: None,

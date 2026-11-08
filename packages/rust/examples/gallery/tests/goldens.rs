@@ -216,3 +216,27 @@ fn brick_world() {
     let png = render_png(&mut rt, 1024, 768, 2.0, &[Down, Down, Down, Down, Down]);
     assert_golden(&png, dir.join("brick-world.png"), TOLERANCE);
 }
+
+/// The SelectableCard, Kbd, and Lab sections in every theme, light and dark.
+#[test]
+fn new_components_in_every_theme() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens/themes");
+    for theme in Theme::ALL {
+        for (mode, m) in [(Mode::Light, "light"), (Mode::Dark, "dark")] {
+            for (section, height) in [
+                (Section::SelectableCards, 320),
+                (Section::Kbd, 260),
+                (Section::Lab, 620),
+            ] {
+                let mut rt =
+                    astryx_gallery::runtime(Gallery::section(section).with_theme(theme, mode));
+                let png = render_png(&mut rt, SIZE.0, height, 1.0, &[]);
+                assert_golden(
+                    &png,
+                    dir.join(format!("{}-{}-{m}.png", section.slug(), theme.name)),
+                    TOLERANCE,
+                );
+            }
+        }
+    }
+}

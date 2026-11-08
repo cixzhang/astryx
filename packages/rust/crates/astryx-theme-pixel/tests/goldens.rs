@@ -118,7 +118,8 @@ fn scale_two_tooltip_and_right_to_left() {
 #[test]
 fn edges_fall_on_the_pixel_grid() {
     use astryx_core::Direction;
-    let skip = [Section::Avatars, Section::Thumbnails];
+    // These sections show photos, whose pixels are not on the grid.
+    let skip = [Section::Avatars, Section::Thumbnails, Section::Lab];
     let runs = [
         (3.0, Direction::Ltr),
         (2.0, Direction::Ltr),

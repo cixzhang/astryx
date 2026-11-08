@@ -69,13 +69,19 @@ impl Palette {
 
     /// The swatch nearest to `color` by eye (in Oklab).
     pub fn nearest(&self, color: Color) -> &'static Swatch {
-        self.nearest_rgb(to_u8(color))
+        self.nearest_rgb(to_u8(color), &[])
     }
 
-    fn nearest_rgb(&self, rgb: [u8; 3]) -> &'static Swatch {
+    /// [`Self::nearest`], leaving out the swatches named in `except`.
+    pub fn nearest_except(&self, color: Color, except: &[&str]) -> &'static Swatch {
+        self.nearest_rgb(to_u8(color), except)
+    }
+
+    fn nearest_rgb(&self, rgb: [u8; 3], except: &[&str]) -> &'static Swatch {
         let want = oklab(rgb);
         self.swatches
             .iter()
+            .filter(|s| !except.contains(&s.name))
             .min_by(|a, b| distance(oklab(a.rgb), want).total_cmp(&distance(oklab(b.rgb), want)))
             .expect("the palette has swatches")
     }
@@ -109,7 +115,7 @@ impl Palette {
             if px[3] < 128 {
                 px.copy_from_slice(&[0, 0, 0, 0]);
             } else {
-                let s = self.nearest_rgb([px[0], px[1], px[2]]);
+                let s = self.nearest_rgb([px[0], px[1], px[2]], &[]);
                 px.copy_from_slice(&[s.rgb[0], s.rgb[1], s.rgb[2], 255]);
             }
         }

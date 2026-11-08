@@ -49,6 +49,7 @@ struct ItemProps<Msg> {
     is_highlighted: bool,
     is_selected: bool,
     is_disabled: bool,
+    is_contained: bool,
     start_content: Option<Element<Msg>>,
     end_content: Option<Element<Msg>>,
     marker: Option<Element<Msg>>,
@@ -69,6 +70,7 @@ impl<Msg> ItemProps<Msg> {
             is_highlighted: false,
             is_selected: false,
             is_disabled: false,
+            is_contained: false,
             start_content: None,
             end_content: None,
             marker: None,
@@ -117,6 +119,15 @@ macro_rules! row_props {
         }
         pub fn is_selected(mut self, on: bool) -> Self {
             self.p.is_selected = on;
+            self
+        }
+        /// Experimental, not yet in Astryx: the row draws its own card
+        /// surface and border, so it reads as one contained item whether or
+        /// not it is selected. Selection colors the border and fill on top;
+        /// focus adds the ring. Astryx contains rows by placing a List in a
+        /// Card instead.
+        pub fn is_contained(mut self, on: bool) -> Self {
+            self.p.is_contained = on;
             self
         }
         /// Content before the words, such as an Icon or an Avatar.
@@ -218,9 +229,22 @@ fn build_row<Msg>(base: Base, p: ItemProps<Msg>, static_role: Option<Role>, cx: 
         c.accent_muted.into()
     } else if p.is_highlighted {
         c.overlay_hover.into()
+    } else if p.is_contained {
+        c.background_card.into()
     } else {
         Color::TRANSPARENT
     };
+    // A contained row keeps its border in every state; the border sits
+    // inside the padding, so the row is the same size either way.
+    let border = p.is_contained.then(|| {
+        let color: Color = if p.is_selected {
+            c.accent.into()
+        } else {
+            c.border.into()
+        };
+        (color, t.size.border_width)
+    });
+    let edge = border.map_or(0.0, |(_, w)| w);
     let radius = radii(t.radius.element);
     let body = type_style(t.font.body, FontFamily::Body);
     let first_line = (body.size * body.leading - 0.01).ceil();
@@ -235,14 +259,23 @@ fn build_row<Msg>(base: Base, p: ItemProps<Msg>, static_role: Option<Role>, cx: 
             height: len(0.0),
         },
         padding: taffy::Rect {
-            left: len(inline),
-            right: len(inline),
-            top: len(block),
-            bottom: len(block),
+            left: len(inline - edge),
+            right: len(inline - edge),
+            top: len(block - edge),
+            bottom: len(block - edge),
+        },
+        border: taffy::Rect {
+            left: len(edge),
+            right: len(edge),
+            top: len(edge),
+            bottom: len(edge),
         },
         ..Style::default()
     })
-    .draw(Draw::Box(BoxDraw::fill(fill, radius)));
+    .draw(Draw::Box(BoxDraw {
+        border,
+        ..BoxDraw::fill(fill, radius)
+    }));
     let href = p.href.as_deref().and_then(crate::element::safe_destination);
     let interactive = p.on_click.is_some() || href.is_some();
     let mut sem = if interactive {
