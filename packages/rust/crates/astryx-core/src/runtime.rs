@@ -420,7 +420,7 @@ impl<A: App> Runtime<A> {
         let tokens = self.theme.tokens(&self.prefs);
         let mut cx = BuildCx::new(tokens);
         cx.theme = self.theme.theme;
-        cx.prefs = self.prefs;
+        cx.prefs = self.prefs.clone();
         cx.viewport = self.viewport;
         self.direction = self.app.direction();
         cx.direction = self.direction;
@@ -2213,7 +2213,7 @@ impl<A: App> Surface for Runtime<A> {
 
     fn set_preferences(&mut self, preferences: &Preferences) {
         if *preferences != self.prefs {
-            self.prefs = *preferences;
+            self.prefs = preferences.clone();
             self.policy = MotionPolicy {
                 prefers_reduced_motion: preferences.reduced_motion,
                 pointer: if preferences.coarse_pointer {

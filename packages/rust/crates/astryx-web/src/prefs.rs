@@ -39,6 +39,7 @@ pub fn detect_preferences() -> Preferences {
         day_phase: DayPhase::Day,
         day_time: None,
         idle: astryx_core::Idle::Active,
+        device: None,
         sound_off: false,
     }
 }

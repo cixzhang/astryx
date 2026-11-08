@@ -811,8 +811,8 @@ impl Runner {
         if preferences == shell.preferences {
             return;
         }
-        shell.preferences = preferences;
         shell.surface.set_preferences(&preferences);
+        shell.preferences = preferences;
         shell.dirty = true;
         drop(shell);
         self.schedule();

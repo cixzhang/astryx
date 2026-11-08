@@ -771,7 +771,7 @@ pub enum ColorScheme {
 
 /// What the person asked their OS or browser for. Shells read it from the
 /// platform and pass changes to `Surface::set_preferences`.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Preferences {
     pub reduced_motion: bool,
     pub color_scheme: ColorScheme,
@@ -792,6 +792,35 @@ pub struct Preferences {
     pub idle: Idle,
     /// The person turned sounds off.
     pub sound_off: bool,
+    /// The device's radios, battery and clock, for a status bar. Shells
+    /// that read them set it, refreshed every 30 seconds; others leave
+    /// `None`.
+    pub device: Option<DeviceStatus>,
+}
+
+/// What a status bar shows. See [`Preferences::device`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct DeviceStatus {
+    pub wifi: Radio,
+    /// The network Wi-Fi is connected to, when known.
+    pub wifi_name: Option<String>,
+    pub bluetooth: Radio,
+    /// Battery charge, 0 to 100; `None` without a battery.
+    pub battery_percent: Option<u8>,
+    /// Plugged in and charging, or full on power.
+    pub charging: bool,
+    /// Local time, hours 0 to 23 and minutes.
+    pub time: (u8, u8),
+}
+
+/// A radio's state.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Radio {
+    #[default]
+    Off,
+    /// On, not connected.
+    On,
+    Connected,
 }
 
 /// Whether the person is using the device. Shells that save power set it;

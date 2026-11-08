@@ -287,7 +287,7 @@ impl Surface for Demo {
     }
 
     fn frame(&mut self, frame: &FrameInfo, text: &dyn TextMeasure) -> DisplayList {
-        let preferences = self.preferences;
+        let preferences = self.preferences.clone();
         let p = Palette::for_scheme(preferences.color_scheme);
         if preferences.reduced_motion {
             self.ring = 1.0;
@@ -665,7 +665,7 @@ impl Surface for Demo {
     }
 
     fn set_preferences(&mut self, preferences: &Preferences) {
-        self.preferences = *preferences;
+        self.preferences = preferences.clone();
     }
 
     fn a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
