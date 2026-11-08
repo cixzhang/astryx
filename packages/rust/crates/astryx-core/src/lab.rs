@@ -32,13 +32,15 @@ use taffy::prelude::*;
 
 // ---- StatusBar ----
 
-/// A compact row of device status: the time, Wi-Fi, Bluetooth, and the
-/// battery. It shows the shell's `Preferences::device`, and nothing when
-/// the shell reports none. Assistive technology reads it as one line, such
-/// as "Wi-Fi connected, battery 82% charging, 7:42 PM".
+/// A compact row of device status: the time, Wi-Fi, Bluetooth, a muted
+/// speaker while sounds are off, and the battery. It shows the shell's
+/// `Preferences::device` and `Preferences::sound_off`, and nothing when
+/// the shell reports no device. Assistive technology reads it as one line,
+/// such as "Wi-Fi connected, battery 82% charging, 7:42 PM".
 pub struct StatusBar {
     base: Base,
     device: Option<DeviceStatus>,
+    sound_off: Option<bool>,
 }
 
 impl Default for StatusBar {
@@ -52,11 +54,18 @@ impl StatusBar {
         StatusBar {
             base: Base::default(),
             device: None,
+            sound_off: None,
         }
     }
     /// Shows `device` instead of the shell's, as for previews.
     pub fn device(mut self, device: DeviceStatus) -> Self {
         self.device = Some(device);
+        self
+    }
+    /// Shows sounds as off (or on) instead of the shell's setting, as for
+    /// previews.
+    pub fn sound_off(mut self, off: bool) -> Self {
+        self.sound_off = Some(off);
         self
     }
 }
@@ -77,7 +86,7 @@ fn clock((hours, minutes): (u8, u8)) -> String {
 }
 
 /// The status as one sentence for assistive technology.
-fn status_label(d: &DeviceStatus) -> String {
+fn status_label(d: &DeviceStatus, sound_off: bool) -> String {
     let mut parts = vec![match d.wifi {
         Radio::Off => "Wi-Fi off".to_string(),
         Radio::On => "Wi-Fi on, not connected".to_string(),
@@ -87,6 +96,9 @@ fn status_label(d: &DeviceStatus) -> String {
         Radio::Off => {}
         Radio::On => parts.push("Bluetooth on".into()),
         Radio::Connected => parts.push("Bluetooth connected".into()),
+    }
+    if sound_off {
+        parts.push("sounds off".into());
     }
     if let Some(p) = d.battery_percent {
         parts.push(format!(
@@ -126,6 +138,21 @@ const BLUETOOTH: &[PathCmd] = &[
     PathCmd::LineTo(pt(12.0, 2.0)),
     PathCmd::LineTo(pt(17.0, 7.0)),
     PathCmd::LineTo(pt(7.0, 17.0)),
+];
+
+/// A speaker with a cross beside it.
+const SOUND_OFF: &[PathCmd] = &[
+    PathCmd::MoveTo(pt(3.0, 9.0)),
+    PathCmd::LineTo(pt(7.0, 9.0)),
+    PathCmd::LineTo(pt(12.0, 4.5)),
+    PathCmd::LineTo(pt(12.0, 19.5)),
+    PathCmd::LineTo(pt(7.0, 15.0)),
+    PathCmd::LineTo(pt(3.0, 15.0)),
+    PathCmd::Close,
+    PathCmd::MoveTo(pt(16.0, 9.0)),
+    PathCmd::LineTo(pt(22.0, 15.0)),
+    PathCmd::MoveTo(pt(22.0, 9.0)),
+    PathCmd::LineTo(pt(16.0, 15.0)),
 ];
 
 const BOLT: &[PathCmd] = &[
@@ -180,6 +207,20 @@ const BLUETOOTH_BITS: &[&str] = &[
     ".....#.#....",
     ".....##.....",
     ".....#......",
+];
+const SOUND_OFF_BITS: &[&str] = &[
+    "............",
+    "......#.....",
+    ".....##.....",
+    "....###.....",
+    "#######.#..#",
+    "#######..##.",
+    "#######..##.",
+    "#######.#..#",
+    "....###.....",
+    ".....##.....",
+    "......#.....",
+    "............",
 ];
 const BOLT_BITS: &[&str] = &[
     "......##....",
@@ -246,7 +287,8 @@ impl<Msg> Build<Msg> for StatusBar {
         let c = &t.color;
         let style = type_style(t.font.label, FontFamily::Body);
         let side = IconSize::Sm.points();
-        let sem = Semantics::new(Role::Text, status_label(&device));
+        let sound_off = self.sound_off.unwrap_or(cx.prefs.sound_off);
+        let sem = Semantics::new(Role::Text, status_label(&device, sound_off));
         cx.key(self.base.id.as_deref());
         cx.begin(
             Node::new(Style {
@@ -299,6 +341,17 @@ impl<Msg> Build<Msg> for StatusBar {
                 BLUETOOTH.to_vec(),
                 side,
                 color.into(),
+                false,
+            );
+            cx.leaf(icon);
+        }
+        if sound_off {
+            let icon = named_icon(
+                cx,
+                ("soundOff", SOUND_OFF_BITS),
+                SOUND_OFF.to_vec(),
+                side,
+                c.icon_secondary.into(),
                 false,
             );
             cx.leaf(icon);
@@ -787,7 +840,7 @@ mod tests {
             ..DeviceStatus::default()
         };
         assert_eq!(
-            status_label(&d),
+            status_label(&d, false),
             "Wi-Fi connected, battery 82% charging, 7:42 PM"
         );
         let d = DeviceStatus {
@@ -796,7 +849,11 @@ mod tests {
             time: (0, 5),
             ..DeviceStatus::default()
         };
-        assert_eq!(status_label(&d), "Wi-Fi off, Bluetooth on, 12:05 AM");
+        assert_eq!(status_label(&d, false), "Wi-Fi off, Bluetooth on, 12:05 AM");
+        assert_eq!(
+            status_label(&d, true),
+            "Wi-Fi off, Bluetooth on, sounds off, 12:05 AM"
+        );
         assert_eq!(clock((12, 0)), "12:00 PM");
     }
 }

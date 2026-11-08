@@ -292,6 +292,9 @@ struct Quad {
     texture: Option<glow::Texture>,
     /// Multiplies the target by the quad's color instead of blending over it.
     multiply: bool,
+    /// For an image: sample its nearest pixel (on a pixel grid) or blend
+    /// neighbours. `None` keeps the texture's own filter.
+    nearest: Option<bool>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -430,8 +433,8 @@ pub struct GlRenderer {
     stats: RenderStats,
     /// Open pixel grids, innermost last, in points.
     grids: Vec<f32>,
-    /// Images whose textures sample nearest, last drawn on a pixel grid.
-    nearest: std::collections::HashSet<ImageId>,
+    /// Image textures set to sample nearest; the others sample linear.
+    nearest: std::collections::HashSet<glow::Texture>,
     /// Registered images: the texture and its size in pixels.
     images: HashMap<ImageId, (glow::Texture, u32, u32)>,
 }
@@ -592,10 +595,9 @@ impl GlRenderer {
     /// Adds or replaces an image; `None` frees it. Pixels that do not match
     /// the size are ignored.
     pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
-        // A new texture starts with linear filtering.
-        self.nearest.remove(&id);
         let gl = self.gl.clone();
         if let Some((old, _, _)) = self.images.remove(&id) {
+            self.nearest.remove(&old);
             // SAFETY: the texture belongs to this context.
             unsafe { gl.delete_texture(old) };
         }
@@ -715,6 +717,7 @@ impl GlRenderer {
             border,
             texture: None,
             multiply: false,
+            nearest: None,
         });
     }
 
@@ -942,6 +945,7 @@ impl GlRenderer {
                     border: 0.0,
                     texture: Some(texture),
                     multiply: false,
+                    nearest: None,
                 },
                 clip,
             })
@@ -1055,6 +1059,7 @@ impl GlRenderer {
             border: 0.0,
             texture: Some(region.texture),
             multiply: false,
+            nearest: None,
         });
     }
 
@@ -1421,33 +1426,8 @@ impl GlRenderer {
                 let Some(&(texture, w, h)) = self.images.get(image) else {
                     return;
                 };
-                // On a pixel grid, image pixels stay square. The filter is
-                // the texture's, so it follows where the image was drawn last.
+                // On a pixel grid, image pixels stay square.
                 let on_grid = !self.grids.is_empty();
-                if on_grid != self.nearest.contains(image) {
-                    let filter = if on_grid { glow::NEAREST } else { glow::LINEAR };
-                    // SAFETY: the context is current while the shell drives
-                    // the renderer, and the texture is alive.
-                    unsafe {
-                        let gl = &self.gl;
-                        gl.bind_texture(glow::TEXTURE_2D, Some(texture));
-                        gl.tex_parameter_i32(
-                            glow::TEXTURE_2D,
-                            glow::TEXTURE_MIN_FILTER,
-                            filter as i32,
-                        );
-                        gl.tex_parameter_i32(
-                            glow::TEXTURE_2D,
-                            glow::TEXTURE_MAG_FILTER,
-                            filter as i32,
-                        );
-                    }
-                    if on_grid {
-                        self.nearest.insert(*image);
-                    } else {
-                        self.nearest.remove(image);
-                    }
-                }
                 if r.is_empty() || !self.visible(IRect::outer(&r)) {
                     self.stats.culled += 1;
                     return;
@@ -1483,6 +1463,7 @@ impl GlRenderer {
                     border: 0.0,
                     texture: Some(texture),
                     multiply: false,
+                    nearest: Some(on_grid),
                 });
             }
             DrawCmd::PushClip { rect, radii } => {
@@ -1657,6 +1638,7 @@ impl GlRenderer {
                 border: 0.0,
                 texture: Some(target.texture),
                 multiply: true,
+                nearest: None,
             };
             self.layers_in_use.push(target);
             let saved = self.clip;
@@ -1843,6 +1825,7 @@ impl GlRenderer {
             border: 0.0,
             texture: Some(layer.texture),
             multiply: false,
+            nearest: None,
         };
         match key {
             Some(k) => {
@@ -2000,8 +1983,18 @@ impl GlRenderer {
             // Batches: runs of items that share a texture and scissor.
             let mut vertices = std::mem::take(&mut self.vertices);
             vertices.clear();
-            let mut batches: Vec<(usize, usize, Option<glow::Texture>, IRect, bool, Pick)> =
-                Vec::new();
+            // An image drawn both on and off a pixel grid in one frame splits
+            // into batches with their own filters.
+            #[allow(clippy::type_complexity)]
+            let mut batches: Vec<(
+                usize,
+                usize,
+                Option<glow::Texture>,
+                IRect,
+                bool,
+                Pick,
+                Option<bool>,
+            )> = Vec::new();
             for item in items {
                 let q = &item.quad;
                 let pick = if self.fast_paths {
@@ -2011,17 +2004,23 @@ impl GlRenderer {
                 };
                 let start = vertices.len() / 4;
                 let joins = match batches.last_mut() {
-                    Some((first, count, texture, scissor, multiply, p))
+                    Some((first, count, texture, scissor, multiply, p, nearest))
                         if *scissor == item.clip.scissor
                             && *count < BATCH_QUADS
                             && *multiply == q.multiply
                             && *p == pick
                             && (q.texture.is_none()
                                 || texture.is_none()
-                                || *texture == q.texture) =>
+                                || *texture == q.texture)
+                            && (q.nearest.is_none()
+                                || nearest.is_none()
+                                || *nearest == q.nearest) =>
                     {
                         if texture.is_none() {
                             *texture = q.texture;
+                        }
+                        if nearest.is_none() {
+                            *nearest = q.nearest;
                         }
                         let _ = first;
                         *count += 1;
@@ -2030,7 +2029,15 @@ impl GlRenderer {
                     _ => false,
                 };
                 if !joins {
-                    batches.push((start, 1, q.texture, item.clip.scissor, q.multiply, pick));
+                    batches.push((
+                        start,
+                        1,
+                        q.texture,
+                        item.clip.scissor,
+                        q.multiply,
+                        pick,
+                        q.nearest,
+                    ));
                 }
                 push_vertices(&mut vertices, item);
             }
@@ -2041,7 +2048,7 @@ impl GlRenderer {
             }
             let mut multiplying = false;
             let mut current = Pick::Full;
-            for (first, count, texture, scissor, multiply, pick) in &batches {
+            for (first, count, texture, scissor, multiply, pick, nearest) in &batches {
                 if *pick != current {
                     current = *pick;
                     let p = match current {
@@ -2082,6 +2089,26 @@ impl GlRenderer {
                     self.atlas.mark_used(*t);
                 }
                 gl.bind_texture(glow::TEXTURE_2D, Some(texture.unwrap_or(self.white)));
+                if let (Some(t), Some(want)) = (texture, nearest) {
+                    if self.nearest.contains(t) != *want {
+                        let filter = if *want { glow::NEAREST } else { glow::LINEAR };
+                        gl.tex_parameter_i32(
+                            glow::TEXTURE_2D,
+                            glow::TEXTURE_MIN_FILTER,
+                            filter as i32,
+                        );
+                        gl.tex_parameter_i32(
+                            glow::TEXTURE_2D,
+                            glow::TEXTURE_MAG_FILTER,
+                            filter as i32,
+                        );
+                        if *want {
+                            self.nearest.insert(*t);
+                        } else {
+                            self.nearest.remove(t);
+                        }
+                    }
+                }
                 let base = (*first * 4) as i32 * STRIDE;
                 let float = |index: u32, offset: i32| {
                     gl.vertex_attrib_pointer_f32(

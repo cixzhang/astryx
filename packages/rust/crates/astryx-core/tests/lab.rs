@@ -274,6 +274,43 @@ fn the_status_bar_shows_the_device_and_reads_as_one_line() {
 }
 
 #[test]
+fn the_status_bar_shows_a_muted_speaker_while_sounds_are_off() {
+    let device = DeviceStatus {
+        wifi: Radio::Connected,
+        battery_percent: Some(82),
+        time: (7, 5),
+        ..DeviceStatus::default()
+    };
+    let paths = |list: &DisplayList| {
+        list.commands
+            .iter()
+            .filter(|c| matches!(c, DrawCmd::Path { .. }))
+            .count()
+    };
+    let mut rt = runtime(|| Element::<()>::from(StatusBar::new()));
+    rt.set_preferences(&Preferences {
+        device: Some(device.clone()),
+        ..Preferences::default()
+    });
+    let sounding = draw(&mut rt, 400, 100);
+    rt.set_preferences(&Preferences {
+        device: Some(device.clone()),
+        sound_off: true,
+        ..Preferences::default()
+    });
+    let muted = draw(&mut rt, 400, 100);
+    assert_eq!(paths(&muted), paths(&sounding) + 1, "one more icon");
+    let nodes = a11y_nodes(&rt.accessibility().unwrap());
+    assert!(nodes
+        .iter()
+        .any(|n| n.label.as_deref() == Some("Wi-Fi connected, sounds off, battery 82%, 7:05 AM")));
+    // A preview can show either state whatever the shell says.
+    let shown =
+        paint(move || Element::<()>::from(StatusBar::new().device(device.clone()).sound_off(true)));
+    assert_eq!(paths(&shown), paths(&sounding) + 1);
+}
+
+#[test]
 fn a_low_battery_gauge_turns_to_the_error_color() {
     let t = light();
     let device = DeviceStatus {
