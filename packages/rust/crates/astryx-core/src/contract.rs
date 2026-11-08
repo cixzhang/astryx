@@ -403,39 +403,178 @@ impl Lighting {
 
 /// One stop of the day's light: from `minute`, tint toward `rgb` at
 /// `strength`. Colors are Terrace palette swatches.
-const DAY: [(f32, u32, f32); 12] = [
-    (4.0 * 60.0 + 45.0, 0x30569b, 0.70),  // night: blue-3
-    (5.0 * 60.0 + 45.0, 0xe08e79, 0.35),  // dawn: rose-3
-    (6.0 * 60.0 + 30.0, 0xfdefbd, 0.18),  // morning: straw-1
-    (7.0 * 60.0, 0xfdefbd, 0.0),          // day
-    (16.0 * 60.0 + 30.0, 0xeac086, 0.0),  // day
-    (17.0 * 60.0, 0xeac086, 0.22),        // golden hour: straw-3
-    (17.0 * 60.0 + 30.0, 0xeac086, 0.30), // golden hour
-    (18.0 * 60.0 + 15.0, 0xe08e79, 0.38), // sunset: rose-3
-    (19.0 * 60.0, 0x542437, 0.50),        // sunset: ink-plum
-    (19.0 * 60.0 + 45.0, 0x30569b, 0.60), // dusk: blue-3
-    (20.0 * 60.0 + 30.0, 0x30569b, 0.70), // night
-    (24.0 * 60.0 + 4.0 * 60.0 + 45.0, 0x30569b, 0.70),
+/// What a stop of the day is measured from.
+#[derive(Clone, Copy)]
+enum Anchor {
+    Dawn,
+    Sunrise,
+    Sunset,
+    Dusk,
+}
+
+/// The stops of the day: an anchor and minutes from it, the ambient tint
+/// and how strongly the light map darkens. With [`SunTimes::DEFAULT`]
+/// they fall at 04:45, 05:45, 06:30, 07:00, 16:30, 17:00, 17:30, 18:15,
+/// 19:00, 19:45 and 20:30.
+const DAY: [(Anchor, f32, u32, f32); 11] = [
+    (Anchor::Dawn, -60.0, 0x30569b, 0.70),   // night: blue-3
+    (Anchor::Dawn, 0.0, 0xe08e79, 0.35),     // dawn: rose-3
+    (Anchor::Sunrise, 0.0, 0xfdefbd, 0.18),  // morning: straw-1
+    (Anchor::Sunrise, 30.0, 0xfdefbd, 0.0),  // day
+    (Anchor::Sunset, -105.0, 0xeac086, 0.0), // day
+    (Anchor::Sunset, -75.0, 0xeac086, 0.22), // golden hour: straw-3
+    (Anchor::Sunset, -45.0, 0xeac086, 0.30), // golden hour
+    (Anchor::Sunset, 0.0, 0xe08e79, 0.38),   // sunset: rose-3
+    (Anchor::Dusk, 0.0, 0x542437, 0.50),     // twilight: ink-plum
+    (Anchor::Dusk, 45.0, 0x30569b, 0.60),    // dusk: blue-3
+    (Anchor::Dusk, 90.0, 0x30569b, 0.70),    // night
 ];
 
 /// Steps between two stops of the day. The light holds still between
 /// steps, like the art, and each step is about two 8-bit levels at most.
 const DAY_STEPS: f32 = 32.0;
 
+/// When the sun rises and sets where the person is, in minutes after
+/// local midnight: civil dawn and dusk (the sun 6 degrees below the
+/// horizon), sunrise and sunset. Shells that know the place and date set
+/// [`Preferences::sun`]; see [`SunTimes::compute`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SunTimes {
+    pub dawn: f32,
+    pub sunrise: f32,
+    pub sunset: f32,
+    pub dusk: f32,
+}
+
+impl Default for SunTimes {
+    fn default() -> Self {
+        SunTimes::DEFAULT
+    }
+}
+
+impl SunTimes {
+    /// A fixed day, for shells that do not know the place: dawn 05:45,
+    /// sunrise 06:30, sunset 18:15, dusk 19:00.
+    pub const DEFAULT: SunTimes = SunTimes {
+        dawn: 5.0 * 60.0 + 45.0,
+        sunrise: 6.0 * 60.0 + 30.0,
+        sunset: 18.0 * 60.0 + 15.0,
+        dusk: 19.0 * 60.0,
+    };
+
+    /// The sun's times on a date (`year`, `month` 1 to 12, `day`) at
+    /// `latitude` (north positive) and `longitude` (east positive), in a
+    /// zone `utc_offset` minutes ahead of UTC that day (negative west of
+    /// Greenwich, daylight saving included). NOAA's solar position
+    /// formulas; good to a minute or two away from the poles. `None` when
+    /// the sun does not rise or set that day.
+    pub fn compute(
+        year: i32,
+        month: u32,
+        day: u32,
+        latitude: f64,
+        longitude: f64,
+        utc_offset: f64,
+    ) -> Option<SunTimes> {
+        use std::f64::consts::PI;
+        let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+        let days_before = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+        let month = month.clamp(1, 12) as usize;
+        let ordinal = days_before[month - 1] + day as i32 + i32::from(leap && month > 2);
+        let year_days = if leap { 366.0 } else { 365.0 };
+        // The fractional year at noon, in radians.
+        let g = 2.0 * PI / year_days * (f64::from(ordinal) - 1.0);
+        let eqtime = 229.18
+            * (0.000075 + 0.001868 * g.cos()
+                - 0.032077 * g.sin()
+                - 0.014615 * (2.0 * g).cos()
+                - 0.040849 * (2.0 * g).sin());
+        let decl = 0.006918 - 0.399912 * g.cos() + 0.070257 * g.sin() - 0.006758 * (2.0 * g).cos()
+            + 0.000907 * (2.0 * g).sin()
+            - 0.002697 * (3.0 * g).cos()
+            + 0.00148 * (3.0 * g).sin();
+        let lat = latitude.to_radians();
+        // Minutes after local midnight when the sun is `zenith` degrees
+        // from overhead, rising (sign -1) or setting (sign 1).
+        let at = |zenith: f64, sign: f64| -> Option<f32> {
+            let cos_ha =
+                zenith.to_radians().cos() / (lat.cos() * decl.cos()) - lat.tan() * decl.tan();
+            if !(-1.0..=1.0).contains(&cos_ha) {
+                return None;
+            }
+            let ha = cos_ha.acos().to_degrees();
+            let utc = 720.0 - 4.0 * (longitude - sign * ha) - eqtime;
+            Some((utc + utc_offset).rem_euclid(24.0 * 60.0) as f32)
+        };
+        // 90.833: the sun's upper edge on the horizon, with refraction.
+        Some(SunTimes {
+            dawn: at(96.0, -1.0)?,
+            sunrise: at(90.833, -1.0)?,
+            sunset: at(90.833, 1.0)?,
+            dusk: at(96.0, 1.0)?,
+        })
+    }
+
+    fn anchor(&self, a: Anchor) -> f32 {
+        match a {
+            Anchor::Dawn => self.dawn,
+            Anchor::Sunrise => self.sunrise,
+            Anchor::Sunset => self.sunset,
+            Anchor::Dusk => self.dusk,
+        }
+    }
+
+    /// The part of the day at `minutes` after local midnight: night before
+    /// dawn and after dusk, dusk for the twilight on either side of the
+    /// day.
+    pub fn phase(&self, minutes: f32) -> DayPhase {
+        let m = minutes.rem_euclid(24.0 * 60.0);
+        if m < self.dawn || m >= self.dusk {
+            DayPhase::Night
+        } else if m < self.sunrise || m >= self.sunset {
+            DayPhase::Dusk
+        } else {
+            DayPhase::Day
+        }
+    }
+}
+
 impl Lighting {
+    /// The light at `minutes` after local midnight, at `time` seconds, on
+    /// the fixed day of [`SunTimes::DEFAULT`]. See [`Lighting::at_sun`].
+    pub fn at(minutes: f32, time: f32) -> Option<Lighting> {
+        Lighting::at_sun(minutes, &SunTimes::DEFAULT, time)
+    }
+
     /// The light at `minutes` after local midnight, at `time` seconds:
     /// night, dawn, day, golden hour, sunset and dusk blend into each other
-    /// in small eased steps. `None` by day.
-    pub fn at(minutes: f32, time: f32) -> Option<Lighting> {
+    /// in small eased steps, placed by the sun's times. `None` by day.
+    pub fn at_sun(minutes: f32, sun: &SunTimes, time: f32) -> Option<Lighting> {
+        let stops: Vec<(f32, u32, f32)> = DAY
+            .iter()
+            .map(|&(a, offset, c, s)| (sun.anchor(a) + offset, c, s))
+            .collect();
+        let first = stops[0].0;
         let m = minutes.rem_euclid(24.0 * 60.0);
         // Before the first stop, the night that began the evening before.
-        let m = if m < DAY[0].0 { m + 24.0 * 60.0 } else { m };
-        let i = DAY
+        let m = if m < first { m + 24.0 * 60.0 } else { m };
+        let last = stops[stops.len() - 1];
+        if m >= last.0 {
+            // Night until the first stop of the next day.
+            let channel = |shift: u32| ((last.1 >> shift) & 255) as f32 / 255.0;
+            return Some(Lighting {
+                ambient: Color::rgba(channel(16), channel(8), channel(0), 1.0),
+                strength: last.2,
+                time,
+                dapple: None,
+            });
+        }
+        let i = stops
             .windows(2)
             .position(|w| m < w[1].0)
-            .unwrap_or(DAY.len() - 2);
-        let ((m0, c0, s0), (m1, c1, s1)) = (DAY[i], DAY[i + 1]);
-        let f = ((m - m0) / (m1 - m0)).clamp(0.0, 1.0);
+            .unwrap_or(stops.len() - 2);
+        let ((m0, c0, s0), (m1, c1, s1)) = (stops[i], stops[i + 1]);
+        let f = ((m - m0) / (m1 - m0).max(1e-3)).clamp(0.0, 1.0);
         let f = (f * DAY_STEPS).floor() / DAY_STEPS;
         let f = f * f * (3.0 - 2.0 * f);
         let strength = s0 + (s1 - s0) * f;
@@ -453,15 +592,22 @@ impl Lighting {
     }
 
     /// How bright lamps and lanterns are at `minutes` after midnight, 0 to
-    /// 1: off by day, fading in through dusk and out through dawn.
+    /// 1, on the fixed day of [`SunTimes::DEFAULT`].
     pub fn lamp_level(minutes: f32) -> f32 {
+        Lighting::lamp_level_sun(minutes, &SunTimes::DEFAULT)
+    }
+
+    /// How bright lamps and lanterns are at `minutes` after midnight, 0 to
+    /// 1: off by day, fading in from the golden hour to after dusk and out
+    /// from before dawn to after sunrise.
+    pub fn lamp_level_sun(minutes: f32, sun: &SunTimes) -> f32 {
         let m = minutes.rem_euclid(24.0 * 60.0);
         let ramp = |from: f32, to: f32| {
-            let f = ((m - from) / (to - from)).clamp(0.0, 1.0);
+            let f = ((m - from) / (to - from).max(1e-3)).clamp(0.0, 1.0);
             f * f * (3.0 - 2.0 * f)
         };
-        // Up from 17:30 to 19:30, down from 05:30 to 07:00.
-        ramp(17.5 * 60.0, 19.5 * 60.0).max(1.0 - ramp(5.5 * 60.0, 7.0 * 60.0))
+        ramp(sun.sunset - 45.0, sun.dusk + 30.0)
+            .max(1.0 - ramp(sun.dawn - 15.0, sun.sunrise + 30.0))
     }
 }
 
@@ -831,6 +977,10 @@ pub struct Preferences {
     /// smoothly. Shells that read a clock set it, refreshed every minute;
     /// others leave `None`.
     pub day_time: Option<f32>,
+    /// When the sun rises and sets today where the person is, for scenes
+    /// lit by [`Lighting::at_sun`]. Shells that know the place set it;
+    /// others leave `None`, and apps use [`SunTimes::DEFAULT`].
+    pub sun: Option<SunTimes>,
     /// How long since the person last touched the device, for shells that
     /// save power. Apps may calm motion while `Dim`.
     pub idle: Idle,

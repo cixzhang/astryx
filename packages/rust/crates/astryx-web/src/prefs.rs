@@ -38,6 +38,7 @@ pub fn detect_preferences() -> Preferences {
         // The browser does not say; apps that light scenes read their own clock.
         day_phase: DayPhase::Day,
         day_time: None,
+        sun: None,
         idle: astryx_core::Idle::Active,
         device: None,
         sound_off: false,
