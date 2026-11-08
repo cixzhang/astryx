@@ -6,6 +6,7 @@
 use astryx_core::paged::Paged;
 use astryx_core::*;
 
+pub mod catalog;
 pub mod images;
 mod world;
 

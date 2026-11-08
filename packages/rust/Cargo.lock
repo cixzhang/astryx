@@ -261,6 +261,7 @@ dependencies = [
  "astryx-headless",
  "astryx-render-soft",
  "astryx-theme-pixel",
+ "serde_json",
 ]
 
 [[package]]

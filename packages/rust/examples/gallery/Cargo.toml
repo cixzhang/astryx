@@ -10,6 +10,8 @@ publish = false
 astryx-core.workspace = true
 # World art draws its colors from the pixel palette.
 astryx-theme-pixel = { path = "../../crates/astryx-theme-pixel" }
+# The catalog reads demo props from JSON.
+serde_json = "1"
 
 [dev-dependencies]
 astryx-desktop = { path = "../../crates/astryx-desktop" }
