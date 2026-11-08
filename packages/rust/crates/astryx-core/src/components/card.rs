@@ -288,17 +288,13 @@ impl<Msg> Build<Msg> for SelectableCard<Msg> {
         };
         let mut sem = Semantics::new(
             if in_group {
-                Role::ListBoxOption
+                Role::Radio
             } else {
                 Role::Checkbox
             },
             self.label,
         );
-        if in_group {
-            sem.selected = Some(selected);
-        } else {
-            sem.checked = Some(selected);
-        }
+        sem.checked = Some(selected);
         sem.disabled = self.is_disabled;
         let mut node = node
             .interact(Interact::new(msg, self.is_disabled))

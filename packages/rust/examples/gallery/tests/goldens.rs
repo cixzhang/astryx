@@ -217,7 +217,8 @@ fn brick_world() {
     assert_golden(&png, dir.join("brick-world.png"), TOLERANCE);
 }
 
-/// The SelectableCard, Kbd, and Lab sections in every theme, light and dark.
+/// The SelectableCard, Kbd, OnScreenKeyboard, and Lab sections in every
+/// theme, light and dark.
 #[test]
 fn new_components_in_every_theme() {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens/themes");
@@ -226,6 +227,7 @@ fn new_components_in_every_theme() {
             for (section, height) in [
                 (Section::SelectableCards, 320),
                 (Section::Kbd, 260),
+                (Section::Keyboard, 480),
                 (Section::Lab, 620),
             ] {
                 let mut rt =
@@ -238,5 +240,34 @@ fn new_components_in_every_theme() {
                 );
             }
         }
+    }
+}
+
+/// The on-screen keyboard at Brick size: the chord layout with the down
+/// group latched, and the grid with a key highlighted.
+#[test]
+fn brick_keyboard() {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/goldens");
+    for (name, kind, inputs) in [
+        (
+            "chord",
+            astryx_core::lab::KeyboardKind::Chord,
+            &[Input::Down, Input::B, Input::Down][..],
+        ),
+        (
+            "grid",
+            astryx_core::lab::KeyboardKind::Grid,
+            &[Input::Right, Input::A, Input::Down][..],
+        ),
+    ] {
+        let mut gallery = Gallery::section(Section::Keyboard);
+        gallery.keyboard = astryx_core::lab::KeyboardState::new(kind);
+        let mut rt = astryx_gallery::runtime(gallery);
+        let png = render_png(&mut rt, 1024, 768, 2.0, inputs);
+        assert_golden(
+            &png,
+            dir.join(format!("brick-keyboard-{name}.png")),
+            TOLERANCE,
+        );
     }
 }

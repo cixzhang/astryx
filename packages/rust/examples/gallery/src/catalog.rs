@@ -317,6 +317,11 @@ pub const COMPONENTS: &[ComponentSpec] = &[
         ],
     },
     ComponentSpec {
+        name: "OnScreenKeyboard",
+        variants: &["chord", "grid"],
+        props: &[text("label", "Message"), text("value", "Hello")],
+    },
+    ComponentSpec {
         name: "Kbd",
         variants: &["gamepad", "keyboard"],
         props: &[text("keys", "B")],
@@ -884,6 +889,20 @@ pub fn build<Msg: Clone + 'static>(
             })
             .child(Text::new(p.text("text")))
             .into(),
+        // A picture of the keyboard: typing needs the app to keep its state.
+        "OnScreenKeyboard" => {
+            let kind = if variant == "grid" {
+                lab::KeyboardKind::Grid
+            } else {
+                lab::KeyboardKind::Chord
+            };
+            lab::OnScreenKeyboard::new(
+                p.text("label"),
+                p.text("value"),
+                lab::KeyboardState::new(kind),
+            )
+            .into()
+        }
         "Kbd" => match variant {
             "keyboard" => Kbd::new(&p.text("keys")).into(),
             _ => Kbd::gamepad(&p.text("keys")).into(),

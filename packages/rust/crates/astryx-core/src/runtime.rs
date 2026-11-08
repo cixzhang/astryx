@@ -252,6 +252,8 @@ pub struct Runtime<A: App> {
     bare_page: Option<u64>,
     /// The view was rebuilt since the last frame.
     rebuilt: bool,
+    /// Node timers already sent, by node id and time.
+    fired_timers: HashSet<(u64, u64)>,
     /// The focus last reported to `App::on_focus`.
     reported_focus: Option<Option<u64>>,
     /// Each camera's offset (x, y), moving toward its target.
@@ -316,6 +318,7 @@ impl<A: App> Runtime<A> {
             bare_page: None,
             reported_focus: None,
             rebuilt: false,
+            fired_timers: HashSet::new(),
             cameras: HashMap::new(),
             scroll: HashMap::new(),
             reveal: false,
@@ -391,6 +394,49 @@ impl<A: App> Runtime<A> {
     pub fn app_mut(&mut self) -> &mut A {
         self.stale = true;
         &mut self.app
+    }
+
+    /// Sends the node timers whose time has come, each once.
+    fn fire_timers(&mut self, now: f64) -> Option<Command> {
+        let due: Vec<(u64, f64, A::Msg)> = self
+            .nodes
+            .iter()
+            .filter_map(|n| n.timer.as_ref().map(|(at, msg)| (n.id, *at, msg)))
+            .filter(|&(id, at, _)| at <= now && !self.fired_timers.contains(&(id, at.to_bits())))
+            .map(|(id, at, msg)| (id, at, msg.clone()))
+            .collect();
+        let mut command = None;
+        for (id, at, msg) in due {
+            self.fired_timers.insert((id, at.to_bits()));
+            command = Some(self.send(msg));
+        }
+        command
+    }
+
+    fn timer_pending(&self) -> bool {
+        self.nodes.iter().any(|n| {
+            n.timer
+                .as_ref()
+                .is_some_and(|(at, _)| !self.fired_timers.contains(&(n.id, at.to_bits())))
+        })
+    }
+
+    /// Gives an input to the focused node that captures input, such as an
+    /// on-screen keyboard. `None` when nothing captured it.
+    fn capture(&mut self, input: Input, phase: InputPhase) -> Option<Command> {
+        if matches!(input, Input::Next | Input::Previous) {
+            return None;
+        }
+        let id = self.focused?;
+        let node = self.nodes.iter().find(|n| n.id == id)?;
+        let capture = node.capture.clone()?;
+        self.repaint = true;
+        // The keyboard edits at the end of the text, so the caret goes there.
+        self.carets.remove(&id);
+        Some(match capture(input, phase, self.motion_ms) {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        })
     }
 
     /// Tells the app where focus went, once per change.
@@ -1798,6 +1844,7 @@ impl<A: App> Runtime<A> {
         for event in self.press.tick(now) {
             command = self.press_event(event);
         }
+        command = self.fire_timers(now).unwrap_or(command);
         let held_out = self
             .hold
             .filter(|h| !h.done && (now - h.started_ms) as f32 >= h.duration_ms);
@@ -2100,21 +2147,35 @@ impl<A: App> Runtime<A> {
     fn handle_a11y_action(&mut self, id: u64, action: A11yAction) -> Command {
         self.repaint = true;
         self.repeats.cancel();
+        if action == A11yAction::PressCancel {
+            self.end_press();
+            self.pressed = None;
+            return Command::None;
+        }
         let Some(stop) = self.stop_index(Some(id)) else {
             return Command::None;
         };
-        self.set_focus(stop);
-        self.reveal_focus(true);
+        if self.focused != Some(id) {
+            self.set_focus(stop);
+            self.reveal_focus(true);
+        }
         match action {
-            A11yAction::Focus => Command::None,
+            A11yAction::Focus | A11yAction::PressCancel => Command::None,
             A11yAction::Activate => self.activate(id),
+            // A pointer press runs the same press as A, so press feedback,
+            // long presses, and holds behave alike.
+            A11yAction::PressStart => self.handle_input(Input::A, InputPhase::Pressed),
+            A11yAction::PressEnd => self.handle_input(Input::A, InputPhase::Released),
         }
     }
 }
 
 impl<A: App> Surface for Runtime<A> {
     fn input(&mut self, input: Input, phase: InputPhase) -> Command {
-        let command = self.handle_input(input, phase);
+        let command = match self.capture(input, phase) {
+            Some(command) => command,
+            None => self.handle_input(input, phase),
+        };
         let followed = self.report_focus();
         if command == Command::None {
             followed
@@ -2387,6 +2448,7 @@ impl<A: App> Surface for Runtime<A> {
             || self.highlight.wants_frames()
             || self.press_scale.is_animating()
             || self.hold.is_some_and(|h| !h.done)
+            || self.timer_pending()
             || self.hold_release.is_some()
             || self.moving.values().any(|m| m.shown.is_animating())
             || self.cameras.values().any(|c| c.is_animating())

@@ -9,7 +9,13 @@
 //! - [`SelectableCardGroup`]: a single choice among `SelectableCard`s, as a
 //!   radio group of cards.
 //! - [`KeyHints`]: a row of gamepad keys and what they do.
+//! - [`OnScreenKeyboard`]: text entry with a gamepad, as a chord ring or a
+//!   grid.
 
+pub use crate::components::keyboard::{
+    ChordLayer, ChordLayout, GridLayout, KeyboardAction, KeyboardKind, KeyboardState,
+    KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
+};
 use crate::components::text::{text_node, type_style};
 use crate::components::{
     dim, len, radii, square, Button, ButtonSize, ButtonVariant, IconSize, SelectableCard,
@@ -624,8 +630,6 @@ impl<Msg: Clone + 'static> Build<Msg> for SelectableCardGroup<Msg> {
         }
         let gap = len(self.gap.points(cx.tokens));
         cx.key(self.base.id.as_deref());
-        // The group is a list of options until the contract has a radio
-        // group role.
         let ix = cx.begin(
             Node::new(Style {
                 flex_direction: if self.is_horizontal {
@@ -644,7 +648,7 @@ impl<Msg: Clone + 'static> Build<Msg> for SelectableCardGroup<Msg> {
                 },
                 ..Style::default()
             })
-            .sem(Semantics::new(Role::ListBox, self.label)),
+            .sem(Semantics::new(Role::RadioGroup, self.label)),
         );
         let group = cx.id_of(ix);
         for (value, mut card) in self.options {

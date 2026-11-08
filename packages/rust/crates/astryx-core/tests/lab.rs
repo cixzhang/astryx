@@ -105,11 +105,11 @@ fn plans(value: Option<&'static str>) -> impl Fn() -> Element<String> {
 fn a_card_group_chooses_one_and_is_one_step_for_next() {
     let mut rt = runtime(plans(Some("pro")));
     draw(&mut rt, 400, 600);
-    let group = a11y(&rt, Role::ListBox);
+    let group = a11y(&rt, Role::RadioGroup);
     assert_eq!(group[0].label.as_deref(), Some("Plan"));
-    let options = a11y(&rt, Role::ListBoxOption);
+    let options = a11y(&rt, Role::Radio);
     assert_eq!(
-        options.iter().map(|o| o.selected).collect::<Vec<_>>(),
+        options.iter().map(|o| o.checked).collect::<Vec<_>>(),
         [Some(false), Some(true), Some(false)]
     );
     // Next from Before lands on the chosen card; Next again leaves the group.
@@ -447,4 +447,56 @@ fn contained_rows_keep_their_surface_and_border_when_unselected() {
         rows[0].bounds.height, rows[2].bounds.height,
         "the border takes no extra room"
     );
+}
+
+// ---- Pointer presses ----
+
+#[test]
+fn a_pointer_press_runs_the_same_press_as_a() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(Button::new("One").on_click("one"))
+            .child(Button::new("Two").on_click("two"))
+            .into()
+    });
+    step(&mut rt, 0.0);
+    let two = a11y(&rt, Role::Button)[1].id;
+    rt.a11y_action(two, A11yAction::PressStart);
+    step(&mut rt, 0.0);
+    assert!(
+        focused(&rt).is_some_and(|n| n.id == two),
+        "the press focuses"
+    );
+    assert!(rt.app().sent.is_empty(), "nothing on press");
+    rt.a11y_action(two, A11yAction::PressEnd);
+    assert_eq!(rt.app().sent, ["two"]);
+    rt.a11y_action(two, A11yAction::PressStart);
+    rt.a11y_action(two, A11yAction::PressCancel);
+    step(&mut rt, 0.1);
+    assert_eq!(rt.app().sent, ["two"], "a cancelled press does nothing");
+}
+
+#[test]
+fn click_and_hold_confirms_a_hold_button_and_a_quick_click_does_not() {
+    let mut rt = runtime(|| {
+        HoldButton::new("Delete")
+            .duration_ms(500)
+            .on_confirm("deleted")
+            .into()
+    });
+    step(&mut rt, 0.0);
+    let id = a11y(&rt, Role::Button)[0].id;
+    rt.a11y_action(id, A11yAction::PressStart);
+    step(&mut rt, 0.1);
+    rt.a11y_action(id, A11yAction::PressEnd);
+    step(&mut rt, 0.5);
+    assert!(rt.app().sent.is_empty(), "a quick click does not confirm");
+    rt.a11y_action(id, A11yAction::PressStart);
+    step(&mut rt, 0.0);
+    step(&mut rt, 0.6);
+    assert_eq!(rt.app().sent, ["deleted"], "held long enough");
+    rt.a11y_action(id, A11yAction::PressEnd);
+    // Assistive technology activates at once.
+    rt.a11y_action(id, A11yAction::Activate);
+    assert_eq!(rt.app().sent, ["deleted", "deleted"]);
 }

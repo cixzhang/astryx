@@ -141,16 +141,17 @@ fn main() {
     assert_eq!(
         log[..3],
         [
-            Event::Action(2, A11yAction::Focus),
-            Event::Action(2, A11yAction::Activate),
-            Event::Action(2, A11yAction::Focus),
+            Event::Action(2, A11yAction::PressStart),
+            Event::Action(2, A11yAction::PressEnd),
+            Event::Action(2, A11yAction::PressStart),
         ],
-        "a click activates; a release over another node does not"
+        "a click presses and releases; a release over another node cancels"
     );
+    assert_eq!(log[3], Event::Action(2, A11yAction::PressCancel));
     // winit on X11 reports a synthetic wheel click on both press and release,
     // so each notch arrives once or twice. The sign and size must be right.
     let at = Point { x: 230.0, y: 40.0 };
-    let scrolls: Vec<f32> = log[3..]
+    let scrolls: Vec<f32> = log[4..]
         .iter()
         .map(|e| match e {
             Event::Scroll(p, d) if *p == at && d.x == 0.0 => d.y,

@@ -682,7 +682,7 @@ impl Runner {
         let hit = shell.pointer_hit(event);
         shell.pointer_target = hit.map(|(id, _)| id);
         if let Some((id, _)) = hit {
-            shell.a11y_action(id, A11yAction::Focus);
+            shell.a11y_action(id, A11yAction::PressStart);
             shell.render(now(&self.window), false);
         }
         shell.mirror.focus_tab_stop();
@@ -697,11 +697,16 @@ impl Runner {
         let Some(target) = shell.pointer_target.take() else {
             return;
         };
-        if shell.pointer_hit(event).map(|(id, _)| id) == Some(target) {
-            shell.a11y_action(target, A11yAction::Activate);
-            drop(shell);
-            self.schedule();
-        }
+        // Lifting over the pressed node ends the press as a click; lifting
+        // elsewhere cancels it.
+        let action = if shell.pointer_hit(event).map(|(id, _)| id) == Some(target) {
+            A11yAction::PressEnd
+        } else {
+            A11yAction::PressCancel
+        };
+        shell.a11y_action(target, action);
+        drop(shell);
+        self.schedule();
     }
 
     fn on_pointermove(&self, event: &web_sys::PointerEvent) {

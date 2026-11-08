@@ -411,6 +411,11 @@ pub(crate) enum Axis {
     Vertical,
 }
 
+/// Takes an input, its phase, and the runtime's clock in milliseconds; may
+/// return the app's message.
+pub(crate) type Capture<Msg> =
+    std::rc::Rc<dyn Fn(crate::contract::Input, crate::contract::InputPhase, f64) -> Option<Msg>>;
+
 /// One built node. Children always follow their parent in the node list.
 pub(crate) struct Node<Msg> {
     pub id: u64,
@@ -454,6 +459,12 @@ pub(crate) struct Node<Msg> {
     /// a single-choice group; `group_entry` marks the stop they land on.
     pub group: Option<u64>,
     pub group_entry: bool,
+    /// While focused, takes every input but Next and Previous, with the
+    /// runtime's clock in milliseconds, and returns the app's message.
+    pub capture: Option<Capture<Msg>>,
+    /// A message the runtime sends once its clock reaches the time, in
+    /// milliseconds.
+    pub timer: Option<(f64, Msg)>,
     /// A `paged::Paged` viewport: its scroll offset rests on page starts.
     pub pager: bool,
     /// A `paged::CameraFollow` viewport, offset in both directions.
@@ -487,6 +498,8 @@ impl<Msg> Node<Msg> {
             name: None,
             group: None,
             group_entry: false,
+            capture: None,
+            timer: None,
             pager: false,
             camera: false,
         }

@@ -3,6 +3,9 @@
 //! last action. The theme selector and the dark mode switch at the top
 //! change the theme at run time.
 
+use astryx_core::lab::{
+    KeyboardAction, KeyboardKind, KeyboardState, KeyboardUpdate, OnScreenKeyboard,
+};
 use astryx_core::paged::Paged;
 use astryx_core::*;
 
@@ -41,12 +44,13 @@ pub enum Section {
     Thumbnails,
     SelectableCards,
     Kbd,
+    Keyboard,
     Lab,
     World,
 }
 
 impl Section {
-    pub const ALL: [Section; 19] = [
+    pub const ALL: [Section; 20] = [
         Section::Typography,
         Section::Stacks,
         Section::Buttons,
@@ -64,6 +68,7 @@ impl Section {
         Section::Thumbnails,
         Section::SelectableCards,
         Section::Kbd,
+        Section::Keyboard,
         Section::Lab,
         Section::World,
     ];
@@ -87,6 +92,7 @@ impl Section {
             Section::Thumbnails => "Thumbnail",
             Section::SelectableCards => "SelectableCard",
             Section::Kbd => "Kbd",
+            Section::Keyboard => "OnScreenKeyboard",
             Section::Lab => "Lab",
             Section::World => "World",
         }
@@ -112,6 +118,7 @@ impl Section {
             Section::Thumbnails => "Open, remove, loading, and disabled",
             Section::SelectableCards => "Selected, unselected, variants, and disabled",
             Section::Kbd => "Keyboard shortcuts, gamepad buttons, and key hints",
+            Section::Keyboard => "Chord and grid keyboards for gamepads; L1 and R1 together switch",
             Section::Lab => "StatusBar, HoldButton, Image, and card choices (experimental)",
             Section::World => "Board, sprites, and a camera that follows focus (experimental)",
         }
@@ -137,6 +144,7 @@ impl Section {
             Section::Thumbnails => "thumbnails",
             Section::SelectableCards => "selectable-cards",
             Section::Kbd => "kbd",
+            Section::Keyboard => "on-screen-keyboard",
             Section::Lab => "lab",
             Section::World => "world",
         }
@@ -172,6 +180,7 @@ pub enum Msg {
     Card(usize, bool),
     /// A plan chosen in the card group.
     Plan(String),
+    Keyboard(KeyboardUpdate),
 }
 
 /// The gallery's state.
@@ -200,6 +209,10 @@ pub struct Gallery {
     pub cards: [bool; 4],
     /// The chosen plan in the Lab section's card group.
     pub plan: String,
+    pub keyboard: KeyboardState,
+    pub typed: String,
+    /// What the keyboard last finished with: "Done" or "Cancelled".
+    pub finished: Option<&'static str>,
 }
 
 impl Default for Gallery {
@@ -234,6 +247,9 @@ impl Default for Gallery {
             world_at: None,
             cards: [true, false, true, false],
             plan: "pro".into(),
+            keyboard: KeyboardState::default(),
+            typed: String::new(),
+            finished: None,
         }
     }
 }
@@ -327,6 +343,16 @@ impl App for Gallery {
             Msg::WorldFocus(id) => self.world_at = Some(id),
             Msg::Card(i, on) => self.cards[i] = on,
             Msg::Plan(plan) => self.plan = plan,
+            Msg::Keyboard(update) => {
+                self.keyboard = update.state;
+                self.typed = update.value;
+                match update.action {
+                    Some(KeyboardAction::Done) => self.finished = Some("Done"),
+                    Some(KeyboardAction::Cancel) => self.finished = Some("Cancelled"),
+                    // A real app would keep the layout as a preference here.
+                    Some(KeyboardAction::Switched(_)) | None => {}
+                }
+            }
             Msg::Field(label, value) => {
                 self.fields.insert(label, value);
             }
@@ -614,6 +640,7 @@ impl Gallery {
             Section::Thumbnails => self.thumbnails(),
             Section::SelectableCards => self.selectable_cards(),
             Section::Kbd => kbd(),
+            Section::Keyboard => self.keyboard(),
             Section::Lab => lab::lab(self),
             Section::World => world::world(self.world_at.as_deref()),
         }
@@ -979,6 +1006,42 @@ fn typography() -> Element<Msg> {
     ]
     .gap(Space::S4)
     .into()
+}
+
+impl Gallery {
+    fn keyboard(&self) -> Element<Msg> {
+        let grid = self.keyboard.kind == KeyboardKind::Grid;
+        let finished = match self.finished {
+            Some(how) => format!("{how}: \"{}\"", self.typed),
+            None if grid => "Move with the D-pad, press A to type".to_string(),
+            None => "Hold or tap a direction, then A, B, X, or Y".to_string(),
+        };
+        let hints = if grid {
+            astryx_core::lab::KeyHints::new()
+                .key("B", "Delete")
+                .key("X", "Space")
+                .key("Y", "Capitals")
+                .key("L2 R2", "Symbols")
+        } else {
+            astryx_core::lab::KeyHints::new()
+                .key("L1", "Delete")
+                .key("R1", "Space")
+                .key("L2 R2", "Layer")
+        };
+        vstack![
+            OnScreenKeyboard::new("Message", self.typed.clone(), self.keyboard.clone())
+                .on_change(Msg::Keyboard),
+            Text::new(finished)
+                .size(TextSize::Sm)
+                .color(TextColor::Secondary),
+            hints
+                .key("Start", "Done")
+                .key("Select", "Cancel")
+                .key("L1+R1", "Switch keyboard"),
+        ]
+        .gap(Space::S3)
+        .into()
+    }
 }
 
 fn kbd() -> Element<Msg> {

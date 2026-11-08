@@ -145,7 +145,7 @@ fn destructive_ring_takes_the_error_color() {
             .variant(ButtonVariant::Destructive)
             .into()
     });
-    assert_eq!(rings(&list, c(t.color.error)).len(), 1);
+    assert_eq!(rings(&list, c(t.color.border_error)).len(), 1);
     assert!(rings(&list, c(t.color.accent)).is_empty());
 }
 

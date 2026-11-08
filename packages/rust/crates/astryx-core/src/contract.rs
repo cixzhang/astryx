@@ -716,6 +716,10 @@ pub enum Role {
     ListBox,
     /// One choice in a `ListBox`. `selected` tells whether it is chosen.
     ListBoxOption,
+    /// A set of choices of which one is chosen at a time.
+    RadioGroup,
+    /// One choice in a `RadioGroup`. `checked` tells whether it is chosen.
+    Radio,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to
@@ -904,6 +908,20 @@ pub trait Surface {
 pub enum A11yAction {
     /// Move app focus to the node.
     Focus,
-    /// Activate the node, as `Input::A` does for the focused node.
+    /// Activate the node, as `Input::A` does for the focused node. Assistive
+    /// technology sends it; it acts at once, even on controls that confirm
+    /// only after a held press.
     Activate,
+    /// A pointer went down on the node: focus it and start a press, as
+    /// `Input::A` going down does.
+    PressStart,
+    /// The pointer that started a press came up over the same node: end the
+    /// press, as `Input::A` coming up does, which activates it (a control
+    /// that confirms on a held press does so only if it was held long
+    /// enough).
+    PressEnd,
+    /// The pointer came up elsewhere: end the press without activating.
+    /// Surfaces that do not track presses treat `PressStart` as `Focus`,
+    /// `PressEnd` as `Activate`, and ignore `PressCancel`.
+    PressCancel,
 }

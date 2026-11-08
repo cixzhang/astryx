@@ -11,6 +11,7 @@ pub(crate) mod icon_paths;
 pub(crate) mod input;
 pub(crate) mod item;
 pub(crate) mod kbd;
+pub(crate) mod keyboard;
 pub(crate) mod media;
 pub(crate) mod stack;
 pub(crate) mod switch;

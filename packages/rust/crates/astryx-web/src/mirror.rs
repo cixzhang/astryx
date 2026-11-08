@@ -113,6 +113,10 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
             d.tag = "div";
             role = Some("listbox");
         }
+        Role::RadioGroup => {
+            d.tag = "div";
+            role = Some("radiogroup");
+        }
         Role::ComboBox | Role::ListBoxOption => {
             d.tag = "div";
             role = Some(if node.role == Role::ComboBox {
@@ -136,12 +140,13 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
             d.text = join(&node.label, &node.value).filter(|_| leaf);
             name_from_text = true;
         }
-        Role::Button | Role::Switch | Role::Checkbox => {
+        Role::Button | Role::Switch | Role::Checkbox | Role::Radio => {
             d.tag = "button";
             d.attrs.push(("type", "button".into()));
             match node.role {
                 Role::Switch => role = Some("switch"),
                 Role::Checkbox => role = Some("checkbox"),
+                Role::Radio => role = Some("radio"),
                 _ => {}
             }
             if let Some(checked) = node.checked {
@@ -599,6 +604,19 @@ mod tests {
             .iter()
             .find(|(n, _)| *n == name)
             .map(|(_, v)| v.as_str())
+    }
+
+    #[test]
+    fn radios_carry_their_role_and_checked_state() {
+        let mut n = node(Role::Radio);
+        n.checked = Some(false);
+        let d = describe(&n, Some(false));
+        assert_eq!(
+            (d.tag, attr(&d, "role"), attr(&d, "aria-checked")),
+            ("button", Some("radio"), Some("false"))
+        );
+        let g = describe(&node(Role::RadioGroup), None);
+        assert_eq!(attr(&g, "role"), Some("radiogroup"));
     }
 
     #[test]

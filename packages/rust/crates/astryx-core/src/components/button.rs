@@ -142,9 +142,11 @@ impl<Msg> Build<Msg> for Button<Msg> {
             ButtonVariant::Destructive => (c.on_error.into(), c.error.into()),
         };
         // The ring matches the variant it rings, so a red button does not
-        // read as another control's focus.
+        // read as another control's focus. It takes the error border color,
+        // not the fill, so it stays visible on the ground when a theme's
+        // error fill is light.
         let ring = if self.variant == ButtonVariant::Destructive {
-            c.error
+            c.border_error
         } else {
             c.accent
         };

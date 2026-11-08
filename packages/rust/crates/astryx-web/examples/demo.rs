@@ -676,8 +676,12 @@ impl Surface for Demo {
         else {
             return Command::None;
         };
+        if action == A11yAction::PressCancel {
+            return Command::None;
+        }
         self.set_focus(index);
-        if action == A11yAction::Activate {
+        // The demo does not track presses: a pointer press ending is a click.
+        if matches!(action, A11yAction::Activate | A11yAction::PressEnd) {
             self.activate();
         }
         Command::None

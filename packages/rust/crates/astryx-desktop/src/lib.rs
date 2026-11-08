@@ -480,13 +480,20 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                     ElementState::Pressed => {
                         self.pointer_target = hit;
                         if let Some(id) = hit {
-                            let command = self.surface.a11y_action(id, A11yAction::Focus);
+                            let command = self.surface.a11y_action(id, A11yAction::PressStart);
                             self.handle(event_loop, command);
                         }
                     }
                     ElementState::Released => {
-                        if let Some(id) = self.pointer_target.take().filter(|t| hit == Some(*t)) {
-                            let command = self.surface.a11y_action(id, A11yAction::Activate);
+                        if let Some(id) = self.pointer_target.take() {
+                            // Lifting over the pressed node ends the press as a
+                            // click; lifting elsewhere cancels it.
+                            let action = if hit == Some(id) {
+                                A11yAction::PressEnd
+                            } else {
+                                A11yAction::PressCancel
+                            };
+                            let command = self.surface.a11y_action(id, action);
                             self.handle(event_loop, command);
                         }
                     }

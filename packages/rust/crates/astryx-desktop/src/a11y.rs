@@ -27,6 +27,8 @@ fn role(role: Role) -> AkRole {
         Role::ComboBox => AkRole::ComboBox,
         Role::ListBox => AkRole::ListBox,
         Role::ListBoxOption => AkRole::ListBoxOption,
+        Role::RadioGroup => AkRole::RadioGroup,
+        Role::Radio => AkRole::RadioButton,
     }
 }
 
@@ -80,6 +82,7 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
             | Role::TextInput
             | Role::ComboBox
             | Role::ListBoxOption
+            | Role::Radio
     ) && !node.disabled
     {
         ak.add_action(Action::Click);
@@ -201,6 +204,12 @@ mod tests {
             .unwrap()
             .1;
         assert_eq!(group.children(), &[NodeId(2), NodeId(3)]);
+    }
+
+    #[test]
+    fn radios_map_to_radio_roles() {
+        assert_eq!(role(Role::RadioGroup), AkRole::RadioGroup);
+        assert_eq!(role(Role::Radio), AkRole::RadioButton);
     }
 
     #[test]

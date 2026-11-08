@@ -1264,7 +1264,12 @@ impl Surface for FixtureSurface {
             return Command::None;
         }
         self.focus = (id - 3) as usize;
-        if action == A11yAction::Activate && self.focus == 2 {
+        // This fixture does not track presses: a pointer press ending is a click.
+        let activates = matches!(action, A11yAction::Activate | A11yAction::PressEnd);
+        if action == A11yAction::PressCancel {
+            return Command::None;
+        }
+        if activates && self.focus == 2 {
             self.toggled = !self.toggled;
         }
         Command::None
