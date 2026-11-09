@@ -723,6 +723,15 @@ def main():
         opened = list(opened.values())
         check("Command::OpenUrl opens a new tab without an opener", len(opened) == 1
               and opened[0].get("canAccessOpener") is not True, opened)
+        # Full Chromium's --headless puts the new tab in front, which hides
+        # the app's tab: no animation frames, so no gamepad polling or
+        # resize handling, as in a real browser. Close it and come back.
+        for tab in opened:
+            cdp.send("Target.closeTarget", {"targetId": tab["targetId"]}, session=False)
+        cdp.send("Page.bringToFront")
+        settle(cdp, 200)
+        check("the app's tab is in front again after the help tab closes",
+              cdp.eval("document.visibilityState") == "visible", cdp.eval("document.visibilityState"))
         key(cdp, "Tab", vk=9)
         check("Tab past the last item leaves the app (no keyboard trap)",
               cdp.eval("document.activeElement.id") == "after", cdp.eval("document.activeElement.outerHTML"))
