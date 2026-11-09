@@ -311,6 +311,31 @@ fn the_status_bar_shows_a_muted_speaker_while_sounds_are_off() {
 }
 
 #[test]
+fn wifi_is_crossed_out_whenever_it_is_not_connected() {
+    let paths = |wifi: Radio| {
+        let device = DeviceStatus {
+            wifi,
+            time: (9, 0),
+            ..DeviceStatus::default()
+        };
+        let list = paint(move || Element::<()>::from(StatusBar::new().device(device.clone())));
+        list.commands
+            .iter()
+            .find_map(|c| match c {
+                DrawCmd::Path { commands, .. } => Some(commands.len()),
+                _ => None,
+            })
+            .unwrap()
+    };
+    let connected = paths(Radio::Connected);
+    assert!(
+        paths(Radio::On) > connected,
+        "on but not connected: crossed out"
+    );
+    assert_eq!(paths(Radio::On), paths(Radio::Off));
+}
+
+#[test]
 fn a_low_battery_gauge_turns_to_the_error_color() {
     let t = light();
     let device = DeviceStatus {

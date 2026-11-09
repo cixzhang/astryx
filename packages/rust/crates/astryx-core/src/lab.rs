@@ -32,7 +32,8 @@ use taffy::prelude::*;
 
 // ---- StatusBar ----
 
-/// A compact row of device status: the time, Wi-Fi, Bluetooth, a muted
+/// A compact row of device status: the time, Wi-Fi (crossed out when not
+/// connected), Bluetooth, a muted
 /// speaker while sounds are off, and the battery. It shows the shell's
 /// `Preferences::device` and `Preferences::sound_off`, and nothing when
 /// the shell reports no device. Assistive technology reads it as one line,
@@ -315,18 +316,16 @@ impl<Msg> Build<Msg> for StatusBar {
         }));
         let (wifi, wifi_color) = match device.wifi {
             Radio::Off => ("wifiOff", c.icon_secondary),
-            Radio::On => ("wifi", c.icon_secondary),
+            Radio::On => ("wifiOff", c.icon_secondary),
             Radio::Connected => ("wifi", c.icon_primary),
         };
+        // Crossed out whenever there is no connection, on or off.
+        let offline = device.wifi != Radio::Connected;
         let mut paths = WIFI.to_vec();
-        if device.wifi == Radio::Off {
+        if offline {
             paths.extend_from_slice(SLASH);
         }
-        let bits = if device.wifi == Radio::Off {
-            WIFI_OFF_BITS
-        } else {
-            WIFI_BITS
-        };
+        let bits = if offline { WIFI_OFF_BITS } else { WIFI_BITS };
         let icon = named_icon(cx, (wifi, bits), paths, side, wifi_color.into(), false);
         cx.leaf(icon);
         if device.bluetooth != Radio::Off {
