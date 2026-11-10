@@ -360,7 +360,11 @@ pub struct Interact<Msg> {
 /// A text field's value and how to report a new one.
 pub struct Edit<Msg> {
     pub value: String,
-    pub on_change: std::rc::Rc<dyn Fn(String) -> Msg>,
+    /// The message a new value sends, if any.
+    pub on_change: Option<std::rc::Rc<dyn Fn(String) -> Msg>>,
+    /// Runs with a new value before `on_change`: a component keeping its
+    /// own draft text (a combobox query) in local state.
+    pub effect: Option<std::rc::Rc<dyn Fn(String)>>,
     /// The index of the node that draws the value, for the caret.
     pub text_node: u32,
     /// Drawn masked, so the caret follows the mask.

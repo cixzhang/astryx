@@ -2677,8 +2677,8 @@ impl<A: App> Runtime<A> {
             effect(&e);
             self.stale = true;
         }
-        match on_drag {
-            Some(f) => self.send(f(&e)),
+        match on_drag.and_then(|f| f(&e)) {
+            Some(msg) => self.send(msg),
             None => Command::None,
         }
     }
@@ -3601,7 +3601,11 @@ impl<A: App> Surface for Runtime<A> {
             return Command::None;
         };
         let id = self.nodes[ix].id;
-        let (old, on_change) = (self.field_value(id, edit), edit.on_change.clone());
+        let (old, on_change, effect) = (
+            self.field_value(id, edit),
+            edit.on_change.clone(),
+            edit.effect.clone(),
+        );
         let mut caret = self.caret(id, &old);
         let mut value: Vec<char> = old.chars().collect();
         for ch in text.chars() {
@@ -3627,10 +3631,17 @@ impl<A: App> Surface for Runtime<A> {
         if value == old {
             return Command::None;
         }
-        let msg = on_change(value.clone());
+        if let Some(effect) = effect {
+            effect(value.clone());
+            self.stale = true;
+        }
+        let msg = on_change.map(|f| f(value.clone()));
         // Keystrokes before the next frame build on this value.
         self.typed = Some((id, value));
-        self.send(msg)
+        match msg {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        }
     }
 
     fn take_image_updates(&mut self) -> Vec<(ImageId, Option<ImageData>)> {

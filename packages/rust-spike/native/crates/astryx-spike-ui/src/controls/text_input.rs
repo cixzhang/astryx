@@ -268,7 +268,8 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
                 cx.end();
                 let edit = Edit {
                     value: self.value.clone(),
-                    on_change: on_change.clone(),
+                    on_change: Some(on_change.clone()),
+                    effect: None,
                     text_node: text_ix,
                     masked,
                     caret: color(c.text_primary),
