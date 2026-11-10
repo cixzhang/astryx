@@ -365,6 +365,7 @@ version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-spike-foundations",
+ "astryx-spike-layers",
  "astryx-tokens",
  "taffy",
 ]

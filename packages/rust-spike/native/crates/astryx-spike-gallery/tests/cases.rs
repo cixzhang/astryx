@@ -15,10 +15,11 @@ fn every_case_renders_in_a_named_box() {
         let mut rt = astryx_core::Runtime::new(g);
         astryx_core::testing::draw(&mut rt, 420, 300);
         let tree = astryx_core::contract::Surface::accessibility(&rt).expect(&id);
-        let named = tree
-            .children
-            .iter()
-            .any(|c| c.role == Role::Group && c.label.as_deref() == Some("case"));
+        // A modal layer (BottomSheet) makes the page, case box included,
+        // inert, so only the layer is in the tree.
+        let named = astryx_spike_ui::testkit::flatten(&tree).iter().any(|c| {
+            (c.role == Role::Group && c.label.as_deref() == Some("case")) || c.role == Role::Dialog
+        });
         assert!(named, "{id}: {tree:#?}");
     }
 }
