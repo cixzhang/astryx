@@ -1,0 +1,11 @@
+[package]
+name = "astryx-spike-layers"
+description = "Astryx layers for the Rust stack: anchored placement with flips and the viewport gutter, popovers, dialogs, tooltips, context menus, and hover intent"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core = { workspace = true }
+astryx-tokens = { workspace = true }
+taffy = { workspace = true }

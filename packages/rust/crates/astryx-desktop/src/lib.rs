@@ -25,7 +25,10 @@ use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use astryx_core::{A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, Surface};
+use astryx_core::{
+    A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, PointerEvent, PointerKind,
+    PointerPhase, Surface,
+};
 use astryx_render_gl::GlRenderer;
 use astryx_render_soft::tiny_skia::{IntSize, Pixmap};
 use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
@@ -484,6 +487,16 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 });
                 self.update_cursor();
                 self.hover();
+                if let Some(at) = self.pointer {
+                    let outcome = self.surface.pointer(PointerEvent {
+                        id: 0,
+                        kind: PointerKind::Mouse,
+                        phase: PointerPhase::Move,
+                        at,
+                        button: 0,
+                    });
+                    self.handle(event_loop, outcome.command);
+                }
             }
             WindowEvent::CursorLeft { .. } => {
                 self.pointer = None;
@@ -496,6 +509,24 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 ..
             } => {
                 let hit = self.pointer_hit().map(|n| n.id);
+                if let Some(at) = self.pointer {
+                    let phase = match state {
+                        ElementState::Pressed => PointerPhase::Down,
+                        ElementState::Released => PointerPhase::Up,
+                    };
+                    let outcome = self.surface.pointer(PointerEvent {
+                        id: 0,
+                        kind: PointerKind::Mouse,
+                        phase,
+                        at,
+                        button: 0,
+                    });
+                    self.handle(event_loop, outcome.command);
+                    if outcome.handled {
+                        self.pointer_target = None;
+                        return;
+                    }
+                }
                 match state {
                     ElementState::Pressed => {
                         self.pointer_target = hit;

@@ -386,6 +386,31 @@ impl Shell {
         }
     }
 
+    /// Sends a pointer event to the surface; true when it took the event.
+    fn pointer(&mut self, event: &web_sys::PointerEvent, phase: astryx_core::PointerPhase) -> bool {
+        if self.stopped {
+            return false;
+        }
+        let rect = self.canvas.get_bounding_client_rect();
+        let kind = match event.pointer_type().as_str() {
+            "touch" => astryx_core::PointerKind::Touch,
+            "pen" => astryx_core::PointerKind::Pen,
+            _ => astryx_core::PointerKind::Mouse,
+        };
+        let outcome = self.surface.pointer(astryx_core::PointerEvent {
+            id: event.pointer_id() as u64,
+            kind,
+            phase,
+            at: astryx_core::Point {
+                x: (event.client_x() as f64 - rect.left()) as f32,
+                y: (event.client_y() as f64 - rect.top()) as f32,
+            },
+            button: event.button().max(0) as u8,
+        });
+        self.handle(outcome.command);
+        outcome.handled
+    }
+
     fn a11y_action(&mut self, id: u64, action: A11yAction) {
         if self.stopped {
             return;
@@ -712,6 +737,14 @@ impl Runner {
         };
         // Keeps DOM focus in the app and stops text selection on the canvas.
         event.prevent_default();
+        if shell.pointer(event, astryx_core::PointerPhase::Down) {
+            shell.pointer_target = None;
+            shell.render(now(&self.window), false);
+            shell.mirror.focus_tab_stop();
+            drop(shell);
+            self.schedule();
+            return;
+        }
         let hit = shell.pointer_hit(event);
         shell.pointer_target = hit.map(|(id, _)| id);
         if let Some((id, _)) = hit {
@@ -727,6 +760,7 @@ impl Runner {
         let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
+        shell.pointer(event, astryx_core::PointerPhase::Up);
         let Some(target) = shell.pointer_target.take() else {
             return;
         };
@@ -755,8 +789,11 @@ impl Runner {
             shell.cursor = cursor;
             let _ = shell.canvas.style().set_property("cursor", cursor);
         }
+        shell.pointer(event, astryx_core::PointerPhase::Move);
         // Touch never hovers.
         if event.pointer_type() == "touch" {
+            drop(shell);
+            self.schedule();
             return;
         }
         let rect = shell.canvas.get_bounding_client_rect();
