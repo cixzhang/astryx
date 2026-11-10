@@ -70,6 +70,9 @@ pub struct LayerSpec<Msg> {
     /// The message a dismissal sends. Without one, the layer never closes
     /// itself.
     pub on_dismiss: Option<Rc<dyn Fn(DismissReason) -> Msg>>,
+    /// Runs on a dismissal before `on_dismiss`: a change to a component's
+    /// own state (an uncontrolled popover closing itself).
+    pub dismiss_effect: Option<Rc<dyn Fn(DismissReason)>>,
     /// A tint drawn over the page behind a modal layer.
     pub backdrop: Option<crate::contract::Color>,
 }
@@ -86,6 +89,7 @@ impl<Msg> LayerSpec<Msg> {
             light_dismiss: false,
             escape_dismiss: false,
             on_dismiss: None,
+            dismiss_effect: None,
             backdrop: None,
         }
     }
@@ -116,7 +120,10 @@ pub struct HoverSpec<Msg> {
     pub leave_ms: f64,
     /// Keyboard focus on this node (focus visible) counts as hover at once.
     pub focus: bool,
-    pub on_change: Rc<dyn Fn(bool) -> Msg>,
+    pub on_change: Option<Rc<dyn Fn(bool) -> Msg>>,
+    /// Runs on a change before `on_change`: a change to a component's own
+    /// state (an uncontrolled tooltip).
+    pub effect: Option<Rc<dyn Fn(bool)>>,
 }
 
 /// A paint state a node's [`Draw`](crate::element::Draw) can change in, of

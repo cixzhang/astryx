@@ -352,6 +352,9 @@ pub struct Interact<Msg> {
     pub edit: Option<Edit<Msg>>,
     /// Activates only after A is held this many milliseconds.
     pub hold: Option<f32>,
+    /// Runs on activation, before `on_activate` is sent: a change to the
+    /// component's own state through a [`LocalHandle`].
+    pub effect: Option<std::rc::Rc<dyn Fn()>>,
 }
 
 /// A text field's value and how to report a new one.
@@ -386,7 +389,14 @@ impl<Msg> Interact<Msg> {
             href: None,
             edit: None,
             hold: None,
+            effect: None,
         }
+    }
+
+    /// Runs `f` on activation, before `on_activate` is sent.
+    pub fn effect(mut self, f: impl Fn() + 'static) -> Self {
+        self.effect = Some(std::rc::Rc::new(f));
+        self
     }
     /// Opens `href` on activation, unless Astryx's navigation rules refuse it.
     pub fn href(mut self, href: Option<&str>) -> Self {
@@ -583,6 +593,15 @@ pub struct Node<Msg> {
     /// Draws that replace `draw` while the nearest focus stop around the
     /// node is in a state; the last match wins.
     pub variants: Vec<(crate::layer::When, Draw)>,
+    /// Animated paint channels; see [`crate::motion`].
+    pub anims: Vec<crate::motion::Anim>,
+    /// How the node leaves when it goes away.
+    pub exit: Option<crate::motion::Exit>,
+    /// Animates the node's laid-out height when it changes.
+    pub resize: Option<crate::motion::Resize>,
+    /// The subtree is drawn but inert: out of the accessibility tree and
+    /// unreachable by focus, as the web's `inert` (collapsed content).
+    pub inert: bool,
 }
 
 impl<Msg> Node<Msg> {
@@ -619,7 +638,18 @@ impl<Msg> Node<Msg> {
             layer: None,
             hover: None,
             variants: Vec::new(),
+            anims: Vec::new(),
+            exit: None,
+            resize: None,
+            inert: false,
         }
+    }
+
+    /// Animates `anim.channel` toward `anim.to`.
+    pub fn animate(mut self, anim: crate::motion::Anim) -> Self {
+        self.anims.retain(|a| a.channel != anim.channel);
+        self.anims.push(anim);
+        self
     }
 
     /// Draws `draw` instead while the nearest focus stop is in `when`.
@@ -723,6 +753,8 @@ pub struct BuildCx<Msg> {
     pub now_ms: f64,
     /// Where each element with an `id` prop was drawn in the last frame.
     pub last_rects: std::sync::Arc<std::collections::HashMap<String, crate::contract::Rect>>,
+    /// Component state kept by the runtime. See [`BuildCx::local_handle`].
+    pub locals: Locals,
     /// Context values by type, innermost last. See [`Element::provide`].
     contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
     open: Vec<u32>,
@@ -749,6 +781,7 @@ impl<Msg> BuildCx<Msg> {
             image_sizes: Default::default(),
             now_ms: 0.0,
             last_rects: Default::default(),
+            locals: Locals::default(),
             contexts: Default::default(),
             open: Vec::new(),
             key: None,
@@ -786,6 +819,36 @@ impl<Msg> BuildCx<Msg> {
             .last()?
             .clone();
         any.downcast::<T>().ok()
+    }
+
+    /// The id `begin` gives the next node.
+    pub fn next_id(&self) -> u64 {
+        let (parent_id, sibling) = match self.open.last() {
+            Some(&p) => (
+                self.nodes[p as usize].id,
+                self.nodes[p as usize].children.len() as u64,
+            ),
+            None => (0, 0),
+        };
+        mix(parent_id, self.key.map_or(sibling, |k| k ^ KEYED))
+    }
+
+    /// The component state of type `T` for the node `begin` opens next,
+    /// kept by the runtime while that node's identity stays in the tree,
+    /// as React's `useState` keeps it. A change through the handle
+    /// rebuilds. Give the node an `id` or key so the state follows it when
+    /// its siblings change.
+    pub fn local_handle<T: Clone + Default + 'static>(&self) -> LocalHandle<T> {
+        LocalHandle {
+            locals: self.locals.clone(),
+            id: self.next_id(),
+            _t: std::marker::PhantomData,
+        }
+    }
+
+    /// The current value of [`Self::local_handle`].
+    pub fn local<T: Clone + Default + 'static>(&self) -> T {
+        self.local_handle::<T>().get()
     }
 
     /// Where the element with `id` was drawn in the last frame.
@@ -1024,6 +1087,92 @@ impl<Msg> BuildCx<Msg> {
 const KEYED: u64 = 0x9e37_79b9_7f4a_7c15;
 /// Keeps layer identities apart from the nodes declared beside them.
 const LAYER: u64 = 0x5851_f42d_4c95_7f2d;
+
+type LocalMap = std::collections::HashMap<(u64, std::any::TypeId), Box<dyn std::any::Any>>;
+
+/// Component state the runtime keeps between builds, by node id and type.
+#[derive(Clone, Default)]
+pub struct Locals {
+    map: std::rc::Rc<std::cell::RefCell<LocalMap>>,
+    changed: std::rc::Rc<std::cell::Cell<bool>>,
+}
+
+impl Locals {
+    /// Whether a handle changed a value since the last `take_changed`.
+    pub fn is_changed(&self) -> bool {
+        self.changed.get()
+    }
+
+    /// Whether a handle changed a value since the last call.
+    pub fn take_changed(&self) -> bool {
+        self.changed.replace(false)
+    }
+
+    /// Drops state whose node is gone.
+    pub fn retain(&self, live: impl Fn(u64) -> bool) {
+        self.map.borrow_mut().retain(|(id, _), _| live(*id));
+    }
+
+    pub fn len(&self) -> usize {
+        self.map.borrow().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+/// One component's state of type `T`. Clone it into callbacks.
+pub struct LocalHandle<T> {
+    locals: Locals,
+    id: u64,
+    _t: std::marker::PhantomData<T>,
+}
+
+impl<T> Clone for LocalHandle<T> {
+    fn clone(&self) -> Self {
+        LocalHandle {
+            locals: self.locals.clone(),
+            id: self.id,
+            _t: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T: Clone + Default + 'static> LocalHandle<T> {
+    fn key(&self) -> (u64, std::any::TypeId) {
+        (self.id, std::any::TypeId::of::<T>())
+    }
+
+    /// The node this state belongs to.
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    pub fn get(&self) -> T {
+        self.locals
+            .map
+            .borrow()
+            .get(&self.key())
+            .and_then(|v| v.downcast_ref::<T>())
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    pub fn set(&self, value: T) {
+        self.locals
+            .map
+            .borrow_mut()
+            .insert(self.key(), Box::new(value));
+        self.locals.changed.set(true);
+    }
+
+    pub fn update(&self, f: impl FnOnce(&mut T)) {
+        let mut value = self.get();
+        f(&mut value);
+        self.set(value);
+    }
+}
 
 /// What a subtree inherits at one place in the tree. See [`BuildCx::scope`].
 #[derive(Clone)]

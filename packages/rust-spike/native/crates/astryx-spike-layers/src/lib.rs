@@ -66,6 +66,7 @@ pub struct Layer<Msg> {
     placement: Placement,
     content: Element<Msg>,
     on_dismiss: Option<Rc<dyn Fn(DismissReason) -> Msg>>,
+    dismiss_effect: Option<Rc<dyn Fn(DismissReason)>>,
     modal: bool,
     trap_focus: bool,
     restore_focus: bool,
@@ -114,6 +115,7 @@ impl<Msg: 'static> Layer<Msg> {
             placement,
             content,
             on_dismiss: None,
+            dismiss_effect: None,
             modal,
             trap_focus: trap,
             restore_focus: restore,
@@ -163,6 +165,13 @@ impl<Msg: 'static> Layer<Msg> {
 
     pub fn on_dismiss(mut self, f: impl Fn(DismissReason) -> Msg + 'static) -> Self {
         self.on_dismiss = Some(Rc::new(f));
+        self
+    }
+
+    /// Runs `f` on a dismissal, before any `on_dismiss` message: an
+    /// uncontrolled layer closes itself through its owner's local state.
+    pub fn on_dismiss_effect(mut self, f: impl Fn(DismissReason) + 'static) -> Self {
+        self.dismiss_effect = Some(Rc::new(f));
         self
     }
 
@@ -229,6 +238,7 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
         spec.light_dismiss = this.light_dismiss;
         spec.escape_dismiss = this.escape_dismiss;
         spec.on_dismiss = this.on_dismiss;
+        spec.dismiss_effect = this.dismiss_effect;
         spec.backdrop = this.backdrop;
         // The layer never grows past the viewport less its gutter.
         let gutter = this.placement.gutter;
@@ -243,6 +253,17 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
         let label = this.label;
         let modal = this.modal;
         let content = this.content;
+        let from = match (this.kind, &this.anchor) {
+            (Kind::Dialog, _) | (_, LayerAnchor::None) => astryx_spike_motion::From::Center,
+            _ => match this.placement.side {
+                Side::Above => astryx_spike_motion::From::Above,
+                Side::Below => astryx_spike_motion::From::Below,
+                Side::Start => astryx_spike_motion::From::Start,
+                Side::End => astryx_spike_motion::From::End,
+            },
+        };
+        let motion = astryx_spike_motion::tokens(cx);
+        let rtl = cx.rtl();
         cx.key(this.id.as_deref());
         cx.layer(spec, move |cx| {
             let mut style = Style {
@@ -261,7 +282,11 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
                 ..Semantics::role(role)
             }
             .with_state(|s| s.modal = modal);
-            cx.begin(Node::new(style).sem(sem));
+            // Astryx's layer entrance and one exit copy on close.
+            let mut node = Node::new(style).sem(sem);
+            node.anims = astryx_spike_motion::layer_enter(motion, from, rtl);
+            node.exit = Some(astryx_spike_motion::layer_exit(motion));
+            cx.begin(node);
             cx.child(content);
             cx.end();
         });
@@ -283,7 +308,8 @@ pub struct Hover<Msg> {
     enter_ms: f64,
     leave_ms: f64,
     focus: bool,
-    on_change: Rc<dyn Fn(bool) -> Msg>,
+    on_change: Option<Rc<dyn Fn(bool) -> Msg>>,
+    effect: Option<Rc<dyn Fn(bool)>>,
     id: Option<String>,
 }
 
@@ -291,11 +317,22 @@ impl<Msg: 'static> Hover<Msg> {
     /// Tooltip timing: [`TOOLTIP_ENTER_MS`] and [`TOOLTIP_LEAVE_MS`].
     pub fn new(child: impl Into<Element<Msg>>, on_change: impl Fn(bool) -> Msg + 'static) -> Self {
         Hover {
+            on_change: Some(Rc::new(on_change)),
+            ..Self::local(child, |_| {})
+        }
+    }
+
+    /// Hover that changes only a component's own state: `effect` runs with
+    /// each change (set a [`LocalHandle`](astryx_core::authoring::LocalHandle)
+    /// in it) and no app message is sent.
+    pub fn local(child: impl Into<Element<Msg>>, effect: impl Fn(bool) + 'static) -> Self {
+        Hover {
             child: child.into(),
             enter_ms: TOOLTIP_ENTER_MS,
             leave_ms: TOOLTIP_LEAVE_MS,
             focus: true,
-            on_change: Rc::new(on_change),
+            on_change: None,
+            effect: Some(Rc::new(effect)),
             id: None,
         }
     }
@@ -329,6 +366,7 @@ impl<Msg: 'static> Build<Msg> for Hover<Msg> {
             leave_ms: self.leave_ms,
             focus: self.focus,
             on_change: self.on_change,
+            effect: self.effect,
         });
         cx.key(self.id.as_deref());
         cx.begin(node);

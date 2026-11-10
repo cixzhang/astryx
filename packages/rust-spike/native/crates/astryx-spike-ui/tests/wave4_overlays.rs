@@ -15,12 +15,15 @@ enum Msg {
 fn tooltip_shows_only_when_open_and_names_itself() {
     let view = |open: bool| {
         move || -> Element<Msg> {
+            // Room above the trigger for the tooltip and the viewport gutter.
             VStack::new()
                 .padding(astryx_core::Space::S10)
                 .child(
-                    Tooltip::new("save", Button::new("Save"), "Save your changes")
-                        .is_open(open)
-                        .on_open_change(Msg::Open),
+                    VStack::new().padding(astryx_core::Space::S10).child(
+                        Tooltip::new("save", Button::new("Save"), "Save your changes")
+                            .is_open(open)
+                            .on_open_change(Msg::Open),
+                    ),
                 )
                 .into()
         }

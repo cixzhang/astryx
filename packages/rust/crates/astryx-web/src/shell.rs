@@ -789,11 +789,8 @@ impl Runner {
             shell.cursor = cursor;
             let _ = shell.canvas.style().set_property("cursor", cursor);
         }
-        shell.pointer(event, astryx_core::PointerPhase::Move);
         // Touch never hovers.
         if event.pointer_type() == "touch" {
-            drop(shell);
-            self.schedule();
             return;
         }
         let rect = shell.canvas.get_bounding_client_rect();

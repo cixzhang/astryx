@@ -1,6 +1,5 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
-use crate::contract::PointerKind;
 use crate::contract::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
     ImageId, Input, InputPhase, Live, Point, PointerEvent, PointerOutcome, PointerPhase,
@@ -19,6 +18,7 @@ use astryx_motion::gesture::{
 use astryx_motion::tokens::{self as motion_tokens, MotionTokens};
 use astryx_motion::{Animated, Change, Motion, MotionPolicy, Pointer};
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 use taffy::{FlexDirection, Style};
 
 /// An Astryx app: state, a view of it, and an update for each message.
@@ -316,6 +316,34 @@ pub struct Runtime<A: App> {
     hovers: HashMap<u64, HoverTrack>,
     /// Focus last moved by a pointer press, so it is not focus-visible.
     focus_by_pointer: bool,
+    /// Animated paint channels by node id and channel.
+    anims: HashMap<(u64, crate::motion::Channel), Animated<f32>>,
+    /// Exit copies playing out.
+    exits: Vec<ExitCopy>,
+    /// How each node with an exit spec was last drawn, by node id.
+    captured: HashMap<u64, (Vec<DrawCmd>, Rect)>,
+    /// Height animations by node id.
+    resizes: HashMap<u64, ResizeTrack>,
+    /// Component state, shared with every build.
+    locals: crate::element::Locals,
+    /// The drawable size the last build saw.
+    build_viewport: (f32, f32),
+}
+
+/// A closed node's last drawing, leaving.
+struct ExitCopy {
+    id: u64,
+    commands: Vec<DrawCmd>,
+    rect: Rect,
+    opacity: Animated<f32>,
+    scale: Animated<f32>,
+    translate: Animated<(f32, f32)>,
+}
+
+/// A node's natural height and the height it is drawn at.
+struct ResizeTrack {
+    natural: f32,
+    shown: Animated<f32>,
 }
 
 /// Where the pointer has been relative to a node that reports hover.
@@ -390,6 +418,12 @@ impl<A: App> Runtime<A> {
             layer_openers: HashMap::new(),
             hovers: HashMap::new(),
             focus_by_pointer: false,
+            anims: HashMap::new(),
+            exits: Vec::new(),
+            captured: HashMap::new(),
+            resizes: HashMap::new(),
+            locals: Default::default(),
+            build_viewport: (0.0, 0.0),
         }
     }
 
@@ -570,12 +604,13 @@ impl<A: App> Runtime<A> {
         let mut cx = BuildCx::new(tokens);
         cx.theme = self.theme.theme;
         cx.prefs = self.prefs.clone();
-        cx.viewport = self.viewport;
+        cx.viewport = self.build_viewport;
         self.direction = self.app.direction();
         cx.direction = self.direction;
         cx.images = self.images.clone();
         cx.image_sizes = self.image_sizes.clone();
         cx.now_ms = self.motion_ms;
+        cx.locals = self.locals.clone();
         if let Some(layout) = &self.layout {
             cx.last_rects = std::sync::Arc::new(
                 self.nodes
@@ -620,6 +655,9 @@ impl<A: App> Runtime<A> {
             }
         }
         self.track_layers(&old);
+        self.sync_motion(&old);
+        let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
+        self.locals.retain(|id| ids.contains(&id));
         self.stale = false;
         self.rebuilt = true;
         // A rebuild that changes only paint, such as a switch to a theme
@@ -1189,12 +1227,23 @@ impl<A: App> Runtime<A> {
             }
         };
         let _ = trapped;
+        let inert = |nodes: &[Node<A::Msg>], mut ix: usize| loop {
+            if nodes[ix].inert {
+                return true;
+            }
+            match nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
         self.stops = self
             .nodes
             .iter()
             .enumerate()
             .filter(|&(i, n)| {
-                n.interact.is_some() && (top_trap.is_none() || in_top_trap(&self.nodes, i))
+                n.interact.is_some()
+                    && (top_trap.is_none() || in_top_trap(&self.nodes, i))
+                    && !inert(&self.nodes, i)
             })
             .map(|(i, n)| (i, n.id))
             .collect();
@@ -1967,6 +2016,22 @@ impl<A: App> Runtime<A> {
         for camera in self.cameras.values_mut() {
             camera.tick(dt);
         }
+        for a in self.anims.values_mut() {
+            a.tick(dt);
+        }
+        for e in &mut self.exits {
+            e.opacity.tick(dt);
+            e.scale.tick(dt);
+            e.translate.tick(dt);
+        }
+        self.exits.retain(|e| {
+            e.opacity.is_animating() || e.scale.is_animating() || e.translate.is_animating()
+        });
+        for r in self.resizes.values_mut() {
+            if r.shown.tick(dt) {
+                self.relayout = true;
+            }
+        }
         let mut command = Command::None;
         for event in self.press.tick(now) {
             command = self.press_event(event);
@@ -2017,6 +2082,9 @@ impl<A: App> Runtime<A> {
         let completed_hold =
             interact.hold.is_some() && self.hold.is_some_and(|h| h.id == id && h.done);
         let msg = interact.on_activate.clone();
+        if let Some(effect) = interact.effect.clone() {
+            effect();
+        }
         let href = interact.href.clone();
         let popup = interact.popup;
         self.cue(if completed_hold {
@@ -2200,6 +2268,140 @@ impl<A: App> Runtime<A> {
         }
     }
 
+    /// `motion` for `channel` under the person's and the theme's motion
+    /// settings: travel lands at once under Reduce Motion; opacity may
+    /// cross-fade.
+    fn plan_motion(
+        &self,
+        channel: Option<crate::motion::Channel>,
+        motion: Motion,
+        change: Change,
+    ) -> Motion {
+        use astryx_motion::Plan;
+        match self.policy.plan(change, self.motion_tokens()) {
+            Plan::Animate => motion,
+            Plan::Instant => Motion::Instant,
+            Plan::CrossFade {
+                duration_ms,
+                easing,
+            } if channel == Some(crate::motion::Channel::Opacity) => {
+                Motion::curve(duration_ms, easing)
+            }
+            Plan::CrossFade { .. } => Motion::Instant,
+        }
+    }
+
+    /// Brings animations up to date with a rebuild from `old`: new targets
+    /// retarget, new nodes enter, and nodes with an exit spec that went
+    /// away leave through an exit copy.
+    fn sync_motion(&mut self, old: &[Node<A::Msg>]) {
+        let mut live = HashSet::new();
+        let mut plans = Vec::new();
+        for node in &self.nodes {
+            for a in &node.anims {
+                let key = (node.id, a.channel);
+                live.insert(key);
+                plans.push((key, *a));
+            }
+        }
+        for (key, a) in plans {
+            let motion = self.plan_motion(Some(a.channel), a.motion, a.change);
+            match self.anims.get_mut(&key) {
+                None => {
+                    let mut v = Animated::new(a.from.unwrap_or(a.to));
+                    if a.from.is_some() {
+                        v.animate_to(a.to, motion);
+                    }
+                    self.anims.insert(key, v);
+                }
+                Some(v) if v.target() != a.to => v.animate_to(a.to, motion),
+                Some(_) => {}
+            }
+        }
+        self.anims.retain(|k, _| live.contains(k));
+        let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
+        for node in old {
+            let Some(exit) = node.exit else { continue };
+            if ids.contains(&node.id) {
+                continue;
+            }
+            let Some((commands, rect)) = self.captured.remove(&node.id) else {
+                continue;
+            };
+            // One copy per node: a second exit replaces the first.
+            self.exits.retain(|e| e.id != node.id);
+            let fade = self.plan_motion(
+                Some(crate::motion::Channel::Opacity),
+                exit.motion,
+                exit.change,
+            );
+            let travel = self.plan_motion(None, exit.motion, exit.change);
+            let mut opacity = Animated::new(1.0);
+            opacity.animate_to(exit.opacity, fade);
+            let mut scale = Animated::new(1.0);
+            scale.animate_to(exit.scale, travel);
+            let mut translate = Animated::new((0.0, 0.0));
+            translate.animate_to(exit.translate, travel);
+            if opacity.is_animating() || scale.is_animating() || translate.is_animating() {
+                self.exits.push(ExitCopy {
+                    id: node.id,
+                    commands,
+                    rect,
+                    opacity,
+                    scale,
+                    translate,
+                });
+            }
+        }
+        self.captured.retain(|id, _| ids.contains(id));
+    }
+
+    /// Animates the heights of nodes with a resize spec toward their newly
+    /// laid-out heights. Returns true when it laid out again at animated
+    /// heights.
+    fn resize_layout(&mut self, text: &dyn TextMeasure) -> bool {
+        let Some(layout) = self.layout.as_ref() else {
+            return false;
+        };
+        let mut overrides = Vec::new();
+        let mut live = HashSet::new();
+        let mut starts = Vec::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(resize) = node.resize else { continue };
+            live.insert(node.id);
+            let natural = layout.boxes.get(ix).map_or(0.0, |b| b.height);
+            starts.push((ix, node.id, natural, resize));
+        }
+        for (ix, id, natural, resize) in starts {
+            let motion = self.plan_motion(None, resize.motion, resize.change);
+            let track = self.resizes.entry(id).or_insert(ResizeTrack {
+                natural,
+                shown: Animated::new(natural),
+            });
+            if (track.natural - natural).abs() > 0.25 {
+                track.natural = natural;
+                track.shown.animate_to(natural, motion);
+            }
+            if track.shown.is_animating() {
+                overrides.push((ix, track.shown.value()));
+            }
+        }
+        self.resizes.retain(|id, _| live.contains(id));
+        if overrides.is_empty() {
+            return false;
+        }
+        let layout = self.layout.as_mut().expect("layout");
+        for &(ix, h) in &overrides {
+            layout.override_height(&self.nodes, ix, Some(h));
+        }
+        layout.compute(&self.nodes, self.viewport, text);
+        // The next frame measures the natural heights again.
+        for &(ix, _) in &overrides {
+            layout.override_height(&self.nodes, ix, None);
+        }
+        true
+    }
+
     /// The topmost layer root whose spec passes `f`.
     fn top_layer(&self, f: impl Fn(&crate::layer::LayerSpec<A::Msg>) -> bool) -> Option<usize> {
         self.nodes
@@ -2209,6 +2411,14 @@ impl<A: App> Runtime<A> {
 
     /// Sends layer `ix`'s dismissal message for `reason`.
     fn dismiss(&mut self, ix: usize, reason: DismissReason) -> Command {
+        if let Some(effect) = self.nodes[ix]
+            .layer
+            .as_ref()
+            .and_then(|l| l.dismiss_effect.clone())
+        {
+            effect(reason);
+            self.stale = true;
+        }
         let msg = self.nodes[ix]
             .layer
             .as_ref()
@@ -2328,7 +2538,8 @@ impl<A: App> Runtime<A> {
     fn track_hover(&mut self, rects: &[Rect]) {
         let now = self.motion_ms;
         let focus_visible = !self.focus_by_pointer;
-        let mut sends = Vec::new();
+        let mut sends: Vec<A::Msg> = Vec::new();
+        let mut effects: HoverEffects = Vec::new();
         let mut seen = HashSet::new();
         for (ix, node) in self.nodes.iter().enumerate() {
             let Some(spec) = &node.hover else {
@@ -2353,7 +2564,7 @@ impl<A: App> Runtime<A> {
                 track.outside_since = None;
                 if !track.on {
                     track.on = true;
-                    sends.push((spec.on_change)(true));
+                    report(spec, true, &mut sends, &mut effects);
                 }
                 continue;
             }
@@ -2362,18 +2573,24 @@ impl<A: App> Runtime<A> {
                 let since = *track.inside_since.get_or_insert(now);
                 if !track.on && now - since >= spec.enter_ms {
                     track.on = true;
-                    sends.push((spec.on_change)(true));
+                    report(spec, true, &mut sends, &mut effects);
                 }
             } else {
                 track.inside_since = None;
                 let since = *track.outside_since.get_or_insert(now);
                 if track.on && now - since >= spec.leave_ms {
                     track.on = false;
-                    sends.push((spec.on_change)(false));
+                    report(spec, false, &mut sends, &mut effects);
                 }
             }
         }
         self.hovers.retain(|id, _| seen.contains(id));
+        if !effects.is_empty() {
+            for (effect, on) in effects {
+                effect(on);
+            }
+            self.stale = true;
+        }
         for msg in sends {
             let command = self.send(msg);
             self.pending = std::mem::take(&mut self.pending).and(command);
@@ -2555,9 +2772,7 @@ impl<A: App> Runtime<A> {
 
 impl<A: App> Surface for Runtime<A> {
     fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
-        if event.kind != PointerKind::Touch && event.phase != PointerPhase::Cancel {
-            self.pointer_move(Some(event.at));
-        }
+        // Hover stays on `pointer_move`; this path carries presses.
         if event.phase != PointerPhase::Down {
             return PointerOutcome::default();
         }
@@ -2576,7 +2791,7 @@ impl<A: App> Surface for Runtime<A> {
         if inside {
             return PointerOutcome::default();
         }
-        if spec.light_dismiss && spec.on_dismiss.is_some() {
+        if spec.light_dismiss && (spec.on_dismiss.is_some() || spec.dismiss_effect.is_some()) {
             let command = self.dismiss(top, DismissReason::OutsidePress);
             let command = command.and(std::mem::take(&mut self.pending));
             return PointerOutcome {
@@ -2645,6 +2860,15 @@ impl<A: App> Surface for Runtime<A> {
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
+        if self.locals.take_changed() {
+            self.stale = true;
+        }
+        // Components may size themselves from the viewport while they
+        // build, so a new viewport rebuilds, and the first build sees it.
+        if viewport != self.build_viewport {
+            self.build_viewport = viewport;
+            self.stale = true;
+        }
         if self.stale || self.app.theme() != self.theme || self.app.direction() != self.direction {
             self.rebuild();
         }
@@ -2663,6 +2887,10 @@ impl<A: App> Surface for Runtime<A> {
                 .expect("layout")
                 .compute(&self.nodes, viewport, text);
             self.relayout = false;
+            if self.resize_layout(text) {
+                // Lay out again next frame, while the height moves.
+                self.relayout = true;
+            }
             self.layout
                 .as_mut()
                 .expect("layout")
@@ -2718,7 +2946,59 @@ impl<A: App> Surface for Runtime<A> {
         let caret = self.caret_paint(text);
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
-        let transforms = self.transforms(&rects);
+        let mut transforms = self.transforms(&rects);
+        let mut opacities = HashMap::new();
+        if !self.anims.is_empty() {
+            let index: HashMap<u64, usize> = self
+                .nodes
+                .iter()
+                .enumerate()
+                .map(|(i, n)| (n.id, i))
+                .collect();
+            use crate::motion::Channel;
+            for (&(id, channel), a) in &self.anims {
+                let Some(&ix) = index.get(&id) else { continue };
+                let v = a.value();
+                if channel == Channel::Opacity {
+                    if v < 1.0 {
+                        opacities.insert(ix, v.max(0.0));
+                    }
+                    continue;
+                }
+                let identity = match channel {
+                    Channel::Scale => v == 1.0,
+                    _ => v == 0.0,
+                };
+                if identity {
+                    continue;
+                }
+                let t = transforms.entry(ix).or_insert(paint::Transform {
+                    origin: rects[ix].center(),
+                    scale: 1.0,
+                    translate: Point { x: 0.0, y: 0.0 },
+                });
+                match channel {
+                    Channel::TranslateX => t.translate.x += v,
+                    Channel::TranslateY => t.translate.y += v,
+                    Channel::Scale => t.scale *= v,
+                    Channel::Opacity => {}
+                }
+            }
+        }
+        let exits = self
+            .exits
+            .iter()
+            .map(|e| {
+                let (x, y) = e.translate.value();
+                (
+                    e.commands.clone(),
+                    e.rect,
+                    e.opacity.value().clamp(0.0, 1.0),
+                    e.scale.value(),
+                    Point { x, y },
+                )
+            })
+            .collect();
         let (page_clips, page_marks) = self.pager_paint(&rects);
         // The topmost enabled focus stop under the pointer shows hover.
         let hovered = self.pointer.and_then(|p| {
@@ -2769,15 +3049,25 @@ impl<A: App> Surface for Runtime<A> {
             transforms,
             page_clips,
             page_marks,
+            opacities,
+            exits,
         };
         let layout = self.layout.as_ref().expect("layout");
+        let mut captures = Vec::new();
         let list = paint::paint(
             &self.nodes,
             layout,
             &rects,
             &state,
             self.theme.tokens(&self.prefs).color.background_body.into(),
+            &mut captures,
         );
+        for (ix, start, end) in captures {
+            self.captured.insert(
+                self.nodes[ix].id,
+                (list.commands[start..end].to_vec(), rects[ix]),
+            );
+        }
         self.timings.paint = watch.lap();
         list
     }
@@ -2924,6 +3214,10 @@ impl<A: App> Surface for Runtime<A> {
             || self.repeats.wants_frames()
             || self.paging.wants_frames()
             || self.hover_pending()
+            || self.locals.is_changed()
+            || self.anims.values().any(|a| a.is_animating())
+            || !self.exits.is_empty()
+            || self.resizes.values().any(|r| r.shown.is_animating())
     }
 }
 
@@ -2931,6 +3225,24 @@ fn gesture_phase(phase: InputPhase) -> Phase {
     match phase {
         InputPhase::Pressed => Phase::Pressed,
         InputPhase::Released => Phase::Released,
+    }
+}
+
+/// Hover effects waiting to run, with the hover state each reports.
+type HoverEffects = Vec<(Rc<dyn Fn(bool)>, bool)>;
+
+/// Queues a hover report: the component's own effect and the app's message.
+fn report<Msg>(
+    spec: &crate::layer::HoverSpec<Msg>,
+    on: bool,
+    sends: &mut Vec<Msg>,
+    effects: &mut HoverEffects,
+) {
+    if let Some(effect) = &spec.effect {
+        effects.push((effect.clone(), on));
+    }
+    if let Some(f) = &spec.on_change {
+        sends.push(f(on));
     }
 }
 

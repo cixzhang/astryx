@@ -49,6 +49,11 @@ pub(crate) struct PaintState {
     /// The band each resting pager shows (top and bottom, from its top
     /// edge), by node index.
     pub page_clips: HashMap<usize, (f32, f32)>,
+    /// Animated opacity by node index, multiplied into the node's own.
+    pub opacities: HashMap<usize, f32>,
+    /// Exit copies, drawn above everything: commands, rect, opacity,
+    /// scale, and translation.
+    pub exits: Vec<(Vec<DrawCmd>, Rect, f32, f32, Point)>,
     /// Page indicators, drawn after content.
     pub page_marks: Vec<DrawCmd>,
 }
@@ -202,6 +207,7 @@ pub(crate) fn paint<Msg>(
     rects: &[Rect],
     state: &PaintState,
     clear: Color,
+    captures: &mut Vec<(usize, usize, usize)>,
 ) -> DisplayList {
     let mut list = DisplayList {
         clear,
@@ -222,8 +228,20 @@ pub(crate) fn paint<Msg>(
             layout,
             rects,
             state,
+            captures: std::cell::RefCell::new(captures),
         };
         paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
+    }
+    for (commands, rect, opacity, scale, translate) in &state.exits {
+        list.commands.push(DrawCmd::PushTransform {
+            origin: rect.center(),
+            scale: *scale,
+            translate: *translate,
+        });
+        list.commands.push(DrawCmd::PushOpacity(*opacity));
+        list.commands.extend(commands.iter().cloned());
+        list.commands.push(DrawCmd::PopOpacity);
+        list.commands.push(DrawCmd::PopTransform);
     }
     list.commands.extend(state.page_marks.iter().cloned());
     list.commands.extend(overlay);
@@ -293,6 +311,8 @@ struct Scene<'a, Msg> {
     layout: &'a Layout,
     rects: &'a [Rect],
     state: &'a PaintState,
+    /// Where each node with an exit spec drew: node index and command range.
+    captures: std::cell::RefCell<&'a mut Vec<(usize, usize, usize)>>,
 }
 
 fn paint_node<Msg>(
@@ -341,6 +361,7 @@ fn paint_node<Msg>(
         },
         None => owner,
     };
+    let capture_start = out.len();
     let transform = state.transforms.get(&ix).copied();
     let transform = match grid {
         Some(cell) => transform.and_then(|t| t.on_grid(cell)),
@@ -349,9 +370,10 @@ fn paint_node<Msg>(
     if let Some(t) = transform {
         out.push(t.push());
     }
-    let faded = node.opacity < 1.0;
+    let opacity = node.opacity * state.opacities.get(&ix).copied().unwrap_or(1.0);
+    let faded = opacity < 1.0;
     if faded {
-        out.push(DrawCmd::PushOpacity(node.opacity));
+        out.push(DrawCmd::PushOpacity(opacity));
     }
     let opens_grid = grid.is_some() && grid != ctx.grid;
     if let (true, Some(cell)) = (opens_grid, grid) {
@@ -720,7 +742,7 @@ fn paint_node<Msg>(
         } else {
             ctx.viewport
         },
-        opacity: ctx.opacity * node.opacity,
+        opacity: ctx.opacity * opacity,
         grid: grid.or(ctx.grid),
     };
     for &child in &node.children {
@@ -807,6 +829,12 @@ fn paint_node<Msg>(
     }
     if transform.is_some() {
         out.push(DrawCmd::PopTransform);
+    }
+    if node.exit.is_some() {
+        scene
+            .captures
+            .borrow_mut()
+            .push((ix, capture_start, out.len()));
     }
 }
 

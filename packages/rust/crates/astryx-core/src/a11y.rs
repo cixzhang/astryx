@@ -115,6 +115,9 @@ fn resolve(state: &A11yState, refs: &A11yRefs, names: &HashMap<&str, u64>) -> A1
 fn collect<Msg>(cx: &Cx<Msg>, ix: usize, covered: bool, out: &mut Vec<A11yNode>) {
     let (nodes, rects, focused) = (cx.nodes, cx.rects, cx.focused);
     let node = &nodes[ix];
+    if node.inert {
+        return;
+    }
     let sem = match &node.sem {
         Some(sem) if !covered || node.interact.is_some() || sem.live.is_some() => sem,
         _ => {
