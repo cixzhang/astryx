@@ -1,0 +1,465 @@
+{
+ "family": "Selector",
+ "source": "packages/core/src/Selector/Selector.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Selector",
+   "visualProps": {
+    "hasClear": [
+     false,
+     true
+    ],
+    "hasSearch": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "variant": [
+     "input",
+     "secondary",
+     "ghost"
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "indicatorPosition": [
+     "start",
+     "end"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ],
+    "isLoading": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "hasClear": false,
+    "hasSearch": false,
+    "size": "md",
+    "variant": "input",
+    "isDisabled": false,
+    "isReadOnly": false,
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "statusVariant": null,
+    "indicatorPosition": "end",
+    "presentation": "popover",
+    "isLoading": false
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "selector-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "selector-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "selector-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasSearch": true
+     }
+    },
+    {
+     "id": "selector-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "selector-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "selector-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "secondary"
+     }
+    },
+    {
+     "id": "selector-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "ghost"
+     }
+    },
+    {
+     "id": "selector-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "selector-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "selector-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "selector-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "selector-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "selector-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "selector-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "selector-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "selector-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "selector-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "selector-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "statusVariant": "attached",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasSearch": true,
+      "variant": "secondary",
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "detached",
+      "presentation": "bottom-sheet",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "variant": "ghost",
+      "isReadOnly": true,
+      "isOptional": true,
+      "statusVariant": "tooltip",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "selector-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "hasSearch": true,
+      "size": "sm",
+      "isDisabled": true,
+      "isLabelHidden": true,
+      "isRequired": true,
+      "statusVariant": "tooltip",
+      "indicatorPosition": "start",
+      "presentation": "adaptive",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "variant": "secondary",
+      "isLabelHidden": true,
+      "statusVariant": "detached",
+      "indicatorPosition": "start",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "selector-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "hasSearch": true,
+      "size": "lg",
+      "variant": "ghost",
+      "isDisabled": true,
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "attached",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "variant": "ghost",
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isLabelHidden": true,
+      "statusVariant": "attached",
+      "indicatorPosition": "start",
+      "presentation": "bottom-sheet",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "size": "sm",
+      "variant": "secondary",
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "detached",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "isReadOnly": true,
+      "isOptional": true,
+      "statusVariant": "tooltip",
+      "presentation": "bottom-sheet",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "selector-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "variant": "secondary",
+      "statusVariant": "attached",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "selector-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "size": "sm",
+      "statusVariant": "detached",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "selector-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasSearch": true,
+      "size": "sm",
+      "statusVariant": "attached",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "attached",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "variant": "secondary",
+      "statusVariant": "tooltip",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "variant": "ghost",
+      "statusVariant": "detached",
+      "indicatorPosition": "start",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "selector-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isDisabled": true,
+      "statusVariant": "attached",
+      "indicatorPosition": "start"
+     }
+    },
+    {
+     "id": "selector-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isReadOnly": true,
+      "isLabelHidden": true,
+      "statusVariant": "attached",
+      "indicatorPosition": "start"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,354 @@
+{
+ "family": "NumberInput",
+ "source": "packages/core/src/NumberInput/NumberInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "NumberInput",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "isWheelEnabled": [
+     false,
+     true
+    ],
+    "hasNumberSteppers": [
+     false,
+     true
+    ],
+    "isIntegerOnly": [
+     false,
+     true
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "hasAutoFocus": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isReadOnly": false,
+    "statusVariant": "attached",
+    "isWheelEnabled": true,
+    "hasNumberSteppers": false,
+    "isIntegerOnly": false,
+    "hasClear": false,
+    "hasAutoFocus": false
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "number-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "number-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "number-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "number-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "number-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "number-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "number-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "number-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "number-input-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "number-input-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "number-input-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isWheelEnabled": false
+     }
+    },
+    {
+     "id": "number-input-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasNumberSteppers": true
+     }
+    },
+    {
+     "id": "number-input-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isIntegerOnly": true
+     }
+    },
+    {
+     "id": "number-input-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "number-input-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isWheelEnabled": false
+     }
+    },
+    {
+     "id": "number-input-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isReadOnly": true,
+      "statusVariant": "detached",
+      "hasNumberSteppers": true,
+      "isIntegerOnly": true,
+      "hasClear": true,
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "statusVariant": "tooltip",
+      "isIntegerOnly": true,
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isReadOnly": true,
+      "statusVariant": "tooltip",
+      "isWheelEnabled": false,
+      "hasNumberSteppers": true,
+      "hasClear": true
+     }
+    },
+    {
+     "id": "number-input-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "isRequired": true,
+      "isDisabled": true,
+      "statusVariant": "detached",
+      "isWheelEnabled": false,
+      "hasClear": true,
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isReadOnly": true,
+      "hasNumberSteppers": true,
+      "isIntegerOnly": true
+     }
+    },
+    {
+     "id": "number-input-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isReadOnly": true,
+      "statusVariant": "tooltip",
+      "hasClear": true,
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "isDisabled": true,
+      "isWheelEnabled": false,
+      "hasNumberSteppers": true,
+      "isIntegerOnly": true
+     }
+    },
+    {
+     "id": "number-input-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached",
+      "isWheelEnabled": false
+     }
+    },
+    {
+     "id": "number-input-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "isWheelEnabled": false
+     }
+    },
+    {
+     "id": "number-input-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isLabelHidden": true,
+      "isWheelEnabled": false,
+      "hasClear": true,
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "number-input-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isOptional": true,
+      "isWheelEnabled": false
+     }
+    }
+   ]
+  }
+ ]
+}
