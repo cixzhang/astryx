@@ -1,6 +1,6 @@
 //! The gallery in a desktop window.
 //!
-//! `cargo run -p astryx-spike-infra-gallery --example desktop` browses every
+//! `cargo run -p astryx-spike-infra-gallery --example infra_desktop` browses every
 //! family. The QA harness drives one case through the environment:
 //! - `ASTRYX_CASE=<id>`: show only that case.
 //! - `ASTRYX_SCHEME=light|dark`, `ASTRYX_DIR=ltr|rtl`.

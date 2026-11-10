@@ -16,16 +16,18 @@ use std::rc::Rc;
 pub struct Drag<Msg> {
     child: Element<Msg>,
     axis: Axis,
-    on_pan: Option<Rc<dyn Fn(PanEvent) -> Msg>>,
+    on_pan: Option<Rc<dyn Fn(PanEvent) -> Option<Msg>>>,
     effect: Option<Rc<dyn Fn(PanEvent)>>,
     id: Option<String>,
 }
 
 impl<Msg: 'static> Drag<Msg> {
+    /// `on_pan` returns the message an event sends, if any (`None` to send
+    /// only at the release, for instance).
     pub fn new(
         child: impl Into<Element<Msg>>,
         axis: Axis,
-        on_pan: impl Fn(PanEvent) -> Msg + 'static,
+        on_pan: impl Fn(PanEvent) -> Option<Msg> + 'static,
     ) -> Self {
         Drag {
             child: child.into(),
@@ -136,7 +138,7 @@ impl<Msg: 'static> Build<Msg> for Drag<Msg> {
                 Axis::Both => true,
             }),
             on_drag: on_pan.map(|f| {
-                Rc::new(move |e: &DragEvent| f(to_pan(e))) as Rc<dyn Fn(&DragEvent) -> Msg>
+                Rc::new(move |e: &DragEvent| f(to_pan(e))) as Rc<dyn Fn(&DragEvent) -> Option<Msg>>
             }),
             effect: effect
                 .map(|f| Rc::new(move |e: &DragEvent| f(to_pan2(e))) as Rc<dyn Fn(&DragEvent)>),

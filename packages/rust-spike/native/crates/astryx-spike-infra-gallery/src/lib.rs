@@ -209,7 +209,7 @@ impl Gallery {
                     .into(),
             ),
             Axis::Y,
-            Msg::Pan,
+            |e| Some(Msg::Pan(e)),
         )
         .id("sheet");
         element(Offset {

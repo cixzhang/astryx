@@ -33,8 +33,8 @@ and splits by hunk along the rows below.
 - **f. Component state**: `Locals`, `LocalHandle`, `BuildCx::{locals,
   next_id, local_handle, local}`, `Interact::effect`,
   `LayerSpec::dismiss_effect`, `HoverSpec::effect` (and `on_change`
-  becoming optional), and the runtime's state store, pruned with the
-  node tree.
+  becoming optional), `Edit::effect` (and `Edit::on_change` becoming
+  optional), and the runtime's state store, pruned with the node tree.
 - **g. Drags**: `gesture.rs` (`DragSpec`, `DragEvent`, `DragPhase`),
   `Node::drag`, `PointerEvent::time_ms`, the runtime's drag sessions
   (innermost member that wants the direction takes the drag; finger
@@ -76,3 +76,5 @@ and splits by hunk along the rows below.
 | astryx-core `gesture.rs` (new), `element.rs`, `runtime.rs`, `contract.rs`; astryx-desktop `lib.rs`; astryx-web `shell.rs` | `DragSpec` drag handlers; the runtime gives a drag to the innermost handler (or finger-scrolled container) that wants its direction after 10 points, cancels the press under it, scrolls containers under a finger with a coast at UIScrollView's deceleration; `PointerEvent::time_ms`; shells forward moves while pressed | Gestures row: sheets over scrolling lists, swipe rows, reorder, momentum | Additive (no drag handlers: only finger scrolling, which no shell sent before) |
 | astryx-core `contract.rs`, `element.rs`, `runtime.rs`; astryx-desktop `lib.rs`, `input.rs`; astryx-web `keys.rs`, `shell.rs` | `Surface::key` with `KeyEvent` (logical key, modifiers, repeat), offered first to `on_key` handlers from the focused node out (Pass keeps today's mapping); `on_context` for a right click at a point; `FocusRequests` move focus to an element by id after a build | Menus, comboboxes, grids, tree lists, reorder, context menus (Shift+F10, right click), roving focus | Additive (no handlers: shells map keys as before) |
 | astryx-core `element.rs`, `runtime.rs` | A scroll container can rebuild the view when its offset changes and read the offset while building; start at an initial offset when it appears; report offset changes; shift its offset once when content above the viewport changes height | Virtualizer: windowed rows, scroll restore, scroll anchoring | Additive |
+| astryx-core `element.rs`, `runtime.rs`, `components/input.rs`, `components/keyboard.rs` | `Edit::on_change` is optional and `Edit::effect` runs first with a new value | Inputs that keep their own draft text (combobox query, number draft) | Struct change: `Edit` literals wrap `on_change` in `Some` and add `effect: None` (three sites updated) |
+| astryx-core `gesture.rs`, `runtime.rs` | `DragSpec::on_drag` returns an optional message | Handlers that send only at the release (reorder, drag to dismiss) | Introduced on this branch |

@@ -169,7 +169,7 @@ mod sheet {
                     Drag::new(
                         VStack::new().child(Text::new("Handle")).child(list),
                         Axis::Y,
-                        Msg::Pan,
+                        |e| Some(Msg::Pan(e)),
                     )
                     .id("sheet"),
                 )
