@@ -1,24 +1,217 @@
-// Astryx Settings Dialog: the view. app.ts answers what it asks for. Colours, fonts,
-// sizes and the safe area are left unsaid, so each platform supplies its own:
-// the header is the navigation bar, its heading the title, its button a bar item.
-shape Greeting
-  text: string
+// The Astryx `settings-dialog` template (packages/cli/assets/templates/pages/settings-dialog),
+// rebuilt on Exact: an inline settings dialog with grouped navigation, search across every
+// setting, ten panels of setting cards, and a narrow layout with tabs.
+use Stack, VStack, HStack, Card, Heading, Text, Icon, Divider, Button, IconButton, Switch, TextInput, SegmentedControl, ChoiceItem, Item, SideNavItem, Token from "@astryx-spike/astryx"
+use Selector from "@astryx-spike/astryx-layers"
 
 routes nav
   home "/"
 
-component AstryxSettingsDialog
-  resource greeting = greeting("Astryx Settings Dialog") as shape Greeting
-  state liked = false
-  action like
-    liked = not liked
+shape Viewport
+  width: number
+
+shape Setting
+  panel: string
+  card: string
+  key: string
+  title: string
+  description: string
+  icon: string
+  kind: string
+  options: ChoiceItem[]
+  buttonLabel: string
+  buttonVariant: string
+
+shape Panel
+  id: string
+  label: string
+  description: string
+  group: string
+  icon: string
+
+shape Value
+  key: string
+  value: string
+
+fn panels(): Panel[] = [Panel(id="profile", label="Profile", description="How you appear to the people you work with.", group="Account", icon="info"), Panel(id="security", label="Login & security", description="Sign-in methods and the devices signed in right now.", group="Account", icon="check"), Panel(id="billing", label="Billing", description="Your plan, seats, and where invoices are sent.", group="Account", icon="calendar"), Panel(id="appearance", label="Appearance", description="Theme and density for this browser.", group="Workspace", icon="viewColumns"), Panel(id="notifications", label="Notifications", description="What reaches you, and where it arrives.", group="Workspace", icon="warning"), Panel(id="shortcuts", label="Keyboard shortcuts", description="Rebind or switch off any shortcut on this surface.", group="Workspace", icon="copy"), Panel(id="language", label="Language & region", description="Language, formats, and time zone.", group="Workspace", icon="clock"), Panel(id="privacy", label="Privacy", description="What you share, and what we keep.", group="Advanced", icon="eyeSlash"), Panel(id="integrations", label="Connected apps", description="Services with access to this workspace.", group="Advanced", icon="externalLink"), Panel(id="developer", label="Developer", description="API access and pre-release features.", group="Advanced", icon="wrench")]
+
+fn settings(): Setting[] = [Setting(panel="profile", card="Identity", key="displayName", title="Display name", description="Shown on your posts, comments, and mentions.", icon="clock", kind="text", options=[], buttonLabel="", buttonVariant=""), Setting(panel="profile", card="Identity", key="jobTitle", title="Job title", description="Appears under your name on your profile card.", icon="clock", kind="text", options=[], buttonLabel="", buttonVariant=""), Setting(panel="profile", card="Identity", key="pronouns", title="Pronouns", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="none", label="Not specified", description="", isDisabled=false), ChoiceItem(value="they", label="they/them", description="", isDisabled=false), ChoiceItem(value="she", label="she/her", description="", isDisabled=false), ChoiceItem(value="he", label="he/him", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="profile", card="Availability", key="showLocalTime", title="Show my local time", description="Helps people across time zones pick a sane hour.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="profile", card="Availability", key="presence", title="Presence", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="available", label="Available", description="", isDisabled=false), ChoiceItem(value="busy", label="Busy", description="", isDisabled=false), ChoiceItem(value="away", label="Away", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="security", card="Sign-in", key="password", title="Password", description="Last changed three months ago.", icon="externalLink", kind="button", options=[], buttonLabel="Change", buttonVariant="secondary"), Setting(panel="security", card="Sign-in", key="twoFactor", title="Two-factor authentication", description="Ask for a code when you sign in on a new device.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="security", card="Sign-in", key="passkeys", title="Passkeys", description="Sign in with your fingerprint, face, or screen lock.", icon="externalLink", kind="button", options=[], buttonLabel="Add passkey", buttonVariant="secondary"), Setting(panel="security", card="Active sessions", key="mac", title="MacBook Pro \u00b7 Chrome", description="San Francisco \u00b7 Active now", icon="info", kind="none", options=[], buttonLabel="", buttonVariant=""), Setting(panel="security", card="Active sessions", key="iphone", title="iPhone 15 \u00b7 Safari", description="San Francisco \u00b7 2 hours ago", icon="externalLink", kind="button", options=[], buttonLabel="Sign out", buttonVariant="ghost"), Setting(panel="security", card="Active sessions", key="windows", title="Windows \u00b7 Edge", description="Seattle \u00b7 3 days ago", icon="externalLink", kind="button", options=[], buttonLabel="Sign out", buttonVariant="ghost"), Setting(panel="billing", card="Plan", key="plan", title="Current plan", description="Renews on December 1.", icon="externalLink", kind="button", options=[], buttonLabel="Upgrade", buttonVariant="primary"), Setting(panel="billing", card="Plan", key="seats", title="Seats", description="8 of 10 seats in use.", icon="externalLink", kind="button", options=[], buttonLabel="Manage seats", buttonVariant="secondary"), Setting(panel="billing", card="Invoices", key="billingEmail", title="Billing email", description="Invoices and receipts go here.", icon="clock", kind="text", options=[], buttonLabel="", buttonVariant=""), Setting(panel="billing", card="Invoices", key="emailInvoices", title="Email invoices", description="Send each invoice as a PDF.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="billing", card="Invoices", key="payment", title="Payment method", description="Visa ending in 4242.", icon="externalLink", kind="button", options=[], buttonLabel="Update", buttonVariant="secondary"), Setting(panel="appearance", card="Theme", key="colorTheme", title="Color theme", description="Light, dark, or follow the system.", icon="viewColumns", kind="segmented", options=[ChoiceItem(value="light", label="Light", description="", isDisabled=false), ChoiceItem(value="dark", label="Dark", description="", isDisabled=false), ChoiceItem(value="system", label="System", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="appearance", card="Theme", key="accent", title="Accent color", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="blue", label="Blue", description="", isDisabled=false), ChoiceItem(value="teal", label="Teal", description="", isDisabled=false), ChoiceItem(value="purple", label="Purple", description="", isDisabled=false), ChoiceItem(value="orange", label="Orange", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="appearance", card="Typography", key="font", title="Interface font", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="system", label="System", description="", isDisabled=false), ChoiceItem(value="serif", label="Serif", description="", isDisabled=false), ChoiceItem(value="mono", label="Monospace", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="appearance", card="Layout", key="density", title="Interface density", description="", icon="viewColumns", kind="segmented", options=[ChoiceItem(value="comfortable", label="Comfortable", description="", isDisabled=false), ChoiceItem(value="compact", label="Compact", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="appearance", card="Layout", key="reduceMotion", title="Reduce motion", description="Turn off animations and transitions.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Email", key="mentions", title="Mentions", description="When someone @mentions you.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Email", key="comments", title="Comments", description="Replies on threads you follow.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Email", key="digest", title="Weekly digest", description="A summary every Monday morning.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Desktop", key="desktop", title="Desktop notifications", description="Show a banner on this computer.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Desktop", key="sound", title="Play a sound", description="", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="notifications", card="Desktop", key="quiet", title="Quiet hours", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="none", label="Off", description="", isDisabled=false), ChoiceItem(value="evening", label="18:00 \u2013 09:00", description="", isDisabled=false), ChoiceItem(value="night", label="22:00 \u2013 07:00", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-search", title="Search everything", description="\u2318K", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-new", title="New item", description="\u2318N", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-save", title="Save", description="\u2318S", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-settings", title="Open settings", description="\u2318,", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-sidebar", title="Toggle the sidebar", description="\u2318\\\\", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="shortcuts", card="Shortcuts", key="sc-reset", title="Reset all to defaults", description="", icon="externalLink", kind="button", options=[], buttonLabel="Reset", buttonVariant="ghost"), Setting(panel="language", card="Language & region", key="lang", title="Language", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="en-US", label="English (US)", description="", isDisabled=false), ChoiceItem(value="en-GB", label="English (UK)", description="", isDisabled=false), ChoiceItem(value="fr", label="Fran\u00e7ais", description="", isDisabled=false), ChoiceItem(value="de", label="Deutsch", description="", isDisabled=false), ChoiceItem(value="ja", label="\u65e5\u672c\u8a9e", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="language", card="Language & region", key="region", title="Region format", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="US", label="United States", description="", isDisabled=false), ChoiceItem(value="GB", label="United Kingdom", description="", isDisabled=false), ChoiceItem(value="DE", label="Germany", description="", isDisabled=false), ChoiceItem(value="JP", label="Japan", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="language", card="Language & region", key="tz", title="Time zone", description="", icon="chevronDown", kind="select", options=[ChoiceItem(value="PT", label="Pacific (GMT-08:00)", description="", isDisabled=false), ChoiceItem(value="MT", label="Mountain (GMT-07:00)", description="", isDisabled=false), ChoiceItem(value="CT", label="Central (GMT-06:00)", description="", isDisabled=false), ChoiceItem(value="ET", label="Eastern (GMT-05:00)", description="", isDisabled=false), ChoiceItem(value="UTC", label="UTC (GMT+00:00)", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="language", card="Language & region", key="weekStart", title="Start the week on", description="", icon="viewColumns", kind="segmented", options=[ChoiceItem(value="sun", label="Sunday", description="", isDisabled=false), ChoiceItem(value="mon", label="Monday", description="", isDisabled=false)], buttonLabel="", buttonVariant=""), Setting(panel="privacy", card="Visibility", key="discoverable", title="Discoverable by email", description="People who know your email can find you.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="privacy", card="Visibility", key="receipts", title="Read receipts", description="Let others see when you have read a message.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="privacy", card="Visibility", key="activity", title="Activity status", description="Show when you are active.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="privacy", card="Your data", key="suggestions", title="Personalized suggestions", description="Use your activity to suggest content.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="privacy", card="Your data", key="export", title="Export my data", description="A copy of everything, sent by email.", icon="externalLink", kind="button", options=[], buttonLabel="Request export", buttonVariant="secondary"), Setting(panel="privacy", card="Your data", key="delete", title="Delete my account", description="This cannot be undone.", icon="externalLink", kind="button", options=[], buttonLabel="Delete", buttonVariant="destructive"), Setting(panel="integrations", card="Connected apps", key="calendar", title="Calendar", description="Connected \u00b7 syncs every 15 minutes.", icon="externalLink", kind="button", options=[], buttonLabel="Disconnect", buttonVariant="ghost"), Setting(panel="integrations", card="Connected apps", key="storage", title="File storage", description="Attach files from your drive.", icon="externalLink", kind="button", options=[], buttonLabel="Connect", buttonVariant="secondary"), Setting(panel="integrations", card="Connected apps", key="chat", title="Chat", description="Post updates to a channel.", icon="externalLink", kind="button", options=[], buttonLabel="Connect", buttonVariant="secondary"), Setting(panel="developer", card="API", key="api", title="API access", description="Allow personal access tokens.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="developer", card="API", key="webhook", title="Webhook URL", description="Where events are sent.", icon="clock", kind="text", options=[], buttonLabel="", buttonVariant=""), Setting(panel="developer", card="Pre-release", key="early", title="Early access features", description="Try features before they ship.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant=""), Setting(panel="developer", card="Pre-release", key="verbose", title="Verbose logging", description="Log every request to the console.", icon="check", kind="switch", options=[], buttonLabel="", buttonVariant="")]
+
+fn initialValues(): Value[] = [Value(key="displayName", value="Ada Lovelace"), Value(key="jobTitle", value="Analyst"), Value(key="pronouns", value="she"), Value(key="showLocalTime", value="true"), Value(key="presence", value="available"), Value(key="twoFactor", value="true"), Value(key="billingEmail", value="billing@example.com"), Value(key="emailInvoices", value="true"), Value(key="colorTheme", value="system"), Value(key="accent", value="blue"), Value(key="font", value="system"), Value(key="density", value="comfortable"), Value(key="mentions", value="true"), Value(key="comments", value="true"), Value(key="desktop", value="true"), Value(key="quiet", value="none"), Value(key="sc-search", value="true"), Value(key="sc-new", value="true"), Value(key="sc-save", value="true"), Value(key="sc-settings", value="true"), Value(key="lang", value="en-US"), Value(key="region", value="US"), Value(key="tz", value="PT"), Value(key="weekStart", value="sun"), Value(key="receipts", value="true"), Value(key="activity", value="true"), Value(key="suggestions", value="true"), Value(key="webhook", value="https://example.com/hooks")]
+
+fn valueOf(values: Value[], key: string): string = values.filter(v => v.key == key).map(v => v.value).join("")
+fn firstOfCard(panel: string, card: string): string = settings().filter(x => x.panel == panel and x.card == card).map(x => x.key).slice(0, 1).join("")
+fn cardsOf(panel: string): string[] = settings().filter(s => s.panel == panel and s.key == firstOfCard(panel, s.card)).map(s => s.card)
+fn panelLabel(id: string): string = panels().filter(p => p.id == id).map(p => p.label).join("")
+fn panelDescription(id: string): string = panels().filter(p => p.id == id).map(p => p.description).join("")
+fn matches(s: Setting, q: string): bool = s.title.toLowerCase().includes(q.trim().toLowerCase()) or s.description.toLowerCase().includes(q.trim().toLowerCase())
+
+component SettingsDialog
+  resource viewport = exactViewport() as shape Viewport
+  derive narrow = viewport.width < 640
+  state panel = "profile"
+  state query = ""
+  state values = initialValues()
+  state last = ""
+  action select(id: string)
+    panel = id
+    query = ""
+  action setQuery(t: string)
+    query = t
+  action clearQuery
+    query = ""
+  action setValue(key: string, v: string)
+    values = values.filter(x => x.key != key).concat([Value(key=key, value=v)])
+    last = `${key}=${v}`
+  action setBool(key: string, b: bool)
+    values = values.filter(x => x.key != key).concat([Value(key=key, value=(b ? "true" : "false"))])
+    last = `${key}=${b ? "true" : "false"}`
+  action pressed(key: string)
+    last = `pressed ${key}`
   view
-    main testId="root" navigationKey=`${top(nav).id}` navigationBack="back" width="100%" height="100%"
-      for e in stack(nav) key=e.id
-        column navigationKey=`${e.id}` navigationScroll="content" position="absolute" inset=0 display="flex" flex-direction="column"
-          header display="flex" align-items="center"
-            text "Astryx Settings Dialog" role="heading" aria-level=1 flex=1
-            button press=like aria-label=(liked ? "Unlike" : "Like") testId="like"
-              image (liked ? "symbol:heart-fill" : "symbol:heart")
-          scroll id="content" flex=1 min-height=0 padding=16
-            text greeting.text testId="greeting"
+    main testId="root" navigationKey=`${top(nav).id}` width="100%" height="100%" background-color="astryx.surface.body"
+      display="flex" align-items="center" justify-content="center" padding=(narrow ? "astryx.space.s0" : "astryx.space.s4")
+      column role="dialog" aria-labelledby="settings-title" testId="dialog"
+        width="100%" max-width=1120 height=(narrow ? "100%" : "min(800px, calc(100vh - 2rem))")
+        background-color="astryx.surface.popover" border-radius=(narrow ? "astryx.radius.none" : "astryx.radius.container")
+        box-shadow="astryx.shadow.high" overflow="hidden"
+        if narrow
+          column height="100%"
+            row align-items="center" gap="astryx.space.s2" padding="astryx.space.s3"
+              text "Settings" id="settings-title" flex=1 font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.primary"
+              IconButton(label="Close", icon="close", variant="ghost", size="sm", isDisabled=false, press=pressed("close"))
+            Divider(orientation="horizontal", label="", variant="subtle", isFullBleed=false)
+            view padding-left="astryx.space.s3" padding-right="astryx.space.s3" padding-top="astryx.space.s2" padding-bottom="astryx.space.s2"
+              TextInput(id="search", label="Search settings", value=query, placeholder="Search settings", description="", size="sm", isLabelHidden=true, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=true, hasAutoFocus=false, autoCapitalize="none", statusMessage="", statusVariant="error", statusPlacement="attached", input=setQuery, clear=clearQuery)
+            if query.trim() != ""
+              SearchResults(query=query, pick=select)
+            else
+              row gap="astryx.space.s1" padding-left="astryx.space.s3" padding-right="astryx.space.s3" padding-top="astryx.space.s2" padding-bottom="astryx.space.s2" overflow-x="auto" role="navigation" aria-label="Settings sections"
+                for p in panels() key=p.id
+                  view flex-shrink=0
+                    Button(label=p.label, variant=(p.id == panel ? "secondary" : "ghost"), size="sm", elevation="none", icon=p.icon, isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=select(p.id))
+              Divider(orientation="horizontal", label="", variant="subtle", isFullBleed=false)
+              scroll flex=1 min-height=0
+                PanelBody(panel=panel, values=values, narrow=true, setValue=setValue, setBool=setBool, pressed=pressed)
+        else
+          row height="100%"
+            column width=260 flex-shrink=0 gap="astryx.space.s2" padding="astryx.space.s2" background-color="astryx.surface.body"
+              border-right-width="astryx.border.width" border-right-style="solid" border-right-color="astryx.border" role="navigation" aria-label="Settings sections"
+              row padding-left="astryx.space.s2" min-height=32 align-items="center"
+                text "Settings" id="settings-title" role="heading" aria-level=4 font="astryx.type.heading-4" color="astryx.text.primary"
+              TextInput(id="search", label="Search settings", value=query, placeholder="Search settings", description="", size="sm", isLabelHidden=true, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=true, hasAutoFocus=false, autoCapitalize="none", statusMessage="", statusVariant="error", statusPlacement="attached", input=setQuery, clear=clearQuery)
+              if query.trim() != ""
+                SearchResults(query=query, pick=select)
+              else
+                scroll flex=1 min-height=0
+                  column gap="astryx.space.s3"
+                    for g in ["Account", "Workspace", "Advanced"] key=g
+                      column gap="astryx.space.s0-5"
+                        text g padding-left="astryx.space.s2" font="astryx.type.supporting" font-weight="astryx.weight.semibold" color="astryx.text.secondary"
+                        for p in panels().filter(p => p.group == g) key=p.id
+                          SideNavItem(label=p.label, icon=p.icon, isSelected=(p.id == panel), isCollapsed=false, press=select(p.id))
+            scroll flex=1 min-width=0 testId="pane"
+              column padding="astryx.space.s4" gap="astryx.space.s4"
+                row align-items="flex-start" gap="astryx.space.s2"
+                  column flex=1 gap="astryx.space.s0-5"
+                    text panelLabel(panel) role="heading" aria-level=2 font="astryx.type.heading-2" color="astryx.text.primary" testId="panel-title"
+                    text panelDescription(panel) font="astryx.type.supporting" color="astryx.text.secondary"
+                  IconButton(label="Close", icon="close", variant="ghost", size="sm", isDisabled=false, press=pressed("close"))
+                PanelBody(panel=panel, values=values, narrow=false, setValue=setValue, setBool=setBool, pressed=pressed)
+                text last testId="last" font="astryx.type.supporting" color="astryx.text.secondary"
+
+// One setting: its icon, title and description, and its control at the end
+// (under the text on a narrow screen, as the template's container query
+// does; only the app root reads the width, so it passes `narrow`).
+component SettingsRow
+  props
+    setting: Setting
+    value: string
+    narrow: bool
+    setValue: action
+    setBool: action
+    pressed: action
+  view
+    view display="flex" flex-direction=(narrow ? "column" : "row") gap="astryx.space.s2" padding="astryx.space.s4"
+      align-items=(narrow ? "stretch" : "center") testId=`row-${setting.key}`
+      row gap="astryx.space.s2" align-items="flex-start" flex=1 min-width=0
+        view padding-top="astryx.space.s0-5"
+          Icon(icon=setting.icon, size="sm", color="secondary", label="")
+        column gap="astryx.space.s0-5" flex=1 min-width=0
+          row gap="astryx.space.s2" align-items="center"
+            text setting.title font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.primary"
+            if setting.key == "twoFactor"
+              Token(label="Recommended", size="sm", color="green", icon="", isDisabled=false, removable=false, remove=pressed(setting.key))
+            if setting.key == "mac"
+              Token(label="This device", size="sm", color="default", icon="", isDisabled=false, removable=false, remove=pressed(setting.key))
+            if setting.key == "plan"
+              Token(label="Team", size="sm", color="blue", icon="", isDisabled=false, removable=false, remove=pressed(setting.key))
+            if setting.key == "early"
+              Token(label="Beta", size="sm", color="purple", icon="", isDisabled=false, removable=false, remove=pressed(setting.key))
+          if setting.description != ""
+            text setting.description font="astryx.type.supporting" color="astryx.text.secondary"
+      view width=(narrow ? "100%" : "192px") flex-shrink=0 display="flex" justify-content=(narrow ? "flex-start" : "flex-end")
+        if setting.kind == "text"
+          TextInput(id=setting.key, label=setting.title, value=value, placeholder="", description="", size="sm", isLabelHidden=true, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=false, hasAutoFocus=false, autoCapitalize="", statusMessage="", statusVariant="error", statusPlacement="attached", input=setValue(setting.key), clear=pressed(setting.key))
+        if setting.kind == "switch"
+          Switch(label=setting.title, isOn=(value == "true"), size="md", isDisabled=false, isLoading=false, isLabelHidden=true, labelPosition="end", labelSpacing="hug", isRequired=false, isOptional=false, still=false, change=setBool(setting.key))
+        if setting.kind == "select"
+          view width="100%"
+            Selector(id=setting.key, label=setting.title, options=setting.options, value=value, placeholder="Choose", size="sm", isDisabled=false, isMultiple=false, isLabelHidden=true, values=[], change=setValue(setting.key))
+        if setting.kind == "segmented"
+          SegmentedControl(label=setting.title, items=setting.options, value=value, size="sm", layout="hug", isDisabled=false, change=setValue(setting.key))
+        if setting.kind == "button"
+          Button(label=setting.buttonLabel, variant=setting.buttonVariant, size="sm", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=pressed(setting.key))
+
+// A titled card of setting rows with dividers between them.
+component SettingsCard
+  props
+    title: string
+    rows: Setting[]
+    values: Value[]
+    narrow: bool
+    setValue: action
+    setBool: action
+    pressed: action
+  view
+    column gap="astryx.space.s1-5"
+      text title font="astryx.type.supporting" font-weight="astryx.weight.semibold" color="astryx.text.secondary"
+      column border-radius="astryx.radius.container" background-color="astryx.surface.muted" overflow="hidden"
+        for r, i in rows key=r.key
+          column
+            if i > 0
+              view height="astryx.border.width" background-color="astryx.border"
+            SettingsRow(setting=r, value=valueOf(values, r.key), narrow=narrow, setValue=setValue, setBool=setBool, pressed=pressed)
+
+// The cards of one panel.
+component PanelBody
+  props
+    panel: string
+    values: Value[]
+    narrow: bool
+    setValue: action
+    setBool: action
+    pressed: action
+  view
+    column gap="astryx.space.s5" padding=(narrow ? "astryx.space.s4" : "astryx.space.s0")
+      for c in cardsOf(panel) key=c
+        SettingsCard(title=c, rows=settings().filter(s => s.panel == panel and s.card == c), values=values, narrow=narrow, setValue=setValue, setBool=setBool, pressed=pressed)
+
+// Settings matching the search, each opening its panel.
+component SearchResults
+  props
+    query: string
+    pick: action
+  view
+    column role="listbox" aria-label="Search results" gap="astryx.space.s0-5" overflow="auto" testId="results"
+      for s in settings().filter(s => matches(s, query)) key=`${s.panel}-${s.key}`
+        button press=pick(s.panel) role="option" aria-label=s.title testId=`result-${s.key}`
+          display="flex" align-items="center" gap="astryx.space.s2" width="100%" box-sizing="border-box" border-width=0 text-align="left"
+          padding="astryx.space.s2" border-radius="astryx.radius.element" background-color="transparent"
+          Icon(icon=s.icon, size="sm", color="secondary", label="")
+          column flex=1 min-width=0
+            text s.title font="astryx.type.body" color="astryx.text.primary"
+            text `${panelLabel(s.panel)} · ${s.description}` font="astryx.type.supporting" color="astryx.text.secondary" line-clamp=1 overflow="hidden"
+          Icon(icon="chevronRight", size="sm", color="secondary", label="")
+      if settings().filter(s => matches(s, query)).length == 0
+        text "No settings match" padding="astryx.space.s2" font="astryx.type.body" color="astryx.text.secondary"

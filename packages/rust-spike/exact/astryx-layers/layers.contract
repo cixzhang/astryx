@@ -1,0 +1,396 @@
+// Wave 3 layers and motion.
+//
+// Layers. Astryx's layer system (LayerProvider: a stack of open layers, portals,
+// focus trap and restore, Escape and outside-press dismissal, inert
+// background) maps to the platform's own top layer: a `popover` column for a
+// light layer, a `dialog` for a modal one. The platform keeps the stack, the
+// focus and the dismissal; the library styles the surface and places it.
+// A popover anchors to the control that opened it (`popovertarget`), never to
+// another element.
+//
+// Motion. Astryx's presets are keyframes here, timed by the theme's duration
+// and easing tokens' default values (a keyframe takes literals). A library
+// component cannot read reduced motion (the viewport is the app's root
+// resource), so each moving component takes `still`.
+use IconGlyph, space from "@astryx-spike/astryx"
+
+
+keyframes astryxEnter
+  from opacity=0 scale=0.96
+keyframes astryxExit
+  to opacity=0 scale=0.96
+keyframes astryxFadeIn
+  from opacity=0
+keyframes astryxFadeOut
+  to opacity=0
+keyframes astryxRise
+  from opacity=0 translate="0px 8px"
+keyframes astryxSheetUp
+  from translate="0px 100%"
+
+// The enter animation for a layer, or none when still.
+fn enterMotion(still: bool): string = still ? "none" : "astryxEnter 175ms cubic-bezier(0.24, 1, 0.4, 1) both"
+fn fadeMotion(still: bool): string = still ? "none" : "astryxFadeIn 175ms cubic-bezier(0.24, 1, 0.4, 1) both"
+
+// Where a popover sits beside its trigger: Astryx's placement (above, below,
+// start, end) and alignment (start, center, end) as a position area.
+fn popoverArea(placement: string, alignment: string): string = placement == "above" ? (alignment == "start" ? "top span-right" : alignment == "end" ? "top span-left" : "top") : placement == "start" ? (alignment == "start" ? "left span-bottom" : alignment == "end" ? "left span-top" : "left") : placement == "end" ? (alignment == "start" ? "right span-bottom" : alignment == "end" ? "right span-top" : "right") : (alignment == "start" ? "bottom span-right" : alignment == "end" ? "bottom span-left" : "bottom")
+
+// Popover: a light layer beside the control that opens it. The trigger is
+// the caller's: a button with `popovertarget=<id>`. Light dismiss is the
+// platform's (`popover="auto"`); without it the popover is "manual" and closes
+// by its close button or the trigger.
+style PopoverSurface
+  background-color="astryx.surface.popover"
+  border-radius="astryx.radius.container"
+  box-shadow="astryx.shadow.low"
+  border-width=0
+  color="astryx.text.primary"
+
+component Popover
+  props
+    id: string
+    label: string
+    placement: string
+    alignment: string
+    padding: number
+    role: string
+    hasCloseButton: bool
+    closeButtonLabel: string
+    hasLightDismiss: bool
+    still: bool
+  slot
+  view
+    column id=id popover=(hasLightDismiss ? "auto" : "manual") class=PopoverSurface
+      role=(role == "none" ? "presentation" : "dialog") aria-label=label
+      position-area=popoverArea(placement, alignment)
+      margin="astryx.space.s1"
+      padding=space(padding < 0 ? "3" : padding.toString())
+      animation=enterMotion(still)
+      testId=`popover-${id}`
+      children
+      if hasCloseButton
+        button popovertarget=id popovertargetaction="hide" aria-label=(closeButtonLabel == "" ? "Close" : closeButtonLabel)
+          testId=`close-${id}` position="absolute" top="astryx.space.s1" right="astryx.space.s1"
+          width=24 height=24 padding=0 border-radius="astryx.radius.inner" background-color="transparent" color="astryx.icon.secondary"
+          view width=16 height=16
+            IconGlyph(icon="close")
+
+// Collapsible: a trigger row that shows and hides its content. Astryx takes
+// the trigger as an element; one slot is the content here, so the trigger is
+// a `title`. Open state is the caller's (`isOpen`, `toggle`): a group that
+// keeps one open needs it, and a slot passes no context.
+component Collapsible
+  props
+    title: string
+    value: string
+    isOpen: bool
+    isDisabled: bool
+    chevronPosition: string
+    density: string
+    hasDivider: bool
+    still: bool
+    toggle: action
+  slot
+  view
+    column width="100%"
+      border-top-width=(hasDivider ? "astryx.border.width" : "0px") border-top-style="solid" border-top-color="astryx.border"
+      button press=toggle disabled=isDisabled aria-expanded=isOpen aria-controls=`panel-${value}` testId=`trigger-${value}`
+        display="flex" align-items="center" width="100%" background-color="transparent" border-width=0
+        padding-left=0 padding-right=0
+        padding-top=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+        padding-bottom=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+        opacity=(isDisabled ? 0.5 : 1)
+        if chevronPosition == "start"
+          view width=17 height=17 margin-right="astryx.space.s2" flex-shrink=0 color="astryx.icon.primary"
+            rotate=(isOpen ? "90deg" : "0deg") transition=(still ? "none" : "rotate 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+            IconGlyph(icon="chevronRight")
+        text title flex=1 text-align="left" font="astryx.type.large" font-weight="astryx.weight.semibold" color="astryx.text.primary"
+        if chevronPosition != "start"
+          view width=17 height=17 flex-shrink=0 color="astryx.icon.primary"
+            rotate=(isOpen ? "180deg" : "0deg") transition=(still ? "none" : "rotate 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+            IconGlyph(icon="chevronDown")
+      if isOpen
+        column id=`panel-${value}` role="region" aria-label=title testId=`panel-${value}`
+          padding-top="astryx.space.s1"
+          padding-bottom=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+          animation=(still ? "none" : "astryxRise 175ms cubic-bezier(0.24, 1, 0.4, 1) both")
+          children
+
+// CollapsibleGroup: collapsibles stacked as one list. Which are open is the
+// caller's state (one value for `single`, several for `multiple`).
+component CollapsibleGroup
+  props
+    label: string
+  slot
+  view
+    column width="100%" role="group" aria-label=label
+      children
+
+// Tooltip: a short text label beside its trigger, shown on hover or focus
+// after `delay` ms. The trigger is the slot. Timers run only in the app root's
+// tasks, so the delay is the fade's own delay: the tooltip opens at once and
+// stays transparent for `delay` ms. Hover is a web and desktop
+// event; touch has no hover, so on touch the tooltip shows on focus only.
+style TooltipLook
+  background-color="astryx.text.primary"
+  color="astryx.surface.surface"
+  border-radius="astryx.radius.container"
+  padding-top="astryx.space.s1" padding-bottom="astryx.space.s1"
+  padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+  max-width=300 border-width=0
+
+component Tooltip
+  props
+    id: string
+    content: string
+    placement: string
+    alignment: string
+    delay: number
+    isEnabled: bool
+    focusTrigger: string
+    still: bool
+  slot
+  action hovered(on: bool)
+    if on and isEnabled
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  action focused
+    if isEnabled and focusTrigger != "never"
+      showPopover(id, source=`${id}-trigger`)
+  action blurred
+    hidePopover(id)
+  view
+    view id=`${id}-trigger` hover=hovered focus=focused blur=blurred aria-describedby=id testId=`${id}-trigger`
+      children
+    text content id=id popover="manual" role="tooltip" class=TooltipLook
+      font="astryx.type.body" position-area=popoverArea(placement, alignment) margin="astryx.space.s1"
+      animation=(still ? "none" : `astryxFadeIn 175ms cubic-bezier(0.24, 1, 0.4, 1) ${delay}ms both`) testId=id
+
+// InfoTip: an information icon button whose tooltip explains what is next to it.
+component InfoTip
+  props
+    id: string
+    content: string
+    label: string
+    size: string
+  action hovered(on: bool)
+    if on
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  view
+    button id=`${id}-trigger` popovertarget=id hover=hovered aria-label=(label == "" ? "More information" : label) testId=`${id}-trigger`
+      padding="astryx.space.s0-5" border-radius="astryx.radius.full" background-color="transparent" border-width=0
+      color="astryx.icon.secondary"
+      view width=(size == "xsm" ? 12 : size == "md" ? 20 : size == "lg" ? 24 : 16) height=(size == "xsm" ? 12 : size == "md" ? 20 : size == "lg" ? 24 : 16)
+        IconGlyph(icon="info")
+    text content id=id popover="auto" role="tooltip" class=TooltipLook font="astryx.type.body"
+      position-area="top" margin="astryx.space.s1" testId=id
+
+// HoverCard: a richer card shown while the pointer rests on its trigger. Its
+// card content comes as text and a title here: the one slot is the trigger.
+component HoverCard
+  props
+    id: string
+    title: string
+    body: string
+    label: string
+    placement: string
+    alignment: string
+    isEnabled: bool
+    still: bool
+  slot
+  action hovered(on: bool)
+    if on and isEnabled
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  view
+    view id=`${id}-trigger` hover=hovered focus=hovered(true) blur=hovered(false) testId=`${id}-trigger`
+      children
+    column id=id popover="manual" role="dialog" aria-label=(label == "" ? title : label) class=PopoverSurface
+      position-area=popoverArea(placement, alignment) margin="astryx.space.s1" padding="astryx.space.s3" gap="astryx.space.s1" max-width=320
+      animation=enterMotion(still) testId=id
+      text title font="astryx.type.label" color="astryx.text.primary"
+      text body font="astryx.type.supporting" color="astryx.text.secondary"
+
+// Dialog: a modal layer over the page, opened with `showModal(id)` or a
+// button's `commandfor=<id> command="show-modal"`. The platform traps focus,
+// makes the page inert and closes it on Escape (`closedby`). Its body and
+// actions are the slot; the header is a title and a close button.
+component Dialog
+  props
+    id: string
+    title: string
+    purpose: string
+    variant: string
+    padding: number
+    hasCloseButton: bool
+    still: bool
+  slot
+  view
+    dialog id=id role=(purpose == "required" ? "alertdialog" : "dialog") aria-label=title
+      closedby=(purpose == "required" ? "none" : "any")
+      class=PopoverSurface box-shadow="astryx.shadow.high"
+      width=(variant == "fullscreen" ? "100%" : "min(560px, calc(100% - 32px))")
+      height=(variant == "fullscreen" ? "100%" : "auto")
+      max-width=(variant == "fullscreen" ? "100%" : "560px")
+      border-radius=(variant == "fullscreen" ? "astryx.radius.none" : "astryx.radius.container")
+      padding="astryx.space.s0" animation=enterMotion(still) testId=id
+      column gap="astryx.space.s3" padding=space(padding < 0 ? "6" : padding.toString())
+        row align-items="center" gap="astryx.space.s2"
+          text title role="heading" aria-level=2 flex=1 font="astryx.type.heading-3" color="astryx.text.primary"
+          if hasCloseButton and purpose != "required"
+            button commandfor=id command="close" aria-label="Close" testId=`close-${id}`
+              width=28 height=28 padding=0 border-width=0 border-radius="astryx.radius.element" background-color="transparent" color="astryx.icon.secondary"
+              view width=18 height=18
+                IconGlyph(icon="close")
+        children
+
+// BottomSheet: a sheet that rises from the bottom edge, with a grabber.
+// Dragging the grabber down past a third of the sheet closes it; the drag is
+// pointer events on the grabber, with the offset in component state.
+component BottomSheet
+  props
+    id: string
+    title: string
+    still: bool
+  slot
+  state dragging = false
+  state startY = 0
+  state offset = 0
+  action down(e: PointerEvent)
+    dragging = true
+    startY = e.clientY
+    offset = 0
+  action move(e: PointerEvent)
+    if dragging
+      offset = max(0, e.clientY - startY)
+  action up(e: PointerEvent)
+    dragging = false
+    if offset > 120
+      offset = 0
+      close(id)
+    else
+      offset = 0
+  view
+    dialog id=id role="dialog" aria-label=title closedby="any" testId=id
+      margin-top="auto" margin-bottom=0 margin-left=0 margin-right=0 width="100%" max-width="100%" max-height="85%"
+      background-color="astryx.surface.popover" color="astryx.text.primary"
+      border-top-left-radius="astryx.radius.page" border-top-right-radius="astryx.radius.page"
+      border-bottom-left-radius="astryx.radius.none" border-bottom-right-radius="astryx.radius.none"
+      border-width=0 padding="astryx.space.s0" box-shadow="astryx.shadow.high"
+      translate=`0px ${offset}px`
+      transition=(dragging or still ? "none" : "translate 410ms cubic-bezier(0.24, 1, 0.4, 1)")
+      animation=(still ? "none" : "astryxSheetUp 410ms cubic-bezier(0.24, 1, 0.4, 1) both")
+      column align-items="center" padding-top="astryx.space.s2" padding-bottom="astryx.space.s2" touch-action="none"
+        pointerdown=down pointermove=move pointerup=up testId=`grabber-${id}`
+        view width=36 height=5 border-radius="astryx.radius.full" background-color="astryx.border.emphasized"
+      column gap="astryx.space.s3" padding-left="astryx.space.s4" padding-right="astryx.space.s4" padding-bottom="astryx.space.s6"
+        text title role="heading" aria-level=2 font="astryx.type.heading-4" color="astryx.text.primary"
+        children
+
+// A menu row: DropdownMenu's and ContextMenu's items are data.
+shape MenuItem
+  id: string
+  label: string
+  icon: string
+  shortcut: string
+  isDestructive: bool
+  isDisabled: bool
+  isChecked: bool
+  isDivider: bool
+
+// The rows of a menu, closing it on a press.
+component MenuRows
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    select: action
+  view
+    column id=id popover="auto" role="menu" aria-label=label class=PopoverSurface padding="astryx.space.s1" min-width=220 testId=id
+      for it in items key=it.id
+        if it.isDivider
+          view height="astryx.border.width" background-color="astryx.border" margin-top="astryx.space.s1" margin-bottom="astryx.space.s1"
+        else
+          button press=select(it.id) popovertarget=id popovertargetaction="hide" disabled=it.isDisabled destructive=it.isDestructive
+            role=(it.isChecked ? "menuitemcheckbox" : "menuitem") aria-checked=it.isChecked aria-label=it.label testId=`menu-${it.id}`
+            display="flex" align-items="center" gap="astryx.space.s2" width="100%" box-sizing="border-box" border-width=0 background-color="transparent"
+            padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+            border-radius="astryx.radius.inner" opacity=(it.isDisabled ? 0.5 : 1)
+            view width=16 height=16 flex-shrink=0 color=(it.isDestructive ? "astryx.icon.error" : "astryx.icon.secondary")
+              IconGlyph(icon=(it.isChecked ? "check" : it.icon))
+            text it.label flex=1 text-align="left" font="astryx.type.body" color=(it.isDestructive ? "astryx.text.error" : "astryx.text.primary")
+            if it.shortcut != ""
+              text it.shortcut font="astryx.type.supporting" color="astryx.text.secondary"
+
+// DropdownMenu: a button that opens a menu of actions below it.
+component DropdownMenu
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    variant: string
+    size: string
+    hasChevron: bool
+    select: action
+  view
+    column
+      button id=`${id}-trigger` popovertarget=id aria-haspopup="menu" aria-label=label testId=`${id}-trigger`
+        display="flex" align-items="center" gap="astryx.space.s1"
+        height=(size == "sm" ? "astryx.size.element-sm" : size == "lg" ? "astryx.size.element-lg" : "astryx.size.element-md")
+        padding-left="astryx.space.s3" padding-right=(hasChevron ? "astryx.space.s2" : "astryx.space.s3") border-width=0
+        border-radius="astryx.radius.element" background-color=(variant == "ghost" ? "transparent" : "astryx.neutral") color="astryx.text.primary"
+        text label font="astryx.type.label" font-weight="astryx.weight.medium"
+        if hasChevron
+          view width=16 height=16
+            IconGlyph(icon="chevronDown")
+      MenuRows(id=id, label=label, items=items, select=select)
+
+// ContextMenu: a menu opened by a right click or a long press on its slot.
+component ContextMenu
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    select: action
+  slot
+  view
+    view contextPopover=id testId=`${id}-target`
+      children
+    MenuRows(id=id, label=label, items=items, select=select)
+
+// Resizable: a start panel whose width the reader drags by the handle (or
+// steps with the arrow keys on it). The width is the caller's (`width`,
+// `resize` with the new width in px). The panel is the slot.
+component Resizable
+  props
+    label: string
+    width: number
+    minWidth: number
+    maxWidth: number
+    resize: action
+  slot
+  state dragging = false
+  state startX = 0
+  state startWidth = 0
+  action down(e: PointerEvent)
+    dragging = true
+    startX = e.clientX
+    startWidth = width
+  action move(e: PointerEvent)
+    if dragging
+      resize(min(maxWidth, max(minWidth, startWidth + e.clientX - startX)))
+  action up(e: PointerEvent)
+    dragging = false
+  view
+    row align-items="stretch" height="100%"
+      view width=width flex-shrink=0 overflow="hidden"
+        children
+      view role="separator" aria-orientation="vertical" aria-label=label aria-valuenow=width aria-valuemin=minWidth aria-valuemax=maxWidth tabindex=0
+        width=8 cursor="col-resize" touch-action="none" display="flex" justify-content="center" flex-shrink=0
+        pointerdown=down pointermove=move pointerup=up testId="resize-handle"
+        view width="astryx.border.width" background-color=(dragging ? "astryx.accent" : "astryx.border")

@@ -1,0 +1,311 @@
+// Wave 7 pickers: Typeahead (Astryx's combobox), Tokenizer, Selector,
+// MultiSelector, Calendar, DateInput, DateRangeInput, TimeInput and
+// DateTimeInput. Each opens a listbox or a calendar in a popover beside its
+// field.
+//
+// Contract refuses aria-activedescendant, aria-autocomplete and
+// aria-multiselectable, so the highlighted option is drawn but not announced
+// as the active descendant; options are buttons a reader reaches by Tab.
+use IconGlyph, ChoiceItem, space from "@astryx-spike/astryx"
+use PopoverSurface, popoverArea from "./layers.contract"
+
+style FieldBox
+  display="flex" align-items="center" gap="astryx.space.s2"
+  padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+  border-width="astryx.border.width" border-style="solid" border-color="astryx.border.emphasized"
+  border-radius="astryx.radius.element" background-color="astryx.surface.surface"
+
+style OptionLook
+  :hover
+    background-color="astryx.overlay.hover"
+
+fn fieldHeight(size: string): string = size == "sm" ? "astryx.size.element-sm" : size == "lg" ? "astryx.size.element-lg" : "astryx.size.element-md"
+fn matches(o: ChoiceItem, q: string): bool = q.trim() == "" or o.label.toLowerCase().includes(q.trim().toLowerCase())
+
+// Typeahead: a text field whose typing filters a list of options below it.
+// `query` is the caller's; `pick` receives the chosen option's value.
+component Typeahead
+  props
+    id: string
+    label: string
+    query: string
+    options: ChoiceItem[]
+    selected: string
+    placeholder: string
+    size: string
+    isDisabled: bool
+    isLabelHidden: bool
+    hasClear: bool
+    hasEntriesOnFocus: bool
+    input: action
+    pick: action
+    clear: action
+  state highlighted = 0
+  action typed(t: string)
+    highlighted = 0
+    showPopover(`${id}-list`, source=`${id}-field`)
+    input(t)
+  action focused
+    if hasEntriesOnFocus
+      showPopover(`${id}-list`, source=`${id}-field`)
+  action choose(v: string)
+    hidePopover(`${id}-list`)
+    pick(v)
+  action submitted
+    let shown = options.filter(o => matches(o, query))
+    match shown.at(highlighted)
+      case some(o)
+        hidePopover(`${id}-list`)
+        pick(o.value)
+      case none
+        highlighted = 0
+  view
+    column gap="astryx.space.s1"
+      if not isLabelHidden
+        text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row id=`${id}-field` class=FieldBox height=fieldHeight(size) opacity=(isDisabled ? 0.5 : 1)
+        view width=16 height=16 color="astryx.icon.secondary"
+          IconGlyph(icon="search")
+        input value=query input=typed focus=focused submit=submitted placeholder=placeholder disabled=isDisabled
+          role="combobox" aria-expanded=false aria-controls=`${id}-list` aria-label=label testId=`input-${id}`
+          flex=1 min-width=0 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary"
+        if hasClear and query != ""
+          button press=clear aria-label=`Clear ${label}` testId=`clear-${id}` width=20 height=20 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+            view width=14 height=14
+              IconGlyph(icon="close")
+      column id=`${id}-list` popover="auto" role="listbox" aria-label=label class=PopoverSurface
+        position-area="bottom span-right" margin-top="astryx.space.s1" padding="astryx.space.s1" min-width=240 max-height=280 overflow="auto" testId=`${id}-list`
+        for o, i in options.filter(o => matches(o, query)) key=o.value
+          button press=choose(o.value) role="option" aria-selected=(selected == o.value) aria-label=o.label class=OptionLook testId=`${id}-option-${o.value}`
+            display="flex" align-items="center" gap="astryx.space.s2" width="100%" box-sizing="border-box" border-width=0 text-align="left"
+            padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+            border-radius="astryx.radius.inner" background-color=(i == highlighted ? "astryx.overlay.hover" : "transparent")
+            column flex=1 min-width=0
+              text o.label font="astryx.type.body" color="astryx.text.primary"
+              if o.description != ""
+                text o.description font="astryx.type.supporting" color="astryx.text.secondary"
+            if selected == o.value
+              view width=16 height=16 color="astryx.icon.accent"
+                IconGlyph(icon="check")
+        if options.filter(o => matches(o, query)).length == 0
+          text "No results" font="astryx.type.body" color="astryx.text.secondary" padding="astryx.space.s2"
+
+// Tokenizer: chosen values as tokens inside a field, with a typeahead to add
+// more and a remove button on each token.
+component Tokenizer
+  props
+    id: string
+    label: string
+    query: string
+    options: ChoiceItem[]
+    values: string[]
+    input: action
+    add: action
+    remove: action
+  action typed(t: string)
+    showPopover(`${id}-list`, source=`${id}-field`)
+    input(t)
+  action choose(v: string)
+    hidePopover(`${id}-list`)
+    add(v)
+  view
+    column gap="astryx.space.s1"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row id=`${id}-field` class=FieldBox min-height="astryx.size.element-md" flex-wrap="wrap" gap="astryx.space.s1"
+        padding-top="astryx.space.s1" padding-bottom="astryx.space.s1"
+        for v in values key=v
+          row align-items="center" gap="astryx.space.s0-5" height="astryx.space.s6" padding-left="astryx.space.s2" padding-right="astryx.space.s1"
+            border-radius="astryx.radius.inner" background-color="astryx.neutral"
+            text options.filter(o => o.value == v).map(o => o.label).join("") font="astryx.type.supporting" font-weight="astryx.weight.medium" color="astryx.text.primary"
+            button press=remove(v) aria-label=`Remove ${v}` testId=`remove-${v}` width=16 height=16 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+              view width=12 height=12
+                IconGlyph(icon="close")
+        input value=query input=typed aria-label=label testId=`input-${id}` flex=1 min-width=80 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary"
+      column id=`${id}-list` popover="auto" role="listbox" aria-label=label class=PopoverSurface
+        position-area="bottom span-right" margin-top="astryx.space.s1" padding="astryx.space.s1" min-width=240 testId=`${id}-list`
+        for o in options.filter(o => matches(o, query) and not values.includes(o.value)) key=o.value
+          button press=choose(o.value) role="option" aria-label=o.label class=OptionLook testId=`${id}-option-${o.value}`
+            display="flex" width="100%" box-sizing="border-box" border-width=0 text-align="left" background-color="transparent"
+            padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-radius="astryx.radius.inner"
+            text o.label font="astryx.type.body" color="astryx.text.primary"
+
+// Selector: a button showing the chosen option that opens the options in a
+// listbox. MultiSelector chooses several; the button counts them.
+component Selector
+  props
+    id: string
+    label: string
+    options: ChoiceItem[]
+    value: string
+    placeholder: string
+    size: string
+    isDisabled: bool
+    isMultiple: bool
+    isLabelHidden: bool
+    values: string[]
+    change: action
+  view
+    column gap="astryx.space.s1"
+      if not isLabelHidden
+        text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      button id=`${id}-trigger` popovertarget=`${id}-list` disabled=isDisabled aria-haspopup="listbox" aria-label=label testId=`${id}-trigger`
+        class=FieldBox height=fieldHeight(size) opacity=(isDisabled ? 0.5 : 1)
+        text (isMultiple ? (values.length == 0 ? placeholder : `${values.length} selected`) : (options.filter(o => o.value == value).length == 0 ? placeholder : options.filter(o => o.value == value).map(o => o.label).join("")))
+          flex=1 text-align="left" font="astryx.type.body"
+          color=((isMultiple and values.length == 0) or (not isMultiple and value == "") ? "astryx.text.secondary" : "astryx.text.primary")
+        view width=16 height=16 color="astryx.icon.secondary"
+          IconGlyph(icon="chevronDown")
+      column id=`${id}-list` popover="auto" role="listbox" aria-label=label class=PopoverSurface
+        position-area="bottom span-right" margin-top="astryx.space.s1" padding="astryx.space.s1" min-width=240 testId=`${id}-list`
+        for o in options key=o.value
+          button press=change(o.value) popovertarget=(isMultiple ? "" : `${id}-list`) popovertargetaction="hide" disabled=o.isDisabled
+            role="option" aria-selected=(isMultiple ? values.includes(o.value) : value == o.value) aria-label=o.label class=OptionLook testId=`${id}-option-${o.value}`
+            display="flex" align-items="center" gap="astryx.space.s2" width="100%" box-sizing="border-box" border-width=0 text-align="left" background-color="transparent"
+            padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-radius="astryx.radius.inner"
+            view width=16 height=16 color="astryx.icon.accent" opacity=((isMultiple ? values.includes(o.value) : value == o.value) ? 1 : 0)
+              IconGlyph(icon="check")
+            text o.label font="astryx.type.body" color="astryx.text.primary"
+
+// Days in a month (1–12) of a year.
+fn daysIn(year: number, month: number): number = month == 2 ? ((year - floor(year / 4) * 4 == 0 and year - floor(year / 100) * 100 != 0) or year - floor(year / 400) * 400 == 0 ? 29 : 28) : (month == 4 or month == 6 or month == 9 or month == 11) ? 30 : 31
+// The weekday (0 Sunday … 6 Saturday) of a date, by Zeller's congruence.
+fn weekday(year: number, month: number, day: number): number = zeller(month < 3 ? year - 1 : year, month < 3 ? month + 12 : month, day)
+fn zeller(y: number, m: number, d: number): number = mod7(d + floor(13 * (m + 1) / 5) + y + floor(y / 4) - floor(y / 100) + floor(y / 400) + 6)
+fn mod7(n: number): number = n - floor(n / 7) * 7
+fn pad2(n: number): string = n < 10 ? `0${n}` : n.toString()
+fn isoDate(year: number, month: number, day: number): string = `${year}-${pad2(month)}-${pad2(day)}`
+fn monthName(m: number): string = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].slice(m - 1, m).join("")
+
+// Calendar: one month of days. `selected` and the range ends are ISO dates
+// ("2026-11-10"); `pick` receives the pressed day's ISO date and `shift` a
+// month step (-1 or 1). Weekday and month names are English: Contract formats
+// dates in en-US.
+component Calendar
+  props
+    year: number
+    month: number
+    selected: string
+    rangeStart: string
+    rangeEnd: string
+    today: string
+    pick: action
+    shift: action
+  view
+    column gap="astryx.space.s2" width=280 testId="calendar"
+      row align-items="center"
+        button press=shift(-1) aria-label="Previous month" testId="month-prev" width=28 height=28 padding=0 border-width=0 border-radius="astryx.radius.element" background-color="transparent" color="astryx.icon.primary"
+          view width=16 height=16
+            IconGlyph(icon="chevronLeft")
+        text `${monthName(month)} ${year}` flex=1 text-align="center" font="astryx.type.label" font-weight="astryx.weight.semibold" color="astryx.text.primary" testId="month-title"
+        button press=shift(1) aria-label="Next month" testId="month-next" width=28 height=28 padding=0 border-width=0 border-radius="astryx.radius.element" background-color="transparent" color="astryx.icon.primary"
+          view width=16 height=16
+            IconGlyph(icon="chevronRight")
+      view display="grid" grid-template-columns="repeat(7, 1fr)" row-gap="astryx.space.s0-5" role="grid" aria-label=`${monthName(month)} ${year}`
+        for w in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] key=w
+          text w text-align="center" font="astryx.type.supporting" color="astryx.text.secondary"
+        for b in range(weekday(year, month, 1)) key=`blank-${b}`
+          view height=36
+        for d in range(daysIn(year, month)) key=d
+          button press=pick(isoDate(year, month, d + 1)) aria-label=isoDate(year, month, d + 1) aria-pressed=(selected == isoDate(year, month, d + 1))
+            testId=`day-${isoDate(year, month, d + 1)}` height=36 padding=0
+            border-radius=(rangeStart != "" and rangeEnd != "" and isoDate(year, month, d + 1) > rangeStart and isoDate(year, month, d + 1) < rangeEnd ? "astryx.radius.none" : "astryx.radius.full")
+            background-color=(selected == isoDate(year, month, d + 1) or rangeStart == isoDate(year, month, d + 1) or rangeEnd == isoDate(year, month, d + 1) ? "astryx.accent" : rangeStart != "" and rangeEnd != "" and isoDate(year, month, d + 1) > rangeStart and isoDate(year, month, d + 1) < rangeEnd ? "astryx.accent-muted" : "transparent")
+            border-width=(today == isoDate(year, month, d + 1) ? 1 : 0) border-style="solid" border-color="astryx.accent"
+            text (d + 1).toString() font="astryx.type.body"
+              color=(selected == isoDate(year, month, d + 1) or rangeStart == isoDate(year, month, d + 1) or rangeEnd == isoDate(year, month, d + 1) ? "astryx.on-accent" : "astryx.text.primary")
+
+// DateInput: a date field (typed as ISO or picked) with a calendar popover.
+// DateRangeInput picks two ends; the calendar shows the range.
+component DateInput
+  props
+    id: string
+    label: string
+    value: string
+    endValue: string
+    isRange: bool
+    year: number
+    month: number
+    today: string
+    size: string
+    isDisabled: bool
+    input: action
+    pick: action
+    shift: action
+  view
+    column gap="astryx.space.s1"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row id=`${id}-field` class=FieldBox height=fieldHeight(size) opacity=(isDisabled ? 0.5 : 1)
+        input value=(isRange ? (value == "" ? "" : `${value} – ${endValue}`) : value) input=input placeholder="YYYY-MM-DD" disabled=isDisabled readonly=isRange
+          aria-label=label testId=`input-${id}` flex=1 min-width=0 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary"
+        button popovertarget=`${id}-calendar` id=`${id}-open` aria-label=`Choose ${label}` disabled=isDisabled testId=`open-${id}`
+          width=24 height=24 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+          view width=16 height=16
+            IconGlyph(icon="calendar")
+      column id=`${id}-calendar` popover="auto" role="dialog" aria-label=label class=PopoverSurface position-area="bottom span-right" margin-top="astryx.space.s1" padding="astryx.space.s3" testId=`${id}-calendar`
+        Calendar(year=year, month=month, selected=(isRange ? "" : value), rangeStart=(isRange ? value : ""), rangeEnd=(isRange ? endValue : ""), today=today, pick=pick, shift=shift)
+
+// TimeInput: hours and minutes as a 24-hour "HH:MM" field with step
+// buttons. DateTimeInput is a DateInput beside a TimeInput.
+component TimeInput
+  props
+    id: string
+    label: string
+    value: string
+    size: string
+    isDisabled: bool
+    input: action
+  view
+    column gap="astryx.space.s1"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row class=FieldBox height=fieldHeight(size) opacity=(isDisabled ? 0.5 : 1) width=140
+        view width=16 height=16 color="astryx.icon.secondary"
+          IconGlyph(icon="clock")
+        input value=value input=input placeholder="HH:MM" inputmode="numeric" maxlength=5 disabled=isDisabled aria-label=label testId=`input-${id}`
+          flex=1 min-width=0 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary" font-variant-numeric="tabular-nums"
+
+// A command of a CommandPalette.
+shape Command
+  id: string
+  label: string
+  group: string
+
+// CommandPalette: a modal search over commands. It opens with
+// `showModal(id)` (the caller binds ⌘K); typing filters, a press runs the
+// command and closes the palette.
+component CommandPalette
+  props
+    id: string
+    label: string
+    query: string
+    commands: Command[]
+    input: action
+    run: action
+  action choose(c: string)
+    close(id)
+    run(c)
+  action submitted
+    match commands.filter(c => c.label.toLowerCase().includes(query.trim().toLowerCase())).at(0)
+      case some(c)
+        close(id)
+        run(c.id)
+      case none
+        close(id)
+  view
+    dialog id=id role="dialog" aria-label=label closedby="any" class=PopoverSurface box-shadow="astryx.shadow.high"
+      width="min(560px, calc(100% - 32px))" margin-top="10vh" padding="astryx.space.s0" testId=id
+      column
+        row align-items="center" gap="astryx.space.s2" padding="astryx.space.s3" border-bottom-width="astryx.border.width" border-bottom-style="solid" border-bottom-color="astryx.border"
+          view width=18 height=18 color="astryx.icon.secondary"
+            IconGlyph(icon="search")
+          input value=query input=input submit=submitted autofocus=true aria-label=label placeholder=label testId=`input-${id}`
+            flex=1 border-width=0 background-color="transparent" padding=0 font="astryx.type.large" color="astryx.text.primary"
+        column role="listbox" aria-label=label padding="astryx.space.s1" max-height=360 overflow="auto"
+          for c in commands.filter(c => query.trim() == "" or c.label.toLowerCase().includes(query.trim().toLowerCase())) key=c.id
+            button press=choose(c.id) role="option" aria-label=c.label class=OptionLook testId=`command-${c.id}`
+              display="flex" align-items="center" width="100%" box-sizing="border-box" border-width=0 text-align="left" background-color="transparent"
+              padding-top="astryx.space.s2" padding-bottom="astryx.space.s2" padding-left="astryx.space.s3" padding-right="astryx.space.s3" border-radius="astryx.radius.inner"
+              text c.label flex=1 font="astryx.type.body" color="astryx.text.primary"
+              if c.group != ""
+                text c.group font="astryx.type.supporting" color="astryx.text.secondary"
+          if commands.filter(c => query.trim() == "" or c.label.toLowerCase().includes(query.trim().toLowerCase())).length == 0
+            text "No results" padding="astryx.space.s3" font="astryx.type.body" color="astryx.text.secondary"

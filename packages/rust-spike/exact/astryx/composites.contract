@@ -1,0 +1,154 @@
+// Wave 6 composites in the library: Item, List and ListItem, ReorderList and
+// TreeList. Rows that a component must key, reorder or nest are data (one
+// slot cannot be counted, keyed or reordered).
+use IconGlyph from "./icons.contract"
+use Icon, Avatar from "./primitives.contract"
+use space from "./foundations.contract"
+
+fn densityPad(density: string): string = density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2"
+
+// Item: a row with an optional icon, a label, a description and an end
+// text. Astryx takes start and end content as elements; here they are an
+// icon name and text, and the slot is extra end content (a badge, a switch).
+component Item
+  props
+    label: string
+    description: string
+    icon: string
+    endText: string
+    density: string
+    isSelected: bool
+    isHighlighted: bool
+    isDisabled: bool
+    labelLines: number
+  slot
+  view
+    row align-items="center" gap="astryx.space.s3" min-width=0
+      padding-top=densityPad(density) padding-bottom=densityPad(density)
+      padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+      border-radius="astryx.radius.element"
+      background-color=(isSelected ? "astryx.accent-muted" : isHighlighted ? "astryx.overlay.hover" : "transparent")
+      opacity=(isDisabled ? 0.5 : 1)
+      if icon != ""
+        Icon(icon=icon, size="md", color="secondary", label="")
+      column flex=1 min-width=0 gap="astryx.space.s0-5"
+        text label font="astryx.type.body" color="astryx.text.primary" line-clamp=labelLines overflow=(labelLines > 0 ? "hidden" : "visible")
+        if description != ""
+          text description font="astryx.type.supporting" color="astryx.text.secondary"
+      if endText != ""
+        text endText font="astryx.type.supporting" color="astryx.text.secondary" white-space="nowrap"
+      children
+
+// List: rows in a column, with Astryx's density, dividers and markers. Its
+// rows are the slot (ListItem).
+component List
+  props
+    label: string
+    density: string
+    hasDividers: bool
+    edge: string
+    listStyle: string
+  slot
+  view
+    column role="list" aria-label=label width="100%"
+      padding-left=(edge == "flush" or edge == "bleed" ? "astryx.space.s0" : edge == "outset" ? "astryx.space.s1" : "astryx.space.s2")
+      padding-right=(edge == "flush" or edge == "bleed" ? "astryx.space.s0" : edge == "outset" ? "astryx.space.s1" : "astryx.space.s2")
+      children
+
+// ListItem: one row of a List. `marker` is the list's marker for this row
+// (a slot passes no context, so the caller passes the list's style, density
+// and dividers to each row).
+component ListItem
+  props
+    label: string
+    description: string
+    icon: string
+    marker: string
+    density: string
+    hasDivider: bool
+    isSelected: bool
+    isDisabled: bool
+  slot
+  view
+    row role="listitem" align-items="flex-start" gap="astryx.space.s2" min-width=0
+      border-top-width=(hasDivider ? "astryx.border.width" : "0px") border-top-style="solid" border-top-color="astryx.border"
+      if marker != ""
+        text marker font="astryx.type.body" color="astryx.text.secondary" min-width=16 padding-top=densityPad(density)
+      // Contract forwards no slot into another component, so the row repeats
+      // Item's layout instead of wrapping Item.
+      row flex=1 align-items="center" gap="astryx.space.s3" min-width=0
+        padding-top=densityPad(density) padding-bottom=densityPad(density)
+        padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-radius="astryx.radius.element"
+        background-color=(isSelected ? "astryx.accent-muted" : "transparent") opacity=(isDisabled ? 0.5 : 1)
+        if icon != ""
+          Icon(icon=icon, size="md", color="secondary", label="")
+        column flex=1 min-width=0 gap="astryx.space.s0-5"
+          text label font="astryx.type.body" color="astryx.text.primary"
+          if description != ""
+            text description font="astryx.type.supporting" color="astryx.text.secondary"
+        children
+
+// A row of a ReorderList or a TreeList.
+shape RowItem
+  key: string
+  label: string
+  description: string
+  icon: string
+  depth: number
+  hasChildren: bool
+  isExpanded: bool
+
+// ReorderList: rows the reader moves by their grip (pointer, touch, or
+// Space, the arrows and Enter on the focused grip). The host draws the
+// lifted row and scrolls; the caller's `reorder` moves the key before
+// another key (none: to the end).
+component ReorderList
+  props
+    id: string
+    label: string
+    items: RowItem[]
+    density: string
+    hasDividers: bool
+    reorder: action
+  view
+    list id=id virtualized=true reorderdrop=reorder aria-label=label max-height=480 width="100%" estimated-item-height=44
+      for it in items key=it.key
+        row align-items="center" gap="astryx.space.s2" testId=`row-${it.key}`
+          border-top-width=(hasDividers ? "astryx.border.width" : "0px") border-top-style="solid" border-top-color="astryx.border"
+          view reorderFor=id touch-action="none" width=24 height=24 color="astryx.icon.secondary" aria-label=`Reorder ${it.label}` testId=`grip-${it.key}` flex-shrink=0
+            IconGlyph(icon="moreHorizontal")
+          view flex=1 min-width=0
+            Item(label=it.label, description=it.description, icon=it.icon, endText="", density=density, isSelected=false, isHighlighted=false, isDisabled=false, labelLines=0)
+
+// TreeList: nested rows, flattened with a depth each. A row with children
+// shows a chevron; `toggle` opens or closes it, `select` picks a row. Line
+// guides mark each level.
+component TreeList
+  props
+    label: string
+    items: RowItem[]
+    selected: string
+    density: string
+    variant: string
+    toggle: action
+    select: action
+  view
+    column role="tree" aria-label=label width="100%"
+      for it in items key=it.key
+        row role="treeitem" aria-level=(it.depth + 1) aria-expanded=it.isExpanded aria-selected=(selected == it.key)
+          align-items="center" testId=`tree-${it.key}`
+          border-radius="astryx.radius.element"
+          background-color=(selected == it.key ? "astryx.accent-muted" : "transparent")
+          for d in range(it.depth) key=d
+            view width=20 align-self="stretch" display="flex" justify-content="center" flex-shrink=0
+              view width="astryx.border.width" background-color=(variant == "noGuides" ? "transparent" : "astryx.border")
+          if it.hasChildren
+            button press=toggle(it.key) aria-label=(it.isExpanded ? `Collapse ${it.label}` : `Expand ${it.label}`) testId=`toggle-${it.key}`
+              width=20 height=20 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary" flex-shrink=0
+              view width=16 height=16 rotate=(it.isExpanded ? "90deg" : "0deg")
+                IconGlyph(icon="chevronRight")
+          else
+            view width=20 flex-shrink=0
+          button press=select(it.key) aria-label=it.label testId=`select-${it.key}`
+            flex=1 min-width=0 border-width=0 background-color="transparent" padding=0 text-align="left"
+            Item(label=it.label, description="", icon=it.icon, endText="", density=density, isSelected=false, isHighlighted=false, isDisabled=false, labelLines=1)

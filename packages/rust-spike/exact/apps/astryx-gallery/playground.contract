@@ -1,0 +1,178 @@
+// Interactive cases: controls wired to real state, for behavior tests.
+use Switch, TextInput, CheckboxInput, RadioList, SegmentedControl, ChoiceItem, Button, NumberInput from "@astryx-spike/astryx"
+
+fn plans(): ChoiceItem[] = [ChoiceItem(value="free", label="Free", description="", isDisabled=false), ChoiceItem(value="pro", label="Pro", description="", isDisabled=false), ChoiceItem(value="team", label="Team", description="", isDisabled=false)]
+
+component ControlsPlayground
+  state on = false
+  state name = ""
+  state agreed = false
+  state plan = "free"
+  state view = "pro"
+  state count = 1
+  state presses = 0
+  action setOn(b: bool)
+    on = b
+  action setName(t: string)
+    name = t
+  action clearName
+    name = ""
+  action setAgreed(b: bool)
+    agreed = b
+  action setPlan(v: string)
+    plan = v
+  action setView(v: string)
+    view = v
+  action press
+    presses = presses + 1
+  action typed(t: string)
+    count = match parseNumber(t) { case some(n) => n, case none => count }
+  action up
+    count = count + 1
+  action down
+    count = count - 1
+  view
+    column gap="astryx.space.s4" width=320
+      Switch(label="Wi-Fi", isOn=on, size="md", isDisabled=false, isLoading=false, isLabelHidden=false, labelPosition="end", labelSpacing="hug", isRequired=false, isOptional=false, still=true, change=setOn)
+      text (on ? "on" : "off") testId="switch-state"
+      TextInput(id="name", label="Name", value=name, placeholder="Your name", description="", size="md", isLabelHidden=false, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=true, hasAutoFocus=false, autoCapitalize="", statusMessage="", statusVariant="error", statusPlacement="attached", input=setName, clear=clearName)
+      text name testId="name-value"
+      CheckboxInput(label="I agree", state=(agreed ? "checked" : "unchecked"), description="", isDisabled=false, change=setAgreed)
+      text (agreed ? "agreed" : "not agreed") testId="agreed-state"
+      RadioList(name="plan", label="Plan", items=plans(), value=plan, isDisabled=false, change=setPlan)
+      text plan testId="plan-value"
+      SegmentedControl(label="View", items=plans(), value=view, size="md", layout="hug", isDisabled=false, change=setView)
+      text view testId="view-value"
+      NumberInput(id="count", label="Count", value=count.toString(), size="md", isDisabled=false, input=typed, stepUp=up, stepDown=down)
+      text count.toString() testId="count-value"
+      Button(label="Save", variant="primary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=press)
+      text presses.toString() testId="presses"
+
+// Composites wired to state: reorder, tree, dialog, sheet, menus, resize.
+use ReorderList, TreeList, RowItem from "@astryx-spike/astryx"
+use Dialog, BottomSheet, DropdownMenu, ContextMenu, MenuItem, Resizable from "@astryx-spike/astryx-layers"
+
+fn row(key: string, label: string, depth: number, hasChildren: bool, isExpanded: bool): RowItem = RowItem(key=key, label=label, description="", icon="", depth=depth, hasChildren=hasChildren, isExpanded=isExpanded)
+fn menu(id: string, label: string): MenuItem = MenuItem(id=id, label=label, icon="", shortcut="", isDestructive=false, isDisabled=false, isChecked=false, isDivider=false)
+
+component CompositesPlayground
+  state order = ["a", "b", "c"]
+  state open = ["src"]
+  state picked = ""
+  state chosen = ""
+  state width = 160
+  action reorder(key: string, before: option<string>)
+    let rest = order.filter(k => k != key)
+    order = match before { case some(b) => rest.slice(0, rest.indexOf(b)).concat([key]).concat(rest.slice(rest.indexOf(b))), case none => rest.concat([key]) }
+  action toggle(key: string)
+    open = open.includes(key) ? open.filter(k => k != key) : open.concat([key])
+  action pick(key: string)
+    picked = key
+  action choose(id: string)
+    chosen = id
+  action resize(w: number)
+    width = w
+  view
+    column gap="astryx.space.s4" width=360
+      view height=200
+        ReorderList(id="tasks", label="Tasks", items=order.map(k => row(k, `Task ${k}`, 0, false, false)), density="balanced", hasDividers=true, reorder=reorder)
+      text order.join(",") testId="order"
+      TreeList(label="Files", items=(open.includes("src") ? [row("src", "src", 0, true, true), row("a.ts", "a.ts", 1, false, false)] : [row("src", "src", 0, true, false)]), selected=picked, density="balanced", variant="lineGuides", toggle=toggle, select=pick)
+      text `${picked} ${open.join(",")}` testId="tree-state"
+      button commandfor="pg-dialog" command="show-modal" testId="open-dialog"
+        text "Open dialog"
+      Dialog(id="pg-dialog", title="Rename", purpose="form", variant="standard", padding=6, hasCloseButton=true, still=true)
+        text "Dialog body" testId="dialog-body"
+      button commandfor="pg-sheet" command="show-modal" testId="open-sheet"
+        text "Open sheet"
+      BottomSheet(id="pg-sheet", title="Share", still=true)
+        text "Sheet body" testId="sheet-body"
+      DropdownMenu(id="pg-menu", label="Actions", items=[menu("edit", "Edit"), menu("copy", "Copy")], variant="secondary", size="md", hasChevron=true, select=choose)
+      ContextMenu(id="pg-context", label="Row actions", items=[menu("pin", "Pin"), menu("hide", "Hide")], select=choose)
+        text "Row" testId="context-row"
+      text chosen testId="chosen"
+      view height=80
+        Resizable(label="Resize", width=width, minWidth=100, maxWidth=300, resize=resize)
+          text "Sidebar"
+      text width.toString() testId="width"
+
+// Data and pickers wired to state: typeahead, tokenizer, selectors, dates, table.
+use Table, TableColumn, TableRow, Pagination from "@astryx-spike/astryx"
+use Typeahead, Tokenizer, Selector, DateInput, TimeInput from "@astryx-spike/astryx-layers"
+
+fn people(): ChoiceItem[] = [ChoiceItem(value="ada", label="Ada Lovelace", description="Analyst", isDisabled=false), ChoiceItem(value="grace", label="Grace Hopper", description="Admiral", isDisabled=false), ChoiceItem(value="alan", label="Alan Turing", description="Mathematician", isDisabled=false)]
+fn cols(): TableColumn[] = [TableColumn(key="name", label="Name", width="", align="start", isSortable=true), TableColumn(key="role", label="Role", width="", align="start", isSortable=false), TableColumn(key="year", label="Born", width="80px", align="end", isSortable=true)]
+fn tableRows(): TableRow[] = [TableRow(key="ada", cells=["Ada Lovelace", "Analyst", "1815"], depth=0, isExpanded=false, hasChildren=false), TableRow(key="grace", cells=["Grace Hopper", "Admiral", "1906"], depth=0, isExpanded=false, hasChildren=false), TableRow(key="alan", cells=["Alan Turing", "Mathematician", "1912"], depth=0, isExpanded=false, hasChildren=false)]
+
+component DataPlayground
+  state query = ""
+  state person = ""
+  state tq = ""
+  state tags = ["ada"]
+  state one = ""
+  state many = []
+  state date = ""
+  state year = 2026
+  state month = 11
+  state time = "09:30"
+  state sortKey = "name"
+  state sortDir = "asc"
+  state picked = []
+  state page = 1
+  action setQuery(t: string)
+    query = t
+  action setPerson(v: string)
+    person = v
+    query = people().filter(p => p.value == v).map(p => p.label).join("")
+  action clearQuery
+    query = ""
+  action setTq(t: string)
+    tq = t
+  action addTag(v: string)
+    tags = tags.concat([v])
+    tq = ""
+  action removeTag(v: string)
+    tags = tags.filter(t => t != v)
+  action setOne(v: string)
+    one = v
+  action toggleMany(v: string)
+    many = many.includes(v) ? many.filter(m => m != v) : many.concat([v])
+  action setDateText(t: string)
+    date = t
+  action pickDate(d: string)
+    date = d
+  action shiftMonth(by: number)
+    let next = month + by
+    month = next > 12 ? 1 : next < 1 ? 12 : next
+    year = next > 12 ? year + 1 : next < 1 ? year - 1 : year
+  action setTime(t: string)
+    time = t
+  action sort(k: string)
+    sortDir = sortKey == k and sortDir == "asc" ? "desc" : "asc"
+    sortKey = k
+  action toggleRow(k: string, b: bool)
+    picked = b ? picked.concat([k]) : picked.filter(p => p != k)
+  action toggleAll(b: bool)
+    picked = b ? ["ada", "grace", "alan"] : []
+  action expand(k: string)
+    page = page
+  action go(p: number)
+    page = p
+  view
+    column gap="astryx.space.s4" width=420
+      Typeahead(id="who", label="Person", query=query, options=people(), selected=person, placeholder="Search people", size="md", isDisabled=false, isLabelHidden=false, hasClear=true, hasEntriesOnFocus=false, input=setQuery, pick=setPerson, clear=clearQuery)
+      text person testId="person"
+      Tokenizer(id="tags", label="People", query=tq, options=people(), values=tags, input=setTq, add=addTag, remove=removeTag)
+      text tags.join(",") testId="tags"
+      Selector(id="one", label="Owner", options=people(), value=one, placeholder="Choose", size="md", isDisabled=false, isMultiple=false, isLabelHidden=false, values=[], change=setOne)
+      text one testId="one"
+      Selector(id="many", label="Reviewers", options=people(), value="", placeholder="Choose", size="md", isDisabled=false, isMultiple=true, isLabelHidden=false, values=many, change=toggleMany)
+      text many.join(",") testId="many"
+      DateInput(id="due", label="Due", value=date, endValue="", isRange=false, year=year, month=month, today="2026-11-10", size="md", isDisabled=false, input=setDateText, pick=pickDate, shift=shiftMonth)
+      text `${date} ${year}-${month}` testId="date"
+      TimeInput(id="at", label="At", value=time, size="md", isDisabled=false, input=setTime)
+      text time testId="time"
+      Table(label="People", columns=cols(), rows=(sortDir == "desc" ? sortBy(tableRows(), r => sortKey == "year" ? r.cells.slice(2, 3).join("") : r.cells.slice(0, 1).join(""), "desc") : sortBy(tableRows(), r => sortKey == "year" ? r.cells.slice(2, 3).join("") : r.cells.slice(0, 1).join(""))), density="balanced", dividers="rows", isStriped=false, hasHover=true, verticalAlign="middle", textOverflow="wrap", sortKey=sortKey, sortDirection=sortDir, hasSelection=true, selected=picked, sort=sort, toggleRow=toggleRow, toggleAll=toggleAll, toggleExpand=expand)
+      text `${sortKey} ${sortDir} ${picked.join(",")}` testId="table-state"
+      Pagination(page=page, pageCount=5, label="Pages", go=go)
+      text page.toString() testId="page-value"

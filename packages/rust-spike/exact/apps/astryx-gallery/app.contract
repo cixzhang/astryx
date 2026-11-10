@@ -1,9 +1,10 @@
 // Astryx Gallery: every ported family's visual cases, one per page, for QA.
-// A page is `/?case=<id>&scheme=light|dark&theme=<astryx theme>`; with no case
+// A page is `/?case=<id>&scheme=light|dark&theme=<astryx theme>` (neutral when
+// unset), the case in a 16 px box on the theme's surface colour; with no case
 // the page lists the cases. The gallery has no data module: its cases are
 // literal calls in cases.contract (tools/gallery-cases.mjs writes it).
 use space, radius from "@astryx-spike/astryx"
-use CaseRow, CaseView, caseRows from "./cases.contract"
+use CaseRow, CaseView, caseRows, caseOpens, caseModal from "./cases.contract"
 
 routes nav
   home "/"
@@ -20,8 +21,11 @@ component AstryxGallery
       setScheme("dark")
     if scheme == "light"
       setScheme("light")
-    if themeName != ""
-      setMode("theme", themeName)
+    setMode("theme", themeName == "" ? "neutral" : themeName)
+    if caseOpens(caseId)
+      showPopover("case-popover", source="case-popover-trigger")
+    if caseModal(caseId)
+      showModal("case-dialog")
   view
     main testId="root" navigationKey=`${entry.id}` width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary"
       scroll id="content" height="100%"
@@ -32,6 +36,6 @@ component AstryxGallery
               link href=`/?case=${c.id}` testId=`open-${c.id}`
                 text `${c.id}  ${c.family}: ${c.title}` font="astryx.type.body"
         else
-          column padding=16 testId="page" align-items="flex-start"
-            view testId="case"
+          column padding=16 testId="page"
+            column testId="case" padding=16 background-color="astryx.surface.surface" align-items="flex-start"
               CaseView(id=caseId)
