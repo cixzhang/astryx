@@ -152,6 +152,7 @@ pub fn text_node<Msg>(text: impl Into<String>, style: TextStyle, color: Color) -
             align: TextAlign::Start,
             max_lines: None,
             strikethrough: false,
+            shorter: Vec::new(),
         }))
 }
 
