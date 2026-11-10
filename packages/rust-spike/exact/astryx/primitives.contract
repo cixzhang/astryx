@@ -1,0 +1,294 @@
+// Wave 1 primitives: Text, Heading, Icon, Spinner, VisuallyHidden, Kbd,
+// Divider, Link, Badge, Avatar, AvatarStatusDot, AvatarGroup and the
+// selection indicators. Each follows its Astryx component at 957d934: the
+// same props by name, the same tokens. Contract props have no defaults, so a
+// caller passes every prop; the gallery's cases pass Astryx's defaults.
+use IconGlyph from "./icons.contract"
+use space from "./foundations.contract"
+
+// Text: one run of text in an Astryx type role. `size`, `weight` and `color`
+// override the role's own; "" keeps the role's.
+component Text
+  props
+    text: string
+    type: string
+    size: string
+    color: string
+    weight: string
+    maxLines: number
+    textWrap: string
+    justify: string
+    hasStrikethrough: bool
+    hasTabularNumbers: bool
+  view
+    text text
+      font=(type == "large" ? "astryx.type.large" : type == "label" ? "astryx.type.label" : type == "supporting" ? "astryx.type.supporting" : type == "code" ? "astryx.type.code" : type == "display-1" ? "astryx.type.display-1" : type == "display-2" ? "astryx.type.display-2" : type == "display-3" ? "astryx.type.display-3" : "astryx.type.body")
+      font-size=(size == "" ? "inherit" : fontSizeToken(size))
+      font-weight=(weight == "" ? "inherit" : `astryx.weight.${weight}`)
+      color=(color == "inherit" ? "inherit" : color == "placeholder" ? "astryx.text.secondary" : `astryx.text.${color}`)
+      line-clamp=maxLines
+      overflow=(maxLines > 0 ? "hidden" : "visible")
+      text-wrap=(textWrap == "balance" ? "balance" : "auto")
+      white-space=(textWrap == "nowrap" ? "nowrap" : "normal")
+      text-align=justify
+      text-decoration-line=(hasStrikethrough ? "line-through" : "none")
+      font-variant-numeric=(hasTabularNumbers ? "tabular-nums" : "normal")
+
+// A text size step to its font-size token: Astryx writes 2xl, the token s2xl.
+fn fontSizeToken(size: string): string = size == "xsm" ? "astryx.font-size.xs" : (size.length == 3 and (size.endsWith("xl") or size.endsWith("xs"))) ? `astryx.font-size.s${size}` : `astryx.font-size.${size}`
+
+// Heading: a heading at `level` 1–6 in its heading type role.
+component Heading
+  props
+    text: string
+    level: number
+    color: string
+  view
+    text text role="heading" aria-level=level
+      font=(level == 1 ? "astryx.type.heading-1" : level == 2 ? "astryx.type.heading-2" : level == 3 ? "astryx.type.heading-3" : level == 5 ? "astryx.type.heading-5" : level == 6 ? "astryx.type.heading-6" : "astryx.type.heading-4")
+      color=(color == "" or color == "primary" ? "astryx.text.primary" : `astryx.text.${color}`)
+
+// Icon: one of Astryx's icons at a size, in a colour role. An icon with a
+// label is an image to a reader; without one it is hidden.
+component Icon
+  props
+    icon: string
+    size: string
+    color: string
+    label: string
+  view
+    view display="flex" flex-shrink=0
+      width=iconSize(size) height=iconSize(size)
+      color=iconColor(color)
+      role=(label == "" ? "presentation" : "img")
+      aria-label=label
+      aria-hidden=(label == "")
+      IconGlyph(icon=icon)
+
+fn iconSize(size: string): string = size == "xsm" ? "0.75rem" : size == "sm" ? "1rem" : size == "lg" ? "1.5rem" : "1.25rem"
+fn iconColor(c: string): string = c == "inherit" or c == "" ? "inherit" : c == "accent" ? "astryx.accent" : c == "tertiary" ? "astryx.icon.secondary" : `astryx.icon.${c}`
+
+// Spinner: an arc turning on a track. Reduced motion stops the turn and keeps
+// the arc.
+keyframes spinnerTurn
+  from rotate="0deg"
+  to rotate="360deg"
+
+component Spinner
+  props
+    size: string
+    shade: string
+    label: string
+  view
+    column display="flex" align-items="center" gap="astryx.space.s2" role="status" aria-label=(label == "" ? "Loading" : label)
+      view width=spinnerBox(size) height=spinnerBox(size)
+        animation="spinnerTurn 730ms linear infinite"
+        svg viewBox=`0 0 ${spinnerBox(size)} ${spinnerBox(size)}` width="100%" height="100%" aria-hidden=true
+          circle cx=(spinnerBox(size) / 2) cy=(spinnerBox(size) / 2) r=(spinnerDiameter(size) / 2) fill="none" stroke-width=spinnerStroke(size)
+            stroke=(shade == "onMedia" ? "astryx.on-dark" : shade == "inherit" ? "currentColor" : "astryx.track")
+            stroke-opacity=(shade == "onMedia" ? 0.3 : shade == "subtle" ? 0.5 : 1)
+          circle cx=(spinnerBox(size) / 2) cy=(spinnerBox(size) / 2) r=(spinnerDiameter(size) / 2) fill="none" stroke-width=spinnerStroke(size) stroke-linecap="round"
+            stroke=(shade == "subtle" ? "astryx.text.secondary" : shade == "onMedia" ? "astryx.on-dark" : shade == "inherit" ? "currentColor" : "astryx.accent")
+            stroke-dasharray=`${spinnerDiameter(size) * 3.14159 * 0.375} ${spinnerDiameter(size) * 3.14159 * 0.625}`
+            transform=`rotate(-90 ${spinnerBox(size) / 2} ${spinnerBox(size) / 2})`
+      if label != ""
+        text label font="astryx.type.supporting" color="astryx.text.secondary"
+
+fn spinnerDiameter(size: string): number = size == "sm" ? 10 : size == "lg" ? 18 : size == "xl" ? 28 : 14
+fn spinnerStroke(size: string): number = size == "sm" ? 2 : size == "xl" ? 4 : 3
+fn spinnerBox(size: string): number = spinnerDiameter(size) + spinnerStroke(size) * 2
+
+// VisuallyHidden: read by a screen reader, not drawn.
+component VisuallyHidden
+  props
+    text: string
+  view
+    text text position="absolute" width=1 height=1 overflow="hidden" white-space="nowrap"
+
+// Kbd: a key combination, "Mod+K" as two keys.
+style KbdKey
+  display="flex" align-items="center" justify-content="center"
+  min-width="astryx.space.s5" height="astryx.space.s5"
+  padding-left="astryx.space.s1" padding-right="astryx.space.s1"
+  border-radius="astryx.radius.inner" background-color="astryx.neutral"
+  border-bottom-width=2 border-bottom-style="solid" border-bottom-color="astryx.border.emphasized"
+  color="astryx.text.primary" font="astryx.type.supporting" font-weight="astryx.weight.medium" user-select="none"
+
+component Kbd
+  props
+    keys: string
+  view
+    row display="flex" align-items="center" gap="astryx.space.s1" flex-shrink=0
+      for k in keys.split("+") key=k
+        text (k == "Mod" ? "⌘" : k) class=KbdKey
+
+// Divider: a rule across or down, with an optional label in its middle.
+component Divider
+  props
+    orientation: string
+    label: string
+    variant: string
+    isFullBleed: bool
+  view
+    if orientation == "vertical"
+      column display="flex" align-items="center" height="100%" role="separator" aria-orientation="vertical"
+        view width="astryx.border.width" flex-grow=1 background-color=(variant == "strong" ? "astryx.border.emphasized" : "astryx.border")
+        if label != ""
+          text label padding-top="astryx.space.s3" padding-bottom="astryx.space.s3" font="astryx.type.supporting" color="astryx.text.secondary"
+          view width="astryx.border.width" flex-grow=1 background-color=(variant == "strong" ? "astryx.border.emphasized" : "astryx.border")
+    else
+      row display="flex" align-items="center" width="100%" role="separator"
+        view height="astryx.border.width" flex-grow=1 background-color=(variant == "strong" ? "astryx.border.emphasized" : "astryx.border")
+        if label != ""
+          text label flex-shrink=0 padding-left="astryx.space.s3" padding-right="astryx.space.s3" font="astryx.type.supporting" color="astryx.text.secondary"
+          view height="astryx.border.width" flex-grow=1 background-color=(variant == "strong" ? "astryx.border.emphasized" : "astryx.border")
+
+// Link: text that goes somewhere. An external link opens a new tab.
+// Astryx thickens the underline on hover; a state row paints only, so the
+// hover here deepens the colour instead.
+style LinkLook
+  color="astryx.text.accent" text-decoration-line="underline"
+  :hover
+    opacity=0.8
+
+component Link
+  props
+    text: string
+    href: string
+    isExternal: bool
+  view
+    link href=href class=LinkLook testId=`link-${text}`
+      row align-items="center" gap="astryx.space.s0-5"
+        text text
+        if isExternal
+          Icon(icon="externalLink", size="xsm", color="inherit", label="(opens in a new tab)")
+
+// Badge: a short status label, filled by variant.
+style BadgeLook
+  display="flex" align-items="center" justify-content="center"
+  gap="astryx.space.s1" height="astryx.space.s5"
+  padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+  border-radius="astryx.radius.full"
+  white-space="nowrap" max-width="100%" min-width=0
+
+component Badge
+  props
+    variant: string
+    label: string
+    icon: string
+  view
+    row class=BadgeLook testId="badge"
+      background-color=badgeFill(variant)
+      color=badgeInk(variant)
+      if icon != ""
+        Icon(icon=icon, size="xsm", color="inherit", label="")
+      text label overflow="hidden" text-overflow="ellipsis" min-width=0 font="astryx.type.supporting" font-weight="astryx.weight.medium"
+
+fn badgeFill(v: string): string = v == "neutral" or v == "" ? "astryx.neutral" : (v == "info" or v == "success" or v == "warning" or v == "error") ? `astryx.${v}` : `astryx.surface.${v}`
+fn badgeInk(v: string): string = v == "neutral" or v == "" ? "astryx.text.primary" : (v == "info" or v == "success" or v == "warning" or v == "error") ? `astryx.on-${v}` : `astryx.text.${v}`
+
+// Avatar: a picture of a person or thing, or their initials when there is no
+// picture. `size` is a named size or "" with `px` set.
+component Avatar
+  props
+    src: string
+    name: string
+    size: string
+    px: number
+    shape: string
+    status: string
+    statusLabel: string
+  view
+    view position="relative" display="flex" flex-shrink=0
+      width=avatarPx(size, px) height=avatarPx(size, px)
+      border-radius=avatarRadius(shape)
+      role="img" aria-label=(statusLabel == "" ? name : `${name}, ${statusLabel}`)
+      if src != ""
+        image src alt="" width="100%" height="100%" object-fit="cover" border-radius=avatarRadius(shape)
+      else
+        view display="flex" align-items="center" justify-content="center" width="100%" height="100%"
+          overflow="hidden" border-radius=avatarRadius(shape)
+          background-color="astryx.neutral" color="astryx.text.primary" font-weight="astryx.weight.medium"
+          text initials(name) font-size=(avatarPx(size, px) * 0.4) text-transform="uppercase" aria-hidden=true
+      if status != ""
+        view position="absolute"
+          bottom=(shape == "circle" ? avatarPx(size, px) * 0.1464 : 0)
+          right=(shape == "circle" ? avatarPx(size, px) * 0.1464 : 0)
+          translate=(shape == "circle" ? "50% 50%" : "25% 25%")
+          AvatarStatusDot(variant=status, label="")
+
+fn avatarPx(size: string, px: number): number = size == "xsm" ? 20 : size == "sm" ? 24 : size == "md" ? 36 : size == "lg" ? 48 : size == "xl" ? 128 : px
+fn avatarRadius(shape: string): string = shape == "rounded" ? "astryx.radius.element" : shape == "square" ? "astryx.radius.none" : "astryx.radius.full"
+
+// The first letters of the first and last words.
+fn initials(name: string): string = initialsOf(name.trim().split(" ").filter(w => w != ""))
+fn initialsOf(words: string[]): string = words.length == 0 ? "" : words.length == 1 ? words.join("").slice(0, 1).toUpperCase() : `${words.slice(0, 1).join("").slice(0, 1)}${words.slice(words.length - 1).join("").slice(0, 1)}`.toUpperCase()
+
+// AvatarStatusDot: a small presence dot.
+component AvatarStatusDot
+  props
+    variant: string
+    label: string
+  view
+    view width=10 height=10 border-radius="astryx.radius.full"
+      border-width=2 border-style="solid" border-color="astryx.surface.surface"
+      background-color=(variant == "error" ? "astryx.error" : variant == "neutral" ? "astryx.icon.disabled" : "astryx.success")
+      role=(label == "" ? "presentation" : "img") aria-label=label
+
+// AvatarGroup: avatars overlapped in a row, with a count for the rest.
+shape AvatarItem
+  name: string
+  src: string
+
+component AvatarGroup
+  props
+    items: AvatarItem[]
+    size: string
+    max: number
+  view
+    row display="flex" align-items="center" role="group" aria-label=`${items.length} ${items.length == 1 ? "person" : "people"}`
+      for a, i in items.slice(0, max) key=a.name
+        view border-width=2 border-style="solid" border-color="astryx.surface.surface" background-color="astryx.surface.surface"
+          border-radius="astryx.radius.full"
+          margin-left=(i == 0 ? 0 : avatarPx(size, 0) * -0.25)
+          Avatar(src=a.src, name=a.name, size=size, px=0, shape="circle", status="", statusLabel="")
+      if items.length > max
+        view border-width=2 border-style="solid" border-color="astryx.surface.surface" border-radius="astryx.radius.full"
+          margin-left=(avatarPx(size, 0) * -0.25)
+          width=avatarPx(size, 0) height=avatarPx(size, 0)
+          display="flex" align-items="center" justify-content="center" background-color="astryx.neutral"
+          text `+${items.length - max}` font="astryx.type.supporting" font-weight="astryx.weight.medium"
+
+// The selection indicators: a checkbox box, a radio circle and a bare check.
+component CheckboxIndicator
+  props
+    checked: string
+    disabled: bool
+  view
+    view width=16 height=16 border-radius="astryx.radius.inner" display="flex" align-items="center" justify-content="center"
+      border-width=(checked == "false" ? 1.5 : 0) border-style="solid" border-color="astryx.border.emphasized"
+      background-color=(checked == "false" ? "astryx.surface.surface" : disabled ? "astryx.text.disabled" : "astryx.accent")
+      color="astryx.on-accent"
+      if checked == "true"
+        view width=12 height=12
+          IconGlyph(icon="check")
+      if checked == "mixed"
+        view width=8 height=2 border-radius="astryx.radius.inner" background-color="astryx.on-accent"
+
+component RadioIndicator
+  props
+    checked: bool
+    disabled: bool
+  view
+    view width=16 height=16 border-radius="astryx.radius.full" display="flex" align-items="center" justify-content="center"
+      border-width=(checked ? 0 : 1.5) border-style="solid" border-color="astryx.border.emphasized"
+      background-color=(checked ? (disabled ? "astryx.text.disabled" : "astryx.accent") : "astryx.surface.surface")
+      if checked
+        view width=6 height=6 border-radius="astryx.radius.full" background-color="astryx.on-accent"
+
+component CheckIndicator
+  props
+    checked: bool
+  view
+    view width=16 height=16 color="astryx.accent" opacity=(checked ? 1 : 0)
+      IconGlyph(icon="check")

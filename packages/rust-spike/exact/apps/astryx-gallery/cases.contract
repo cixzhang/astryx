@@ -1,0 +1,228 @@
+// The gallery's cases, written by tools/gallery-cases.mjs; do not edit.
+use Avatar, AvatarGroup, AvatarItem, Badge, CheckIndicator, CheckboxIndicator, Divider, Heading, Icon, Kbd, Link, RadioIndicator, Spinner, Text from "@astryx-spike/astryx"
+use Swatches from "./swatches.contract"
+
+shape CaseRow
+  id: string
+  family: string
+  title: string
+
+fn caseRows(): CaseRow[] = [CaseRow(id="foundations-0001", family="Foundations", title="Token swatches"), CaseRow(id="text-0001", family="Text", title="defaults"), CaseRow(id="text-0002", family="Text", title="type=\"large\""), CaseRow(id="text-0003", family="Text", title="type=\"label\""), CaseRow(id="text-0004", family="Text", title="type=\"supporting\""), CaseRow(id="text-0005", family="Text", title="type=\"code\""), CaseRow(id="text-0006", family="Text", title="type=\"display-1\""), CaseRow(id="text-0007", family="Text", title="type=\"display-2\""), CaseRow(id="text-0008", family="Text", title="type=\"display-3\""), CaseRow(id="text-0009", family="Text", title="size=\"xsm\""), CaseRow(id="text-0010", family="Text", title="size=\"sm\""), CaseRow(id="text-0011", family="Text", title="size=\"base\""), CaseRow(id="text-0012", family="Text", title="size=\"lg\""), CaseRow(id="text-0013", family="Text", title="size=\"xl\""), CaseRow(id="text-0014", family="Text", title="size=\"2xl\""), CaseRow(id="text-0015", family="Text", title="color=\"secondary\""), CaseRow(id="text-0016", family="Text", title="color=\"disabled\""), CaseRow(id="text-0017", family="Text", title="color=\"accent\""), CaseRow(id="text-0018", family="Text", title="weight=\"medium\""), CaseRow(id="text-0019", family="Text", title="weight=\"semibold\""), CaseRow(id="text-0020", family="Text", title="weight=\"bold\""), CaseRow(id="text-0021", family="Text", title="maxLines=1"), CaseRow(id="text-0022", family="Text", title="hasStrikethrough=true"), CaseRow(id="text-0023", family="Text", title="hasTabularNumbers=true"), CaseRow(id="heading-0001", family="Heading", title="defaults"), CaseRow(id="heading-0002", family="Heading", title="level=1"), CaseRow(id="heading-0003", family="Heading", title="level=3"), CaseRow(id="heading-0004", family="Heading", title="level=4"), CaseRow(id="heading-0005", family="Heading", title="level=5"), CaseRow(id="heading-0006", family="Heading", title="level=6"), CaseRow(id="heading-0007", family="Heading", title="color=\"secondary\""), CaseRow(id="icon-0001", family="Icon", title="defaults"), CaseRow(id="icon-0002", family="Icon", title="icon=\"close\""), CaseRow(id="icon-0003", family="Icon", title="icon=\"check\""), CaseRow(id="icon-0004", family="Icon", title="icon=\"success\""), CaseRow(id="icon-0005", family="Icon", title="icon=\"error\""), CaseRow(id="icon-0006", family="Icon", title="icon=\"warning\""), CaseRow(id="icon-0007", family="Icon", title="icon=\"info\""), CaseRow(id="icon-0008", family="Icon", title="icon=\"calendar\""), CaseRow(id="icon-0009", family="Icon", title="icon=\"clock\""), CaseRow(id="icon-0010", family="Icon", title="icon=\"chevronDown\""), CaseRow(id="icon-0011", family="Icon", title="icon=\"copy\""), CaseRow(id="icon-0012", family="Icon", title="size=\"xsm\""), CaseRow(id="icon-0013", family="Icon", title="size=\"sm\""), CaseRow(id="icon-0014", family="Icon", title="size=\"lg\""), CaseRow(id="icon-0015", family="Icon", title="color=\"primary\""), CaseRow(id="icon-0016", family="Icon", title="color=\"secondary\""), CaseRow(id="icon-0017", family="Icon", title="color=\"accent\""), CaseRow(id="icon-0018", family="Icon", title="color=\"success\""), CaseRow(id="icon-0019", family="Icon", title="color=\"error\""), CaseRow(id="icon-0020", family="Icon", title="color=\"warning\""), CaseRow(id="spinner-0001", family="Spinner", title="defaults"), CaseRow(id="spinner-0002", family="Spinner", title="size=\"sm\""), CaseRow(id="spinner-0003", family="Spinner", title="size=\"lg\""), CaseRow(id="spinner-0004", family="Spinner", title="size=\"xl\""), CaseRow(id="spinner-0005", family="Spinner", title="shade=\"subtle\""), CaseRow(id="spinner-0006", family="Spinner", title="shade=\"inherit\""), CaseRow(id="spinner-0007", family="Spinner", title="label=\"Loading results\""), CaseRow(id="kbd-0001", family="Kbd", title="defaults"), CaseRow(id="kbd-0002", family="Kbd", title="keys=\"Esc\""), CaseRow(id="kbd-0003", family="Kbd", title="keys=\"Shift+Enter\""), CaseRow(id="kbd-0004", family="Kbd", title="keys=\"Ctrl+Alt+Delete\""), CaseRow(id="divider-0001", family="Divider", title="defaults"), CaseRow(id="divider-0002", family="Divider", title="variant=\"strong\""), CaseRow(id="divider-0003", family="Divider", title="label=\"or\""), CaseRow(id="divider-0004", family="Divider", title="orientation=\"vertical\""), CaseRow(id="link-0001", family="Link", title="defaults"), CaseRow(id="link-0002", family="Link", title="isExternal=true"), CaseRow(id="badge-0001", family="Badge", title="defaults"), CaseRow(id="badge-0002", family="Badge", title="variant=\"info\""), CaseRow(id="badge-0003", family="Badge", title="variant=\"success\""), CaseRow(id="badge-0004", family="Badge", title="variant=\"warning\""), CaseRow(id="badge-0005", family="Badge", title="variant=\"error\""), CaseRow(id="badge-0006", family="Badge", title="variant=\"blue\""), CaseRow(id="badge-0007", family="Badge", title="variant=\"cyan\""), CaseRow(id="badge-0008", family="Badge", title="variant=\"green\""), CaseRow(id="badge-0009", family="Badge", title="variant=\"orange\""), CaseRow(id="badge-0010", family="Badge", title="variant=\"pink\""), CaseRow(id="badge-0011", family="Badge", title="variant=\"purple\""), CaseRow(id="badge-0012", family="Badge", title="variant=\"red\""), CaseRow(id="badge-0013", family="Badge", title="variant=\"teal\""), CaseRow(id="badge-0014", family="Badge", title="variant=\"yellow\""), CaseRow(id="badge-0015", family="Badge", title="variant=\"gray\""), CaseRow(id="badge-0016", family="Badge", title="icon=\"check\""), CaseRow(id="avatar-0001", family="Avatar", title="defaults"), CaseRow(id="avatar-0002", family="Avatar", title="size=\"xsm\""), CaseRow(id="avatar-0003", family="Avatar", title="size=\"sm\""), CaseRow(id="avatar-0004", family="Avatar", title="size=\"lg\""), CaseRow(id="avatar-0005", family="Avatar", title="size=\"xl\""), CaseRow(id="avatar-0006", family="Avatar", title="shape=\"rounded\""), CaseRow(id="avatar-0007", family="Avatar", title="shape=\"square\""), CaseRow(id="avatar-0008", family="Avatar", title="status=\"success\""), CaseRow(id="avatar-0009", family="Avatar", title="status=\"neutral\""), CaseRow(id="avatar-0010", family="Avatar", title="status=\"error\""), CaseRow(id="avatar-0011", family="Avatar", title="name=\"Alice\""), CaseRow(id="avatargroup-0001", family="AvatarGroup", title="defaults"), CaseRow(id="avatargroup-0002", family="AvatarGroup", title="size=\"sm\""), CaseRow(id="avatargroup-0003", family="AvatarGroup", title="size=\"lg\""), CaseRow(id="avatargroup-0004", family="AvatarGroup", title="max=2"), CaseRow(id="avatargroup-0005", family="AvatarGroup", title="max=6"), CaseRow(id="indicator-0001", family="Indicator", title="defaults"), CaseRow(id="indicator-0002", family="Indicator", title="checked=\"true\""), CaseRow(id="indicator-0003", family="Indicator", title="checked=\"mixed\""), CaseRow(id="indicator-0004", family="Indicator", title="disabled=true")]
+
+component CaseView
+  props
+    id: string
+  view
+    column
+      if id.startsWith("foundations-")
+        FoundationsCases(id=id)
+      if id.startsWith("text-")
+        TextCases(id=id)
+      if id.startsWith("heading-")
+        HeadingCases(id=id)
+      if id.startsWith("icon-")
+        IconCases(id=id)
+      if id.startsWith("spinner-")
+        SpinnerCases(id=id)
+      if id.startsWith("kbd-")
+        KbdCases(id=id)
+      if id.startsWith("divider-")
+        DividerCases(id=id)
+      if id.startsWith("link-")
+        LinkCases(id=id)
+      if id.startsWith("badge-")
+        BadgeCases(id=id)
+      if id.startsWith("avatar-")
+        AvatarCases(id=id)
+      if id.startsWith("avatargroup-")
+        AvatarGroupCases(id=id)
+      if id.startsWith("indicator-")
+        IndicatorCases(id=id)
+
+shape FoundationsCase
+  id: string
+
+fn foundationsCases(): FoundationsCase[] = [FoundationsCase(id="foundations-0001")]
+
+component FoundationsCases
+  props
+    id: string
+  view
+    for c in foundationsCases().filter(c => c.id == id) key=c.id
+      Swatches()
+
+shape TextCase
+  id: string
+  text: string
+  type: string
+  size: string
+  color: string
+  weight: string
+  maxLines: number
+  textWrap: string
+  justify: string
+  hasStrikethrough: bool
+  hasTabularNumbers: bool
+
+fn textCases(): TextCase[] = [TextCase(id="text-0001", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0002", text="The quick brown fox jumps over the lazy dog", type="large", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0003", text="The quick brown fox jumps over the lazy dog", type="label", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0004", text="The quick brown fox jumps over the lazy dog", type="supporting", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0005", text="The quick brown fox jumps over the lazy dog", type="code", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0006", text="The quick brown fox jumps over the lazy dog", type="display-1", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0007", text="The quick brown fox jumps over the lazy dog", type="display-2", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0008", text="The quick brown fox jumps over the lazy dog", type="display-3", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0009", text="The quick brown fox jumps over the lazy dog", type="body", size="xsm", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0010", text="The quick brown fox jumps over the lazy dog", type="body", size="sm", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0011", text="The quick brown fox jumps over the lazy dog", type="body", size="base", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0012", text="The quick brown fox jumps over the lazy dog", type="body", size="lg", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0013", text="The quick brown fox jumps over the lazy dog", type="body", size="xl", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0014", text="The quick brown fox jumps over the lazy dog", type="body", size="2xl", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0015", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="secondary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0016", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="disabled", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0017", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="accent", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0018", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="medium", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0019", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="semibold", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0020", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="bold", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0021", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="", maxLines=1, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false), TextCase(id="text-0022", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=true, hasTabularNumbers=false), TextCase(id="text-0023", text="The quick brown fox jumps over the lazy dog", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=true)]
+
+component TextCases
+  props
+    id: string
+  view
+    for c in textCases().filter(c => c.id == id) key=c.id
+      Text(text=c.text, type=c.type, size=c.size, color=c.color, weight=c.weight, maxLines=c.maxLines, textWrap=c.textWrap, justify=c.justify, hasStrikethrough=c.hasStrikethrough, hasTabularNumbers=c.hasTabularNumbers)
+
+shape HeadingCase
+  id: string
+  text: string
+  level: number
+  color: string
+
+fn headingCases(): HeadingCase[] = [HeadingCase(id="heading-0001", text="Section heading", level=2, color="primary"), HeadingCase(id="heading-0002", text="Section heading", level=1, color="primary"), HeadingCase(id="heading-0003", text="Section heading", level=3, color="primary"), HeadingCase(id="heading-0004", text="Section heading", level=4, color="primary"), HeadingCase(id="heading-0005", text="Section heading", level=5, color="primary"), HeadingCase(id="heading-0006", text="Section heading", level=6, color="primary"), HeadingCase(id="heading-0007", text="Section heading", level=2, color="secondary")]
+
+component HeadingCases
+  props
+    id: string
+  view
+    for c in headingCases().filter(c => c.id == id) key=c.id
+      Heading(text=c.text, level=c.level, color=c.color)
+
+shape IconCase
+  id: string
+  icon: string
+  size: string
+  color: string
+  label: string
+
+fn iconCases(): IconCase[] = [IconCase(id="icon-0001", icon="search", size="md", color="inherit", label=""), IconCase(id="icon-0002", icon="close", size="md", color="inherit", label=""), IconCase(id="icon-0003", icon="check", size="md", color="inherit", label=""), IconCase(id="icon-0004", icon="success", size="md", color="inherit", label=""), IconCase(id="icon-0005", icon="error", size="md", color="inherit", label=""), IconCase(id="icon-0006", icon="warning", size="md", color="inherit", label=""), IconCase(id="icon-0007", icon="info", size="md", color="inherit", label=""), IconCase(id="icon-0008", icon="calendar", size="md", color="inherit", label=""), IconCase(id="icon-0009", icon="clock", size="md", color="inherit", label=""), IconCase(id="icon-0010", icon="chevronDown", size="md", color="inherit", label=""), IconCase(id="icon-0011", icon="copy", size="md", color="inherit", label=""), IconCase(id="icon-0012", icon="search", size="xsm", color="inherit", label=""), IconCase(id="icon-0013", icon="search", size="sm", color="inherit", label=""), IconCase(id="icon-0014", icon="search", size="lg", color="inherit", label=""), IconCase(id="icon-0015", icon="search", size="md", color="primary", label=""), IconCase(id="icon-0016", icon="search", size="md", color="secondary", label=""), IconCase(id="icon-0017", icon="search", size="md", color="accent", label=""), IconCase(id="icon-0018", icon="search", size="md", color="success", label=""), IconCase(id="icon-0019", icon="search", size="md", color="error", label=""), IconCase(id="icon-0020", icon="search", size="md", color="warning", label="")]
+
+component IconCases
+  props
+    id: string
+  view
+    for c in iconCases().filter(c => c.id == id) key=c.id
+      Icon(icon=c.icon, size=c.size, color=c.color, label=c.label)
+
+shape SpinnerCase
+  id: string
+  size: string
+  shade: string
+  label: string
+
+fn spinnerCases(): SpinnerCase[] = [SpinnerCase(id="spinner-0001", size="md", shade="default", label=""), SpinnerCase(id="spinner-0002", size="sm", shade="default", label=""), SpinnerCase(id="spinner-0003", size="lg", shade="default", label=""), SpinnerCase(id="spinner-0004", size="xl", shade="default", label=""), SpinnerCase(id="spinner-0005", size="md", shade="subtle", label=""), SpinnerCase(id="spinner-0006", size="md", shade="inherit", label=""), SpinnerCase(id="spinner-0007", size="md", shade="default", label="Loading results")]
+
+component SpinnerCases
+  props
+    id: string
+  view
+    for c in spinnerCases().filter(c => c.id == id) key=c.id
+      Spinner(size=c.size, shade=c.shade, label=c.label)
+
+shape KbdCase
+  id: string
+  keys: string
+
+fn kbdCases(): KbdCase[] = [KbdCase(id="kbd-0001", keys="Mod+K"), KbdCase(id="kbd-0002", keys="Esc"), KbdCase(id="kbd-0003", keys="Shift+Enter"), KbdCase(id="kbd-0004", keys="Ctrl+Alt+Delete")]
+
+component KbdCases
+  props
+    id: string
+  view
+    for c in kbdCases().filter(c => c.id == id) key=c.id
+      Kbd(keys=c.keys)
+
+shape DividerCase
+  id: string
+  orientation: string
+  label: string
+  variant: string
+  isFullBleed: bool
+
+fn dividerCases(): DividerCase[] = [DividerCase(id="divider-0001", orientation="horizontal", label="", variant="subtle", isFullBleed=false), DividerCase(id="divider-0002", orientation="horizontal", label="", variant="strong", isFullBleed=false), DividerCase(id="divider-0003", orientation="horizontal", label="or", variant="subtle", isFullBleed=false), DividerCase(id="divider-0004", orientation="vertical", label="", variant="subtle", isFullBleed=false)]
+
+component DividerCases
+  props
+    id: string
+  view
+    for c in dividerCases().filter(c => c.id == id) key=c.id
+      view width=240 height=80 display="flex" align-items="center" justify-content="center"
+        Divider(orientation=c.orientation, label=c.label, variant=c.variant, isFullBleed=c.isFullBleed)
+
+shape LinkCase
+  id: string
+  text: string
+  href: string
+  isExternal: bool
+
+fn linkCases(): LinkCase[] = [LinkCase(id="link-0001", text="Read the docs", href="#", isExternal=false), LinkCase(id="link-0002", text="Read the docs", href="#", isExternal=true)]
+
+component LinkCases
+  props
+    id: string
+  view
+    for c in linkCases().filter(c => c.id == id) key=c.id
+      Link(text=c.text, href=c.href, isExternal=c.isExternal)
+
+shape BadgeCase
+  id: string
+  variant: string
+  label: string
+  icon: string
+
+fn badgeCases(): BadgeCase[] = [BadgeCase(id="badge-0001", variant="neutral", label="Badge", icon=""), BadgeCase(id="badge-0002", variant="info", label="Badge", icon=""), BadgeCase(id="badge-0003", variant="success", label="Badge", icon=""), BadgeCase(id="badge-0004", variant="warning", label="Badge", icon=""), BadgeCase(id="badge-0005", variant="error", label="Badge", icon=""), BadgeCase(id="badge-0006", variant="blue", label="Badge", icon=""), BadgeCase(id="badge-0007", variant="cyan", label="Badge", icon=""), BadgeCase(id="badge-0008", variant="green", label="Badge", icon=""), BadgeCase(id="badge-0009", variant="orange", label="Badge", icon=""), BadgeCase(id="badge-0010", variant="pink", label="Badge", icon=""), BadgeCase(id="badge-0011", variant="purple", label="Badge", icon=""), BadgeCase(id="badge-0012", variant="red", label="Badge", icon=""), BadgeCase(id="badge-0013", variant="teal", label="Badge", icon=""), BadgeCase(id="badge-0014", variant="yellow", label="Badge", icon=""), BadgeCase(id="badge-0015", variant="gray", label="Badge", icon=""), BadgeCase(id="badge-0016", variant="neutral", label="Badge", icon="check")]
+
+component BadgeCases
+  props
+    id: string
+  view
+    for c in badgeCases().filter(c => c.id == id) key=c.id
+      Badge(variant=c.variant, label=c.label, icon=c.icon)
+
+shape AvatarCase
+  id: string
+  src: string
+  name: string
+  size: string
+  px: number
+  shape: string
+  status: string
+  statusLabel: string
+
+fn avatarCases(): AvatarCase[] = [AvatarCase(id="avatar-0001", src="", name="Ada Lovelace", size="md", px=0, shape="circle", status="", statusLabel=""), AvatarCase(id="avatar-0002", src="", name="Ada Lovelace", size="xsm", px=0, shape="circle", status="", statusLabel=""), AvatarCase(id="avatar-0003", src="", name="Ada Lovelace", size="sm", px=0, shape="circle", status="", statusLabel=""), AvatarCase(id="avatar-0004", src="", name="Ada Lovelace", size="lg", px=0, shape="circle", status="", statusLabel=""), AvatarCase(id="avatar-0005", src="", name="Ada Lovelace", size="xl", px=0, shape="circle", status="", statusLabel=""), AvatarCase(id="avatar-0006", src="", name="Ada Lovelace", size="md", px=0, shape="rounded", status="", statusLabel=""), AvatarCase(id="avatar-0007", src="", name="Ada Lovelace", size="md", px=0, shape="square", status="", statusLabel=""), AvatarCase(id="avatar-0008", src="", name="Ada Lovelace", size="md", px=0, shape="circle", status="success", statusLabel=""), AvatarCase(id="avatar-0009", src="", name="Ada Lovelace", size="md", px=0, shape="circle", status="neutral", statusLabel=""), AvatarCase(id="avatar-0010", src="", name="Ada Lovelace", size="md", px=0, shape="circle", status="error", statusLabel=""), AvatarCase(id="avatar-0011", src="", name="Alice", size="md", px=0, shape="circle", status="", statusLabel="")]
+
+component AvatarCases
+  props
+    id: string
+  view
+    for c in avatarCases().filter(c => c.id == id) key=c.id
+      Avatar(src=c.src, name=c.name, size=c.size, px=c.px, shape=c.shape, status=c.status, statusLabel=c.statusLabel)
+
+shape AvatarGroupCase
+  id: string
+  items: AvatarItem[]
+  size: string
+  max: number
+
+fn avatarGroupCases(): AvatarGroupCase[] = [AvatarGroupCase(id="avatargroup-0001", items=[AvatarItem(name="Ada Lovelace", src=""), AvatarItem(name="Grace Hopper", src=""), AvatarItem(name="Alan Turing", src=""), AvatarItem(name="Katherine Johnson", src=""), AvatarItem(name="Edsger Dijkstra", src=""), AvatarItem(name="Barbara Liskov", src="")], size="md", max=4), AvatarGroupCase(id="avatargroup-0002", items=[AvatarItem(name="Ada Lovelace", src=""), AvatarItem(name="Grace Hopper", src=""), AvatarItem(name="Alan Turing", src=""), AvatarItem(name="Katherine Johnson", src=""), AvatarItem(name="Edsger Dijkstra", src=""), AvatarItem(name="Barbara Liskov", src="")], size="sm", max=4), AvatarGroupCase(id="avatargroup-0003", items=[AvatarItem(name="Ada Lovelace", src=""), AvatarItem(name="Grace Hopper", src=""), AvatarItem(name="Alan Turing", src=""), AvatarItem(name="Katherine Johnson", src=""), AvatarItem(name="Edsger Dijkstra", src=""), AvatarItem(name="Barbara Liskov", src="")], size="lg", max=4), AvatarGroupCase(id="avatargroup-0004", items=[AvatarItem(name="Ada Lovelace", src=""), AvatarItem(name="Grace Hopper", src=""), AvatarItem(name="Alan Turing", src=""), AvatarItem(name="Katherine Johnson", src=""), AvatarItem(name="Edsger Dijkstra", src=""), AvatarItem(name="Barbara Liskov", src="")], size="md", max=2), AvatarGroupCase(id="avatargroup-0005", items=[AvatarItem(name="Ada Lovelace", src=""), AvatarItem(name="Grace Hopper", src=""), AvatarItem(name="Alan Turing", src=""), AvatarItem(name="Katherine Johnson", src=""), AvatarItem(name="Edsger Dijkstra", src=""), AvatarItem(name="Barbara Liskov", src="")], size="md", max=6)]
+
+component AvatarGroupCases
+  props
+    id: string
+  view
+    for c in avatarGroupCases().filter(c => c.id == id) key=c.id
+      AvatarGroup(items=c.items, size=c.size, max=c.max)
+
+shape IndicatorCase
+  id: string
+  checked: string
+  disabled: bool
+
+fn indicatorCases(): IndicatorCase[] = [IndicatorCase(id="indicator-0001", checked="false", disabled=false), IndicatorCase(id="indicator-0002", checked="true", disabled=false), IndicatorCase(id="indicator-0003", checked="mixed", disabled=false), IndicatorCase(id="indicator-0004", checked="false", disabled=true)]
+
+component IndicatorCases
+  props
+    id: string
+  view
+    for c in indicatorCases().filter(c => c.id == id) key=c.id
+      CheckboxIndicator(checked=c.checked, disabled=c.disabled)

@@ -1,0 +1,92 @@
+{
+ "infra:Foundations": {
+  "wave": 0,
+  "status": "workaround",
+  "evidence": "astryx/astryx.tamber (251 tokens) and tokens/themes.tamber (8 themes, 1,066 per-theme values), imported by Exact's own `contract tamber import astryx`; gallery case foundations-0001 on web and Linux.",
+  "notes": "279 of 286 resolved tokens map; 7 do not (duration min/max tiers, focus outline style). The 4 motion tokens cannot vary by theme (Tamber writes a duration or easing into its transition at build), so every theme uses the default theme's motion. A type role (`font`) varies by theme, so it must sit on each text, not on a container. Number and date formatting stay en-US in Contract (a data module would localise, but the Linux build carries none)."
+ },
+ "VisuallyHidden": {
+  "wave": 0,
+  "status": "workaround",
+  "evidence": "primitives.contract VisuallyHidden",
+  "notes": "Contract refuses clip-path inset(); a 1 px clipped box stands in."
+ },
+ "SizeContext": {
+  "wave": 0,
+  "status": "workaround",
+  "evidence": "-",
+  "notes": "No context through a slot: size is a prop each child takes."
+ },
+ "InteractiveRoleContext": {
+  "wave": 0,
+  "status": "workaround",
+  "evidence": "-",
+  "notes": "No context through a slot: role is a prop."
+ },
+ "Text": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery text-0001..0024; web + Linux",
+  "notes": "`font` takes only literals, so the type role is a chain of literals. No inline-flex. `textWrap` keeps auto/balance plus nowrap; `pretty` is refused. Truncation tooltip waits for Tooltip (wave 4)."
+ },
+ "Heading": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery heading-0001..0007",
+  "notes": ""
+ },
+ "Icon": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "astryx/icons.contract (29 icons from defaultIcons.tsx as one path each); gallery icon-*",
+  "notes": "Contract expands a component at each use, so a branch per icon repeated all 29 icons at every Icon: one path chosen by a function keeps Icon small. Custom icon registry (registerIcons) has no Contract equivalent: icons are known at build."
+ },
+ "Spinner": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery spinner-*",
+  "notes": "Turn is a CSS keyframe; reduced motion not yet wired."
+ },
+ "Kbd": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery kbd-*",
+  "notes": "Mod shows as the Command sign on every platform for now."
+ },
+ "Divider": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery divider-*",
+  "notes": "isFullBleed needs the container's padding, which Contract cannot read (no runtime CSS variables): ignored."
+ },
+ "Link": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery link-*",
+  "notes": "Hover underline thickness refused (a state row paints only); hover dims instead. LinkProvider (router swap) is Contract's own `link`/routes."
+ },
+ "Badge": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery badge-* (15 variants)",
+  "notes": "Forced-colours outline not expressible."
+ },
+ "Avatar": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery avatar-*",
+  "notes": "Initials use the first letter of the first and last words (no Unicode-aware search). Image fallbackSrc and load error not yet wired. Tooltip waits for wave 4."
+ },
+ "AvatarGroup": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery avatargroup-*",
+  "notes": "Members are data (AvatarItem[]), not child elements: one slot cannot be counted."
+ },
+ "Indicator": {
+  "wave": 1,
+  "status": "ported",
+  "evidence": "gallery indicator-*",
+  "notes": "Checkbox, radio and check indicators."
+ }
+}

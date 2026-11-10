@@ -1,0 +1,18 @@
+// Foundations: names for Astryx's token scales. Astryx props take a step
+// ("2", "0.5"); a step names one token. Contract has no maps, so each scale is
+// a function over the step's text.
+
+// A spacing step (0, 0.5, 1, 1.5, 2 … 12) to its token name.
+fn space(step: string): string = `astryx.space.s${step.replaceAll(".", "-")}`
+
+// An element size (sm, md, lg) to its height token.
+fn elementSize(size: string): string = `astryx.size.element-${size}`
+
+// A radius role (none, inner, element, container, page, full) to its token.
+fn radius(role: string): string = `astryx.radius.${role}`
+
+// A text size step (xs, sm, base, lg, xl, 2xl …) to its font-size token.
+fn fontSize(step: string): string = (step.endsWith("xl") and step.length == 3 or step.endsWith("xs") and step.length == 3) ? `astryx.font-size.s${step}` : `astryx.font-size.${step}`
+
+// A type role is written as a literal token on `font` (`font="astryx.type.body"`): `font`
+// takes only a literal shorthand, so it has no function here.
