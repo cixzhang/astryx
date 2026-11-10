@@ -284,13 +284,9 @@ impl<Msg: Clone + 'static> Build<Msg> for ChatComposer<Msg> {
                 if e.phase != InputPhase::Pressed || e.key != Key::Enter || disabled {
                     return KeyResponse::Pass;
                 }
+                // Shift+Enter: the multi-line field types the break at the caret.
                 if e.modifiers.shift {
-                    let mut d = h.get();
-                    let mut s = d.text.unwrap_or_else(|| text.clone());
-                    s.push('\n');
-                    d.text = Some(s);
-                    h.set(d);
-                    return KeyResponse::Handled;
+                    return KeyResponse::Pass;
                 }
                 if stop || text.trim().is_empty() {
                     return KeyResponse::Handled;

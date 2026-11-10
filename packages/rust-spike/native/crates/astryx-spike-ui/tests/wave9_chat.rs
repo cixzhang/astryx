@@ -21,8 +21,7 @@ fn composer_sends_on_enter_and_clears() {
     let send = find(&rig.tree(), Role::Button, "Send").cloned().unwrap();
     assert!(send.disabled, "nothing to send yet");
     rig.type_text("Hello");
-    // Shift+Enter adds a line (at the end until the runtime edits
-    // multi-line text at the caret).
+    // Shift+Enter adds a line at the caret.
     rig.key(
         Key::Enter,
         Modifiers {
