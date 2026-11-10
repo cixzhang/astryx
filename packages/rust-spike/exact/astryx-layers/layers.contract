@@ -126,3 +126,92 @@ component CollapsibleGroup
   view
     column width="100%" role="group" aria-label=label
       children
+
+// Tooltip: a short text label beside its trigger, shown on hover or focus
+// after `delay` ms. The trigger is the slot. Timers run only in the app root's
+// tasks, so the delay is the fade's own delay: the tooltip opens at once and
+// stays transparent for `delay` ms. Hover is a web and desktop
+// event; touch has no hover, so on touch the tooltip shows on focus only.
+style TooltipLook
+  background-color="astryx.text.primary"
+  color="astryx.surface.surface"
+  border-radius="astryx.radius.container"
+  padding-top="astryx.space.s1" padding-bottom="astryx.space.s1"
+  padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+  max-width=300 border-width=0
+
+component Tooltip
+  props
+    id: string
+    content: string
+    placement: string
+    alignment: string
+    delay: number
+    isEnabled: bool
+    focusTrigger: string
+    still: bool
+  slot
+  action hovered(on: bool)
+    if on and isEnabled
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  action focused
+    if isEnabled and focusTrigger != "never"
+      showPopover(id, source=`${id}-trigger`)
+  action blurred
+    hidePopover(id)
+  view
+    view id=`${id}-trigger` hover=hovered focus=focused blur=blurred aria-describedby=id testId=`${id}-trigger`
+      children
+    text content id=id popover="manual" role="tooltip" class=TooltipLook
+      font="astryx.type.body" position-area=popoverArea(placement, alignment) margin="astryx.space.s1"
+      animation=(still ? "none" : `astryxFadeIn 175ms cubic-bezier(0.24, 1, 0.4, 1) ${delay}ms both`) testId=id
+
+// InfoTip: an information icon button whose tooltip explains what is next to it.
+component InfoTip
+  props
+    id: string
+    content: string
+    label: string
+    size: string
+  action hovered(on: bool)
+    if on
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  view
+    button id=`${id}-trigger` popovertarget=id hover=hovered aria-label=(label == "" ? "More information" : label) testId=`${id}-trigger`
+      padding="astryx.space.s0-5" border-radius="astryx.radius.full" background-color="transparent" border-width=0
+      color="astryx.icon.secondary"
+      view width=(size == "xsm" ? 12 : size == "md" ? 20 : size == "lg" ? 24 : 16) height=(size == "xsm" ? 12 : size == "md" ? 20 : size == "lg" ? 24 : 16)
+        IconGlyph(icon="info")
+    text content id=id popover="auto" role="tooltip" class=TooltipLook font="astryx.type.body"
+      position-area="top" margin="astryx.space.s1" testId=id
+
+// HoverCard: a richer card shown while the pointer rests on its trigger. Its
+// card content comes as text and a title here: the one slot is the trigger.
+component HoverCard
+  props
+    id: string
+    title: string
+    body: string
+    label: string
+    placement: string
+    alignment: string
+    isEnabled: bool
+    still: bool
+  slot
+  action hovered(on: bool)
+    if on and isEnabled
+      showPopover(id, source=`${id}-trigger`)
+    else
+      hidePopover(id)
+  view
+    view id=`${id}-trigger` hover=hovered focus=hovered(true) blur=hovered(false) testId=`${id}-trigger`
+      children
+    column id=id popover="manual" role="dialog" aria-label=(label == "" ? title : label) class=PopoverSurface
+      position-area=popoverArea(placement, alignment) margin="astryx.space.s1" padding="astryx.space.s3" gap="astryx.space.s1" max-width=320
+      animation=enterMotion(still) testId=id
+      text title font="astryx.type.label" color="astryx.text.primary"
+      text body font="astryx.type.supporting" color="astryx.text.secondary"

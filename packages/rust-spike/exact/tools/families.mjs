@@ -154,7 +154,7 @@ export const FAMILIES = {
     defaults: { id: 'case-popover', label: 'Details', placement: 'below', alignment: 'center', padding: 3, role: 'dialog', hasCloseButton: false, closeButtonLabel: '', hasLightDismiss: true, still: true },
     opens: p => p.isOpen !== false && p.isEnabled !== false,
     children: [TEXT('Popover content')],
-    wrap: inner => ['column align-items="center" width=360 height=220 justify-content="center"', '  button id="popover-trigger" popovertarget="case-popover" testId="popover-trigger" padding="8px 12px"', '    text "Open"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['column align-items="center" width=360 height=220 justify-content="center"', '  button id="case-popover-trigger" popovertarget="case-popover" testId="popover-trigger" padding="8px 12px"', '    text "Open"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Popover', {}, { placement: ['above', 'start', 'end'], alignment: ['start', 'end'], padding: [0, 6], hasCloseButton: [true], isOpen: [false] }),
   },
   Collapsible: {
@@ -181,5 +181,28 @@ export const FAMILIES = {
     component: 'RadioIndicator', qa: { file: 'Indicator', components: ['RadioIndicator'] },
     defaults: { state: 'unchecked', size: 'md', isDisabled: false },
     smoke: sweep('RadioIndicator', {}, { state: ['checked'] }),
+  },
+  Tooltip: {
+    component: 'Tooltip', uses: ['Tooltip'],
+    defaults: { id: 'case-popover', content: 'Copy link', placement: 'above', alignment: 'center', delay: 0, isEnabled: true, focusTrigger: 'auto', still: true },
+    opens: p => p.isOpen !== false && p.isEnabled !== false,
+    children: ['Filler(label="Hover me")'],
+    wrap: inner => ['column align-items="center" justify-content="center" width=320 height=160', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Tooltip', {}, { placement: ['below', 'start', 'end'], alignment: ['start', 'end'] }),
+  },
+  InfoTip: {
+    component: 'InfoTip',
+    defaults: { id: 'case-popover', content: 'Billing runs on the first of the month.', label: 'More information', size: 'sm' },
+    opens: () => true,
+    wrap: inner => ['row align-items="center" justify-content="center" width=320 height=160', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('InfoTip', {}, { size: ['xsm', 'md', 'lg'] }),
+  },
+  HoverCard: {
+    component: 'HoverCard', uses: ['HoverCard'],
+    defaults: { id: 'case-popover', title: 'Ada Lovelace', body: 'Wrote the first published algorithm.', label: '', placement: 'below', alignment: 'center', isEnabled: true, still: true },
+    opens: p => p.isOpen !== false && p.isEnabled !== false,
+    children: ['Filler(label="@ada")'],
+    wrap: inner => ['column align-items="center" justify-content="center" width=360 height=200', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('HoverCard', {}, { placement: ['above', 'end'], alignment: ['start'] }),
   },
 };

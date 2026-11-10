@@ -2,9 +2,9 @@
 
 Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2e25b307a40e7fce66dc27c9f802`.
 
-- Dependency closure ported (core, by source files): 341 of 689 (49.5%).
-- With the stretch rows: 347 of 720 (48.2%).
-- Rows: 15 ported, 17 workaround, 0 blocked, 45 not started.
+- Dependency closure ported (core, by source files): 351 of 689 (50.9%).
+- With the stretch rows: 357 of 720 (49.6%).
+- Rows: 16 ported, 19 workaround, 0 blocked, 42 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -42,11 +42,11 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Grid | 3 | core | 2 | workaround | gallery grid-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. rowHeight not yet wired. |
 | HStack | 2 | core, stretch, template | 2 | workaround | gallery h-stack-* | Contract forwards no slot into another component, so HStack repeats Stack's body instead of wrapping Stack. |
 | Heading | 2 | core, stretch, template | 1 | ported | gallery heading-0001..0007 |  |
-| HoverCard | 5 | weakness |  | not started |  |  |
+| HoverCard | 5 | weakness | 4 | workaround | gallery hovercard-* | Card content is a title and body text: the one slot is the trigger. Same delay limit as Tooltip. |
 | Icon | 8 | core, stretch, template, weakness | 1 | ported | astryx/icons.contract (29 icons from defaultIcons.tsx as one path each); gallery icon-* | Contract expands a component at each use, so a branch per icon repeated all 29 icons at every Icon: one path chosen by a function keeps Icon small. Custom icon registry (registerIcons) has no Contract equivalent: icons are known at build. |
 | IconButton | 2 | core, stretch |  | not started |  |  |
 | Indicator | 7 | core, stretch, template, weakness | 1 | ported | gallery checkbox-indicator-*, check-indicator-*, radio-indicator-* | Checkbox, radio and check indicators. |
-| InfoTip | 1 | core, stretch, template, weakness |  | not started |  |  |
+| InfoTip | 1 | core, stretch, template, weakness | 4 | ported | gallery infotip-* | Opens on hover and on press (popovertarget). |
 | InputGroup | 6 | core, stretch, template, weakness |  | not started |  |  |
 | InteractiveRoleContext | 1 | core, stretch | 0 | workaround | - | No context through a slot: role is a prop. |
 | Item | 9 | core, stretch, template, weakness |  | not started |  |  |
@@ -79,7 +79,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Token | 4 | core, stretch | 2 | ported | gallery token-* | href/onClick variants and endContent not yet wired. |
 | Tokenizer | 6 | core, stretch |  | not started |  |  |
 | Toolbar | 2 | core | 2 | workaround | - | Arrow-key roving focus waits for wave 5 controls; overflow menu waits for OverflowList (wave 6). |
-| Tooltip | 4 | core, stretch, template, weakness |  | not started |  |  |
+| Tooltip | 4 | core, stretch, template, weakness | 4 | workaround | gallery tooltip-*; test 'a tooltip case opens its tooltip' | Shows on hover and focus via the platform popover, anchored to the trigger. Timers run only in the app root's tasks, so `delay` is the fade's delay (the tooltip is open, transparent, for `delay` ms) and hideDelay is not possible. Content is text (one slot: the trigger). touchTrigger tap not wired. Hover is web and desktop only. |
 | TopNav | 2 | core |  | not started |  |  |
 | TreeList | 5 | stretch, template |  | not started |  |  |
 | Typeahead | 8 | core, stretch |  | not started |  |  |

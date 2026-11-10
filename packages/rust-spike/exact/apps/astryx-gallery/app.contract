@@ -23,7 +23,7 @@ component AstryxGallery
       setScheme("light")
     setMode("theme", themeName == "" ? "neutral" : themeName)
     if caseOpens(caseId)
-      showPopover("case-popover", source="popover-trigger")
+      showPopover("case-popover", source="case-popover-trigger")
   view
     main testId="root" navigationKey=`${entry.id}` width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary"
       scroll id="content" height="100%"

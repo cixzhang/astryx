@@ -190,5 +190,23 @@
   "status": "workaround",
   "evidence": "gallery popover-*; web and Linux",
   "notes": "Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run."
+ },
+ "Tooltip": {
+  "wave": 4,
+  "status": "workaround",
+  "evidence": "gallery tooltip-*; test 'a tooltip case opens its tooltip'",
+  "notes": "Shows on hover and focus via the platform popover, anchored to the trigger. Timers run only in the app root's tasks, so `delay` is the fade's delay (the tooltip is open, transparent, for `delay` ms) and hideDelay is not possible. Content is text (one slot: the trigger). touchTrigger tap not wired. Hover is web and desktop only."
+ },
+ "InfoTip": {
+  "wave": 4,
+  "status": "ported",
+  "evidence": "gallery infotip-*",
+  "notes": "Opens on hover and on press (popovertarget)."
+ },
+ "HoverCard": {
+  "wave": 4,
+  "status": "workaround",
+  "evidence": "gallery hovercard-*",
+  "notes": "Card content is a title and body text: the one slot is the trigger. Same delay limit as Tooltip."
  }
 }

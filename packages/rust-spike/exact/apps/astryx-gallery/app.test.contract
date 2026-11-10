@@ -24,3 +24,10 @@ test "a removable token removes on press"
 test "a layout frame shows its parts"
   at "/?case=layout-0001"
   expect tree has "case"
+
+test "a tooltip case opens its tooltip beside the trigger"
+  at "/?case=tooltip-0001"
+  clock +1
+  expect tree has "case-popover"
+  tap "case-popover-trigger" hover
+  expect tree has "case-popover"

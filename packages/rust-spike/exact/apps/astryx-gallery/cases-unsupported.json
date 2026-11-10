@@ -24,5 +24,10 @@
   "isModal",
   "isOpen",
   "presentation"
+ ],
+ "Tooltip": [
+  "isDefaultOpen",
+  "isOpen",
+  "touchTrigger"
  ]
 }
