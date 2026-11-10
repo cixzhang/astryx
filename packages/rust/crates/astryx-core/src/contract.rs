@@ -1217,6 +1217,13 @@ pub trait Surface {
         let _ = event;
         PointerOutcome::default()
     }
+    /// A key went down or up. Shells send it before mapping the key to an
+    /// [`Input`]; when the outcome is `handled`, a component took the key
+    /// and the shell skips that mapping (and any text the key types).
+    fn key(&mut self, event: KeyEvent) -> KeyOutcome {
+        let _ = event;
+        KeyOutcome::default()
+    }
     /// A command the app returned outside an input, such as while a held
     /// press completes during a frame. Shells take it after each frame.
     fn take_command(&mut self) -> Command {
@@ -1236,6 +1243,59 @@ pub trait Surface {
     fn set_preferences(&mut self, preferences: &Preferences) {
         let _ = preferences;
     }
+}
+
+/// A keyboard key, by meaning (the layout's logical key).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Key {
+    /// A key that types text, such as `a` or `é`.
+    Character(String),
+    Enter,
+    Space,
+    Escape,
+    Tab,
+    Up,
+    Down,
+    Left,
+    Right,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+    Backspace,
+    Delete,
+    /// The context menu key.
+    ContextMenu,
+    /// A function key: `F(10)` is F10.
+    F(u8),
+}
+
+/// Modifier keys held with a key.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Modifiers {
+    pub shift: bool,
+    pub ctrl: bool,
+    pub alt: bool,
+    /// Command on macOS, the Windows key elsewhere.
+    pub meta: bool,
+}
+
+/// One key event.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct KeyEvent {
+    pub key: Key,
+    pub phase: InputPhase,
+    pub modifiers: Modifiers,
+    /// The platform repeats a held key.
+    pub repeat: bool,
+}
+
+/// What the surface did with a key event.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct KeyOutcome {
+    pub command: Command,
+    /// A component took the key; the shell must not also map it.
+    pub handled: bool,
 }
 
 /// What kind of device a pointer is.
