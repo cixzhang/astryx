@@ -20,6 +20,7 @@ pub mod composites;
 pub mod controls;
 pub mod data;
 pub mod layout;
+pub mod nav;
 pub mod overlays;
 pub mod primitives;
 
@@ -27,6 +28,7 @@ pub use composites::*;
 pub use controls::*;
 pub use data::*;
 pub use layout::*;
+pub use nav::*;
 pub use overlays::*;
 pub use primitives::*;
 
