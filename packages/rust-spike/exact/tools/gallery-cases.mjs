@@ -26,16 +26,32 @@ const lit = v => {
 
 // Each family's cases are data: a list of one shape, read by one call. Contract expands a
 // component at each place it is used, so one call per case would repeat the component per case.
+// QA's case file for a family: components[] each with cases[] {id, kind, props}. A family reads
+// the components `def.qa` names (default: the one named like the family).
+function qaCases(family, def) {
+  const file = resolve(QA, `${def.qa?.file ?? family}.json`);
+  if (!existsSync(file)) return null;
+  const doc = JSON.parse(readFileSync(file, 'utf8'));
+  const names = def.qa?.components ?? [def.component, family];
+  const picked = doc.components.filter(c => names.includes(c.component));
+  if (!picked.length) return null;
+  const rename = id => (def.qa?.idFrom ? id.replace(def.qa.idFrom, def.qa.idTo) : id);
+  return picked.flatMap(c => c.cases.map(k => ({ id: rename(k.id), title: `${c.component} ${k.kind} ${JSON.stringify(k.props)}`, props: { ...(c.base ?? {}), ...k.props } })));
+}
+
 const typeOf = (v, k, def) => def.types?.[k] ?? (typeof v === 'string' ? 'string' : typeof v === 'number' ? 'number' : typeof v === 'boolean' ? 'bool' : null);
 const rows = [];
 const families = [];
+const dropped = {};
 for (const [family, def] of Object.entries(FAMILIES)) {
-  const qaFile = resolve(QA, `${family}.json`);
-  const cases = existsSync(qaFile) ? JSON.parse(readFileSync(qaFile, 'utf8')) : def.smoke;
+  const qa = qaCases(family, def);
+  const cases = qa ?? def.smoke;
   const keys = Object.keys(def.defaults);
   const records = [];
   for (const c of cases) {
-    const props = { ...def.defaults, ...(def.map ? def.map(c.props ?? {}) : c.props ?? {}) };
+    const given = def.map ? def.map(c.props ?? {}) : c.props ?? {};
+    for (const k of Object.keys(given)) if (!(k in def.defaults)) (dropped[family] ??= new Set()).add(k);
+    const props = { ...def.defaults, ...given };
     rows.push({ id: c.id, family, title: c.title ?? (Object.entries(c.props ?? {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ') || 'defaults') });
     records.push(`${family}Case(${['id', ...keys].map(k => `${k}=${lit(k === 'id' ? c.id : props[k])}`).join(', ')})`);
   }
@@ -43,7 +59,7 @@ for (const [family, def] of Object.entries(FAMILIES)) {
   const inner = def.children ? [call, ...def.children.map(l => `  ${l}`)] : [call];
   const body = def.wrap ? def.wrap(inner) : inner;
   families.push({
-    family, uses: def.uses ?? [def.component],
+    family, fromQa: !!qa, uses: def.uses ?? [def.component],
     decl: [
       `shape ${family}Case`, '  id: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
@@ -73,10 +89,8 @@ const out = [
   '  view',
   '    column',
 ];
-for (const f of families) {
-  out.push(`      if id.startsWith(${JSON.stringify(f.family.toLowerCase() + '-')})`);
-  out.push(`        ${f.family}Cases(id=id)`);
-}
+for (const f of families) out.push(`      ${f.family}Cases(id=id)`);
 for (const f of families) out.push('', ...f.decl);
 writeFileSync(resolve(HERE, 'apps/astryx-gallery/cases.contract'), out.join('\n') + '\n');
-console.log(`cases ${rows.length} in ${families.length} families`);
+writeFileSync(resolve(HERE, 'apps/astryx-gallery/cases-unsupported.json'), JSON.stringify(Object.fromEntries(Object.entries(dropped).map(([f, ks]) => [f, [...ks].sort()])), null, 1) + '\n');
+console.log(`cases ${rows.length} in ${families.length} families (${families.filter(f => f.fromQa).map(f => f.family).join(', ')} from QA)`);

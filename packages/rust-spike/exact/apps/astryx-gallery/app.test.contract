@@ -5,7 +5,7 @@ test "the index lists every case"
 test "a badge case shows its label"
   at "/?case=badge-0003"
   expect tree has "case"
-  expect text "badge" == "Badge"
+  expect text "badge" == "Label"
 
 test "a dark butter page applies after load"
   at "/?case=foundations-0001&scheme=dark&theme=butter"

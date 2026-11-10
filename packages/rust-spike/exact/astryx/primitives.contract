@@ -18,10 +18,12 @@ component Text
     maxLines: number
     textWrap: string
     justify: string
+    wordBreak: string
     hasStrikethrough: bool
     hasTabularNumbers: bool
   view
     text text
+      overflow-wrap=(wordBreak == "break-all" ? "anywhere" : "break-word")
       font=(type == "large" ? "astryx.type.large" : type == "label" ? "astryx.type.label" : type == "supporting" ? "astryx.type.supporting" : type == "code" ? "astryx.type.code" : type == "display-1" ? "astryx.type.display-1" : type == "display-2" ? "astryx.type.display-2" : type == "display-3" ? "astryx.type.display-3" : "astryx.type.body")
       font-size=(size == "" ? "inherit" : fontSizeToken(size))
       font-weight=(weight == "" ? "inherit" : `astryx.weight.${weight}`)
@@ -42,11 +44,23 @@ component Heading
   props
     text: string
     level: number
+    accessibilityLevel: number
+    weight: string
     color: string
+    textWrap: string
+    justify: string
+    wordBreak: string
+    hasStrikethrough: bool
   view
-    text text role="heading" aria-level=level
+    text text role="heading" aria-level=(accessibilityLevel > 0 ? accessibilityLevel : level)
+      font-weight=(weight == "" ? "inherit" : `astryx.weight.${weight}`)
+      text-wrap=(textWrap == "balance" ? "balance" : "auto")
+      white-space=(textWrap == "nowrap" ? "nowrap" : "normal")
+      text-align=justify
+      overflow-wrap=(wordBreak == "break-all" ? "anywhere" : "break-word")
+      text-decoration-line=(hasStrikethrough ? "line-through" : "none")
       font=(level == 1 ? "astryx.type.heading-1" : level == 2 ? "astryx.type.heading-2" : level == 3 ? "astryx.type.heading-3" : level == 5 ? "astryx.type.heading-5" : level == 6 ? "astryx.type.heading-6" : "astryx.type.heading-4")
-      color=(color == "" or color == "primary" ? "astryx.text.primary" : `astryx.text.${color}`)
+      color=(color == "" or color == "primary" ? "astryx.text.primary" : color == "inherit" ? "inherit" : color == "placeholder" ? "astryx.text.secondary" : `astryx.text.${color}`)
 
 // Icon: one of Astryx's icons at a size, in a colour role. An icon with a
 // label is an image to a reader; without one it is hidden.
@@ -143,24 +157,36 @@ component Divider
           text label flex-shrink=0 padding-left="astryx.space.s3" padding-right="astryx.space.s3" font="astryx.type.supporting" color="astryx.text.secondary"
           view height="astryx.border.width" flex-grow=1 background-color=(variant == "strong" ? "astryx.border.emphasized" : "astryx.border")
 
-// Link: text that goes somewhere. An external link opens a new tab.
-// Astryx thickens the underline on hover; a state row paints only, so the
-// hover here deepens the colour instead.
+// Link: text that goes somewhere. An external link opens a new tab and says
+// so. Astryx underlines on hover; a state row paints only, so here hover
+// dims the colour and `hasUnderline` underlines always.
 style LinkLook
-  color="astryx.text.accent" text-decoration-line="underline"
   :hover
-    opacity=0.8
+    opacity=0.85
 
 component Link
   props
     text: string
     href: string
-    isExternal: bool
+    hasUnderline: bool
+    isDisabled: bool
+    isExternalLink: bool
+    isStandalone: bool
+    size: string
+    weight: string
+    color: string
   view
     link href=href class=LinkLook testId=`link-${text}`
+      aria-disabled=isDisabled
+      opacity=(isDisabled ? 0.5 : 1)
       row align-items="center" gap="astryx.space.s0-5"
         text text
-        if isExternal
+          color=(color == "inherit" ? "inherit" : color == "placeholder" ? "astryx.text.secondary" : color == "" ? "astryx.text.accent" : `astryx.text.${color}`)
+          text-decoration-line=(hasUnderline ? "underline" : "none")
+          font=(isStandalone ? "astryx.type.body" : "astryx.type.body")
+          font-size=(size == "" ? "inherit" : fontSizeToken(size))
+          font-weight=(weight == "" ? "inherit" : `astryx.weight.${weight}`)
+        if isExternalLink
           Icon(icon="externalLink", size="xsm", color="inherit", label="(opens in a new tab)")
 
 // Badge: a short status label, filled by variant.
@@ -259,36 +285,43 @@ component AvatarGroup
           display="flex" align-items="center" justify-content="center" background-color="astryx.neutral"
           text `+${items.length - max}` font="astryx.type.supporting" font-weight="astryx.weight.medium"
 
-// The selection indicators: a checkbox box, a radio circle and a bare check.
+// The selection indicators: a checkbox box, a radio circle and a bare check,
+// at `size` sm (14) or md (16).
+fn indicatorPx(size: string): number = size == "sm" ? 14 : 16
+
 component CheckboxIndicator
   props
-    checked: string
-    disabled: bool
+    state: string
+    size: string
+    isDisabled: bool
   view
-    view width=16 height=16 border-radius="astryx.radius.inner" display="flex" align-items="center" justify-content="center"
-      border-width=(checked == "false" ? 1.5 : 0) border-style="solid" border-color="astryx.border.emphasized"
-      background-color=(checked == "false" ? "astryx.surface.surface" : disabled ? "astryx.text.disabled" : "astryx.accent")
+    view width=indicatorPx(size) height=indicatorPx(size) border-radius="astryx.radius.inner" display="flex" align-items="center" justify-content="center"
+      border-width=(state == "unchecked" ? 1.5 : 0) border-style="solid" border-color=(isDisabled ? "astryx.icon.disabled" : "astryx.border.emphasized")
+      background-color=(state == "unchecked" ? "astryx.surface.surface" : isDisabled ? "astryx.text.disabled" : "astryx.accent")
       color="astryx.on-accent"
-      if checked == "true"
-        view width=12 height=12
+      if state == "checked"
+        view width=(indicatorPx(size) - 4) height=(indicatorPx(size) - 4)
           IconGlyph(icon="check")
-      if checked == "mixed"
-        view width=8 height=2 border-radius="astryx.radius.inner" background-color="astryx.on-accent"
+      if state == "indeterminate"
+        view width=(indicatorPx(size) / 2) height=2 border-radius="astryx.radius.inner" background-color="astryx.on-accent"
 
 component RadioIndicator
   props
-    checked: bool
-    disabled: bool
+    state: string
+    size: string
+    isDisabled: bool
   view
-    view width=16 height=16 border-radius="astryx.radius.full" display="flex" align-items="center" justify-content="center"
-      border-width=(checked ? 0 : 1.5) border-style="solid" border-color="astryx.border.emphasized"
-      background-color=(checked ? (disabled ? "astryx.text.disabled" : "astryx.accent") : "astryx.surface.surface")
-      if checked
-        view width=6 height=6 border-radius="astryx.radius.full" background-color="astryx.on-accent"
+    view width=indicatorPx(size) height=indicatorPx(size) border-radius="astryx.radius.full" display="flex" align-items="center" justify-content="center"
+      border-width=(state == "checked" ? 0 : 1.5) border-style="solid" border-color=(isDisabled ? "astryx.icon.disabled" : "astryx.border.emphasized")
+      background-color=(state == "checked" ? (isDisabled ? "astryx.text.disabled" : "astryx.accent") : "astryx.surface.surface")
+      if state == "checked"
+        view width=(indicatorPx(size) * 0.375) height=(indicatorPx(size) * 0.375) border-radius="astryx.radius.full" background-color="astryx.on-accent"
 
 component CheckIndicator
   props
-    checked: bool
+    state: string
+    size: string
+    isDisabled: bool
   view
-    view width=16 height=16 color="astryx.accent" opacity=(checked ? 1 : 0)
+    view width=indicatorPx(size) height=indicatorPx(size) color=(isDisabled ? "astryx.icon.disabled" : "astryx.accent") opacity=(state == "checked" ? 1 : 0)
       IconGlyph(icon="check")

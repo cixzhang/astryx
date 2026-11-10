@@ -19,6 +19,8 @@ use IconGlyph from "./icons.contract"
 
 fn step(n: number): string = space(n.toString())
 fn stepOr(n: number, fallback: number): string = n < 0 ? step(fallback) : step(n)
+// The first spacing step that is set (not -1).
+fn firstSet(a: number, b: number, c: number): number = a >= 0 ? a : b >= 0 ? b : c
 fn sizeOr(v: string, fallback: string): string = v == "" ? fallback : v
 fn flexAlign(a: string): string = a == "start" ? "flex-start" : a == "end" ? "flex-end" : a == "center" ? "center" : a == "baseline" ? "baseline" : "stretch"
 fn flexJustify(j: string): string = j == "end" ? "flex-end" : j == "center" ? "center" : j == "between" or j == "space-between" ? "space-between" : j == "around" or j == "space-around" ? "space-around" : j == "evenly" or j == "space-evenly" ? "space-evenly" : "flex-start"
@@ -30,7 +32,13 @@ component Stack
     gap: number
     padding: number
     paddingInline: number
+    paddingInlineStart: number
+    paddingInlineEnd: number
     paddingBlock: number
+    paddingBlockStart: number
+    paddingBlockEnd: number
+    hAlign: string
+    vAlign: string
     align: string
     justify: string
     wrap: string
@@ -40,13 +48,13 @@ component Stack
     view display="flex"
       flex-direction=(direction == "horizontal" or direction == "row" ? "row" : "column")
       gap=stepOr(gap, 0)
-      padding-top=stepOr(paddingBlock < 0 ? padding : paddingBlock, 0)
-      padding-bottom=stepOr(paddingBlock < 0 ? padding : paddingBlock, 0)
-      padding-left=stepOr(paddingInline < 0 ? padding : paddingInline, 0)
-      padding-right=stepOr(paddingInline < 0 ? padding : paddingInline, 0)
-      align-items=flexAlign(align)
-      justify-content=flexJustify(justify)
-      flex-wrap=(wrap == "wrap" ? "wrap" : "nowrap")
+      padding-top=stepOr(firstSet(paddingBlockStart, paddingBlock, padding), 0)
+      padding-bottom=stepOr(firstSet(paddingBlockEnd, paddingBlock, padding), 0)
+      padding-left=stepOr(firstSet(paddingInlineStart, paddingInline, padding), 0)
+      padding-right=stepOr(firstSet(paddingInlineEnd, paddingInline, padding), 0)
+      align-items=(direction == "horizontal" or direction == "row" ? flexAlign(vAlign == "" ? align : vAlign) : flexAlign(hAlign == "" ? align : hAlign))
+      justify-content=(direction == "horizontal" or direction == "row" ? flexJustify(hAlign == "" ? justify : hAlign) : flexJustify(vAlign == "" ? justify : vAlign))
+      flex-wrap=(wrap == "wrap" ? "wrap" : wrap == "wrap-reverse" ? "wrap-reverse" : "nowrap")
       overflow=(isScrollable ? "auto" : "visible")
       min-width=0
       children
@@ -129,6 +137,7 @@ component Layout
   props
     height: string
     padding: number
+    defaultHasDividers: bool
   slot
   view
     view display="grid"
@@ -264,7 +273,7 @@ component EmptyState
       if icon != ""
         view width=(isCompact ? 24 : 40) height=(isCompact ? 24 : 40) color="astryx.icon.secondary"
           IconGlyph(icon=icon)
-      Heading(text=title, level=headingLevel, color="primary")
+      Heading(text=title, level=headingLevel, accessibilityLevel=0, weight="", color="primary", textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false)
       if description != ""
         text description font="astryx.type.body" color="astryx.text.secondary" max-width=400
       row gap="astryx.space.s2" justify-content="center"

@@ -23,13 +23,13 @@ export const FAMILIES = {
     smoke: [{ id: 'foundations-0001', title: 'Token swatches', props: {} }],
   },
   Text: {
-    component: 'Text', map: childrenAs('text'),
-    defaults: { text: 'The quick brown fox jumps over the lazy dog', type: 'body', size: '', color: 'primary', weight: '', maxLines: 0, textWrap: '', justify: 'start', hasStrikethrough: false, hasTabularNumbers: false },
+    component: 'Text', qa: { file: 'Text', components: ['Heading'], idFrom: /^heading-/, idTo: 'text-' }, map: childrenAs('text'),
+    defaults: { text: 'The quick brown fox jumps over the lazy dog', type: 'body', size: '', color: 'primary', weight: '', maxLines: 0, textWrap: '', justify: 'start', wordBreak: 'break-word', hasStrikethrough: false, hasTabularNumbers: false },
     smoke: sweep('Text', {}, { type: ['large', 'label', 'supporting', 'code', 'display-1', 'display-2', 'display-3'], size: ['xsm', 'sm', 'base', 'lg', 'xl', '2xl'], color: ['secondary', 'disabled', 'accent'], weight: ['medium', 'semibold', 'bold'], maxLines: [1], hasStrikethrough: [true], hasTabularNumbers: [true] }),
   },
   Heading: {
-    component: 'Heading', map: childrenAs('text'),
-    defaults: { text: 'Section heading', level: 2, color: 'primary' },
+    component: 'Heading', qa: { file: 'Heading', components: ['Heading'] }, map: childrenAs('text'),
+    defaults: { text: 'Section heading', level: 1, accessibilityLevel: 0, weight: '', color: 'primary', textWrap: '', justify: 'start', wordBreak: 'break-word', hasStrikethrough: false },
     smoke: sweep('Heading', {}, { level: [1, 3, 4, 5, 6], color: ['secondary'] }),
   },
   Icon: {
@@ -54,8 +54,8 @@ export const FAMILIES = {
   },
   Link: {
     component: 'Link', map: childrenAs('text'),
-    defaults: { text: 'Read the docs', href: '#', isExternal: false },
-    smoke: sweep('Link', {}, { isExternal: [true] }),
+    defaults: { text: 'Read the docs', href: '#', hasUnderline: false, isDisabled: false, isExternalLink: false, isStandalone: false, size: '', weight: '', color: 'accent' },
+    smoke: sweep('Link', {}, { isExternalLink: [true], hasUnderline: [true], isDisabled: [true] }),
   },
   Badge: {
     component: 'Badge',
@@ -63,7 +63,7 @@ export const FAMILIES = {
     smoke: sweep('Badge', {}, { variant: ['info', 'success', 'warning', 'error', 'blue', 'cyan', 'green', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow', 'gray'], icon: ['check'] }),
   },
   Avatar: {
-    component: 'Avatar',
+    component: 'Avatar', qa: { file: 'Avatar', components: ['AvatarStatusDot'] },
     defaults: { src: '', name: 'Ada Lovelace', size: 'md', px: 0, shape: 'circle', status: '', statusLabel: '' },
     map: p => (typeof p.size === 'number' ? { ...p, size: '', px: p.size } : p),
     smoke: sweep('Avatar', {}, { size: ['xsm', 'sm', 'lg', 'xl'], shape: ['rounded', 'square'], status: ['success', 'neutral', 'error'], name: ['Alice'] }),
@@ -75,13 +75,13 @@ export const FAMILIES = {
     smoke: sweep('AvatarGroup', {}, { size: ['sm', 'lg'], max: [2, 6] }),
   },
   Indicator: {
-    component: 'CheckboxIndicator', uses: ['CheckboxIndicator', 'RadioIndicator', 'CheckIndicator'],
-    defaults: { checked: 'false', disabled: false },
-    smoke: sweep('Indicator', {}, { checked: ['true', 'mixed'], disabled: [true] }),
+    component: 'CheckboxIndicator', qa: { file: 'Indicator', components: ['CheckboxIndicator'] }, uses: ['CheckboxIndicator', 'RadioIndicator', 'CheckIndicator'],
+    defaults: { state: 'unchecked', size: 'md', isDisabled: false },
+    smoke: sweep('Indicator', {}, { state: ['checked', 'indeterminate'], isDisabled: [true] }),
   },
   Stack: {
     component: 'Stack',
-    defaults: { direction: 'vertical', gap: 2, padding: -1, paddingInline: -1, paddingBlock: -1, align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false },
+    defaults: { direction: 'vertical', gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false },
     children: FILL3,
     smoke: sweep('Stack', {}, { direction: ['horizontal'], gap: [0, 1, 4, 8], padding: [2, 4], align: ['start', 'center', 'end'], justify: ['center', 'between'], wrap: ['wrap'] }),
     wrap: inner => ['view width=320 height=200 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
@@ -97,7 +97,7 @@ export const FAMILIES = {
     wrap: inner => ['view width=320 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
   },
   Grid: {
-    component: 'Grid', defaults: { columns: 3, minWidth: 0, gap: 2, rowGap: -1, columnGap: -1, align: '', justify: '' },
+    component: 'Grid', qa: { file: 'Grid', components: ['GridSpan'] }, defaults: { columns: 3, minWidth: 0, gap: 2, rowGap: -1, columnGap: -1, align: '', justify: '' },
     wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
     children: ['Filler(label="1")', 'Filler(label="2")', 'Filler(label="3")', 'Filler(label="4")', 'Filler(label="5")'],
     smoke: sweep('Grid', {}, { columns: [2, 4], minWidth: [90], gap: [0, 4] }),
@@ -113,7 +113,7 @@ export const FAMILIES = {
     wrap: inner => ['view width=240', ...inner.map(l => `  ${l}`)],
   },
   Section: {
-    component: 'Section', defaults: { variant: 'section', padding: 4, dividers: [], bleed: 0 }, types: { dividers: 'string[]' }, children: ['Text(text="Section content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false)'],
+    component: 'Section', defaults: { variant: 'section', padding: 4, dividers: [], bleed: 0 }, types: { dividers: 'string[]' }, children: ['Text(text="Section content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)'],
     uses: ['Section', 'Text'],
     smoke: sweep('Section', {}, { variant: ['transparent', 'muted'], padding: [0, 2, 8], dividers: [['top', 'bottom']] }),
     wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
@@ -121,11 +121,11 @@ export const FAMILIES = {
   Card: {
     component: 'Card', defaults: { variant: 'default', padding: 4, elevation: 'none' },
     wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
-    children: ['Text(text="Card content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false)'], uses: ['Card', 'Text'],
+    children: ['Text(text="Card content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)'], uses: ['Card', 'Text'],
     smoke: sweep('Card', {}, { variant: ['transparent', 'muted', 'blue', 'green', 'red'], padding: [0, 2, 8], elevation: ['low', 'med', 'high'] }),
   },
   Layout: {
-    component: 'Layout', defaults: { height: 'fill', padding: 4 }, uses: ['Layout', 'LayoutHeader', 'LayoutPanel', 'LayoutContent', 'LayoutFooter', 'Text'],
+    component: 'Layout', qa: { file: 'Layout', components: ['LayoutHeader'] }, defaults: { height: 'fill', padding: 4, defaultHasDividers: false }, uses: ['Layout', 'LayoutHeader', 'LayoutPanel', 'LayoutContent', 'LayoutFooter', 'Text'],
     children: [
       'LayoutHeader(hasDivider=true, isFullBleed=false)', '  Filler(label="Header")',
       'LayoutPanel(side="start", width="120px", hasDivider=true)', '  Filler(label="Start")',
