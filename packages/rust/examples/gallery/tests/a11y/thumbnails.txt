@@ -1,0 +1,17 @@
+Group
+  Heading(2) label="Thumbnail"
+  Text label="Images: plain, open, remove, uploading, disabled"
+  Image label="Beach"
+  Button label="Open Hills at sunset" description="open.jpg" focusable focused
+  Image label="photo-0.jpg"
+    Button label="Remove photo-0.jpg" focusable
+  Image label="photo-1.jpg"
+    Button label="Remove photo-1.jpg" focusable
+  Image label="uploading.jpg"
+  Image label="disabled.jpg" disabled
+    Button label="Remove disabled.jpg" focusable disabled
+  Text label="No image, failed, still loading, loading without an image"
+  Image label="no image"
+  Image label="broken.jpg"
+  Image label="pending.jpg"
+  Image label="loading.jpg"

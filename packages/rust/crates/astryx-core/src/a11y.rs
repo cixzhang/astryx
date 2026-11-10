@@ -136,19 +136,62 @@ fn collect<Msg>(cx: &Cx<Msg>, ix: usize, covered: bool, out: &mut Vec<A11yNode>)
         label: sem.label.clone(),
         value: sem.value.clone(),
         bounds: rects[ix],
-        focused: node.interact.is_some() && focused == Some(node.id),
+        focused: node.interact.as_ref().is_some_and(|i| i.focusable) && focused == Some(node.id),
         disabled: sem.disabled,
         checked: sem.checked,
         description: sem.description.clone(),
         selected: sem.selected,
-        focusable: node.interact.is_some(),
+        focusable: node.interact.as_ref().is_some_and(|i| i.focusable),
         live: sem.live,
         state: resolve(&sem.state, &sem.refs, cx.names),
         children: Vec::new(),
     };
-    let covers = sem.label.is_some() && names_from_content(sem.role);
+    let covers = sem.label.is_some() && (sem.one_stop || names_from_content(sem.role));
     for &c in &node.children {
         collect(cx, c as usize, covers, &mut a.children);
     }
     out.push(a);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::element::Semantics;
+    use taffy::Style;
+
+    fn tree_of(container: Semantics) -> A11yNode {
+        let mut nodes: Vec<Node<()>> =
+            vec![Node::new(Style::default()), Node::new(Style::default())];
+        nodes[0].children = vec![1];
+        nodes[1].parent = Some(0);
+        nodes[1].sem = Some(container);
+        nodes[1].children = vec![2, 3];
+        for label in ["Ada", "Online"] {
+            let mut n = Node::new(Style::default()).sem(Semantics::new(Role::Text, label));
+            n.parent = Some(1);
+            nodes.push(n);
+        }
+        let rects = vec![Rect::default(); nodes.len()];
+        tree(&nodes, &rects, None, None).expect("tree")
+    }
+
+    #[test]
+    fn labeled_containers_keep_children_unless_one_stop() {
+        let group = tree_of(Semantics::new(Role::Group, "Avatars"));
+        assert_eq!(
+            group.children[0].children.len(),
+            2,
+            "a group keeps its children"
+        );
+        let one = tree_of(Semantics {
+            one_stop: true,
+            ..Semantics::new(Role::Group, "Ada, online")
+        });
+        assert!(
+            one.children[0].children.is_empty(),
+            "one stop: the label speaks for all"
+        );
+        let button = tree_of(Semantics::new(Role::Button, "Ada"));
+        assert!(button.children[0].children.is_empty(), "named from content");
+    }
 }

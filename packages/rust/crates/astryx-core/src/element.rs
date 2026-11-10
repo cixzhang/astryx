@@ -355,6 +355,10 @@ pub struct Interact<Msg> {
     /// Runs on activation, before `on_activate` is sent: a change to the
     /// component's own state through a [`LocalHandle`].
     pub effect: Option<std::rc::Rc<dyn Fn()>>,
+    /// False for a control pressed only by pointer, never a focus stop: a
+    /// combobox's option, which the input points at through
+    /// `aria-activedescendant` while it keeps focus.
+    pub focusable: bool,
 }
 
 /// A text field's value and how to report a new one.
@@ -394,7 +398,14 @@ impl<Msg> Interact<Msg> {
             edit: None,
             hold: None,
             effect: None,
+            focusable: true,
         }
+    }
+
+    /// A control pressed only by pointer, never a focus stop.
+    pub fn pointer_only(mut self) -> Self {
+        self.focusable = false;
+        self
     }
 
     /// Runs `f` on activation, before `on_activate` is sent.
@@ -433,6 +444,11 @@ pub struct Semantics {
     pub state: crate::contract::A11yState,
     /// Relations to other elements, by their Astryx `id` prop.
     pub refs: A11yRefs,
+    /// A labeled node of any role reads as one stop: its label speaks for
+    /// its subtree, whose nodes are left out unless they are focus stops.
+    /// Roles named from content (buttons, rows, options) do this anyway;
+    /// set it on a labeled container that must read as one item.
+    pub one_stop: bool,
 }
 
 /// ARIA relations by element `id` prop, resolved to accessibility ids when
@@ -460,6 +476,7 @@ impl Semantics {
             live: None,
             state: Default::default(),
             refs: Default::default(),
+            one_stop: false,
         }
     }
 

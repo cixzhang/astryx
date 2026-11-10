@@ -336,6 +336,8 @@ pub struct Runtime<A: App> {
     coasts: HashMap<u64, f32>,
     /// Focus moves components asked for, shared with every build.
     focus_requests: crate::element::FocusRequests,
+    /// A pointer-only control pressed and not yet released.
+    pointer_only_press: Option<u64>,
     /// The offsets builds saw, for containers that rebuild on scroll, and
     /// the offsets last reported, by node id.
     built_scroll: HashMap<u64, f32>,
@@ -455,6 +457,7 @@ impl<A: App> Runtime<A> {
             drag: None,
             coasts: HashMap::new(),
             focus_requests: Default::default(),
+            pointer_only_press: None,
             built_scroll: HashMap::new(),
             reported_scroll: HashMap::new(),
         }
@@ -1306,7 +1309,7 @@ impl<A: App> Runtime<A> {
             .iter()
             .enumerate()
             .filter(|&(i, n)| {
-                n.interact.is_some()
+                n.interact.as_ref().is_some_and(|i| i.focusable)
                     && (top_trap.is_none() || in_top_trap(&self.nodes, i))
                     && !inert(&self.nodes, i)
             })
@@ -2736,6 +2739,48 @@ impl<A: App> Runtime<A> {
         }
     }
 
+    /// The deepest enabled pointer-only control under `at`.
+    fn pointer_only_at(&self, at: Point) -> Option<u64> {
+        let layout = self.layout.as_ref()?;
+        let modal = self
+            .nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(|l| l.modal));
+        (0..self.nodes.len())
+            .rev()
+            .find(|&ix| {
+                self.nodes[ix]
+                    .interact
+                    .as_ref()
+                    .is_some_and(|i| !i.focusable && !i.disabled)
+                    && modal.is_none_or(|m| ix >= m)
+                    && layout.rects.get(ix).is_some_and(|&r| contains(r, at))
+            })
+            .map(|ix| self.nodes[ix].id)
+    }
+
+    /// Activates a pointer-only control: its effect, then its message.
+    fn activate_pointer_only(&mut self, id: u64) -> Command {
+        let Some(interact) = self
+            .nodes
+            .iter()
+            .find(|n| n.id == id)
+            .and_then(|n| n.interact.as_ref())
+        else {
+            return Command::None;
+        };
+        let (effect, msg) = (interact.effect.clone(), interact.on_activate.clone());
+        if let Some(effect) = effect {
+            effect();
+            self.stale = true;
+        }
+        self.cue(FeedbackKind::Select);
+        match msg {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        }
+    }
+
     /// Moves focus to the element a component asked for: the stop with that
     /// `id` prop, or the first stop inside it.
     fn apply_focus_request(&mut self) {
@@ -3050,19 +3095,6 @@ impl<A: App> Runtime<A> {
 impl<A: App> Runtime<A> {
     fn handle_input(&mut self, input: Input, phase: InputPhase) -> Command {
         self.repaint = true;
-        if phase == InputPhase::Pressed
-            && matches!(
-                input,
-                Input::Up
-                    | Input::Down
-                    | Input::Left
-                    | Input::Right
-                    | Input::Next
-                    | Input::Previous
-            )
-        {
-            self.focus_by_pointer = false;
-        }
         match (input, phase) {
             (Input::A, _) => {
                 let mut command = Command::None;
@@ -3163,6 +3195,19 @@ impl<A: App> Runtime<A> {
             self.pressed = None;
             return Command::None;
         }
+        let pointer_only = self
+            .nodes
+            .iter()
+            .find(|n| n.id == id)
+            .and_then(|n| n.interact.as_ref())
+            .is_some_and(|i| !i.focusable && !i.disabled);
+        if pointer_only {
+            // Assistive technology can still press an option it reads.
+            return match action {
+                A11yAction::Activate | A11yAction::PressEnd => self.activate_pointer_only(id),
+                _ => Command::None,
+            };
+        }
         let Some(stop) = self.stop_index(Some(id)) else {
             return Command::None;
         };
@@ -3186,6 +3231,27 @@ impl<A: App> Runtime<A> {
 
 impl<A: App> Surface for Runtime<A> {
     fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
+        // A press on a pointer-only control activates it when the pointer
+        // comes up over it, without moving focus.
+        if let Some(id) = self.pointer_only_press {
+            if matches!(event.phase, PointerPhase::Up | PointerPhase::Cancel) {
+                self.pointer_only_press = None;
+                let over = self.pointer_only_at(event.at) == Some(id);
+                let command = if event.phase == PointerPhase::Up && over {
+                    self.activate_pointer_only(id)
+                } else {
+                    Command::None
+                };
+                return PointerOutcome {
+                    command: command.and(std::mem::take(&mut self.pending)),
+                    handled: true,
+                };
+            }
+            return PointerOutcome {
+                command: Command::None,
+                handled: true,
+            };
+        }
         // Hover stays on `pointer_move`; this path carries presses and drags.
         if event.phase != PointerPhase::Down {
             let outcome = self.drag_event(event);
@@ -3194,6 +3260,16 @@ impl<A: App> Surface for Runtime<A> {
                 command: outcome.command.and(pending),
                 handled: outcome.handled,
             };
+        }
+        if event.button == 0 {
+            if let Some(id) = self.pointer_only_at(event.at) {
+                self.pointer_only_press = Some(id);
+                self.repaint = true;
+                return PointerOutcome {
+                    command: Command::None,
+                    handled: true,
+                };
+            }
         }
         if event.button == 2 {
             if let Some(command) = self.context_press(event.at) {
@@ -3237,21 +3313,12 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn key(&mut self, event: crate::contract::KeyEvent) -> crate::contract::KeyOutcome {
+        if event.phase == InputPhase::Pressed {
+            self.focus_by_pointer = false;
+        }
         let Some(command) = self.route_key(&event) else {
             return crate::contract::KeyOutcome::default();
         };
-        if event.phase == InputPhase::Pressed
-            && matches!(
-                event.key,
-                crate::contract::Key::Up
-                    | crate::contract::Key::Down
-                    | crate::contract::Key::Left
-                    | crate::contract::Key::Right
-                    | crate::contract::Key::Tab
-            )
-        {
-            self.focus_by_pointer = false;
-        }
         let followed = self.report_focus();
         let command = if command == Command::None {
             followed
@@ -3272,6 +3339,12 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn input(&mut self, input: Input, phase: InputPhase) -> Command {
+        // Every input a shell sends is a key, a D-pad, or a face button:
+        // focus moved or used that way shows its ring, as `:focus-visible`
+        // does after a key. Only a pointer press hides it.
+        if phase == InputPhase::Pressed {
+            self.focus_by_pointer = false;
+        }
         let command = match self.capture(input, phase) {
             Some(command) => command,
             None => self.handle_input(input, phase),

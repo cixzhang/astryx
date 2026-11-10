@@ -73,7 +73,9 @@ pub struct Layer<Msg> {
     light_dismiss: bool,
     escape_dismiss: bool,
     backdrop: Option<Color>,
-    role: Role,
+    /// `None`: the layer adds no role of its own, so its content (a
+    /// combobox's list box) is what assistive technology reads.
+    role: Option<Role>,
     label: Option<String>,
     /// The layer is as wide as its anchor (a combobox's list).
     match_anchor_width: bool,
@@ -122,7 +124,7 @@ impl<Msg: 'static> Layer<Msg> {
             light_dismiss: light,
             escape_dismiss: true,
             backdrop: None,
-            role,
+            role: Some(role),
             label: None,
             match_anchor_width: false,
             id: None,
@@ -207,7 +209,13 @@ impl<Msg: 'static> Layer<Msg> {
     }
 
     pub fn role(mut self, role: Role) -> Self {
-        self.role = role;
+        self.role = Some(role);
+        self
+    }
+
+    /// The layer adds no role: its content speaks for itself.
+    pub fn no_role(mut self) -> Self {
+        self.role = None;
         self
     }
 
@@ -277,13 +285,16 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
             if let Some(w) = anchor_width {
                 style.min_size.width = taffy::LengthPercentageAuto::length(w);
             }
-            let sem = Semantics {
-                label,
-                ..Semantics::role(role)
-            }
-            .with_state(|s| s.modal = modal);
             // Astryx's layer entrance and one exit copy on close.
-            let mut node = Node::new(style).sem(sem);
+            let mut node = Node::new(style);
+            if let Some(role) = role {
+                let sem = Semantics {
+                    label,
+                    ..Semantics::role(role)
+                }
+                .with_state(|s| s.modal = modal);
+                node = node.sem(sem);
+            }
             node.anims = astryx_spike_motion::layer_enter(motion, from, rtl);
             node.exit = Some(astryx_spike_motion::layer_exit(motion));
             cx.begin(node);

@@ -1,0 +1,15 @@
+Group
+  Heading(2) label="World"
+  Button label="Oak tree" focusable focused
+  Button label="Birch tree" focusable
+  Image label="Hero"
+  Button label="Pine tree" focusable
+  Button label="Violet" focusable
+  Button label="Boulder" focusable
+  Button label="Daisy" focusable
+  Button label="Pebble" focusable
+  Button label="Willow tree" focusable
+  Button label="Poppy" focusable
+  Button label="Elm tree" focusable
+  Button label="Standing stone" focusable
+  Button label="Tulip" focusable

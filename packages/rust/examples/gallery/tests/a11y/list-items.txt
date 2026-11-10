@@ -1,0 +1,19 @@
+Group
+  Heading(2) label="ListItem"
+  Text label="Selectable rows"
+  Button label="Inbox" description="2 messages" focusable focused
+  Button label="Drafts" description="5 messages" selected=true focusable
+  Button label="Archive" description="8 messages" focusable
+  Text label="Contained rows: a surface and border in every state"
+  Button label="Sunflower" description="Tall, needs sun" focusable
+  Button label="Tomato" description="Water daily" selected=true focusable
+  Button label="Basil" description="Grows in pots" focusable
+  Text label="Static, disabled, end content"
+  ListItem label="Static row"
+  ListItem label="With a description" description="Supporting words under the label"
+  Button label="Disabled row" description="Reachable, does nothing" focusable disabled
+  ListItem label="Ada Lovelace" description="Mathematician"
+  ListItem label="Airplane mode"
+    Switch label="Airplane mode" checked=false focusable
+      Text live=Polite
+  ListItem label="A long label that runs past the width of the row and truncates with an ellipsis" description="A long description that also truncates to one line by default"

@@ -1,0 +1,56 @@
+Group
+  Heading(2) label="Button"
+  Text label="Variants"
+  Button label="Primary" focusable focused
+    Text live=Polite
+  Button label="Secondary" focusable
+    Text live=Polite
+  Button label="Ghost" focusable
+    Text live=Polite
+  Button label="Destructive" focusable
+    Text live=Polite
+  Text label="Disabled (focusable, inert)"
+  Button label="Primary" focusable disabled
+    Text live=Polite
+  Button label="Secondary" focusable disabled
+    Text live=Polite
+  Button label="Ghost" focusable disabled
+    Text live=Polite
+  Button label="Destructive" focusable disabled
+    Text live=Polite
+  Text label="Loading"
+  Button label="Primary" value="Loading" focusable
+    Text label="Loading" live=Polite
+  Button label="Secondary" value="Loading" focusable
+    Text label="Loading" live=Polite
+  Button label="Ghost" value="Loading" focusable
+    Text label="Loading" live=Polite
+  Button label="Destructive" value="Loading" focusable
+    Text label="Loading" live=Polite
+  Text label="Sizes sm, md, lg"
+  Button label="Small" focusable
+    Text live=Polite
+  Button label="Medium" focusable
+    Text live=Polite
+  Button label="Large" focusable
+    Text live=Polite
+  Text label="Elevation low, med, high"
+  Button label="Low" focusable
+    Text live=Polite
+  Button label="Med" focusable
+    Text live=Polite
+  Button label="High" focusable
+    Text live=Polite
+  Text label="Width fill"
+  Button label="Fills the width" focusable
+    Text live=Polite
+  Text label="Interruptible loading, long label"
+  Button label="Cancel upload" value="Loading" focusable
+    Text label="Loading" live=Polite
+  Button label="A very long button label that truncates inside a narrow row" focusable
+    Text live=Polite
+  Text label="Tooltips show while focused; B hides them"
+  Button label="Share" description="Copies a link to this page" focusable
+    Text live=Polite
+  Button label="Publish" description="Add a title before publishing" focusable disabled
+    Text live=Polite
