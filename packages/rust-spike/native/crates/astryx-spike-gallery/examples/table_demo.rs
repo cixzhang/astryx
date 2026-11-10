@@ -38,20 +38,34 @@ impl App for Demo {
                 .width(ColumnWidth::Pixel(96.0)),
         ];
         let sel: HashSet<String> = ["2".to_string()].into_iter().collect();
-        Card::new()
-            .padding(astryx_core::Space::S4)
+        HStack::new()
+            .gap(astryx_core::Space::S4)
             .child(
-                Table::new(data, cols, |r| r.0.to_string())
-                    .label("Pioneers")
-                    .sortable(Sortable::new(
-                        vec![SortEntry {
-                            sort_key: "age".into(),
-                            direction: SortDirection::Ascending,
-                        }],
-                        |_| Msg::Noop,
-                    ))
-                    .plugin(Selection::new(sel, |_| Msg::Noop))
-                    .plugin(TablePagination::new(1, 4, |_| Msg::Noop)),
+                Card::new().child(
+                    Calendar::new(
+                        "cal",
+                        CalendarValue::Range(Some(DateRange {
+                            start: CivilDate::new(2026, 11, 9),
+                            end: Some(CivilDate::new(2026, 11, 13)),
+                        })),
+                    )
+                    .today(CivilDate::new(2026, 11, 11)),
+                ),
+            )
+            .child(
+                Card::new().padding(astryx_core::Space::S4).child(
+                    Table::new(data, cols, |r| r.0.to_string())
+                        .label("Pioneers")
+                        .sortable(Sortable::new(
+                            vec![SortEntry {
+                                sort_key: "age".into(),
+                                direction: SortDirection::Ascending,
+                            }],
+                            |_| Msg::Noop,
+                        ))
+                        .plugin(Selection::new(sel, |_| Msg::Noop))
+                        .plugin(TablePagination::new(1, 4, |_| Msg::Noop)),
+                ),
             )
             .into()
     }
@@ -75,6 +89,6 @@ fn main() {
         Mode::Light
     };
     let mut rt = Runtime::new(Demo(mode)).hide_focus_until_keyboard();
-    let png = astryx_headless::render_png(&mut rt, 720, 400, 2.0, &[]);
+    let png = astryx_headless::render_png(&mut rt, 1100, 420, 2.0, &[]);
     std::fs::write(out, png).unwrap();
 }

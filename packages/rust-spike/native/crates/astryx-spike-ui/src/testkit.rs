@@ -90,21 +90,42 @@ impl<Msg: Clone + 'static> Rig<Msg> {
         self.rt.pointer(e(PointerPhase::Up, to, t + 4.0));
         self.redraw();
     }
-    /// Presses and releases `key` with `modifiers`.
+    /// Presses and releases `key` with `modifiers`, as a shell does: a key
+    /// no component takes falls back to its input (Enter activates, arrows
+    /// move focus, Escape goes back).
     pub fn key(&mut self, key: astryx_core::Key, modifiers: astryx_core::Modifiers) {
         use astryx_core::contract::Surface;
-        for phase in [
-            astryx_core::InputPhase::Pressed,
-            astryx_core::InputPhase::Released,
-        ] {
-            self.rt.key(astryx_core::KeyEvent {
-                key: key.clone(),
-                phase,
-                modifiers,
-                repeat: false,
-            });
-        }
+        use astryx_core::Key as K;
+        let out = self.rt.key(astryx_core::KeyEvent {
+            key: key.clone(),
+            phase: astryx_core::InputPhase::Pressed,
+            modifiers,
+            repeat: false,
+        });
+        self.rt.key(astryx_core::KeyEvent {
+            key: key.clone(),
+            phase: astryx_core::InputPhase::Released,
+            modifiers,
+            repeat: false,
+        });
         self.redraw();
+        if !out.handled {
+            let input = match key {
+                K::Enter | K::Space => Some(Input::A),
+                K::Escape => Some(Input::B),
+                K::Up => Some(Input::Up),
+                K::Down => Some(Input::Down),
+                K::Left => Some(Input::Left),
+                K::Right => Some(Input::Right),
+                K::Tab if modifiers.shift => Some(Input::Previous),
+                K::Tab => Some(Input::Next),
+                K::ContextMenu => Some(Input::Menu),
+                _ => None,
+            };
+            if let Some(i) = input {
+                self.press(i);
+            }
+        }
     }
     /// A secondary (right) click at `at`.
     pub fn right_click(&mut self, at: astryx_core::Point) {
