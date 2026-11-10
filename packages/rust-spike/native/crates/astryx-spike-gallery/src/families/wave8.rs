@@ -210,6 +210,22 @@ fn render_chat_composer(p: Props) -> Element<Msg> {
     c.into()
 }
 
+fn render_power_search(p: Props) -> Element<Msg> {
+    let mut ps = PowerSearch::new(
+        "power",
+        PowerSearchConfig::default(),
+        Vec::new(),
+        |_, _, _| Msg::Noop,
+    )
+    .label(p.str_or("label", "Search"))
+    .is_disabled(p.bool("isDisabled"))
+    .is_read_only(p.bool("isReadOnly"));
+    if let Some(sz) = size(p) {
+        ps = ps.size(sz);
+    }
+    ps.into()
+}
+
 pub fn families() -> Vec<Family> {
     vec![
         Family {
@@ -296,6 +312,12 @@ pub fn families() -> Vec<Family> {
                 ]
             },
             render: render_chat_composer,
+        },
+        Family {
+            name: "PowerSearch",
+            base: || json!({"label": "Label"}),
+            sweeps: || vec![("size", v(&["sm", "md", "lg"]))],
+            render: render_power_search,
         },
         Family {
             name: "TopNav",
