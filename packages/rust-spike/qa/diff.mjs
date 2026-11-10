@@ -30,14 +30,28 @@ for (const r of ai.cases.filter(r => r.file)) {
   const a64 = readFileSync(join(A, r.file)).toString('base64'), b64 = readFileSync(join(B, r.file)).toString('base64');
   const res = await page.evaluate(async ({ a64, b64, tol, wantImage }) => {
     const load = async s => createImageBitmap(await (await fetch('data:image/png;base64,' + s)).blob());
-    const [ia, ib] = await Promise.all([load(a64), load(b64)]);
+    // Trim each shot to its painted content (pixels unlike the top-left background) plus
+    // 16 px, so hosts whose case box is wider or taller than the component compare fairly.
+    const trim = img => {
+      const c = new OffscreenCanvas(img.width, img.height), x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, img.width, img.height).data, w = img.width, h = img.height;
+      const bg = [d[0], d[1], d[2]];
+      let x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (let y = 0; y < h; y++) for (let i = 0; i < w; i++) { const o = (y * w + i) * 4; if (Math.abs(d[o] - bg[0]) > tol || Math.abs(d[o + 1] - bg[1]) > tol || Math.abs(d[o + 2] - bg[2]) > tol) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+      if (x1 < 0) return { canvas: c, x: 0, y: 0, w: Math.min(w, 32), h: Math.min(h, 32), bg };
+      x0 = Math.max(0, x0 - 16); y0 = Math.max(0, y0 - 16); x1 = Math.min(w - 1, x1 + 16); y1 = Math.min(h - 1, y1 + 16);
+      return { canvas: c, x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, bg };
+    };
+    const [ra, rb] = await Promise.all([load(a64), load(b64)]);
+    const ta = trim(ra), tb = trim(rb);
+    const ia = { width: ta.w, height: ta.h }, ib = { width: tb.w, height: tb.h };
     const W = Math.max(ia.width, ib.width), H = Math.max(ia.height, ib.height);
-    const px = img => { const c = new OffscreenCanvas(W, H), x = c.getContext('2d'); x.drawImage(img, 0, 0); return x.getImageData(0, 0, W, H).data; };
-    const da = px(ia), db = px(ib), out = new Uint8ClampedArray(W * H * 4);
+    const px = t => { const c = new OffscreenCanvas(W, H), x = c.getContext('2d'); x.fillStyle = `rgb(${t.bg.join(',')})`; x.fillRect(0, 0, W, H); x.drawImage(t.canvas, t.x, t.y, t.w, t.h, 0, 0, t.w, t.h); return x.getImageData(0, 0, W, H).data; };
+    const da = px(ta), db = px(tb), out = new Uint8ClampedArray(W * H * 4);
     let diff = 0;
     for (let i = 0; i < W * H; i++) {
-      const o = i * 4, inA = (i % W) < ia.width && Math.floor(i / W) < ia.height, inB = (i % W) < ib.width && Math.floor(i / W) < ib.height;
-      const d = !inA || !inB || Math.abs(da[o] - db[o]) > tol || Math.abs(da[o + 1] - db[o + 1]) > tol || Math.abs(da[o + 2] - db[o + 2]) > tol || Math.abs(da[o + 3] - db[o + 3]) > tol;
+      const o = i * 4;
+      const d = Math.abs(da[o] - db[o]) > tol || Math.abs(da[o + 1] - db[o + 1]) > tol || Math.abs(da[o + 2] - db[o + 2]) > tol || Math.abs(da[o + 3] - db[o + 3]) > tol;
       if (d) { diff++; out[o] = 255; out[o + 3] = 255; } else { const g = (db[o] + db[o + 1] + db[o + 2]) / 3; out[o] = out[o + 1] = out[o + 2] = 200 + g / 5; out[o + 3] = 255; }
     }
     let png = null;

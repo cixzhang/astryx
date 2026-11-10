@@ -44,3 +44,15 @@ node scorecard.mjs > scorecard.html
 
 `capture.mjs`, `diff.mjs` and `perf.mjs` need `playwright-core` (set `PLAYWRIGHT_CORE` to its
 module path) and a Chromium binary in `CHROME`.
+
+## Final-report scripts
+
+| Script | Output |
+| --- | --- |
+| `checks.mjs` | Keyboard, behavior, text-input and a11y checks on live-state pages (`checks.json`). |
+| `perf2.mjs` | Web first frame, frame time with the frame-rate limit off, transfer raw/gzip/brotli (`perf2.json`). |
+| `scorecard.mjs` | The 12-metric scorecard HTML from shots, checks, perf, `authoring.json` and `reports.json`. |
+| `strips.mjs <templates dir>` | One React / Exact / ours image row per family, plus the two templates. |
+
+`diff.mjs` trims each shot to its painted content plus 16 px before it compares, so a wider
+case box on one host does not count as a difference.

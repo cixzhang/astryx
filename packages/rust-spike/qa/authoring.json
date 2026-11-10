@@ -1,0 +1,185 @@
+{
+ "exact": {
+  "areas": {
+   "astryx-layers/chat.contract": {
+    "files": 1,
+    "lines": 263,
+    "kb": 13
+   },
+   "astryx-layers/index.contract": {
+    "files": 1,
+    "lines": 7,
+    "kb": 1
+   },
+   "astryx-layers/layers.contract": {
+    "files": 1,
+    "lines": 396,
+    "kb": 17
+   },
+   "astryx-layers/pickers.contract": {
+    "files": 1,
+    "lines": 311,
+    "kb": 18
+   },
+   "astryx/astryx.tamber": {
+    "files": 1,
+    "lines": 258,
+    "kb": 12
+   },
+   "astryx/composites.contract": {
+    "files": 1,
+    "lines": 154,
+    "kb": 7
+   },
+   "astryx/controls.contract": {
+    "files": 1,
+    "lines": 427,
+    "kb": 21
+   },
+   "astryx/foundations.contract": {
+    "files": 1,
+    "lines": 18,
+    "kb": 1
+   },
+   "astryx/icons.contract": {
+    "files": 1,
+    "lines": 15,
+    "kb": 5
+   },
+   "astryx/index.contract": {
+    "files": 1,
+    "lines": 13,
+    "kb": 1
+   },
+   "astryx/layout.contract": {
+    "files": 1,
+    "lines": 383,
+    "kb": 15
+   },
+   "astryx/primitives.contract": {
+    "files": 1,
+    "lines": 327,
+    "kb": 16
+   },
+   "astryx/shell.contract": {
+    "files": 1,
+    "lines": 98,
+    "kb": 4
+   },
+   "astryx/table.contract": {
+    "files": 1,
+    "lines": 134,
+    "kb": 8
+   }
+  },
+  "total": {
+   "files": 14,
+   "lines": 2804,
+   "kb": 139
+  },
+  "apps": {
+   "files": 25,
+   "lines": 5168,
+   "kb": 1632
+  },
+  "tests": {
+   "files": 4,
+   "lines": 254,
+   "kb": 7
+  }
+ },
+ "ours": {
+  "areas": {
+   "ui/composites": {
+    "files": 6,
+    "lines": 3381,
+    "kb": 110
+   },
+   "ui/controls": {
+    "files": 8,
+    "lines": 3399,
+    "kb": 107
+   },
+   "ui/data": {
+    "files": 7,
+    "lines": 5307,
+    "kb": 176
+   },
+   "ui/layout": {
+    "files": 8,
+    "lines": 2100,
+    "kb": 64
+   },
+   "ui/lib.rs": {
+    "files": 1,
+    "lines": 36,
+    "kb": 1
+   },
+   "ui/nav": {
+    "files": 2,
+    "lines": 1734,
+    "kb": 55
+   },
+   "ui/overlays": {
+    "files": 1,
+    "lines": 986,
+    "kb": 32
+   },
+   "ui/primitives": {
+    "files": 9,
+    "lines": 1644,
+    "kb": 60
+   },
+   "ui/testkit.rs": {
+    "files": 1,
+    "lines": 178,
+    "kb": 6
+   },
+   "ui/util.rs": {
+    "files": 1,
+    "lines": 90,
+    "kb": 2
+   },
+   "infra/foundations": {
+    "files": 13,
+    "lines": 2414,
+    "kb": 78
+   },
+   "infra/layers": {
+    "files": 3,
+    "lines": 1227,
+    "kb": 37
+   },
+   "infra/motion": {
+    "files": 2,
+    "lines": 432,
+    "kb": 13
+   },
+   "infra/gestures": {
+    "files": 3,
+    "lines": 974,
+    "kb": 30
+   },
+   "infra/virtual": {
+    "files": 2,
+    "lines": 517,
+    "kb": 16
+   }
+  },
+  "total": {
+   "files": 67,
+   "lines": 24419,
+   "kb": 787
+  },
+  "apps": {
+   "files": 25,
+   "lines": 5882,
+   "kb": 184
+  },
+  "tests": {
+   "files": 14,
+   "lines": 2587
+  },
+  "packagesRustDelta": "3,984 lines added / 70 removed in packages/rust (50 files) since rust 2a417534"
+ }
+}

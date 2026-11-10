@@ -1,0 +1,158 @@
+{
+ "baseline": {
+  "keyboard: Tab reaches the switch with a visible focus ring; Space toggles it": {
+   "page": "/iframe.html?id=core-switch--default&viewMode=story&globals=astryxTheme:neutral;colorMode:light",
+   "pass": true,
+   "detail": {
+    "before": "false",
+    "after": "true",
+    "focusVisible": true
+   }
+  },
+  "keyboard: arrow keys move the radio selection": {
+   "page": "/iframe.html?id=core-radiolist--default&viewMode=story&globals=astryxTheme:neutral;colorMode:light",
+   "pass": true,
+   "focusMoved": true,
+   "detail": {
+    "before": "",
+    "after": "",
+    "checkedAfter": "true"
+   }
+  },
+  "text input: typing, IME composition commit, paste-style insert, select-all replace": {
+   "page": "/iframe.html?id=core-textinput--default&viewMode=story&globals=astryxTheme:neutral;colorMode:light",
+   "pass": true,
+   "score": "4/4",
+   "detail": {
+    "v1": "ab日XY",
+    "v2": "z"
+   }
+  },
+  "a11y: combobox announces the highlighted option (aria-activedescendant)": {
+   "page": "/iframe.html?id=core-basetypeahead--default&viewMode=story&globals=astryxTheme:neutral;colorMode:light",
+   "pass": true,
+   "detail": {
+    "role": "combobox",
+    "activedescendant": "_r_3_-option-angular",
+    "expanded": "true"
+   }
+  },
+  "a11y + keyboard: table rows, row count, sort by keyboard": {
+   "page": "/iframe.html?id=core-tablesortable--with-selection&viewMode=story&globals=astryxTheme:neutral;colorMode:light",
+   "pass": true,
+   "rows": 10,
+   "rowcountExposed": false,
+   "sortByKeyboard": true,
+   "detail": {
+    "rows": 10,
+    "rowcount": 0,
+    "sort": "ascending",
+    "firstButton": "Name"
+   }
+  }
+ },
+ "exact": {
+  "keyboard: Tab reaches the switch with a visible focus ring; Space toggles it": {
+   "page": "/?case=playground-0001&scheme=light&theme=neutral",
+   "pass": true,
+   "detail": {
+    "before": "false",
+    "after": "true",
+    "focusVisible": true
+   }
+  },
+  "keyboard: arrow keys move the radio selection": {
+   "page": "/?case=playground-0001&scheme=light&theme=neutral",
+   "pass": true,
+   "focusMoved": true,
+   "detail": {
+    "before": "Free",
+    "after": "Pro",
+    "checkedAfter": "true"
+   }
+  },
+  "text input: typing, IME composition commit, paste-style insert, select-all replace": {
+   "page": "/?case=playground-0001&scheme=light&theme=neutral",
+   "pass": true,
+   "score": "4/4",
+   "detail": {
+    "v1": "ab日XY",
+    "v2": "z"
+   }
+  },
+  "a11y: combobox announces the highlighted option (aria-activedescendant)": {
+   "page": "/?case=playground-0003&scheme=light&theme=neutral",
+   "pass": false,
+   "detail": {
+    "role": "combobox",
+    "activedescendant": null,
+    "expanded": "false"
+   }
+  },
+  "a11y + keyboard: table rows, row count, sort by keyboard": {
+   "page": "/?case=playground-0003&scheme=light&theme=neutral",
+   "pass": true,
+   "rows": 4,
+   "rowcountExposed": false,
+   "sortByKeyboard": true,
+   "detail": {
+    "rows": 4,
+    "rowcount": 0,
+    "sort": "ascending,none,none",
+    "firstButton": "Sort by Name"
+   }
+  }
+ },
+ "ours-web": {
+  "keyboard: Tab reaches the switch with a visible focus ring; Space toggles it": {
+   "page": "/gallery.html?case=playground-0001&scheme=light",
+   "pass": true,
+   "detail": {
+    "before": "false",
+    "after": "true",
+    "focusVisible": true
+   }
+  },
+  "keyboard: arrow keys move the radio selection": {
+   "page": "/gallery.html?case=playground-0001&scheme=light",
+   "pass": true,
+   "focusMoved": true,
+   "detail": {
+    "before": "Free",
+    "after": "Pro",
+    "checkedAfter": "true"
+   }
+  },
+  "text input: typing, IME composition commit, paste-style insert, select-all replace": {
+   "page": "/gallery.html?case=playground-0002&scheme=light",
+   "pass": true,
+   "score": "4/4",
+   "detail": {
+    "v1": "ab日XY",
+    "v2": "z"
+   }
+  },
+  "a11y: combobox announces the highlighted option (aria-activedescendant)": {
+   "page": "/gallery.html?case=playground-0003&scheme=light",
+   "pass": true,
+   "detail": {
+    "role": "combobox",
+    "activedescendant": "ax-3016542779181133191",
+    "expanded": "true"
+   }
+  },
+  "a11y + keyboard: table rows, row count, sort by keyboard": {
+   "page": "/gallery.html?case=playground-0004&scheme=light",
+   "pass": true,
+   "rows": 6,
+   "rowcountExposed": true,
+   "sortByKeyboard": true,
+   "detail": {
+    "rows": 6,
+    "rowcount": 1,
+    "sort": "",
+    "firstButton": "Name"
+   }
+  }
+ }
+}

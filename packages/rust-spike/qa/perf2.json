@@ -1,0 +1,89 @@
+{
+ "baseline": {
+  "firstFrameMs": {
+   "p50": 213.2,
+   "runs": [
+    256,
+    212,
+    213,
+    214,
+    213
+   ]
+  },
+  "transfer": {
+   "requests": 10,
+   "rawKB": 2914.2,
+   "gzipKB": 780.1,
+   "brotliKB": 603,
+   "largest": [
+    "index-y3HAt9s6.js 2392.9 KB",
+    "index-NTwGiZQP.css 228.7 KB",
+    "useLayerDismissal-D-YyMcK7.js 120.6 KB"
+   ]
+  },
+  "frameMs": {
+   "p50": 0.4,
+   "p95": 0.8,
+   "frames": 6740
+  },
+  "mainThreadMsPerToggle": 117.4
+ },
+ "exact": {
+  "firstFrameMs": {
+   "p50": 172,
+   "runs": [
+    172,
+    172,
+    172,
+    192,
+    172
+   ]
+  },
+  "transfer": {
+   "requests": 6,
+   "rawKB": 2294,
+   "gzipKB": 344.9,
+   "brotliKB": 224.5,
+   "largest": [
+    "app.js 1978.1 KB",
+    " 261.3 KB",
+    "input-glue-CHSfn5VB.js 37.1 KB"
+   ]
+  },
+  "frameMs": {
+   "p50": 0.1,
+   "p95": 0.2,
+   "frames": 26336
+  },
+  "mainThreadMsPerToggle": 94.2
+ },
+ "ours-web": {
+  "firstFrameMs": {
+   "p50": 210,
+   "runs": [
+    259,
+    210,
+    216,
+    209,
+    209
+   ]
+  },
+  "transfer": {
+   "requests": 6,
+   "rawKB": 11475.4,
+   "gzipKB": 1959.8,
+   "brotliKB": 1319.5,
+   "largest": [
+    "astryx_spike_gallery_web_bg.wasm 11278.5 KB",
+    "astryx_spike_gallery_web.js 66.7 KB",
+    "latin-400.ttf 43 KB"
+   ]
+  },
+  "frameMs": {
+   "p50": 8.1,
+   "p95": 9.3,
+   "frames": 366
+  },
+  "mainThreadMsPerToggle": 131.7
+ }
+}

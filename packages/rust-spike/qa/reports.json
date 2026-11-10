@@ -1,8 +1,73 @@
 {
-  "11": {
-    "locked closure 688 files / 67 families (lane-reported)": { "exact": "205/720 files (stretch-inclusive denominator), wave 0–1", "ours-web": "pending lane report", "exact-linux": "same as web", "ours-linux": "same as web" }
+  "2": {
+    "Lane test suites": {
+      "exact": "gallery 23/23, shell-nav 6/6, settings-dialog 5/5 pass on the web host; gaps.test 0/1 (keyboard reorder); all three build and respond on Linux",
+      "exact-linux": "popovers opened by popovertarget are not presented on Linux (menus and selectors open nothing); exit animations do not run",
+      "ours-web": "native workspace 173/173, packages/rust 493/493; RadioList arrow-check, editable combobox input and select-all fixed after QA found them (572506c)",
+      "ours-linux": "same suites; desktop types into the combobox"
+    }
+  },
+  "4": {
+    "Lane-reported scope": {
+      "exact": "platform input (browser) on web",
+      "exact-linux": "no text input on the Linux host in v1",
+      "ours-web": "runtime edit path: typing, IME, paste, selection; editable combobox/spinbutton mirror as inputs and Ctrl/Cmd+A selects since 572506c (QA found both missing at e0c23e1)",
+      "ours-linux": "desktop IME commit and selection; multi-line caret gap in the chat composer"
+    }
+  },
+  "6": {
+    "Linux binary, release, stripped": {
+      "exact": "37.4 MB (astryx-gallery-linux; 47.5 MB unstripped)",
+      "ours-web": "17.7 MB (gallery desktop example; 22.5 MB unstripped)"
+    },
+    "Web build output on disk": {
+      "baseline": "2.9 MB (Vite production build of the React gallery)",
+      "exact": "23 MB web-dist (2.0 MB app.js + plan + source maps)",
+      "ours-web": "12.4 MB dist (11.2 MB wasm, 1.3 MB fonts)"
+    }
+  },
+  "8": {
+    "Tokens and themes": {
+      "exact": "279 of 286 Astryx tokens map (tamber import); motion tokens cannot vary by theme; a themed type role must sit on each text",
+      "exact-linux": "same as web",
+      "ours-web": "every published Astryx theme, light and dark, switched at run time",
+      "ours-linux": "same as web"
+    }
+  },
+  "9": {
+    "Rebuild after a change (this machine)": {
+      "exact": "gallery web-build 8 s warm, 51 s cold (3,753 cases); Exact documents a 0.1 s dev-loop reload (not measured here)",
+      "exact-linux": "Linux host rebuild 6-10 s",
+      "ours-web": "wasm gallery build 13-14 s",
+      "ours-linux": "desktop example rebuild 6-9 s"
+    }
   },
   "10": {
-    "environment": { "exact-linux": "TS data module needs Hermes built for glibc ≥ 2.36 (devserver has 2.34): gallery uses a Rust data source", "exact": "", "ours-web": "", "ours-linux": "" }
+    "Ceilings (lane-reported, tagged)": {
+      "exact": "Contract: library slot rules, one slot and no forwarding, no context through slots, root-only resources (viewport, reduced motion, timers), refused ARIA (activedescendant, autocomplete, multiselectable, rowcount, checked=mixed), dialog not state-controlled, en-US only formatting, no logical CSS",
+      "exact-linux": "Linux host: popovertarget popovers not presented, no exit animations, no AT-SPI tree headless; a TS data module needs glibc >= 2.36 (Hermes)",
+      "ours-web": "our own unbuilt: Table sticky-column pinning, non-gregorian calendars, Date/Time input size/status",
+      "ours-linux": "our own unbuilt: multi-line caret in the chat composer"
+    }
+  },
+  "11": {
+    "headline": {
+      "exact": "689/689 core files (100%): 94 as designed, 626 by workaround (with stretch: 720/720)",
+      "ours-web": "496/688 (72%): UI 309/380, infra 187/308"
+    },
+    "Families": {
+      "exact": "77 rows: 27 ported, 50 workaround, 0 blocked",
+      "exact-linux": "same source",
+      "ours-web": "67 UI families: 45 ported, 22 workaround, 0 blocked; infra 76% of applicable files",
+      "ours-linux": "same source"
+    }
+  },
+  "12": {
+    "Table API, 14 pieces: 1:1 / redesign / not expressible": {
+      "exact": "2 / 8 / 4 (ledger); rows are cells in column order, no run-time keyed records",
+      "exact-linux": "same",
+      "ours-web": "12 / 2 / 0 (ledger); sticky-column pinning not built",
+      "ours-linux": "same"
+    }
   }
 }
