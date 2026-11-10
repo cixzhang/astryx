@@ -2,6 +2,7 @@
 //! a popover over a dialog.
 
 use super::*;
+use astryx_core::authoring::{Build, BuildCx, Node, Semantics};
 use astryx_core::testing::{draw, tap};
 use astryx_core::{
     A11yNode, App, Button, Command, Input, PointerEvent, PointerKind, PointerPhase, Surface, VStack,
@@ -301,5 +302,82 @@ fn keyboard_focus_shows_the_tooltip_at_once() {
     assert!(
         tip.bounds.y + tip.bounds.height <= info.bounds.y + 0.5 || tip.bounds.y >= info.bounds.y,
         "placed beside its anchor"
+    );
+}
+
+// Uncontrolled: a disclosure keeps its own open state, with no app message.
+
+struct Disclosure;
+
+impl Build<()> for Disclosure {
+    fn build(self: Box<Self>, cx: &mut BuildCx<()>) {
+        cx.key(Some("disclosure"));
+        let open = cx.local_handle::<bool>();
+        let toggle = open.clone();
+        let mut trigger = Node::new(taffy::Style {
+            size: taffy::Size {
+                width: taffy::Dimension::length(80.0),
+                height: taffy::Dimension::length(30.0),
+            },
+            ..Default::default()
+        })
+        .sem(Semantics::new(Role::Button, "Toggle"))
+        .interact(
+            astryx_core::authoring::Interact::new(None, false)
+                .effect(move || toggle.update(|o| *o = !*o)),
+        );
+        trigger.name = None;
+        cx.key(Some("disclosure"));
+        cx.begin(trigger);
+        cx.end();
+        if open.get() {
+            let close = open.clone();
+            cx.child(
+                Layer::popover("disclosure", Text::new("Panel").into())
+                    .label("Panel")
+                    .on_dismiss_effect(move |_| close.set(false))
+                    .into(),
+            );
+        }
+    }
+}
+
+struct Uncontrolled;
+
+impl App for Uncontrolled {
+    type Msg = ();
+    fn view(&self) -> Element<()> {
+        VStack::new()
+            .child(astryx_core::authoring::element(Disclosure))
+            .into()
+    }
+    fn update(&mut self, _: ()) -> Command {
+        Command::None
+    }
+}
+
+#[test]
+fn an_uncontrolled_popover_opens_and_closes_on_local_state() {
+    let mut rt = Runtime::new(Uncontrolled);
+    draw(&mut rt, 800, 600);
+    let tree = rt.accessibility().unwrap();
+    let toggle = find(&tree, "Toggle").unwrap().id;
+    rt.a11y_action(toggle, astryx_core::A11yAction::Activate);
+    draw(&mut rt, 800, 600);
+    assert!(
+        find(&rt.accessibility().unwrap(), "Panel").is_some(),
+        "opened"
+    );
+    tap(&mut rt, Input::B);
+    draw(&mut rt, 800, 600);
+    assert!(
+        find(&rt.accessibility().unwrap(), "Panel").is_none(),
+        "closed itself"
+    );
+    rt.a11y_action(toggle, astryx_core::A11yAction::Activate);
+    draw(&mut rt, 800, 600);
+    assert!(
+        find(&rt.accessibility().unwrap(), "Panel").is_some(),
+        "state survives rebuilds"
     );
 }

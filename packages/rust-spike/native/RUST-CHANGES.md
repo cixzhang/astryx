@@ -30,6 +30,11 @@ and splits by hunk along the rows below.
   the runtime's per-node animations (retargeting, entrance, Reduce Motion
   through the existing `MotionPolicy`), exit copies captured from the last
   paint, height animation with reflow, and the paint opacity channel.
+- **f. Component state**: `Locals`, `LocalHandle`, `BuildCx::{locals,
+  next_id, local_handle, local}`, `Interact::effect`,
+  `LayerSpec::dismiss_effect`, `HoverSpec::effect` (and `on_change`
+  becoming optional), and the runtime's state store, pruned with the
+  node tree.
 
 ## Changes
 
@@ -53,3 +58,4 @@ and splits by hunk along the rows below.
 | astryx-core `paint.rs` | Draw variants by paint state; modal backdrop | Hover tints and focus styles on any node | Additive |
 | astryx-core `motion.rs` (new), `element.rs` | `Anim`, `Channel`, `Exit`, `Resize`; `Node::{anims, exit, resize, inert}`, `Node::animate` | Component motion on astryx-motion (Switch thumb, layer enter and exit, Collapsible) | Additive |
 | astryx-core `runtime.rs`, `paint.rs`, `layout.rs`, `a11y.rs` | One `Animated` per node and channel kept across rebuilds; exit copies from the last paint, drawn above everything, one per node; height animation with a second layout pass while it moves; `inert` subtrees out of the a11y tree and focus order; `paint` takes a capture list | Motion row: retarget without jumps, exit plays once, layout animation, Reduce Motion | Additive (inactive without anims, exit, resize or inert) |
+| astryx-core `element.rs`, `layer.rs`, `runtime.rs` | Component state kept by the runtime per node id and type (`LocalHandle`), changed from `Interact::effect`, `LayerSpec::dismiss_effect` and `HoverSpec::effect`; a change rebuilds; state is dropped with its node | Astryx's uncontrolled APIs (Tooltip, Popover, Collapsible `defaultIsOpen`, Table default sort) without an app message per bit of UI state | Additive; `HoverSpec::on_change` is now optional (introduced on this branch) |
