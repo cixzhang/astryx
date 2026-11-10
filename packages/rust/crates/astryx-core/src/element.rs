@@ -42,6 +42,28 @@ impl<Msg: 'static> Element<Msg> {
             }),
         }
     }
+
+    /// Makes `value` the nearest context of type `T` for this element and
+    /// everything inside it, as a React context provider does. Components
+    /// read it with [`BuildCx::context`]. It reaches every child slot.
+    pub fn provide<T: 'static>(self, value: std::rc::Rc<T>) -> Self {
+        Element {
+            build: Box::new(Provided { value, child: self }),
+        }
+    }
+}
+
+struct Provided<T, Msg> {
+    value: std::rc::Rc<T>,
+    child: Element<Msg>,
+}
+
+impl<T: 'static, Msg> Build<Msg> for Provided<T, Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        cx.provide(self.value);
+        cx.child(self.child);
+        cx.unprovide::<T>();
+    }
 }
 
 /// Builds one component into nodes.
@@ -603,6 +625,8 @@ pub struct BuildCx<Msg> {
     /// The pixel size of each ready image.
     pub image_sizes:
         std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, (u32, u32)>>,
+    /// Context values by type, innermost last. See [`Element::provide`].
+    contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
     open: Vec<u32>,
     key: Option<u64>,
     /// The `id` prop behind `key`, for the node `begin` opens next.
@@ -625,6 +649,7 @@ impl<Msg> BuildCx<Msg> {
             overlays: Vec::new(),
             images: Default::default(),
             image_sizes: Default::default(),
+            contexts: Default::default(),
             open: Vec::new(),
             key: None,
             name: None,
@@ -635,6 +660,32 @@ impl<Msg> BuildCx<Msg> {
     /// (`Some(false)`), or not registered yet, so still loading (`None`).
     pub fn image_state(&self, src: &str) -> Option<bool> {
         self.images.get(&crate::contract::ImageId::of(src)).copied()
+    }
+
+    /// Makes `value` the nearest context of type `T` until the matching
+    /// [`Self::unprovide`].
+    pub fn provide<T: 'static>(&mut self, value: std::rc::Rc<T>) {
+        self.contexts
+            .entry(std::any::TypeId::of::<T>())
+            .or_default()
+            .push(value);
+    }
+
+    /// Ends the innermost context of type `T`.
+    pub fn unprovide<T: 'static>(&mut self) {
+        if let Some(stack) = self.contexts.get_mut(&std::any::TypeId::of::<T>()) {
+            stack.pop();
+        }
+    }
+
+    /// The nearest context of type `T`, if an ancestor provides one.
+    pub fn context<T: 'static>(&self) -> Option<std::rc::Rc<T>> {
+        let any = self
+            .contexts
+            .get(&std::any::TypeId::of::<T>())?
+            .last()?
+            .clone();
+        any.downcast::<T>().ok()
     }
 
     pub fn inherited(&self) -> Inherited {
