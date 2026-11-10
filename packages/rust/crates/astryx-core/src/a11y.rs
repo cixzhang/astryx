@@ -145,11 +145,9 @@ fn collect<Msg>(cx: &Cx<Msg>, ix: usize, covered: bool, out: &mut Vec<A11yNode>)
         live: sem.live,
         state: {
             let mut s = resolve(&sem.state, &sem.refs, cx.names);
-            s.multiline |= node
-                .interact
-                .as_ref()
-                .and_then(|i| i.edit.as_ref())
-                .is_some_and(|e| e.multiline);
+            let edit = node.interact.as_ref().and_then(|i| i.edit.as_ref());
+            s.multiline |= edit.is_some_and(|e| e.multiline);
+            s.editable |= edit.is_some();
             s
         },
         children: Vec::new(),

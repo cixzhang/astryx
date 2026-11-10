@@ -241,6 +241,9 @@ pub struct Runtime<A: App> {
     direction: Direction,
     /// Caret positions of text fields, in characters, by node id.
     carets: HashMap<u64, usize>,
+    /// The other end of a text field's selection, in characters, by node
+    /// id; the caret is the moving end.
+    anchors: HashMap<u64, usize>,
     measure_generation: u64,
     /// A field's value typed since the last rebuild.
     typed: Option<(u64, String)>,
@@ -411,6 +414,7 @@ impl<A: App> Runtime<A> {
             prefs: Preferences::default(),
             direction: Direction::Ltr,
             carets: HashMap::new(),
+            anchors: HashMap::new(),
             measure_generation: 0,
             typed: None,
             composing: None,
@@ -2221,6 +2225,78 @@ impl<A: App> Runtime<A> {
         self.carets.get(&id).copied().unwrap_or(len).min(len)
     }
 
+    /// A field's selection as an ordered character range, when it selects
+    /// at least one character.
+    fn selection(&self, id: u64, value: &str) -> Option<(usize, usize)> {
+        let caret = self.caret(id, value);
+        let len = value.chars().count();
+        let anchor = self.anchors.get(&id).copied()?.min(len);
+        (anchor != caret).then(|| (anchor.min(caret), anchor.max(caret)))
+    }
+
+    /// Select all, and Shift with the arrows, Home and End, in the focused
+    /// field. A plain arrow over a selection collapses it to that side.
+    fn selection_key(
+        &mut self,
+        event: &crate::contract::KeyEvent,
+    ) -> Option<crate::contract::KeyOutcome> {
+        use crate::contract::{Key, KeyOutcome};
+        let (ix, edit) = self.focused_edit()?;
+        if self.composing.is_some() {
+            return None;
+        }
+        let id = self.nodes[ix].id;
+        let value = self.field_value(id, edit);
+        let len = value.chars().count();
+        let caret = self.caret(id, &value);
+        let m = event.modifiers;
+        let command = m.ctrl || m.meta;
+        let handled = Some(KeyOutcome {
+            command: Command::None,
+            handled: true,
+        });
+        let pressed = event.phase == InputPhase::Pressed;
+        match &event.key {
+            Key::Character(c) if command && c.eq_ignore_ascii_case("a") => {
+                if pressed {
+                    self.anchors.insert(id, 0);
+                    self.carets.insert(id, len);
+                    self.repaint = true;
+                }
+                handled
+            }
+            Key::Left | Key::Right | Key::Home | Key::End if m.shift => {
+                if pressed {
+                    let rtl = self.nodes[ix].rtl;
+                    let back = matches!((&event.key, rtl), (Key::Left, false) | (Key::Right, true));
+                    let next = match event.key {
+                        Key::Home => 0,
+                        Key::End => len,
+                        _ if back => caret.saturating_sub(1),
+                        _ => (caret + 1).min(len),
+                    };
+                    self.anchors.entry(id).or_insert(caret);
+                    self.carets.insert(id, next);
+                    self.repaint = true;
+                }
+                handled
+            }
+            Key::Left | Key::Right if !m.shift => {
+                let (a, b) = self.selection(id, &value)?;
+                if pressed {
+                    let rtl = self.nodes[ix].rtl;
+                    let to_start =
+                        matches!((&event.key, rtl), (Key::Left, false) | (Key::Right, true));
+                    self.carets.insert(id, if to_start { a } else { b });
+                    self.anchors.remove(&id);
+                    self.repaint = true;
+                }
+                handled
+            }
+            _ => None,
+        }
+    }
+
     /// Moves the caret of a focused text field one character. Returns false
     /// at either end, so the arrow moves focus instead.
     fn move_caret(&mut self, input: Input) -> bool {
@@ -2238,6 +2314,7 @@ impl<A: App> Runtime<A> {
             Input::End => len,
             _ => return false,
         };
+        self.anchors.remove(&id);
         self.carets.insert(id, next);
         true
     }
@@ -2265,6 +2342,25 @@ impl<A: App> Runtime<A> {
                 let rect = layout.rects[edit.text_node as usize];
                 let line_h = t.style.size * t.style.leading;
                 let h = (line_h - 0.01).ceil();
+                let mut selection = Vec::new();
+                if let Some((a, b)) = self.selection(id, &value) {
+                    for (n, &(ls, le)) in lines.iter().enumerate() {
+                        let (sa, sb) = (a.max(ls), b.min(le));
+                        if sa >= sb {
+                            continue;
+                        }
+                        let w = |from: usize, to: usize| {
+                            let s: String = value.chars().skip(from).take(to - from).collect();
+                            text.measure(&s, &t.style, None).width
+                        };
+                        selection.push(Rect::new(
+                            rect.x + w(ls, sa),
+                            rect.y + n as f32 * line_h,
+                            w(sa, sb),
+                            h,
+                        ));
+                    }
+                }
                 return Some(paint::Caret {
                     text_node: edit.text_node as usize,
                     shift: 0.0,
@@ -2272,6 +2368,7 @@ impl<A: App> Runtime<A> {
                     color: edit.caret,
                     text: None,
                     underline: None,
+                    selection,
                 });
             }
         }
@@ -2327,7 +2424,16 @@ impl<A: App> Runtime<A> {
         };
         let line = (t.style.size * t.style.leading - 0.01).ceil();
         let top = rect.y + (rect.height - line) / 2.0;
+        let selection = match (self.selection(id, &value), &composing) {
+            (Some((a, b)), None) => {
+                let upto = |n: usize| width(&shown(&value.chars().take(n).collect::<String>()));
+                let (xa, xb) = (upto(a), upto(b));
+                vec![Rect::new(rect.x + xa - shift, top, xb - xa, line)]
+            }
+            _ => Vec::new(),
+        };
         Some(paint::Caret {
+            selection,
             text_node: edit.text_node as usize,
             shift,
             rect: Rect::new((rect.x + x - shift).round(), top, caret_width, line),
@@ -2350,11 +2456,20 @@ impl<A: App> Runtime<A> {
         let id = self.nodes[ix].id;
         let value = self.field_value(id, edit);
         let caret = self.caret(id, &value);
-        let bytes: usize = if edit.masked {
-            caret * '\u{2022}'.len_utf8()
-        } else {
-            value.chars().take(caret).map(char::len_utf8).sum()
+        let anchor = self
+            .anchors
+            .get(&id)
+            .copied()
+            .unwrap_or(caret)
+            .min(value.chars().count());
+        let to_bytes = |chars: usize| -> u32 {
+            if edit.masked {
+                (chars * '\u{2022}'.len_utf8()) as u32
+            } else {
+                value.chars().take(chars).map(char::len_utf8).sum::<usize>() as u32
+            }
         };
+        let (anchor_bytes, caret_bytes) = (to_bytes(anchor), to_bytes(caret));
         fn find(n: &mut A11yNode, id: u64) -> Option<&mut A11yNode> {
             if n.id == id {
                 return Some(n);
@@ -2362,7 +2477,7 @@ impl<A: App> Runtime<A> {
             n.children.iter_mut().find_map(|c| find(c, id))
         }
         if let Some(node) = self.a11y.as_mut().and_then(|root| find(root, id)) {
-            node.text_selection = Some((bytes as u32, bytes as u32));
+            node.text_selection = Some((anchor_bytes, caret_bytes));
         }
     }
 
@@ -3452,7 +3567,10 @@ impl<A: App> Surface for Runtime<A> {
         // Component key handlers come first; a multi-line field's own line
         // breaks and line moves apply when they pass.
         let Some(command) = self.route_key(&event) else {
-            return self.multiline_key(&event).unwrap_or_default();
+            return self
+                .selection_key(&event)
+                .or_else(|| self.multiline_key(&event))
+                .unwrap_or_default();
         };
         let followed = self.report_focus();
         let command = if command == Command::None {
@@ -3818,6 +3936,16 @@ impl<A: App> Surface for Runtime<A> {
         );
         let mut caret = self.caret(id, &old);
         let mut value: Vec<char> = old.chars().collect();
+        // Typing or deleting over a selection replaces it.
+        let mut text = text;
+        if let Some((a, b)) = self.selection(id, &old) {
+            value.drain(a..b);
+            caret = a;
+            if matches!(text, "\u{8}" | "\u{7f}") {
+                text = "";
+            }
+        }
+        self.anchors.remove(&id);
         for ch in text.chars() {
             match ch {
                 // Backspace and Delete arrive as their control characters.
@@ -3843,6 +3971,7 @@ impl<A: App> Surface for Runtime<A> {
         let value: String = value.into_iter().collect();
         self.carets.insert(id, caret);
         if value == old {
+            self.repaint = true;
             return Command::None;
         }
         if let Some(effect) = effect {

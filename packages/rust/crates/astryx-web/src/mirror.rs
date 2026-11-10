@@ -100,173 +100,177 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
     let mut d = NodeDesc::default();
     let mut role = None;
     let mut name_from_text = false;
-    match node.role {
-        Role::Group => {
-            d.tag = "div";
-            role = Some("group");
+    // An editable combobox, search box or spin button is a text field with
+    // its role, so the browser's text input reaches the app.
+    let editable_role = match node.role {
+        Role::ComboBox => Some(("combobox", true)),
+        Role::SearchBox => Some(("searchbox", false)),
+        Role::SpinButton => Some(("spinbutton", false)),
+        _ => None,
+    };
+    if let (true, Some((name, autocomplete))) = (node.state.editable, editable_role) {
+        text_field(node, &mut d);
+        role = Some(name);
+        if autocomplete {
+            d.attrs.push(("aria-autocomplete", "list".into()));
         }
-        Role::Separator => {
-            d.tag = "div";
-            role = Some("separator");
-        }
-        Role::ListBox => {
-            d.tag = "div";
-            role = Some("listbox");
-        }
-        Role::RadioGroup => {
-            d.tag = "div";
-            role = Some("radiogroup");
-        }
-        Role::ComboBox | Role::ListBoxOption => {
-            d.tag = "div";
-            role = Some(if node.role == Role::ComboBox {
-                "combobox"
-            } else {
-                "option"
-            });
-            if let Some(selected) = node.selected {
-                d.attrs.push(("aria-selected", selected.to_string()));
+        if let Some(value) = &node.value {
+            if node.role == Role::SpinButton && node.state.range.is_none() {
+                d.attrs.push(("aria-valuetext", value.clone()));
             }
-            d.text = join(&node.label, &node.value).filter(|_| leaf);
-            name_from_text = true;
         }
-        Role::Text => {
-            d.tag = "div";
-            d.text = join(&node.label, &node.value).filter(|_| leaf);
-            name_from_text = true;
-        }
-        Role::Heading(level) => {
-            d.tag = heading_tag(level);
-            d.text = join(&node.label, &node.value).filter(|_| leaf);
-            name_from_text = true;
-        }
-        Role::Button | Role::Switch | Role::Checkbox | Role::Radio => {
-            d.tag = "button";
-            d.attrs.push(("type", "button".into()));
-            match node.role {
-                Role::Switch => role = Some("switch"),
-                Role::Checkbox => role = Some("checkbox"),
-                Role::Radio => role = Some("radio"),
-                _ => {}
+    } else {
+        match node.role {
+            Role::Group => {
+                d.tag = "div";
+                role = Some("group");
             }
-            if let Some(checked) = node.checked {
-                let attr = if node.role == Role::Button {
-                    "aria-pressed"
+            Role::Separator => {
+                d.tag = "div";
+                role = Some("separator");
+            }
+            Role::ListBox => {
+                d.tag = "div";
+                role = Some("listbox");
+            }
+            Role::RadioGroup => {
+                d.tag = "div";
+                role = Some("radiogroup");
+            }
+            Role::ComboBox | Role::ListBoxOption => {
+                d.tag = "div";
+                role = Some(if node.role == Role::ComboBox {
+                    "combobox"
                 } else {
-                    "aria-checked"
-                };
-                d.attrs.push((attr, checked.to_string()));
-            } else if node.role != Role::Button {
-                d.attrs.push(("aria-checked", "false".into()));
+                    "option"
+                });
+                if let Some(selected) = node.selected {
+                    d.attrs.push(("aria-selected", selected.to_string()));
+                }
+                d.text = join(&node.label, &node.value).filter(|_| leaf);
+                name_from_text = true;
             }
-            if let Some(value) = &node.value {
-                d.attrs.push(("aria-description", value.clone()));
+            Role::Text => {
+                d.tag = "div";
+                d.text = join(&node.label, &node.value).filter(|_| leaf);
+                name_from_text = true;
             }
-            d.text = node.label.clone().filter(|_| leaf);
-            name_from_text = true;
-        }
-        Role::ProgressBar => {
-            d.tag = "div";
-            role = Some("progressbar");
-            d.attrs.push(("aria-valuemin", "0".into()));
-            d.attrs.push(("aria-valuemax", "100".into()));
-            if let Some(value) = &node.value {
-                match percent(value) {
-                    Some(n) => d.attrs.push(("aria-valuenow", format!("{n}"))),
-                    None => d.attrs.push(("aria-valuetext", value.clone())),
+            Role::Heading(level) => {
+                d.tag = heading_tag(level);
+                d.text = join(&node.label, &node.value).filter(|_| leaf);
+                name_from_text = true;
+            }
+            Role::Button | Role::Switch | Role::Checkbox | Role::Radio => {
+                d.tag = "button";
+                d.attrs.push(("type", "button".into()));
+                match node.role {
+                    Role::Switch => role = Some("switch"),
+                    Role::Checkbox => role = Some("checkbox"),
+                    Role::Radio => role = Some("radio"),
+                    _ => {}
+                }
+                if let Some(checked) = node.checked {
+                    let attr = if node.role == Role::Button {
+                        "aria-pressed"
+                    } else {
+                        "aria-checked"
+                    };
+                    d.attrs.push((attr, checked.to_string()));
+                } else if node.role != Role::Button {
+                    d.attrs.push(("aria-checked", "false".into()));
+                }
+                if let Some(value) = &node.value {
+                    d.attrs.push(("aria-description", value.clone()));
+                }
+                d.text = node.label.clone().filter(|_| leaf);
+                name_from_text = true;
+            }
+            Role::ProgressBar => {
+                d.tag = "div";
+                role = Some("progressbar");
+                d.attrs.push(("aria-valuemin", "0".into()));
+                d.attrs.push(("aria-valuemax", "100".into()));
+                if let Some(value) = &node.value {
+                    match percent(value) {
+                        Some(n) => d.attrs.push(("aria-valuenow", format!("{n}"))),
+                        None => d.attrs.push(("aria-valuetext", value.clone())),
+                    }
                 }
             }
-        }
-        Role::TextInput => {
-            d.tag = "input";
-            let kind = if node.secure { "password" } else { "text" };
-            d.attrs.push(("type", kind.into()));
-            // The app draws and owns the text; browser helpers would edit
-            // the hidden field behind its back.
-            d.attrs.push(("autocomplete", "off".into()));
-            d.attrs.push(("autocapitalize", "off".into()));
-            d.attrs.push(("spellcheck", "false".into()));
-            if node.disabled {
-                d.attrs.push(("readonly", String::new()));
+            Role::TextInput => text_field(node, &mut d),
+            Role::List => {
+                d.tag = "div";
+                role = Some("list");
             }
-            let value = node.value.clone().unwrap_or_default();
-            d.selection = node
-                .text_selection
-                .map(|(anchor, focus)| utf16_selection(&value, anchor, focus));
-            d.input_value = Some(value);
-        }
-        Role::List => {
-            d.tag = "div";
-            role = Some("list");
-        }
-        Role::ListItem => {
-            d.tag = "div";
-            role = Some("listitem");
-            d.text = join(&node.label, &node.value).filter(|_| leaf);
-            name_from_text = true;
-        }
-        Role::Image => {
-            d.tag = "div";
-            role = Some("img");
-        }
-        // Containers and landmarks: a div with the ARIA role, named by
-        // aria-label.
-        Role::Dialog
-        | Role::AlertDialog
-        | Role::Menu
-        | Role::TabList
-        | Role::TabPanel
-        | Role::Toolbar
-        | Role::Grid
-        | Role::Table
-        | Role::RowGroup
-        | Role::Row
-        | Role::Tree
-        | Role::Navigation
-        | Role::Banner
-        | Role::Main
-        | Role::Complementary
-        | Role::ContentInfo
-        | Role::Region
-        | Role::Search
-        | Role::Form
-        | Role::ScrollBar => {
-            d.tag = "div";
-            role = Some(aria_role(node.role));
-            if let Some(selected) = node.selected {
-                d.attrs.push(("aria-selected", selected.to_string()));
+            Role::ListItem => {
+                d.tag = "div";
+                role = Some("listitem");
+                d.text = join(&node.label, &node.value).filter(|_| leaf);
+                name_from_text = true;
             }
-        }
-        // Items named by their own text.
-        Role::Link
-        | Role::Tooltip
-        | Role::MenuItem
-        | Role::MenuItemCheckbox
-        | Role::MenuItemRadio
-        | Role::Tab
-        | Role::Cell
-        | Role::GridCell
-        | Role::ColumnHeader
-        | Role::RowHeader
-        | Role::TreeItem
-        | Role::Status
-        | Role::Alert => {
-            d.tag = "div";
-            role = Some(aria_role(node.role));
-            if let Some(selected) = node.selected {
-                d.attrs.push(("aria-selected", selected.to_string()));
+            Role::Image => {
+                d.tag = "div";
+                role = Some("img");
             }
-            if let Some(checked) = node.checked {
-                d.attrs.push(("aria-checked", checked.to_string()));
+            // Containers and landmarks: a div with the ARIA role, named by
+            // aria-label.
+            Role::Dialog
+            | Role::AlertDialog
+            | Role::Menu
+            | Role::TabList
+            | Role::TabPanel
+            | Role::Toolbar
+            | Role::Grid
+            | Role::Table
+            | Role::RowGroup
+            | Role::Row
+            | Role::Tree
+            | Role::Navigation
+            | Role::Banner
+            | Role::Main
+            | Role::Complementary
+            | Role::ContentInfo
+            | Role::Region
+            | Role::Search
+            | Role::Form
+            | Role::ScrollBar => {
+                d.tag = "div";
+                role = Some(aria_role(node.role));
+                if let Some(selected) = node.selected {
+                    d.attrs.push(("aria-selected", selected.to_string()));
+                }
             }
-            d.text = join(&node.label, &node.value).filter(|_| leaf);
-            name_from_text = true;
-        }
-        Role::SearchBox | Role::SpinButton | Role::Slider => {
-            d.tag = "div";
-            role = Some(aria_role(node.role));
-            if let Some(value) = &node.value {
-                d.attrs.push(("aria-valuetext", value.clone()));
+            // Items named by their own text.
+            Role::Link
+            | Role::Tooltip
+            | Role::MenuItem
+            | Role::MenuItemCheckbox
+            | Role::MenuItemRadio
+            | Role::Tab
+            | Role::Cell
+            | Role::GridCell
+            | Role::ColumnHeader
+            | Role::RowHeader
+            | Role::TreeItem
+            | Role::Status
+            | Role::Alert => {
+                d.tag = "div";
+                role = Some(aria_role(node.role));
+                if let Some(selected) = node.selected {
+                    d.attrs.push(("aria-selected", selected.to_string()));
+                }
+                if let Some(checked) = node.checked {
+                    d.attrs.push(("aria-checked", checked.to_string()));
+                }
+                d.text = join(&node.label, &node.value).filter(|_| leaf);
+                name_from_text = true;
+            }
+            Role::SearchBox | Role::SpinButton | Role::Slider => {
+                d.tag = "div";
+                role = Some(aria_role(node.role));
+                if let Some(value) = &node.value {
+                    d.attrs.push(("aria-valuetext", value.clone()));
+                }
             }
         }
     }
@@ -311,6 +315,26 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
     }
     d.attrs.sort_by_key(|(name, _)| *name);
     d
+}
+
+/// Makes `d` a hidden text input carrying the node's value and selection.
+fn text_field(node: &A11yNode, d: &mut NodeDesc) {
+    d.tag = "input";
+    let kind = if node.secure { "password" } else { "text" };
+    d.attrs.push(("type", kind.into()));
+    // The app draws and owns the text; browser helpers would edit the
+    // hidden field behind its back.
+    d.attrs.push(("autocomplete", "off".into()));
+    d.attrs.push(("autocapitalize", "off".into()));
+    d.attrs.push(("spellcheck", "false".into()));
+    if node.disabled {
+        d.attrs.push(("readonly", String::new()));
+    }
+    let value = node.value.clone().unwrap_or_default();
+    d.selection = node
+        .text_selection
+        .map(|(anchor, focus)| utf16_selection(&value, anchor, focus));
+    d.input_value = Some(value);
 }
 
 /// The ARIA role name for a role the mirror draws as a plain div.
@@ -839,6 +863,30 @@ mod tests {
         assert_eq!(attr(&d, "aria-expanded"), Some("true"));
         assert_eq!(attr(&d, "aria-activedescendant"), Some("ax-42"));
         assert_eq!(attr(&d, "aria-controls"), Some("ax-9 ax-10"));
+    }
+
+    #[test]
+    fn editable_comboboxes_and_spin_buttons_are_text_inputs() {
+        let mut combo = node(Role::ComboBox);
+        combo.state.editable = true;
+        combo.state.expanded = Some(true);
+        combo.value = Some("ap".into());
+        combo.text_selection = Some((0, 2));
+        let d = describe(&combo, Some(true));
+        assert_eq!(d.tag, "input");
+        assert_eq!(attr(&d, "role"), Some("combobox"));
+        assert_eq!(attr(&d, "aria-autocomplete"), Some("list"));
+        assert_eq!(attr(&d, "aria-expanded"), Some("true"));
+        assert_eq!(d.input_value.as_deref(), Some("ap"));
+        assert_eq!(d.selection, Some((0, 2, false)));
+        let mut spin = node(Role::SpinButton);
+        spin.state.editable = true;
+        spin.state.range = Some((0.0, 10.0, 3.0));
+        let d = describe(&spin, Some(true));
+        assert_eq!((d.tag, attr(&d, "role")), ("input", Some("spinbutton")));
+        assert_eq!(attr(&d, "aria-valuenow"), Some("3"));
+        // A select-only combobox stays a div.
+        assert_eq!(describe(&node(Role::ComboBox), Some(true)).tag, "div");
     }
 
     #[test]
