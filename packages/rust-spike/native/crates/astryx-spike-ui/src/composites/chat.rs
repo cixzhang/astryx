@@ -359,6 +359,7 @@ impl<Msg: Clone + 'static> Build<Msg> for ChatComposer<Msg> {
                     effect: (!controlled).then_some(effect),
                     text_node: text_ix,
                     masked: false,
+                    multiline: true,
                     caret: color(c.accent),
                 });
             }
