@@ -292,5 +292,59 @@
   "status": "ported",
   "evidence": "gallery selectable-card-*",
   "notes": "A native button with aria-pressed."
+ },
+ "infra:Gestures": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "BottomSheet grabber drag, Resizable handle drag, ReorderList drag (tests pass on web)",
+  "notes": "Pointer events (pointerdown/move/up) with component state cover drags. No gesture arena: competing gestures (a sheet drag inside a scroll) are not arbitrated. Reorder is the host's (`reorderdrop` on a vertical virtualized list). Keyboard reorder (Space, arrows, Enter on the grip) did not move a row in our web run: the grip is exposed as a generic, unfocused element (gaps.test.contract keeps the failing test)."
+ },
+ "Item": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery item-*",
+  "notes": "Start and end content are an icon name and text; the slot is extra end content. Swipe actions not wired (Contract has row `delete=` and a scroll-snap long form)."
+ },
+ "List": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery list-*",
+  "notes": "Rows are the slot (ListItem); a slot passes no context, so each row takes the list's density, divider and marker. Reorderable lists are ReorderList (data rows). Edge compensation by custom properties dropped."
+ },
+ "TreeList": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery tree-list-*; playground test opens, closes and selects",
+  "notes": "Items are flattened rows with a depth (no recursion in a view). Open state is the caller's. Keyboard tree navigation (arrow keys) not wired."
+ },
+ "Dialog": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery dialog-*; playground test opens and closes",
+  "notes": "The platform's modal `dialog` (focus trap, inert page, Escape via closedby). Opened by showModal or commandfor, not by an isOpen prop: a dialog that state holds open is not available in Contract yet. isInline not possible. Lives in astryx-layers (hides its slot)."
+ },
+ "BottomSheet": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery bottomsheet-*; playground test opens it",
+  "notes": "A modal dialog at the bottom edge with a grabber; dragging down past 120 px closes it (pointer events). Snap points and detents not wired."
+ },
+ "DropdownMenu": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery dropdownmenu-*; playground test picks an item",
+  "notes": "The platform menu (popover role=menu). Items are data (MenuItem[]); submenus, radio groups and type-ahead not wired."
+ },
+ "ContextMenu": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery contextmenu-*; playground test picks an item",
+  "notes": "contextPopover on the slot: right click and long press."
+ },
+ "Resizable": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery resizable-*; playground test drags the handle 60 px",
+  "notes": "Width is the caller's state; drag by pointer events. Arrow-key resizing not wired. In astryx-layers: the library cannot size a slot-holding node from a prop."
  }
 }

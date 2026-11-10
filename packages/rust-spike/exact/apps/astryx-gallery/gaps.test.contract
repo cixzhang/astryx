@@ -1,0 +1,12 @@
+// Known gaps: tests that state Astryx behavior Exact does not give yet. They fail on purpose;
+// the default run skips this file (`bun exact.mjs test web app.test.contract`). Run it with
+// `bun exact.mjs test web gaps.test.contract` for the evidence.
+
+test "a row moves by keyboard"
+  at "/?case=playground-0002"
+  type "grip-a" key " "
+  type "grip-a" key "ArrowDown"
+  type "grip-a" key "Enter"
+  clock settle
+  expect text "order" == "b,a,c"
+

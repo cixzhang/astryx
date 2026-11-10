@@ -17,10 +17,17 @@ const childrenAs = key => p => {
 const TEXT = t => `Text(text=${JSON.stringify(t)}, type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)`;
 const STACK_CALL = 'gap=2, padding=-1, paddingInline=-1, paddingInlineStart=-1, paddingInlineEnd=-1, paddingBlock=-1, paddingBlockStart=-1, paddingBlockEnd=-1, hAlign="", vAlign="", align="stretch", justify="start", wrap="nowrap", isScrollable=false';
 const CHOICES = [['free', 'Free', 'For one person'], ['pro', 'Pro', 'For small teams'], ['team', 'Team', 'For companies']].map(([value, label, description]) => ({ $shape: 'ChoiceItem', value, label, description, isDisabled: false }));
+const ROWS = [['a', 'Write the brief'], ['b', 'Review the spec'], ['c', 'Ship the release'], ['d', 'Tell the team']].map(([key, label]) => ({ $shape: 'RowItem', key, label, description: '', icon: '', depth: 0, hasChildren: false, isExpanded: false }));
+const TREE = [['src', 'src', 0, true, true], ['button', 'Button.tsx', 1, false, false], ['dialog', 'Dialog', 1, true, true], ['dialog-tsx', 'Dialog.tsx', 2, false, false], ['docs', 'docs', 0, true, false]].map(([key, label, depth, hasChildren, isExpanded]) => ({ $shape: 'RowItem', key, label, description: '', icon: '', depth, hasChildren, isExpanded }));
+const MENU = [['edit', 'Edit', 'clock', '⌘E'], ['copy', 'Copy link', 'copy', '⌘C'], ['div', '', '', ''], ['delete', 'Delete', 'close', '']].map(([id, label, icon, shortcut]) => ({ $shape: 'MenuItem', id, label, icon, shortcut, isDestructive: id === 'delete', isDisabled: false, isChecked: false, isDivider: id === 'div' }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
 export const FAMILIES = {
+  Playground2: {
+    component: 'CompositesPlayground', uses: [], defaults: {},
+    smoke: [{ id: 'playground-0002', title: 'Composites wired to state', props: {} }],
+  },
   Playground: {
     component: 'ControlsPlayground', uses: [], defaults: {},
     smoke: [{ id: 'playground-0001', title: 'Controls wired to state', props: {} }],
@@ -297,5 +304,66 @@ export const FAMILIES = {
     children: [TEXT('Pro plan, billed yearly')],
     smoke: sweep('SelectableCard', {}, { isSelected: [true], isDisabled: [true], elevation: ['low'] }),
     wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+  },
+  Item: {
+    component: 'Item',
+    defaults: { label: 'Ada Lovelace', description: 'Analyst', icon: 'calendar', endText: 'Today', density: 'balanced', isSelected: false, isHighlighted: false, isDisabled: false, labelLines: 0 },
+    smoke: sweep('Item', {}, { density: ['compact', 'spacious'], isSelected: [true], isHighlighted: [true], isDisabled: [true], icon: [''], description: [''] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  List: {
+    component: 'List', uses: ['List', 'ListItem'],
+    defaults: { label: 'Team', density: 'balanced', hasDividers: false, edge: 'padded', listStyle: 'none' },
+    children: ['Ada Lovelace', 'Grace Hopper', 'Alan Turing'].map((n, i) => `ListItem(label=${JSON.stringify(n)}, description="", icon="", marker=(c.listStyle == "decimal" ? "${i + 1}." : c.listStyle == "disc" ? "•" : c.listStyle == "circle" ? "◦" : ""), density=c.density, hasDivider=${i > 0 ? 'c.hasDividers' : 'false'}, isSelected=false, isDisabled=false)`),
+    smoke: sweep('List', {}, { density: ['compact', 'spacious'], hasDividers: [true], listStyle: ['decimal', 'disc'] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  ReorderList: {
+    component: 'ReorderList', actions: { reorder: 'noopSO' }, uses: ['ReorderList', 'RowItem'], types: { items: 'RowItem[]' },
+    defaults: { id: 'case-reorder', label: 'Tasks', items: ROWS, density: 'balanced', hasDividers: true },
+    smoke: sweep('ReorderList', {}, { density: ['compact'], hasDividers: [false] }),
+    wrap: inner => ['view width=320 height=240', ...inner.map(l => `  ${l}`)],
+  },
+  TreeList: {
+    component: 'TreeList', actions: { toggle: 'noopS', select: 'noopS' }, uses: ['TreeList', 'RowItem'], types: { items: 'RowItem[]' },
+    defaults: { label: 'Files', items: TREE, selected: 'button', density: 'balanced', variant: 'lineGuides' },
+    smoke: sweep('TreeList', {}, { density: ['compact', 'spacious'], variant: ['noGuides'] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  Dialog: {
+    component: 'Dialog', uses: ['Dialog', 'Text', 'Button'],
+    defaults: { id: 'case-dialog', title: 'Delete project?', purpose: 'form', variant: 'standard', padding: 6, hasCloseButton: true, still: true },
+    opensModal: p => p.isOpen !== false && p.isInline !== true,
+    map: p => { const { isOpen, isInline, ...r } = p; return r; },
+    children: [TEXT('This removes the project and its history.'), 'row gap="astryx.space.s2" justify-content="flex-end"', '  Button(label="Cancel", variant="secondary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=noop)', '  Button(label="Delete", variant="destructive", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=noop)'],
+    smoke: sweep('Dialog', {}, { purpose: ['required', 'info'], variant: ['fullscreen'], padding: [2] }),
+  },
+  BottomSheet: {
+    component: 'BottomSheet', uses: ['BottomSheet', 'Text'],
+    defaults: { id: 'case-dialog', title: 'Share', still: true },
+    opensModal: () => true,
+    children: [TEXT('Send this page to someone.')],
+    smoke: sweep('BottomSheet', {}, { title: ['Filters'] }),
+  },
+  DropdownMenu: {
+    component: 'DropdownMenu', actions: { select: 'noopS' }, uses: ['DropdownMenu', 'MenuItem'], types: { items: 'MenuItem[]' },
+    defaults: { id: 'case-popover', label: 'Actions', items: MENU },
+    opens: () => true,
+    wrap: inner => ['column width=320 height=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('DropdownMenu', {}, { label: ['More'] }),
+  },
+  ContextMenu: {
+    component: 'ContextMenu', actions: { select: 'noopS' }, uses: ['ContextMenu', 'MenuItem'], types: { items: 'MenuItem[]' },
+    defaults: { id: 'case-popover', label: 'Row actions', items: MENU },
+    children: ['Filler(label="Right-click or long-press me")'],
+    wrap: inner => ['column width=320 height=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('ContextMenu', {}, {}),
+  },
+  Resizable: {
+    component: 'Resizable', actions: { resize: 'noopN' }, uses: ['Resizable'],
+    defaults: { label: 'Resize sidebar', width: 160, minWidth: 120, maxWidth: 280 },
+    children: ['Filler(label="Sidebar")'],
+    wrap: inner => ['view width=360 height=160 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Resizable', {}, { width: [240] }),
   },
 };

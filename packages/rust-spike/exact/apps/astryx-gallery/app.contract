@@ -4,7 +4,7 @@
 // the page lists the cases. The gallery has no data module: its cases are
 // literal calls in cases.contract (tools/gallery-cases.mjs writes it).
 use space, radius from "@astryx-spike/astryx"
-use CaseRow, CaseView, caseRows, caseOpens from "./cases.contract"
+use CaseRow, CaseView, caseRows, caseOpens, caseModal from "./cases.contract"
 
 routes nav
   home "/"
@@ -24,6 +24,8 @@ component AstryxGallery
     setMode("theme", themeName == "" ? "neutral" : themeName)
     if caseOpens(caseId)
       showPopover("case-popover", source="case-popover-trigger")
+    if caseModal(caseId)
+      showModal("case-dialog")
   view
     main testId="root" navigationKey=`${entry.id}` width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary"
       scroll id="content" height="100%"

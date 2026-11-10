@@ -47,3 +47,51 @@ component ControlsPlayground
       text count.toString() testId="count-value"
       Button(label="Save", variant="primary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=press)
       text presses.toString() testId="presses"
+
+// Composites wired to state: reorder, tree, dialog, sheet, menus, resize.
+use ReorderList, TreeList, RowItem from "@astryx-spike/astryx"
+use Dialog, BottomSheet, DropdownMenu, ContextMenu, MenuItem, Resizable from "@astryx-spike/astryx-layers"
+
+fn row(key: string, label: string, depth: number, hasChildren: bool, isExpanded: bool): RowItem = RowItem(key=key, label=label, description="", icon="", depth=depth, hasChildren=hasChildren, isExpanded=isExpanded)
+fn menu(id: string, label: string): MenuItem = MenuItem(id=id, label=label, icon="", shortcut="", isDestructive=false, isDisabled=false, isChecked=false, isDivider=false)
+
+component CompositesPlayground
+  state order = ["a", "b", "c"]
+  state open = ["src"]
+  state picked = ""
+  state chosen = ""
+  state width = 160
+  action reorder(key: string, before: option<string>)
+    let rest = order.filter(k => k != key)
+    order = match before { case some(b) => rest.slice(0, rest.indexOf(b)).concat([key]).concat(rest.slice(rest.indexOf(b))), case none => rest.concat([key]) }
+  action toggle(key: string)
+    open = open.includes(key) ? open.filter(k => k != key) : open.concat([key])
+  action pick(key: string)
+    picked = key
+  action choose(id: string)
+    chosen = id
+  action resize(w: number)
+    width = w
+  view
+    column gap="astryx.space.s4" width=360
+      view height=200
+        ReorderList(id="tasks", label="Tasks", items=order.map(k => row(k, `Task ${k}`, 0, false, false)), density="balanced", hasDividers=true, reorder=reorder)
+      text order.join(",") testId="order"
+      TreeList(label="Files", items=(open.includes("src") ? [row("src", "src", 0, true, true), row("a.ts", "a.ts", 1, false, false)] : [row("src", "src", 0, true, false)]), selected=picked, density="balanced", variant="lineGuides", toggle=toggle, select=pick)
+      text `${picked} ${open.join(",")}` testId="tree-state"
+      button commandfor="pg-dialog" command="show-modal" testId="open-dialog"
+        text "Open dialog"
+      Dialog(id="pg-dialog", title="Rename", purpose="form", variant="standard", padding=6, hasCloseButton=true, still=true)
+        text "Dialog body" testId="dialog-body"
+      button commandfor="pg-sheet" command="show-modal" testId="open-sheet"
+        text "Open sheet"
+      BottomSheet(id="pg-sheet", title="Share", still=true)
+        text "Sheet body" testId="sheet-body"
+      DropdownMenu(id="pg-menu", label="Actions", items=[menu("edit", "Edit"), menu("copy", "Copy")], select=choose)
+      ContextMenu(id="pg-context", label="Row actions", items=[menu("pin", "Pin"), menu("hide", "Hide")], select=choose)
+        text "Row" testId="context-row"
+      text chosen testId="chosen"
+      view height=80
+        Resizable(label="Resize", width=width, minWidth=100, maxWidth=300, resize=resize)
+          text "Sidebar"
+      text width.toString() testId="width"

@@ -51,3 +51,45 @@ test "controls change their state"
   expect text "count-value" == "3"
   tap "button-Save"
   expect text "presses" == "1"
+
+test "a tree row opens, closes and selects"
+  at "/?case=playground-0002"
+  tap "toggle-src"
+  expect text "tree-state" == " "
+  tap "toggle-src"
+  tap "select-a.ts"
+  expect text "tree-state" == "a.ts src"
+
+test "a dialog opens and closes"
+  at "/?case=playground-0002"
+  tap "open-dialog"
+  expect tree has "dialog-body"
+  tap "close-pg-dialog"
+  clock settle
+  tap "open-dialog"
+  expect tree has "dialog-body"
+
+test "menus choose an action"
+  at "/?case=playground-0002"
+  tap "pg-menu-trigger"
+  tap "menu-copy"
+  expect text "chosen" == "copy"
+  tap "context-row" contextmenu
+  tap "menu-pin"
+  expect text "chosen" == "pin"
+
+test "a row moves by pointer drag"
+  at "/?case=playground-0002"
+  tap "grip-c" drag 0 -100
+  clock settle
+  expect text "order" == "c,a,b"
+
+test "the sheet opens"
+  at "/?case=playground-0002"
+  tap "open-sheet"
+  expect tree has "sheet-body"
+
+test "the panel resizes by its handle"
+  at "/?case=playground-0002"
+  tap "resize-handle" drag 60 0
+  expect text "width" == "220"

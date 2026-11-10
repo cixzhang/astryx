@@ -215,3 +215,177 @@ component HoverCard
       animation=enterMotion(still) testId=id
       text title font="astryx.type.label" color="astryx.text.primary"
       text body font="astryx.type.supporting" color="astryx.text.secondary"
+
+// Dialog: a modal layer over the page, opened with `showModal(id)` or a
+// button's `commandfor=<id> command="show-modal"`. The platform traps focus,
+// makes the page inert and closes it on Escape (`closedby`). Its body and
+// actions are the slot; the header is a title and a close button.
+component Dialog
+  props
+    id: string
+    title: string
+    purpose: string
+    variant: string
+    padding: number
+    hasCloseButton: bool
+    still: bool
+  slot
+  view
+    dialog id=id role=(purpose == "required" ? "alertdialog" : "dialog") aria-label=title
+      closedby=(purpose == "required" ? "none" : "any")
+      class=PopoverSurface box-shadow="astryx.shadow.high"
+      width=(variant == "fullscreen" ? "100%" : "min(560px, calc(100% - 32px))")
+      height=(variant == "fullscreen" ? "100%" : "auto")
+      max-width=(variant == "fullscreen" ? "100%" : "560px")
+      border-radius=(variant == "fullscreen" ? "astryx.radius.none" : "astryx.radius.container")
+      padding="astryx.space.s0" animation=enterMotion(still) testId=id
+      column gap="astryx.space.s3" padding=space(padding < 0 ? "6" : padding.toString())
+        row align-items="center" gap="astryx.space.s2"
+          text title role="heading" aria-level=2 flex=1 font="astryx.type.heading-3" color="astryx.text.primary"
+          if hasCloseButton and purpose != "required"
+            button commandfor=id command="close" aria-label="Close" testId=`close-${id}`
+              width=28 height=28 padding=0 border-width=0 border-radius="astryx.radius.element" background-color="transparent" color="astryx.icon.secondary"
+              view width=18 height=18
+                IconGlyph(icon="close")
+        children
+
+// BottomSheet: a sheet that rises from the bottom edge, with a grabber.
+// Dragging the grabber down past a third of the sheet closes it; the drag is
+// pointer events on the grabber, with the offset in component state.
+component BottomSheet
+  props
+    id: string
+    title: string
+    still: bool
+  slot
+  state dragging = false
+  state startY = 0
+  state offset = 0
+  action down(e: PointerEvent)
+    dragging = true
+    startY = e.clientY
+    offset = 0
+  action move(e: PointerEvent)
+    if dragging
+      offset = max(0, e.clientY - startY)
+  action up(e: PointerEvent)
+    dragging = false
+    if offset > 120
+      offset = 0
+      close(id)
+    else
+      offset = 0
+  view
+    dialog id=id role="dialog" aria-label=title closedby="any" testId=id
+      margin-top="auto" margin-bottom=0 margin-left=0 margin-right=0 width="100%" max-width="100%" max-height="85%"
+      background-color="astryx.surface.popover" color="astryx.text.primary"
+      border-top-left-radius="astryx.radius.page" border-top-right-radius="astryx.radius.page"
+      border-bottom-left-radius="astryx.radius.none" border-bottom-right-radius="astryx.radius.none"
+      border-width=0 padding="astryx.space.s0" box-shadow="astryx.shadow.high"
+      translate=`0px ${offset}px`
+      transition=(dragging or still ? "none" : "translate 410ms cubic-bezier(0.24, 1, 0.4, 1)")
+      animation=(still ? "none" : "astryxSheetUp 410ms cubic-bezier(0.24, 1, 0.4, 1) both")
+      column align-items="center" padding-top="astryx.space.s2" padding-bottom="astryx.space.s2" touch-action="none"
+        pointerdown=down pointermove=move pointerup=up testId=`grabber-${id}`
+        view width=36 height=5 border-radius="astryx.radius.full" background-color="astryx.border.emphasized"
+      column gap="astryx.space.s3" padding-left="astryx.space.s4" padding-right="astryx.space.s4" padding-bottom="astryx.space.s6"
+        text title role="heading" aria-level=2 font="astryx.type.heading-4" color="astryx.text.primary"
+        children
+
+// A menu row: DropdownMenu's and ContextMenu's items are data.
+shape MenuItem
+  id: string
+  label: string
+  icon: string
+  shortcut: string
+  isDestructive: bool
+  isDisabled: bool
+  isChecked: bool
+  isDivider: bool
+
+// The rows of a menu, closing it on a press.
+component MenuRows
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    select: action
+  view
+    column id=id popover="auto" role="menu" aria-label=label class=PopoverSurface padding="astryx.space.s1" min-width=220 testId=id
+      for it in items key=it.id
+        if it.isDivider
+          view height="astryx.border.width" background-color="astryx.border" margin-top="astryx.space.s1" margin-bottom="astryx.space.s1"
+        else
+          button press=select(it.id) popovertarget=id popovertargetaction="hide" disabled=it.isDisabled destructive=it.isDestructive
+            role=(it.isChecked ? "menuitemcheckbox" : "menuitem") aria-checked=it.isChecked aria-label=it.label testId=`menu-${it.id}`
+            display="flex" align-items="center" gap="astryx.space.s2" width="100%" border-width=0 background-color="transparent"
+            padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+            border-radius="astryx.radius.inner" opacity=(it.isDisabled ? 0.5 : 1)
+            view width=16 height=16 flex-shrink=0 color=(it.isDestructive ? "astryx.icon.error" : "astryx.icon.secondary")
+              IconGlyph(icon=(it.isChecked ? "check" : it.icon))
+            text it.label flex=1 text-align="left" font="astryx.type.body" color=(it.isDestructive ? "astryx.text.error" : "astryx.text.primary")
+            if it.shortcut != ""
+              text it.shortcut font="astryx.type.supporting" color="astryx.text.secondary"
+
+// DropdownMenu: a button that opens a menu of actions below it.
+component DropdownMenu
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    select: action
+  view
+    column
+      button id=`${id}-trigger` popovertarget=id aria-haspopup="menu" aria-label=label testId=`${id}-trigger`
+        display="flex" align-items="center" gap="astryx.space.s1" height="astryx.size.element-md"
+        padding-left="astryx.space.s3" padding-right="astryx.space.s2" border-width=0
+        border-radius="astryx.radius.element" background-color="astryx.neutral" color="astryx.text.primary"
+        text label font="astryx.type.label" font-weight="astryx.weight.medium"
+        view width=16 height=16
+          IconGlyph(icon="chevronDown")
+      MenuRows(id=id, label=label, items=items, select=select)
+
+// ContextMenu: a menu opened by a right click or a long press on its slot.
+component ContextMenu
+  props
+    id: string
+    label: string
+    items: MenuItem[]
+    select: action
+  slot
+  view
+    view contextPopover=id testId=`${id}-target`
+      children
+    MenuRows(id=id, label=label, items=items, select=select)
+
+// Resizable: a start panel whose width the reader drags by the handle (or
+// steps with the arrow keys on it). The width is the caller's (`width`,
+// `resize` with the new width in px). The panel is the slot.
+component Resizable
+  props
+    label: string
+    width: number
+    minWidth: number
+    maxWidth: number
+    resize: action
+  slot
+  state dragging = false
+  state startX = 0
+  state startWidth = 0
+  action down(e: PointerEvent)
+    dragging = true
+    startX = e.clientX
+    startWidth = width
+  action move(e: PointerEvent)
+    if dragging
+      resize(min(maxWidth, max(minWidth, startWidth + e.clientX - startX)))
+  action up(e: PointerEvent)
+    dragging = false
+  view
+    row align-items="stretch" height="100%"
+      view width=width flex-shrink=0 overflow="hidden"
+        children
+      view role="separator" aria-orientation="vertical" aria-label=label aria-valuenow=width aria-valuemin=minWidth aria-valuemax=maxWidth tabindex=0
+        width=8 cursor="col-resize" touch-action="none" display="flex" justify-content="center" flex-shrink=0
+        pointerdown=down pointermove=move pointerup=up testId="resize-handle"
+        view width="astryx.border.width" background-color=(dragging ? "astryx.accent" : "astryx.border")
