@@ -1,0 +1,27 @@
+# Our-stack side of the Astryx spike: infra crates and UI crates built on
+# packages/rust. Members are a glob, so adding a crate never edits this file.
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+version = "0.1.0"
+
+[workspace.dependencies]
+astryx-core = { path = "../../rust/crates/astryx-core" }
+astryx-tokens = { path = "../../rust/crates/astryx-tokens" }
+astryx-motion = { path = "../../rust/crates/astryx-motion" }
+astryx-headless = { path = "../../rust/crates/astryx-headless" }
+astryx-render-soft = { path = "../../rust/crates/astryx-render-soft" }
+astryx-desktop = { path = "../../rust/crates/astryx-desktop" }
+astryx-web = { path = "../../rust/crates/astryx-web" }
+taffy = { version = "0.15", default-features = false, features = ["std", "flexbox", "taffy_tree"] }
+serde_json = "1"
+
+[profile.web-release]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+panic = "abort"

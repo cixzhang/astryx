@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Avbryt
+@astryx.appShell.mobileNavigation	Mobilnavigering
+@astryx.appShell.skipToContent	Hoppa till innehåll
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Använd piltangenterna för att växla mellan avatarer
+@astryx.avatarGroup.label	Avatarer
+@astryx.avatarGroup.overflow	{count, number} till
+@astryx.banner.collapse	Komprimera
+@astryx.banner.dismiss	Stäng
+@astryx.banner.dismissTitled	{dismiss} {title}
+@astryx.banner.expand	Expandera
+@astryx.breadcrumbs.label	Sökväg
+@astryx.button.loading	Läser in
+@astryx.calendar.dayInRange	{date}, inom intervall
+@astryx.calendar.dayRangeEnd	{date}, intervallslut
+@astryx.calendar.dayRangeStart	{date}, intervallstart
+@astryx.calendar.dayRangeStartAndEnd	{date}, intervallstart och intervallslut
+@astryx.calendar.daySelected	{date}, vald
+@astryx.calendar.nextMonth	Nästa månad
+@astryx.calendar.previousMonth	Föregående månad
+@astryx.calendar.rangeClearedAnnounce	Startdatum {date} har rensats. Välj ett startdatum.
+@astryx.calendar.rangeCompleteAnnounce	Valt intervall: {start} till {end}.
+@astryx.calendar.rangeStartAnnounce	Startdatum {date}. Välj ett slutdatum.
+@astryx.carousel.label	Karusell
+@astryx.carousel.scrollLeft	Rulla åt vänster
+@astryx.carousel.scrollRight	Rulla åt höger
+@astryx.carousel.slideLabel	Bild {current, number} av {total, number}
+@astryx.chart.dataTableCaption	Data för {label}
+@astryx.chart.label	Diagram
+@astryx.chart.labelWithSeries	Diagram över {series} efter {xKey}
+@astryx.chartLegend.label	Diagramförklaring
+@astryx.chat.composer.placeholder	Skriv ett meddelande…
+@astryx.chat.composerDrawer.label	Objekt
+@astryx.chat.composerInput.label	Meddelandefält
+@astryx.chat.messageAriaLabel	Meddelande {status}
+@astryx.chat.pastedText.expand	Expandera
+@astryx.chat.speechRecognition.noSpeechDetected	Inget tal upptäcktes.
+@astryx.chat.status.delivered	Levererat
+@astryx.chat.status.failed	Misslyckades
+@astryx.chat.status.read	Läst
+@astryx.chat.status.sending	Skickar
+@astryx.chat.status.sent	Skickat
+@astryx.chatComposerDrawer.collapse	Komprimera {label}
+@astryx.chatComposerDrawer.expand	Expandera {label}
+@astryx.chatDictationButton.startDictation	Starta diktering
+@astryx.chatDictationButton.stopDictation	Stoppa diktering
+@astryx.chatLayout.newMessages	Nya meddelanden
+@astryx.chatLayoutScrollButton.scrollToBottom	Rulla längst ner
+@astryx.chatMessage.messageFrom	Meddelande från {sender}
+@astryx.chatSendButton.send	Skicka
+@astryx.chatSendButton.stop	Stoppa
+@astryx.chatToolCalls.error	Fel: {message}
+@astryx.chatToolCalls.groupLabel	{count} verktygsanrop
+@astryx.chatToolCalls.status.complete	Slutfört
+@astryx.chatToolCalls.status.error	Misslyckades
+@astryx.chatToolCalls.status.pending	Väntar
+@astryx.chatToolCalls.status.running	Körs
+@astryx.chatTriggerMenu.suggestions	Förslag
+@astryx.chatTypingIndicator.many	{names} skriver…
+@astryx.chatTypingIndicator.one	{name} skriver…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {annan} other {andra}}
+@astryx.checkboxList.item.checkbox	Kryssruta
+@astryx.citation.label	Källa {number}: {title}
+@astryx.codeBlock.code	Kod
+@astryx.codeBlock.copied	Kopierat
+@astryx.codeBlock.copyCode	Kopiera kod
+@astryx.commandPalette.emptyBootstrap	Skriv för att söka
+@astryx.commandPalette.emptySearch	Inga resultat
+@astryx.commandPalette.footer.close	Stäng
+@astryx.commandPalette.footer.navigate	Navigera
+@astryx.commandPalette.footer.select	Välj
+@astryx.commandPalette.input.placeholder	Sök…
+@astryx.commandPalette.label	Kommandopalett
+@astryx.commandPalette.list.label	Kommandon
+@astryx.commandPalette.loading	Läser in
+@astryx.commandPalette.noResultsFor	Inga resultat för {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {resultat} other {resultat}}
+@astryx.contextMenu.label	Snabbmeny
+@astryx.dateInput.chooseMonthYear	{monthYear}, välj månad och år
+@astryx.dateInput.clear	Rensa {label}
+@astryx.dateInput.closeCalendar	Stäng kalender
+@astryx.dateInput.dialogLabel	Välj datum
+@astryx.dateInput.doneChoosingMonth	Klart
+@astryx.dateInput.invalidDate	Ogiltigt datum
+@astryx.dateInput.monthWheel	Månad
+@astryx.dateInput.openCalendar	Öppna kalender
+@astryx.dateInput.placeholder	Välj ett datum
+@astryx.dateInput.resetPicking	Återställ
+@astryx.dateInput.savePicking	Spara
+@astryx.dateInput.toggleCalendarClose	Stäng kalender
+@astryx.dateInput.yearWheel	År
+@astryx.dateRangeInput.dialogLabel	Välj datumintervall
+@astryx.dateRangeInput.placeholder	Välj datumintervall
+@astryx.dateRangeInput.presetDateRanges	Fördefinierade datumintervall
+@astryx.dateTimeInput.dateTab	Datum
+@astryx.dateTimeInput.dialogLabel	Välj datum och tid
+@astryx.dateTimeInput.hourWheel	Timme
+@astryx.dateTimeInput.meridiemAM	fm
+@astryx.dateTimeInput.meridiemPM	em
+@astryx.dateTimeInput.meridiemWheel	fm/em
+@astryx.dateTimeInput.minuteWheel	Minut
+@astryx.dateTimeInput.openTimePicker	Öppna {label}
+@astryx.dateTimeInput.pickerMode	Avsnitt för datum och tid
+@astryx.dateTimeInput.placeholder	Välj ett datum
+@astryx.dateTimeInput.saveDatePicking	Spara datum
+@astryx.dateTimeInput.secondWheel	Sekund
+@astryx.dateTimeInput.timeHint12h	t.ex. 2:30 em
+@astryx.dateTimeInput.timeHint24h	t.ex. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Alternativ för {label}
+@astryx.dateTimeInput.timePlaceholder	Välj en tid
+@astryx.dateTimeInput.timeSuffix	{label} tid
+@astryx.dateTimeInput.timeTab	Tid
+@astryx.dialog.close	Stäng
+@astryx.dropdownMenu.back	Tillbaka
+@astryx.dropdownMenu.label	Meny
+@astryx.field.optional	Valfritt
+@astryx.field.required	Obligatoriskt
+@astryx.fileInput.clearLabel	Rensa {label}
+@astryx.fileInput.dropHint	Släpp filer här
+@astryx.fileInput.errorInvalidType	”{fileName}” är inte en tillåten filtyp
+@astryx.fileInput.errorMaxFiles	Högst {maxFiles} filer tillåts
+@astryx.fileInput.errorMaxSize	”{fileName}” överskrider gränsen på {maxSize}
+@astryx.fileInput.fileSelected	1 fil vald: {fileName}
+@astryx.fileInput.filesSelected	{count} filer valda
+@astryx.fileInput.placeholder	Välj fil
+@astryx.fileInput.placeholderMultiple	Välj filer
+@astryx.fileInput.required	Obligatoriskt
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Skrivskyddad
+@astryx.input.statusButton.error	Feldetaljer
+@astryx.input.statusButton.success	Detaljer om lyckat resultat
+@astryx.input.statusButton.warning	Varningsdetaljer
+@astryx.keyboardHint.toNavigate	för att navigera
+@astryx.lightbox.close	Stäng
+@astryx.lightbox.imagePosition	Bild {index, number} av {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} av {total, number}
+@astryx.lightbox.mediaViewer	Mediavisare
+@astryx.lightbox.next	Nästa
+@astryx.lightbox.previous	Föregående
+@astryx.lightbox.zoom	Zooma
+@astryx.lightbox.zoomedIn	Inzoomad, använd piltangenterna för att panorera
+@astryx.lightbox.zoomedOut	Utzoomad
+@astryx.link.newTab	(öppnas i ny flik)
+@astryx.listInput.addItem	Lägg till {itemName}
+@astryx.listInput.announceAdded	Tillagt: {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} är redan {boundary, select, first {först} last {sist} other {}}.
+@astryx.listInput.announceDropped	{itemName} har släppts på position {position, number} av {total, number}.
+@astryx.listInput.announceGrabbed	Lyft: {itemName} {position, number}. Använd piltangenterna för att flytta, Space eller Enter för att släppa och Escape för att avbryta.
+@astryx.listInput.announceMovedToPosition	{itemName} har flyttats till position {position, number} av {total, number}.
+@astryx.listInput.announceRemoved	Borttaget: {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	Omordning avbruten.
+@astryx.listInput.announceReturnedToPosition	{itemName} har återgått till position {position, number}.
+@astryx.listInput.emptyDescription	Lägg till {itemName} för att komma igång.
+@astryx.listInput.emptyTitle	Inget tillagt ännu: {itemName}
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} av {total, number}
+@astryx.listInput.removeItem	Ta bort {itemName} {position, number}
+@astryx.listInput.removeUnavailable	Det går inte att ta bort medan listan är inaktiverad
+@astryx.listInput.reorderInstructions	Använd Arrow Up eller Arrow Down för att flytta objektet en position. Tryck på Space eller Enter för att lyfta det och ändra ordningen med fler tangentbordskommandon.
+@astryx.listInput.reorderItem	Ändra ordning för {itemName} {position, number}
+@astryx.markdown.table	Tabell
+@astryx.markdown.taskList	Uppgiftslista
+@astryx.metadataList.showLess	Visa mindre
+@astryx.metadataList.showMore	Visa mer
+@astryx.mobileNav.closeNavigation	Stäng navigering
+@astryx.mobileNav.navigation	Navigering
+@astryx.mobileNav.toggle.open	Öppna navigering
+@astryx.moreMenu.label	Fler alternativ
+@astryx.multiSelector.allSelected	Alla markerade
+@astryx.multiSelector.clearAll	Rensa alla {label}
+@astryx.multiSelector.empty	Inga alternativ
+@astryx.multiSelector.emptySearchResults	Inga resultat hittades
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {resultat} other {resultat}}
+@astryx.multiSelector.searchOptions	Sökalternativ
+@astryx.multiSelector.searchPlaceholder	Sök…
+@astryx.multiSelector.selectAll	Markera alla
+@astryx.multiSelector.selectAllPartiallySelected	{label}, delvis markerad
+@astryx.multiSelector.selectPlaceholder	Välj…
+@astryx.multiSelector.selectionCleared	Markeringen har rensats
+@astryx.multiSelector.selectionCount	{count, number} av {total, number} markerade
+@astryx.numberInput.clearLabel	Rensa {label}
+@astryx.numberInput.decrementLabel	Minska {label}
+@astryx.numberInput.incrementLabel	Öka {label}
+@astryx.outline.label	Innehållsförteckning
+@astryx.pagination.count	{from, number}–{to, number} av {total, number}
+@astryx.pagination.first	Gå till första sidan
+@astryx.pagination.goToPage	Gå till sida {page, number}
+@astryx.pagination.goToPageInput	Gå till sida
+@astryx.pagination.itemsPerPage	Objekt per sida
+@astryx.pagination.label	Sidnumrering
+@astryx.pagination.last	Gå till sista sidan
+@astryx.pagination.next	Gå till nästa sida
+@astryx.pagination.nextBy	Gå framåt {step, number} {step, plural, one {sida} other {sidor}}
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Sida {current, number}
+@astryx.pagination.pageIndicators	Sidindikatorer
+@astryx.pagination.pageLabel	Sida
+@astryx.pagination.pageOfTotal	Sida {current, number} av {total, number}
+@astryx.pagination.previous	Gå till föregående sida
+@astryx.pagination.previousBy	Gå tillbaka {step, number} {step, plural, one {sida} other {sidor}}
+@astryx.popover.close	Stäng popover
+@astryx.powersearch.editor.addFilter	+ Lägg till filter
+@astryx.powersearch.editor.apply	Tillämpa
+@astryx.powersearch.editor.cancel	Avbryt
+@astryx.powersearch.editor.delete	Ta bort
+@astryx.powersearch.editor.field	Fält
+@astryx.powersearch.editor.group	Grupp
+@astryx.powersearch.editor.groupOperator	Gruppoperator
+@astryx.powersearch.editor.operator	Operator
+@astryx.powersearch.editor.removeFilter	Ta bort filter
+@astryx.powersearch.label	Sök
+@astryx.powersearch.operator.after	är efter
+@astryx.powersearch.operator.before	är före
+@astryx.powersearch.operator.between	är mellan
+@astryx.powersearch.operator.contains	innehåller
+@astryx.powersearch.operator.endsWith	slutar med
+@astryx.powersearch.operator.equals	är
+@astryx.powersearch.operator.greaterThan	är större än
+@astryx.powersearch.operator.greaterThanOrEqual	är större än eller lika med
+@astryx.powersearch.operator.is	är
+@astryx.powersearch.operator.isAnyOf	är någon av
+@astryx.powersearch.operator.isFalse	är falskt
+@astryx.powersearch.operator.isNoneOf	är ingen av
+@astryx.powersearch.operator.isNot	är inte
+@astryx.powersearch.operator.isTrue	är sant
+@astryx.powersearch.operator.lessThan	är mindre än
+@astryx.powersearch.operator.lessThanOrEqual	är mindre än eller lika med
+@astryx.powersearch.operator.notContains	innehåller inte
+@astryx.powersearch.operator.notEndsWith	slutar inte med
+@astryx.powersearch.operator.notEquals	är inte
+@astryx.powersearch.operator.notStartsWith	börjar inte med
+@astryx.powersearch.operator.startsWith	börjar med
+@astryx.powersearch.placeholder	Sök…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {resultat} other {resultat}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Lägg till värden…
+@astryx.powersearch.valueEditor.date	Datum
+@astryx.powersearch.valueEditor.dateRange	datumintervall
+@astryx.powersearch.valueEditor.endDate	Slutdatum
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Ange tal…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Ange värde…
+@astryx.powersearch.valueEditor.entities	Entiteter
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {entitet} other {entiteter}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {filter} other {filter}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {objekt} other {objekt}}
+@astryx.powersearch.valueEditor.relativeDate	Relativt datum
+@astryx.powersearch.valueEditor.searchPlaceholder	Sök…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Välj värden…
+@astryx.powersearch.valueEditor.startDate	Startdatum
+@astryx.powersearch.valueEditor.time	Tid
+@astryx.powersearch.valueEditor.value	Värde
+@astryx.powersearch.valueEditor.values	Värden
+@astryx.resizable.collapsed	Komprimerad
+@astryx.resizable.handle.label	Handtag för storleksändring
+@astryx.selector.clearLabel	Rensa {label}
+@astryx.selector.empty	Inga alternativ
+@astryx.selector.emptySearchResults	Inga resultat hittades
+@astryx.selector.placeholder	Välj…
+@astryx.selector.resultCount	{count, number} {count, plural, one {resultat} other {resultat}}
+@astryx.selector.searchOptions	Sökalternativ
+@astryx.selector.searchPlaceholder	Sök…
+@astryx.sideNav.heading.dialogLabel	Navigeringsmeny
+@astryx.sideNav.heading.openMenu	{heading}, Öppna meny
+@astryx.sideNav.label	Sidonavigering
+@astryx.sideNav.resizeSidebar	Ändra storlek på sidofältet
+@astryx.sideNavCollapseButton.collapseSidebar	Komprimera sidofältet
+@astryx.sideNavCollapseButton.expandSidebar	Expandera sidofältet
+@astryx.sideNavItem.collapse	Komprimera {label}
+@astryx.sideNavItem.expand	Expandera {label}
+@astryx.sideNavItem.submenuLabel	Undermeny för {label}
+@astryx.spinner.loading	Läser in
+@astryx.step.goToStep	Gå till steg {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Gå till steg {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Valfritt
+@astryx.step.status.completed	slutfört
+@astryx.step.status.error	fel
+@astryx.step.status.warning	varning
+@astryx.stepper.label	Förlopp
+@astryx.stepper.nextStep	Nästa steg
+@astryx.stepper.previousStep	Föregående steg
+@astryx.tabList.label	Flikar
+@astryx.table.filter.allPlaceholder	Alla
+@astryx.table.filter.apply	Tillämpa
+@astryx.table.filter.reset	Återställ
+@astryx.table.label	Tabell
+@astryx.table.noData	Inga data
+@astryx.table.pagination.label	Tabellsidnumrering
+@astryx.table.pagination.labelAbove	{label} (överst)
+@astryx.table.pagination.labelBelow	{label} (nederst)
+@astryx.table.rowStatus.columnHeader	Radstatus
+@astryx.table.selection.selectAllRows	Markera alla rader
+@astryx.table.selection.selectRow	Markera rad
+@astryx.table.selection.selectRowNamed	Markera {label}
+@astryx.table.sort.ascending	Sortera stigande
+@astryx.table.sort.clear	Rensa sortering
+@astryx.table.sort.descending	Sortera fallande
+@astryx.tableFiltering.filterByColumn	Filtrera {header}
+@astryx.tableGroupedRows.collapseGroup	Komprimera grupp {groupKey}
+@astryx.tableGroupedRows.expandGroup	Expandera grupp {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	Komprimera alla rader
+@astryx.tableRowExpansion.collapseRow	Komprimera rad
+@astryx.tableRowExpansion.columnHeader	Radexpansion
+@astryx.tableRowExpansion.expandAllRows	Expandera alla rader
+@astryx.tableRowExpansion.expandRow	Expandera rad
+@astryx.tableTree.collapseAllRows	Komprimera alla rader
+@astryx.tableTree.collapseRow	Komprimera rad
+@astryx.tableTree.expandAllRows	Expandera alla rader
+@astryx.tableTree.expandRow	Expandera rad
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {tecken} other {tecken}} över gränsen
+@astryx.textArea.charactersRemaining	{count, number} {count, plural, one {tecken} other {tecken}} kvar
+@astryx.textInput.clearLabel	Rensa {label}
+@astryx.thumbnail.fallbackName	Miniatyr
+@astryx.thumbnail.open	Öppna {accessibleName}
+@astryx.thumbnail.remove	Ta bort {accessibleName}
+@astryx.timeInput.clearLabel	Rensa {label}
+@astryx.timeInput.invalidTime	Ogiltig tid
+@astryx.timeInput.openPicker	Öppna {label}
+@astryx.timeInput.placeholder	Välj en tid
+@astryx.timestamp.copied	Kopierat
+@astryx.timestamp.copy	Kopiera
+@astryx.timestamp.copyValue	Kopiera {value}
+@astryx.timestamp.detailsLabel	Tidsstämpeldetaljer
+@astryx.toast.dismiss	Stäng avisering
+@astryx.toast.viewport	Aviseringar
+@astryx.token.remove	Ta bort {label}
+@astryx.tokenizer.clearAll	Rensa alla
+@astryx.tokenizer.tokenAdded	Tillagt: {label}
+@astryx.tokenizer.tokenRemoved	Borttaget: {label}
+@astryx.topNav.heading.dialogLabel	Navigeringsmeny
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Öppna meny
+@astryx.topNav.landmarkLabel	Övre navigering
+@astryx.transferList.addAll	Lägg till alla
+@astryx.transferList.addOption	Lägg till {label}
+@astryx.transferList.announceAdded	{label} har lagts till. {count, number} {count, plural, one {objekt valt} other {objekt valda}}.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {objekt har lagts till} other {objekt har lagts till}}.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {objekt har tagits bort} other {objekt har tagits bort}}.
+@astryx.transferList.announceDropped	{label} har släppts på position {position, number} av {total, number}.
+@astryx.transferList.announceGrabbed	Lyft: {label}, position {position, number} av {total, number}. Använd piltangenterna för att flytta, Space eller Enter för att släppa eller Escape för att avbryta.
+@astryx.transferList.announceMoveCancelled	Flytten av {label} avbröts.
+@astryx.transferList.announceMovedToPosition	{label}, position {position, number} av {total, number}.
+@astryx.transferList.announceRemoved	{label} har tagits bort. {count, number} {count, plural, one {objekt valt} other {objekt valda}}.
+@astryx.transferList.announceReturned	{label} har återgått till position {position, number}.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {objekt hittades} other {objekt hittades}}.
+@astryx.transferList.availableEmpty	Inga tillgängliga alternativ
+@astryx.transferList.availableLabel	Tillgängliga
+@astryx.transferList.clear	Rensa
+@astryx.transferList.noResults	Inga resultat
+@astryx.transferList.removeOption	Ta bort {label}
+@astryx.transferList.reorderDisabled	Det går inte att ändra ordning för {label}
+@astryx.transferList.reorderInstructions	Tryck på Space eller Enter för att lyfta ett objekt. Använd Arrow Up, Arrow Down, Home eller End för att flytta det. Tryck på Space eller Enter för att släppa eller Escape för att avbryta.
+@astryx.transferList.reorderOption	Ändra ordning för {label}
+@astryx.transferList.searchLabel	Sök i {label}
+@astryx.transferList.searchPlaceholder	Sök…
+@astryx.transferList.selectedEmpty	Inga valda alternativ
+@astryx.transferList.selectedLabel	Valda
+@astryx.transferList.transferDisabled	Det går inte att flytta {label}
+@astryx.transferList.ungroupedLabel	Övriga
+@astryx.transferListSelector.apply	Tillämpa
+@astryx.transferListSelector.cancel	Avbryt
+@astryx.transferListSelector.triggerLabel	{count, number} valda
+@astryx.treeList.toggleChildren	Växla underelement
+@astryx.typeahead.clearSelection	Rensa markering
+@astryx.typeahead.emptySearchResults	Inga resultat hittades
+@astryx.typeahead.loading	Läser in
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {resultat} other {resultat}}
+@astryx.typeahead.searchPlaceholder	Sök…
+@astryx.typeahead.searchResults	Sökresultat

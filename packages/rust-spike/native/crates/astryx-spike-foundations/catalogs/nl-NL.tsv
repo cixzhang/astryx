@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Annuleren
+@astryx.appShell.mobileNavigation	Mobiele navigatie
+@astryx.appShell.skipToContent	Naar inhoud gaan
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Gebruik de pijltjestoetsen om tussen avatars te navigeren
+@astryx.avatarGroup.label	Avatars
+@astryx.avatarGroup.overflow	nog {count, number}
+@astryx.banner.collapse	Inklappen
+@astryx.banner.dismiss	Sluiten
+@astryx.banner.dismissTitled	{title} {dismiss}
+@astryx.banner.expand	Uitvouwen
+@astryx.breadcrumbs.label	Kruimelpad
+@astryx.button.loading	Laden
+@astryx.calendar.dayInRange	{date}, binnen bereik
+@astryx.calendar.dayRangeEnd	{date}, einde van bereik
+@astryx.calendar.dayRangeStart	{date}, begin van bereik
+@astryx.calendar.dayRangeStartAndEnd	{date}, begin en einde van bereik
+@astryx.calendar.daySelected	{date}, geselecteerd
+@astryx.calendar.nextMonth	Volgende maand
+@astryx.calendar.previousMonth	Vorige maand
+@astryx.calendar.rangeClearedAnnounce	Startdatum {date} gewist. Selecteer een startdatum.
+@astryx.calendar.rangeCompleteAnnounce	Geselecteerd bereik: {start} tot {end}.
+@astryx.calendar.rangeStartAnnounce	Startdatum {date}. Selecteer een einddatum.
+@astryx.carousel.label	Carrousel
+@astryx.carousel.scrollLeft	Naar links scrollen
+@astryx.carousel.scrollRight	Naar rechts scrollen
+@astryx.carousel.slideLabel	Dia {current, number} van {total, number}
+@astryx.chart.dataTableCaption	Gegevens van {label}
+@astryx.chart.label	Grafiek
+@astryx.chart.labelWithSeries	Grafiek van {series} per {xKey}
+@astryx.chartLegend.label	Grafieklegenda
+@astryx.chat.composer.placeholder	Typ een bericht…
+@astryx.chat.composerDrawer.label	Items
+@astryx.chat.composerInput.label	Berichtinvoer
+@astryx.chat.messageAriaLabel	Bericht {status}
+@astryx.chat.pastedText.expand	Uitvouwen
+@astryx.chat.speechRecognition.noSpeechDetected	Er is geen spraak gedetecteerd.
+@astryx.chat.status.delivered	Bezorgd
+@astryx.chat.status.failed	Mislukt
+@astryx.chat.status.read	Gelezen
+@astryx.chat.status.sending	Verzenden
+@astryx.chat.status.sent	Verzonden
+@astryx.chatComposerDrawer.collapse	{label} inklappen
+@astryx.chatComposerDrawer.expand	{label} uitvouwen
+@astryx.chatDictationButton.startDictation	Dicteren starten
+@astryx.chatDictationButton.stopDictation	Dicteren stoppen
+@astryx.chatLayout.newMessages	Nieuwe berichten
+@astryx.chatLayoutScrollButton.scrollToBottom	Naar beneden scrollen
+@astryx.chatMessage.messageFrom	Bericht van {sender}
+@astryx.chatSendButton.send	Verzenden
+@astryx.chatSendButton.stop	Stoppen
+@astryx.chatToolCalls.error	Fout: {message}
+@astryx.chatToolCalls.groupLabel	{count} toolaanroepen
+@astryx.chatToolCalls.status.complete	Voltooid
+@astryx.chatToolCalls.status.error	Mislukt
+@astryx.chatToolCalls.status.pending	In afwachting
+@astryx.chatToolCalls.status.running	Wordt uitgevoerd
+@astryx.chatTriggerMenu.suggestions	Suggesties
+@astryx.chatTypingIndicator.many	{names} zijn aan het typen…
+@astryx.chatTypingIndicator.one	{name} is aan het typen…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {ander} other {anderen}}
+@astryx.checkboxList.item.checkbox	Selectievakje
+@astryx.citation.label	Bron {number}: {title}
+@astryx.codeBlock.code	Code
+@astryx.codeBlock.copied	Gekopieerd
+@astryx.codeBlock.copyCode	Code kopiëren
+@astryx.commandPalette.emptyBootstrap	Typ om te zoeken
+@astryx.commandPalette.emptySearch	Geen resultaten
+@astryx.commandPalette.footer.close	Sluiten
+@astryx.commandPalette.footer.navigate	Navigeren
+@astryx.commandPalette.footer.select	Selecteren
+@astryx.commandPalette.input.placeholder	Zoeken…
+@astryx.commandPalette.label	Opdrachtenpalet
+@astryx.commandPalette.list.label	Opdrachten
+@astryx.commandPalette.loading	Laden
+@astryx.commandPalette.noResultsFor	Geen resultaten voor {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {resultaat} other {resultaten}}
+@astryx.contextMenu.label	Contextmenu
+@astryx.dateInput.chooseMonthYear	{monthYear}, maand en jaar kiezen
+@astryx.dateInput.clear	{label} wissen
+@astryx.dateInput.closeCalendar	Kalender sluiten
+@astryx.dateInput.dialogLabel	Datum kiezen
+@astryx.dateInput.doneChoosingMonth	Gereed
+@astryx.dateInput.invalidDate	Ongeldige datum
+@astryx.dateInput.monthWheel	Maand
+@astryx.dateInput.openCalendar	Kalender openen
+@astryx.dateInput.placeholder	Selecteer een datum
+@astryx.dateInput.resetPicking	Resetten
+@astryx.dateInput.savePicking	Opslaan
+@astryx.dateInput.toggleCalendarClose	Kalender sluiten
+@astryx.dateInput.yearWheel	Jaar
+@astryx.dateRangeInput.dialogLabel	Datumbereik kiezen
+@astryx.dateRangeInput.placeholder	Datumbereik selecteren
+@astryx.dateRangeInput.presetDateRanges	Vooraf ingestelde datumbereiken
+@astryx.dateTimeInput.dateTab	Datum
+@astryx.dateTimeInput.dialogLabel	Datum en tijd kiezen
+@astryx.dateTimeInput.hourWheel	Uur
+@astryx.dateTimeInput.meridiemAM	AM
+@astryx.dateTimeInput.meridiemPM	PM
+@astryx.dateTimeInput.meridiemWheel	AM/PM
+@astryx.dateTimeInput.minuteWheel	Minuut
+@astryx.dateTimeInput.openTimePicker	{label} openen
+@astryx.dateTimeInput.pickerMode	Datum-/tijdsectie
+@astryx.dateTimeInput.placeholder	Selecteer een datum
+@astryx.dateTimeInput.saveDatePicking	Datum opslaan
+@astryx.dateTimeInput.secondWheel	Seconde
+@astryx.dateTimeInput.timeHint12h	bijv. 2:30 PM
+@astryx.dateTimeInput.timeHint24h	bijv. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Opties voor {label}
+@astryx.dateTimeInput.timePlaceholder	Selecteer een tijd
+@astryx.dateTimeInput.timeSuffix	{label} tijd
+@astryx.dateTimeInput.timeTab	Tijd
+@astryx.dialog.close	Sluiten
+@astryx.dropdownMenu.back	Terug
+@astryx.dropdownMenu.label	Menu
+@astryx.field.optional	Optioneel
+@astryx.field.required	Verplicht
+@astryx.fileInput.clearLabel	{label} wissen
+@astryx.fileInput.dropHint	Zet bestanden hier neer
+@astryx.fileInput.errorInvalidType	“{fileName}” is geen toegestaan bestandstype
+@astryx.fileInput.errorMaxFiles	Maximaal {maxFiles} bestanden toegestaan
+@astryx.fileInput.errorMaxSize	“{fileName}” overschrijdt de limiet van {maxSize}
+@astryx.fileInput.fileSelected	1 bestand geselecteerd: {fileName}
+@astryx.fileInput.filesSelected	{count} bestanden geselecteerd
+@astryx.fileInput.placeholder	Bestand kiezen
+@astryx.fileInput.placeholderMultiple	Bestanden kiezen
+@astryx.fileInput.required	Verplicht
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Alleen-lezen
+@astryx.input.statusButton.error	Foutdetails
+@astryx.input.statusButton.success	Succesdetails
+@astryx.input.statusButton.warning	Waarschuwingsdetails
+@astryx.keyboardHint.toNavigate	om te navigeren
+@astryx.lightbox.close	Sluiten
+@astryx.lightbox.imagePosition	Afbeelding {index, number} van {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} van {total, number}
+@astryx.lightbox.mediaViewer	Mediaviewer
+@astryx.lightbox.next	Volgende
+@astryx.lightbox.previous	Vorige
+@astryx.lightbox.zoom	Zoomen
+@astryx.lightbox.zoomedIn	Ingezoomd, gebruik de pijltjestoetsen om te pannen
+@astryx.lightbox.zoomedOut	Uitgezoomd
+@astryx.link.newTab	(opent in nieuw tabblad)
+@astryx.listInput.addItem	{itemName} toevoegen
+@astryx.listInput.announceAdded	{itemName} {position, number} toegevoegd.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} staat al {boundary, select, first {bovenaan} last {onderaan} other {}}.
+@astryx.listInput.announceDropped	{itemName} neergezet op positie {position, number} van {total, number}.
+@astryx.listInput.announceGrabbed	{itemName} {position, number} opgepakt. Gebruik de pijltjestoetsen om te verplaatsen, Space of Enter om neer te zetten en Escape om te annuleren.
+@astryx.listInput.announceMovedToPosition	{itemName} verplaatst naar positie {position, number} van {total, number}.
+@astryx.listInput.announceRemoved	{itemName} {position, number} verwijderd.
+@astryx.listInput.announceReorderCancelled	Herschikken geannuleerd.
+@astryx.listInput.announceReturnedToPosition	{itemName} teruggezet op positie {position, number}.
+@astryx.listInput.emptyDescription	Voeg een {itemName} toe om te beginnen.
+@astryx.listInput.emptyTitle	Nog geen {itemName} toegevoegd
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} van {total, number}
+@astryx.listInput.removeItem	{itemName} {position, number} verwijderen
+@astryx.listInput.removeUnavailable	Verwijderen is niet mogelijk zolang de lijst is uitgeschakeld
+@astryx.listInput.reorderInstructions	Gebruik Arrow Up of Arrow Down om dit item één positie te verplaatsen. Druk op Space of Enter om het op te pakken en met het toetsenbord verder te herschikken.
+@astryx.listInput.reorderItem	{itemName} {position, number} herschikken
+@astryx.markdown.table	Tabel
+@astryx.markdown.taskList	Takenlijst
+@astryx.metadataList.showLess	Minder weergeven
+@astryx.metadataList.showMore	Meer weergeven
+@astryx.mobileNav.closeNavigation	Navigatie sluiten
+@astryx.mobileNav.navigation	Navigatie
+@astryx.mobileNav.toggle.open	Navigatie openen
+@astryx.moreMenu.label	Meer opties
+@astryx.multiSelector.allSelected	Alles geselecteerd
+@astryx.multiSelector.clearAll	Alle {label} wissen
+@astryx.multiSelector.empty	Geen opties
+@astryx.multiSelector.emptySearchResults	Geen resultaten gevonden
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {resultaat} other {resultaten}}
+@astryx.multiSelector.searchOptions	Zoekopties
+@astryx.multiSelector.searchPlaceholder	Zoeken…
+@astryx.multiSelector.selectAll	Alles selecteren
+@astryx.multiSelector.selectAllPartiallySelected	{label}, gedeeltelijk geselecteerd
+@astryx.multiSelector.selectPlaceholder	Selecteren…
+@astryx.multiSelector.selectionCleared	Selectie gewist
+@astryx.multiSelector.selectionCount	{count, number} van {total, number} geselecteerd
+@astryx.numberInput.clearLabel	{label} wissen
+@astryx.numberInput.decrementLabel	{label} verlagen
+@astryx.numberInput.incrementLabel	{label} verhogen
+@astryx.outline.label	Inhoudsopgave
+@astryx.pagination.count	{from, number}–{to, number} van {total, number}
+@astryx.pagination.first	Ga naar de eerste pagina
+@astryx.pagination.goToPage	Ga naar pagina {page, number}
+@astryx.pagination.goToPageInput	Naar pagina
+@astryx.pagination.itemsPerPage	Items per pagina
+@astryx.pagination.label	Paginering
+@astryx.pagination.last	Ga naar de laatste pagina
+@astryx.pagination.next	Ga naar de volgende pagina
+@astryx.pagination.nextBy	Ga {step, number} {step, plural, one {pagina} other {pagina's}} vooruit
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Pagina {current, number}
+@astryx.pagination.pageIndicators	Pagina-indicatoren
+@astryx.pagination.pageLabel	Pagina
+@astryx.pagination.pageOfTotal	Pagina {current, number} van {total, number}
+@astryx.pagination.previous	Ga naar de vorige pagina
+@astryx.pagination.previousBy	Ga {step, number} {step, plural, one {pagina} other {pagina's}} terug
+@astryx.popover.close	Pop-over sluiten
+@astryx.powersearch.editor.addFilter	+ Filter toevoegen
+@astryx.powersearch.editor.apply	Toepassen
+@astryx.powersearch.editor.cancel	Annuleren
+@astryx.powersearch.editor.delete	Verwijderen
+@astryx.powersearch.editor.field	Veld
+@astryx.powersearch.editor.group	Groep
+@astryx.powersearch.editor.groupOperator	Groepsoperator
+@astryx.powersearch.editor.operator	Operator
+@astryx.powersearch.editor.removeFilter	Filter verwijderen
+@astryx.powersearch.label	Zoeken
+@astryx.powersearch.operator.after	is na
+@astryx.powersearch.operator.before	is vóór
+@astryx.powersearch.operator.between	is tussen
+@astryx.powersearch.operator.contains	bevat
+@astryx.powersearch.operator.endsWith	eindigt met
+@astryx.powersearch.operator.equals	is
+@astryx.powersearch.operator.greaterThan	is groter dan
+@astryx.powersearch.operator.greaterThanOrEqual	is groter dan of gelijk aan
+@astryx.powersearch.operator.is	is
+@astryx.powersearch.operator.isAnyOf	is een van
+@astryx.powersearch.operator.isFalse	is onwaar
+@astryx.powersearch.operator.isNoneOf	is geen van
+@astryx.powersearch.operator.isNot	is niet
+@astryx.powersearch.operator.isTrue	is waar
+@astryx.powersearch.operator.lessThan	is kleiner dan
+@astryx.powersearch.operator.lessThanOrEqual	is kleiner dan of gelijk aan
+@astryx.powersearch.operator.notContains	bevat niet
+@astryx.powersearch.operator.notEndsWith	eindigt niet met
+@astryx.powersearch.operator.notEquals	is niet
+@astryx.powersearch.operator.notStartsWith	begint niet met
+@astryx.powersearch.operator.startsWith	begint met
+@astryx.powersearch.placeholder	Zoeken…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {resultaat} other {resultaten}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Waarden toevoegen…
+@astryx.powersearch.valueEditor.date	Datum
+@astryx.powersearch.valueEditor.dateRange	datumbereik
+@astryx.powersearch.valueEditor.endDate	Einddatum
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Getal invoeren…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Waarde invoeren…
+@astryx.powersearch.valueEditor.entities	Entiteiten
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {entiteit} other {entiteiten}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {filter} other {filters}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {item} other {items}}
+@astryx.powersearch.valueEditor.relativeDate	Relatieve datum
+@astryx.powersearch.valueEditor.searchPlaceholder	Zoeken…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Waarden selecteren…
+@astryx.powersearch.valueEditor.startDate	Startdatum
+@astryx.powersearch.valueEditor.time	Tijd
+@astryx.powersearch.valueEditor.value	Waarde
+@astryx.powersearch.valueEditor.values	Waarden
+@astryx.resizable.collapsed	Ingeklapt
+@astryx.resizable.handle.label	Formaatgreep
+@astryx.selector.clearLabel	{label} wissen
+@astryx.selector.empty	Geen opties
+@astryx.selector.emptySearchResults	Geen resultaten gevonden
+@astryx.selector.placeholder	Selecteer…
+@astryx.selector.resultCount	{count, number} {count, plural, one {resultaat} other {resultaten}}
+@astryx.selector.searchOptions	Zoekopties
+@astryx.selector.searchPlaceholder	Zoeken…
+@astryx.sideNav.heading.dialogLabel	Navigatiemenu
+@astryx.sideNav.heading.openMenu	{heading}, Menu openen
+@astryx.sideNav.label	Zijnavigatie
+@astryx.sideNav.resizeSidebar	Zijbalk aanpassen
+@astryx.sideNavCollapseButton.collapseSidebar	Zijbalk inklappen
+@astryx.sideNavCollapseButton.expandSidebar	Zijbalk uitvouwen
+@astryx.sideNavItem.collapse	{label} inklappen
+@astryx.sideNavItem.expand	{label} uitvouwen
+@astryx.sideNavItem.submenuLabel	Submenu van {label}
+@astryx.spinner.loading	Laden
+@astryx.step.goToStep	Naar stap {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Naar stap {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Optioneel
+@astryx.step.status.completed	voltooid
+@astryx.step.status.error	fout
+@astryx.step.status.warning	waarschuwing
+@astryx.stepper.label	Voortgang
+@astryx.stepper.nextStep	Volgende stap
+@astryx.stepper.previousStep	Vorige stap
+@astryx.tabList.label	Tabbladen
+@astryx.table.filter.allPlaceholder	Alle
+@astryx.table.filter.apply	Toepassen
+@astryx.table.filter.reset	Resetten
+@astryx.table.label	Tabel
+@astryx.table.noData	Geen gegevens
+@astryx.table.pagination.label	Tabelpaginering
+@astryx.table.pagination.labelAbove	{label} (boven)
+@astryx.table.pagination.labelBelow	{label} (onder)
+@astryx.table.rowStatus.columnHeader	Rijstatus
+@astryx.table.selection.selectAllRows	Alle rijen selecteren
+@astryx.table.selection.selectRow	Rij selecteren
+@astryx.table.selection.selectRowNamed	{label} selecteren
+@astryx.table.sort.ascending	Oplopend sorteren
+@astryx.table.sort.clear	Sortering wissen
+@astryx.table.sort.descending	Aflopend sorteren
+@astryx.tableFiltering.filterByColumn	{header} filteren
+@astryx.tableGroupedRows.collapseGroup	Groep {groupKey} inklappen
+@astryx.tableGroupedRows.expandGroup	Groep {groupKey} uitvouwen
+@astryx.tableRowExpansion.collapseAllRows	Alle rijen inklappen
+@astryx.tableRowExpansion.collapseRow	Rij inklappen
+@astryx.tableRowExpansion.columnHeader	Rij uitvouwen
+@astryx.tableRowExpansion.expandAllRows	Alle rijen uitvouwen
+@astryx.tableRowExpansion.expandRow	Rij uitvouwen
+@astryx.tableTree.collapseAllRows	Alle rijen inklappen
+@astryx.tableTree.collapseRow	Rij inklappen
+@astryx.tableTree.expandAllRows	Alle rijen uitvouwen
+@astryx.tableTree.expandRow	Rij uitvouwen
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {teken} other {tekens}} boven de limiet
+@astryx.textArea.charactersRemaining	{count, number} {count, plural, one {teken} other {tekens}} resterend
+@astryx.textInput.clearLabel	{label} wissen
+@astryx.thumbnail.fallbackName	Miniatuur
+@astryx.thumbnail.open	{accessibleName} openen
+@astryx.thumbnail.remove	{accessibleName} verwijderen
+@astryx.timeInput.clearLabel	{label} wissen
+@astryx.timeInput.invalidTime	Ongeldige tijd
+@astryx.timeInput.openPicker	{label} openen
+@astryx.timeInput.placeholder	Selecteer een tijd
+@astryx.timestamp.copied	Gekopieerd
+@astryx.timestamp.copy	Kopiëren
+@astryx.timestamp.copyValue	{value} kopiëren
+@astryx.timestamp.detailsLabel	Tijdstempeldetails
+@astryx.toast.dismiss	Melding sluiten
+@astryx.toast.viewport	Meldingen
+@astryx.token.remove	{label} verwijderen
+@astryx.tokenizer.clearAll	Alles wissen
+@astryx.tokenizer.tokenAdded	{label} toegevoegd
+@astryx.tokenizer.tokenRemoved	{label} verwijderd
+@astryx.topNav.heading.dialogLabel	Navigatiemenu
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Menu openen
+@astryx.topNav.landmarkLabel	Bovenste navigatie
+@astryx.transferList.addAll	Alles toevoegen
+@astryx.transferList.addOption	{label} toevoegen
+@astryx.transferList.announceAdded	{label} toegevoegd. {count, number} {count, plural, one {item} other {items}} geselecteerd.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {item} other {items}} toegevoegd.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {item} other {items}} verwijderd.
+@astryx.transferList.announceDropped	{label} neergezet op positie {position, number} van {total, number}.
+@astryx.transferList.announceGrabbed	{label} opgepakt, positie {position, number} van {total, number}. Gebruik de pijltjestoetsen om te verplaatsen, Space of Enter om neer te zetten of Escape om te annuleren.
+@astryx.transferList.announceMoveCancelled	Verplaatsen van {label} geannuleerd.
+@astryx.transferList.announceMovedToPosition	{label}, positie {position, number} van {total, number}.
+@astryx.transferList.announceRemoved	{label} verwijderd. {count, number} {count, plural, one {item} other {items}} geselecteerd.
+@astryx.transferList.announceReturned	{label} teruggezet op positie {position, number}.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {item} other {items}} gevonden.
+@astryx.transferList.availableEmpty	Geen beschikbare opties
+@astryx.transferList.availableLabel	Beschikbaar
+@astryx.transferList.clear	Wissen
+@astryx.transferList.noResults	Geen resultaten
+@astryx.transferList.removeOption	{label} verwijderen
+@astryx.transferList.reorderDisabled	De volgorde van {label} kan niet worden gewijzigd
+@astryx.transferList.reorderInstructions	Druk op Space of Enter om een item op te pakken. Gebruik Arrow Up, Arrow Down, Home of End om het te verplaatsen. Druk op Space of Enter om het neer te zetten of op Escape om te annuleren.
+@astryx.transferList.reorderOption	Volgorde van {label} wijzigen
+@astryx.transferList.searchLabel	Zoeken in {label}
+@astryx.transferList.searchPlaceholder	Zoeken…
+@astryx.transferList.selectedEmpty	Geen geselecteerde opties
+@astryx.transferList.selectedLabel	Geselecteerd
+@astryx.transferList.transferDisabled	{label} kan niet worden verplaatst
+@astryx.transferList.ungroupedLabel	Overig
+@astryx.transferListSelector.apply	Toepassen
+@astryx.transferListSelector.cancel	Annuleren
+@astryx.transferListSelector.triggerLabel	{count, number} geselecteerd
+@astryx.treeList.toggleChildren	Onderliggende items in-/uitklappen
+@astryx.typeahead.clearSelection	Selectie wissen
+@astryx.typeahead.emptySearchResults	Geen resultaten gevonden
+@astryx.typeahead.loading	Laden
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {resultaat} other {resultaten}}
+@astryx.typeahead.searchPlaceholder	Zoeken…
+@astryx.typeahead.searchResults	Zoekresultaten

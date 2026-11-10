@@ -1,0 +1,20 @@
+[package]
+name = "astryx-spike-foundations"
+description = "Astryx foundations for the Rust stack: themes and brands, i18n (ICU messages, plurals, locale formats, direction), focus and keyboard models, and the size cascade"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core = { workspace = true }
+astryx-tokens = { workspace = true }
+icu_plurals = "2.1"
+icu_decimal = "2.1"
+icu_datetime = "2.1"
+icu_calendar = "2.1"
+icu_locale = "2.1"
+icu_locale_core = "2.1"
+icu_list = "2.1"
+fixed_decimal = { version = "0.7", features = ["ryu"] }
+unicode-normalization = "0.1"
+writeable = "0.6"
