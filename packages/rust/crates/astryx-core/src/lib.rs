@@ -42,8 +42,8 @@ pub mod authoring {
     pub use crate::components::text::{text_draw, text_node, type_style};
     pub use crate::element::{
         element, A11yRefs, Axis, Base, BoxDraw, Build, BuildCx, Capture, Draw, Edit, ImageDraw,
-        Indicator, Inherited, Interact, Node, Overlay, Painter, PathDraw, PopupAction, Semantics,
-        TextDraw,
+        Indicator, Inherited, Interact, LocalHandle, Locals, Node, Overlay, Painter, PathDraw,
+        PopupAction, Scope, Semantics, TextDraw,
     };
     pub use crate::light::LightDraw;
     pub use crate::world::SpriteDraw;

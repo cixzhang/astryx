@@ -18,6 +18,7 @@ use astryx_motion::gesture::{
 use astryx_motion::tokens::{self as motion_tokens, MotionTokens};
 use astryx_motion::{Animated, Change, Motion, MotionPolicy, Pointer};
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 use taffy::{FlexDirection, Style};
 
 /// An Astryx app: state, a view of it, and an update for each message.
@@ -323,6 +324,8 @@ pub struct Runtime<A: App> {
     captured: HashMap<u64, (Vec<DrawCmd>, Rect)>,
     /// Height animations by node id.
     resizes: HashMap<u64, ResizeTrack>,
+    /// Component state, shared with every build.
+    locals: crate::element::Locals,
 }
 
 /// A closed node's last drawing, leaving.
@@ -417,6 +420,7 @@ impl<A: App> Runtime<A> {
             exits: Vec::new(),
             captured: HashMap::new(),
             resizes: HashMap::new(),
+            locals: Default::default(),
         }
     }
 
@@ -603,6 +607,7 @@ impl<A: App> Runtime<A> {
         cx.images = self.images.clone();
         cx.image_sizes = self.image_sizes.clone();
         cx.now_ms = self.motion_ms;
+        cx.locals = self.locals.clone();
         if let Some(layout) = &self.layout {
             cx.last_rects = std::sync::Arc::new(
                 self.nodes
@@ -648,6 +653,8 @@ impl<A: App> Runtime<A> {
         }
         self.track_layers(&old);
         self.sync_motion(&old);
+        let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
+        self.locals.retain(|id| ids.contains(&id));
         self.stale = false;
         self.rebuilt = true;
         // A rebuild that changes only paint, such as a switch to a theme
@@ -2072,6 +2079,9 @@ impl<A: App> Runtime<A> {
         let completed_hold =
             interact.hold.is_some() && self.hold.is_some_and(|h| h.id == id && h.done);
         let msg = interact.on_activate.clone();
+        if let Some(effect) = interact.effect.clone() {
+            effect();
+        }
         let href = interact.href.clone();
         let popup = interact.popup;
         self.cue(if completed_hold {
@@ -2398,6 +2408,14 @@ impl<A: App> Runtime<A> {
 
     /// Sends layer `ix`'s dismissal message for `reason`.
     fn dismiss(&mut self, ix: usize, reason: DismissReason) -> Command {
+        if let Some(effect) = self.nodes[ix]
+            .layer
+            .as_ref()
+            .and_then(|l| l.dismiss_effect.clone())
+        {
+            effect(reason);
+            self.stale = true;
+        }
         let msg = self.nodes[ix]
             .layer
             .as_ref()
@@ -2517,7 +2535,8 @@ impl<A: App> Runtime<A> {
     fn track_hover(&mut self, rects: &[Rect]) {
         let now = self.motion_ms;
         let focus_visible = !self.focus_by_pointer;
-        let mut sends = Vec::new();
+        let mut sends: Vec<A::Msg> = Vec::new();
+        let mut effects: HoverEffects = Vec::new();
         let mut seen = HashSet::new();
         for (ix, node) in self.nodes.iter().enumerate() {
             let Some(spec) = &node.hover else {
@@ -2542,7 +2561,7 @@ impl<A: App> Runtime<A> {
                 track.outside_since = None;
                 if !track.on {
                     track.on = true;
-                    sends.push((spec.on_change)(true));
+                    report(spec, true, &mut sends, &mut effects);
                 }
                 continue;
             }
@@ -2551,18 +2570,24 @@ impl<A: App> Runtime<A> {
                 let since = *track.inside_since.get_or_insert(now);
                 if !track.on && now - since >= spec.enter_ms {
                     track.on = true;
-                    sends.push((spec.on_change)(true));
+                    report(spec, true, &mut sends, &mut effects);
                 }
             } else {
                 track.inside_since = None;
                 let since = *track.outside_since.get_or_insert(now);
                 if track.on && now - since >= spec.leave_ms {
                     track.on = false;
-                    sends.push((spec.on_change)(false));
+                    report(spec, false, &mut sends, &mut effects);
                 }
             }
         }
         self.hovers.retain(|id, _| seen.contains(id));
+        if !effects.is_empty() {
+            for (effect, on) in effects {
+                effect(on);
+            }
+            self.stale = true;
+        }
         for msg in sends {
             let command = self.send(msg);
             self.pending = std::mem::take(&mut self.pending).and(command);
@@ -2763,7 +2788,7 @@ impl<A: App> Surface for Runtime<A> {
         if inside {
             return PointerOutcome::default();
         }
-        if spec.light_dismiss && spec.on_dismiss.is_some() {
+        if spec.light_dismiss && (spec.on_dismiss.is_some() || spec.dismiss_effect.is_some()) {
             let command = self.dismiss(top, DismissReason::OutsidePress);
             let command = command.and(std::mem::take(&mut self.pending));
             return PointerOutcome {
@@ -2832,6 +2857,9 @@ impl<A: App> Surface for Runtime<A> {
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
+        if self.locals.take_changed() {
+            self.stale = true;
+        }
         if self.stale || self.app.theme() != self.theme || self.app.direction() != self.direction {
             self.rebuild();
         }
@@ -3177,6 +3205,7 @@ impl<A: App> Surface for Runtime<A> {
             || self.repeats.wants_frames()
             || self.paging.wants_frames()
             || self.hover_pending()
+            || self.locals.is_changed()
             || self.anims.values().any(|a| a.is_animating())
             || !self.exits.is_empty()
             || self.resizes.values().any(|r| r.shown.is_animating())
@@ -3187,6 +3216,24 @@ fn gesture_phase(phase: InputPhase) -> Phase {
     match phase {
         InputPhase::Pressed => Phase::Pressed,
         InputPhase::Released => Phase::Released,
+    }
+}
+
+/// Hover effects waiting to run, with the hover state each reports.
+type HoverEffects = Vec<(Rc<dyn Fn(bool)>, bool)>;
+
+/// Queues a hover report: the component's own effect and the app's message.
+fn report<Msg>(
+    spec: &crate::layer::HoverSpec<Msg>,
+    on: bool,
+    sends: &mut Vec<Msg>,
+    effects: &mut HoverEffects,
+) {
+    if let Some(effect) = &spec.effect {
+        effects.push((effect.clone(), on));
+    }
+    if let Some(f) = &spec.on_change {
+        sends.push(f(on));
     }
 }
 
