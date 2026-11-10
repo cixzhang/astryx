@@ -1,6 +1,5 @@
 //! The Elm-style app model and the runtime that drives it as a [`Surface`].
 
-use crate::contract::PointerKind;
 use crate::contract::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
     ImageId, Input, InputPhase, Live, Point, PointerEvent, PointerOutcome, PointerPhase,
@@ -2555,9 +2554,7 @@ impl<A: App> Runtime<A> {
 
 impl<A: App> Surface for Runtime<A> {
     fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
-        if event.kind != PointerKind::Touch && event.phase != PointerPhase::Cancel {
-            self.pointer_move(Some(event.at));
-        }
+        // Hover stays on `pointer_move`; this path carries presses.
         if event.phase != PointerPhase::Down {
             return PointerOutcome::default();
         }

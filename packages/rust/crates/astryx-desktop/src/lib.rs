@@ -487,16 +487,6 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 });
                 self.update_cursor();
                 self.hover();
-                if let Some(at) = self.pointer {
-                    let outcome = self.surface.pointer(PointerEvent {
-                        id: 0,
-                        kind: PointerKind::Mouse,
-                        phase: PointerPhase::Move,
-                        at,
-                        button: 0,
-                    });
-                    self.handle(event_loop, outcome.command);
-                }
             }
             WindowEvent::CursorLeft { .. } => {
                 self.pointer = None;
