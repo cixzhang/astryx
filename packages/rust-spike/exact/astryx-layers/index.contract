@@ -1,0 +1,5 @@
+// @astryx-spike/astryx-layers: Astryx components that hide their content until
+// opened. Exact holds a library (a private package with a design) to always
+// showing a component's slot, so these live in a plain package beside it and
+// use its tokens.
+use Popover, Collapsible, CollapsibleGroup, enterMotion, fadeMotion, popoverArea from "./layers.contract"

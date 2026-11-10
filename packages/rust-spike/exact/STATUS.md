@@ -2,9 +2,9 @@
 
 Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2e25b307a40e7fce66dc27c9f802`.
 
-- Dependency closure ported (core, by source files): 245 of 689 (35.6%).
-- With the stretch rows: 251 of 720 (34.9%).
-- Rows: 17 ported, 11 workaround, 0 blocked, 49 not started.
+- Dependency closure ported (core, by source files): 341 of 689 (49.5%).
+- With the stretch rows: 347 of 720 (48.2%).
+- Rows: 17 ported, 15 workaround, 0 blocked, 45 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -26,7 +26,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Chat | 10 | weakness |  | not started |  |  |
 | CheckboxInput | 3 | core, stretch, weakness |  | not started |  |  |
 | CheckboxList | 4 | stretch |  | not started |  |  |
-| Collapsible | 5 | weakness |  | not started |  |  |
+| Collapsible | 5 | weakness | 3 | workaround | gallery collapsible-* | Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot. |
 | CommandPalette | 10 | template |  | not started |  |  |
 | ContextMenu | 2 | core |  | not started |  |  |
 | DateInput | 21 | core, stretch |  | not started |  |  |
@@ -59,7 +59,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | NumberInput | 4 | core, stretch |  | not started |  |  |
 | OverflowList | 2 | core, stretch |  | not started |  |  |
 | Pagination | 2 | core |  | not started |  |  |
-| Popover | 8 | core, stretch, template, weakness |  | not started |  |  |
+| Popover | 8 | core, stretch, template, weakness | 3 | workaround | gallery popover-*; web and Linux | Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run. |
 | PowerSearch | 16 | stretch |  | not started |  |  |
 | RadioList | 3 | stretch |  | not started |  |  |
 | Resizable | 6 | core, template |  | not started |  |  |
@@ -87,5 +87,5 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | VisuallyHidden | 2 | core, stretch, template, weakness | 0 | workaround | primitives.contract VisuallyHidden | Contract refuses clip-path inset(); a 1 px clipped box stands in. |
 | infra:Foundations | 158 | core, stretch, template, weakness | 0 | workaround | astryx/astryx.tamber (251 tokens) and tokens/themes.tamber (8 themes, 1,066 per-theme values), imported by Exact's own `contract tamber import astryx`; gallery case foundations-0001 on web and Linux. | 279 of 286 resolved tokens map; 7 do not (duration min/max tiers, focus outline style). The 4 motion tokens cannot vary by theme (Tamber writes a duration or easing into its transition at build), so every theme uses the default theme's motion. A type role (`font`) varies by theme, so it must sit on each text, not on a container. Number and date formatting stay en-US in Contract (a data module would localise, but the Linux build carries none). |
 | infra:Gestures | 68 | core, stretch, template, weakness |  | not started |  |  |
-| infra:Layers | 41 | core, stretch, template, weakness |  | not started |  |  |
-| infra:Motion | 42 | core, stretch, template, weakness |  | not started |  |  |
+| infra:Layers | 41 | core, stretch, template, weakness | 3 | workaround | astryx-layers/layers.contract; gallery popover-* (web and Linux) | The platform's top layer does the layer stack, focus, Escape and outside-press dismissal (`popover`, `dialog`). A popover anchors only to the control that opened it (position-area); no anchoring to another element, no collision flipping beyond the platform's, no portal. Exact holds a library to always showing its slot, so every component that hides its content until opened (Popover, Collapsible, Tooltip, Dialog, menus, sheets) lives in a second, plain package (@astryx-spike/astryx-layers) beside the library. |
+| infra:Motion | 42 | core, stretch, template, weakness | 3 | workaround | layers.contract keyframes astryxEnter/Exit/FadeIn/Rise/SheetUp | Keyframes take literals, so presets carry the default theme's durations and easings. A library cannot read reduced motion (the viewport is the app's root resource): moving components take `still`. Exit animations do not run on Linux. Animating to an auto height is not possible (numeric heights only): Collapsible content rises in instead. |

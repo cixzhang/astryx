@@ -1,0 +1,128 @@
+// Wave 3 layers and motion.
+//
+// Layers. Astryx's layer system (LayerProvider: a stack of open layers, portals,
+// focus trap and restore, Escape and outside-press dismissal, inert
+// background) maps to the platform's own top layer: a `popover` column for a
+// light layer, a `dialog` for a modal one. The platform keeps the stack, the
+// focus and the dismissal; the library styles the surface and places it.
+// A popover anchors to the control that opened it (`popovertarget`), never to
+// another element.
+//
+// Motion. Astryx's presets are keyframes here, timed by the theme's duration
+// and easing tokens' default values (a keyframe takes literals). A library
+// component cannot read reduced motion (the viewport is the app's root
+// resource), so each moving component takes `still`.
+use IconGlyph, space from "@astryx-spike/astryx"
+
+
+keyframes astryxEnter
+  from opacity=0 scale=0.96
+keyframes astryxExit
+  to opacity=0 scale=0.96
+keyframes astryxFadeIn
+  from opacity=0
+keyframes astryxFadeOut
+  to opacity=0
+keyframes astryxRise
+  from opacity=0 translate="0px 8px"
+keyframes astryxSheetUp
+  from translate="0px 100%"
+
+// The enter animation for a layer, or none when still.
+fn enterMotion(still: bool): string = still ? "none" : "astryxEnter 175ms cubic-bezier(0.24, 1, 0.4, 1) both"
+fn fadeMotion(still: bool): string = still ? "none" : "astryxFadeIn 175ms cubic-bezier(0.24, 1, 0.4, 1) both"
+
+// Where a popover sits beside its trigger: Astryx's placement (above, below,
+// start, end) and alignment (start, center, end) as a position area.
+fn popoverArea(placement: string, alignment: string): string = placement == "above" ? (alignment == "start" ? "top span-right" : alignment == "end" ? "top span-left" : "top") : placement == "start" ? (alignment == "start" ? "left span-bottom" : alignment == "end" ? "left span-top" : "left") : placement == "end" ? (alignment == "start" ? "right span-bottom" : alignment == "end" ? "right span-top" : "right") : (alignment == "start" ? "bottom span-right" : alignment == "end" ? "bottom span-left" : "bottom")
+
+// Popover: a light layer beside the control that opens it. The trigger is
+// the caller's: a button with `popovertarget=<id>`. Light dismiss is the
+// platform's (`popover="auto"`); without it the popover is "manual" and closes
+// by its close button or the trigger.
+style PopoverSurface
+  background-color="astryx.surface.popover"
+  border-radius="astryx.radius.container"
+  box-shadow="astryx.shadow.low"
+  border-width=0
+  color="astryx.text.primary"
+
+component Popover
+  props
+    id: string
+    label: string
+    placement: string
+    alignment: string
+    padding: number
+    role: string
+    hasCloseButton: bool
+    closeButtonLabel: string
+    hasLightDismiss: bool
+    still: bool
+  slot
+  view
+    column id=id popover=(hasLightDismiss ? "auto" : "manual") class=PopoverSurface
+      role=(role == "none" ? "presentation" : "dialog") aria-label=label
+      position-area=popoverArea(placement, alignment)
+      margin="astryx.space.s1"
+      padding=space(padding < 0 ? "3" : padding.toString())
+      animation=enterMotion(still)
+      testId=`popover-${id}`
+      children
+      if hasCloseButton
+        button popovertarget=id popovertargetaction="hide" aria-label=(closeButtonLabel == "" ? "Close" : closeButtonLabel)
+          testId=`close-${id}` position="absolute" top="astryx.space.s1" right="astryx.space.s1"
+          width=24 height=24 padding=0 border-radius="astryx.radius.inner" background-color="transparent" color="astryx.icon.secondary"
+          view width=16 height=16
+            IconGlyph(icon="close")
+
+// Collapsible: a trigger row that shows and hides its content. Astryx takes
+// the trigger as an element; one slot is the content here, so the trigger is
+// a `title`. Open state is the caller's (`isOpen`, `toggle`): a group that
+// keeps one open needs it, and a slot passes no context.
+component Collapsible
+  props
+    title: string
+    value: string
+    isOpen: bool
+    isDisabled: bool
+    chevronPosition: string
+    density: string
+    hasDivider: bool
+    still: bool
+    toggle: action
+  slot
+  view
+    column width="100%"
+      border-top-width=(hasDivider ? "astryx.border.width" : "0px") border-top-style="solid" border-top-color="astryx.border"
+      button press=toggle disabled=isDisabled aria-expanded=isOpen aria-controls=`panel-${value}` testId=`trigger-${value}`
+        display="flex" align-items="center" width="100%" background-color="transparent" border-width=0
+        padding-left=0 padding-right=0
+        padding-top=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+        padding-bottom=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+        opacity=(isDisabled ? 0.5 : 1)
+        if chevronPosition == "start"
+          view width=17 height=17 margin-right="astryx.space.s2" flex-shrink=0 color="astryx.icon.primary"
+            rotate=(isOpen ? "90deg" : "0deg") transition=(still ? "none" : "rotate 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+            IconGlyph(icon="chevronRight")
+        text title flex=1 text-align="left" font="astryx.type.large" font-weight="astryx.weight.semibold" color="astryx.text.primary"
+        if chevronPosition != "start"
+          view width=17 height=17 flex-shrink=0 color="astryx.icon.primary"
+            rotate=(isOpen ? "180deg" : "0deg") transition=(still ? "none" : "rotate 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+            IconGlyph(icon="chevronDown")
+      if isOpen
+        column id=`panel-${value}` role="region" aria-label=title testId=`panel-${value}`
+          padding-top="astryx.space.s1"
+          padding-bottom=(density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2")
+          animation=(still ? "none" : "astryxRise 175ms cubic-bezier(0.24, 1, 0.4, 1) both")
+          children
+
+// CollapsibleGroup: collapsibles stacked as one list. Which are open is the
+// caller's state (one value for `single`, several for `multiple`).
+component CollapsibleGroup
+  props
+    label: string
+  slot
+  view
+    column width="100%" role="group" aria-label=label
+      children

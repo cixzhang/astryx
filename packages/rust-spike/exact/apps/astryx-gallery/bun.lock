@@ -5,11 +5,11 @@
     "": {
       "name": "astryx-gallery",
       "dependencies": {
-        "@astryx-spike/astryx": "file:../../astryx",
+        "@astryx-spike/astryx-layers": "file:../../astryx-layers",
       },
     },
   },
   "packages": {
-    "@astryx-spike/astryx": ["@astryx-spike/astryx@file:../../astryx", {}],
+    "@astryx-spike/astryx-layers": ["@astryx-spike/astryx-layers@file:../../astryx-layers", {}],
   }
 }

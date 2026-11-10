@@ -10,5 +10,13 @@
  ],
  "Link": [
   "display"
+ ],
+ "Popover": [
+  "hasAutoFocus",
+  "hasEscapeDismiss",
+  "isEnabled",
+  "isModal",
+  "isOpen",
+  "presentation"
  ]
 }

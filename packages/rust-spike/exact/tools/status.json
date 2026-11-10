@@ -166,5 +166,29 @@
   "status": "ported",
   "evidence": "gallery token-*",
   "notes": "href/onClick variants and endContent not yet wired."
+ },
+ "infra:Layers": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "astryx-layers/layers.contract; gallery popover-* (web and Linux)",
+  "notes": "The platform's top layer does the layer stack, focus, Escape and outside-press dismissal (`popover`, `dialog`). A popover anchors only to the control that opened it (position-area); no anchoring to another element, no collision flipping beyond the platform's, no portal. Exact holds a library to always showing its slot, so every component that hides its content until opened (Popover, Collapsible, Tooltip, Dialog, menus, sheets) lives in a second, plain package (@astryx-spike/astryx-layers) beside the library."
+ },
+ "infra:Motion": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "layers.contract keyframes astryxEnter/Exit/FadeIn/Rise/SheetUp",
+  "notes": "Keyframes take literals, so presets carry the default theme's durations and easings. A library cannot read reduced motion (the viewport is the app's root resource): moving components take `still`. Exit animations do not run on Linux. Animating to an auto height is not possible (numeric heights only): Collapsible content rises in instead."
+ },
+ "Collapsible": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "gallery collapsible-*",
+  "notes": "Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot."
+ },
+ "Popover": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "gallery popover-*; web and Linux",
+  "notes": "Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run."
  }
 }

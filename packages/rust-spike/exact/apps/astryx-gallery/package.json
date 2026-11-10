@@ -6,6 +6,6 @@
     "start": "bun exact.mjs serve dist"
   },
   "dependencies": {
-    "@astryx-spike/astryx": "file:../../astryx"
+    "@astryx-spike/astryx-layers": "file:../../astryx-layers"
   }
 }

@@ -43,6 +43,7 @@ const typeOf = (v, k, def) => def.types?.[k] ?? (typeof v === 'string' ? 'string
 const rows = [];
 const families = [];
 const dropped = {};
+const opens = [];
 for (const [family, def] of Object.entries(FAMILIES)) {
   const qa = qaCases(family, def);
   const cases = qa ?? def.smoke;
@@ -52,8 +53,9 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     const given = def.map ? def.map(c.props ?? {}) : c.props ?? {};
     for (const k of Object.keys(given)) if (!(k in def.defaults)) (dropped[family] ??= new Set()).add(k);
     const props = { ...def.defaults, ...given };
+    if (def.opens && def.opens(given)) opens.push(c.id);
     rows.push({ id: c.id, family, title: c.title ?? (Object.entries(c.props ?? {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ') || 'defaults') });
-    records.push(`${family}Case(${['id', ...keys].map(k => `${k}=${lit(k === 'id' ? c.id : props[k])}`).join(', ')})`);
+    records.push(`${family}Case(${['caseId', ...keys].map(k => `${k}=${lit(k === 'caseId' ? c.id : props[k])}`).join(', ')})`);
   }
   const call = `${def.component}(${keys.map(k => `${k}=c.${k}`).join(', ')})`;
   const inner = def.children ? [call, ...def.children.map(l => `  ${l}`)] : [call];
@@ -61,25 +63,31 @@ for (const [family, def] of Object.entries(FAMILIES)) {
   families.push({
     family, fromQa: !!qa, uses: def.uses ?? [def.component],
     decl: [
-      `shape ${family}Case`, '  id: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
+      `shape ${family}Case`, '  caseId: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
       `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  view',
-      `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.id == id) key=c.id`,
+      `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.caseId == id) key=c.caseId`,
       ...body.map(l => `      ${l}`),
     ],
   });
 }
 
 const uses = [...new Set(families.flatMap(f => f.uses))].sort();
+const LAYERS = new Set(['Popover', 'Collapsible', 'CollapsibleGroup', 'Tooltip', 'InfoTip', 'HoverCard', 'Dialog', 'DropdownMenu', 'ContextMenu', 'BottomSheet']);
+const libUses = uses.filter(u => !LAYERS.has(u));
+const layerUses = uses.filter(u => LAYERS.has(u));
 const out = [
   '// The gallery\'s cases, written by tools/gallery-cases.mjs; do not edit.',
-  ...(uses.length ? [`use ${uses.join(', ')} from "@astryx-spike/astryx"`] : []),
+  ...(libUses.length ? [`use ${libUses.join(', ')} from "@astryx-spike/astryx"`] : []),
+  ...(layerUses.length ? [`use ${layerUses.join(', ')} from "@astryx-spike/astryx-layers"`] : []),
   'use Swatches, Filler from "./swatches.contract"',
   '',
   'shape CaseRow',
   '  id: string',
   '  family: string',
   '  title: string',
+  '',
+  `fn caseOpens(id: string): bool = ${opens.length ? opens.map(i => `id == ${lit(i)}`).join(' or ') : 'false'}`,
   '',
   `fn caseRows(): CaseRow[] = [${rows.map(r => `CaseRow(id=${lit(r.id)}, family=${lit(r.family)}, title=${lit(r.title)})`).join(', ')}]`,
   '',

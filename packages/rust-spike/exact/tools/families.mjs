@@ -14,6 +14,7 @@ const childrenAs = key => p => {
   return children === undefined ? rest : { ...rest, [key]: String(children) };
 };
 
+const TEXT = t => `Text(text=${JSON.stringify(t)}, type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)`;
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
@@ -146,5 +147,21 @@ export const FAMILIES = {
     map: p => { const { onRemove, ...r } = p; return onRemove ? { ...r, removable: true } : r; },
     wrap: inner => [inner[0].replace(/\)$/, ', remove=noop)')],
     smoke: sweep('Token', {}, { size: ['sm', 'lg'], color: ['red', 'green', 'blue', 'purple'], icon: ['check'], isDisabled: [true], removable: [true] }),
+  },
+  Popover: {
+    component: 'Popover', uses: ['Popover', 'Text'],
+    defaults: { id: 'case-popover', label: 'Details', placement: 'below', alignment: 'center', padding: 3, role: 'dialog', hasCloseButton: false, closeButtonLabel: '', hasLightDismiss: true, still: true },
+    opens: p => p.isOpen !== false && p.isEnabled !== false,
+    children: [TEXT('Popover content')],
+    wrap: inner => ['column align-items="center" width=360 height=220 justify-content="center"', '  button id="popover-trigger" popovertarget="case-popover" testId="popover-trigger" padding="8px 12px"', '    text "Open"', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Popover', {}, { placement: ['above', 'start', 'end'], alignment: ['start', 'end'], padding: [0, 6], hasCloseButton: [true], isOpen: [false] }),
+  },
+  Collapsible: {
+    component: 'Collapsible', qa: { file: 'Collapsible', components: ['Collapsible', 'CollapsibleGroup'] }, uses: ['Collapsible', 'Text'],
+    defaults: { title: 'Shipping details', value: 'a', isOpen: false, isDisabled: false, chevronPosition: 'end', density: 'balanced', hasDivider: false, still: true },
+    map: p => { const { defaultIsOpen, ...r } = p; return defaultIsOpen === undefined ? r : { ...r, isOpen: r.isOpen ?? defaultIsOpen }; },
+    children: [TEXT('Ships in two business days.')],
+    wrap: inner => ['view width=320', `  ${inner[0].replace(/\)$/, ', toggle=noop)')}`, ...inner.slice(1).map(l => `  ${l}`)],
+    smoke: sweep('Collapsible', {}, { isOpen: [true], isDisabled: [true], chevronPosition: ['start'], density: ['compact', 'spacious'] }),
   },
 };
