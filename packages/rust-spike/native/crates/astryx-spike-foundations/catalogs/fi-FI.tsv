@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Peruuta
+@astryx.appShell.mobileNavigation	Mobiilinavigointi
+@astryx.appShell.skipToContent	Siirry sisältöön
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Siirry avatarien välillä nuolinäppäimillä
+@astryx.avatarGroup.label	Avatarit
+@astryx.avatarGroup.overflow	{count, number} lisää
+@astryx.banner.collapse	Tiivistä
+@astryx.banner.dismiss	Hylkää
+@astryx.banner.dismissTitled	{dismiss} {title}
+@astryx.banner.expand	Laajenna
+@astryx.breadcrumbs.label	Navigointipolku
+@astryx.button.loading	Ladataan
+@astryx.calendar.dayInRange	{date}, välillä
+@astryx.calendar.dayRangeEnd	{date}, välin loppu
+@astryx.calendar.dayRangeStart	{date}, välin alku
+@astryx.calendar.dayRangeStartAndEnd	{date}, välin alku ja loppu
+@astryx.calendar.daySelected	{date}, valittu
+@astryx.calendar.nextMonth	Seuraava kuukausi
+@astryx.calendar.previousMonth	Edellinen kuukausi
+@astryx.calendar.rangeClearedAnnounce	Alkamispäivä {date} tyhjennetty. Valitse alkamispäivä.
+@astryx.calendar.rangeCompleteAnnounce	Valittu väli: {start}–{end}.
+@astryx.calendar.rangeStartAnnounce	Alkamispäivä {date}. Valitse päättymispäivä.
+@astryx.carousel.label	Karuselli
+@astryx.carousel.scrollLeft	Vieritä vasemmalle
+@astryx.carousel.scrollRight	Vieritä oikealle
+@astryx.carousel.slideLabel	Dia {current, number} / {total, number}
+@astryx.chart.dataTableCaption	Kaavion tiedot: {label}
+@astryx.chart.label	Kaavio
+@astryx.chart.labelWithSeries	Kaavio: {series} kentän {xKey} mukaan
+@astryx.chartLegend.label	Kaavion selite
+@astryx.chat.composer.placeholder	Kirjoita viesti…
+@astryx.chat.composerDrawer.label	Kohteet
+@astryx.chat.composerInput.label	Viestin syöttö
+@astryx.chat.messageAriaLabel	Viesti {status}
+@astryx.chat.pastedText.expand	Laajenna
+@astryx.chat.speechRecognition.noSpeechDetected	Puhetta ei havaittu.
+@astryx.chat.status.delivered	Toimitettu
+@astryx.chat.status.failed	Epäonnistui
+@astryx.chat.status.read	Luettu
+@astryx.chat.status.sending	Lähetetään
+@astryx.chat.status.sent	Lähetetty
+@astryx.chatComposerDrawer.collapse	Tiivistä {label}
+@astryx.chatComposerDrawer.expand	Laajenna {label}
+@astryx.chatDictationButton.startDictation	Aloita sanelu
+@astryx.chatDictationButton.stopDictation	Lopeta sanelu
+@astryx.chatLayout.newMessages	Uusia viestejä
+@astryx.chatLayoutScrollButton.scrollToBottom	Vieritä alas
+@astryx.chatMessage.messageFrom	Viesti käyttäjältä {sender}
+@astryx.chatSendButton.send	Lähetä
+@astryx.chatSendButton.stop	Pysäytä
+@astryx.chatToolCalls.error	Virhe: {message}
+@astryx.chatToolCalls.groupLabel	{count} työkalukutsua
+@astryx.chatToolCalls.status.complete	Valmis
+@astryx.chatToolCalls.status.error	Epäonnistui
+@astryx.chatToolCalls.status.pending	Odottaa
+@astryx.chatToolCalls.status.running	Käynnissä
+@astryx.chatTriggerMenu.suggestions	Ehdotukset
+@astryx.chatTypingIndicator.many	{names} kirjoittavat…
+@astryx.chatTypingIndicator.one	{name} kirjoittaa…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {muu} other {muuta}}
+@astryx.checkboxList.item.checkbox	Valintaruutu
+@astryx.citation.label	Lähde {number}: {title}
+@astryx.codeBlock.code	Koodi
+@astryx.codeBlock.copied	Kopioitu
+@astryx.codeBlock.copyCode	Kopioi koodi
+@astryx.commandPalette.emptyBootstrap	Hae kirjoittamalla
+@astryx.commandPalette.emptySearch	Ei tuloksia
+@astryx.commandPalette.footer.close	Sulje
+@astryx.commandPalette.footer.navigate	Navigoi
+@astryx.commandPalette.footer.select	Valitse
+@astryx.commandPalette.input.placeholder	Hae…
+@astryx.commandPalette.label	Komentopaletti
+@astryx.commandPalette.list.label	Komennot
+@astryx.commandPalette.loading	Ladataan
+@astryx.commandPalette.noResultsFor	Ei tuloksia haulle {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {tulos} other {tulosta}}
+@astryx.contextMenu.label	Pikavalikko
+@astryx.dateInput.chooseMonthYear	{monthYear}, valitse kuukausi ja vuosi
+@astryx.dateInput.clear	Tyhjennä {label}
+@astryx.dateInput.closeCalendar	Sulje kalenteri
+@astryx.dateInput.dialogLabel	Valitse päivämäärä
+@astryx.dateInput.doneChoosingMonth	Valmis
+@astryx.dateInput.invalidDate	Virheellinen päivämäärä
+@astryx.dateInput.monthWheel	Kuukausi
+@astryx.dateInput.openCalendar	Avaa kalenteri
+@astryx.dateInput.placeholder	Valitse päivämäärä
+@astryx.dateInput.resetPicking	Palauta
+@astryx.dateInput.savePicking	Tallenna
+@astryx.dateInput.toggleCalendarClose	Sulje kalenteri
+@astryx.dateInput.yearWheel	Vuosi
+@astryx.dateRangeInput.dialogLabel	Valitse päivämääräväli
+@astryx.dateRangeInput.placeholder	Valitse päivämääräväli
+@astryx.dateRangeInput.presetDateRanges	Valmiit päivämäärävälit
+@astryx.dateTimeInput.dateTab	Päivämäärä
+@astryx.dateTimeInput.dialogLabel	Valitse päivämäärä ja aika
+@astryx.dateTimeInput.hourWheel	Tunti
+@astryx.dateTimeInput.meridiemAM	ap.
+@astryx.dateTimeInput.meridiemPM	ip.
+@astryx.dateTimeInput.meridiemWheel	ap./ip.
+@astryx.dateTimeInput.minuteWheel	Minuutti
+@astryx.dateTimeInput.openTimePicker	Avaa {label}
+@astryx.dateTimeInput.pickerMode	Päivämäärä-/aikaosio
+@astryx.dateTimeInput.placeholder	Valitse päivämäärä
+@astryx.dateTimeInput.saveDatePicking	Tallenna päivämäärä
+@astryx.dateTimeInput.secondWheel	Sekunti
+@astryx.dateTimeInput.timeHint12h	esim. 2:30 ip.
+@astryx.dateTimeInput.timeHint24h	esim. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Vaihtoehdot: {label}
+@astryx.dateTimeInput.timePlaceholder	Valitse aika
+@astryx.dateTimeInput.timeSuffix	{label} aika
+@astryx.dateTimeInput.timeTab	Aika
+@astryx.dialog.close	Sulje
+@astryx.dropdownMenu.back	Takaisin
+@astryx.dropdownMenu.label	Valikko
+@astryx.field.optional	Valinnainen
+@astryx.field.required	Pakollinen
+@astryx.fileInput.clearLabel	Tyhjennä {label}
+@astryx.fileInput.dropHint	Pudota tiedostot tähän
+@astryx.fileInput.errorInvalidType	Tiedoston ”{fileName}” tyyppiä ei hyväksytä
+@astryx.fileInput.errorMaxFiles	Enintään {maxFiles} tiedostoa sallitaan
+@astryx.fileInput.errorMaxSize	Tiedosto ”{fileName}” ylittää kokorajan {maxSize}
+@astryx.fileInput.fileSelected	1 tiedosto valittu: {fileName}
+@astryx.fileInput.filesSelected	{count} tiedostoa valittu
+@astryx.fileInput.placeholder	Valitse tiedosto
+@astryx.fileInput.placeholderMultiple	Valitse tiedostot
+@astryx.fileInput.required	Pakollinen
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Vain luku
+@astryx.input.statusButton.error	Virheen tiedot
+@astryx.input.statusButton.success	Onnistumisen tiedot
+@astryx.input.statusButton.warning	Varoituksen tiedot
+@astryx.keyboardHint.toNavigate	navigoidaksesi
+@astryx.lightbox.close	Sulje
+@astryx.lightbox.imagePosition	Kuva {index, number} / {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} / {total, number}
+@astryx.lightbox.mediaViewer	Medianäkymä
+@astryx.lightbox.next	Seuraava
+@astryx.lightbox.previous	Edellinen
+@astryx.lightbox.zoom	Zoomaus
+@astryx.lightbox.zoomedIn	Lähennetty, panoroi nuolinäppäimillä
+@astryx.lightbox.zoomedOut	Loitonnettu
+@astryx.link.newTab	(avautuu uuteen välilehteen)
+@astryx.listInput.addItem	Lisää {itemName}
+@astryx.listInput.announceAdded	Lisätty {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} on jo {boundary, select, first {ensimmäisenä} last {viimeisenä} other {}}.
+@astryx.listInput.announceDropped	{itemName} pudotettu kohtaan {position, number} / {total, number}.
+@astryx.listInput.announceGrabbed	{itemName} {position, number} poimittu. Siirrä nuolinäppäimillä, pudota painamalla Space tai Enter ja peruuta painamalla Escape.
+@astryx.listInput.announceMovedToPosition	{itemName} siirretty kohtaan {position, number} / {total, number}.
+@astryx.listInput.announceRemoved	Poistettu {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	Uudelleenjärjestely peruutettu.
+@astryx.listInput.announceReturnedToPosition	{itemName} palautettu kohtaan {position, number}.
+@astryx.listInput.emptyDescription	Aloita lisäämällä {itemName}.
+@astryx.listInput.emptyTitle	Ei vielä kohteita: {itemName}
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} / {total, number}
+@astryx.listInput.removeItem	Poista {itemName} {position, number}
+@astryx.listInput.removeUnavailable	Poistaminen ei ole mahdollista, kun luettelo on poissa käytöstä
+@astryx.listInput.reorderInstructions	Siirrä tätä kohdetta yhden paikan verran näppäimellä Arrow Up tai Arrow Down. Poimi kohde painamalla Space tai Enter, niin voit käyttää laajennettua näppäimistöjärjestelyä.
+@astryx.listInput.reorderItem	Järjestä uudelleen {itemName} {position, number}
+@astryx.markdown.table	Taulukko
+@astryx.markdown.taskList	Tehtäväluettelo
+@astryx.metadataList.showLess	Näytä vähemmän
+@astryx.metadataList.showMore	Näytä enemmän
+@astryx.mobileNav.closeNavigation	Sulje navigointi
+@astryx.mobileNav.navigation	Navigointi
+@astryx.mobileNav.toggle.open	Avaa navigointi
+@astryx.moreMenu.label	Lisää vaihtoehtoja
+@astryx.multiSelector.allSelected	Kaikki valittu
+@astryx.multiSelector.clearAll	Tyhjennä kaikki {label}
+@astryx.multiSelector.empty	Ei vaihtoehtoja
+@astryx.multiSelector.emptySearchResults	Tuloksia ei löytynyt
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {tulos} other {tulosta}}
+@astryx.multiSelector.searchOptions	Hakuvaihtoehdot
+@astryx.multiSelector.searchPlaceholder	Hae…
+@astryx.multiSelector.selectAll	Valitse kaikki
+@astryx.multiSelector.selectAllPartiallySelected	{label}, osittain valittu
+@astryx.multiSelector.selectPlaceholder	Valitse…
+@astryx.multiSelector.selectionCleared	Valinta tyhjennetty
+@astryx.multiSelector.selectionCount	{count, number} / {total, number} valittu
+@astryx.numberInput.clearLabel	Tyhjennä {label}
+@astryx.numberInput.decrementLabel	Pienennä arvoa: {label}
+@astryx.numberInput.incrementLabel	Suurenna arvoa: {label}
+@astryx.outline.label	Sisällysluettelo
+@astryx.pagination.count	{from, number}–{to, number} / {total, number}
+@astryx.pagination.first	Siirry ensimmäiselle sivulle
+@astryx.pagination.goToPage	Siirry sivulle {page, number}
+@astryx.pagination.goToPageInput	Siirry sivulle
+@astryx.pagination.itemsPerPage	Kohteita sivulla
+@astryx.pagination.label	Sivutus
+@astryx.pagination.last	Siirry viimeiselle sivulle
+@astryx.pagination.next	Siirry seuraavalle sivulle
+@astryx.pagination.nextBy	Siirry eteenpäin {step, number} {step, plural, one {sivu} other {sivua}}
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Sivu {current, number}
+@astryx.pagination.pageIndicators	Sivun ilmaisimet
+@astryx.pagination.pageLabel	Sivu
+@astryx.pagination.pageOfTotal	Sivu {current, number} / {total, number}
+@astryx.pagination.previous	Siirry edelliselle sivulle
+@astryx.pagination.previousBy	Siirry taaksepäin {step, number} {step, plural, one {sivu} other {sivua}}
+@astryx.popover.close	Sulje ponnahdusikkuna
+@astryx.powersearch.editor.addFilter	+ Lisää suodatin
+@astryx.powersearch.editor.apply	Käytä
+@astryx.powersearch.editor.cancel	Peruuta
+@astryx.powersearch.editor.delete	Poista
+@astryx.powersearch.editor.field	Kenttä
+@astryx.powersearch.editor.group	Ryhmä
+@astryx.powersearch.editor.groupOperator	Ryhmäoperaattori
+@astryx.powersearch.editor.operator	Operaattori
+@astryx.powersearch.editor.removeFilter	Poista suodatin
+@astryx.powersearch.label	Hae
+@astryx.powersearch.operator.after	on jälkeen
+@astryx.powersearch.operator.before	on ennen
+@astryx.powersearch.operator.between	on välillä
+@astryx.powersearch.operator.contains	sisältää
+@astryx.powersearch.operator.endsWith	päättyy
+@astryx.powersearch.operator.equals	on
+@astryx.powersearch.operator.greaterThan	on suurempi kuin
+@astryx.powersearch.operator.greaterThanOrEqual	on suurempi tai yhtä suuri kuin
+@astryx.powersearch.operator.is	on
+@astryx.powersearch.operator.isAnyOf	on jokin seuraavista
+@astryx.powersearch.operator.isFalse	on epätosi
+@astryx.powersearch.operator.isNoneOf	ei ole mikään seuraavista
+@astryx.powersearch.operator.isNot	ei ole
+@astryx.powersearch.operator.isTrue	on tosi
+@astryx.powersearch.operator.lessThan	on pienempi kuin
+@astryx.powersearch.operator.lessThanOrEqual	on pienempi tai yhtä suuri kuin
+@astryx.powersearch.operator.notContains	ei sisällä
+@astryx.powersearch.operator.notEndsWith	ei pääty
+@astryx.powersearch.operator.notEquals	ei ole
+@astryx.powersearch.operator.notStartsWith	ei ala
+@astryx.powersearch.operator.startsWith	alkaa
+@astryx.powersearch.placeholder	Hae…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {tulos} other {tulosta}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Lisää arvoja…
+@astryx.powersearch.valueEditor.date	Päivämäärä
+@astryx.powersearch.valueEditor.dateRange	päivämääräväli
+@astryx.powersearch.valueEditor.endDate	Päättymispäivä
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Anna numero…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Anna arvo…
+@astryx.powersearch.valueEditor.entities	Entiteetit
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {entiteetti} other {entiteettiä}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {suodatin} other {suodatinta}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {kohde} other {kohdetta}}
+@astryx.powersearch.valueEditor.relativeDate	Suhteellinen päivämäärä
+@astryx.powersearch.valueEditor.searchPlaceholder	Hae…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Valitse arvoja…
+@astryx.powersearch.valueEditor.startDate	Alkamispäivä
+@astryx.powersearch.valueEditor.time	Aika
+@astryx.powersearch.valueEditor.value	Arvo
+@astryx.powersearch.valueEditor.values	Arvot
+@astryx.resizable.collapsed	Tiivistetty
+@astryx.resizable.handle.label	Koonmuutoskahva
+@astryx.selector.clearLabel	Tyhjennä {label}
+@astryx.selector.empty	Ei vaihtoehtoja
+@astryx.selector.emptySearchResults	Tuloksia ei löytynyt
+@astryx.selector.placeholder	Valitse…
+@astryx.selector.resultCount	{count, number} {count, plural, one {tulos} other {tulosta}}
+@astryx.selector.searchOptions	Hakuvaihtoehdot
+@astryx.selector.searchPlaceholder	Hae…
+@astryx.sideNav.heading.dialogLabel	Navigointivalikko
+@astryx.sideNav.heading.openMenu	{heading}, Avaa valikko
+@astryx.sideNav.label	Sivunavigointi
+@astryx.sideNav.resizeSidebar	Muuta sivupalkin kokoa
+@astryx.sideNavCollapseButton.collapseSidebar	Tiivistä sivupalkki
+@astryx.sideNavCollapseButton.expandSidebar	Laajenna sivupalkki
+@astryx.sideNavItem.collapse	Tiivistä {label}
+@astryx.sideNavItem.expand	Laajenna {label}
+@astryx.sideNavItem.submenuLabel	Alivalikko: {label}
+@astryx.spinner.loading	Ladataan
+@astryx.step.goToStep	Siirry vaiheeseen {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Siirry vaiheeseen {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Valinnainen
+@astryx.step.status.completed	valmis
+@astryx.step.status.error	virhe
+@astryx.step.status.warning	varoitus
+@astryx.stepper.label	Edistyminen
+@astryx.stepper.nextStep	Seuraava vaihe
+@astryx.stepper.previousStep	Edellinen vaihe
+@astryx.tabList.label	Välilehdet
+@astryx.table.filter.allPlaceholder	Kaikki
+@astryx.table.filter.apply	Käytä
+@astryx.table.filter.reset	Palauta
+@astryx.table.label	Taulukko
+@astryx.table.noData	Ei tietoja
+@astryx.table.pagination.label	Taulukon sivutus
+@astryx.table.pagination.labelAbove	{label} (yläpuolella)
+@astryx.table.pagination.labelBelow	{label} (alapuolella)
+@astryx.table.rowStatus.columnHeader	Rivin tila
+@astryx.table.selection.selectAllRows	Valitse kaikki rivit
+@astryx.table.selection.selectRow	Valitse rivi
+@astryx.table.selection.selectRowNamed	Valitse {label}
+@astryx.table.sort.ascending	Järjestä nousevasti
+@astryx.table.sort.clear	Tyhjennä järjestys
+@astryx.table.sort.descending	Järjestä laskevasti
+@astryx.tableFiltering.filterByColumn	Suodata {header}
+@astryx.tableGroupedRows.collapseGroup	Tiivistä ryhmä {groupKey}
+@astryx.tableGroupedRows.expandGroup	Laajenna ryhmä {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	Tiivistä kaikki rivit
+@astryx.tableRowExpansion.collapseRow	Tiivistä rivi
+@astryx.tableRowExpansion.columnHeader	Rivin laajennus
+@astryx.tableRowExpansion.expandAllRows	Laajenna kaikki rivit
+@astryx.tableRowExpansion.expandRow	Laajenna rivi
+@astryx.tableTree.collapseAllRows	Tiivistä kaikki rivit
+@astryx.tableTree.collapseRow	Tiivistä rivi
+@astryx.tableTree.expandAllRows	Laajenna kaikki rivit
+@astryx.tableTree.expandRow	Laajenna rivi
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {merkki} other {merkkiä}} yli rajan
+@astryx.textArea.charactersRemaining	{count, number} {count, plural, one {merkki} other {merkkiä}} jäljellä
+@astryx.textInput.clearLabel	Tyhjennä {label}
+@astryx.thumbnail.fallbackName	Pikkukuva
+@astryx.thumbnail.open	Avaa {accessibleName}
+@astryx.thumbnail.remove	Poista {accessibleName}
+@astryx.timeInput.clearLabel	Tyhjennä {label}
+@astryx.timeInput.invalidTime	Virheellinen aika
+@astryx.timeInput.openPicker	Avaa {label}
+@astryx.timeInput.placeholder	Valitse aika
+@astryx.timestamp.copied	Kopioitu
+@astryx.timestamp.copy	Kopioi
+@astryx.timestamp.copyValue	Kopioi {value}
+@astryx.timestamp.detailsLabel	Aikaleiman tiedot
+@astryx.toast.dismiss	Hylkää ilmoitus
+@astryx.toast.viewport	Ilmoitukset
+@astryx.token.remove	Poista {label}
+@astryx.tokenizer.clearAll	Tyhjennä kaikki
+@astryx.tokenizer.tokenAdded	Lisätty {label}
+@astryx.tokenizer.tokenRemoved	Poistettu {label}
+@astryx.topNav.heading.dialogLabel	Navigointivalikko
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Avaa valikko
+@astryx.topNav.landmarkLabel	Ylänavigointi
+@astryx.transferList.addAll	Lisää kaikki
+@astryx.transferList.addOption	Lisää {label}
+@astryx.transferList.announceAdded	{label} lisätty. {count, number} {count, plural, one {kohde} other {kohdetta}} valittuna.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {kohde} other {kohdetta}} lisätty.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {kohde} other {kohdetta}} poistettu.
+@astryx.transferList.announceDropped	{label} pudotettu kohtaan {position, number} / {total, number}.
+@astryx.transferList.announceGrabbed	{label} poimittu, paikka {position, number} / {total, number}. Siirrä nuolinäppäimillä, pudota painamalla Space tai Enter tai peruuta painamalla Escape.
+@astryx.transferList.announceMoveCancelled	{label}: siirto peruutettu.
+@astryx.transferList.announceMovedToPosition	{label}, paikka {position, number} / {total, number}.
+@astryx.transferList.announceRemoved	{label} poistettu. {count, number} {count, plural, one {kohde} other {kohdetta}} valittuna.
+@astryx.transferList.announceReturned	{label} palautettu kohtaan {position, number}.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {kohde} other {kohdetta}} löytyi.
+@astryx.transferList.availableEmpty	Ei valittavia vaihtoehtoja
+@astryx.transferList.availableLabel	Valittavissa
+@astryx.transferList.clear	Tyhjennä
+@astryx.transferList.noResults	Ei tuloksia
+@astryx.transferList.removeOption	Poista {label}
+@astryx.transferList.reorderDisabled	Kohdetta ei voi järjestää uudelleen: {label}
+@astryx.transferList.reorderInstructions	Poimi kohde painamalla Space tai Enter. Siirrä sitä näppäimillä Arrow Up, Arrow Down, Home tai End. Pudota painamalla Space tai Enter tai peruuta painamalla Escape.
+@astryx.transferList.reorderOption	Järjestä uudelleen: {label}
+@astryx.transferList.searchLabel	Hae: {label}
+@astryx.transferList.searchPlaceholder	Hae…
+@astryx.transferList.selectedEmpty	Ei valittuja vaihtoehtoja
+@astryx.transferList.selectedLabel	Valitut
+@astryx.transferList.transferDisabled	Kohdetta ei voi siirtää: {label}
+@astryx.transferList.ungroupedLabel	Muut
+@astryx.transferListSelector.apply	Käytä
+@astryx.transferListSelector.cancel	Peruuta
+@astryx.transferListSelector.triggerLabel	{count, number} valittu
+@astryx.treeList.toggleChildren	Näytä tai piilota alakohteet
+@astryx.typeahead.clearSelection	Tyhjennä valinta
+@astryx.typeahead.emptySearchResults	Tuloksia ei löytynyt
+@astryx.typeahead.loading	Ladataan
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {tulos} other {tulosta}}
+@astryx.typeahead.searchPlaceholder	Hae…
+@astryx.typeahead.searchResults	Hakutulokset

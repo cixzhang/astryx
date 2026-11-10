@@ -397,7 +397,7 @@ const MICROPHONE: &[PathCmd] = &[
 
 /// The path, whether it is filled (else stroked), and its stroke width in
 /// the 24-point view box, for a built-in icon name.
-pub(crate) fn icon_path(name: &str) -> Option<(&'static [PathCmd], bool, f32)> {
+pub fn icon_path(name: &str) -> Option<(&'static [PathCmd], bool, f32)> {
     Some(match name {
         "close" => (CLOSE, false, 1.5),
         "chevronDown" => (CHEVRON_DOWN, false, 1.5),

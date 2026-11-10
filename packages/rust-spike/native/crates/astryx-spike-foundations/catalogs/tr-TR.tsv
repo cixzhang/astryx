@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	İptal
+@astryx.appShell.mobileNavigation	Mobil gezinme
+@astryx.appShell.skipToContent	İçeriğe geç
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Avatarlar arasında gezinmek için ok tuşlarını kullanın
+@astryx.avatarGroup.label	Avatarlar
+@astryx.avatarGroup.overflow	{count, number} tane daha
+@astryx.banner.collapse	Daralt
+@astryx.banner.dismiss	Kapat
+@astryx.banner.dismissTitled	{title}: {dismiss}
+@astryx.banner.expand	Genişlet
+@astryx.breadcrumbs.label	İçerik haritası
+@astryx.button.loading	Yükleniyor
+@astryx.calendar.dayInRange	{date}, aralık içinde
+@astryx.calendar.dayRangeEnd	{date}, aralık bitişi
+@astryx.calendar.dayRangeStart	{date}, aralık başlangıcı
+@astryx.calendar.dayRangeStartAndEnd	{date}, aralık başlangıcı ve bitişi
+@astryx.calendar.daySelected	{date}, seçili
+@astryx.calendar.nextMonth	Sonraki ay
+@astryx.calendar.previousMonth	Önceki ay
+@astryx.calendar.rangeClearedAnnounce	Başlangıç tarihi {date} temizlendi. Bir başlangıç tarihi seçin.
+@astryx.calendar.rangeCompleteAnnounce	Seçili aralık: {start} - {end}.
+@astryx.calendar.rangeStartAnnounce	Başlangıç tarihi {date}. Bir bitiş tarihi seçin.
+@astryx.carousel.label	Galeri
+@astryx.carousel.scrollLeft	Sola kaydır
+@astryx.carousel.scrollRight	Sağa kaydır
+@astryx.carousel.slideLabel	{total, number} slayttan {current, number}. slayt
+@astryx.chart.dataTableCaption	{label} verileri
+@astryx.chart.label	Grafik
+@astryx.chart.labelWithSeries	{xKey} alanına göre {series} grafiği
+@astryx.chartLegend.label	Grafik lejantı
+@astryx.chat.composer.placeholder	Bir mesaj yazın…
+@astryx.chat.composerDrawer.label	Öğeler
+@astryx.chat.composerInput.label	Mesaj girişi
+@astryx.chat.messageAriaLabel	Mesaj {status}
+@astryx.chat.pastedText.expand	Genişlet
+@astryx.chat.speechRecognition.noSpeechDetected	Konuşma algılanmadı.
+@astryx.chat.status.delivered	İletildi
+@astryx.chat.status.failed	Başarısız
+@astryx.chat.status.read	Okundu
+@astryx.chat.status.sending	Gönderiliyor
+@astryx.chat.status.sent	Gönderildi
+@astryx.chatComposerDrawer.collapse	{label} daralt
+@astryx.chatComposerDrawer.expand	{label} genişlet
+@astryx.chatDictationButton.startDictation	Dikteyi başlat
+@astryx.chatDictationButton.stopDictation	Dikteyi durdur
+@astryx.chatLayout.newMessages	Yeni mesajlar
+@astryx.chatLayoutScrollButton.scrollToBottom	En alta kaydır
+@astryx.chatMessage.messageFrom	{sender} kişisinden mesaj
+@astryx.chatSendButton.send	Gönder
+@astryx.chatSendButton.stop	Durdur
+@astryx.chatToolCalls.error	Hata: {message}
+@astryx.chatToolCalls.groupLabel	{count} araç çağrısı
+@astryx.chatToolCalls.status.complete	Tamamlandı
+@astryx.chatToolCalls.status.error	Başarısız
+@astryx.chatToolCalls.status.pending	Beklemede
+@astryx.chatToolCalls.status.running	Çalışıyor
+@astryx.chatTriggerMenu.suggestions	Öneriler
+@astryx.chatTypingIndicator.many	{names} yazıyor…
+@astryx.chatTypingIndicator.one	{name} yazıyor…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {kişi daha} other {kişi daha}}
+@astryx.checkboxList.item.checkbox	Onay kutusu
+@astryx.citation.label	Kaynak {number}: {title}
+@astryx.codeBlock.code	Kod
+@astryx.codeBlock.copied	Kopyalandı
+@astryx.codeBlock.copyCode	Kodu kopyala
+@astryx.commandPalette.emptyBootstrap	Aramak için yazın
+@astryx.commandPalette.emptySearch	Sonuç yok
+@astryx.commandPalette.footer.close	Kapat
+@astryx.commandPalette.footer.navigate	Gezin
+@astryx.commandPalette.footer.select	Seç
+@astryx.commandPalette.input.placeholder	Ara…
+@astryx.commandPalette.label	Komut paleti
+@astryx.commandPalette.list.label	Komutlar
+@astryx.commandPalette.loading	Yükleniyor
+@astryx.commandPalette.noResultsFor	{query} için sonuç bulunamadı
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {sonuç} other {sonuç}}
+@astryx.contextMenu.label	Bağlam menüsü
+@astryx.dateInput.chooseMonthYear	{monthYear}, ay ve yıl seçin
+@astryx.dateInput.clear	{label} temizle
+@astryx.dateInput.closeCalendar	Takvimi kapat
+@astryx.dateInput.dialogLabel	Tarih seçin
+@astryx.dateInput.doneChoosingMonth	Tamam
+@astryx.dateInput.invalidDate	Geçersiz tarih
+@astryx.dateInput.monthWheel	Ay
+@astryx.dateInput.openCalendar	Takvimi aç
+@astryx.dateInput.placeholder	Bir tarih seçin
+@astryx.dateInput.resetPicking	Sıfırla
+@astryx.dateInput.savePicking	Kaydet
+@astryx.dateInput.toggleCalendarClose	Takvimi kapat
+@astryx.dateInput.yearWheel	Yıl
+@astryx.dateRangeInput.dialogLabel	Tarih aralığı seçin
+@astryx.dateRangeInput.placeholder	Tarih aralığı seçin
+@astryx.dateRangeInput.presetDateRanges	Hazır tarih aralıkları
+@astryx.dateTimeInput.dateTab	Tarih
+@astryx.dateTimeInput.dialogLabel	Tarih ve saat seçin
+@astryx.dateTimeInput.hourWheel	Saat
+@astryx.dateTimeInput.meridiemAM	ÖÖ
+@astryx.dateTimeInput.meridiemPM	ÖS
+@astryx.dateTimeInput.meridiemWheel	ÖÖ/ÖS
+@astryx.dateTimeInput.minuteWheel	Dakika
+@astryx.dateTimeInput.openTimePicker	{label} aç
+@astryx.dateTimeInput.pickerMode	Tarih/saat bölümü
+@astryx.dateTimeInput.placeholder	Bir tarih seçin
+@astryx.dateTimeInput.saveDatePicking	Tarihi kaydet
+@astryx.dateTimeInput.secondWheel	Saniye
+@astryx.dateTimeInput.timeHint12h	örn. 2:30 ÖS
+@astryx.dateTimeInput.timeHint24h	örn. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	{label} seçenekleri
+@astryx.dateTimeInput.timePlaceholder	Bir saat seçin
+@astryx.dateTimeInput.timeSuffix	{label} saati
+@astryx.dateTimeInput.timeTab	Saat
+@astryx.dialog.close	Kapat
+@astryx.dropdownMenu.back	Geri
+@astryx.dropdownMenu.label	Menü
+@astryx.field.optional	İsteğe bağlı
+@astryx.field.required	Zorunlu
+@astryx.fileInput.clearLabel	{label} temizle
+@astryx.fileInput.dropHint	Dosyaları buraya bırakın
+@astryx.fileInput.errorInvalidType	"{fileName}" kabul edilen bir dosya türü değil
+@astryx.fileInput.errorMaxFiles	En fazla {maxFiles} dosyaya izin verilir
+@astryx.fileInput.errorMaxSize	"{fileName}" {maxSize} sınırını aşıyor
+@astryx.fileInput.fileSelected	1 dosya seçildi: {fileName}
+@astryx.fileInput.filesSelected	{count} dosya seçildi
+@astryx.fileInput.placeholder	Dosya seçin
+@astryx.fileInput.placeholderMultiple	Dosyaları seçin
+@astryx.fileInput.required	Zorunlu
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Salt okunur
+@astryx.input.statusButton.error	Hata ayrıntıları
+@astryx.input.statusButton.success	Başarı ayrıntıları
+@astryx.input.statusButton.warning	Uyarı ayrıntıları
+@astryx.keyboardHint.toNavigate	gezinmek için
+@astryx.lightbox.close	Kapat
+@astryx.lightbox.imagePosition	{total, number} görselden {index, number}. görsel
+@astryx.lightbox.mediaPosition	{alt}, {total, number} öğeden {index, number}.
+@astryx.lightbox.mediaViewer	Medya görüntüleyici
+@astryx.lightbox.next	Sonraki
+@astryx.lightbox.previous	Önceki
+@astryx.lightbox.zoom	Yakınlaştır
+@astryx.lightbox.zoomedIn	Yakınlaştırıldı, kaydırmak için ok tuşlarını kullanın
+@astryx.lightbox.zoomedOut	Uzaklaştırıldı
+@astryx.link.newTab	(yeni sekmede açılır)
+@astryx.listInput.addItem	{itemName} ekle
+@astryx.listInput.announceAdded	{itemName} {position, number} eklendi.
+@astryx.listInput.announceAlreadyAtBoundary	Bu {itemName} zaten {boundary, select, first {ilk sırada} last {son sırada} other {}}.
+@astryx.listInput.announceDropped	{itemName}, {total, number} içinden {position, number}. sıraya bırakıldı.
+@astryx.listInput.announceGrabbed	{itemName} {position, number} tutuldu. Taşımak için ok tuşlarını, bırakmak için Space veya Enter, iptal etmek için Escape tuşunu kullanın.
+@astryx.listInput.announceMovedToPosition	{itemName}, {total, number} içinden {position, number}. sıraya taşındı.
+@astryx.listInput.announceRemoved	{itemName} {position, number} kaldırıldı.
+@astryx.listInput.announceReorderCancelled	Yeniden sıralama iptal edildi.
+@astryx.listInput.announceReturnedToPosition	{itemName}, {position, number}. sıraya döndü.
+@astryx.listInput.emptyDescription	Başlamak için bir {itemName} ekleyin.
+@astryx.listInput.emptyTitle	Henüz {itemName} eklenmedi
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName}, {total, number} içinden {position, number}
+@astryx.listInput.removeItem	{itemName} {position, number} kaldır
+@astryx.listInput.removeUnavailable	Liste devre dışıyken kaldırma işlemi kullanılamaz
+@astryx.listInput.reorderInstructions	Bu öğeyi bir konum taşımak için Arrow Up veya Arrow Down tuşunu kullanın. Klavyeyle gelişmiş yeniden sıralama için öğeyi almak üzere Space veya Enter tuşuna basın.
+@astryx.listInput.reorderItem	{itemName} {position, number} yeniden sırala
+@astryx.markdown.table	Tablo
+@astryx.markdown.taskList	Görev listesi
+@astryx.metadataList.showLess	Daha az göster
+@astryx.metadataList.showMore	Daha fazla göster
+@astryx.mobileNav.closeNavigation	Gezinmeyi kapat
+@astryx.mobileNav.navigation	Gezinme
+@astryx.mobileNav.toggle.open	Gezinmeyi aç
+@astryx.moreMenu.label	Diğer seçenekler
+@astryx.multiSelector.allSelected	Tümü seçildi
+@astryx.multiSelector.clearAll	Tümünü temizle: {label}
+@astryx.multiSelector.empty	Seçenek yok
+@astryx.multiSelector.emptySearchResults	Sonuç bulunamadı
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {sonuç} other {sonuç}}
+@astryx.multiSelector.searchOptions	Arama seçenekleri
+@astryx.multiSelector.searchPlaceholder	Ara…
+@astryx.multiSelector.selectAll	Tümünü seç
+@astryx.multiSelector.selectAllPartiallySelected	{label}, kısmen seçili
+@astryx.multiSelector.selectPlaceholder	Seç…
+@astryx.multiSelector.selectionCleared	Seçim temizlendi
+@astryx.multiSelector.selectionCount	{total, number} içinden {count, number} seçildi
+@astryx.numberInput.clearLabel	{label} temizle
+@astryx.numberInput.decrementLabel	{label} azalt
+@astryx.numberInput.incrementLabel	{label} artır
+@astryx.outline.label	İçindekiler
+@astryx.pagination.count	{total, number} içinden {from, number}–{to, number}
+@astryx.pagination.first	İlk sayfaya git
+@astryx.pagination.goToPage	{page, number}. sayfaya git
+@astryx.pagination.goToPageInput	Sayfaya git
+@astryx.pagination.itemsPerPage	Sayfa başına öğe
+@astryx.pagination.label	Sayfalama
+@astryx.pagination.last	Son sayfaya git
+@astryx.pagination.next	Sonraki sayfaya git
+@astryx.pagination.nextBy	{step, number} {step, plural, one {sayfa} other {sayfa}} ileri git
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	{current, number}. sayfa
+@astryx.pagination.pageIndicators	Sayfa göstergeleri
+@astryx.pagination.pageLabel	Sayfa
+@astryx.pagination.pageOfTotal	{total, number} sayfadan {current, number}. sayfa
+@astryx.pagination.previous	Önceki sayfaya git
+@astryx.pagination.previousBy	{step, number} {step, plural, one {sayfa} other {sayfa}} geri git
+@astryx.popover.close	Açılır pencereyi kapat
+@astryx.powersearch.editor.addFilter	+ Filtre ekle
+@astryx.powersearch.editor.apply	Uygula
+@astryx.powersearch.editor.cancel	İptal
+@astryx.powersearch.editor.delete	Sil
+@astryx.powersearch.editor.field	Alan
+@astryx.powersearch.editor.group	Grup
+@astryx.powersearch.editor.groupOperator	Grup işleci
+@astryx.powersearch.editor.operator	İşleç
+@astryx.powersearch.editor.removeFilter	Filtreyi kaldır
+@astryx.powersearch.label	Ara
+@astryx.powersearch.operator.after	şundan sonradır
+@astryx.powersearch.operator.before	şundan öncedir
+@astryx.powersearch.operator.between	şunlar arasındadır
+@astryx.powersearch.operator.contains	içerir
+@astryx.powersearch.operator.endsWith	ile biter
+@astryx.powersearch.operator.equals	eşittir
+@astryx.powersearch.operator.greaterThan	şundan büyüktür
+@astryx.powersearch.operator.greaterThanOrEqual	şundan büyük veya eşittir
+@astryx.powersearch.operator.is	eşittir
+@astryx.powersearch.operator.isAnyOf	şunlardan herhangi biridir
+@astryx.powersearch.operator.isFalse	yanlıştır
+@astryx.powersearch.operator.isNoneOf	şunlardan hiçbiri değildir
+@astryx.powersearch.operator.isNot	eşit değildir
+@astryx.powersearch.operator.isTrue	doğrudur
+@astryx.powersearch.operator.lessThan	şundan küçüktür
+@astryx.powersearch.operator.lessThanOrEqual	şundan küçük veya eşittir
+@astryx.powersearch.operator.notContains	içermez
+@astryx.powersearch.operator.notEndsWith	ile bitmez
+@astryx.powersearch.operator.notEquals	eşit değildir
+@astryx.powersearch.operator.notStartsWith	ile başlamaz
+@astryx.powersearch.operator.startsWith	ile başlar
+@astryx.powersearch.placeholder	Ara…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {sonuç} other {sonuç}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Değer ekleyin…
+@astryx.powersearch.valueEditor.date	Tarih
+@astryx.powersearch.valueEditor.dateRange	tarih aralığı
+@astryx.powersearch.valueEditor.endDate	Bitiş tarihi
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Sayı girin…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Değer girin…
+@astryx.powersearch.valueEditor.entities	Varlıklar
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {varlık} other {varlık}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {filtre} other {filtre}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {öğe} other {öğe}}
+@astryx.powersearch.valueEditor.relativeDate	Göreli tarih
+@astryx.powersearch.valueEditor.searchPlaceholder	Ara…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Değer seçin…
+@astryx.powersearch.valueEditor.startDate	Başlangıç tarihi
+@astryx.powersearch.valueEditor.time	Saat
+@astryx.powersearch.valueEditor.value	Değer
+@astryx.powersearch.valueEditor.values	Değerler
+@astryx.resizable.collapsed	Daraltıldı
+@astryx.resizable.handle.label	Yeniden boyutlandırma tutamacı
+@astryx.selector.clearLabel	{label} temizle
+@astryx.selector.empty	Seçenek yok
+@astryx.selector.emptySearchResults	Sonuç bulunamadı
+@astryx.selector.placeholder	Seç…
+@astryx.selector.resultCount	{count, number} {count, plural, one {sonuç} other {sonuç}}
+@astryx.selector.searchOptions	Arama seçenekleri
+@astryx.selector.searchPlaceholder	Ara…
+@astryx.sideNav.heading.dialogLabel	Gezinme menüsü
+@astryx.sideNav.heading.openMenu	{heading}, Menüyü aç
+@astryx.sideNav.label	Yan gezinme
+@astryx.sideNav.resizeSidebar	Kenar çubuğunu yeniden boyutlandır
+@astryx.sideNavCollapseButton.collapseSidebar	Kenar çubuğunu daralt
+@astryx.sideNavCollapseButton.expandSidebar	Kenar çubuğunu genişlet
+@astryx.sideNavItem.collapse	{label} daralt
+@astryx.sideNavItem.expand	{label} genişlet
+@astryx.sideNavItem.submenuLabel	{label} alt menüsü
+@astryx.spinner.loading	Yükleniyor
+@astryx.step.goToStep	{stepNumber, number}. adıma git: {label}
+@astryx.step.goToStepWithStatus	{stepNumber, number}. adıma git: {label}, {status}
+@astryx.step.optional	İsteğe bağlı
+@astryx.step.status.completed	tamamlandı
+@astryx.step.status.error	hata
+@astryx.step.status.warning	uyarı
+@astryx.stepper.label	İlerleme
+@astryx.stepper.nextStep	Sonraki adım
+@astryx.stepper.previousStep	Önceki adım
+@astryx.tabList.label	Sekmeler
+@astryx.table.filter.allPlaceholder	Tümü
+@astryx.table.filter.apply	Uygula
+@astryx.table.filter.reset	Sıfırla
+@astryx.table.label	Tablo
+@astryx.table.noData	Veri yok
+@astryx.table.pagination.label	Tablo sayfalaması
+@astryx.table.pagination.labelAbove	{label} (üst)
+@astryx.table.pagination.labelBelow	{label} (alt)
+@astryx.table.rowStatus.columnHeader	Satır durumu
+@astryx.table.selection.selectAllRows	Tüm satırları seç
+@astryx.table.selection.selectRow	Satırı seç
+@astryx.table.selection.selectRowNamed	{label} öğesini seç
+@astryx.table.sort.ascending	Artan sırada sırala
+@astryx.table.sort.clear	Sıralamayı temizle
+@astryx.table.sort.descending	Azalan sırada sırala
+@astryx.tableFiltering.filterByColumn	{header} filtrele
+@astryx.tableGroupedRows.collapseGroup	{groupKey} grubunu daralt
+@astryx.tableGroupedRows.expandGroup	{groupKey} grubunu genişlet
+@astryx.tableRowExpansion.collapseAllRows	Tüm satırları daralt
+@astryx.tableRowExpansion.collapseRow	Satırı daralt
+@astryx.tableRowExpansion.columnHeader	Satır genişletme
+@astryx.tableRowExpansion.expandAllRows	Tüm satırları genişlet
+@astryx.tableRowExpansion.expandRow	Satırı genişlet
+@astryx.tableTree.collapseAllRows	Tüm satırları daralt
+@astryx.tableTree.collapseRow	Satırı daralt
+@astryx.tableTree.expandAllRows	Tüm satırları genişlet
+@astryx.tableTree.expandRow	Satırı genişlet
+@astryx.textArea.charactersOverLimit	Limit {count, number} {count, plural, one {karakter} other {karakter}} aşıldı
+@astryx.textArea.charactersRemaining	{count, number} {count, plural, one {karakter} other {karakter}} kaldı
+@astryx.textInput.clearLabel	{label} temizle
+@astryx.thumbnail.fallbackName	Küçük resim
+@astryx.thumbnail.open	{accessibleName} aç
+@astryx.thumbnail.remove	{accessibleName} kaldır
+@astryx.timeInput.clearLabel	{label} temizle
+@astryx.timeInput.invalidTime	Geçersiz saat
+@astryx.timeInput.openPicker	{label} aç
+@astryx.timeInput.placeholder	Bir saat seçin
+@astryx.timestamp.copied	Kopyalandı
+@astryx.timestamp.copy	Kopyala
+@astryx.timestamp.copyValue	{value} kopyala
+@astryx.timestamp.detailsLabel	Zaman damgası ayrıntıları
+@astryx.toast.dismiss	Bildirimi kapat
+@astryx.toast.viewport	Bildirimler
+@astryx.token.remove	{label} kaldır
+@astryx.tokenizer.clearAll	Tümünü temizle
+@astryx.tokenizer.tokenAdded	{label} eklendi
+@astryx.tokenizer.tokenRemoved	{label} kaldırıldı
+@astryx.topNav.heading.dialogLabel	Gezinme menüsü
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Menüyü aç
+@astryx.topNav.landmarkLabel	Üst gezinme
+@astryx.transferList.addAll	Tümünü ekle
+@astryx.transferList.addOption	{label} ekle
+@astryx.transferList.announceAdded	{label} eklendi. {count, number} {count, plural, one {öğe} other {öğe}} seçili.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {öğe} other {öğe}} eklendi.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {öğe} other {öğe}} kaldırıldı.
+@astryx.transferList.announceDropped	{label}, {total, number} içinden {position, number}. sıraya bırakıldı.
+@astryx.transferList.announceGrabbed	{label} tutuldu, {total, number} içinden {position, number}. sırada. Taşımak için ok tuşlarını, bırakmak için Space veya Enter, iptal etmek için Escape kullanın.
+@astryx.transferList.announceMoveCancelled	{label} taşıma işlemi iptal edildi.
+@astryx.transferList.announceMovedToPosition	{label}, {total, number} içinden {position, number}. sırada.
+@astryx.transferList.announceRemoved	{label} kaldırıldı. {count, number} {count, plural, one {öğe} other {öğe}} seçili.
+@astryx.transferList.announceReturned	{label}, {position, number}. sıraya döndü.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {öğe} other {öğe}} bulundu.
+@astryx.transferList.availableEmpty	Kullanılabilir seçenek yok
+@astryx.transferList.availableLabel	Kullanılabilir
+@astryx.transferList.clear	Temizle
+@astryx.transferList.noResults	Sonuç yok
+@astryx.transferList.removeOption	{label} kaldır
+@astryx.transferList.reorderDisabled	{label} yeniden sıralanamaz
+@astryx.transferList.reorderInstructions	Bir öğeyi tutmak için Space veya Enter tuşuna basın. Taşımak için Arrow Up, Arrow Down, Home veya End tuşlarını kullanın. Bırakmak için Space veya Enter, iptal etmek için Escape tuşuna basın.
+@astryx.transferList.reorderOption	{label} yeniden sırala
+@astryx.transferList.searchLabel	{label} içinde ara
+@astryx.transferList.searchPlaceholder	Ara…
+@astryx.transferList.selectedEmpty	Seçili seçenek yok
+@astryx.transferList.selectedLabel	Seçilenler
+@astryx.transferList.transferDisabled	{label} taşınamaz
+@astryx.transferList.ungroupedLabel	Diğer
+@astryx.transferListSelector.apply	Uygula
+@astryx.transferListSelector.cancel	İptal
+@astryx.transferListSelector.triggerLabel	{count, number} seçildi
+@astryx.treeList.toggleChildren	Alt öğeleri aç/kapat
+@astryx.typeahead.clearSelection	Seçimi temizle
+@astryx.typeahead.emptySearchResults	Sonuç bulunamadı
+@astryx.typeahead.loading	Yükleniyor
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {sonuç} other {sonuç}}
+@astryx.typeahead.searchPlaceholder	Ara…
+@astryx.typeahead.searchResults	Arama sonuçları

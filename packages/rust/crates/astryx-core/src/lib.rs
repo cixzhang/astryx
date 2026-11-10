@@ -30,3 +30,18 @@ pub use element::{Element, Space};
 pub use paint::{FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 pub use runtime::{App, FeedbackKind, FrameTimings, Runtime};
 pub use theme::{Direction, Mode, ThemeChoice};
+
+/// The building blocks components are made of, for component crates outside
+/// this one. An out-of-crate component implements [`authoring::Build`] and
+/// converts into an [`Element`] with [`authoring::element`]. These types are
+/// the same ones the built-in components use, so they may change with them.
+pub mod authoring {
+    pub use crate::components::icon_paths::icon_path;
+    pub use crate::components::text::{text_draw, text_node, type_style};
+    pub use crate::element::{
+        element, Axis, Base, BoxDraw, Build, BuildCx, Capture, Draw, Edit, ImageDraw, Indicator,
+        Inherited, Interact, Node, Overlay, Painter, PathDraw, PopupAction, Semantics, TextDraw,
+    };
+    pub use crate::light::LightDraw;
+    pub use crate::world::SpriteDraw;
+}

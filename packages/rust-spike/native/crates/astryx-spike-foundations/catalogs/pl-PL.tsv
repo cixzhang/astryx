@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Anuluj
+@astryx.appShell.mobileNavigation	Nawigacja mobilna
+@astryx.appShell.skipToContent	Przejdź do treści
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Użyj strzałek, aby poruszać się między awatarami
+@astryx.avatarGroup.label	Awatary
+@astryx.avatarGroup.overflow	jeszcze {count, number}
+@astryx.banner.collapse	Zwiń
+@astryx.banner.dismiss	Zamknij
+@astryx.banner.dismissTitled	{dismiss}: {title}
+@astryx.banner.expand	Rozwiń
+@astryx.breadcrumbs.label	Ścieżka nawigacyjna
+@astryx.button.loading	Ładowanie
+@astryx.calendar.dayInRange	{date}, w zakresie
+@astryx.calendar.dayRangeEnd	{date}, koniec zakresu
+@astryx.calendar.dayRangeStart	{date}, początek zakresu
+@astryx.calendar.dayRangeStartAndEnd	{date}, początek i koniec zakresu
+@astryx.calendar.daySelected	{date}, wybrano
+@astryx.calendar.nextMonth	Następny miesiąc
+@astryx.calendar.previousMonth	Poprzedni miesiąc
+@astryx.calendar.rangeClearedAnnounce	Wyczyszczono datę początkową {date}. Wybierz datę początkową.
+@astryx.calendar.rangeCompleteAnnounce	Wybrany zakres: od {start} do {end}.
+@astryx.calendar.rangeStartAnnounce	Data początkowa {date}. Wybierz datę końcową.
+@astryx.carousel.label	Karuzela
+@astryx.carousel.scrollLeft	Przewiń w lewo
+@astryx.carousel.scrollRight	Przewiń w prawo
+@astryx.carousel.slideLabel	Slajd {current, number} z {total, number}
+@astryx.chart.dataTableCaption	Dane: {label}
+@astryx.chart.label	Wykres
+@astryx.chart.labelWithSeries	Wykres {series} według {xKey}
+@astryx.chartLegend.label	Legenda wykresu
+@astryx.chat.composer.placeholder	Napisz wiadomość…
+@astryx.chat.composerDrawer.label	Elementy
+@astryx.chat.composerInput.label	Pole wiadomości
+@astryx.chat.messageAriaLabel	Wiadomość {status}
+@astryx.chat.pastedText.expand	Rozwiń
+@astryx.chat.speechRecognition.noSpeechDetected	Nie wykryto mowy.
+@astryx.chat.status.delivered	Dostarczono
+@astryx.chat.status.failed	Niepowodzenie
+@astryx.chat.status.read	Przeczytano
+@astryx.chat.status.sending	Wysyłanie
+@astryx.chat.status.sent	Wysłano
+@astryx.chatComposerDrawer.collapse	Zwiń {label}
+@astryx.chatComposerDrawer.expand	Rozwiń {label}
+@astryx.chatDictationButton.startDictation	Rozpocznij dyktowanie
+@astryx.chatDictationButton.stopDictation	Zatrzymaj dyktowanie
+@astryx.chatLayout.newMessages	Nowe wiadomości
+@astryx.chatLayoutScrollButton.scrollToBottom	Przewiń na dół
+@astryx.chatMessage.messageFrom	Wiadomość od {sender}
+@astryx.chatSendButton.send	Wyślij
+@astryx.chatSendButton.stop	Zatrzymaj
+@astryx.chatToolCalls.error	Błąd: {message}
+@astryx.chatToolCalls.groupLabel	Wywołania narzędzi: {count}
+@astryx.chatToolCalls.status.complete	Ukończono
+@astryx.chatToolCalls.status.error	Niepowodzenie
+@astryx.chatToolCalls.status.pending	Oczekiwanie
+@astryx.chatToolCalls.status.running	W trakcie
+@astryx.chatTriggerMenu.suggestions	Sugestie
+@astryx.chatTypingIndicator.many	{names} piszą…
+@astryx.chatTypingIndicator.one	{name} pisze…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {inna osoba} few {inne osoby} many {innych osób} other {innej osoby}}
+@astryx.checkboxList.item.checkbox	Pole wyboru
+@astryx.citation.label	Cytat {number}: {title}
+@astryx.codeBlock.code	Kod
+@astryx.codeBlock.copied	Skopiowano
+@astryx.codeBlock.copyCode	Kopiuj kod
+@astryx.commandPalette.emptyBootstrap	Pisz, aby wyszukać
+@astryx.commandPalette.emptySearch	Brak wyników
+@astryx.commandPalette.footer.close	Zamknij
+@astryx.commandPalette.footer.navigate	Nawiguj
+@astryx.commandPalette.footer.select	Wybierz
+@astryx.commandPalette.input.placeholder	Szukaj…
+@astryx.commandPalette.label	Paleta poleceń
+@astryx.commandPalette.list.label	Polecenia
+@astryx.commandPalette.loading	Ładowanie
+@astryx.commandPalette.noResultsFor	Brak wyników dla {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {wynik} few {wyniki} many {wyników} other {wyniku}}
+@astryx.contextMenu.label	Menu kontekstowe
+@astryx.dateInput.chooseMonthYear	{monthYear}, wybierz miesiąc i rok
+@astryx.dateInput.clear	Wyczyść {label}
+@astryx.dateInput.closeCalendar	Zamknij kalendarz
+@astryx.dateInput.dialogLabel	Wybierz datę
+@astryx.dateInput.doneChoosingMonth	Gotowe
+@astryx.dateInput.invalidDate	Nieprawidłowa data
+@astryx.dateInput.monthWheel	Miesiąc
+@astryx.dateInput.openCalendar	Otwórz kalendarz
+@astryx.dateInput.placeholder	Wybierz datę
+@astryx.dateInput.resetPicking	Resetuj
+@astryx.dateInput.savePicking	Zapisz
+@astryx.dateInput.toggleCalendarClose	Zamknij kalendarz
+@astryx.dateInput.yearWheel	Rok
+@astryx.dateRangeInput.dialogLabel	Wybierz zakres dat
+@astryx.dateRangeInput.placeholder	Wybierz zakres dat
+@astryx.dateRangeInput.presetDateRanges	Predefiniowane zakresy dat
+@astryx.dateTimeInput.dateTab	Data
+@astryx.dateTimeInput.dialogLabel	Wybierz datę i godzinę
+@astryx.dateTimeInput.hourWheel	Godzina
+@astryx.dateTimeInput.meridiemAM	AM
+@astryx.dateTimeInput.meridiemPM	PM
+@astryx.dateTimeInput.meridiemWheel	AM/PM
+@astryx.dateTimeInput.minuteWheel	Minuta
+@astryx.dateTimeInput.openTimePicker	Otwórz {label}
+@astryx.dateTimeInput.pickerMode	Sekcja daty i godziny
+@astryx.dateTimeInput.placeholder	Wybierz datę
+@astryx.dateTimeInput.saveDatePicking	Zapisz datę
+@astryx.dateTimeInput.secondWheel	Sekunda
+@astryx.dateTimeInput.timeHint12h	np. 2:30 PM
+@astryx.dateTimeInput.timeHint24h	np. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Opcje: {label}
+@astryx.dateTimeInput.timePlaceholder	Wybierz godzinę
+@astryx.dateTimeInput.timeSuffix	godzina: {label}
+@astryx.dateTimeInput.timeTab	Godzina
+@astryx.dialog.close	Zamknij
+@astryx.dropdownMenu.back	Wstecz
+@astryx.dropdownMenu.label	Menu
+@astryx.field.optional	Opcjonalne
+@astryx.field.required	Wymagane
+@astryx.fileInput.clearLabel	Wyczyść {label}
+@astryx.fileInput.dropHint	Upuść pliki tutaj
+@astryx.fileInput.errorInvalidType	Plik „{fileName}” ma niedozwolony typ
+@astryx.fileInput.errorMaxFiles	Maksymalna liczba plików: {maxFiles}
+@astryx.fileInput.errorMaxSize	Plik „{fileName}” przekracza limit {maxSize}
+@astryx.fileInput.fileSelected	Wybrano 1 plik: {fileName}
+@astryx.fileInput.filesSelected	Liczba wybranych plików: {count}
+@astryx.fileInput.placeholder	Wybierz plik
+@astryx.fileInput.placeholderMultiple	Wybierz pliki
+@astryx.fileInput.required	Wymagane
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Tylko do odczytu
+@astryx.input.statusButton.error	Szczegóły błędu
+@astryx.input.statusButton.success	Szczegóły powodzenia
+@astryx.input.statusButton.warning	Szczegóły ostrzeżenia
+@astryx.keyboardHint.toNavigate	aby nawigować
+@astryx.lightbox.close	Zamknij
+@astryx.lightbox.imagePosition	Obraz {index, number} z {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} z {total, number}
+@astryx.lightbox.mediaViewer	Przeglądarka multimediów
+@astryx.lightbox.next	Następny
+@astryx.lightbox.previous	Poprzedni
+@astryx.lightbox.zoom	Powiększenie
+@astryx.lightbox.zoomedIn	Powiększono, użyj strzałek, aby przesuwać
+@astryx.lightbox.zoomedOut	Pomniejszono
+@astryx.link.newTab	(otwiera się w nowej karcie)
+@astryx.listInput.addItem	Dodaj: {itemName}
+@astryx.listInput.announceAdded	Dodano: {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} jest już {boundary, select, first {na początku} last {na końcu} other {}}.
+@astryx.listInput.announceDropped	Upuszczono na pozycji {position, number} z {total, number}: {itemName}.
+@astryx.listInput.announceGrabbed	Podniesiono: {itemName} {position, number}. Użyj strzałek, aby przenieść, Space lub Enter, aby upuścić, a Escape, aby anulować.
+@astryx.listInput.announceMovedToPosition	Przeniesiono na pozycję {position, number} z {total, number}: {itemName}.
+@astryx.listInput.announceRemoved	Usunięto: {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	Anulowano zmianę kolejności.
+@astryx.listInput.announceReturnedToPosition	Przywrócono na pozycję {position, number}: {itemName}.
+@astryx.listInput.emptyDescription	Aby rozpocząć, dodaj: {itemName}.
+@astryx.listInput.emptyTitle	Nie dodano jeszcze: {itemName}
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} z {total, number}
+@astryx.listInput.removeItem	Usuń: {itemName} {position, number}
+@astryx.listInput.removeUnavailable	Usuwanie jest niedostępne, gdy lista jest wyłączona
+@astryx.listInput.reorderInstructions	Użyj Arrow Up lub Arrow Down, aby przesunąć ten element o jedną pozycję. Naciśnij Space lub Enter, aby go podnieść i zmieniać kolejność za pomocą klawiatury.
+@astryx.listInput.reorderItem	Przenieś: {itemName} {position, number}
+@astryx.markdown.table	Tabela
+@astryx.markdown.taskList	Lista zadań
+@astryx.metadataList.showLess	Pokaż mniej
+@astryx.metadataList.showMore	Pokaż więcej
+@astryx.mobileNav.closeNavigation	Zamknij nawigację
+@astryx.mobileNav.navigation	Nawigacja
+@astryx.mobileNav.toggle.open	Otwórz nawigację
+@astryx.moreMenu.label	Więcej opcji
+@astryx.multiSelector.allSelected	Zaznaczono wszystko
+@astryx.multiSelector.clearAll	Wyczyść wszystko: {label}
+@astryx.multiSelector.empty	Brak opcji
+@astryx.multiSelector.emptySearchResults	Nie znaleziono wyników
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {wynik} few {wyniki} many {wyników} other {wyniku}}
+@astryx.multiSelector.searchOptions	Wyszukaj opcje
+@astryx.multiSelector.searchPlaceholder	Szukaj…
+@astryx.multiSelector.selectAll	Zaznacz wszystko
+@astryx.multiSelector.selectAllPartiallySelected	{label}, częściowo zaznaczono
+@astryx.multiSelector.selectPlaceholder	Wybierz…
+@astryx.multiSelector.selectionCleared	Wyczyszczono zaznaczenie
+@astryx.multiSelector.selectionCount	Zaznaczono {count, number} z {total, number}
+@astryx.numberInput.clearLabel	Wyczyść {label}
+@astryx.numberInput.decrementLabel	Zmniejsz {label}
+@astryx.numberInput.incrementLabel	Zwiększ {label}
+@astryx.outline.label	Spis treści
+@astryx.pagination.count	{from, number}–{to, number} z {total, number}
+@astryx.pagination.first	Przejdź do pierwszej strony
+@astryx.pagination.goToPage	Przejdź do strony {page, number}
+@astryx.pagination.goToPageInput	Przejdź do strony
+@astryx.pagination.itemsPerPage	Elementów na stronie
+@astryx.pagination.label	Paginacja
+@astryx.pagination.last	Przejdź do ostatniej strony
+@astryx.pagination.next	Przejdź do następnej strony
+@astryx.pagination.nextBy	Przejdź o {step, number} {step, plural, one {stronę} few {strony} many {stron} other {strony}} do przodu
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Strona {current, number}
+@astryx.pagination.pageIndicators	Wskaźniki stron
+@astryx.pagination.pageLabel	Strona
+@astryx.pagination.pageOfTotal	Strona {current, number} z {total, number}
+@astryx.pagination.previous	Przejdź do poprzedniej strony
+@astryx.pagination.previousBy	Cofnij o {step, number} {step, plural, one {stronę} few {strony} many {stron} other {strony}}
+@astryx.popover.close	Zamknij okno
+@astryx.powersearch.editor.addFilter	+ Dodaj filtr
+@astryx.powersearch.editor.apply	Zastosuj
+@astryx.powersearch.editor.cancel	Anuluj
+@astryx.powersearch.editor.delete	Usuń
+@astryx.powersearch.editor.field	Pole
+@astryx.powersearch.editor.group	Grupuj
+@astryx.powersearch.editor.groupOperator	Operator grupy
+@astryx.powersearch.editor.operator	Operator
+@astryx.powersearch.editor.removeFilter	Usuń filtr
+@astryx.powersearch.label	Szukaj
+@astryx.powersearch.operator.after	jest po
+@astryx.powersearch.operator.before	jest przed
+@astryx.powersearch.operator.between	jest pomiędzy
+@astryx.powersearch.operator.contains	zawiera
+@astryx.powersearch.operator.endsWith	kończy się na
+@astryx.powersearch.operator.equals	jest
+@astryx.powersearch.operator.greaterThan	jest większe niż
+@astryx.powersearch.operator.greaterThanOrEqual	jest większe lub równe
+@astryx.powersearch.operator.is	jest
+@astryx.powersearch.operator.isAnyOf	jest jednym z
+@astryx.powersearch.operator.isFalse	jest fałszem
+@astryx.powersearch.operator.isNoneOf	nie jest żadnym z
+@astryx.powersearch.operator.isNot	nie jest
+@astryx.powersearch.operator.isTrue	jest prawdą
+@astryx.powersearch.operator.lessThan	jest mniejsze niż
+@astryx.powersearch.operator.lessThanOrEqual	jest mniejsze lub równe
+@astryx.powersearch.operator.notContains	nie zawiera
+@astryx.powersearch.operator.notEndsWith	nie kończy się na
+@astryx.powersearch.operator.notEquals	nie jest
+@astryx.powersearch.operator.notStartsWith	nie zaczyna się od
+@astryx.powersearch.operator.startsWith	zaczyna się od
+@astryx.powersearch.placeholder	Szukaj…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {wynik} few {wyniki} many {wyników} other {wyniku}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Dodaj wartości…
+@astryx.powersearch.valueEditor.date	Data
+@astryx.powersearch.valueEditor.dateRange	zakres dat
+@astryx.powersearch.valueEditor.endDate	Data końcowa
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Wprowadź liczbę…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Wprowadź wartość…
+@astryx.powersearch.valueEditor.entities	Encje
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {encja} few {encje} many {encji} other {encji}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {filtr} few {filtry} many {filtrów} other {filtra}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}
+@astryx.powersearch.valueEditor.relativeDate	Data względna
+@astryx.powersearch.valueEditor.searchPlaceholder	Szukaj…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Wybierz wartości…
+@astryx.powersearch.valueEditor.startDate	Data początkowa
+@astryx.powersearch.valueEditor.time	Godzina
+@astryx.powersearch.valueEditor.value	Wartość
+@astryx.powersearch.valueEditor.values	Wartości
+@astryx.resizable.collapsed	Zwinięto
+@astryx.resizable.handle.label	Uchwyt zmiany rozmiaru
+@astryx.selector.clearLabel	Wyczyść {label}
+@astryx.selector.empty	Brak opcji
+@astryx.selector.emptySearchResults	Nie znaleziono wyników
+@astryx.selector.placeholder	Wybierz…
+@astryx.selector.resultCount	{count, number} {count, plural, one {wynik} few {wyniki} many {wyników} other {wyniku}}
+@astryx.selector.searchOptions	Wyszukaj opcje
+@astryx.selector.searchPlaceholder	Szukaj…
+@astryx.sideNav.heading.dialogLabel	Menu nawigacji
+@astryx.sideNav.heading.openMenu	{heading}, Otwórz menu
+@astryx.sideNav.label	Nawigacja boczna
+@astryx.sideNav.resizeSidebar	Zmień rozmiar paska bocznego
+@astryx.sideNavCollapseButton.collapseSidebar	Zwiń pasek boczny
+@astryx.sideNavCollapseButton.expandSidebar	Rozwiń pasek boczny
+@astryx.sideNavItem.collapse	Zwiń {label}
+@astryx.sideNavItem.expand	Rozwiń {label}
+@astryx.sideNavItem.submenuLabel	Podmenu: {label}
+@astryx.spinner.loading	Ładowanie
+@astryx.step.goToStep	Przejdź do kroku {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Przejdź do kroku {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Opcjonalne
+@astryx.step.status.completed	ukończono
+@astryx.step.status.error	błąd
+@astryx.step.status.warning	ostrzeżenie
+@astryx.stepper.label	Postęp
+@astryx.stepper.nextStep	Następny krok
+@astryx.stepper.previousStep	Poprzedni krok
+@astryx.tabList.label	Karty
+@astryx.table.filter.allPlaceholder	Wszystko
+@astryx.table.filter.apply	Zastosuj
+@astryx.table.filter.reset	Resetuj
+@astryx.table.label	Tabela
+@astryx.table.noData	Brak danych
+@astryx.table.pagination.label	Paginacja tabeli
+@astryx.table.pagination.labelAbove	{label} (u góry)
+@astryx.table.pagination.labelBelow	{label} (u dołu)
+@astryx.table.rowStatus.columnHeader	Stan wiersza
+@astryx.table.selection.selectAllRows	Zaznacz wszystkie wiersze
+@astryx.table.selection.selectRow	Zaznacz wiersz
+@astryx.table.selection.selectRowNamed	Zaznacz {label}
+@astryx.table.sort.ascending	Sortuj rosnąco
+@astryx.table.sort.clear	Wyczyść sortowanie
+@astryx.table.sort.descending	Sortuj malejąco
+@astryx.tableFiltering.filterByColumn	Filtruj {header}
+@astryx.tableGroupedRows.collapseGroup	Zwiń grupę {groupKey}
+@astryx.tableGroupedRows.expandGroup	Rozwiń grupę {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	Zwiń wszystkie wiersze
+@astryx.tableRowExpansion.collapseRow	Zwiń wiersz
+@astryx.tableRowExpansion.columnHeader	Rozwijanie wiersza
+@astryx.tableRowExpansion.expandAllRows	Rozwiń wszystkie wiersze
+@astryx.tableRowExpansion.expandRow	Rozwiń wiersz
+@astryx.tableTree.collapseAllRows	Zwiń wszystkie wiersze
+@astryx.tableTree.collapseRow	Zwiń wiersz
+@astryx.tableTree.expandAllRows	Rozwiń wszystkie wiersze
+@astryx.tableTree.expandRow	Rozwiń wiersz
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {znak} few {znaki} many {znaków} other {znaku}} ponad limit
+@astryx.textArea.charactersRemaining	Pozostało {count, number} {count, plural, one {znak} few {znaki} many {znaków} other {znaku}}
+@astryx.textInput.clearLabel	Wyczyść {label}
+@astryx.thumbnail.fallbackName	Miniatura
+@astryx.thumbnail.open	Otwórz {accessibleName}
+@astryx.thumbnail.remove	Usuń {accessibleName}
+@astryx.timeInput.clearLabel	Wyczyść {label}
+@astryx.timeInput.invalidTime	Nieprawidłowa godzina
+@astryx.timeInput.openPicker	Otwórz {label}
+@astryx.timeInput.placeholder	Wybierz godzinę
+@astryx.timestamp.copied	Skopiowano
+@astryx.timestamp.copy	Kopiuj
+@astryx.timestamp.copyValue	Kopiuj {value}
+@astryx.timestamp.detailsLabel	Szczegóły znacznika czasu
+@astryx.toast.dismiss	Zamknij powiadomienie
+@astryx.toast.viewport	Powiadomienia
+@astryx.token.remove	Usuń {label}
+@astryx.tokenizer.clearAll	Wyczyść wszystko
+@astryx.tokenizer.tokenAdded	Dodano {label}
+@astryx.tokenizer.tokenRemoved	Usunięto {label}
+@astryx.topNav.heading.dialogLabel	Menu nawigacji
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Otwórz menu
+@astryx.topNav.landmarkLabel	Nawigacja górna
+@astryx.transferList.addAll	Dodaj wszystko
+@astryx.transferList.addOption	Dodaj {label}
+@astryx.transferList.announceAdded	Dodano {label}. Wybrano {count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}.
+@astryx.transferList.announceBulkAdded	Dodano {count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}.
+@astryx.transferList.announceBulkRemoved	Usunięto {count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}.
+@astryx.transferList.announceDropped	Upuszczono {label} na pozycji {position, number} z {total, number}.
+@astryx.transferList.announceGrabbed	Podniesiono {label}, pozycja {position, number} z {total, number}. Użyj strzałek, aby przenieść, Space lub Enter, aby upuścić, lub Escape, aby anulować.
+@astryx.transferList.announceMoveCancelled	Anulowano przenoszenie: {label}.
+@astryx.transferList.announceMovedToPosition	{label}, pozycja {position, number} z {total, number}.
+@astryx.transferList.announceRemoved	Usunięto {label}. Wybrano {count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}.
+@astryx.transferList.announceReturned	Przywrócono {label} na pozycję {position, number}.
+@astryx.transferList.announceSearchResults	Znaleziono {count, number} {count, plural, one {element} few {elementy} many {elementów} other {elementu}}.
+@astryx.transferList.availableEmpty	Brak dostępnych opcji
+@astryx.transferList.availableLabel	Dostępne
+@astryx.transferList.clear	Wyczyść
+@astryx.transferList.noResults	Brak wyników
+@astryx.transferList.removeOption	Usuń {label}
+@astryx.transferList.reorderDisabled	Nie można zmienić pozycji: {label}
+@astryx.transferList.reorderInstructions	Naciśnij Space lub Enter, aby podnieść element. Użyj Arrow Up, Arrow Down, Home lub End, aby go przenieść. Naciśnij Space lub Enter, aby upuścić, lub Escape, aby anulować.
+@astryx.transferList.reorderOption	Zmień pozycję: {label}
+@astryx.transferList.searchLabel	Szukaj: {label}
+@astryx.transferList.searchPlaceholder	Szukaj…
+@astryx.transferList.selectedEmpty	Brak wybranych opcji
+@astryx.transferList.selectedLabel	Wybrane
+@astryx.transferList.transferDisabled	Nie można przenieść: {label}
+@astryx.transferList.ungroupedLabel	Inne
+@astryx.transferListSelector.apply	Zastosuj
+@astryx.transferListSelector.cancel	Anuluj
+@astryx.transferListSelector.triggerLabel	Wybrano {count, number}
+@astryx.treeList.toggleChildren	Przełącz elementy podrzędne
+@astryx.typeahead.clearSelection	Wyczyść zaznaczenie
+@astryx.typeahead.emptySearchResults	Nie znaleziono wyników
+@astryx.typeahead.loading	Ładowanie
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {wynik} few {wyniki} many {wyników} other {wyniku}}
+@astryx.typeahead.searchPlaceholder	Szukaj…
+@astryx.typeahead.searchResults	Wyniki wyszukiwania
