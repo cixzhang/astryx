@@ -25,8 +25,11 @@ and splits by hunk along the rows below.
   the AccessKit and DOM-mirror bridges.
 - **d. Draw variants and backdrop**: `Node::variants`, `When`, the paint
   state lookup, and the modal backdrop.
-- **e. Motion** (next): component animations, exit copies and size
-  animation on astryx-motion.
+- **e. Motion**: `motion.rs` (`Anim`, `Channel`, `Exit`, `Resize`),
+  `Node::{anims, exit, resize, inert, animate}`, `Layout::override_height`,
+  the runtime's per-node animations (retargeting, entrance, Reduce Motion
+  through the existing `MotionPolicy`), exit copies captured from the last
+  paint, height animation with reflow, and the paint opacity channel.
 
 ## Changes
 
@@ -48,3 +51,5 @@ and splits by hunk along the rows below.
 | astryx-core `contract.rs`, `runtime.rs`, astryx-desktop `lib.rs`, astryx-web `shell.rs` | `PointerEvent`, `PointerOutcome`, `Surface::pointer` (default no-op); shells send presses (down, up) before their existing `PressStart` mapping | A press outside any focus stop (light dismiss); later, drags for gestures. Hover stays on the existing `pointer_move`; hover intent (`HoverSpec`) reads that same pointer position | Additive |
 | astryx-core `runtime.rs`, `paint.rs` | Focus visibility: a pointer press makes focus not visible until the next arrow or Tab; rings paint only while visible; `Runtime::hide_focus_until_keyboard` | `:focus-visible` parity on web and desktop | Behavior change for pointer presses only; focus-first devices (no pointer) are unchanged |
 | astryx-core `paint.rs` | Draw variants by paint state; modal backdrop | Hover tints and focus styles on any node | Additive |
+| astryx-core `motion.rs` (new), `element.rs` | `Anim`, `Channel`, `Exit`, `Resize`; `Node::{anims, exit, resize, inert}`, `Node::animate` | Component motion on astryx-motion (Switch thumb, layer enter and exit, Collapsible) | Additive |
+| astryx-core `runtime.rs`, `paint.rs`, `layout.rs`, `a11y.rs` | One `Animated` per node and channel kept across rebuilds; exit copies from the last paint, drawn above everything, one per node; height animation with a second layout pass while it moves; `inert` subtrees out of the a11y tree and focus order; `paint` takes a capture list | Motion row: retarget without jumps, exit plays once, layout animation, Reduce Motion | Additive (inactive without anims, exit, resize or inert) |

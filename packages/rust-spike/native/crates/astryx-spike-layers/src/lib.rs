@@ -243,6 +243,17 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
         let label = this.label;
         let modal = this.modal;
         let content = this.content;
+        let from = match (this.kind, &this.anchor) {
+            (Kind::Dialog, _) | (_, LayerAnchor::None) => astryx_spike_motion::From::Center,
+            _ => match this.placement.side {
+                Side::Above => astryx_spike_motion::From::Above,
+                Side::Below => astryx_spike_motion::From::Below,
+                Side::Start => astryx_spike_motion::From::Start,
+                Side::End => astryx_spike_motion::From::End,
+            },
+        };
+        let motion = astryx_spike_motion::tokens(cx);
+        let rtl = cx.rtl();
         cx.key(this.id.as_deref());
         cx.layer(spec, move |cx| {
             let mut style = Style {
@@ -261,7 +272,11 @@ impl<Msg: 'static> Build<Msg> for Layer<Msg> {
                 ..Semantics::role(role)
             }
             .with_state(|s| s.modal = modal);
-            cx.begin(Node::new(style).sem(sem));
+            // Astryx's layer entrance and one exit copy on close.
+            let mut node = Node::new(style).sem(sem);
+            node.anims = astryx_spike_motion::layer_enter(motion, from, rtl);
+            node.exit = Some(astryx_spike_motion::layer_exit(motion));
+            cx.begin(node);
             cx.child(content);
             cx.end();
         });

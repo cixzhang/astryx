@@ -1,0 +1,12 @@
+[package]
+name = "astryx-spike-motion"
+description = "Astryx motion presets for the Rust stack on astryx-motion: layer enter and exit, state changes on springs, collapse, and Reduce Motion, wired through the core runtime"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core = { workspace = true }
+astryx-motion = { workspace = true }
+astryx-tokens = { workspace = true }
+taffy = { workspace = true }

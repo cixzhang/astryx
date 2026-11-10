@@ -344,6 +344,17 @@ name = "astryx-spike-layers"
 version = "0.1.0"
 dependencies = [
  "astryx-core",
+ "astryx-spike-motion",
+ "astryx-tokens",
+ "taffy",
+]
+
+[[package]]
+name = "astryx-spike-motion"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-motion",
  "astryx-tokens",
  "taffy",
 ]
