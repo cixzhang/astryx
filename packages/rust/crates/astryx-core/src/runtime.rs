@@ -3449,11 +3449,10 @@ impl<A: App> Surface for Runtime<A> {
         if event.phase == InputPhase::Pressed {
             self.focus_by_pointer = false;
         }
-        if let Some(outcome) = self.multiline_key(&event) {
-            return outcome;
-        }
+        // Component key handlers come first; a multi-line field's own line
+        // breaks and line moves apply when they pass.
         let Some(command) = self.route_key(&event) else {
-            return crate::contract::KeyOutcome::default();
+            return self.multiline_key(&event).unwrap_or_default();
         };
         let followed = self.report_focus();
         let command = if command == Command::None {
