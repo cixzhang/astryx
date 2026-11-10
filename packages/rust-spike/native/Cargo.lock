@@ -340,11 +340,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "astryx-spike-gestures"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-motion",
+ "taffy",
+]
+
+[[package]]
+name = "astryx-spike-layers"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-spike-motion",
+ "astryx-tokens",
+ "taffy",
+]
+
+[[package]]
+name = "astryx-spike-motion"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-motion",
+ "astryx-tokens",
+ "taffy",
+]
+
+[[package]]
 name = "astryx-spike-ui"
 version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-spike-foundations",
+ "astryx-spike-layers",
+ "astryx-spike-motion",
  "astryx-tokens",
  "taffy",
 ]

@@ -32,7 +32,8 @@ fn gallery() -> Gallery {
         Ok("rtl") => Direction::Rtl,
         _ => Direction::Ltr,
     };
-    g.with_mode(mode).with_direction(dir)
+    let theme = std::env::var("ASTRYX_THEME").unwrap_or_default();
+    g.with_mode(mode).with_direction(dir).with_theme(&theme)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,10 +46,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .unwrap_or((1280, 800));
     if let Ok(path) = std::env::var("ASTRYX_A11Y") {
-        let mut rt = Runtime::new(gallery());
+        let mut rt = Runtime::new(gallery()).hide_focus_until_keyboard();
         let renderer = astryx_render_soft::SoftRenderer::new();
         let frame = astryx_headless::frame_info(w, h, 1.0);
-        let _ = rt.frame(&frame, renderer.text());
+        astryx_spike_gallery::settle(&mut rt, w, h);
         let _ = rt.frame(&frame, renderer.text());
         let tree = rt.accessibility().map(|t| a11y_json::to_json(&t));
         std::fs::write(&path, serde_json::to_string_pretty(&tree)?)?;
@@ -61,7 +62,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         screenshot,
     };
     let shooting = options.exit_after_screenshot;
-    run_with(Runtime::new(gallery()), options)?;
+    let mut rt = Runtime::new(gallery()).hide_focus_until_keyboard();
+    if shooting {
+        astryx_spike_gallery::settle(&mut rt, w, h);
+    }
+    run_with(rt, options)?;
     if shooting {
         println!("first_frame_ms={}", start.elapsed().as_millis());
     }

@@ -43,6 +43,7 @@ fn button(id: u64, bounds: Rect) -> A11yNode {
         text_selection: None,
         secure: false,
         live: None,
+        state: Default::default(),
         children: Vec::new(),
     }
 }

@@ -2,10 +2,12 @@
 
 use crate::contract::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
-    ImageId, Input, InputPhase, Live, Point, Preferences, Radii, Rect, Role, Size, SoundId,
-    Surface, TextAlign, TextDirection, TextMeasure,
+    ImageId, Input, InputPhase, Live, Point, PointerEvent, PointerKind, PointerOutcome,
+    PointerPhase, Preferences, Radii, Rect, Role, Size, SoundId, Surface, TextAlign, TextDirection,
+    TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction, Semantics};
+use crate::layer::{DismissReason, LayerAnchor, PlaceInput};
 use crate::layout::{self, Layout};
 use crate::paint::{self, PaintState, FOCUS_RING_OFFSET, FOCUS_RING_WIDTH};
 use crate::theme::{Direction, ThemeChoice};
@@ -17,6 +19,7 @@ use astryx_motion::gesture::{
 use astryx_motion::tokens::{self as motion_tokens, MotionTokens};
 use astryx_motion::{Animated, Change, Motion, MotionPolicy, Pointer};
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 use taffy::{FlexDirection, Style};
 
 /// An Astryx app: state, a view of it, and an update for each message.
@@ -308,6 +311,72 @@ pub struct Runtime<A: App> {
     /// Image changes the shell has not taken yet.
     image_updates: Vec<(ImageId, Option<ImageData>)>,
     sound_updates: Vec<(SoundId, Option<std::sync::Arc<[u8]>>)>,
+    /// Open layers by root id, with the focus they restore when they close.
+    layer_openers: HashMap<u64, Option<u64>>,
+    /// Hover tracking for nodes with a hover spec, by node id.
+    hovers: HashMap<u64, HoverTrack>,
+    /// Focus last moved by a pointer press, so it is not focus-visible.
+    focus_by_pointer: bool,
+    /// Animated paint channels by node id and channel.
+    anims: HashMap<(u64, crate::motion::Channel), Animated<f32>>,
+    /// Exit copies playing out.
+    exits: Vec<ExitCopy>,
+    /// How each node with an exit spec was last drawn, by node id.
+    captured: HashMap<u64, (Vec<DrawCmd>, Rect)>,
+    /// Height animations by node id.
+    resizes: HashMap<u64, ResizeTrack>,
+    /// Component state, shared with every build.
+    locals: crate::element::Locals,
+    /// The drawable size the last build saw.
+    build_viewport: (f32, f32),
+    /// The pointer drag in progress.
+    drag: Option<DragSession>,
+    /// Scroll containers coasting after a finger's throw: velocity in
+    /// points per second along the axis, by node id.
+    coasts: HashMap<u64, f32>,
+}
+
+/// One pointer's drag: the handlers under its press and the one that took it.
+struct DragSession {
+    pointer: u64,
+    kind: crate::contract::PointerKind,
+    start: Point,
+    start_ms: f64,
+    /// Drag handlers and finger-scroll containers, innermost first.
+    members: Vec<u64>,
+    /// The member that took the drag; `Some(None)` when none wanted it.
+    claimed: Option<Option<u64>>,
+    /// A claimed scroll container's offset at the start.
+    scroll_from: f32,
+    /// Recent positions along a claimed scroll container's axis.
+    samples: Vec<(f32, f64)>,
+}
+
+/// A closed node's last drawing, leaving.
+struct ExitCopy {
+    id: u64,
+    commands: Vec<DrawCmd>,
+    rect: Rect,
+    opacity: Animated<f32>,
+    scale: Animated<f32>,
+    translate: Animated<(f32, f32)>,
+}
+
+/// A node's natural height and the height it is drawn at.
+struct ResizeTrack {
+    natural: f32,
+    shown: Animated<f32>,
+}
+
+/// Where the pointer has been relative to a node that reports hover.
+#[derive(Clone, Copy, Debug, Default)]
+struct HoverTrack {
+    /// What the app was last told.
+    on: bool,
+    /// Since when the pointer has been inside (or outside) without a
+    /// report, in runtime milliseconds.
+    inside_since: Option<f64>,
+    outside_since: Option<f64>,
 }
 
 impl<A: App> Runtime<A> {
@@ -368,7 +437,27 @@ impl<A: App> Runtime<A> {
             image_sizes: Default::default(),
             image_updates: Vec::new(),
             sound_updates: Vec::new(),
+            layer_openers: HashMap::new(),
+            hovers: HashMap::new(),
+            focus_by_pointer: false,
+            anims: HashMap::new(),
+            exits: Vec::new(),
+            captured: HashMap::new(),
+            resizes: HashMap::new(),
+            locals: Default::default(),
+            build_viewport: (0.0, 0.0),
+            drag: None,
+            coasts: HashMap::new(),
         }
+    }
+
+    /// Hides the focus ring until the person uses the keyboard, as browsers
+    /// do for a page that has just loaded (`:focus-visible`). Pointer-first
+    /// shells (desktop, web) and screenshot harnesses use it; focus-first
+    /// devices keep the ring from the start.
+    pub fn hide_focus_until_keyboard(mut self) -> Self {
+        self.focus_by_pointer = true;
+        self
     }
 
     /// Registers the image for `id`: `Some` makes it ready, replacing any
@@ -539,11 +628,22 @@ impl<A: App> Runtime<A> {
         let mut cx = BuildCx::new(tokens);
         cx.theme = self.theme.theme;
         cx.prefs = self.prefs.clone();
-        cx.viewport = self.viewport;
+        cx.viewport = self.build_viewport;
         self.direction = self.app.direction();
         cx.direction = self.direction;
         cx.images = self.images.clone();
         cx.image_sizes = self.image_sizes.clone();
+        cx.now_ms = self.motion_ms;
+        cx.locals = self.locals.clone();
+        if let Some(layout) = &self.layout {
+            cx.last_rects = std::sync::Arc::new(
+                self.nodes
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(ix, n)| Some((n.name.clone()?, *layout.rects.get(ix)?)))
+                    .collect(),
+            );
+        }
         cx.popup = self.popup.and_then(|id| {
             let ix = self.nodes.iter().position(|n| n.id == id)?;
             Some((id, self.layout.as_ref()?.rects.get(ix).copied()?))
@@ -553,9 +653,13 @@ impl<A: App> Runtime<A> {
             ..Style::default()
         }));
         cx.child(self.app.view());
-        // Popups go last, so they paint above the view and are not clipped by it.
-        for overlay in std::mem::take(&mut cx.overlays) {
-            overlay(&mut cx);
+        // Popups go last, so they paint above the view and are not clipped
+        // by it. A layer opened inside a layer queues another overlay, which
+        // goes after, so it stacks above.
+        while !cx.overlays.is_empty() {
+            for overlay in std::mem::take(&mut cx.overlays) {
+                overlay(&mut cx);
+            }
         }
         cx.end();
         self.animating = cx.animating;
@@ -574,6 +678,10 @@ impl<A: App> Runtime<A> {
                 self.popup = None;
             }
         }
+        self.track_layers(&old);
+        self.sync_motion(&old);
+        let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
+        self.locals.retain(|id| ids.contains(&id));
         self.stale = false;
         self.rebuilt = true;
         // A rebuild that changes only paint, such as a switch to a theme
@@ -1130,12 +1238,37 @@ impl<A: App> Runtime<A> {
                 None => return false,
             }
         };
-        let has_trap = self.nodes.iter().any(|n| n.trap);
+        // Only the topmost trap holds focus: a popover opened over a dialog
+        // takes it from the dialog.
+        let top_trap = self.nodes.iter().rposition(|n| n.trap);
+        let in_top_trap = |nodes: &[Node<A::Msg>], mut ix: usize| loop {
+            if Some(ix) == top_trap {
+                return true;
+            }
+            match nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
+        let _ = trapped;
+        let inert = |nodes: &[Node<A::Msg>], mut ix: usize| loop {
+            if nodes[ix].inert {
+                return true;
+            }
+            match nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
         self.stops = self
             .nodes
             .iter()
             .enumerate()
-            .filter(|&(i, n)| n.interact.is_some() && (!has_trap || trapped(&self.nodes, i)))
+            .filter(|&(i, n)| {
+                n.interact.is_some()
+                    && (top_trap.is_none() || in_top_trap(&self.nodes, i))
+                    && !inert(&self.nodes, i)
+            })
             .map(|(i, n)| (i, n.id))
             .collect();
         if self.stops.is_empty() {
@@ -1907,6 +2040,23 @@ impl<A: App> Runtime<A> {
         for camera in self.cameras.values_mut() {
             camera.tick(dt);
         }
+        for a in self.anims.values_mut() {
+            a.tick(dt);
+        }
+        self.tick_coasts(dt);
+        for e in &mut self.exits {
+            e.opacity.tick(dt);
+            e.scale.tick(dt);
+            e.translate.tick(dt);
+        }
+        self.exits.retain(|e| {
+            e.opacity.is_animating() || e.scale.is_animating() || e.translate.is_animating()
+        });
+        for r in self.resizes.values_mut() {
+            if r.shown.tick(dt) {
+                self.relayout = true;
+            }
+        }
         let mut command = Command::None;
         for event in self.press.tick(now) {
             command = self.press_event(event);
@@ -1957,6 +2107,9 @@ impl<A: App> Runtime<A> {
         let completed_hold =
             interact.hold.is_some() && self.hold.is_some_and(|h| h.id == id && h.done);
         let msg = interact.on_activate.clone();
+        if let Some(effect) = interact.effect.clone() {
+            effect();
+        }
         let href = interact.href.clone();
         let popup = interact.popup;
         self.cue(if completed_hold {
@@ -2140,6 +2293,610 @@ impl<A: App> Runtime<A> {
         }
     }
 
+    /// `motion` for `channel` under the person's and the theme's motion
+    /// settings: travel lands at once under Reduce Motion; opacity may
+    /// cross-fade.
+    fn plan_motion(
+        &self,
+        channel: Option<crate::motion::Channel>,
+        motion: Motion,
+        change: Change,
+    ) -> Motion {
+        use astryx_motion::Plan;
+        match self.policy.plan(change, self.motion_tokens()) {
+            Plan::Animate => motion,
+            Plan::Instant => Motion::Instant,
+            Plan::CrossFade {
+                duration_ms,
+                easing,
+            } if channel == Some(crate::motion::Channel::Opacity) => {
+                Motion::curve(duration_ms, easing)
+            }
+            Plan::CrossFade { .. } => Motion::Instant,
+        }
+    }
+
+    /// Brings animations up to date with a rebuild from `old`: new targets
+    /// retarget, new nodes enter, and nodes with an exit spec that went
+    /// away leave through an exit copy.
+    fn sync_motion(&mut self, old: &[Node<A::Msg>]) {
+        let mut live = HashSet::new();
+        let mut plans = Vec::new();
+        for node in &self.nodes {
+            for a in &node.anims {
+                let key = (node.id, a.channel);
+                live.insert(key);
+                plans.push((key, *a));
+            }
+        }
+        for (key, a) in plans {
+            let motion = self.plan_motion(Some(a.channel), a.motion, a.change);
+            match self.anims.get_mut(&key) {
+                None => {
+                    let mut v = Animated::new(a.from.unwrap_or(a.to));
+                    if a.from.is_some() {
+                        v.animate_to(a.to, motion);
+                    }
+                    self.anims.insert(key, v);
+                }
+                Some(v) if v.target() != a.to => v.animate_to(a.to, motion),
+                Some(_) => {}
+            }
+        }
+        self.anims.retain(|k, _| live.contains(k));
+        let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
+        for node in old {
+            let Some(exit) = node.exit else { continue };
+            if ids.contains(&node.id) {
+                continue;
+            }
+            let Some((commands, rect)) = self.captured.remove(&node.id) else {
+                continue;
+            };
+            // One copy per node: a second exit replaces the first.
+            self.exits.retain(|e| e.id != node.id);
+            let fade = self.plan_motion(
+                Some(crate::motion::Channel::Opacity),
+                exit.motion,
+                exit.change,
+            );
+            let travel = self.plan_motion(None, exit.motion, exit.change);
+            let mut opacity = Animated::new(1.0);
+            opacity.animate_to(exit.opacity, fade);
+            let mut scale = Animated::new(1.0);
+            scale.animate_to(exit.scale, travel);
+            let mut translate = Animated::new((0.0, 0.0));
+            translate.animate_to(exit.translate, travel);
+            if opacity.is_animating() || scale.is_animating() || translate.is_animating() {
+                self.exits.push(ExitCopy {
+                    id: node.id,
+                    commands,
+                    rect,
+                    opacity,
+                    scale,
+                    translate,
+                });
+            }
+        }
+        self.captured.retain(|id, _| ids.contains(id));
+    }
+
+    /// Animates the heights of nodes with a resize spec toward their newly
+    /// laid-out heights. Returns true when it laid out again at animated
+    /// heights.
+    fn resize_layout(&mut self, text: &dyn TextMeasure) -> bool {
+        let Some(layout) = self.layout.as_ref() else {
+            return false;
+        };
+        let mut overrides = Vec::new();
+        let mut live = HashSet::new();
+        let mut starts = Vec::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(resize) = node.resize else { continue };
+            live.insert(node.id);
+            let natural = layout.boxes.get(ix).map_or(0.0, |b| b.height);
+            starts.push((ix, node.id, natural, resize));
+        }
+        for (ix, id, natural, resize) in starts {
+            let motion = self.plan_motion(None, resize.motion, resize.change);
+            let track = self.resizes.entry(id).or_insert(ResizeTrack {
+                natural,
+                shown: Animated::new(natural),
+            });
+            if (track.natural - natural).abs() > 0.25 {
+                track.natural = natural;
+                track.shown.animate_to(natural, motion);
+            }
+            if track.shown.is_animating() {
+                overrides.push((ix, track.shown.value()));
+            }
+        }
+        self.resizes.retain(|id, _| live.contains(id));
+        if overrides.is_empty() {
+            return false;
+        }
+        let layout = self.layout.as_mut().expect("layout");
+        for &(ix, h) in &overrides {
+            layout.override_height(&self.nodes, ix, Some(h));
+        }
+        layout.compute(&self.nodes, self.viewport, text);
+        // The next frame measures the natural heights again.
+        for &(ix, _) in &overrides {
+            layout.override_height(&self.nodes, ix, None);
+        }
+        true
+    }
+
+    /// Starts a drag session for a press: the drag handlers and (for a
+    /// finger) scroll containers on the path to the deepest node under it.
+    fn begin_drag(&mut self, event: PointerEvent) {
+        self.drag = None;
+        let Some(layout) = self.layout.as_ref() else {
+            return;
+        };
+        let deepest = (0..self.nodes.len())
+            .rev()
+            .find(|&ix| layout.rects.get(ix).is_some_and(|&r| contains(r, event.at)));
+        let mut members = Vec::new();
+        let mut at = deepest;
+        while let Some(ix) = at {
+            let node = &self.nodes[ix];
+            let finger_scroll = node.scroll.is_some() && event.kind == PointerKind::Touch;
+            if node.drag.is_some() || finger_scroll {
+                members.push(node.id);
+                self.coasts.remove(&node.id);
+            }
+            if node.inert {
+                members.clear();
+            }
+            at = node.parent.map(|p| p as usize);
+        }
+        // Behind a modal layer the page takes no drags.
+        let modal = self
+            .nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(|l| l.modal));
+        if members.is_empty() || modal.is_some_and(|m| deepest.is_none_or(|d| d < m)) {
+            return;
+        }
+        self.drag = Some(DragSession {
+            pointer: event.id,
+            kind: event.kind,
+            start: event.at,
+            start_ms: event.time_ms,
+            members,
+            claimed: None,
+            scroll_from: 0.0,
+            samples: Vec::new(),
+        });
+    }
+
+    /// Whether member `id` takes a drag that travelled `d`.
+    fn member_wants(&self, id: u64, d: Point) -> bool {
+        let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+            return false;
+        };
+        let node = &self.nodes[ix];
+        if let Some(spec) = &node.drag {
+            return (spec.wants)(d);
+        }
+        let Some(axis) = node.scroll else {
+            return false;
+        };
+        let (along, across) = match axis {
+            Axis::Vertical => (d.y, d.x),
+            Axis::Horizontal => (d.x * self.scroll_sign(ix), d.y),
+        };
+        if along.abs() < across.abs() {
+            return false;
+        }
+        let offset = self.scroll.get(&id).copied().unwrap_or(0.0);
+        let max = self.layout.as_ref().map_or(0.0, |l| l.overflow[ix]);
+        // Dragging content forward (positive) scrolls back toward 0.
+        if along > 0.0 {
+            offset > 0.5
+        } else {
+            offset < max - 0.5
+        }
+    }
+
+    /// Feeds a move, lift, or cancel to the drag in progress.
+    fn drag_event(&mut self, event: PointerEvent) -> PointerOutcome {
+        use crate::gesture::{DragPhase, DRAG_HYSTERESIS};
+        let Some(session) = self.drag.as_ref() else {
+            return PointerOutcome::default();
+        };
+        if session.pointer != event.id {
+            return PointerOutcome::default();
+        }
+        let d = Point {
+            x: event.at.x - session.start.x,
+            y: event.at.y - session.start.y,
+        };
+        let ending = matches!(event.phase, PointerPhase::Up | PointerPhase::Cancel);
+        if session.claimed.is_none() {
+            if d.x.abs().max(d.y.abs()) < DRAG_HYSTERESIS {
+                if ending {
+                    self.drag = None;
+                }
+                return PointerOutcome::default();
+            }
+            let members = session.members.clone();
+            let winner = members.into_iter().find(|&id| self.member_wants(id, d));
+            let session = self.drag.as_mut().expect("session");
+            session.claimed = Some(winner);
+            if let Some(id) = winner {
+                // The drag is not a press of the control under it.
+                self.end_press();
+                self.pressed = None;
+                self.repaint = true;
+                if let Some(ix) = self.nodes.iter().position(|n| n.id == id) {
+                    if self.nodes[ix].drag.is_some() {
+                        let command = self.send_drag(ix, DragPhase::Start, &event);
+                        if ending {
+                            let end = self.send_drag(ix, DragPhase::End, &event);
+                            self.drag = None;
+                            return PointerOutcome {
+                                command: command.and(end),
+                                handled: true,
+                            };
+                        }
+                        return PointerOutcome {
+                            command,
+                            handled: true,
+                        };
+                    } else {
+                        let from = self.scroll.get(&id).copied().unwrap_or(0.0);
+                        let session = self.drag.as_mut().expect("session");
+                        session.scroll_from = from;
+                    }
+                }
+            }
+        }
+        let Some(Some(id)) = self.drag.as_ref().and_then(|s| s.claimed) else {
+            if ending {
+                self.drag = None;
+            }
+            return PointerOutcome::default();
+        };
+        let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+            self.drag = None;
+            return PointerOutcome::default();
+        };
+        let phase = match event.phase {
+            PointerPhase::Up => DragPhase::End,
+            PointerPhase::Cancel => DragPhase::Cancel,
+            _ => DragPhase::Move,
+        };
+        let mut command = Command::None;
+        if self.nodes[ix].drag.is_some() {
+            command = self.send_drag(ix, phase, &event);
+        } else {
+            let along = match self.nodes[ix].scroll {
+                Some(Axis::Vertical) => d.y,
+                _ => d.x * self.scroll_sign(ix),
+            };
+            let session = self.drag.as_mut().expect("session");
+            let from = session.scroll_from;
+            if session.samples.last().is_none_or(|&(a, _)| a != along) {
+                session.samples.push((along, event.time_ms));
+            }
+            if session.samples.len() > 3 {
+                session.samples.remove(0);
+            }
+            let samples = session.samples.clone();
+            self.set_scroll(ix, from - along, false);
+            if phase == DragPhase::End {
+                if let [.., (a, ta), (b, tb)] = samples[..] {
+                    let dt = (tb - ta) as f32;
+                    let rested = event.time_ms - tb > 40.0;
+                    if dt > 0.0 && !rested {
+                        // Content moves with the finger; the offset moves
+                        // against it.
+                        let v = -(b - a) / dt * 1000.0;
+                        if v.abs() > 50.0 {
+                            self.coasts.insert(id, v);
+                        }
+                    }
+                }
+            }
+        }
+        if ending {
+            self.drag = None;
+        }
+        PointerOutcome {
+            command,
+            handled: true,
+        }
+    }
+
+    /// Sends drag `phase` to the handler at node `ix`.
+    fn send_drag(
+        &mut self,
+        ix: usize,
+        phase: crate::gesture::DragPhase,
+        event: &PointerEvent,
+    ) -> Command {
+        let Some(session) = self.drag.as_ref() else {
+            return Command::None;
+        };
+        let e = crate::gesture::DragEvent {
+            phase,
+            kind: session.kind,
+            at: event.at,
+            time_ms: event.time_ms,
+            start: session.start,
+            start_ms: session.start_ms,
+        };
+        let (effect, on_drag) = match &self.nodes[ix].drag {
+            Some(spec) => (spec.effect.clone(), spec.on_drag.clone()),
+            None => (None, None),
+        };
+        if let Some(effect) = effect {
+            effect(&e);
+            self.stale = true;
+        }
+        match on_drag {
+            Some(f) => self.send(f(&e)),
+            None => Command::None,
+        }
+    }
+
+    /// Advances the coasts of thrown scroll containers.
+    fn tick_coasts(&mut self, dt: f32) {
+        use crate::gesture::SCROLL_DECELERATION;
+        if self.coasts.is_empty() {
+            return;
+        }
+        let dt_ms = dt * 1000.0;
+        let decay = SCROLL_DECELERATION.powf(dt_ms);
+        let ln = SCROLL_DECELERATION.ln();
+        let coasts: Vec<(u64, f32)> = self.coasts.iter().map(|(&k, &v)| (k, v)).collect();
+        for (id, v) in coasts {
+            let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+                self.coasts.remove(&id);
+                continue;
+            };
+            let moved = v / 1000.0 * (decay - 1.0) / ln;
+            let offset = self.scroll.get(&id).copied().unwrap_or(0.0);
+            let max = self.layout.as_ref().map_or(0.0, |l| l.overflow[ix]);
+            let next = offset + moved;
+            let v = v * decay;
+            self.scroll.insert(id, next.clamp(0.0, max));
+            self.shown.remove(&id);
+            if let Some(layout) = self.layout.as_mut() {
+                layout.place(&self.nodes, &self.scroll);
+            }
+            if v.abs() < 1.0 || next <= 0.0 || next >= max {
+                self.coasts.remove(&id);
+            } else {
+                self.coasts.insert(id, v);
+            }
+            self.repaint = true;
+        }
+    }
+
+    /// The topmost layer root whose spec passes `f`.
+    fn top_layer(&self, f: impl Fn(&crate::layer::LayerSpec<A::Msg>) -> bool) -> Option<usize> {
+        self.nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(&f))
+    }
+
+    /// Sends layer `ix`'s dismissal message for `reason`.
+    fn dismiss(&mut self, ix: usize, reason: DismissReason) -> Command {
+        if let Some(effect) = self.nodes[ix]
+            .layer
+            .as_ref()
+            .and_then(|l| l.dismiss_effect.clone())
+        {
+            effect(reason);
+            self.stale = true;
+        }
+        let msg = self.nodes[ix]
+            .layer
+            .as_ref()
+            .and_then(|l| l.on_dismiss.as_ref())
+            .map(|f| f(reason));
+        match msg {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        }
+    }
+
+    /// Notes layers that opened and closed in a rebuild from `old`: a new
+    /// layer remembers the focus it opened over; a closed layer that held
+    /// focus gives it back.
+    fn track_layers(&mut self, old: &[Node<A::Msg>]) {
+        let now: HashSet<u64> = self
+            .nodes
+            .iter()
+            .filter(|n| n.layer.is_some())
+            .map(|n| n.id)
+            .collect();
+        for n in self.nodes.iter().filter(|n| n.layer.is_some()) {
+            self.layer_openers.entry(n.id).or_insert(self.focused);
+        }
+        let closed: Vec<u64> = self
+            .layer_openers
+            .keys()
+            .copied()
+            .filter(|id| !now.contains(id))
+            .collect();
+        for id in closed {
+            let opener = self.layer_openers.remove(&id).flatten();
+            let restore = old
+                .iter()
+                .find(|n| n.id == id)
+                .and_then(|n| n.layer.as_ref())
+                .is_some_and(|l| l.restore_focus);
+            let focus_gone = self
+                .focused
+                .is_none_or(|f| !self.nodes.iter().any(|n| n.id == f));
+            if restore && focus_gone {
+                if let Some(opener) = opener.filter(|o| self.nodes.iter().any(|n| n.id == *o)) {
+                    self.focused = Some(opener);
+                    self.reveal = true;
+                }
+            }
+        }
+    }
+
+    /// Places every layer against its anchor, in order, so a layer anchored
+    /// inside another layer follows it.
+    fn place_layers(&mut self) {
+        let Some(layout) = self.layout.as_mut() else {
+            return;
+        };
+        if !self.nodes.iter().any(|n| n.layer.is_some()) {
+            if !layout.layers.is_empty() {
+                layout.layers.clear();
+                layout.place(&self.nodes, &self.scroll);
+            }
+            return;
+        }
+        layout.layers.clear();
+        layout.place(&self.nodes, &self.scroll);
+        let base = layout.rects.clone();
+        let viewport = Rect::new(0.0, 0.0, self.viewport.0, self.viewport.1);
+        let mut offsets: HashMap<u64, (f32, f32)> = HashMap::new();
+        // The offset of the layer around node `ix`, if one was placed.
+        let enclosing = |nodes: &[Node<A::Msg>], offsets: &HashMap<u64, (f32, f32)>, ix: usize| {
+            let mut at = Some(ix);
+            while let Some(i) = at {
+                if nodes[i].layer.is_some() {
+                    return offsets.get(&nodes[i].id).copied().unwrap_or((0.0, 0.0));
+                }
+                at = nodes[i].parent.map(|p| p as usize);
+            }
+            (0.0, 0.0)
+        };
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(spec) = &node.layer else {
+                continue;
+            };
+            let anchor_ix = match &spec.anchor {
+                LayerAnchor::None | LayerAnchor::Point(_) => None,
+                LayerAnchor::Name(name) => self
+                    .nodes
+                    .iter()
+                    .position(|n| n.name.as_deref() == Some(name.as_str())),
+                LayerAnchor::Id(id) => self.nodes.iter().position(|n| n.id == *id),
+            };
+            let anchor = match &spec.anchor {
+                LayerAnchor::Point(p) => Some(Rect::new(p.x, p.y, 0.0, 0.0)),
+                _ => anchor_ix.map(|a| {
+                    let (dx, dy) = enclosing(&self.nodes, &offsets, a);
+                    let r = base[a];
+                    Rect::new(r.x + dx, r.y + dy, r.width, r.height)
+                }),
+            };
+            let size = Size {
+                width: base[ix].width,
+                height: base[ix].height,
+            };
+            let at = (spec.place)(&PlaceInput {
+                anchor,
+                size,
+                viewport,
+                rtl: node.rtl,
+            });
+            offsets.insert(node.id, (at.x, at.y));
+        }
+        layout.layers = offsets;
+        layout.place(&self.nodes, &self.scroll);
+    }
+
+    /// Reports hover changes for nodes with a hover spec, after their
+    /// delays. A layer anchored to such a node counts as inside it.
+    fn track_hover(&mut self, rects: &[Rect]) {
+        let now = self.motion_ms;
+        let focus_visible = !self.focus_by_pointer;
+        let mut sends: Vec<A::Msg> = Vec::new();
+        let mut effects: HoverEffects = Vec::new();
+        let mut seen = HashSet::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(spec) = &node.hover else {
+                continue;
+            };
+            seen.insert(node.id);
+            let over = |r: Rect| self.pointer.is_some_and(|p| contains(r, p));
+            let mut inside = rects.get(ix).is_some_and(|&r| over(r));
+            if !inside {
+                inside = self.nodes.iter().enumerate().any(|(lx, l)| {
+                    l.layer.as_ref().is_some_and(|spec| match &spec.anchor {
+                        LayerAnchor::Id(id) => *id == node.id,
+                        LayerAnchor::Name(n) => node.name.as_deref() == Some(n.as_str()),
+                        _ => false,
+                    }) && rects.get(lx).is_some_and(|&r| over(r))
+                });
+            }
+            let focused = spec.focus && focus_visible && self.focus_within(ix);
+            let track = self.hovers.entry(node.id).or_default();
+            if focused {
+                track.inside_since = None;
+                track.outside_since = None;
+                if !track.on {
+                    track.on = true;
+                    report(spec, true, &mut sends, &mut effects);
+                }
+                continue;
+            }
+            if inside {
+                track.outside_since = None;
+                let since = *track.inside_since.get_or_insert(now);
+                if !track.on && now - since >= spec.enter_ms {
+                    track.on = true;
+                    report(spec, true, &mut sends, &mut effects);
+                }
+            } else {
+                track.inside_since = None;
+                let since = *track.outside_since.get_or_insert(now);
+                if track.on && now - since >= spec.leave_ms {
+                    track.on = false;
+                    report(spec, false, &mut sends, &mut effects);
+                }
+            }
+        }
+        self.hovers.retain(|id, _| seen.contains(id));
+        if !effects.is_empty() {
+            for (effect, on) in effects {
+                effect(on);
+            }
+            self.stale = true;
+        }
+        for msg in sends {
+            let command = self.send(msg);
+            self.pending = std::mem::take(&mut self.pending).and(command);
+        }
+    }
+
+    /// Whether focus is on node `ix` or inside it.
+    fn focus_within(&self, ix: usize) -> bool {
+        let Some(f) = self.focused else {
+            return false;
+        };
+        let Some(mut at) = self.nodes.iter().position(|n| n.id == f) else {
+            return false;
+        };
+        loop {
+            if at == ix {
+                return true;
+            }
+            match self.nodes[at].parent {
+                Some(p) => at = p as usize,
+                None => return false,
+            }
+        }
+    }
+
+    /// Whether a hover report is waiting on its delay.
+    fn hover_pending(&self) -> bool {
+        self.hovers
+            .values()
+            .any(|t| (t.on && t.outside_since.is_some()) || (!t.on && t.inside_since.is_some()))
+    }
+
     /// Closes the open popup and puts focus back on its owner.
     fn close_popup(&mut self) {
         if let Some(owner) = self.popup.take() {
@@ -2153,6 +2910,19 @@ impl<A: App> Runtime<A> {
 impl<A: App> Runtime<A> {
     fn handle_input(&mut self, input: Input, phase: InputPhase) -> Command {
         self.repaint = true;
+        if phase == InputPhase::Pressed
+            && matches!(
+                input,
+                Input::Up
+                    | Input::Down
+                    | Input::Left
+                    | Input::Right
+                    | Input::Next
+                    | Input::Previous
+            )
+        {
+            self.focus_by_pointer = false;
+        }
         match (input, phase) {
             (Input::A, _) => {
                 let mut command = Command::None;
@@ -2216,6 +2986,11 @@ impl<A: App> Runtime<A> {
                 }
                 Command::None
             }
+            (Input::B, InputPhase::Pressed) if self.top_layer(|l| l.escape_dismiss).is_some() => {
+                let ix = self.top_layer(|l| l.escape_dismiss).expect("checked");
+                self.cue(FeedbackKind::Back);
+                self.dismiss(ix, DismissReason::Escape)
+            }
             (Input::B, InputPhase::Pressed) if self.popup.is_some() => {
                 self.close_popup();
                 self.cue(FeedbackKind::Back);
@@ -2260,13 +3035,57 @@ impl<A: App> Runtime<A> {
             A11yAction::Activate => self.activate(id),
             // A pointer press runs the same press as A, so press feedback,
             // long presses, and holds behave alike.
-            A11yAction::PressStart => self.handle_input(Input::A, InputPhase::Pressed),
+            A11yAction::PressStart => {
+                self.focus_by_pointer = true;
+                self.handle_input(Input::A, InputPhase::Pressed)
+            }
             A11yAction::PressEnd => self.handle_input(Input::A, InputPhase::Released),
         }
     }
 }
 
 impl<A: App> Surface for Runtime<A> {
+    fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
+        // Hover stays on `pointer_move`; this path carries presses and drags.
+        if event.phase != PointerPhase::Down {
+            let outcome = self.drag_event(event);
+            let pending = std::mem::take(&mut self.pending);
+            return PointerOutcome {
+                command: outcome.command.and(pending),
+                handled: outcome.handled,
+            };
+        }
+        self.begin_drag(event);
+        // A press outside the topmost layer closes it, if it closes on
+        // outside presses, and goes no further: the same press neither
+        // reaches the page nor closes the layer under it.
+        let Some(top) = self.top_layer(|_| true) else {
+            return PointerOutcome::default();
+        };
+        let inside = self
+            .layout
+            .as_ref()
+            .and_then(|l| l.rects.get(top))
+            .is_some_and(|r| contains(*r, event.at));
+        let spec = self.nodes[top].layer.as_ref().expect("layer");
+        if inside {
+            return PointerOutcome::default();
+        }
+        if spec.light_dismiss && (spec.on_dismiss.is_some() || spec.dismiss_effect.is_some()) {
+            let command = self.dismiss(top, DismissReason::OutsidePress);
+            let command = command.and(std::mem::take(&mut self.pending));
+            return PointerOutcome {
+                command,
+                handled: true,
+            };
+        }
+        // A modal layer's page is inert.
+        PointerOutcome {
+            command: Command::None,
+            handled: spec.modal,
+        }
+    }
+
     fn pointer_move(&mut self, at: Option<Point>) {
         if self.pointer != at {
             self.pointer = at;
@@ -2321,6 +3140,15 @@ impl<A: App> Surface for Runtime<A> {
         // Where the focused element is drawn now, so a rebuild that moves
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
+        if self.locals.take_changed() {
+            self.stale = true;
+        }
+        // Components may size themselves from the viewport while they
+        // build, so a new viewport rebuilds, and the first build sees it.
+        if viewport != self.build_viewport {
+            self.build_viewport = viewport;
+            self.stale = true;
+        }
         if self.stale || self.app.theme() != self.theme || self.app.direction() != self.direction {
             self.rebuild();
         }
@@ -2339,6 +3167,10 @@ impl<A: App> Surface for Runtime<A> {
                 .expect("layout")
                 .compute(&self.nodes, viewport, text);
             self.relayout = false;
+            if self.resize_layout(text) {
+                // Lay out again next frame, while the height moves.
+                self.relayout = true;
+            }
             self.layout
                 .as_mut()
                 .expect("layout")
@@ -2361,15 +3193,21 @@ impl<A: App> Surface for Runtime<A> {
             self.reveal_focus(false);
         }
         self.follow_cameras();
+        self.place_layers();
         // A rebuild can move focus; the app hears of it too.
         let _ = self.report_focus();
         self.update_moving();
         self.animating_visible = self.animation_visible();
         self.timings.layout = watch.lap();
+        let modal = self
+            .nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(|l| l.modal));
         self.a11y = a11y::tree(
             &self.nodes,
             &self.layout.as_ref().expect("layout").rects,
             self.focused,
+            modal,
         );
         self.timings.a11y = watch.lap();
         self.mark_text_selection();
@@ -2384,10 +3222,63 @@ impl<A: App> Surface for Runtime<A> {
                 .collect();
             layout.placed(&self.nodes, &shown)
         };
+        self.track_hover(&rects);
         let caret = self.caret_paint(text);
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
-        let transforms = self.transforms(&rects);
+        let mut transforms = self.transforms(&rects);
+        let mut opacities = HashMap::new();
+        if !self.anims.is_empty() {
+            let index: HashMap<u64, usize> = self
+                .nodes
+                .iter()
+                .enumerate()
+                .map(|(i, n)| (n.id, i))
+                .collect();
+            use crate::motion::Channel;
+            for (&(id, channel), a) in &self.anims {
+                let Some(&ix) = index.get(&id) else { continue };
+                let v = a.value();
+                if channel == Channel::Opacity {
+                    if v < 1.0 {
+                        opacities.insert(ix, v.max(0.0));
+                    }
+                    continue;
+                }
+                let identity = match channel {
+                    Channel::Scale => v == 1.0,
+                    _ => v == 0.0,
+                };
+                if identity {
+                    continue;
+                }
+                let t = transforms.entry(ix).or_insert(paint::Transform {
+                    origin: rects[ix].center(),
+                    scale: 1.0,
+                    translate: Point { x: 0.0, y: 0.0 },
+                });
+                match channel {
+                    Channel::TranslateX => t.translate.x += v,
+                    Channel::TranslateY => t.translate.y += v,
+                    Channel::Scale => t.scale *= v,
+                    Channel::Opacity => {}
+                }
+            }
+        }
+        let exits = self
+            .exits
+            .iter()
+            .map(|e| {
+                let (x, y) = e.translate.value();
+                (
+                    e.commands.clone(),
+                    e.rect,
+                    e.opacity.value().clamp(0.0, 1.0),
+                    e.scale.value(),
+                    Point { x, y },
+                )
+            })
+            .collect();
         let (page_clips, page_marks) = self.pager_paint(&rects);
         // The topmost enabled focus stop under the pointer shows hover.
         let hovered = self.pointer.and_then(|p| {
@@ -2402,7 +3293,13 @@ impl<A: App> Surface for Runtime<A> {
                 (enabled && inside).then_some(self.nodes[ix].id)
             })
         });
+        let backdrop = modal.and_then(|ix| {
+            let color = self.nodes[ix].layer.as_ref()?.backdrop?;
+            Some((ix, color))
+        });
         let state = PaintState {
+            focus_visible: !self.focus_by_pointer || self.focused_edit().is_some(),
+            backdrop,
             focused: self.focused,
             pressed: self.pressed,
             hovered,
@@ -2432,15 +3329,25 @@ impl<A: App> Surface for Runtime<A> {
             transforms,
             page_clips,
             page_marks,
+            opacities,
+            exits,
         };
         let layout = self.layout.as_ref().expect("layout");
+        let mut captures = Vec::new();
         let list = paint::paint(
             &self.nodes,
             layout,
             &rects,
             &state,
             self.theme.tokens(&self.prefs).color.background_body.into(),
+            &mut captures,
         );
+        for (ix, start, end) in captures {
+            self.captured.insert(
+                self.nodes[ix].id,
+                (list.commands[start..end].to_vec(), rects[ix]),
+            );
+        }
         self.timings.paint = watch.lap();
         list
     }
@@ -2586,6 +3493,12 @@ impl<A: App> Surface for Runtime<A> {
             || self.press.wants_frames()
             || self.repeats.wants_frames()
             || self.paging.wants_frames()
+            || self.hover_pending()
+            || self.locals.is_changed()
+            || !self.coasts.is_empty()
+            || self.anims.values().any(|a| a.is_animating())
+            || !self.exits.is_empty()
+            || self.resizes.values().any(|r| r.shown.is_animating())
     }
 }
 
@@ -2594,4 +3507,26 @@ fn gesture_phase(phase: InputPhase) -> Phase {
         InputPhase::Pressed => Phase::Pressed,
         InputPhase::Released => Phase::Released,
     }
+}
+
+/// Hover effects waiting to run, with the hover state each reports.
+type HoverEffects = Vec<(Rc<dyn Fn(bool)>, bool)>;
+
+/// Queues a hover report: the component's own effect and the app's message.
+fn report<Msg>(
+    spec: &crate::layer::HoverSpec<Msg>,
+    on: bool,
+    sends: &mut Vec<Msg>,
+    effects: &mut HoverEffects,
+) {
+    if let Some(effect) = &spec.effect {
+        effects.push((effect.clone(), on));
+    }
+    if let Some(f) = &spec.on_change {
+        sends.push(f(on));
+    }
+}
+
+fn contains(r: Rect, p: Point) -> bool {
+    p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height
 }

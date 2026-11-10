@@ -67,6 +67,7 @@ mod tests {
             text_selection: None,
             secure: false,
             live: None,
+            state: Default::default(),
             children: Vec::new(),
         }
     }

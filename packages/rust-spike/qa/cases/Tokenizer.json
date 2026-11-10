@@ -1,0 +1,406 @@
+{
+ "family": "Tokenizer",
+ "source": "packages/core/src/Tokenizer/Tokenizer.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Tokenizer",
+   "visualProps": {
+    "hasClear": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "hasEntriesOnFocus": [
+     false,
+     true
+    ],
+    "hasAutoFocus": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "hasCreate": [
+     false,
+     true
+    ],
+    "tokenOverflowBehavior": [
+     "none",
+     "unfocusedInline",
+     "unfocusedLayer"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ]
+   },
+   "defaults": {
+    "hasClear": false,
+    "isDisabled": false,
+    "statusVariant": "attached",
+    "isLabelHidden": false,
+    "isRequired": false,
+    "isOptional": false,
+    "hasEntriesOnFocus": false,
+    "hasAutoFocus": false,
+    "size": "md",
+    "hasCreate": false,
+    "tokenOverflowBehavior": "none",
+    "presentation": "adaptive"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "tokenizer-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "tokenizer-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "tokenizer-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "tokenizer-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "tokenizer-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "tokenizer-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "tokenizer-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "tokenizer-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "tokenizer-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasEntriesOnFocus": true
+     }
+    },
+    {
+     "id": "tokenizer-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "tokenizer-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "tokenizer-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "tokenizer-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasCreate": true
+     }
+    },
+    {
+     "id": "tokenizer-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "tokenOverflowBehavior": "unfocusedInline"
+     }
+    },
+    {
+     "id": "tokenizer-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "tokenizer-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "tokenizer-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "tokenizer-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "statusVariant": "detached",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isOptional": true,
+      "hasEntriesOnFocus": true,
+      "hasAutoFocus": true,
+      "hasCreate": true,
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "statusVariant": "detached",
+      "isRequired": true,
+      "hasEntriesOnFocus": true,
+      "size": "lg",
+      "hasCreate": true,
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "tokenizer-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "isDisabled": true,
+      "isLabelHidden": true,
+      "isOptional": true,
+      "hasAutoFocus": true,
+      "size": "lg",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "tokenizer-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip",
+      "isLabelHidden": true,
+      "hasEntriesOnFocus": true,
+      "hasAutoFocus": true,
+      "size": "sm",
+      "hasCreate": true,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "isDisabled": true,
+      "statusVariant": "tooltip",
+      "isRequired": true,
+      "isOptional": true,
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "tokenizer-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip",
+      "isOptional": true,
+      "hasAutoFocus": true,
+      "size": "lg",
+      "hasCreate": true,
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "tokenizer-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": true,
+      "isDisabled": true,
+      "statusVariant": "detached",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "tokenizer-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "hasEntriesOnFocus": true,
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedInline"
+     }
+    },
+    {
+     "id": "tokenizer-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasCreate": true,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached",
+      "isLabelHidden": true,
+      "hasEntriesOnFocus": true,
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedLayer",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "tokenizer-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "isOptional": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "tokenizer-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "tokenizer-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedLayer",
+      "presentation": "bottom-sheet"
+     }
+    }
+   ]
+  }
+ ]
+}

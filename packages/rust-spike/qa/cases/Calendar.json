@@ -1,0 +1,535 @@
+{
+ "family": "Calendar",
+ "source": "packages/core/src/Calendar/Calendar.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Calendar",
+   "visualProps": {
+    "mode": [
+     "single",
+     "range"
+    ],
+    "numberOfMonths": [
+     1,
+     2
+    ],
+    "hasOutsideDays": [
+     false,
+     true
+    ],
+    "hasWeekNumbers": [
+     false,
+     true
+    ],
+    "hasVariableRowCount": [
+     false,
+     true
+    ],
+    "calendar": [
+     "gregory",
+     "iso8601",
+     "buddhist",
+     "roc",
+     "japanese",
+     "persian",
+     "indian",
+     "hebrew",
+     "chinese",
+     "dangi",
+     "coptic",
+     "ethiopic",
+     "ethioaa",
+     "islamic-civil",
+     "islamic-tbla",
+     "islamic-umalqura"
+    ]
+   },
+   "defaults": {
+    "mode": "single",
+    "numberOfMonths": 1,
+    "hasOutsideDays": true,
+    "hasWeekNumbers": false,
+    "hasVariableRowCount": false,
+    "calendar": null
+   },
+   "base": {},
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "calendar-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "calendar-0002",
+     "kind": "sweep",
+     "props": {
+      "mode": "range"
+     }
+    },
+    {
+     "id": "calendar-0003",
+     "kind": "sweep",
+     "props": {
+      "numberOfMonths": 2
+     }
+    },
+    {
+     "id": "calendar-0004",
+     "kind": "sweep",
+     "props": {
+      "hasOutsideDays": false
+     }
+    },
+    {
+     "id": "calendar-0005",
+     "kind": "sweep",
+     "props": {
+      "hasWeekNumbers": true
+     }
+    },
+    {
+     "id": "calendar-0006",
+     "kind": "sweep",
+     "props": {
+      "hasVariableRowCount": true
+     }
+    },
+    {
+     "id": "calendar-0007",
+     "kind": "sweep",
+     "props": {
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "calendar-0008",
+     "kind": "sweep",
+     "props": {
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "calendar-0009",
+     "kind": "sweep",
+     "props": {
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "calendar-0010",
+     "kind": "sweep",
+     "props": {
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "calendar-0011",
+     "kind": "sweep",
+     "props": {
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "calendar-0012",
+     "kind": "sweep",
+     "props": {
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "calendar-0013",
+     "kind": "sweep",
+     "props": {
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "calendar-0014",
+     "kind": "sweep",
+     "props": {
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "calendar-0015",
+     "kind": "sweep",
+     "props": {
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "calendar-0016",
+     "kind": "sweep",
+     "props": {
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "calendar-0017",
+     "kind": "sweep",
+     "props": {
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "calendar-0018",
+     "kind": "sweep",
+     "props": {
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "calendar-0019",
+     "kind": "sweep",
+     "props": {
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "calendar-0020",
+     "kind": "sweep",
+     "props": {
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "calendar-0021",
+     "kind": "sweep",
+     "props": {
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "calendar-0022",
+     "kind": "sweep",
+     "props": {
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "calendar-0023",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "calendar-0024",
+     "kind": "pairwise",
+     "props": {
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "calendar-0025",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "hasVariableRowCount": true,
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "calendar-0026",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasOutsideDays": false,
+      "hasWeekNumbers": true,
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "calendar-0027",
+     "kind": "pairwise",
+     "props": {
+      "numberOfMonths": 2,
+      "hasOutsideDays": false,
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "calendar-0028",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "calendar-0029",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "calendar-0030",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "calendar-0031",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "calendar-0032",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "calendar-0033",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "calendar-0034",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "calendar-0035",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "calendar-0036",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "calendar-0037",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "calendar-0038",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "calendar-0039",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "calendar-0040",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "calendar-0041",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "hasOutsideDays": false,
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "calendar-0042",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "calendar-0043",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "calendar-0044",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "calendar-0045",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "calendar-0046",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "calendar-0047",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "calendar-0048",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "calendar-0049",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "calendar-0050",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "calendar-0051",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "calendar-0052",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "calendar-0053",
+     "kind": "pairwise",
+     "props": {
+      "mode": "range",
+      "numberOfMonths": 2,
+      "hasWeekNumbers": true,
+      "hasVariableRowCount": true,
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "calendar-0054",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "hasWeekNumbers": true,
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "calendar-0055",
+     "kind": "pairwise",
+     "props": {
+      "hasOutsideDays": false,
+      "hasVariableRowCount": true,
+      "calendar": "roc"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,12 +1,13 @@
 //! Link: navigates to a URL, or runs an action when it has no `href`.
 
 use super::icon::icon_node;
-use crate::util::{color, component, len, mix, radii, strings};
+use crate::util::{color, component, len, mix, radii};
 use astryx_core::authoring::{
     text_draw, text_node, type_style, Base, Build, BuildCx, Indicator, Interact, Node, Semantics,
 };
 use astryx_core::contract::{FontFamily, Role};
 use astryx_core::{TextColor, TextSize, TextWeight};
+use astryx_spike_foundations::{args, CxExt};
 use taffy::{AlignItems, FlexDirection, Style};
 
 /// Link `display`.
@@ -183,16 +184,20 @@ impl<Msg: Clone + 'static> Build<Msg> for Link<Msg> {
         let new_tab = self
             .new_tab_label
             .clone()
-            .unwrap_or_else(|| strings::NEW_TAB.to_string());
+            .unwrap_or_else(|| cx.t("@astryx.link.newTab", &args! {}));
         let mut name = self.label.clone().unwrap_or_else(|| self.children.clone());
         if self.is_external_link {
             name = format!("{name} {new_tab}");
         }
-        // a11y-role: Link. Until the contract has it, a link reads as a button
-        // with its destination as the description.
-        let mut sem = Semantics::new(Role::Button, name);
+        // Without an href it acts on press, so it is a button, as Astryx
+        // renders a <button> for it.
+        let role = if self.href.is_some() {
+            Role::Link
+        } else {
+            Role::Button
+        };
+        let mut sem = Semantics::new(role, name);
         sem.disabled = self.is_disabled;
-        sem.description = self.href.clone();
         let radius = radii(t.radius.inner);
         let node = Node::new(Style {
             flex_direction: FlexDirection::Row,

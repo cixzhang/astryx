@@ -1171,6 +1171,7 @@ impl Surface for FixtureSurface {
             selected: None,
             focusable: false,
             live: None,
+            state: Default::default(),
             id,
             role,
             label: Some(label.to_owned()),
@@ -1239,6 +1240,7 @@ impl Surface for FixtureSurface {
                     selected: None,
                     focusable: false,
                     live: None,
+                    state: Default::default(),
                     value: Some("65%".into()),
                     ..node(
                         7,

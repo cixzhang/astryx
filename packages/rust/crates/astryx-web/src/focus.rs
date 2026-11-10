@@ -71,6 +71,7 @@ mod tests {
             selected: None,
             focusable: matches!(role, Role::Button | Role::Switch | Role::ListItem),
             live: None,
+            state: Default::default(),
             id,
             role,
             label: None,

@@ -1,0 +1,163 @@
+{
+ "family": "ContextMenu",
+ "source": "packages/core/src/ContextMenu/ContextMenu.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "ContextMenu",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "triggerAs": [
+     "div",
+     "span"
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "presentation": "popover",
+    "isDisabled": false,
+    "triggerAs": "div"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "context-menu-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "context-menu-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "context-menu-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "context-menu-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "context-menu-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "context-menu-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "context-menu-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "triggerAs": "span"
+     }
+    },
+    {
+     "id": "context-menu-0008",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "presentation": "bottom-sheet",
+      "isDisabled": true,
+      "triggerAs": "span"
+     }
+    },
+    {
+     "id": "context-menu-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "presentation": "adaptive",
+      "triggerAs": "span"
+     }
+    },
+    {
+     "id": "context-menu-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "context-menu-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "triggerAs": "span"
+     }
+    },
+    {
+     "id": "context-menu-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "presentation": "bottom-sheet",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "context-menu-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "presentation": "adaptive"
+     }
+    }
+   ]
+  }
+ ]
+}

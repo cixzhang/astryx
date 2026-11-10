@@ -10,5 +10,7 @@ publish = false
 astryx-core.workspace = true
 astryx-tokens.workspace = true
 astryx-spike-foundations = { path = "../astryx-spike-foundations" }
+astryx-spike-layers = { path = "../astryx-spike-layers" }
+astryx-spike-motion = { path = "../astryx-spike-motion" }
 # Grid lays out with CSS grid.
 taffy = { workspace = true, features = ["grid"] }

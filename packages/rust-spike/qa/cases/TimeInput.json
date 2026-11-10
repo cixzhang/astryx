@@ -1,0 +1,532 @@
+{
+ "family": "TimeInput",
+ "source": "packages/core/src/TimeInput/TimeInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "TimeInput",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "hasSeconds": [
+     false,
+     true
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "hourFormat": [
+     "12h",
+     "24h"
+    ],
+    "presentation": [
+     "text-input",
+     "popover",
+     "bottom-sheet",
+     "native",
+     "adaptive-bottom-sheet",
+     "adaptive-native"
+    ],
+    "nativePicker": [
+     "touch",
+     "always",
+     "never"
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isLoading": false,
+    "hasSeconds": false,
+    "hasClear": false,
+    "hourFormat": null,
+    "presentation": "adaptive-native",
+    "nativePicker": "touch",
+    "size": "md",
+    "statusVariant": "attached"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "time-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "time-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "time-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "time-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "time-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "time-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "time-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasSeconds": true
+     }
+    },
+    {
+     "id": "time-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "time-input-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h"
+     }
+    },
+    {
+     "id": "time-input-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hourFormat": "24h"
+     }
+    },
+    {
+     "id": "time-input-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "text-input"
+     }
+    },
+    {
+     "id": "time-input-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "time-input-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "time-input-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "time-input-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "time-input-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "time-input-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "time-input-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "time-input-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "time-input-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0021",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "presentation": "text-input",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "time-input-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hasClear": true,
+      "hourFormat": "24h",
+      "presentation": "popover",
+      "nativePicker": "always",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "hasClear": true,
+      "hourFormat": "12h",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never",
+      "size": "lg",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isDisabled": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "presentation": "native",
+      "nativePicker": "never",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "time-input-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "hasSeconds": true,
+      "hasClear": true,
+      "hourFormat": "12h",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always",
+      "size": "sm",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "hourFormat": "24h",
+      "presentation": "native",
+      "nativePicker": "always",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "12h",
+      "presentation": "adaptive-bottom-sheet",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "size": "lg",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasClear": true,
+      "hourFormat": "24h",
+      "presentation": "text-input",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "time-input-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hourFormat": "12h",
+      "presentation": "popover",
+      "size": "sm",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "hasSeconds": true,
+      "hasClear": true,
+      "hourFormat": "24h",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "always",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "time-input-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasClear": true,
+      "hourFormat": "24h",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "time-input-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "presentation": "text-input",
+      "nativePicker": "never",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "hourFormat": "24h",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "time-input-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "hasClear": true,
+      "hourFormat": "12h",
+      "presentation": "native",
+      "size": "sm",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "presentation": "text-input",
+      "nativePicker": "always",
+      "size": "lg",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "24h",
+      "presentation": "popover",
+      "nativePicker": "never",
+      "size": "sm",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "never",
+      "size": "sm",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "time-input-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "nativePicker": "never",
+      "size": "sm",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "time-input-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "presentation": "popover",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "time-input-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "presentation": "bottom-sheet",
+      "size": "sm",
+      "statusVariant": "detached"
+     }
+    }
+   ]
+  }
+ ]
+}

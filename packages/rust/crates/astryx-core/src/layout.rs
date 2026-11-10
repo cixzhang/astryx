@@ -22,6 +22,9 @@ pub(crate) struct Layout {
     pub texts: Vec<Option<String>>,
     /// Each camera viewport's offset (x, y), by node id.
     pub camera: HashMap<u64, (f32, f32)>,
+    /// Where each layer root goes (x, y), by node id, as its placement
+    /// decided after layout.
+    pub layers: HashMap<u64, (f32, f32)>,
 }
 
 /// How a rebuilt node list differs from the last one, for layout.
@@ -83,6 +86,20 @@ impl Layout {
         change
     }
 
+    /// Lays node `ix` out at `height` (or back at its own style with
+    /// `None`) on the next compute.
+    pub fn override_height<Msg>(&mut self, nodes: &[Node<Msg>], ix: usize, height: Option<f32>) {
+        let mut style = taffy_style(&nodes[ix]);
+        if let Some(h) = height {
+            style.size.height = taffy::Dimension::length(h);
+            style.min_size.height = taffy::LengthPercentageAuto::length(0.0);
+            style.max_size.height = taffy::LengthPercentageAuto::length(h);
+        }
+        self.tree
+            .set_style(self.ids[ix], style)
+            .expect("taffy style");
+    }
+
     pub fn new<Msg>(nodes: &[Node<Msg>]) -> Self {
         let mut tree = TaffyTree::with_capacity(nodes.len());
         let mut ids = vec![NodeId::new(0); nodes.len()];
@@ -110,6 +127,7 @@ impl Layout {
             overflow: Vec::new(),
             texts: Vec::new(),
             camera: HashMap::new(),
+            layers: HashMap::new(),
         }
     }
 
@@ -209,6 +227,10 @@ impl Layout {
         let mut rects = self.boxes.clone();
         for (ix, node) in nodes.iter().enumerate() {
             let (mut dx, mut dy) = node.parent.map_or((0.0, 0.0), |p| shift[p as usize]);
+            if let Some(&(x, y)) = self.layers.get(&node.id) {
+                dx -= x;
+                dy -= y;
+            }
             rects[ix].x -= dx;
             rects[ix].y -= dy;
             if let Some(axis) = node.scroll {

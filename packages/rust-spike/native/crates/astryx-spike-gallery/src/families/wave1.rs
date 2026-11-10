@@ -1,6 +1,6 @@
 //! Wave 1 families: primitives.
 
-use super::{v, Family};
+use super::{inline, kid_text, kids, v, Family};
 use crate::props::Props;
 use crate::Msg;
 use astryx_core::Element;
@@ -69,8 +69,8 @@ fn justify(s: &str) -> TextJustify {
 }
 
 fn render_text(p: Props) -> Element<Msg> {
-    let mut t = Text::new(p.words("The quick brown fox jumps over the lazy dog."))
-        .r#type(text_type(p.str_or("type", "body")));
+    let words = p.str("children").or(kid_text(&p)).unwrap_or("Label");
+    let mut t = Text::new(words).r#type(text_type(p.str_or("type", "body")));
     if let Some(s) = p.str("size").and_then(text_size) {
         t = t.size(s);
     }
@@ -91,7 +91,8 @@ fn render_text(p: Props) -> Element<Msg> {
 
 fn render_heading(p: Props) -> Element<Msg> {
     let level = p.num("level").unwrap_or(2.0) as u8;
-    let mut h = Heading::new(level, p.words("Heading"));
+    let words = p.str("children").or(kid_text(&p)).unwrap_or("Label");
+    let mut h = Heading::new(level, words);
     if let Some(c) = p.str("color").and_then(text_color) {
         h = h.color(c);
     }
@@ -124,15 +125,14 @@ pub(crate) fn icon_size(s: &str) -> IconSize {
 }
 
 fn render_icon(p: Props) -> Element<Msg> {
-    let mut i =
-        Icon::new(p.str_or("icon", "check")).color(icon_color(p.str_or("color", "inherit")));
+    let mut i = Icon::new(p.str_or("icon", "")).color(icon_color(p.str_or("color", "inherit")));
     if let Some(s) = p.str("size") {
         i = i.size(icon_size(s));
     }
     if let Some(l) = p.str("label") {
         i = i.label(l);
     }
-    i.into()
+    inline(i)
 }
 
 fn render_spinner(p: Props) -> Element<Msg> {
@@ -152,17 +152,20 @@ fn render_spinner(p: Props) -> Element<Msg> {
     if let Some(l) = p.str("label") {
         s = s.label(l);
     }
-    s.into()
+    inline(s)
 }
 
 fn render_link(p: Props) -> Element<Msg> {
-    let mut l = Link::new(p.words("Read the docs"))
-        .href(p.str_or("href", "https://example.com"))
+    let words = p.str("children").or(kid_text(&p)).unwrap_or("Label");
+    let mut l = Link::new(words)
         .has_underline(p.bool("hasUnderline"))
         .is_disabled(p.bool("isDisabled"))
         .is_external_link(p.bool("isExternalLink"))
         .is_standalone(p.bool("isStandalone"))
         .on_click(Msg::Noop);
+    if let Some(h) = p.str("href") {
+        l = l.href(h);
+    }
     if let Some(c) = p.str("color").and_then(text_color) {
         l = l.color(c);
     }
@@ -172,10 +175,13 @@ fn render_link(p: Props) -> Element<Msg> {
     if let Some(w) = p.str("weight").and_then(text_weight) {
         l = l.weight(w);
     }
-    if p.str("display") == Some("block") {
-        l = l.display(LinkDisplay::Block);
+    if let Some(n) = p.num("maxLines") {
+        l = l.max_lines(n as u32);
     }
-    l.into()
+    if p.str("display") == Some("block") {
+        return l.display(LinkDisplay::Block).into();
+    }
+    inline(l)
 }
 
 fn badge_variant(s: &str) -> BadgeVariant {
@@ -202,9 +208,7 @@ fn badge_variant(s: &str) -> BadgeVariant {
 }
 
 fn render_badge(p: Props) -> Element<Msg> {
-    Badge::new(p.words("Badge"))
-        .variant(badge_variant(p.str_or("variant", "neutral")))
-        .into()
+    inline(Badge::new(p.words("Label")).variant(badge_variant(p.str_or("variant", "neutral"))))
 }
 
 pub(crate) fn avatar_size(s: &str) -> AvatarSize {
@@ -230,41 +234,47 @@ fn render_avatar(p: Props) -> Element<Msg> {
         .name(p.str_or("name", "Ada Lovelace"))
         .size(avatar_size(p.str_or("size", "md")))
         .shape(avatar_shape(p.str_or("shape", "circle")));
-    if let Some(s) = p.str("status") {
-        let variant = match s {
-            "neutral" => AvatarStatusDotVariant::Neutral,
-            "error" => AvatarStatusDotVariant::Error,
+    if p.str("$component") == Some("AvatarStatusDot") || p.get("status").is_some() {
+        let variant = match p.str("variant").or(p.str("status")) {
+            Some("neutral") => AvatarStatusDotVariant::Neutral,
+            Some("error") => AvatarStatusDotVariant::Error,
             _ => AvatarStatusDotVariant::Success,
         };
+        if p.str("$component") == Some("AvatarStatusDot") {
+            return inline(AvatarStatusDot::new(variant));
+        }
         a = a.status(AvatarStatusDot::new(variant));
     }
-    a.into()
+    inline(a)
 }
 
 fn render_avatar_group(p: Props) -> Element<Msg> {
-    let names = [
-        "Ada Lovelace",
-        "Grace Hopper",
-        "Alan Turing",
-        "Edsger Dijkstra",
-    ];
-    let n = p.num("count").unwrap_or(3.0) as usize;
-    let mut g = AvatarGroup::new(names.iter().take(n).map(|name| Avatar::new().name(*name)))
+    let mut g = AvatarGroup::new([])
         .size(avatar_size(p.str_or("size", "md")))
         .shape(avatar_shape(p.str_or("shape", "circle")));
-    if let Some(o) = p.num("overflow") {
+    let mut members = kids(&p);
+    if members.is_empty() {
+        for name in ["Ada Lovelace", "Grace Hopper", "Alan Turing"] {
+            members.push(Avatar::new().name(name).into());
+        }
+    }
+    for k in members {
+        g = g.child(k);
+    }
+    if let Some(o) = p.num("count").or(p.num("overflow")) {
         g = g.overflow(AvatarGroupOverflow::new(o as u32));
     }
-    g.into()
+    inline(g)
 }
 
 fn render_kbd(p: Props) -> Element<Msg> {
-    Kbd::new(p.str_or("keys", "mod+k")).into()
+    inline(Kbd::new(p.str_or("keys", "mod+k")))
 }
 
 fn render_divider(p: Props) -> Element<Msg> {
+    let vertical = p.str("orientation") == Some("vertical");
     let mut d = Divider::new()
-        .orientation(if p.str("orientation") == Some("vertical") {
+        .orientation(if vertical {
             DividerOrientation::Vertical
         } else {
             DividerOrientation::Horizontal
@@ -277,22 +287,10 @@ fn render_divider(p: Props) -> Element<Msg> {
     if let Some(l) = p.str("label") {
         d = d.label(l);
     }
-    if p.str("orientation") == Some("vertical") {
-        HStack::new()
-            .height(SizeValue::Points(48.0))
-            .gap(astryx_core::Space::S2)
-            .child(Text::new("Start"))
-            .child(d)
-            .child(Text::new("End"))
-            .into()
+    if vertical {
+        inline(d)
     } else {
-        VStack::new()
-            .width(SizeValue::Points(240.0))
-            .gap(astryx_core::Space::S2)
-            .child(Text::new("Above"))
-            .child(d)
-            .child(Text::new("Below"))
-            .into()
+        d.into()
     }
 }
 
@@ -303,8 +301,14 @@ fn render_indicator(p: Props) -> Element<Msg> {
         IndicatorSize::Md
     };
     let disabled = p.bool("isDisabled");
-    let state = p.str_or("state", "checked");
-    match p.str_or("kind", "checkbox") {
+    let state = p.str_or("state", "unchecked");
+    let kind = match p.str("$component") {
+        Some("RadioIndicator") => "radio",
+        Some("CheckIndicator") => "check",
+        Some("CheckboxIndicator") => "checkbox",
+        _ => p.str_or("kind", "checkbox"),
+    };
+    let mark: Element<Msg> = match kind {
         "radio" => RadioIndicator::new(state == "checked")
             .size(size)
             .is_disabled(disabled)
@@ -313,21 +317,19 @@ fn render_indicator(p: Props) -> Element<Msg> {
             .is_disabled(disabled)
             .into(),
         _ => CheckboxIndicator::new(match state {
-            "unchecked" => CheckboxState::Unchecked,
+            "checked" => CheckboxState::Checked,
             "indeterminate" => CheckboxState::Indeterminate,
-            _ => CheckboxState::Checked,
+            _ => CheckboxState::Unchecked,
         })
         .size(size)
         .is_disabled(disabled)
         .into(),
-    }
+    };
+    inline(mark)
 }
 
 fn render_visually_hidden(p: Props) -> Element<Msg> {
-    HStack::new()
-        .child(Text::new("Visible"))
-        .child(VisuallyHidden::new(p.words("Hidden from sight")))
-        .into()
+    VisuallyHidden::new(p.str("children").or(kid_text(&p)).unwrap_or("Label")).into()
 }
 
 pub fn families() -> Vec<Family> {
