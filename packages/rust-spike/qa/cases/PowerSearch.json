@@ -1,0 +1,330 @@
+{
+ "family": "PowerSearch",
+ "source": "packages/core/src/PowerSearch/PowerSearch.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "PowerSearch",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "hasAutoFocus": [
+     false,
+     true
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached"
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "tokenOverflowBehavior": [
+     "none",
+     "unfocusedInline",
+     "unfocusedLayer"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": true,
+    "hasAutoFocus": false,
+    "hasClear": true,
+    "isReadOnly": false,
+    "isDisabled": false,
+    "statusVariant": "attached",
+    "size": "md",
+    "tokenOverflowBehavior": "none",
+    "presentation": "adaptive"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "power-search-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "power-search-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false
+     }
+    },
+    {
+     "id": "power-search-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "power-search-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": false
+     }
+    },
+    {
+     "id": "power-search-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "power-search-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "power-search-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "power-search-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "power-search-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "power-search-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "tokenOverflowBehavior": "unfocusedInline"
+     }
+    },
+    {
+     "id": "power-search-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "power-search-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "power-search-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasAutoFocus": true,
+      "isReadOnly": true,
+      "isDisabled": true,
+      "statusVariant": "detached",
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "power-search-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "size": "lg",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "power-search-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasAutoFocus": true,
+      "hasClear": false,
+      "isReadOnly": true,
+      "statusVariant": "detached",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "power-search-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "isReadOnly": true,
+      "isDisabled": true,
+      "size": "lg",
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasAutoFocus": true,
+      "statusVariant": "detached",
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedInline",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "tokenOverflowBehavior": "unfocusedLayer",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "power-search-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasAutoFocus": true,
+      "hasClear": false,
+      "isReadOnly": true,
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedLayer"
+     }
+    },
+    {
+     "id": "power-search-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "statusVariant": "detached",
+      "size": "sm",
+      "tokenOverflowBehavior": "unfocusedLayer",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "isDisabled": true,
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "power-search-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "power-search-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "tokenOverflowBehavior": "unfocusedInline"
+     }
+    },
+    {
+     "id": "power-search-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": false,
+      "hasClear": false,
+      "size": "lg",
+      "presentation": "bottom-sheet"
+     }
+    }
+   ]
+  }
+ ]
+}

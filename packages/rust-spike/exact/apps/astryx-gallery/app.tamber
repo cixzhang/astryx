@@ -1,7 +1,7 @@
 tamber gallery
 
 axes
-  theme = default | neutral | stone | butter | chocolate | gothic | matcha | y2k
+  theme = neutral | default | stone | butter | chocolate | gothic | matcha | y2k
 
 theme
   astryx.accent = light-dark(#0064E0, #0171E3)

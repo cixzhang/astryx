@@ -1,0 +1,33 @@
+{
+ "family": "TopNav",
+ "source": "packages/core/src/TopNav/TopNav.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "TopNav",
+   "visualProps": {},
+   "defaults": {},
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "top-nav-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1343 @@
+{
+ "family": "DateInput",
+ "source": "packages/core/src/DateInput/DateInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "DateInput",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "numberOfMonths": [
+     1,
+     2
+    ],
+    "calendar": [
+     "gregory",
+     "iso8601",
+     "buddhist",
+     "roc",
+     "japanese",
+     "persian",
+     "indian",
+     "hebrew",
+     "chinese",
+     "dangi",
+     "coptic",
+     "ethiopic",
+     "ethioaa",
+     "islamic-civil",
+     "islamic-tbla",
+     "islamic-umalqura"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "native",
+     "adaptive-bottom-sheet",
+     "adaptive-native"
+    ],
+    "nativePicker": [
+     "touch",
+     "always",
+     "never"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isLoading": false,
+    "size": "md",
+    "statusVariant": "attached",
+    "hasClear": false,
+    "numberOfMonths": 1,
+    "calendar": null,
+    "presentation": "adaptive-native",
+    "nativePicker": "touch"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "date-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "date-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "date-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "date-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "date-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "date-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "date-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "date-input-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "date-input-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "date-input-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "date-input-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "numberOfMonths": 2
+     }
+    },
+    {
+     "id": "date-input-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-input-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-input-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-input-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-input-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-input-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-input-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-input-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-input-0021",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-input-0022",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-input-0023",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-input-0024",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-input-0025",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-input-0026",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-input-0027",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-input-0028",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-input-0029",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0030",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0031",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0032",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0033",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0034",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "gregory",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "iso8601",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 2,
+      "calendar": "buddhist",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isDisabled": true,
+      "size": "lg",
+      "hasClear": true,
+      "calendar": "roc",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "size": "lg",
+      "statusVariant": "detached",
+      "calendar": "japanese",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "size": "sm",
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-input-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "statusVariant": "tooltip",
+      "hasClear": true,
+      "calendar": "indian",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 2,
+      "calendar": "hebrew",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0043",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "size": "sm",
+      "hasClear": true,
+      "calendar": "buddhist",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0044",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "isLoading": true,
+      "size": "sm",
+      "numberOfMonths": 2,
+      "calendar": "roc",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0045",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "calendar": "persian",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0046",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "size": "sm",
+      "calendar": "indian",
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0047",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "chinese",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0048",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "dangi",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0049",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "coptic",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0050",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethiopic",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0051",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethioaa",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0052",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-civil",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0053",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-tbla",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0054",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-umalqura",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0055",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "gregory",
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0056",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "size": "sm",
+      "calendar": "iso8601",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0057",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "size": "sm",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "japanese",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0058",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "hasClear": true,
+      "calendar": "hebrew",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0059",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "chinese",
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0060",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "dangi",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0061",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "coptic",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0062",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "ethiopic",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0063",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "ethioaa",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0064",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "islamic-civil",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0065",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "islamic-tbla",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0066",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "numberOfMonths": 2,
+      "calendar": "islamic-umalqura",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0067",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached",
+      "calendar": "buddhist",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0068",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached",
+      "calendar": "roc",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0069",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip",
+      "calendar": "japanese",
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0070",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "gregory",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0071",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "iso8601",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0072",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "persian",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0073",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "detached",
+      "numberOfMonths": 2,
+      "calendar": "indian",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0074",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "detached",
+      "calendar": "hebrew",
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0075",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "chinese",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0076",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "dangi",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0077",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "coptic",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0078",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "ethiopic",
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0079",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "ethioaa",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0080",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "islamic-civil",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0081",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "islamic-tbla",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0082",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "islamic-umalqura",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-input-0083",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "calendar": "roc",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0084",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "gregory",
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-input-0085",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "gregory",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0086",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-input-0087",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "iso8601",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0088",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-input-0089",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "buddhist",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0090",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-input-0091",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "roc",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0092",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-input-0093",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "japanese",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0094",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "japanese",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0095",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "persian",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0096",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "persian",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0097",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "indian",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0098",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-input-0099",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "hebrew",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0100",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-input-0101",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "chinese",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-input-0102",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "chinese",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0103",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "dangi",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0104",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "dangi",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0105",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "coptic",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-input-0106",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "coptic",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0107",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethiopic",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0108",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-input-0109",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethioaa",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0110",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-input-0111",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-civil",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0112",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-input-0113",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-tbla",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0114",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-input-0115",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-umalqura",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-input-0116",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "calendar": "islamic-umalqura"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@astryx-spike/astryx-layers",
+  "version": "0.0.0",
+  "description": "Astryx's layered and disclosing components (Popover, Collapsible, and later Tooltip, Dialog, menus) for Exact. Not an Exact library: a library component must always show its slot, and these hide theirs until opened. They use the tokens of @astryx-spike/astryx.",
+  "exports": {
+    ".": "./index.contract"
+  }
+}

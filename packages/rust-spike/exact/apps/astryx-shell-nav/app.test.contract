@@ -1,7 +1,37 @@
-test "the greeting loads"
-  expect tree has "root"
-  expect text "greeting" == "Hello from Astryx Shell Nav."
+test "the shell shows its menu bar, tree and editor"
+  size 1280x800
+  expect tree has "menu-file-trigger"
+  expect tree has "tree-AppShell.tsx"
+  expect tree has "tab-theme.ts"
 
-test "the header's button likes it"
-  tap "like"
-  expect state liked == true
+test "a menu runs an item"
+  size 1280x800
+  tap "menu-edit-trigger"
+  tap "menu-Copy"
+  expect text "state" == "AppShell.tsx||Copy"
+
+test "the file tree opens folders and selects files"
+  size 1280x800
+  tap "toggle-public"
+  tap "select-robots.txt"
+  expect text "state" == "robots.txt||"
+
+test "the command palette opens from search and runs a command"
+  size 1280x800
+  tap "open-palette"
+  type "input-palette" "terminal"
+  expect tree has "command-toggle-terminal"
+  tap "command-toggle-terminal"
+  expect text "state" == "AppShell.tsx|toggle-terminal|"
+
+test "the side panel resizes"
+  size 1280x800
+  tap "resize-handle" drag 80 0
+  expect tree has "tree-src"
+
+test "on a narrow screen the tree moves into a sheet"
+  size 390x844
+  expect tree missing "menu-file-trigger"
+  tap "button-Open file tree"
+  tap "select-README.md"
+  expect text "state" == "README.md||"

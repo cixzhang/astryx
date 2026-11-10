@@ -1,7 +1,33 @@
-test "the greeting loads"
-  expect tree has "root"
-  expect text "greeting" == "Hello from Astryx Settings Dialog."
+test "the dialog opens on the profile panel"
+  size 1280x800
+  expect text "panel-title" == "Profile"
+  expect tree has "row-displayName"
 
-test "the header's button likes it"
-  tap "like"
-  expect state liked == true
+test "a panel opens from the side navigation"
+  size 1280x800
+  tap "nav-Appearance"
+  expect text "panel-title" == "Appearance"
+  tap "segment-dark"
+  expect text "last" == "colorTheme=dark"
+
+test "settings change"
+  size 1280x800
+  type "input-displayName" "Grace"
+  expect text "last" == "displayName=Grace"
+  tap "switch-Show my local time"
+  expect text "last" == "showLocalTime=false"
+  tap "pronouns-trigger"
+  tap "pronouns-option-they"
+  expect text "last" == "pronouns=they"
+
+test "search finds a setting and opens its panel"
+  size 1280x800
+  type "input-search" "webhook"
+  expect tree has "result-webhook"
+  tap "result-webhook"
+  expect text "panel-title" == "Developer"
+
+test "on a narrow screen panels are tabs"
+  size 390x844
+  tap "button-Privacy"
+  expect tree has "row-discoverable"

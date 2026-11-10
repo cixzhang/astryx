@@ -86,7 +86,367 @@
  "Indicator": {
   "wave": 1,
   "status": "ported",
-  "evidence": "gallery indicator-*",
+  "evidence": "gallery checkbox-indicator-*, check-indicator-*, radio-indicator-*",
   "notes": "Checkbox, radio and check indicators."
+ },
+ "Stack": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery stack-*, stack-item-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. StackItem ported."
+ },
+ "HStack": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery h-stack-*",
+  "notes": "Contract forwards no slot into another component, so HStack repeats Stack's body instead of wrapping Stack."
+ },
+ "VStack": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery v-stack-*",
+  "notes": "As HStack: no slot forwarding, so it repeats Stack's body."
+ },
+ "Grid": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery grid-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. rowHeight not yet wired."
+ },
+ "Center": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery center-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. isInline dropped (no inline-flex)."
+ },
+ "AspectRatio": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery aspectratio-*",
+  "notes": "fit (cover/contain) applies to an image child, set by the caller."
+ },
+ "Layout": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery layout-0001, layout-0002",
+  "notes": "Astryx takes header/start/end/footer as named props; Contract has one slot, so LayoutHeader, LayoutPanel, LayoutContent and LayoutFooter are children that place themselves on the frame's grid. Edge compensation through --container-padding-* custom properties has no equivalent. Panel width is a zero-height strut; content width is padding. No container queries."
+ },
+ "Section": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery section-*",
+  "notes": "Nested full-bleed (cancel the container's padding) needs the padding by prop (`bleed`): no runtime custom properties, no context through a slot."
+ },
+ "Card": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery card-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Border inset compensation (padding minus border) dropped."
+ },
+ "FormLayout": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "used by settings-dialog (wave 8)",
+  "notes": ""
+ },
+ "Toolbar": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "-",
+  "notes": "Arrow-key roving focus waits for wave 5 controls; overflow menu waits for OverflowList (wave 6)."
+ },
+ "EmptyState": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery emptystate-*",
+  "notes": "actions are the slot."
+ },
+ "Token": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery token-*",
+  "notes": "href/onClick variants and endContent not yet wired."
+ },
+ "infra:Layers": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "astryx-layers/layers.contract; gallery popover-* (web and Linux)",
+  "notes": "The platform's top layer does the layer stack, focus, Escape and outside-press dismissal (`popover`, `dialog`). A popover anchors only to the control that opened it (position-area); no anchoring to another element, no collision flipping beyond the platform's, no portal. Exact holds a library to always showing its slot, so every component that hides its content until opened (Popover, Collapsible, Tooltip, Dialog, menus, sheets) lives in a second, plain package (@astryx-spike/astryx-layers) beside the library."
+ },
+ "infra:Motion": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "layers.contract keyframes astryxEnter/Exit/FadeIn/Rise/SheetUp",
+  "notes": "Keyframes take literals, so presets carry the default theme's durations and easings. A library cannot read reduced motion (the viewport is the app's root resource): moving components take `still`. Exit animations do not run on Linux. Animating to an auto height is not possible (numeric heights only): Collapsible content rises in instead."
+ },
+ "Collapsible": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "gallery collapsible-*",
+  "notes": "Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot."
+ },
+ "Popover": {
+  "wave": 3,
+  "status": "workaround",
+  "evidence": "gallery popover-*; web and Linux",
+  "notes": "Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run."
+ },
+ "Tooltip": {
+  "wave": 4,
+  "status": "workaround",
+  "evidence": "gallery tooltip-*; test 'a tooltip case opens its tooltip'",
+  "notes": "Shows on hover and focus via the platform popover, anchored to the trigger. Timers run only in the app root's tasks, so `delay` is the fade's delay (the tooltip is open, transparent, for `delay` ms) and hideDelay is not possible. Content is text (one slot: the trigger). touchTrigger tap not wired. Hover is web and desktop only."
+ },
+ "InfoTip": {
+  "wave": 4,
+  "status": "ported",
+  "evidence": "gallery infotip-*",
+  "notes": "Opens on hover and on press (popovertarget)."
+ },
+ "HoverCard": {
+  "wave": 4,
+  "status": "workaround",
+  "evidence": "gallery hovercard-*",
+  "notes": "Card content is a title and body text: the one slot is the trigger. Same delay limit as Tooltip."
+ },
+ "Button": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery button-*; playground test presses Save (web and Linux)",
+  "notes": "A native button drawn in Astryx's look. isInterruptible not wired. Press scale is a paint-only :active opacity (a state row cannot scale)."
+ },
+ "IconButton": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery iconbutton-*",
+  "notes": ""
+ },
+ "ButtonGroup": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery button-group-*",
+  "notes": "A slot passes no context and Contract has no :first-child, so each Button takes `groupEdge` from the caller to square its inner corners. Group-wide size and isDisabled are each Button's props."
+ },
+ "Switch": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery switch-*; playground test toggles it (web and Linux)",
+  "notes": "A native checkbox (role switch) lies transparent over the drawn track and thumb. Drag-to-toggle (touch) not wired."
+ },
+ "TextInput": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery text-input-*; playground test types and clears (web; Linux by the agent's type)",
+  "notes": "No :focus-within: the field's focus and blur set the ring through component state. hasAutoCorrect and hasSpellCheck have no Contract attribute. Real-keyboard editing on Linux not verified (the agent sets the value)."
+ },
+ "NumberInput": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery numberinput-*; playground test steps it",
+  "notes": "Value is text; parse and clamp are the caller's (parseNumber)."
+ },
+ "CheckboxInput": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery checkboxinput-*; playground test checks it",
+  "notes": "aria-checked takes only a bool: an indeterminate box reads as unchecked."
+ },
+ "RadioList": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery radiolist-*; playground test picks an option",
+  "notes": "Options are data (ChoiceItem[]), not RadioListItem children: one slot cannot tell a list which child is chosen."
+ },
+ "CheckboxList": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery checkboxlist-*",
+  "notes": "Options are data, as RadioList."
+ },
+ "Field": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery field-*",
+  "notes": "The control is the slot and names itself by the label's id."
+ },
+ "FieldStatus": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery fieldstatus-*",
+  "notes": ""
+ },
+ "InputGroup": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery input-group-*",
+  "notes": "Parts are the slot (InputGroupText, an input)."
+ },
+ "SegmentedControl": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery segmented-control-*; playground test picks a segment",
+  "notes": "A library control must be the native one, so each segment is a transparent radio input over its drawn segment. Items are data."
+ },
+ "SelectableCard": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery selectable-card-*",
+  "notes": "A native button with aria-pressed."
+ },
+ "infra:Gestures": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "BottomSheet grabber drag, Resizable handle drag, ReorderList drag (tests pass on web)",
+  "notes": "Pointer events (pointerdown/move/up) with component state cover drags. No gesture arena: competing gestures (a sheet drag inside a scroll) are not arbitrated. Reorder is the host's (`reorderdrop` on a vertical virtualized list). Keyboard reorder (Space, arrows, Enter on the grip) did not move a row in our web run: the grip is exposed as a generic, unfocused element (gaps.test.contract keeps the failing test)."
+ },
+ "Item": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery item-*",
+  "notes": "Start and end content are an icon name and text; the slot is extra end content. Swipe actions not wired (Contract has row `delete=` and a scroll-snap long form)."
+ },
+ "List": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery list-*",
+  "notes": "Rows are the slot (ListItem); a slot passes no context, so each row takes the list's density, divider and marker. Reorderable lists are ReorderList (data rows). Edge compensation by custom properties dropped."
+ },
+ "TreeList": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery tree-list-*; playground test opens, closes and selects",
+  "notes": "Items are flattened rows with a depth (no recursion in a view). Open state is the caller's. Keyboard tree navigation (arrow keys) not wired."
+ },
+ "Dialog": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery dialog-*; playground test opens and closes",
+  "notes": "The platform's modal `dialog` (focus trap, inert page, Escape via closedby). Opened by showModal or commandfor, not by an isOpen prop: a dialog that state holds open is not available in Contract yet. isInline not possible. Lives in astryx-layers (hides its slot)."
+ },
+ "BottomSheet": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery bottomsheet-*; playground test opens it",
+  "notes": "A modal dialog at the bottom edge with a grabber; dragging down past 120 px closes it (pointer events). Snap points and detents not wired."
+ },
+ "DropdownMenu": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery dropdownmenu-*; playground test picks an item",
+  "notes": "The platform menu (popover role=menu). Items are data (MenuItem[]); submenus, radio groups and type-ahead not wired."
+ },
+ "ContextMenu": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery contextmenu-*; playground test picks an item",
+  "notes": "contextPopover on the slot: right click and long press."
+ },
+ "Resizable": {
+  "wave": 6,
+  "status": "workaround",
+  "evidence": "gallery resizable-*; playground test drags the handle 60 px",
+  "notes": "Width is the caller's state; drag by pointer events. Arrow-key resizing not wired. In astryx-layers: the library cannot size a slot-holding node from a prop."
+ },
+ "Typeahead": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery typeahead-*; playground test filters and picks",
+  "notes": "The Combobox root. A field plus a listbox popover; filtering in the view; Enter picks the highlighted option. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Arrow-key highlight not wired (an input takes no key event). Async sources are the caller's (no data module in a Linux build)."
+ },
+ "Tokenizer": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery tokenizer-*; playground test adds and removes",
+  "notes": "Tokens and a typeahead in one field. Backspace-to-remove not wired. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order."
+ },
+ "Selector": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery selector-*; playground test chooses",
+  "notes": "A trigger and a listbox popover. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Type-ahead in the list not wired."
+ },
+ "MultiSelector": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery multiselector-*; playground test chooses several",
+  "notes": "Selector with isMultiple. aria-multiselectable is refused."
+ },
+ "Calendar": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery calendar-*; playground test moves a month and picks a day",
+  "notes": "Month grid from day arithmetic (Zeller's congruence) in Contract functions: no date library. Names are English (Contract formats dates en-US); other calendar systems and locales are not possible without a data module. Arrow-key grid navigation not wired."
+ },
+ "DateInput": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery dateinput-*; playground test",
+  "notes": "ISO text field plus a calendar popover. Segmented date entry and locale formats not possible (en-US only)."
+ },
+ "DateRangeInput": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery daterangeinput-*",
+  "notes": "DateInput with isRange; the calendar shades the range."
+ },
+ "TimeInput": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery timeinput-*",
+  "notes": "24-hour HH:MM text field; no locale 12-hour format, no segment stepping."
+ },
+ "DateTimeInput": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "composed: DateInput beside TimeInput",
+  "notes": "No separate component: the two fields side by side."
+ },
+ "Pagination": {
+  "wave": 7,
+  "status": "ported",
+  "evidence": "gallery pagination-*; playground test pages",
+  "notes": "Ellipsis for long ranges not wired."
+ },
+ "Table": {
+  "wave": 7,
+  "status": "workaround",
+  "evidence": "gallery table-*; playground test sorts, selects all and one, pages",
+  "notes": "Columns and rows are data; a row is its cells in column order (Contract has no records keyed by a run-time string). Sorting, selection, pagination, tree rows are the caller's state; the table draws them. Not honoured: verticalAlign (cells take no vertical-align top/bottom) and hasHover=false (a state class chosen by a prop is refused). Not wired: column resize, sticky columns, virtualization (aria-rowcount/rowindex refused), filtering UI, column settings, grouped rows."
+ },
+ "AppShell": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "gallery app-shell-*; shell-nav template (web and Linux)",
+  "notes": "One slot: TopNav, SideNav and AppShellContent are children that place themselves on the shell's grid. Folding the side navigation into a drawer on narrow screens is the app root's choice (only the root reads the viewport); the shell-nav template does it with a BottomSheet."
+ },
+ "TopNav": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "shell-nav template",
+  "notes": "start and end content are one slot; a flex spacer separates them."
+ },
+ "SideNav": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "shell-nav and settings-dialog templates",
+  "notes": "Resizing composes Resizable; header/topContent/sections are the slot. SideNavItem ported."
+ },
+ "MobileNav": {
+  "wave": 8,
+  "status": "ported",
+  "evidence": "shell.contract MobileNav",
+  "notes": "Items are data."
+ },
+ "CommandPalette": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "gallery command-palette-*; shell-nav test opens it from search and runs a command; ⌘K via keycapture on the app root",
+  "notes": "A modal dialog with a filtering list. Commands are data (no async search source in a Linux build). activedescendant refused: arrow-key highlight not announced; Enter runs the first match."
+ },
+ "infra:Compositions": {
+  "wave": 8,
+  "status": "ported",
+  "evidence": "apps/astryx-shell-nav (6 tests) and apps/astryx-settings-dialog (5 tests) pass on web; both render and respond on the Linux host",
+  "notes": "Both templates rebuilt from the Astryx page sources. Linux: popover menus are not presented (Exact logs 'Linux does not support popover presentation'), so the shell's menu bar and selectors open nothing there; trees, switches, text and panels work."
  }
 }

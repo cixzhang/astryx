@@ -1,0 +1,66 @@
+{
+ "family": "InfoTip",
+ "source": "packages/core/src/InfoTip/InfoTip.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "InfoTip",
+   "visualProps": {
+    "size": [
+     "xsm",
+     "sm",
+     "md",
+     "lg"
+    ]
+   },
+   "defaults": {
+    "size": "sm"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "info-tip-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "info-tip-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "info-tip-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "md"
+     }
+    },
+    {
+     "id": "info-tip-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    }
+   ]
+  }
+ ]
+}

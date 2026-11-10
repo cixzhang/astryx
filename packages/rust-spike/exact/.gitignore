@@ -1,5 +1,6 @@
-# The Exact checkout at the pinned commit, linked here on each machine (see README).
+.exact/
 /.exact-sdk
+/node_modules/
 node_modules/
 target/
-.exact/
+# The Exact checkout at the pinned commit, linked here on each machine (see README).

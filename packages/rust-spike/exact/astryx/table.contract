@@ -1,0 +1,134 @@
+// Wave 7 Table: columns and rows as data, in the platform's table elements.
+//
+// Astryx's Table takes `columns` and `data` (records keyed by column) plus
+// plugin hooks (sorting, selection, pagination, tree rows, sticky columns,
+// resizing, virtualization). Contract has no records keyed by a run-time
+// string, so a row is its cells in column order (`cells: string[]`). Sorting,
+// selection and pagination are the caller's state, passed in; the table draws
+// them and reports presses. A table cell takes no `vertical-align: top` or
+// `bottom` in Contract, so `verticalAlign` is not honoured.
+use IconGlyph from "./icons.contract"
+use space from "./foundations.contract"
+
+shape TableColumn
+  key: string
+  label: string
+  width: string
+  align: string
+  isSortable: bool
+
+shape TableRow
+  key: string
+  cells: string[]
+  depth: number
+  isExpanded: bool
+  hasChildren: bool
+
+fn cellPadX(density: string): string = density == "compact" ? "astryx.space.s2" : density == "spacious" ? "astryx.space.s4" : "astryx.space.s3"
+fn cellPadY(density: string): string = density == "compact" ? "astryx.space.s1" : density == "spacious" ? "astryx.space.s3" : "astryx.space.s2"
+fn rowLine(dividers: string): bool = dividers == "rows" or dividers == "grid"
+fn colLine(dividers: string): bool = dividers == "columns" or dividers == "grid"
+
+// A row's fill (selection, stripes) is on its cells: a row with a :hover
+// state takes only literal rows, and a transparent cell shows the row's hover.
+// A state class chosen by a prop is a computed row too, so every row hovers:
+// `hasHover=false` is not honoured.
+style TableRowLook
+  :hover
+    background-color="astryx.overlay.hover"
+
+component Table
+  props
+    label: string
+    columns: TableColumn[]
+    rows: TableRow[]
+    density: string
+    dividers: string
+    isStriped: bool
+    hasHover: bool
+    verticalAlign: string
+    textOverflow: string
+    sortKey: string
+    sortDirection: string
+    hasSelection: bool
+    selected: string[]
+    sort: action
+    toggleRow: action
+    toggleAll: action
+    toggleExpand: action
+  view
+    table aria-label=label width="100%" border-spacing=0 testId="table"
+      thead
+        tr
+          if hasSelection
+            th width=36 padding-left=cellPadX(density) padding-right="astryx.space.s0" border-bottom-width="astryx.border.width" border-bottom-style="solid" border-bottom-color="astryx.border"
+              input type="checkbox" checked=(selected.length == rows.length and rows.length > 0) change=toggleAll aria-label="Select all rows" testId="select-all"
+          for col in columns key=col.key
+            th width=(col.width == "" ? "auto" : col.width) text-align=(col.align == "end" ? "right" : col.align == "center" ? "center" : "left")
+              padding-left=cellPadX(density) padding-right=cellPadX(density) padding-top=cellPadY(density) padding-bottom=cellPadY(density)
+              border-bottom-width="astryx.border.width" border-bottom-style="solid" border-bottom-color="astryx.border"
+              border-right-width=(colLine(dividers) ? "astryx.border.width" : "0px") border-right-style="solid" border-right-color="astryx.border"
+              aria-sort=(sortKey == col.key ? (sortDirection == "desc" ? "descending" : "ascending") : "none")
+              if col.isSortable
+                button press=sort(col.key) aria-label=`Sort by ${col.label}` testId=`sort-${col.key}`
+                  display="flex" align-items="center" gap="astryx.space.s1" border-width=0 padding=0 background-color="transparent"
+                  text col.label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+                  view width=14 height=14 color=(sortKey == col.key ? "astryx.icon.primary" : "astryx.icon.disabled")
+                    IconGlyph(icon=(sortKey == col.key ? (sortDirection == "desc" ? "arrowDown" : "arrowUp") : "arrowsUpDown"))
+              else
+                text col.label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      tbody
+        for r, i in rows key=r.key
+          tr class=TableRowLook testId=`row-${r.key}`
+            aria-selected=selected.includes(r.key)
+            if hasSelection
+              td padding-left=cellPadX(density) padding-right="astryx.space.s0" background-color=(selected.includes(r.key) ? "astryx.accent-muted" : isStriped and i - floor(i / 2) * 2 == 1 ? "astryx.surface.muted" : "transparent")
+                border-bottom-width=(rowLine(dividers) ? "astryx.border.width" : "0px") border-bottom-style="solid" border-bottom-color="astryx.border"
+                input type="checkbox" checked=selected.includes(r.key) change=toggleRow(r.key) aria-label=`Select row ${r.key}` testId=`select-${r.key}`
+            for cell, ci in r.cells key=ci
+              td
+                background-color=(selected.includes(r.key) ? "astryx.accent-muted" : isStriped and i - floor(i / 2) * 2 == 1 ? "astryx.surface.muted" : "transparent")
+                padding-left=(ci == 0 ? `calc(${cellPadXPx(density)}px + ${r.depth * 20}px)` : cellPadX(density)) padding-right=cellPadX(density)
+                padding-top=cellPadY(density) padding-bottom=cellPadY(density)
+                text-align=(colAlign(columns, ci) == "end" ? "right" : colAlign(columns, ci) == "center" ? "center" : "left")
+                border-bottom-width=(rowLine(dividers) ? "astryx.border.width" : "0px") border-bottom-style="solid" border-bottom-color="astryx.border"
+                border-right-width=(colLine(dividers) ? "astryx.border.width" : "0px") border-right-style="solid" border-right-color="astryx.border"
+                row align-items="center" gap="astryx.space.s1" min-width=0
+                  if ci == 0 and r.hasChildren
+                    button press=toggleExpand(r.key) aria-expanded=r.isExpanded aria-label=(r.isExpanded ? `Collapse ${cell}` : `Expand ${cell}`) testId=`expand-${r.key}`
+                      width=18 height=18 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+                      view width=14 height=14 rotate=(r.isExpanded ? "90deg" : "0deg")
+                        IconGlyph(icon="chevronRight")
+                  text cell font="astryx.type.body" color="astryx.text.primary" min-width=0
+                    white-space=(textOverflow == "truncate" ? "nowrap" : "normal")
+                    overflow=(textOverflow == "truncate" ? "hidden" : "visible")
+                    text-overflow=(textOverflow == "truncate" ? "ellipsis" : "clip")
+
+
+fn colAlign(columns: TableColumn[], i: number): string = match columns.at(i) { case some(c) => c.align, case none => "start" }
+fn cellPadXPx(density: string): number = density == "compact" ? 8 : density == "spacious" ? 16 : 12
+
+// Pagination: page buttons with previous and next.
+component Pagination
+  props
+    page: number
+    pageCount: number
+    label: string
+    go: action
+  view
+    row role="navigation" aria-label=label gap="astryx.space.s1" align-items="center"
+      button press=go(page - 1) disabled=(page <= 1) aria-label="Previous page" testId="page-prev"
+        width="astryx.size.element-md" height="astryx.size.element-md" padding=0 border-width=0 border-radius="astryx.radius.element"
+        background-color="transparent" color="astryx.icon.primary"
+        view width=16 height=16
+          IconGlyph(icon="chevronLeft")
+      for p in range(pageCount) key=p
+        button press=go(p + 1) aria-current=(page == p + 1) aria-label=`Page ${p + 1}` testId=`page-${p + 1}`
+          min-width="astryx.size.element-md" height="astryx.size.element-md" border-width=0 border-radius="astryx.radius.element"
+          background-color=(page == p + 1 ? "astryx.neutral" : "transparent")
+          text (p + 1).toString() font="astryx.type.label" font-weight=(page == p + 1 ? "astryx.weight.semibold" : "astryx.weight.normal") color="astryx.text.primary"
+      button press=go(page + 1) disabled=(page >= pageCount) aria-label="Next page" testId="page-next"
+        width="astryx.size.element-md" height="astryx.size.element-md" padding=0 border-width=0 border-radius="astryx.radius.element"
+        background-color="transparent" color="astryx.icon.primary"
+        view width=16 height=16
+          IconGlyph(icon="chevronRight")

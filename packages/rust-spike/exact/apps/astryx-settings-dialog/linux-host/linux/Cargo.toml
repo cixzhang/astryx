@@ -1,0 +1,23 @@
+[package]
+name = "astryx-settings-dialog-linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+build = "build.rs"
+
+[[bin]]
+name = "astryx-settings-dialog-linux"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+exact-logic = { path = "../../../../.exact-sdk/logic" }
+astryx-settings-dialog-data = { path = "../data" }
+exact-linux = { path = "../../../../.exact-sdk/host/linux" }
+
+[build-dependencies]
+astryx-settings-dialog-data = { path = "../data" }
+contract = { path = "../../../../.exact-sdk/contract/cli" }
+exact-bake = { path = "../../../../.exact-sdk/bake" }

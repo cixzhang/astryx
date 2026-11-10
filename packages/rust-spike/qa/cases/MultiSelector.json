@@ -1,0 +1,655 @@
+{
+ "family": "MultiSelector",
+ "source": "packages/core/src/MultiSelector/MultiSelector.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "MultiSelector",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "variant": [
+     "input",
+     "secondary",
+     "ghost"
+    ],
+    "triggerDisplay": [
+     "count",
+     "labels",
+     "badges"
+    ],
+    "hasSelectAll": [
+     false,
+     true
+    ],
+    "hasSearch": [
+     false,
+     true
+    ],
+    "hasCreate": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "indicatorPosition": [
+     "start",
+     "end"
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "isDefaultOpen": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "variant": "input",
+    "triggerDisplay": "count",
+    "hasSelectAll": false,
+    "hasSearch": false,
+    "hasCreate": false,
+    "isDisabled": false,
+    "isReadOnly": false,
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isLoading": false,
+    "statusVariant": null,
+    "indicatorPosition": "start",
+    "presentation": "popover",
+    "hasClear": false,
+    "isDefaultOpen": false
+   },
+   "base": {
+    "label": "Label",
+    "value": "value",
+    "onChange": "onChange"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "multi-selector-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange"
+     }
+    },
+    {
+     "id": "multi-selector-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "multi-selector-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "multi-selector-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "variant": "secondary"
+     }
+    },
+    {
+     "id": "multi-selector-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "variant": "ghost"
+     }
+    },
+    {
+     "id": "multi-selector-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "triggerDisplay": "labels"
+     }
+    },
+    {
+     "id": "multi-selector-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "triggerDisplay": "badges"
+     }
+    },
+    {
+     "id": "multi-selector-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "hasSelectAll": true
+     }
+    },
+    {
+     "id": "multi-selector-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "hasSearch": true
+     }
+    },
+    {
+     "id": "multi-selector-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "hasCreate": true
+     }
+    },
+    {
+     "id": "multi-selector-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "multi-selector-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "multi-selector-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "multi-selector-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "multi-selector-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "multi-selector-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "multi-selector-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "multi-selector-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "multi-selector-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "multi-selector-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "indicatorPosition": "end"
+     }
+    },
+    {
+     "id": "multi-selector-0021",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "multi-selector-0022",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "multi-selector-0023",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "multi-selector-0024",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "multi-selector-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "variant": "secondary",
+      "triggerDisplay": "labels",
+      "hasSelectAll": true,
+      "hasSearch": true,
+      "hasCreate": true,
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "indicatorPosition": "end",
+      "presentation": "bottom-sheet",
+      "hasClear": true,
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "variant": "ghost",
+      "triggerDisplay": "badges",
+      "hasSearch": true,
+      "isDisabled": true,
+      "isLabelHidden": true,
+      "isRequired": true,
+      "statusVariant": "tooltip",
+      "indicatorPosition": "end",
+      "presentation": "adaptive",
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "triggerDisplay": "labels",
+      "hasCreate": true,
+      "isReadOnly": true,
+      "isOptional": true,
+      "isLoading": true,
+      "statusVariant": "tooltip",
+      "presentation": "adaptive",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "multi-selector-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "variant": "secondary",
+      "hasSelectAll": true,
+      "isDisabled": true,
+      "isRequired": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "multi-selector-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "variant": "ghost",
+      "hasSelectAll": true,
+      "hasSearch": true,
+      "hasCreate": true,
+      "isReadOnly": true,
+      "isLabelHidden": true,
+      "statusVariant": "attached",
+      "indicatorPosition": "end",
+      "hasClear": true,
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "lg",
+      "triggerDisplay": "badges",
+      "hasSelectAll": true,
+      "hasCreate": true,
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "detached",
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "lg",
+      "variant": "secondary",
+      "hasSearch": true,
+      "isReadOnly": true,
+      "isOptional": true,
+      "statusVariant": "attached",
+      "indicatorPosition": "end",
+      "presentation": "bottom-sheet",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "multi-selector-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "lg",
+      "variant": "ghost",
+      "triggerDisplay": "labels",
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "multi-selector-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "variant": "secondary",
+      "triggerDisplay": "badges",
+      "isReadOnly": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "indicatorPosition": "end",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "multi-selector-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "lg",
+      "variant": "secondary",
+      "hasSelectAll": true,
+      "statusVariant": "tooltip",
+      "presentation": "adaptive",
+      "hasClear": true,
+      "isDefaultOpen": true
+     }
+    },
+    {
+     "id": "multi-selector-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "hasSearch": true,
+      "isDisabled": true,
+      "statusVariant": "attached",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "multi-selector-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "variant": "ghost",
+      "isOptional": true,
+      "statusVariant": "detached",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "multi-selector-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "statusVariant": "attached",
+      "indicatorPosition": "end",
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "multi-selector-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "variant": "secondary",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "multi-selector-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "triggerDisplay": "labels",
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "multi-selector-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "triggerDisplay": "badges",
+      "isRequired": true,
+      "statusVariant": "attached",
+      "presentation": "bottom-sheet",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "multi-selector-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "isLabelHidden": true,
+      "statusVariant": "attached"
+     }
+    },
+    {
+     "id": "multi-selector-0043",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "presentation": "bottom-sheet"
+     }
+    }
+   ]
+  }
+ ]
+}

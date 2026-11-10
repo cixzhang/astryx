@@ -1,0 +1,248 @@
+{
+ "family": "DropdownMenu",
+ "source": "packages/core/src/DropdownMenu/DropdownMenu.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "DropdownMenu",
+   "visualProps": {
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ],
+    "isMenuOpen": [
+     false,
+     true
+    ],
+    "placement": [
+     "above",
+     "below",
+     "start",
+     "end"
+    ],
+    "alignment": [
+     "start",
+     "center",
+     "end"
+    ],
+    "hasChevron": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "presentation": "popover",
+    "isMenuOpen": false,
+    "placement": "below",
+    "alignment": "start",
+    "hasChevron": true
+   },
+   "base": {},
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "dropdown-menu-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "dropdown-menu-0002",
+     "kind": "sweep",
+     "props": {
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "dropdown-menu-0003",
+     "kind": "sweep",
+     "props": {
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "dropdown-menu-0004",
+     "kind": "sweep",
+     "props": {
+      "isMenuOpen": true
+     }
+    },
+    {
+     "id": "dropdown-menu-0005",
+     "kind": "sweep",
+     "props": {
+      "placement": "above"
+     }
+    },
+    {
+     "id": "dropdown-menu-0006",
+     "kind": "sweep",
+     "props": {
+      "placement": "start"
+     }
+    },
+    {
+     "id": "dropdown-menu-0007",
+     "kind": "sweep",
+     "props": {
+      "placement": "end"
+     }
+    },
+    {
+     "id": "dropdown-menu-0008",
+     "kind": "sweep",
+     "props": {
+      "alignment": "center"
+     }
+    },
+    {
+     "id": "dropdown-menu-0009",
+     "kind": "sweep",
+     "props": {
+      "alignment": "end"
+     }
+    },
+    {
+     "id": "dropdown-menu-0010",
+     "kind": "sweep",
+     "props": {
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0011",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0012",
+     "kind": "pairwise",
+     "props": {
+      "isMenuOpen": true,
+      "alignment": "center"
+     }
+    },
+    {
+     "id": "dropdown-menu-0013",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "bottom-sheet",
+      "alignment": "end",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0014",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "bottom-sheet",
+      "isMenuOpen": true,
+      "placement": "above"
+     }
+    },
+    {
+     "id": "dropdown-menu-0015",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "adaptive",
+      "placement": "start",
+      "alignment": "center",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0016",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "adaptive",
+      "isMenuOpen": true,
+      "placement": "end",
+      "alignment": "end"
+     }
+    },
+    {
+     "id": "dropdown-menu-0017",
+     "kind": "pairwise",
+     "props": {
+      "isMenuOpen": true,
+      "placement": "start",
+      "alignment": "end",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0018",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0019",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "bottom-sheet",
+      "placement": "start"
+     }
+    },
+    {
+     "id": "dropdown-menu-0020",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "bottom-sheet",
+      "placement": "end",
+      "alignment": "center",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0021",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "adaptive",
+      "placement": "above",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0022",
+     "kind": "pairwise",
+     "props": {
+      "presentation": "adaptive",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0023",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "center",
+      "hasChevron": false
+     }
+    },
+    {
+     "id": "dropdown-menu-0024",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "end",
+      "hasChevron": false
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,24 +1,119 @@
-// Astryx Shell Nav: the view. app.ts answers what it asks for. Colours, fonts,
-// sizes and the safe area are left unsaid, so each platform supplies its own:
-// the header is the navigation bar, its heading the title, its button a bar item.
-shape Greeting
-  text: string
+// The Astryx `shell-nav` template (packages/cli/assets/templates/pages/shell-nav), rebuilt on
+// Exact: an IDE-like app shell with a menu bar, a resizable file tree, editor tab and code
+// placeholders, and a command palette on ⌘K or the search field.
+use AppShell, AppShellContent, TopNav, SideNav, TreeList, RowItem, Button, IconButton, Layout, LayoutHeader, LayoutContent, HStack, VStack, Card from "@astryx-spike/astryx"
+use DropdownMenu, MenuItem, CommandPalette, Command, Resizable, BottomSheet from "@astryx-spike/astryx-layers"
+
+shape Viewport
+  width: number
 
 routes nav
   home "/"
 
-component AstryxShellNav
-  resource greeting = greeting("Astryx Shell Nav") as shape Greeting
-  state liked = false
-  action like
-    liked = not liked
+shape FileNode
+  key: string
+  label: string
+  depth: number
+  isFolder: bool
+  parent: string
+
+fn mi(label: string, shortcut: string): MenuItem = MenuItem(id=label, label=label, icon="", shortcut=shortcut, isDestructive=false, isDisabled=false, isChecked=false, isDivider=false)
+fn hr(n: string): MenuItem = MenuItem(id=`div-${n}`, label="", icon="", shortcut="", isDestructive=false, isDisabled=false, isChecked=false, isDivider=true)
+
+fn fileMenu(): MenuItem[] = [mi("New File", "⌘N"), mi("New Window", "⇧⌘N"), hr("1"), mi("Open...", "⌘O"), mi("Save", "⌘S"), mi("Save As...", "⇧⌘S"), hr("2"), mi("Close Editor", "⌘W")]
+fn editMenu(): MenuItem[] = [mi("Undo", "⌘Z"), mi("Redo", "⇧⌘Z"), hr("1"), mi("Cut", "⌘X"), mi("Copy", "⌘C"), mi("Paste", "⌘V"), hr("2"), mi("Find", "⌘F")]
+fn viewMenu(): MenuItem[] = [mi("Command Palette", "⇧⌘P"), hr("1"), mi("Explorer", "⇧⌘E"), mi("Search", "⇧⌘F"), hr("2"), mi("Toggle Terminal", "⌃`"), mi("Zen Mode", "⌘K")]
+fn windowMenu(): MenuItem[] = [mi("Minimize", "⌘M"), mi("Zoom", ""), hr("1"), mi("Next Tab", "⌃⇥"), mi("Previous Tab", "⌃⇧⇥"), hr("2"), mi("Bring All to Front", "")]
+fn helpMenu(): MenuItem[] = [mi("Documentation", ""), mi("Release Notes", ""), mi("Report Issue", ""), mi("About", "")]
+
+fn files(): FileNode[] = [FileNode(key="src", label="src", depth=0, isFolder=true, parent=""), FileNode(key="components", label="components", depth=1, isFolder=true, parent="src"), FileNode(key="AppShell.tsx", label="AppShell.tsx", depth=2, isFolder=false, parent="components"), FileNode(key="TopNav.tsx", label="TopNav.tsx", depth=2, isFolder=false, parent="components"), FileNode(key="SideNav.tsx", label="SideNav.tsx", depth=2, isFolder=false, parent="components"), FileNode(key="hooks", label="hooks", depth=1, isFolder=true, parent="src"), FileNode(key="useTheme.ts", label="useTheme.ts", depth=2, isFolder=false, parent="hooks"), FileNode(key="useResizable.ts", label="useResizable.ts", depth=2, isFolder=false, parent="hooks"), FileNode(key="index.tsx", label="index.tsx", depth=1, isFolder=false, parent="src"), FileNode(key="App.tsx", label="App.tsx", depth=1, isFolder=false, parent="src"), FileNode(key="public", label="public", depth=0, isFolder=true, parent=""), FileNode(key="favicon.ico", label="favicon.ico", depth=1, isFolder=false, parent="public"), FileNode(key="robots.txt", label="robots.txt", depth=1, isFolder=false, parent="public"), FileNode(key="package.json", label="package.json", depth=0, isFolder=false, parent=""), FileNode(key="tsconfig.json", label="tsconfig.json", depth=0, isFolder=false, parent=""), FileNode(key="README.md", label="README.md", depth=0, isFolder=false, parent="")]
+
+// A node shows when every folder above it is open (two levels deep here).
+fn shown(f: FileNode, closed: string[]): bool = f.parent == "" or (not closed.includes(f.parent) and (f.parent == "src" or f.parent == "public" or not closed.includes("src")))
+
+fn commands(): Command[] = [Command(id="new-file", label="New File", group="Command"), Command(id="open-file", label="Open File…", group="Command"), Command(id="save-all", label="Save All", group="Command"), Command(id="find-in-files", label="Find in Files", group="Command"), Command(id="toggle-terminal", label="Toggle Terminal", group="Command"), Command(id="go-to-symbol", label="Go to Symbol…", group="Command"), Command(id="appshell", label="AppShell.tsx", group="File"), Command(id="topnav", label="TopNav.tsx", group="File"), Command(id="sidenav", label="SideNav.tsx", group="File"), Command(id="use-theme", label="useTheme.ts", group="File"), Command(id="theme", label="theme.ts", group="File")]
+
+fn codeLines(): string[] = ["38%", "62%", "54%", "0%", "46%", "70%", "58%", "34%", "0%", "50%", "66%", "42%", "60%", "28%"]
+
+// Astryx's AppShell folds its side navigation into a drawer on a narrow
+// screen by a container query inside the component. A library component
+// cannot read the viewport (only the app root can), so the app chooses.
+component ShellNav
+  resource viewport = exactViewport() as shape Viewport
+  derive narrow = viewport.width < 640
+  state closed = ["public"]
+  state selected = "AppShell.tsx"
+  state width = 240
+  state query = ""
+  state ran = ""
+  state menuPick = ""
+  action toggle(key: string)
+    closed = closed.includes(key) ? closed.filter(k => k != key) : closed.concat([key])
+  action pick(key: string)
+    selected = key
+  action resize(w: number)
+    width = w
+  action openTree
+    showModal("tree-sheet")
+  action openPalette
+    query = ""
+    showModal("palette")
+  action shortcut(k: string, e: KeyboardEvent)
+    if (e.metaKey or e.ctrlKey) and k.toLowerCase() == "k"
+      query = ""
+      showModal("palette")
+  action setQuery(t: string)
+    query = t
+  action run(c: string)
+    ran = c
+  action menu(id: string)
+    menuPick = id
+  action noop
+    ran = ran
   view
-    main testId="root" navigationKey=`${top(nav).id}` navigationBack="back" width="100%" height="100%"
-      for e in stack(nav) key=e.id
-        column navigationKey=`${e.id}` navigationScroll="content" position="absolute" inset=0 display="flex" flex-direction="column"
-          header display="flex" align-items="center"
-            text "Astryx Shell Nav" role="heading" aria-level=1 flex=1
-            button press=like aria-label=(liked ? "Unlike" : "Like") testId="like"
-              image (liked ? "symbol:heart-fill" : "symbol:heart")
-          scroll id="content" flex=1 min-height=0 padding=16
-            text greeting.text testId="greeting"
+    main testId="root" navigationKey=`${top(nav).id}` width="100%" height="100%" keycapture=shortcut
+      AppShell(label="Astryx Studio")
+        TopNav(label="Astryx Studio menu bar")
+          if narrow
+            IconButton(label="Open file tree", icon="viewColumns", variant="ghost", size="md", isDisabled=false, press=openTree)
+          else
+            DropdownMenu(id="menu-file", label="File", items=fileMenu(), variant="ghost", size="sm", hasChevron=false, select=menu)
+            DropdownMenu(id="menu-edit", label="Edit", items=editMenu(), variant="ghost", size="sm", hasChevron=false, select=menu)
+            DropdownMenu(id="menu-view", label="View", items=viewMenu(), variant="ghost", size="sm", hasChevron=false, select=menu)
+            DropdownMenu(id="menu-window", label="Window", items=windowMenu(), variant="ghost", size="sm", hasChevron=false, select=menu)
+            DropdownMenu(id="menu-help", label="Help", items=helpMenu(), variant="ghost", size="sm", hasChevron=false, select=menu)
+          view flex=1
+          if narrow
+            IconButton(label="Search files and commands", icon="search", variant="ghost", size="md", isDisabled=false, press=openPalette)
+          else
+            button press=openPalette aria-label="Search files and commands" testId="open-palette"
+              display="flex" align-items="center" gap="astryx.space.s2" width=240 height="astryx.size.element-sm"
+              padding-left="astryx.space.s2" border-width="astryx.border.width" border-style="solid" border-color="astryx.border.emphasized"
+              border-radius="astryx.radius.element" background-color="astryx.surface.surface"
+              text "Search files and commands…" font="astryx.type.body" color="astryx.text.secondary"
+          IconButton(label="Run project", icon="arrowUp", variant="ghost", size="md", isDisabled=false, press=noop)
+          Button(label="Share", variant="secondary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=noop)
+        if not narrow
+          SideNav(label="Files", isCollapsed=false)
+            Resizable(label="Resize file tree", width=width, minWidth=180, maxWidth=400, resize=resize)
+              TreeList(label="Files", items=files().filter(f => shown(f, closed)).map(f => RowItem(key=f.key, label=f.label, description="", icon="", depth=f.depth, hasChildren=f.isFolder, isExpanded=(f.isFolder and not closed.includes(f.key)))), selected=selected, density="compact", variant="lineGuides", toggle=toggle, select=pick)
+        AppShellContent(padding=0, variant="surface")
+          Layout(height="fill", padding=6, defaultHasDividers=true)
+            LayoutHeader(hasDivider=true, isFullBleed=false)
+              row gap="astryx.space.s2"
+                for tab in ["AppShell.tsx", "TopNav.tsx", "theme.ts"] key=tab
+                  view width=132 height=36 border-radius="astryx.radius.container" background-color="astryx.surface.muted" testId=`tab-${tab}`
+            LayoutContent(contentWidth="", padding=6)
+              column gap="astryx.space.s2"
+                for w, i in codeLines() key=i
+                  if w == "0%"
+                    view width=1 height=14
+                  else
+                    row gap="astryx.space.s3" align-items="center"
+                      view width=20 height=14 border-radius="astryx.radius.container" background-color="astryx.surface.muted"
+                      view width=w height=14 border-radius="astryx.radius.container" background-color="astryx.surface.muted"
+              text `${selected}|${ran}|${menuPick}` testId="state" font="astryx.type.supporting" color="astryx.text.secondary" margin-top="astryx.space.s4"
+      if narrow
+        BottomSheet(id="tree-sheet", title="Files", still=false)
+          TreeList(label="Files", items=files().filter(f => shown(f, closed)).map(f => RowItem(key=f.key, label=f.label, description="", icon="", depth=f.depth, hasChildren=f.isFolder, isExpanded=(f.isFolder and not closed.includes(f.key)))), selected=selected, density="compact", variant="lineGuides", toggle=toggle, select=pick)
+      CommandPalette(id="palette", label="Search files and commands", query=query, commands=commands(), input=setQuery, run=run)

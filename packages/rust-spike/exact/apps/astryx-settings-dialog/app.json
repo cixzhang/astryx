@@ -1,13 +1,13 @@
 {
   "$schema": "../../.exact-sdk/scripts/app.schema.json",
-  "name": "Astryx Settings Dialog",
-  "short_name": "Astryx Settings Dialog",
-  "id": "com.example.astryx-settings-dialog-42dea2",
+  "name": "Settings",
+  "short_name": "Settings",
+  "id": "com.example.astryx-settings-dialog",
   "start_url": "/",
   "display": "standalone",
   "app": {
-    "id": "com.example.astryx-settings-dialog-42dea2",
-    "name": "Astryx Settings Dialog"
+    "id": "com.example.astryx-settings-dialog",
+    "name": "Settings"
   },
   "host": {
     "web": {},
