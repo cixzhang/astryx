@@ -2,9 +2,9 @@
 
 Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2e25b307a40e7fce66dc27c9f802`.
 
-- Dependency closure ported (core, by source files): 677 of 689 (98.3%).
-- With the stretch rows: 692 of 720 (96.1%).
-- Rows: 27 ported, 47 workaround, 0 blocked, 3 not started.
+- Dependency closure ported (core, by source files): 689 of 689 (100.0%).
+- With the stretch rows: 720 of 720 (100.0%).
+- Rows: 27 ported, 50 workaround, 0 blocked, 0 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -23,7 +23,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Calendar | 12 | core, stretch | 7 | workaround | gallery calendar-*; playground test moves a month and picks a day | Month grid from day arithmetic (Zeller's congruence) in Contract functions: no date library. Names are English (Contract formats dates en-US); other calendar systems and locales are not possible without a data module. Arrow-key grid navigation not wired. |
 | Card | 2 | core, template | 2 | workaround | gallery card-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Border inset compensation (padding minus border) dropped. |
 | Center | 2 | core | 2 | workaround | gallery center-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. isInline dropped (no inline-flex). |
-| Chat | 10 | weakness |  | not started |  |  |
+| Chat | 10 | weakness | 9 | workaround | astryx-layers/chat.contract; gallery chatmessage-*, chatcomposer-*; playground-0004 tests send a message with a mention and fold tool calls (web) | contenteditable is refused, so the composer is Contract's Markdown textarea with inline atoms: @mentions are pills the caret skips and delete removes whole (web, macOS, iOS; Linux, Windows and Android show the source text). Not possible: pasted-text tokens as rich chips, arbitrary inline elements, dictation without a data module (Exact's speech package needs one). The message list is a virtualized list that follows its end; aria-rowcount is not needed. |
 | CheckboxInput | 3 | core, stretch, weakness | 5 | workaround | gallery checkboxinput-*; playground test checks it | aria-checked takes only a bool: an indeterminate box reads as unchecked. |
 | CheckboxList | 4 | stretch | 5 | workaround | gallery checkboxlist-* | Options are data, as RadioList. |
 | Collapsible | 5 | weakness | 3 | workaround | gallery collapsible-* | Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot. |
@@ -57,10 +57,10 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | MobileNav | 2 | core | 8 | ported | shell.contract MobileNav | Items are data. |
 | MultiSelector | 3 | core | 7 | workaround | gallery multiselector-*; playground test chooses several | Selector with isMultiple. aria-multiselectable is refused. |
 | NumberInput | 4 | core, stretch | 5 | ported | gallery numberinput-*; playground test steps it | Value is text; parse and clamp are the caller's (parseNumber). |
-| OverflowList | 2 | core, stretch |  | not started |  |  |
+| OverflowList | 2 | core, stretch | 9 | workaround | gallery overflowlist-*; playground test opens the rest | Astryx measures items against the width (ResizeObserver). A component cannot measure (geometry reads are the app root's), so the visible count is the caller's; the rest sit in a menu (popover; not presented on Linux). |
 | Pagination | 2 | core | 7 | ported | gallery pagination-*; playground test pages | Ellipsis for long ranges not wired. |
 | Popover | 8 | core, stretch, template, weakness | 3 | workaround | gallery popover-*; web and Linux | Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run. |
-| PowerSearch | 16 | stretch |  | not started |  |  |
+| PowerSearch | 16 | stretch | 9 | workaround | gallery powersearch-*; playground test adds and removes filters (web) | Filter tokens plus a suggestion listbox (field names, then a field's values after `field:`). Combobox ARIA (activedescendant, autocomplete) is refused, so suggestions are buttons in the tab order. Operator menus beyond `is`, async value sources and saved queries not wired. |
 | RadioList | 3 | stretch | 5 | workaround | gallery radiolist-*; playground test picks an option | Options are data (ChoiceItem[]), not RadioListItem children: one slot cannot tell a list which child is chosen. |
 | Resizable | 6 | core, template | 6 | workaround | gallery resizable-*; playground test drags the handle 60 px | Width is the caller's state; drag by pointer events. Arrow-key resizing not wired. In astryx-layers: the library cannot size a slot-holding node from a prop. |
 | Section | 2 | core, stretch, template | 2 | workaround | gallery section-* | Nested full-bleed (cancel the container's padding) needs the padding by prop (`bleed`): no runtime custom properties, no context through a slot. |

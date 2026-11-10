@@ -1,0 +1,263 @@
+// Wave 9 Chat: ChatLayout, ChatMessageList, ChatMessage, ChatMessageBubble,
+// ChatMessageMetadata, ChatSystemMessage, ChatToolCalls, ChatTokenizedText,
+// ChatComposer, ChatSendButton and ChatLayoutScrollButton; and the stretch
+// PowerSearch and OverflowList.
+//
+// Astryx's composer is a contenteditable editor with inline tokens. Contract
+// refuses contenteditable; its Markdown `textarea` with inline atoms (here
+// mentions, `@name`, drawn as pills that the caret skips and delete removes
+// whole) gives the same tokens. Linux, Windows and Android draw the atom's
+// source text instead of a pill.
+use IconGlyph, Avatar, Spinner, ChoiceItem from "@astryx-spike/astryx"
+use PopoverSurface from "./layers.contract"
+
+atom mention prefix="@" border-radius="4px" background-color="astryx.accent-muted" color="astryx.text.accent"
+
+shape ChatMsg
+  id: string
+  role: string
+  author: string
+  text: string
+  time: string
+  status: string
+  tools: string[]
+
+// ChatTokenizedText: message text with its mentions drawn as tokens.
+component ChatTokenizedText
+  props
+    text: string
+    faces: AtomFace[]
+  view
+    text text markup="markdown" atoms="mention" atomFaces=faces font="astryx.type.body" color="inherit"
+
+// ChatMessageMetadata: who sent a message and when.
+component ChatMessageMetadata
+  props
+    author: string
+    time: string
+    status: string
+  view
+    row gap="astryx.space.s1" align-items="center"
+      text author font="astryx.type.supporting" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      if time != ""
+        text `· ${time}` font="astryx.type.supporting" color="astryx.text.secondary"
+      if status != ""
+        text `· ${status}` font="astryx.type.supporting" color="astryx.text.secondary"
+
+// ChatMessageBubble: the message's text in a bubble; the reader's own
+// messages sit in the accent's muted fill at the end edge.
+component ChatMessageBubble
+  props
+    text: string
+    isOwn: bool
+    faces: AtomFace[]
+  view
+    view padding-top="astryx.space.s2" padding-bottom="astryx.space.s2" padding-left="astryx.space.s3" padding-right="astryx.space.s3"
+      border-radius="astryx.radius.chat" max-width="80%"
+      background-color=(isOwn ? "astryx.accent" : "astryx.neutral")
+      color=(isOwn ? "astryx.on-accent" : "astryx.text.primary")
+      ChatTokenizedText(text=text, faces=faces)
+
+// ChatToolCalls: the tools an assistant message ran, folded under a toggle.
+component ChatToolCalls
+  props
+    id: string
+    tools: string[]
+  state open = false
+  action toggle
+    open = not open
+  view
+    column gap="astryx.space.s1"
+      button press=toggle aria-expanded=open aria-label=`${tools.length} ${tools.length == 1 ? "tool call" : "tool calls"}` testId=`tools-${id}`
+        display="flex" align-items="center" gap="astryx.space.s1" border-width=0 padding=0 background-color="transparent" color="astryx.text.secondary"
+        view width=14 height=14 rotate=(open ? "90deg" : "0deg")
+          IconGlyph(icon="chevronRight")
+        view width=14 height=14
+          IconGlyph(icon="wrench")
+        text `${tools.length} ${tools.length == 1 ? "tool call" : "tool calls"}` font="astryx.type.supporting"
+      if open
+        for t in tools key=t
+          text t font="astryx.type.code" color="astryx.text.secondary" padding-left="astryx.space.s5"
+
+// ChatSystemMessage: a line between messages ("Ada joined").
+component ChatSystemMessage
+  props
+    text: string
+  view
+    text text text-align="center" font="astryx.type.supporting" color="astryx.text.secondary" padding="astryx.space.s2"
+
+// ChatMessage: one message with its avatar, metadata, bubble and tools.
+component ChatMessage
+  props
+    msg: ChatMsg
+    faces: AtomFace[]
+  view
+    if msg.role == "system"
+      ChatSystemMessage(text=msg.text)
+    else
+      row gap="astryx.space.s2" align-items="flex-end" flex-direction=(msg.role == "user" ? "row-reverse" : "row") testId=`msg-${msg.id}`
+        Avatar(src="", name=msg.author, size="sm", px=0, shape="circle", status="", statusLabel="")
+        column gap="astryx.space.s1" align-items=(msg.role == "user" ? "flex-end" : "flex-start") flex=1 min-width=0
+          ChatMessageMetadata(author=msg.author, time=msg.time, status=msg.status)
+          ChatMessageBubble(text=msg.text, isOwn=(msg.role == "user"), faces=faces)
+          if msg.tools.length > 0
+            ChatToolCalls(id=msg.id, tools=msg.tools)
+
+fn firstId(ms: ChatMsg[]): string = match ms.at(0) { case some(m) => m.id, case none => "" }
+fn lastId(ms: ChatMsg[]): string = match ms.at(-1) { case some(m) => m.id, case none => "" }
+
+// ChatMessageList: the conversation, newest at the bottom; it follows the
+// end as messages arrive and keeps the first and last messages mounted for
+// readers.
+component ChatMessageList
+  props
+    id: string
+    messages: ChatMsg[]
+    faces: AtomFace[]
+  view
+    list id=id virtualized=true scrollFollowEnd=true scroll-start="end" aria-label="Messages" flex=1 min-height=0 width="100%"
+      estimated-item-height=72 padding-top="astryx.space.s3" padding-bottom="astryx.space.s3"
+      keep-mounted=[firstId(messages), lastId(messages)]
+      for m in messages key=m.id
+        view padding-left="astryx.space.s3" padding-right="astryx.space.s3" padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5"
+          ChatMessage(msg=m, faces=faces)
+
+// ChatSendButton: send, or a spinner while sending.
+component ChatSendButton
+  props
+    isDisabled: bool
+    isSending: bool
+    send: action
+  view
+    button press=send disabled=(isDisabled or isSending) aria-label="Send" testId="chat-send"
+      width="astryx.size.element-md" height="astryx.size.element-md" padding=0 border-width=0 border-radius="astryx.radius.full"
+      background-color=(isDisabled ? "astryx.neutral" : "astryx.accent") color=(isDisabled ? "astryx.icon.disabled" : "astryx.on-accent")
+      display="flex" align-items="center" justify-content="center"
+      if isSending
+        Spinner(size="sm", shade="inherit", label="")
+      else
+        view width=16 height=16
+          IconGlyph(icon="arrowUp")
+
+// ChatComposer: a Markdown field whose @mentions are tokens, with a send
+// button. ⌘/Ctrl+Enter sends. `value` is the caller's.
+component ChatComposer
+  props
+    id: string
+    value: string
+    placeholder: string
+    faces: AtomFace[]
+    isSending: bool
+    input: action
+    send: action
+  action keys(k: string, e: KeyboardEvent)
+    if k == "Enter" and (e.metaKey or e.ctrlKey) and value.trim() != ""
+      send()
+  view
+    row gap="astryx.space.s2" align-items="flex-end" padding="astryx.space.s2" margin="astryx.space.s3"
+      border-width="astryx.border.width" border-style="solid" border-color="astryx.border.emphasized"
+      border-radius="astryx.radius.chat" background-color="astryx.surface.popover" keycapture=keys
+      textarea id=id value=value input=input markup="markdown" atoms="mention" atomFaces=faces placeholder=placeholder
+        aria-label="Message" testId=`input-${id}` flex=1 min-height=36 max-height=160 border-width=0 background-color="transparent"
+        padding-left="astryx.space.s2" padding-top="astryx.space.s1-5" font="astryx.type.body" color="astryx.text.primary"
+      ChatSendButton(isDisabled=(value.trim() == ""), isSending=isSending, send=send)
+
+// ChatLayout: the message list above the composer. Both are the slot.
+component ChatLayout
+  props
+    label: string
+  slot
+  view
+    column height="100%" width="100%" aria-label=label background-color="astryx.surface.surface"
+      children
+
+// A PowerSearch filter: a field, an operator and a value.
+shape SearchFilter
+  field: string
+  op: string
+  value: string
+
+// A field PowerSearch can filter on, with its values.
+shape SearchField
+  key: string
+  label: string
+  values: string[]
+
+// PowerSearch: a search field holding filter tokens ("Status is Open").
+// Typing a field's name suggests it; "field:" suggests its values; picking a
+// value adds the filter. `query` and the filters are the caller's.
+component PowerSearch
+  props
+    id: string
+    label: string
+    query: string
+    fields: SearchField[]
+    filters: SearchFilter[]
+    input: action
+    add: action
+    remove: action
+  action typed(t: string)
+    showPopover(`${id}-list`, source=`${id}-field`)
+    input(t)
+  action choose(field: string, value: string)
+    hidePopover(`${id}-list`)
+    add(field, value)
+  view
+    column gap="astryx.space.s1"
+      row id=`${id}-field` gap="astryx.space.s1" flex-wrap="wrap" align-items="center" min-height="astryx.size.element-md"
+        padding="astryx.space.s1" border-width="astryx.border.width" border-style="solid" border-color="astryx.border.emphasized"
+        border-radius="astryx.radius.element" background-color="astryx.surface.surface" role="search" aria-label=label
+        view width=16 height=16 color="astryx.icon.secondary" margin-left="astryx.space.s1"
+          IconGlyph(icon="funnel")
+        for f in filters key=`${f.field}-${f.value}`
+          row align-items="center" gap="astryx.space.s0-5" height="astryx.space.s6" padding-left="astryx.space.s2" padding-right="astryx.space.s1"
+            border-radius="astryx.radius.inner" background-color="astryx.neutral" testId=`filter-${f.field}`
+            text fields.filter(x => x.key == f.field).map(x => x.label).join("") font="astryx.type.supporting" font-weight="astryx.weight.semibold" color="astryx.text.primary"
+            text f.op font="astryx.type.supporting" color="astryx.text.secondary"
+            text f.value font="astryx.type.supporting" color="astryx.text.primary"
+            button press=remove(f.field) aria-label=`Remove ${f.field} filter` testId=`remove-${f.field}`
+              width=16 height=16 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+              view width=12 height=12
+                IconGlyph(icon="close")
+        input value=query input=typed placeholder=(filters.length == 0 ? "Filter by field…" : "") aria-label=label testId=`input-${id}`
+          flex=1 min-width=120 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary"
+      column id=`${id}-list` popover="auto" role="listbox" aria-label=label class=PopoverSurface position-area="bottom span-right"
+        margin-top="astryx.space.s1" padding="astryx.space.s1" min-width=260 testId=`${id}-list`
+        if query.includes(":")
+          for x in fields.filter(x => x.key == query.split(":").slice(0, 1).join("").trim().toLowerCase()) key=x.key
+            for v in x.values.filter(v => v.toLowerCase().includes(query.split(":").slice(1).join(":").trim().toLowerCase())) key=v
+              button press=choose(x.key, v) role="option" aria-label=`${x.label} is ${v}` testId=`${id}-value-${v}`
+                display="flex" gap="astryx.space.s1" width="100%" box-sizing="border-box" border-width=0 background-color="transparent" text-align="left"
+                padding="astryx.space.s2" border-radius="astryx.radius.inner"
+                text x.label font="astryx.type.body" color="astryx.text.secondary"
+                text v font="astryx.type.body" color="astryx.text.primary"
+        else
+          for x in fields.filter(x => query.trim() == "" or x.label.toLowerCase().includes(query.trim().toLowerCase())) key=x.key
+            button press=input(`${x.key}:`) role="option" aria-label=x.label testId=`${id}-field-${x.key}`
+              display="flex" width="100%" box-sizing="border-box" border-width=0 background-color="transparent" text-align="left"
+              padding="astryx.space.s2" border-radius="astryx.radius.inner"
+              text `${x.label}:` font="astryx.type.body" color="astryx.text.primary"
+
+// OverflowList: items in a row up to `maxVisible`; the rest behind a "+N"
+// button whose menu lists them. Astryx measures the items to fit the width
+// (ResizeObserver); Contract cannot measure from a component, so the count is
+// the caller's.
+component OverflowList
+  props
+    id: string
+    items: ChoiceItem[]
+    maxVisible: number
+    gap: number
+  view
+    row gap="astryx.space.s2" align-items="center" min-width=0
+      for it in items.slice(0, maxVisible) key=it.value
+        view height="astryx.space.s6" padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-radius="astryx.radius.inner"
+          background-color="astryx.neutral" display="flex" align-items="center"
+          text it.label font="astryx.type.supporting" font-weight="astryx.weight.medium" color="astryx.text.primary" white-space="nowrap"
+      if items.length > maxVisible
+        button id=`${id}-more` popovertarget=`${id}-rest` aria-label=`${items.length - maxVisible} more` testId=`${id}-more`
+          height="astryx.space.s6" padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-width=0 border-radius="astryx.radius.inner" background-color="astryx.neutral"
+          text `+${items.length - maxVisible}` font="astryx.type.supporting" font-weight="astryx.weight.medium" color="astryx.text.primary"
+        column id=`${id}-rest` popover="auto" role="menu" class=PopoverSurface position-area="bottom span-right" margin-top="astryx.space.s1" padding="astryx.space.s1" testId=`${id}-rest`
+          for it in items.slice(maxVisible) key=it.value
+            text it.label role="menuitem" padding="astryx.space.s2" font="astryx.type.body" color="astryx.text.primary"

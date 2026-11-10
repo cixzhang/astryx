@@ -23,6 +23,7 @@ const MENU = [['edit', 'Edit', 'clock', '⌘E'], ['copy', 'Copy link', 'copy', '
 const TCOLS = [['name', 'Name', '', 'start', true], ['role', 'Role', '', 'start', false], ['year', 'Born', '80px', 'end', true]].map(([key, label, width, align, isSortable]) => ({ $shape: 'TableColumn', key, label, width, align, isSortable }));
 const TROWS = [['ada', 'Ada Lovelace', 'Analyst', '1815'], ['grace', 'Grace Hopper', 'Rear admiral', '1906'], ['alan', 'Alan Turing', 'Mathematician', '1912'], ['kj', 'Katherine Johnson', 'Mathematician', '1918']].map(([key, ...cells]) => ({ $shape: 'TableRow', key, cells, depth: 0, isExpanded: false, hasChildren: false }));
 const CMDS = [['new-file', 'New File', 'Command'], ['save-all', 'Save All', 'Command'], ['theme', 'theme.ts', 'File']].map(([id, label, group]) => ({ $shape: 'Command', id, label, group }));
+const PSFIELDS = [['status', 'Status', ['Open', 'Closed', 'Draft']], ['owner', 'Owner', ['Ada', 'Grace', 'Alan']]].map(([key, label, values]) => ({ $shape: 'SearchField', key, label, values }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
@@ -34,6 +35,10 @@ export const FAMILIES = {
   Playground3: {
     component: 'DataPlayground', uses: [], defaults: {},
     smoke: [{ id: 'playground-0003', title: 'Pickers and table wired to state', props: {} }],
+  },
+  Playground4: {
+    component: 'ChatPlayground', uses: [], defaults: {},
+    smoke: [{ id: 'playground-0004', title: 'Chat and PowerSearch wired to state', props: {} }],
   },
   Playground: {
     component: 'ControlsPlayground', uses: [], defaults: {},
@@ -456,5 +461,30 @@ export const FAMILIES = {
     map: p => ({}),
     children: ['FixtureBox()', 'FixtureBox()', 'FixtureBox()'],
     smoke: sweep('FormLayout', {}, {}),
+  },
+  ChatMessage: {
+    component: 'ChatMessage', uses: ['ChatMessage', 'ChatMsg'], types: { msg: 'ChatMsg', faces: 'AtomFace[]' }, block: true,
+    defaults: { msg: { $shape: 'ChatMsg', id: 'm1', role: 'assistant', author: 'Assistant', text: 'Hi! Ask me about the **release**.', time: '9:41', status: '', tools: [] }, faces: [] },
+    smoke: [
+      { id: 'chatmessage-0001', props: {} },
+      { id: 'chatmessage-0002', props: { msg: { $shape: 'ChatMsg', id: 'm2', role: 'user', author: 'Grace', text: 'Can you review the notes?', time: '9:42', status: 'Read', tools: [] } } },
+      { id: 'chatmessage-0003', props: { msg: { $shape: 'ChatMsg', id: 'm3', role: 'assistant', author: 'Assistant', text: 'Done.', time: '9:43', status: '', tools: ['search_docs', 'read_changelog'] } } },
+      { id: 'chatmessage-0004', props: { msg: { $shape: 'ChatMsg', id: 'm4', role: 'system', author: '', text: 'Ada joined the conversation', time: '', status: '', tools: [] } } },
+    ],
+  },
+  ChatComposer: {
+    component: 'ChatComposer', actions: { input: 'noopS', send: 'noop' }, uses: ['ChatComposer'], types: { faces: 'AtomFace[]' }, block: true,
+    defaults: { id: 'case-composer', value: '', placeholder: 'Message', faces: [], isSending: false },
+    smoke: sweep('ChatComposer', {}, { value: ['Hello @ada'], isSending: [true] }),
+  },
+  PowerSearch: {
+    component: 'PowerSearch', actions: { input: 'noopS', add: 'noopSS', remove: 'noopS' }, uses: ['PowerSearch', 'SearchField', 'SearchFilter'], types: { fields: 'SearchField[]', filters: 'SearchFilter[]' }, block: true,
+    defaults: { id: 'case-search', label: 'Filter issues', query: '', fields: PSFIELDS, filters: [{ $shape: 'SearchFilter', field: 'status', op: 'is', value: 'Open' }] },
+    smoke: sweep('PowerSearch', {}, { filters: [[]], query: ['own'] }),
+  },
+  OverflowList: {
+    component: 'OverflowList', uses: ['OverflowList'], types: { items: 'ChoiceItem[]' }, libUses: ['ChoiceItem'],
+    defaults: { id: 'case-overflow', items: CHOICES.concat(CHOICES.map(c => ({ ...c, value: c.value + '2', label: c.label + ' 2' }))), maxVisible: 3, gap: 2 },
+    smoke: sweep('OverflowList', {}, { maxVisible: [1, 6] }),
   },
 };

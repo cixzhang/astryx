@@ -448,5 +448,23 @@
   "status": "ported",
   "evidence": "apps/astryx-shell-nav (6 tests) and apps/astryx-settings-dialog (5 tests) pass on web; both render and respond on the Linux host",
   "notes": "Both templates rebuilt from the Astryx page sources. Linux: popover menus are not presented (Exact logs 'Linux does not support popover presentation'), so the shell's menu bar and selectors open nothing there; trees, switches, text and panels work."
+ },
+ "Chat": {
+  "wave": 9,
+  "status": "workaround",
+  "evidence": "astryx-layers/chat.contract; gallery chatmessage-*, chatcomposer-*; playground-0004 tests send a message with a mention and fold tool calls (web)",
+  "notes": "contenteditable is refused, so the composer is Contract's Markdown textarea with inline atoms: @mentions are pills the caret skips and delete removes whole (web, macOS, iOS; Linux, Windows and Android show the source text). Not possible: pasted-text tokens as rich chips, arbitrary inline elements, dictation without a data module (Exact's speech package needs one). The message list is a virtualized list that follows its end; aria-rowcount is not needed."
+ },
+ "PowerSearch": {
+  "wave": 9,
+  "status": "workaround",
+  "evidence": "gallery powersearch-*; playground test adds and removes filters (web)",
+  "notes": "Filter tokens plus a suggestion listbox (field names, then a field's values after `field:`). Combobox ARIA (activedescendant, autocomplete) is refused, so suggestions are buttons in the tab order. Operator menus beyond `is`, async value sources and saved queries not wired."
+ },
+ "OverflowList": {
+  "wave": 9,
+  "status": "workaround",
+  "evidence": "gallery overflowlist-*; playground test opens the rest",
+  "notes": "Astryx measures items against the width (ResizeObserver). A component cannot measure (geometry reads are the app root's), so the visible count is the caller's; the rest sit in a menu (popover; not presented on Linux)."
  }
 }
