@@ -64,6 +64,84 @@ impl<Msg: Clone + 'static> Rig<Msg> {
         c
     }
 
+    /// A mouse drag from `from` to `to` in `steps` moves of 16 ms.
+    pub fn drag(&mut self, from: astryx_core::Point, to: astryx_core::Point, steps: u32) {
+        use astryx_core::contract::{PointerEvent, PointerKind, PointerPhase, Surface};
+        let e = |phase, at, t: f64| PointerEvent {
+            id: 1,
+            kind: PointerKind::Mouse,
+            phase,
+            at,
+            button: 0,
+            time_ms: t,
+        };
+        self.rt.pointer(e(PointerPhase::Down, from, 0.0));
+        let mut t = 0.0;
+        for i in 1..=steps {
+            t += 16.0;
+            let k = i as f32 / steps as f32;
+            let at = astryx_core::Point {
+                x: from.x + (to.x - from.x) * k,
+                y: from.y + (to.y - from.y) * k,
+            };
+            self.rt.pointer(e(PointerPhase::Move, at, t));
+            self.redraw();
+        }
+        self.rt.pointer(e(PointerPhase::Up, to, t + 4.0));
+        self.redraw();
+    }
+    /// Presses and releases `key` with `modifiers`, as a shell does: a key
+    /// no component takes falls back to its input (Enter activates, arrows
+    /// move focus, Escape goes back).
+    pub fn key(&mut self, key: astryx_core::Key, modifiers: astryx_core::Modifiers) {
+        use astryx_core::contract::Surface;
+        use astryx_core::Key as K;
+        let out = self.rt.key(astryx_core::KeyEvent {
+            key: key.clone(),
+            phase: astryx_core::InputPhase::Pressed,
+            modifiers,
+            repeat: false,
+        });
+        self.rt.key(astryx_core::KeyEvent {
+            key: key.clone(),
+            phase: astryx_core::InputPhase::Released,
+            modifiers,
+            repeat: false,
+        });
+        self.redraw();
+        if !out.handled {
+            let input = match key {
+                K::Enter | K::Space => Some(Input::A),
+                K::Escape => Some(Input::B),
+                K::Up => Some(Input::Up),
+                K::Down => Some(Input::Down),
+                K::Left => Some(Input::Left),
+                K::Right => Some(Input::Right),
+                K::Tab if modifiers.shift => Some(Input::Previous),
+                K::Tab => Some(Input::Next),
+                K::ContextMenu => Some(Input::Menu),
+                _ => None,
+            };
+            if let Some(i) = input {
+                self.press(i);
+            }
+        }
+    }
+    /// A secondary (right) click at `at`.
+    pub fn right_click(&mut self, at: astryx_core::Point) {
+        use astryx_core::contract::{PointerEvent, PointerKind, PointerPhase, Surface};
+        for phase in [PointerPhase::Down, PointerPhase::Up] {
+            self.rt.pointer(PointerEvent {
+                id: 2,
+                kind: PointerKind::Mouse,
+                phase,
+                at,
+                button: 2,
+                time_ms: 0.0,
+            });
+        }
+        self.redraw();
+    }
     pub fn messages(&self) -> Vec<Msg> {
         self.sent.borrow().clone()
     }
