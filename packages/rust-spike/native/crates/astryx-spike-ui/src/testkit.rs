@@ -64,6 +64,32 @@ impl<Msg: Clone + 'static> Rig<Msg> {
         c
     }
 
+    /// A mouse drag from `from` to `to` in `steps` moves of 16 ms.
+    pub fn drag(&mut self, from: astryx_core::Point, to: astryx_core::Point, steps: u32) {
+        use astryx_core::contract::{PointerEvent, PointerKind, PointerPhase, Surface};
+        let e = |phase, at, t: f64| PointerEvent {
+            id: 1,
+            kind: PointerKind::Mouse,
+            phase,
+            at,
+            button: 0,
+            time_ms: t,
+        };
+        self.rt.pointer(e(PointerPhase::Down, from, 0.0));
+        let mut t = 0.0;
+        for i in 1..=steps {
+            t += 16.0;
+            let k = i as f32 / steps as f32;
+            let at = astryx_core::Point {
+                x: from.x + (to.x - from.x) * k,
+                y: from.y + (to.y - from.y) * k,
+            };
+            self.rt.pointer(e(PointerPhase::Move, at, t));
+            self.redraw();
+        }
+        self.rt.pointer(e(PointerPhase::Up, to, t + 4.0));
+        self.redraw();
+    }
     pub fn messages(&self) -> Vec<Msg> {
         self.sent.borrow().clone()
     }

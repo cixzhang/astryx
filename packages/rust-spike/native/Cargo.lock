@@ -374,6 +374,7 @@ version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-spike-foundations",
+ "astryx-spike-gestures",
  "astryx-spike-layers",
  "astryx-spike-motion",
  "astryx-tokens",

@@ -266,3 +266,57 @@ fn button_tooltip_shows_on_keyboard_focus() {
         "{tree:#?}"
     );
 }
+
+#[test]
+fn resizable_pane_follows_a_drag_within_its_limits() {
+    let mut rig = Rig::<Msg>::sized(
+        || {
+            Resizable::new(
+                "side",
+                "Resize sidebar",
+                Text::new("Pane"),
+                Text::new("Rest"),
+            )
+            .min_size(120.0)
+            .max_size(400.0)
+            .into()
+        },
+        800,
+        400,
+    );
+    let sep = |rig: &Rig<Msg>| {
+        find(&rig.tree(), Role::Separator, "Resize sidebar")
+            .unwrap()
+            .value
+            .clone()
+    };
+    assert_eq!(sep(&rig).as_deref(), Some("250"));
+    rig.drag(
+        Point { x: 250.0, y: 100.0 },
+        Point { x: 330.0, y: 100.0 },
+        8,
+    );
+    assert_eq!(sep(&rig).as_deref(), Some("330"));
+    rig.drag(
+        Point { x: 330.0, y: 100.0 },
+        Point { x: 700.0, y: 100.0 },
+        8,
+    );
+    assert_eq!(sep(&rig).as_deref(), Some("400"), "clamped to max");
+}
+
+#[test]
+fn resizable_collapses_and_snaps() {
+    assert_eq!(
+        resolve_size(60.0, 120.0, 400.0, true, 40.0, &[], false),
+        40.0
+    );
+    assert_eq!(
+        resolve_size(205.0, 120.0, 400.0, false, 40.0, &[200.0], true),
+        200.0
+    );
+    assert_eq!(
+        resolve_size(205.0, 120.0, 400.0, false, 40.0, &[200.0], false),
+        205.0
+    );
+}
