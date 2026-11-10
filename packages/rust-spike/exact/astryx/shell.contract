@@ -20,9 +20,12 @@ component AppShell
 component AppShellContent
   props
     padding: number
+    variant: string
   slot
   view
-    view grid-row=2 grid-column=2 overflow="auto" min-height=0 background-color="astryx.surface.surface"
+    view grid-row=2 grid-column=2 overflow="auto" min-height=0
+      background-color=(variant == "wash" ? "astryx.surface.body" : variant == "section" ? "astryx.surface.muted" : "astryx.surface.surface")
+      box-shadow=(variant == "elevated" ? "astryx.shadow.low" : "none") border-radius=(variant == "elevated" ? "astryx.radius.container" : "astryx.radius.none")
       padding=space(padding < 0 ? "4" : padding.toString()) role="main"
       children
 

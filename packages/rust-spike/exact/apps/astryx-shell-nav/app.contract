@@ -97,7 +97,7 @@ component ShellNav
           SideNav(label="Files", isCollapsed=false)
             Resizable(label="Resize file tree", width=width, minWidth=180, maxWidth=400, resize=resize)
               TreeList(label="Files", items=files().filter(f => shown(f, closed)).map(f => RowItem(key=f.key, label=f.label, description="", icon="", depth=f.depth, hasChildren=f.isFolder, isExpanded=(f.isFolder and not closed.includes(f.key)))), selected=selected, density="compact", variant="lineGuides", toggle=toggle, select=pick)
-        AppShellContent(padding=0)
+        AppShellContent(padding=0, variant="surface")
           Layout(height="fill", padding=6, defaultHasDividers=true)
             LayoutHeader(hasDivider=true, isFullBleed=false)
               row gap="astryx.space.s2"

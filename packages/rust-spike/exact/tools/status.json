@@ -412,5 +412,41 @@
   "status": "workaround",
   "evidence": "gallery table-*; playground test sorts, selects all and one, pages",
   "notes": "Columns and rows are data; a row is its cells in column order (Contract has no records keyed by a run-time string). Sorting, selection, pagination, tree rows are the caller's state; the table draws them. Not honoured: verticalAlign (cells take no vertical-align top/bottom) and hasHover=false (a state class chosen by a prop is refused). Not wired: column resize, sticky columns, virtualization (aria-rowcount/rowindex refused), filtering UI, column settings, grouped rows."
+ },
+ "AppShell": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "gallery app-shell-*; shell-nav template (web and Linux)",
+  "notes": "One slot: TopNav, SideNav and AppShellContent are children that place themselves on the shell's grid. Folding the side navigation into a drawer on narrow screens is the app root's choice (only the root reads the viewport); the shell-nav template does it with a BottomSheet."
+ },
+ "TopNav": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "shell-nav template",
+  "notes": "start and end content are one slot; a flex spacer separates them."
+ },
+ "SideNav": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "shell-nav and settings-dialog templates",
+  "notes": "Resizing composes Resizable; header/topContent/sections are the slot. SideNavItem ported."
+ },
+ "MobileNav": {
+  "wave": 8,
+  "status": "ported",
+  "evidence": "shell.contract MobileNav",
+  "notes": "Items are data."
+ },
+ "CommandPalette": {
+  "wave": 8,
+  "status": "workaround",
+  "evidence": "gallery command-palette-*; shell-nav test opens it from search and runs a command; ⌘K via keycapture on the app root",
+  "notes": "A modal dialog with a filtering list. Commands are data (no async search source in a Linux build). activedescendant refused: arrow-key highlight not announced; Enter runs the first match."
+ },
+ "infra:Compositions": {
+  "wave": 8,
+  "status": "ported",
+  "evidence": "apps/astryx-shell-nav (6 tests) and apps/astryx-settings-dialog (5 tests) pass on web; both render and respond on the Linux host",
+  "notes": "Both templates rebuilt from the Astryx page sources. Linux: popover menus are not presented (Exact logs 'Linux does not support popover presentation'), so the shell's menu bar and selectors open nothing there; trees, switches, text and panels work."
  }
 }

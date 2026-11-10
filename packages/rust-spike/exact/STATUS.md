@@ -2,9 +2,9 @@
 
 Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2e25b307a40e7fce66dc27c9f802`.
 
-- Dependency closure ported (core, by source files): 656 of 689 (95.2%).
-- With the stretch rows: 671 of 720 (93.2%).
-- Rows: 26 ported, 43 workaround, 0 blocked, 8 not started.
+- Dependency closure ported (core, by source files): 677 of 689 (98.3%).
+- With the stretch rows: 692 of 720 (96.1%).
+- Rows: 27 ported, 47 workaround, 0 blocked, 3 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -12,7 +12,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 
 | Row | Files | Groups | Wave | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| AppShell | 5 | core, stretch, template |  | not started |  |  |
+| AppShell | 5 | core, stretch, template | 8 | workaround | gallery app-shell-*; shell-nav template (web and Linux) | One slot: TopNav, SideNav and AppShellContent are children that place themselves on the shell's grid. Folding the side navigation into a drawer on narrow screens is the app root's choice (only the root reads the viewport); the shell-nav template does it with a BottomSheet. |
 | AspectRatio | 2 | core | 2 | ported | gallery aspectratio-* | fit (cover/contain) applies to an image child, set by the caller. |
 | Avatar | 5 | stretch | 1 | ported | gallery avatar-* | Initials use the first letter of the first and last words (no Unicode-aware search). Image fallbackSrc and load error not yet wired. Tooltip waits for wave 4. |
 | AvatarGroup | 1 | stretch | 1 | ported | gallery avatargroup-* | Members are data (AvatarItem[]), not child elements: one slot cannot be counted. |
@@ -27,7 +27,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | CheckboxInput | 3 | core, stretch, weakness | 5 | workaround | gallery checkboxinput-*; playground test checks it | aria-checked takes only a bool: an indeterminate box reads as unchecked. |
 | CheckboxList | 4 | stretch | 5 | workaround | gallery checkboxlist-* | Options are data, as RadioList. |
 | Collapsible | 5 | weakness | 3 | workaround | gallery collapsible-* | Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot. |
-| CommandPalette | 10 | template |  | not started |  |  |
+| CommandPalette | 10 | template | 8 | workaround | gallery command-palette-*; shell-nav test opens it from search and runs a command; ⌘K via keycapture on the app root | A modal dialog with a filtering list. Commands are data (no async search source in a Linux build). activedescendant refused: arrow-key highlight not announced; Enter runs the first match. |
 | ContextMenu | 2 | core | 6 | workaround | gallery contextmenu-*; playground test picks an item | contextPopover on the slot: right click and long press. |
 | DateInput | 21 | core, stretch | 7 | workaround | gallery dateinput-*; playground test | ISO text field plus a calendar popover. Segmented date entry and locale formats not possible (en-US only). |
 | DateRangeInput | 2 | stretch | 7 | workaround | gallery daterangeinput-* | DateInput with isRange; the calendar shades the range. |
@@ -54,7 +54,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Layout | 17 | core, stretch, template, weakness | 2 | workaround | gallery layout-0001, layout-0002 | Astryx takes header/start/end/footer as named props; Contract has one slot, so LayoutHeader, LayoutPanel, LayoutContent and LayoutFooter are children that place themselves on the frame's grid. Edge compensation through --container-padding-* custom properties has no equivalent. Panel width is a zero-height strut; content width is padding. No container queries. |
 | Link | 3 | core, stretch, template, weakness | 1 | ported | gallery link-* | Hover underline thickness refused (a state row paints only); hover dims instead. LinkProvider (router swap) is Contract's own `link`/routes. |
 | List | 6 | core, stretch, weakness | 6 | workaround | gallery list-* | Rows are the slot (ListItem); a slot passes no context, so each row takes the list's density, divider and marker. Reorderable lists are ReorderList (data rows). Edge compensation by custom properties dropped. |
-| MobileNav | 2 | core |  | not started |  |  |
+| MobileNav | 2 | core | 8 | ported | shell.contract MobileNav | Items are data. |
 | MultiSelector | 3 | core | 7 | workaround | gallery multiselector-*; playground test chooses several | Selector with isMultiple. aria-multiselectable is refused. |
 | NumberInput | 4 | core, stretch | 5 | ported | gallery numberinput-*; playground test steps it | Value is text; parse and clamp are the caller's (parseNumber). |
 | OverflowList | 2 | core, stretch |  | not started |  |  |
@@ -67,7 +67,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | SegmentedControl | 6 | template | 5 | workaround | gallery segmented-control-*; playground test picks a segment | A library control must be the native one, so each segment is a transparent radio input over its drawn segment. Items are data. |
 | SelectableCard | 3 | template | 5 | ported | gallery selectable-card-* | A native button with aria-pressed. |
 | Selector | 11 | core, stretch, template | 7 | workaround | gallery selector-*; playground test chooses | A trigger and a listbox popover. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Type-ahead in the list not wired. |
-| SideNav | 2 | core |  | not started |  |  |
+| SideNav | 2 | core | 8 | workaround | shell-nav and settings-dialog templates | Resizing composes Resizable; header/topContent/sections are the slot. SideNavItem ported. |
 | SizeContext | 2 | core, stretch, template, weakness | 0 | workaround | - | No context through a slot: size is a prop each child takes. |
 | Spinner | 4 | core, stretch, template, weakness | 1 | ported | gallery spinner-* | Turn is a CSS keyframe; reduced motion not yet wired. |
 | Stack | 5 | core, stretch, template | 2 | workaround | gallery stack-*, stack-item-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. StackItem ported. |
@@ -80,7 +80,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Tokenizer | 6 | core, stretch | 7 | workaround | gallery tokenizer-*; playground test adds and removes | Tokens and a typeahead in one field. Backspace-to-remove not wired. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. |
 | Toolbar | 2 | core | 2 | workaround | - | Arrow-key roving focus waits for wave 5 controls; overflow menu waits for OverflowList (wave 6). |
 | Tooltip | 4 | core, stretch, template, weakness | 4 | workaround | gallery tooltip-*; test 'a tooltip case opens its tooltip' | Shows on hover and focus via the platform popover, anchored to the trigger. Timers run only in the app root's tasks, so `delay` is the fade's delay (the tooltip is open, transparent, for `delay` ms) and hideDelay is not possible. Content is text (one slot: the trigger). touchTrigger tap not wired. Hover is web and desktop only. |
-| TopNav | 2 | core |  | not started |  |  |
+| TopNav | 2 | core | 8 | workaround | shell-nav template | start and end content are one slot; a flex spacer separates them. |
 | TreeList | 5 | stretch, template | 6 | workaround | gallery tree-list-*; playground test opens, closes and selects | Items are flattened rows with a depth (no recursion in a view). Open state is the caller's. Keyboard tree navigation (arrow keys) not wired. |
 | Typeahead | 8 | core, stretch | 7 | workaround | gallery typeahead-*; playground test filters and picks | The Combobox root. A field plus a listbox popover; filtering in the view; Enter picks the highlighted option. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Arrow-key highlight not wired (an input takes no key event). Async sources are the caller's (no data module in a Linux build). |
 | VStack | 2 | core, stretch, template | 2 | workaround | gallery v-stack-* | As HStack: no slot forwarding, so it repeats Stack's body. |

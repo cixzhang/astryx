@@ -22,6 +22,7 @@ const TREE = [['src', 'src', 0, true, true], ['button', 'Button.tsx', 1, false, 
 const MENU = [['edit', 'Edit', 'clock', '⌘E'], ['copy', 'Copy link', 'copy', '⌘C'], ['div', '', '', ''], ['delete', 'Delete', 'close', '']].map(([id, label, icon, shortcut]) => ({ $shape: 'MenuItem', id, label, icon, shortcut, isDestructive: id === 'delete', isDisabled: false, isChecked: false, isDivider: id === 'div' }));
 const TCOLS = [['name', 'Name', '', 'start', true], ['role', 'Role', '', 'start', false], ['year', 'Born', '80px', 'end', true]].map(([key, label, width, align, isSortable]) => ({ $shape: 'TableColumn', key, label, width, align, isSortable }));
 const TROWS = [['ada', 'Ada Lovelace', 'Analyst', '1815'], ['grace', 'Grace Hopper', 'Rear admiral', '1906'], ['alan', 'Alan Turing', 'Mathematician', '1912'], ['kj', 'Katherine Johnson', 'Mathematician', '1918']].map(([key, ...cells]) => ({ $shape: 'TableRow', key, cells, depth: 0, isExpanded: false, hasChildren: false }));
+const CMDS = [['new-file', 'New File', 'Command'], ['save-all', 'Save All', 'Command'], ['theme', 'theme.ts', 'File']].map(([id, label, group]) => ({ $shape: 'Command', id, label, group }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
@@ -67,6 +68,7 @@ export const FAMILIES = {
     smoke: sweep('Kbd', {}, { keys: ['Esc', 'Shift+Enter', 'Ctrl+Alt+Delete'] }),
   },
   Divider: {
+    block: true,
     component: 'Divider',
     defaults: { orientation: 'horizontal', label: '', variant: 'subtle', isFullBleed: false },
     smoke: sweep('Divider', {}, { variant: ['strong'], label: ['or'], orientation: ['vertical'] }),
@@ -103,45 +105,48 @@ export const FAMILIES = {
     defaults: { direction: 'vertical', gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false },
     children: FILL3,
     smoke: sweep('Stack', {}, { direction: ['horizontal'], gap: [0, 1, 4, 8], padding: [2, 4], align: ['start', 'center', 'end'], justify: ['center', 'between'], wrap: ['wrap'] }),
-    wrap: inner => ['view width=320 height=200', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%" height=200', ...inner.map(l => `  ${l}`)],
   },
   HStack: {
     component: 'HStack', qa: { file: 'Stack', components: ['HStack'] }, defaults: { gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false }, children: FILL3,
     smoke: sweep('HStack', {}, { gap: [0, 4], align: ['center'], justify: ['between'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   VStack: {
     component: 'VStack', qa: { file: 'Stack', components: ['VStack'] }, defaults: { gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false }, children: FILL3,
     smoke: sweep('VStack', {}, { gap: [0, 4], align: ['center', 'end'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   Grid: {
+    block: true,
     component: 'Grid', defaults: { columns: 3, minWidth: 0, gap: 2, rowGap: -1, columnGap: -1, align: '', justify: '' },
     children: ['Filler(label="1")', 'Filler(label="2")', 'Filler(label="3")', 'Filler(label="4")', 'Filler(label="5")'],
     smoke: sweep('Grid', {}, { columns: [2, 4], minWidth: [90], gap: [0, 4] }),
   },
   Center: {
+    block: true,
     component: 'Center', defaults: { axis: 'both', padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1 }, children: ['Filler(label="Centred")'],
     smoke: sweep('Center', {}, { axis: ['horizontal', 'vertical'], padding: [4] }),
   },
   AspectRatio: {
     component: 'AspectRatio', defaults: { ratio: 1.7778, shape: 'rectangle', fit: 'cover' }, children: ['view flex=1 background-color="astryx.surface.blue"'],
     smoke: sweep('AspectRatio', {}, { ratio: [1, 0.75], shape: ['ellipse'] }),
-    wrap: inner => ['view width=240', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   Section: {
     component: 'Section', defaults: { variant: 'section', padding: 4, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, dividers: [], bleed: 0 }, types: { dividers: 'string[]' }, children: ['Text(text="Section content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)'],
     uses: ['Section', 'Text'],
     smoke: sweep('Section', {}, { variant: ['transparent', 'muted'], padding: [0, 2, 8], dividers: [['top', 'bottom']] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   Card: {
     component: 'Card', defaults: { variant: 'default', padding: 4, elevation: 'none' },
-    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     children: ['Text(text="Card content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)'], uses: ['Card', 'Text'],
     smoke: sweep('Card', {}, { variant: ['transparent', 'muted', 'blue', 'green', 'red'], padding: [0, 2, 8], elevation: ['low', 'med', 'high'] }),
   },
   Layout: {
+    block: true,
     component: 'Layout', defaults: { height: 'fill', padding: 4, defaultHasDividers: false }, uses: ['Layout', 'LayoutHeader', 'LayoutPanel', 'LayoutContent', 'LayoutFooter', 'Text'],
     children: [
       'LayoutHeader(hasDivider=true, isFullBleed=false)', '  Filler(label="Header")',
@@ -153,6 +158,7 @@ export const FAMILIES = {
     smoke: [{ id: 'layout-0001', props: {} }, { id: 'layout-0002', props: { height: 'auto' } }],
   },
   EmptyState: {
+    block: true,
     component: 'EmptyState', defaults: { title: 'Title', description: '', icon: '', headingLevel: 3, isCompact: false },
     children: ['Filler(label="Action")'],
     smoke: sweep('EmptyState', {}, { isCompact: [true], icon: [''], description: [''] }),
@@ -176,14 +182,14 @@ export const FAMILIES = {
     defaults: { title: 'Title', value: 'a', isOpen: false, isDisabled: false, chevronPosition: 'end', density: 'balanced', hasDivider: false, still: true },
     map: p => { const { defaultIsOpen, ...r } = p; return defaultIsOpen === undefined ? r : { ...r, isOpen: r.isOpen ?? defaultIsOpen }; },
     children: [TEXT('Ships in two business days.')],
-    wrap: inner => ['view width=320', `  ${inner[0].replace(/\)$/, ', toggle=noop)')}`, ...inner.slice(1).map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', `  ${inner[0].replace(/\)$/, ', toggle=noop)')}`, ...inner.slice(1).map(l => `  ${l}`)],
     smoke: sweep('Collapsible', {}, { isOpen: [true], isDisabled: [true], chevronPosition: ['start'], density: ['compact', 'spacious'] }),
   },
   StackItem: {
     component: 'StackItem', qa: { file: 'Stack', components: ['StackItem'] }, uses: ['Stack', 'StackItem'],
     defaults: { size: 'static', isScrollable: false, crossAlignSelf: '' },
     children: ['Filler(label="Item")'],
-    wrap: inner => ['view width=320 height=120', `  Stack(direction="horizontal", ${STACK_CALL})`, '    Filler(label="Before")', ...inner.map(l => `    ${l}`), '    Filler(label="After")'],
+    wrap: inner => ['view width="100%" height=120', `  Stack(direction="horizontal", ${STACK_CALL})`, '    Filler(label="Before")', ...inner.map(l => `    ${l}`), '    Filler(label="After")'],
     smoke: sweep('StackItem', {}, { size: ['fill'], crossAlignSelf: ['center', 'end', 'stretch'] }),
   },
   CheckIndicator: {
@@ -248,7 +254,7 @@ export const FAMILIES = {
     defaults: { id: 'case-input', label: 'Label', value: '', placeholder: 'Placeholder', description: '', size: 'md', isLabelHidden: false, isDisabled: false, isReadOnly: false, isRequired: false, isOptional: false, isLoading: false, hasClear: false, hasAutoFocus: false, autoCapitalize: '', statusMessage: '', statusVariant: 'error', statusPlacement: 'attached' },
     map: p => { const { statusVariant, ...r } = p; return statusVariant ? { ...r, statusPlacement: statusVariant, statusMessage: 'Enter a valid value.' } : r; },
     smoke: sweep('TextInput', {}, { value: ['value'], size: ['sm', 'lg'], isDisabled: [true], hasClear: [true], statusMessage: ['Enter a valid value.'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   NumberInput: {
     component: 'NumberInput', actions: { input: 'noopS', stepUp: 'noop', stepDown: 'noop' },
@@ -277,7 +283,7 @@ export const FAMILIES = {
     map: p => { const { statusVariant, isGroupLabel, ...r } = p; return statusVariant ? { ...r, statusPlacement: statusVariant, statusMessage: 'Enter a valid value.' } : r; },
     children: ['TextInput(id="inputID", label="Label", value="", placeholder="Placeholder", description="", size="md", isLabelHidden=true, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=false, hasAutoFocus=false, autoCapitalize="", statusMessage="", statusVariant="error", statusPlacement="attached", input=noopS, clear=noop)'],
     smoke: sweep('Field', {}, { description: ['Shown on your profile.'], isRequired: [true], statusMessage: ['Enter a valid value.'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   FieldStatus: {
     component: 'FieldStatus',
@@ -291,14 +297,14 @@ export const FAMILIES = {
     map: p => { const { isLabelHidden, isOptional, isRequired, ...r } = p; return r; },
     children: ['InputGroupText(text="https://")', 'input value="astryx.design" aria-label="Website" flex=1 min-width=0 border-width=0 background-color="transparent" font="astryx.type.body" color="astryx.text.primary"'],
     smoke: sweep('InputGroup', {}, { size: ['sm', 'lg'], isDisabled: [true] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   SegmentedControl: {
     noSlot: true, component: 'SegmentedControl', actions: { change: 'noopS' }, uses: ['SegmentedControl', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
     defaults: { label: 'Label', items: CHOICES, value: 'pro', size: 'md', layout: 'hug', isDisabled: false },
     map: p => { const { value, onChange, ...r } = p; return r; },
     smoke: sweep('SegmentedControl', {}, { size: ['sm', 'lg'], layout: ['fill'], isDisabled: [true] }),
-    wrap: inner => ['view width=360', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   SelectableCard: {
     component: 'SelectableCard', actions: { press: 'noop' }, uses: ['SelectableCard', 'Text'],
@@ -311,26 +317,26 @@ export const FAMILIES = {
     component: 'Item',
     defaults: { label: 'Ada Lovelace', description: 'Analyst', icon: 'calendar', endText: 'Today', density: 'balanced', isSelected: false, isHighlighted: false, isDisabled: false, labelLines: 0 },
     smoke: sweep('Item', {}, { density: ['compact', 'spacious'], isSelected: [true], isHighlighted: [true], isDisabled: [true], icon: [''], description: [''] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   List: {
     component: 'List', uses: ['List', 'ListItem'],
     defaults: { label: 'Team', density: 'balanced', hasDividers: false, edge: 'padded', listStyle: 'none' },
     children: ['Ada Lovelace', 'Grace Hopper', 'Alan Turing'].map((n, i) => `ListItem(label=${JSON.stringify(n)}, description="", icon="", marker=(c.listStyle == "decimal" ? "${i + 1}." : c.listStyle == "disc" ? "•" : c.listStyle == "circle" ? "◦" : ""), density=c.density, hasDivider=${i > 0 ? 'c.hasDividers' : 'false'}, isSelected=false, isDisabled=false)`),
     smoke: sweep('List', {}, { density: ['compact', 'spacious'], hasDividers: [true], listStyle: ['decimal', 'disc'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   ReorderList: {
     component: 'ReorderList', actions: { reorder: 'noopSO' }, uses: ['ReorderList', 'RowItem'], types: { items: 'RowItem[]' },
     defaults: { id: 'case-reorder', label: 'Tasks', items: ROWS, density: 'balanced', hasDividers: true },
     smoke: sweep('ReorderList', {}, { density: ['compact'], hasDividers: [false] }),
-    wrap: inner => ['view width=320 height=240', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%" height=240', ...inner.map(l => `  ${l}`)],
   },
   TreeList: {
     component: 'TreeList', actions: { toggle: 'noopS', select: 'noopS' }, uses: ['TreeList', 'RowItem'], types: { items: 'RowItem[]' },
     defaults: { label: 'Files', items: TREE, selected: 'button', density: 'balanced', variant: 'lineGuides' },
     smoke: sweep('TreeList', {}, { density: ['compact', 'spacious'], variant: ['noGuides'] }),
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
   },
   Dialog: {
     component: 'Dialog', uses: ['Dialog', 'Text', 'Button'],
@@ -372,25 +378,25 @@ export const FAMILIES = {
     component: 'Typeahead', actions: { input: 'noopS', pick: 'noopS', clear: 'noop' }, uses: ['Typeahead', 'ChoiceItem'], types: { options: 'ChoiceItem[]' },
     defaults: { id: 'case-typeahead', label: 'Label', query: '', options: CHOICES, selected: '', placeholder: 'Placeholder', size: 'md', isDisabled: false, isLabelHidden: false, hasClear: false, hasEntriesOnFocus: false },
     map: p => { const { statusVariant, isRequired, isOptional, hasAutoFocus, ...r } = p; return r; },
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Typeahead', {}, { query: ['Pr'], size: ['sm', 'lg'], isDisabled: [true], hasClear: [true] }),
   },
   Tokenizer: {
     component: 'Tokenizer', actions: { input: 'noopS', add: 'noopS', remove: 'noopS' }, uses: ['Tokenizer', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
     defaults: { id: 'case-tokenizer', label: 'Label', query: '', options: CHOICES, values: ['free', 'pro'] },
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Tokenizer', {}, { values: [[]] }),
   },
   Selector: {
     component: 'Selector', actions: { change: 'noopS' }, uses: ['Selector', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
-    defaults: { id: 'case-selector', label: 'Label', options: CHOICES, value: 'pro', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: false, values: [] },
-    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    defaults: { id: 'case-selector', label: 'Label', options: CHOICES, value: 'pro', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: false, isLabelHidden: false, values: [] },
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Selector', {}, { value: [''], size: ['sm', 'lg'], isDisabled: [true] }),
   },
   MultiSelector: {
     component: 'Selector', actions: { change: 'noopS' }, uses: ['Selector', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
-    defaults: { id: 'case-multi', label: 'Label', options: CHOICES, value: '', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: true, values: ['free', 'team'] },
-    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    defaults: { id: 'case-multi', label: 'Label', options: CHOICES, value: '', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: true, isLabelHidden: false, values: ['free', 'team'] },
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('MultiSelector', {}, { values: [[]] }),
   },
   Calendar: {
@@ -401,13 +407,13 @@ export const FAMILIES = {
   DateInput: {
     component: 'DateInput', actions: { input: 'noopS', pick: 'noopS', shift: 'noopN' },
     defaults: { id: 'case-date', label: 'Label', value: '2026-11-18', endValue: '', isRange: false, year: 2026, month: 11, today: '2026-11-10', size: 'md', isDisabled: false },
-    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('DateInput', {}, { value: [''], size: ['sm', 'lg'], isDisabled: [true] }),
   },
   DateRangeInput: {
     component: 'DateInput', actions: { input: 'noopS', pick: 'noopS', shift: 'noopN' },
     defaults: { id: 'case-range', label: 'Label', value: '2026-11-04', endValue: '2026-11-12', isRange: true, year: 2026, month: 11, today: '2026-11-10', size: 'md', isDisabled: false },
-    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('DateRangeInput', {}, { value: [''] }),
   },
   TimeInput: {
@@ -424,7 +430,31 @@ export const FAMILIES = {
     component: 'Table', actions: { sort: 'noopS', toggleRow: 'noopSB2', toggleAll: 'noopB', toggleExpand: 'noopS' }, uses: ['Table', 'TableColumn', 'TableRow'], types: { columns: 'TableColumn[]', rows: 'TableRow[]', selected: 'string[]' },
     noSlot: true,
     defaults: { label: 'People', columns: TCOLS, rows: TROWS, density: 'balanced', dividers: 'rows', isStriped: false, hasHover: false, verticalAlign: 'middle', textOverflow: 'wrap', sortKey: '', sortDirection: 'asc', hasSelection: false, selected: [] },
-    wrap: inner => ['view width=480', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width="100%"', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Table', {}, { density: ['compact', 'spacious'], dividers: ['columns', 'grid', 'none'], isStriped: [true], hasSelection: [true], sortKey: ['name'] }),
+  },
+  AppShell: {
+    component: 'AppShell', uses: ['AppShell', 'TopNav', 'SideNav', 'AppShellContent'], keepChildren: true,
+    defaults: { label: 'App' },
+    map: p => ({}),
+    children: ['TopNav(label="Top")', '  FixtureBox()', '  FixtureBox()', 'SideNav(label="Side", isCollapsed=false)', '  FixtureBox()', '  FixtureBox()', 'AppShellContent(padding=(c.contentPadding < 0 ? 4 : c.contentPadding), variant=c.variant)', '  FixtureBox()', '  FixtureBox()', '  FixtureBox()'],
+    extra: { contentPadding: 4, variant: 'surface' },
+    wrap: inner => ['view width="100%" height=320', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('AppShell', {}, { variant: ['wash', 'section', 'elevated'], contentPadding: [0, 8] }),
+  },
+  CommandPalette: {
+    component: 'CommandPalette', actions: { input: 'noopS', run: 'noopS' }, uses: ['CommandPalette', 'Command'], types: { commands: 'Command[]' },
+    defaults: { id: 'case-dialog', label: 'Label', query: '', commands: CMDS },
+    opensModal: p => p.isOpen !== false && p.isInline !== true,
+    map: p => { const { isOpen, isInline, ...r } = p; return r; },
+    smoke: sweep('CommandPalette', {}, { query: ['sa'] }),
+  },
+  FormLayout: {
+    block: true,
+    component: 'FormLayout', uses: ['FormLayout'],
+    defaults: { gap: 4 },
+    map: p => ({}),
+    children: ['FixtureBox()', 'FixtureBox()', 'FixtureBox()'],
+    smoke: sweep('FormLayout', {}, {}),
   },
 };

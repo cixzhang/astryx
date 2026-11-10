@@ -36,6 +36,6 @@ component AstryxGallery
               link href=`/?case=${c.id}` testId=`open-${c.id}`
                 text `${c.id}  ${c.family}: ${c.title}` font="astryx.type.body"
         else
-          column padding=16 testId="page" align-items="flex-start"
-            view testId="case" padding=16 background-color="astryx.surface.surface"
+          column padding=16 testId="page"
+            column testId="case" padding=16 background-color="astryx.surface.surface" align-items="flex-start"
               CaseView(id=caseId)

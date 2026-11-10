@@ -164,9 +164,9 @@ component DataPlayground
       text person testId="person"
       Tokenizer(id="tags", label="People", query=tq, options=people(), values=tags, input=setTq, add=addTag, remove=removeTag)
       text tags.join(",") testId="tags"
-      Selector(id="one", label="Owner", options=people(), value=one, placeholder="Choose", size="md", isDisabled=false, isMultiple=false, values=[], change=setOne)
+      Selector(id="one", label="Owner", options=people(), value=one, placeholder="Choose", size="md", isDisabled=false, isMultiple=false, isLabelHidden=false, values=[], change=setOne)
       text one testId="one"
-      Selector(id="many", label="Reviewers", options=people(), value="", placeholder="Choose", size="md", isDisabled=false, isMultiple=true, values=many, change=toggleMany)
+      Selector(id="many", label="Reviewers", options=people(), value="", placeholder="Choose", size="md", isDisabled=false, isMultiple=true, isLabelHidden=false, values=many, change=toggleMany)
       text many.join(",") testId="many"
       DateInput(id="due", label="Due", value=date, endValue="", isRange=false, year=year, month=month, today="2026-11-10", size="md", isDisabled=false, input=setDateText, pick=pickDate, shift=shiftMonth)
       text `${date} ${year}-${month}` testId="date"

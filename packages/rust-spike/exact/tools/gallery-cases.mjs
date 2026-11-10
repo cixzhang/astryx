@@ -51,6 +51,7 @@ for (const [family, def] of Object.entries(FAMILIES)) {
   const qa = qaCases(family, def);
   const cases = qa ?? def.smoke;
   const keys = Object.keys(def.defaults);
+  const extraKeys = Object.keys(def.extra ?? {});
   const records = [];
   for (const c of cases) {
     const given0 = def.map ? def.map(c.props ?? {}) : c.props ?? {};
@@ -60,7 +61,8 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     if (def.opens && def.opens(given)) opens.push(c.id);
     if (def.opensModal && def.opensModal(given)) modals.push(c.id);
     rows.push({ id: c.id, family, title: c.title ?? (Object.entries(c.props ?? {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ') || 'defaults') });
-    records.push(`${family}Case(${['caseId', ...keys].map(k => `${k}=${lit(k === 'caseId' ? c.id : props[k])}`).join(', ')})`);
+    const ex = { ...(def.extra ?? {}), ...Object.fromEntries(Object.entries(c.props ?? {}).filter(([k]) => k in (def.extra ?? {}))) };
+    records.push(`${family}Case(${['caseId', ...keys, ...extraKeys].map(k => `${k}=${lit(k === 'caseId' ? c.id : k in ex && !(k in def.defaults) ? ex[k] : props[k])}`).join(', ')})`);
   }
   const acts = Object.entries(def.actions ?? {}).map(([k, a]) => `${k}=${a}`);
   const call = `${def.component}(${[...keys.map(k => `${k}=c.${k}`), ...acts].join(', ')})`;
@@ -77,17 +79,18 @@ for (const [family, def] of Object.entries(FAMILIES)) {
   families.push({
     family, fromQa: !!qa, uses: def.uses ?? [def.component],
     decl: [
-      `shape ${family}Case`, '  caseId: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
+      `shape ${family}Case`, '  caseId: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), ...extraKeys.map(k => `  ${k}: ${typeOf(def.extra[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
       `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  action noopB(b: bool)', '    presses = presses + 1', '  action noopS(t: string)', '    presses = presses + 1', '  action noopSB(t: string, b: bool)', '    presses = presses + 1', '  action noopN(n: number)', '    presses = presses + 1', '  action noopSB2(t: string, b: bool)', '    presses = presses + 1', '  action noopSO(k: string, before: option<string>)', '    presses = presses + 1', '  view',
-      `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.caseId == id) key=c.caseId`,
-      ...body.map(l => `      ${l}`),
+      '    column width="100%" align-items="flex-start"',
+      `      for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.caseId == id) key=c.caseId`,
+      ...body.map(l => `        ${l}`),
     ],
   });
 }
 
 const uses = [...new Set(families.flatMap(f => f.uses))].sort();
-const LAYERS = new Set(['Popover', 'Collapsible', 'CollapsibleGroup', 'Tooltip', 'InfoTip', 'HoverCard', 'Dialog', 'DropdownMenu', 'ContextMenu', 'BottomSheet', 'MenuItem', 'MenuRows', 'Resizable', 'Typeahead', 'Tokenizer', 'Selector', 'Calendar', 'DateInput', 'TimeInput']);
+const LAYERS = new Set(['Popover', 'Collapsible', 'CollapsibleGroup', 'Tooltip', 'InfoTip', 'HoverCard', 'Dialog', 'DropdownMenu', 'ContextMenu', 'BottomSheet', 'MenuItem', 'MenuRows', 'Resizable', 'Typeahead', 'Tokenizer', 'Selector', 'Calendar', 'DateInput', 'TimeInput', 'CommandPalette', 'Command']);
 const libUses = uses.filter(u => !LAYERS.has(u));
 const layerUses = uses.filter(u => LAYERS.has(u));
 const out = [
@@ -111,7 +114,7 @@ const out = [
   '  props',
   '    id: string',
   '  view',
-  '    column',
+  '    column width="100%" align-items="flex-start"',
 ];
 for (const f of families) out.push(`      ${f.family}Cases(id=id)`);
 for (const f of families) out.push('', ...f.decl);

@@ -141,11 +141,13 @@ component Selector
     size: string
     isDisabled: bool
     isMultiple: bool
+    isLabelHidden: bool
     values: string[]
     change: action
   view
     column gap="astryx.space.s1"
-      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      if not isLabelHidden
+        text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
       button id=`${id}-trigger` popovertarget=`${id}-list` disabled=isDisabled aria-haspopup="listbox" aria-label=label testId=`${id}-trigger`
         class=FieldBox height=fieldHeight(size) opacity=(isDisabled ? 0.5 : 1)
         text (isMultiple ? (values.length == 0 ? placeholder : `${values.length} selected`) : (options.filter(o => o.value == value).length == 0 ? placeholder : options.filter(o => o.value == value).map(o => o.label).join("")))
