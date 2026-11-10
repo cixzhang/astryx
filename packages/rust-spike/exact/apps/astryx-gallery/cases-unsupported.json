@@ -33,6 +33,12 @@
   "isOpen",
   "touchTrigger"
  ],
+ "HoverCard": [
+  "focusTrigger",
+  "isDefaultOpen",
+  "isOpen",
+  "touchTrigger"
+ ],
  "Button": [
   "isInterruptible",
   "name"
@@ -50,6 +56,18 @@
  "TextInput": [
   "hasAutoCorrect",
   "hasSpellCheck"
+ ],
+ "NumberInput": [
+  "hasAutoFocus",
+  "hasClear",
+  "hasNumberSteppers",
+  "isIntegerOnly",
+  "isLabelHidden",
+  "isOptional",
+  "isReadOnly",
+  "isRequired",
+  "isWheelEnabled",
+  "statusVariant"
  ],
  "CheckboxInput": [
   "isLabelHidden",
@@ -74,5 +92,150 @@
   "isOptional",
   "isReadOnly",
   "isRequired"
+ ],
+ "BottomSheet": [
+  "hasScrim",
+  "isOpen",
+  "label",
+  "padding",
+  "purpose"
+ ],
+ "DropdownMenu": [
+  "alignment",
+  "isMenuOpen",
+  "placement",
+  "presentation"
+ ],
+ "ContextMenu": [
+  "isDisabled",
+  "presentation",
+  "size",
+  "triggerAs"
+ ],
+ "Tokenizer": [
+  "hasAutoFocus",
+  "hasClear",
+  "hasCreate",
+  "hasEntriesOnFocus",
+  "isDisabled",
+  "isLabelHidden",
+  "isOptional",
+  "isRequired",
+  "presentation",
+  "size",
+  "statusVariant",
+  "tokenOverflowBehavior"
+ ],
+ "Selector": [
+  "hasClear",
+  "hasSearch",
+  "indicatorPosition",
+  "isLoading",
+  "isOptional",
+  "isReadOnly",
+  "isRequired",
+  "presentation",
+  "statusVariant",
+  "variant"
+ ],
+ "MultiSelector": [
+  "hasClear",
+  "hasCreate",
+  "hasSearch",
+  "hasSelectAll",
+  "indicatorPosition",
+  "isDefaultOpen",
+  "isLoading",
+  "isOptional",
+  "isReadOnly",
+  "isRequired",
+  "onChange",
+  "presentation",
+  "statusVariant",
+  "triggerDisplay",
+  "variant"
+ ],
+ "Calendar": [
+  "calendar",
+  "hasOutsideDays",
+  "hasVariableRowCount",
+  "hasWeekNumbers",
+  "mode",
+  "numberOfMonths"
+ ],
+ "DateInput": [
+  "calendar",
+  "hasClear",
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isRequired",
+  "nativePicker",
+  "numberOfMonths",
+  "presentation",
+  "statusVariant"
+ ],
+ "DateRangeInput": [
+  "calendar",
+  "hasClear",
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isRequired",
+  "numberOfMonths",
+  "statusVariant"
+ ],
+ "TimeInput": [
+  "hasClear",
+  "hasSeconds",
+  "hourFormat",
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isRequired",
+  "nativePicker",
+  "presentation",
+  "statusVariant"
+ ],
+ "Pagination": [
+  "hasFirstLast",
+  "hasMore",
+  "isDisabled",
+  "size",
+  "variant"
+ ],
+ "PowerSearch": [
+  "hasAutoFocus",
+  "hasClear",
+  "isDisabled",
+  "isLabelHidden",
+  "isReadOnly",
+  "presentation",
+  "size",
+  "statusVariant",
+  "tokenOverflowBehavior"
+ ],
+ "OverflowList": [
+  "behavior",
+  "collapseFrom"
+ ],
+ "MobileNav": [
+  "isOpen",
+  "side"
+ ],
+ "DateTimeInput": [
+  "calendar",
+  "hasClear",
+  "hasSeconds",
+  "hourFormat",
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isRequired",
+  "nativePicker",
+  "numberOfMonths",
+  "presentation",
+  "timeIncrement",
+  "timeOptionInterval"
  ]
 }
