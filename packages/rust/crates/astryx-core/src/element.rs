@@ -45,11 +45,11 @@ impl<Msg: 'static> Element<Msg> {
 }
 
 /// Builds one component into nodes.
-pub(crate) trait Build<Msg> {
+pub trait Build<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>);
 }
 
-pub(crate) fn element<Msg, B: Build<Msg> + 'static>(b: B) -> Element<Msg> {
+pub fn element<Msg, B: Build<Msg> + 'static>(b: B) -> Element<Msg> {
     Element { build: Box::new(b) }
 }
 
@@ -141,7 +141,7 @@ impl Space {
 /// identity (focus, accessibility id) stable when its siblings change, and
 /// `is_hidden` removes it.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct Base {
+pub struct Base {
     pub id: Option<String>,
     pub is_hidden: bool,
 }
@@ -184,7 +184,7 @@ pub(crate) use base_props;
 
 /// What a node paints for itself, before its children.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Draw {
+pub enum Draw {
     None,
     Box(BoxDraw),
     Text(TextDraw),
@@ -201,7 +201,7 @@ pub(crate) enum Draw {
 
 /// A registered image filling the node's box.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct ImageDraw {
+pub struct ImageDraw {
     pub image: crate::contract::ImageId,
     pub fit: crate::contract::ImageFit,
     pub radii: Radii,
@@ -211,7 +211,7 @@ pub(crate) struct ImageDraw {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct BoxDraw {
+pub struct BoxDraw {
     pub fill: Color,
     pub radii: Radii,
     /// Color and width of a border drawn inside the node's edge.
@@ -231,7 +231,7 @@ impl BoxDraw {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct TextDraw {
+pub struct TextDraw {
     pub text: String,
     pub style: TextStyle,
     pub color: Color,
@@ -243,7 +243,7 @@ pub(crate) struct TextDraw {
 
 /// A vector shape in a square `view_box`, scaled to the node's box.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct PathDraw {
+pub struct PathDraw {
     pub commands: Vec<PathCmd>,
     pub view_box: f32,
     pub fill: Option<Color>,
@@ -253,7 +253,7 @@ pub(crate) struct PathDraw {
 /// The focus ring and pressed overlay a node paints for the nearest
 /// focusable node around it (or itself).
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct Indicator {
+pub struct Indicator {
     pub ring: Option<Color>,
     pub radii: Radii,
     pub overlay: Option<Color>,
@@ -277,7 +277,7 @@ impl Indicator {
 }
 
 /// Makes a node a focus stop.
-pub(crate) struct Interact<Msg> {
+pub struct Interact<Msg> {
     /// Sent when the node is activated (A).
     pub on_activate: Option<Msg>,
     /// Disabled controls keep their focus stop but never activate.
@@ -294,7 +294,7 @@ pub(crate) struct Interact<Msg> {
 }
 
 /// A text field's value and how to report a new one.
-pub(crate) struct Edit<Msg> {
+pub struct Edit<Msg> {
     pub value: String,
     pub on_change: std::rc::Rc<dyn Fn(String) -> Msg>,
     /// The index of the node that draws the value, for the caret.
@@ -306,7 +306,7 @@ pub(crate) struct Edit<Msg> {
 
 /// What activating a control does to the open popup (a Selector's menu).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) enum PopupAction {
+pub enum PopupAction {
     #[default]
     None,
     /// Opens this control's popup, or closes it when open.
@@ -340,7 +340,7 @@ impl<Msg> Interact<Msg> {
 
 /// What assistive technology reads for a node.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Semantics {
+pub struct Semantics {
     pub role: Role,
     pub label: Option<String>,
     pub value: Option<String>,
@@ -409,14 +409,14 @@ pub(crate) fn safe_destination(href: &str) -> Option<String> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Axis {
+pub enum Axis {
     Horizontal,
     Vertical,
 }
 
 /// Takes an input, its phase, and the runtime's clock in milliseconds; may
 /// return the app's message and a feedback cue.
-pub(crate) type Capture<Msg> = std::rc::Rc<
+pub type Capture<Msg> = std::rc::Rc<
     dyn Fn(
         crate::contract::Input,
         crate::contract::InputPhase,
@@ -425,7 +425,7 @@ pub(crate) type Capture<Msg> = std::rc::Rc<
 >;
 
 /// One built node. Children always follow their parent in the node list.
-pub(crate) struct Node<Msg> {
+pub struct Node<Msg> {
     pub id: u64,
     pub parent: Option<u32>,
     pub children: Vec<u32>,
@@ -559,7 +559,7 @@ impl<Msg> Node<Msg> {
 
 /// The text style and color `inherit` resolves to inside a component.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct Inherited {
+pub struct Inherited {
     pub style: TextStyle,
     pub color: Color,
 }
@@ -574,10 +574,10 @@ impl Inherited {
 }
 
 /// Builds a popup once the view is built.
-pub(crate) type Overlay<Msg> = Box<dyn FnOnce(&mut BuildCx<Msg>)>;
+pub type Overlay<Msg> = Box<dyn FnOnce(&mut BuildCx<Msg>)>;
 
 /// Builds elements into the node list.
-pub(crate) struct BuildCx<Msg> {
+pub struct BuildCx<Msg> {
     pub nodes: Vec<Node<Msg>>,
     pub tokens: &'static Tokens,
     /// The theme `tokens` come from, for what it adds beyond tokens.

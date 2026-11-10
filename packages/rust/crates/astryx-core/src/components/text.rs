@@ -75,7 +75,7 @@ pub enum HeadingType {
     Display3,
 }
 
-pub(crate) fn type_style(t: TypeStyle, family: FontFamily) -> TextStyle {
+pub fn type_style(t: TypeStyle, family: FontFamily) -> TextStyle {
     TextStyle {
         direction: None,
         family,
@@ -141,7 +141,7 @@ impl From<TextJustify> for TextAlign {
 }
 
 /// A text leaf node. Its accessible text is its words unless `sem` says otherwise.
-pub(crate) fn text_node<Msg>(text: impl Into<String>, style: TextStyle, color: Color) -> Node<Msg> {
+pub fn text_node<Msg>(text: impl Into<String>, style: TextStyle, color: Color) -> Node<Msg> {
     let text = text.into();
     Node::new(Style::default())
         .sem(Semantics::new(Role::Text, text.clone()))
@@ -155,7 +155,7 @@ pub(crate) fn text_node<Msg>(text: impl Into<String>, style: TextStyle, color: C
         }))
 }
 
-pub(crate) fn text_draw<Msg>(node: &mut Node<Msg>) -> &mut TextDraw {
+pub fn text_draw<Msg>(node: &mut Node<Msg>) -> &mut TextDraw {
     match &mut node.draw {
         Draw::Text(t) => t,
         _ => unreachable!("text_draw on a node without text"),
