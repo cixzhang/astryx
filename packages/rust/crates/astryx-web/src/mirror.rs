@@ -445,6 +445,9 @@ fn add_state(d: &mut NodeDesc, state: &astryx_core::A11yState) {
             d.attrs.push((name, n.to_string()));
         }
     }
+    if state.multiline {
+        d.attrs.push(("aria-multiline", "true".into()));
+    }
     if let Some(sort) = state.sort {
         let v = match sort {
             Sort::Ascending => "ascending",

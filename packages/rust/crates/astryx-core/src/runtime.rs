@@ -338,6 +338,12 @@ pub struct Runtime<A: App> {
     focus_requests: crate::element::FocusRequests,
     /// A pointer-only control pressed and not yet released.
     pointer_only_press: Option<u64>,
+    /// The focused multi-line field's lines as last laid out: its id and
+    /// each line's character range.
+    caret_lines: Option<(u64, Vec<(usize, usize)>)>,
+    /// An Up (-1) or Down (+1) for the focused multi-line field's caret,
+    /// resolved in the next frame, where text can be measured.
+    caret_line_move: Option<i32>,
     /// The offsets builds saw, for containers that rebuild on scroll, and
     /// the offsets last reported, by node id.
     built_scroll: HashMap<u64, f32>,
@@ -458,6 +464,8 @@ impl<A: App> Runtime<A> {
             coasts: HashMap::new(),
             focus_requests: Default::default(),
             pointer_only_press: None,
+            caret_lines: None,
+            caret_line_move: None,
             built_scroll: HashMap::new(),
             reported_scroll: HashMap::new(),
         }
@@ -2246,6 +2254,27 @@ impl<A: App> Runtime<A> {
         let id = self.nodes[ix].id;
         let value = self.field_value(id, edit);
         let caret = self.caret(id, &value);
+        if let (true, Some((lid, lines))) = (edit.multiline, &self.caret_lines) {
+            if *lid == id && self.composing.is_none() {
+                // A multi-line field wraps instead of sliding: the caret sits
+                // on its line at the width of the text before it there.
+                let line = line_of(lines, caret);
+                let start = lines[line].0;
+                let before: String = value.chars().skip(start).take(caret - start).collect();
+                let x = text.measure(&before, &t.style, None).width;
+                let rect = layout.rects[edit.text_node as usize];
+                let line_h = t.style.size * t.style.leading;
+                let h = (line_h - 0.01).ceil();
+                return Some(paint::Caret {
+                    text_node: edit.text_node as usize,
+                    shift: 0.0,
+                    rect: Rect::new((rect.x + x).round(), rect.y + line as f32 * line_h, 1.0, h),
+                    color: edit.caret,
+                    text: None,
+                    underline: None,
+                });
+            }
+        }
         let shown = |s: &str| {
             if edit.masked {
                 "\u{2022}".repeat(s.chars().count())
@@ -2737,6 +2766,110 @@ impl<A: App> Runtime<A> {
         for (report, y) in calls {
             report(y);
         }
+    }
+
+    /// Line breaks and line-to-line caret moves in a focused multi-line
+    /// field. `None` when the key is not one of those.
+    fn multiline_key(
+        &mut self,
+        event: &crate::contract::KeyEvent,
+    ) -> Option<crate::contract::KeyOutcome> {
+        use crate::contract::{Key, KeyOutcome};
+        let (ix, edit) = self.focused_edit()?;
+        if !edit.multiline || self.composing.is_some() {
+            return None;
+        }
+        let id = self.nodes[ix].id;
+        let sends_on_activate = self.nodes[ix]
+            .interact
+            .as_ref()
+            .is_some_and(|i| i.on_activate.is_some() || i.effect.is_some());
+        let handled = KeyOutcome {
+            command: Command::None,
+            handled: true,
+        };
+        match event.key {
+            Key::Enter if event.modifiers.shift || !sends_on_activate => {
+                if event.phase == InputPhase::Pressed {
+                    let command = self.text_input("\n");
+                    return Some(KeyOutcome {
+                        command: command.and(std::mem::take(&mut self.pending)),
+                        handled: true,
+                    });
+                }
+                Some(handled)
+            }
+            Key::Up | Key::Down => {
+                let step = if event.key == Key::Up { -1 } else { 1 };
+                let value = self.field_value(id, edit);
+                let caret = self.caret(id, &value);
+                let lines = match &self.caret_lines {
+                    Some((lid, lines)) if *lid == id => lines.clone(),
+                    _ => return None,
+                };
+                let line = line_of(&lines, caret);
+                let target = line as i32 + step;
+                // On the first or last line the arrow moves focus as usual.
+                if target < 0 || target >= lines.len() as i32 {
+                    return None;
+                }
+                if event.phase == InputPhase::Pressed {
+                    self.caret_line_move = Some(step);
+                    self.repaint = true;
+                }
+                Some(handled)
+            }
+            _ => None,
+        }
+    }
+
+    /// Lays out the focused multi-line field's lines and applies a pending
+    /// Up or Down to its caret.
+    fn layout_caret_lines(&mut self, text: &dyn TextMeasure) {
+        let Some((ix, edit)) = self.focused_edit() else {
+            self.caret_lines = None;
+            return;
+        };
+        if !edit.multiline {
+            self.caret_lines = None;
+            return;
+        }
+        let id = self.nodes[ix].id;
+        let crate::element::Draw::Text(t) = &self.nodes[edit.text_node as usize].draw else {
+            return;
+        };
+        let style = t.style;
+        let Some(width) = self
+            .layout
+            .as_ref()
+            .and_then(|l| l.rects.get(edit.text_node as usize))
+            .map(|r| r.width)
+        else {
+            return;
+        };
+        let value = self.field_value(id, edit);
+        let lines = wrap_lines(&value, width, &|s| text.measure(s, &style, None).width);
+        if let Some(step) = self.caret_line_move.take() {
+            let caret = self.caret(id, &value);
+            let line = line_of(&lines, caret);
+            let chars: Vec<char> = value.chars().collect();
+            let width_of = |a: usize, b: usize| -> f32 {
+                text.measure(&chars[a..b].iter().collect::<String>(), &style, None)
+                    .width
+            };
+            let x = width_of(lines[line].0, caret);
+            let target = (line as i32 + step).clamp(0, lines.len() as i32 - 1) as usize;
+            let (start, end) = lines[target];
+            let best = (start..=end)
+                .min_by(|&a, &b| {
+                    (width_of(start, a) - x)
+                        .abs()
+                        .total_cmp(&(width_of(start, b) - x).abs())
+                })
+                .unwrap_or(start);
+            self.carets.insert(id, best);
+        }
+        self.caret_lines = Some((id, lines));
     }
 
     /// The deepest enabled pointer-only control under `at`.
@@ -3316,6 +3449,9 @@ impl<A: App> Surface for Runtime<A> {
         if event.phase == InputPhase::Pressed {
             self.focus_by_pointer = false;
         }
+        if let Some(outcome) = self.multiline_key(&event) {
+            return outcome;
+        }
         let Some(command) = self.route_key(&event) else {
             return crate::contract::KeyOutcome::default();
         };
@@ -3484,6 +3620,7 @@ impl<A: App> Surface for Runtime<A> {
             layout.placed(&self.nodes, &shown)
         };
         self.track_hover(&rects);
+        self.layout_caret_lines(text);
         let caret = self.caret_paint(text);
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
@@ -3674,10 +3811,11 @@ impl<A: App> Surface for Runtime<A> {
             return Command::None;
         };
         let id = self.nodes[ix].id;
-        let (old, on_change, effect) = (
+        let (old, on_change, effect, multiline) = (
             self.field_value(id, edit),
             edit.on_change.clone(),
             edit.effect.clone(),
+            edit.multiline,
         );
         let mut caret = self.caret(id, &old);
         let mut value: Vec<char> = old.chars().collect();
@@ -3690,6 +3828,10 @@ impl<A: App> Surface for Runtime<A> {
                 }
                 '\u{7f}' if caret < value.len() => {
                     value.remove(caret);
+                }
+                '\n' if multiline => {
+                    value.insert(caret, '\n');
+                    caret += 1;
                 }
                 // A single-line field takes no other control characters.
                 c if c.is_control() => {}
@@ -3802,4 +3944,70 @@ fn report<Msg>(
 
 fn contains(r: Rect, p: Point) -> bool {
     p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height
+}
+
+/// Lines of `value` as a text box `width` wide wraps them: hard breaks at
+/// `\n`, soft breaks after spaces where the next word would pass the width.
+/// Each line is a character range without its line break.
+fn wrap_lines(value: &str, width: f32, measure: &dyn Fn(&str) -> f32) -> Vec<(usize, usize)> {
+    let chars: Vec<char> = value.chars().collect();
+    let mut lines = Vec::new();
+    let mut start = 0;
+    let breaks = chars
+        .iter()
+        .enumerate()
+        .filter(|&(_, &c)| c == '\n')
+        .map(|(i, _)| i)
+        .chain([chars.len()]);
+    for end in breaks {
+        // One paragraph, chars[start..end], broken greedily after spaces.
+        let mut line_start = start;
+        for j in start..end {
+            let soft_break = chars[j] == ' ' && j + 1 < end && chars[j + 1] != ' ';
+            if !soft_break {
+                continue;
+            }
+            let word_end = (j + 1..end).find(|&k| chars[k] == ' ').unwrap_or(end);
+            let candidate: String = chars[line_start..word_end].iter().collect();
+            if measure(candidate.trim_end()) > width + 0.5 {
+                lines.push((line_start, j + 1));
+                line_start = j + 1;
+            }
+        }
+        lines.push((line_start, end));
+        start = end + 1;
+    }
+    lines
+}
+
+/// The line holding caret position `caret`: at a soft break the caret shows
+/// at the start of the next line.
+fn line_of(lines: &[(usize, usize)], caret: usize) -> usize {
+    lines.iter().rposition(|&(s, _)| s <= caret).unwrap_or(0)
+}
+
+#[cfg(test)]
+mod wrap_tests {
+    use super::{line_of, wrap_lines};
+
+    #[test]
+    fn wraps_at_spaces_and_breaks_at_newlines() {
+        // Every character is 10 points wide.
+        let m = |s: &str| s.chars().count() as f32 * 10.0;
+        let lines = wrap_lines("aaa bbb ccc\ndd", 75.0, &m);
+        assert_eq!(lines, vec![(0, 8), (8, 11), (12, 14)]);
+        assert_eq!(line_of(&lines, 3), 0);
+        assert_eq!(
+            line_of(&lines, 8),
+            1,
+            "at a soft break the caret starts the next line"
+        );
+        assert_eq!(line_of(&lines, 12), 2);
+        assert_eq!(wrap_lines("", 50.0, &m), vec![(0, 0)]);
+        assert_eq!(
+            wrap_lines("a\n", 50.0, &m),
+            vec![(0, 1), (2, 2)],
+            "a trailing break opens a line"
+        );
+    }
 }

@@ -373,6 +373,11 @@ pub struct Edit<Msg> {
     pub text_node: u32,
     /// Drawn masked, so the caret follows the mask.
     pub masked: bool,
+    /// The field takes several lines: Shift+Enter (and Enter, when the
+    /// field sends nothing on activate) types a line break, Up and Down move
+    /// the caret between lines, and the caret follows wrapped lines. The
+    /// text node must wrap (give it the field's width).
+    pub multiline: bool,
     pub caret: Color,
 }
 

@@ -343,6 +343,7 @@ impl<Msg: Clone> Build<Msg> for TextInput<Msg> {
                     effect: None,
                     text_node: text_ix,
                     masked: self.input_type == TextInputType::Password,
+                    multiline: false,
                     caret: c.text_primary.into(),
                 };
                 if let Some(i) = cx.nodes[field_ix as usize].interact.as_mut() {

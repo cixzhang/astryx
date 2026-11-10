@@ -1011,6 +1011,8 @@ pub struct A11yState {
     pub sort: Option<Sort>,
     /// A range value: minimum, maximum, and current.
     pub range: Option<(f64, f64, f64)>,
+    /// A text field that takes several lines.
+    pub multiline: bool,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to

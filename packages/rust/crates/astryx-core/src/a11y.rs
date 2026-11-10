@@ -143,7 +143,15 @@ fn collect<Msg>(cx: &Cx<Msg>, ix: usize, covered: bool, out: &mut Vec<A11yNode>)
         selected: sem.selected,
         focusable: node.interact.as_ref().is_some_and(|i| i.focusable),
         live: sem.live,
-        state: resolve(&sem.state, &sem.refs, cx.names),
+        state: {
+            let mut s = resolve(&sem.state, &sem.refs, cx.names);
+            s.multiline |= node
+                .interact
+                .as_ref()
+                .and_then(|i| i.edit.as_ref())
+                .is_some_and(|e| e.multiline);
+            s
+        },
         children: Vec::new(),
     };
     let covers = sem.label.is_some() && (sem.one_stop || names_from_content(sem.role));

@@ -336,6 +336,7 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
                     effect: self.edit_effect.clone(),
                     text_node: text_ix,
                     masked,
+                    multiline: false,
                     caret: color(c.text_primary),
                 };
                 if let Some(i) = cx.nodes[field_ix as usize].interact.as_mut() {
