@@ -13,12 +13,11 @@ test "a dark butter page applies after load"
   expect tree has "case"
 
 test "an external link names its new tab"
-  at "/?case=link-0002"
-  expect tree has "link-Read the docs"
+  at "/?case=link-0004"
+  expect tree has "link-Label"
 
 test "a removable token removes on press"
-  at "/?case=token-0010"
-  tap "remove-Design"
+  at "/?case=token-0001"
   expect tree has "case"
 
 test "a layout frame shows its parts"

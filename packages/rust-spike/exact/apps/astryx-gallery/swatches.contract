@@ -22,3 +22,8 @@ component Filler
   view
     view padding="astryx.space.s2" border-radius="astryx.radius.inner" background-color="astryx.surface.blue" min-width=48
       text label font="astryx.type.supporting" color="astryx.text.blue"
+
+// QA's "boxes" fixture: a 40 x 24 box with a 4 px radius on the muted background.
+component FixtureBox
+  view
+    view width=40 height=24 border-radius="astryx.radius.inner" background-color="astryx.surface.muted"

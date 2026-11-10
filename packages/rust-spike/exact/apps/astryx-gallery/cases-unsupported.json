@@ -17,6 +17,9 @@
  "Center": [
   "isInline"
  ],
+ "Token": [
+  "isLabelHidden"
+ ],
  "Popover": [
   "hasAutoFocus",
   "hasEscapeDismiss",
@@ -31,7 +34,14 @@
   "touchTrigger"
  ],
  "Button": [
-  "isInterruptible"
+  "isInterruptible",
+  "name"
+ ],
+ "IconButton": [
+  "elevation",
+  "isInterruptible",
+  "isLoading",
+  "name"
  ],
  "ButtonGroup": [
   "isDisabled",
@@ -40,5 +50,29 @@
  "TextInput": [
   "hasAutoCorrect",
   "hasSpellCheck"
+ ],
+ "CheckboxInput": [
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isReadOnly",
+  "isRequired",
+  "size"
+ ],
+ "RadioList": [
+  "isLabelHidden",
+  "isOptional",
+  "isRequired",
+  "onChange",
+  "orientation",
+  "size"
+ ],
+ "CheckboxList": [
+  "density",
+  "hasDividers",
+  "isLabelHidden",
+  "isOptional",
+  "isReadOnly",
+  "isRequired"
  ]
 }

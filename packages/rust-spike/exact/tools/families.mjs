@@ -37,12 +37,12 @@ export const FAMILIES = {
     smoke: [{ id: 'foundations-0001', title: 'Token swatches', props: {} }],
   },
   Text: {
-    component: 'Text', map: childrenAs('text'),
+    component: 'Text', textProp: 'text', map: childrenAs('text'),
     defaults: { text: 'The quick brown fox jumps over the lazy dog', type: 'body', size: '', color: 'primary', weight: '', maxLines: 0, textWrap: '', justify: 'start', wordBreak: 'break-word', hasStrikethrough: false, hasTabularNumbers: false },
     smoke: sweep('Text', {}, { type: ['large', 'label', 'supporting', 'code', 'display-1', 'display-2', 'display-3'], size: ['xsm', 'sm', 'base', 'lg', 'xl', '2xl'], color: ['secondary', 'disabled', 'accent'], weight: ['medium', 'semibold', 'bold'], maxLines: [1], hasStrikethrough: [true], hasTabularNumbers: [true] }),
   },
   Heading: {
-    component: 'Heading', map: childrenAs('text'),
+    component: 'Heading', textProp: 'text', map: childrenAs('text'),
     defaults: { text: 'Section heading', level: 1, accessibilityLevel: 0, weight: '', color: 'primary', textWrap: '', justify: 'start', wordBreak: 'break-word', hasStrikethrough: false },
     smoke: sweep('Heading', {}, { level: [1, 3, 4, 5, 6], color: ['secondary'] }),
   },
@@ -67,7 +67,7 @@ export const FAMILIES = {
     wrap: inner => ['view width=240 height=80 display="flex" align-items="center" justify-content="center"', ...inner.map(l => `  ${l}`)],
   },
   Link: {
-    component: 'Link', map: childrenAs('text'),
+    component: 'Link', textProp: 'text', map: p => { const { label, ...r } = childrenAs('text')(p); return label === undefined ? r : { text: String(label), ...r }; },
     defaults: { text: 'Read the docs', href: '#', hasUnderline: false, isDisabled: false, isExternalLink: false, isStandalone: false, size: '', weight: '', color: 'accent' },
     smoke: sweep('Link', {}, { isExternalLink: [true], hasUnderline: [true], isDisabled: [true] }),
   },
@@ -83,13 +83,13 @@ export const FAMILIES = {
     smoke: sweep('Avatar', {}, { size: ['xsm', 'sm', 'lg', 'xl'], shape: ['rounded', 'square'], status: ['success', 'neutral', 'error'], name: ['Alice'] }),
   },
   AvatarGroup: {
-    component: 'AvatarGroup',
+    noSlot: true, component: 'AvatarGroup',
     defaults: { items: avatars, size: 'md', max: 4 },
     uses: ['AvatarGroup', 'AvatarItem'], types: { items: 'AvatarItem[]' },
     smoke: sweep('AvatarGroup', {}, { size: ['sm', 'lg'], max: [2, 6] }),
   },
   Indicator: {
-    component: 'CheckboxIndicator', qa: { file: 'Indicator', components: ['CheckboxIndicator'] }, uses: ['CheckboxIndicator'],
+    noSlot: true, component: 'CheckboxIndicator', qa: { file: 'Indicator', components: ['CheckboxIndicator'] }, uses: ['CheckboxIndicator'],
     defaults: { state: 'unchecked', size: 'md', isDisabled: false },
     smoke: sweep('Indicator', {}, { state: ['checked', 'indeterminate'], isDisabled: [true] }),
   },
@@ -98,17 +98,17 @@ export const FAMILIES = {
     defaults: { direction: 'vertical', gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false },
     children: FILL3,
     smoke: sweep('Stack', {}, { direction: ['horizontal'], gap: [0, 1, 4, 8], padding: [2, 4], align: ['start', 'center', 'end'], justify: ['center', 'between'], wrap: ['wrap'] }),
-    wrap: inner => ['view width=320 height=200 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width=320 height=200', ...inner.map(l => `  ${l}`)],
   },
   HStack: {
     component: 'HStack', qa: { file: 'Stack', components: ['HStack'] }, defaults: { gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false }, children: FILL3,
     smoke: sweep('HStack', {}, { gap: [0, 4], align: ['center'], justify: ['between'] }),
-    wrap: inner => ['view width=320 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
   },
   VStack: {
     component: 'VStack', qa: { file: 'Stack', components: ['VStack'] }, defaults: { gap: 0, padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1, hAlign: '', vAlign: '', align: 'stretch', justify: 'start', wrap: 'nowrap', isScrollable: false }, children: FILL3,
     smoke: sweep('VStack', {}, { gap: [0, 4], align: ['center', 'end'] }),
-    wrap: inner => ['view width=320 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
   },
   Grid: {
     component: 'Grid', defaults: { columns: 3, minWidth: 0, gap: 2, rowGap: -1, columnGap: -1, align: '', justify: '' },
@@ -119,7 +119,7 @@ export const FAMILIES = {
   Center: {
     component: 'Center', defaults: { axis: 'both', padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1 }, children: ['Filler(label="Centred")'],
     smoke: sweep('Center', {}, { axis: ['horizontal', 'vertical'], padding: [4] }),
-    wrap: inner => ['view width=240 height=120 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width=240 height=120', ...inner.map(l => `  ${l}`)],
   },
   AspectRatio: {
     component: 'AspectRatio', defaults: { ratio: 1.7778, shape: 'rectangle', fit: 'cover' }, children: ['view flex=1 background-color="astryx.surface.blue"'],
@@ -151,7 +151,7 @@ export const FAMILIES = {
     wrap: inner => ['view width=600 height=360 background-color="astryx.surface.surface"', ...inner.map(l => `  ${l}`)],
   },
   EmptyState: {
-    component: 'EmptyState', defaults: { title: 'Title', description: 'Try a different search.', icon: 'search', headingLevel: 3, isCompact: false },
+    component: 'EmptyState', defaults: { title: 'Title', description: '', icon: '', headingLevel: 3, isCompact: false },
     children: ['Filler(label="Action")'],
     smoke: sweep('EmptyState', {}, { isCompact: [true], icon: [''], description: [''] }),
   },
@@ -171,7 +171,7 @@ export const FAMILIES = {
   },
   Collapsible: {
     component: 'Collapsible', uses: ['Collapsible', 'Text'],
-    defaults: { title: 'Shipping details', value: 'a', isOpen: false, isDisabled: false, chevronPosition: 'end', density: 'balanced', hasDivider: false, still: true },
+    defaults: { title: 'Title', value: 'a', isOpen: false, isDisabled: false, chevronPosition: 'end', density: 'balanced', hasDivider: false, still: true },
     map: p => { const { defaultIsOpen, ...r } = p; return defaultIsOpen === undefined ? r : { ...r, isOpen: r.isOpen ?? defaultIsOpen }; },
     children: [TEXT('Ships in two business days.')],
     wrap: inner => ['view width=320', `  ${inner[0].replace(/\)$/, ', toggle=noop)')}`, ...inner.slice(1).map(l => `  ${l}`)],
@@ -181,22 +181,22 @@ export const FAMILIES = {
     component: 'StackItem', qa: { file: 'Stack', components: ['StackItem'] }, uses: ['Stack', 'StackItem'],
     defaults: { size: 'static', isScrollable: false, crossAlignSelf: '' },
     children: ['Filler(label="Item")'],
-    wrap: inner => ['view width=320 height=120 background-color="astryx.surface.muted"', `  Stack(direction="horizontal", ${STACK_CALL})`, '    Filler(label="Before")', ...inner.map(l => `    ${l}`), '    Filler(label="After")'],
+    wrap: inner => ['view width=320 height=120', `  Stack(direction="horizontal", ${STACK_CALL})`, '    Filler(label="Before")', ...inner.map(l => `    ${l}`), '    Filler(label="After")'],
     smoke: sweep('StackItem', {}, { size: ['fill'], crossAlignSelf: ['center', 'end', 'stretch'] }),
   },
   CheckIndicator: {
-    component: 'CheckIndicator', qa: { file: 'Indicator', components: ['CheckIndicator'] },
+    noSlot: true, component: 'CheckIndicator', qa: { file: 'Indicator', components: ['CheckIndicator'] },
     defaults: { state: 'unchecked', size: 'md', isDisabled: false },
     smoke: sweep('CheckIndicator', {}, { state: ['checked'] }),
   },
   RadioIndicator: {
-    component: 'RadioIndicator', qa: { file: 'Indicator', components: ['RadioIndicator'] },
+    noSlot: true, component: 'RadioIndicator', qa: { file: 'Indicator', components: ['RadioIndicator'] },
     defaults: { state: 'unchecked', size: 'md', isDisabled: false },
     smoke: sweep('RadioIndicator', {}, { state: ['checked'] }),
   },
   Tooltip: {
     component: 'Tooltip', uses: ['Tooltip'],
-    defaults: { id: 'case-popover', content: 'Copy link', placement: 'above', alignment: 'center', delay: 0, isEnabled: true, focusTrigger: 'auto', still: true },
+    defaults: { id: 'case-popover', content: 'Label', placement: 'above', alignment: 'center', delay: 0, isEnabled: true, focusTrigger: 'auto', still: true },
     opens: p => p.isOpen !== false && p.isEnabled !== false,
     children: ['Filler(label="Hover me")'],
     wrap: inner => ['column align-items="center" justify-content="center" width=320 height=160', ...inner.map(l => `  ${l}`)],
@@ -218,7 +218,7 @@ export const FAMILIES = {
     smoke: sweep('HoverCard', {}, { placement: ['above', 'end'], alignment: ['start'] }),
   },
   Button: {
-    component: 'Button', actions: { press: 'noop' },
+    noSlot: true, component: 'Button', actions: { press: 'noop' },
     defaults: { label: 'Label', variant: 'secondary', size: 'md', elevation: 'none', icon: '', isLoading: false, isDisabled: false, isIconOnly: false, groupEdge: '' },
     map: p => (p.isIconOnly && !p.icon ? { ...p, icon: 'search' } : p),
     smoke: sweep('Button', {}, { variant: ['primary', 'ghost', 'destructive'], size: ['sm', 'lg'], isLoading: [true], isDisabled: [true], isIconOnly: [true], icon: ['check'] }),
@@ -260,12 +260,12 @@ export const FAMILIES = {
     smoke: sweep('CheckboxInput', {}, { state: ['checked', 'indeterminate'], description: ['Once a week.'], isDisabled: [true] }),
   },
   RadioList: {
-    component: 'RadioList', actions: { change: 'noopS' }, uses: ['RadioList', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
+    noSlot: true, component: 'RadioList', actions: { change: 'noopS' }, uses: ['RadioList', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
     defaults: { name: 'plan', label: 'Plan', items: CHOICES, value: 'pro', isDisabled: false },
     smoke: sweep('RadioList', {}, { value: ['free'], isDisabled: [true] }),
   },
   CheckboxList: {
-    component: 'CheckboxList', actions: { change: 'noopSB' }, uses: ['CheckboxList', 'ChoiceItem'], types: { items: 'ChoiceItem[]', values: 'string[]' },
+    noSlot: true, component: 'CheckboxList', actions: { change: 'noopSB' }, uses: ['CheckboxList', 'ChoiceItem'], types: { items: 'ChoiceItem[]', values: 'string[]' },
     defaults: { label: 'Plans', items: CHOICES, values: ['pro'], isDisabled: false },
     smoke: sweep('CheckboxList', {}, { values: [['free', 'team']], isDisabled: [true] }),
   },
@@ -292,7 +292,7 @@ export const FAMILIES = {
     wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
   },
   SegmentedControl: {
-    component: 'SegmentedControl', actions: { change: 'noopS' }, uses: ['SegmentedControl', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
+    noSlot: true, component: 'SegmentedControl', actions: { change: 'noopS' }, uses: ['SegmentedControl', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
     defaults: { label: 'Label', items: CHOICES, value: 'pro', size: 'md', layout: 'hug', isDisabled: false },
     map: p => { const { value, onChange, ...r } = p; return r; },
     smoke: sweep('SegmentedControl', {}, { size: ['sm', 'lg'], layout: ['fill'], isDisabled: [true] }),
@@ -332,7 +332,7 @@ export const FAMILIES = {
   },
   Dialog: {
     component: 'Dialog', uses: ['Dialog', 'Text', 'Button'],
-    defaults: { id: 'case-dialog', title: 'Delete project?', purpose: 'form', variant: 'standard', padding: 6, hasCloseButton: true, still: true },
+    defaults: { id: 'case-dialog', title: 'Title', purpose: 'form', variant: 'standard', padding: 6, hasCloseButton: true, still: true },
     opensModal: p => p.isOpen !== false && p.isInline !== true,
     map: p => { const { isOpen, isInline, ...r } = p; return r; },
     children: [TEXT('This removes the project and its history.'), 'row gap="astryx.space.s2" justify-content="flex-end"', '  Button(label="Cancel", variant="secondary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=noop)', '  Button(label="Delete", variant="destructive", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=noop)'],
@@ -363,7 +363,7 @@ export const FAMILIES = {
     component: 'Resizable', actions: { resize: 'noopN' }, uses: ['Resizable'],
     defaults: { label: 'Resize sidebar', width: 160, minWidth: 120, maxWidth: 280 },
     children: ['Filler(label="Sidebar")'],
-    wrap: inner => ['view width=360 height=160 background-color="astryx.surface.muted"', ...inner.map(l => `  ${l}`)],
+    wrap: inner => ['view width=360 height=160', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Resizable', {}, { width: [240] }),
   },
 };
