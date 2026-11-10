@@ -1,0 +1,390 @@
+{
+ "family": "Dialog",
+ "source": "packages/core/src/Dialog/Dialog.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "DialogHeader",
+   "visualProps": {
+    "isOpen": [
+     false,
+     true
+    ],
+    "variant": [
+     "standard",
+     "fullscreen"
+    ],
+    "purpose": [
+     "required",
+     "form",
+     "info"
+    ],
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "isInline": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "isOpen": false,
+    "variant": "standard",
+    "purpose": "info",
+    "padding": 0,
+    "isInline": false
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "dialogheader-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "dialogheader-0002",
+     "kind": "sweep",
+     "props": {
+      "isOpen": true
+     }
+    },
+    {
+     "id": "dialogheader-0003",
+     "kind": "sweep",
+     "props": {
+      "variant": "fullscreen"
+     }
+    },
+    {
+     "id": "dialogheader-0004",
+     "kind": "sweep",
+     "props": {
+      "purpose": "required"
+     }
+    },
+    {
+     "id": "dialogheader-0005",
+     "kind": "sweep",
+     "props": {
+      "purpose": "form"
+     }
+    },
+    {
+     "id": "dialogheader-0006",
+     "kind": "sweep",
+     "props": {
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "dialogheader-0007",
+     "kind": "sweep",
+     "props": {
+      "padding": 1
+     }
+    },
+    {
+     "id": "dialogheader-0008",
+     "kind": "sweep",
+     "props": {
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "dialogheader-0009",
+     "kind": "sweep",
+     "props": {
+      "padding": 2
+     }
+    },
+    {
+     "id": "dialogheader-0010",
+     "kind": "sweep",
+     "props": {
+      "padding": 3
+     }
+    },
+    {
+     "id": "dialogheader-0011",
+     "kind": "sweep",
+     "props": {
+      "padding": 4
+     }
+    },
+    {
+     "id": "dialogheader-0012",
+     "kind": "sweep",
+     "props": {
+      "padding": 5
+     }
+    },
+    {
+     "id": "dialogheader-0013",
+     "kind": "sweep",
+     "props": {
+      "padding": 6
+     }
+    },
+    {
+     "id": "dialogheader-0014",
+     "kind": "sweep",
+     "props": {
+      "padding": 8
+     }
+    },
+    {
+     "id": "dialogheader-0015",
+     "kind": "sweep",
+     "props": {
+      "padding": 10
+     }
+    },
+    {
+     "id": "dialogheader-0016",
+     "kind": "sweep",
+     "props": {
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0017",
+     "kind": "pairwise",
+     "props": {
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 0.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0018",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 1
+     }
+    },
+    {
+     "id": "dialogheader-0019",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "required",
+      "padding": 1.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0020",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0021",
+     "kind": "pairwise",
+     "props": {
+      "variant": "fullscreen",
+      "purpose": "required",
+      "padding": 1
+     }
+    },
+    {
+     "id": "dialogheader-0022",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 2,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0023",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 3
+     }
+    },
+    {
+     "id": "dialogheader-0024",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 4
+     }
+    },
+    {
+     "id": "dialogheader-0025",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 5
+     }
+    },
+    {
+     "id": "dialogheader-0026",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 6
+     }
+    },
+    {
+     "id": "dialogheader-0027",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 8
+     }
+    },
+    {
+     "id": "dialogheader-0028",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "required",
+      "padding": 10
+     }
+    },
+    {
+     "id": "dialogheader-0029",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "purpose": "required",
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "dialogheader-0030",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 2
+     }
+    },
+    {
+     "id": "dialogheader-0031",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 3,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0032",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 4,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0033",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0034",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 6,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0035",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 8,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0036",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "variant": "fullscreen",
+      "purpose": "form",
+      "padding": 10,
+      "isInline": true
+     }
+    },
+    {
+     "id": "dialogheader-0037",
+     "kind": "pairwise",
+     "props": {
+      "purpose": "form",
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "dialogheader-0038",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "isInline": true
+     }
+    }
+   ]
+  },
+  {
+   "component": "useImperativeDialog",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "useimperativedialog-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

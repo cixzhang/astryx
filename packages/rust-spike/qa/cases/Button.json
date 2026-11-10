@@ -1,0 +1,340 @@
+{
+ "family": "Button",
+ "source": "packages/core/src/Button/Button.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Button",
+   "visualProps": {
+    "variant": [
+     "primary",
+     "secondary",
+     "ghost",
+     "destructive"
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "elevation": [
+     "none",
+     "low",
+     "med",
+     "high"
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "isInterruptible": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isIconOnly": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "variant": "secondary",
+    "size": "md",
+    "elevation": "none",
+    "isLoading": false,
+    "isInterruptible": false,
+    "isDisabled": false,
+    "isIconOnly": false
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "button-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "button-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "primary"
+     }
+    },
+    {
+     "id": "button-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "ghost"
+     }
+    },
+    {
+     "id": "button-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "destructive"
+     }
+    },
+    {
+     "id": "button-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "button-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "button-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "button-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "button-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "button-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "button-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isInterruptible": true
+     }
+    },
+    {
+     "id": "button-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "button-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "primary",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "button-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "primary",
+      "elevation": "low",
+      "isLoading": true,
+      "isInterruptible": true,
+      "isDisabled": true,
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "primary",
+      "size": "lg",
+      "elevation": "med",
+      "isInterruptible": true,
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "elevation": "low",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "button-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "elevation": "high",
+      "isLoading": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "button-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "ghost",
+      "size": "sm",
+      "elevation": "med",
+      "isLoading": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "button-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "ghost",
+      "elevation": "high",
+      "isInterruptible": true
+     }
+    },
+    {
+     "id": "button-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "ghost",
+      "size": "lg",
+      "isInterruptible": true,
+      "isDisabled": true,
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "destructive",
+      "size": "sm",
+      "elevation": "high",
+      "isInterruptible": true,
+      "isIconOnly": true
+     }
+    },
+    {
+     "id": "button-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "destructive",
+      "elevation": "med",
+      "isLoading": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "button-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "destructive",
+      "size": "lg",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "button-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "primary",
+      "size": "sm",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "button-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "elevation": "med",
+      "isInterruptible": true
+     }
+    },
+    {
+     "id": "button-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "ghost",
+      "size": "sm",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "button-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "variant": "destructive",
+      "size": "sm"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1639 @@
+{
+ "family": "Grid",
+ "source": "packages/core/src/Grid/Grid.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "GridSpan",
+   "visualProps": {
+    "gap": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "rowGap": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "columnGap": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "align": [
+     "start",
+     "center",
+     "end",
+     "stretch"
+    ],
+    "justify": [
+     "start",
+     "center",
+     "end",
+     "stretch"
+    ]
+   },
+   "defaults": {
+    "gap": 0,
+    "rowGap": 0,
+    "columnGap": 0,
+    "align": "start",
+    "justify": "start"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "gridspan-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "gridspan-0002",
+     "kind": "sweep",
+     "props": {
+      "gap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0003",
+     "kind": "sweep",
+     "props": {
+      "gap": 1
+     }
+    },
+    {
+     "id": "gridspan-0004",
+     "kind": "sweep",
+     "props": {
+      "gap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0005",
+     "kind": "sweep",
+     "props": {
+      "gap": 2
+     }
+    },
+    {
+     "id": "gridspan-0006",
+     "kind": "sweep",
+     "props": {
+      "gap": 3
+     }
+    },
+    {
+     "id": "gridspan-0007",
+     "kind": "sweep",
+     "props": {
+      "gap": 4
+     }
+    },
+    {
+     "id": "gridspan-0008",
+     "kind": "sweep",
+     "props": {
+      "gap": 5
+     }
+    },
+    {
+     "id": "gridspan-0009",
+     "kind": "sweep",
+     "props": {
+      "gap": 6
+     }
+    },
+    {
+     "id": "gridspan-0010",
+     "kind": "sweep",
+     "props": {
+      "gap": 8
+     }
+    },
+    {
+     "id": "gridspan-0011",
+     "kind": "sweep",
+     "props": {
+      "gap": 10
+     }
+    },
+    {
+     "id": "gridspan-0012",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0013",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0014",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0015",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0016",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0017",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0018",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0019",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0020",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0021",
+     "kind": "sweep",
+     "props": {
+      "rowGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0022",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0023",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0024",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0025",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0026",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0027",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0028",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0029",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0030",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0031",
+     "kind": "sweep",
+     "props": {
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0032",
+     "kind": "sweep",
+     "props": {
+      "align": "center"
+     }
+    },
+    {
+     "id": "gridspan-0033",
+     "kind": "sweep",
+     "props": {
+      "align": "end"
+     }
+    },
+    {
+     "id": "gridspan-0034",
+     "kind": "sweep",
+     "props": {
+      "align": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0035",
+     "kind": "sweep",
+     "props": {
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0036",
+     "kind": "sweep",
+     "props": {
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0037",
+     "kind": "sweep",
+     "props": {
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0038",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 0.5,
+      "columnGap": 0.5,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0039",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 1,
+      "columnGap": 1,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0040",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 1.5,
+      "columnGap": 1.5,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0041",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 2,
+      "columnGap": 2,
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0042",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 3,
+      "columnGap": 3,
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0043",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 4,
+      "columnGap": 4,
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0044",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 5,
+      "columnGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0045",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 6,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0046",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 8,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0047",
+     "kind": "pairwise",
+     "props": {
+      "rowGap": 10,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0048",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "columnGap": 0.5,
+      "align": "end",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0049",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 0.5,
+      "align": "stretch",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0050",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 1,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0051",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 1.5,
+      "columnGap": 1,
+      "align": "center"
+     }
+    },
+    {
+     "id": "gridspan-0052",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 2,
+      "columnGap": 3,
+      "align": "center",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0053",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 3,
+      "columnGap": 2,
+      "align": "center"
+     }
+    },
+    {
+     "id": "gridspan-0054",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 4,
+      "columnGap": 5,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0055",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 5,
+      "columnGap": 4,
+      "align": "center",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0056",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 6,
+      "columnGap": 8,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0057",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 8,
+      "columnGap": 6,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0058",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 10,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0059",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "columnGap": 1,
+      "align": "stretch",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0060",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 0.5,
+      "columnGap": 1.5,
+      "align": "end"
+     }
+    },
+    {
+     "id": "gridspan-0061",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 1,
+      "align": "center",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0062",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 1.5,
+      "columnGap": 0.5,
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0063",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 2,
+      "columnGap": 4,
+      "align": "end"
+     }
+    },
+    {
+     "id": "gridspan-0064",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 3,
+      "columnGap": 5,
+      "align": "end",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0065",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 4,
+      "columnGap": 2,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0066",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 5,
+      "columnGap": 3,
+      "align": "end",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0067",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 6,
+      "columnGap": 10,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0068",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 8,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0069",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 10,
+      "columnGap": 6,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0070",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "columnGap": 1.5,
+      "align": "center",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0071",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 0.5,
+      "columnGap": 1,
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0072",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 1,
+      "columnGap": 0.5,
+      "align": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0073",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 1.5,
+      "align": "end",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0074",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 2,
+      "columnGap": 5,
+      "align": "stretch",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0075",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 3,
+      "columnGap": 4,
+      "align": "stretch",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0076",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 4,
+      "columnGap": 3,
+      "align": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0077",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 5,
+      "columnGap": 2,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0078",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 6,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0079",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 8,
+      "columnGap": 10,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0080",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 10,
+      "columnGap": 8,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0081",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0082",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 0.5,
+      "columnGap": 3,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0083",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 1,
+      "columnGap": 4,
+      "align": "end",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0084",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 1.5,
+      "columnGap": 5,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0085",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 2,
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0086",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 3,
+      "columnGap": 0.5,
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0087",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 4,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0088",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 5,
+      "columnGap": 1.5,
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0089",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 6,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0090",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 8,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0091",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 10,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0092",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0093",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 0.5,
+      "columnGap": 2,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0094",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 1,
+      "columnGap": 5,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0095",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 1.5,
+      "columnGap": 4,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0096",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 2,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0097",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0098",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 4,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0099",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 5,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0100",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 6,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0101",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 8,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0102",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 10,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0103",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "columnGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0104",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 0.5,
+      "columnGap": 5,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0105",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 1,
+      "columnGap": 2,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0106",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 1.5,
+      "columnGap": 3,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0107",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 2,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0108",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 3,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0109",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0110",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 5,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0111",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 6,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0112",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 8,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0113",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 10,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0114",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "columnGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0115",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 0.5,
+      "columnGap": 4,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0116",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 1,
+      "columnGap": 3,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0117",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 1.5,
+      "columnGap": 2,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0118",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 2,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0119",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 3,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0120",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 4,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0121",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0122",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 6,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0123",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 8,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0124",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 10,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0125",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "columnGap": 6,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0126",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 0.5,
+      "columnGap": 8,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0127",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 1,
+      "columnGap": 10,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0128",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0129",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 2,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0130",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 3,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0131",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 4,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0132",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 5,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0133",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 6,
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0134",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 8,
+      "columnGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0135",
+     "kind": "pairwise",
+     "props": {
+      "gap": 6,
+      "rowGap": 10,
+      "columnGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0136",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0137",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 0.5,
+      "columnGap": 6,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0138",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 1,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0139",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 1.5,
+      "columnGap": 10,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0140",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 2,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0141",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 3,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0142",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 4,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0143",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 5,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0144",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 6,
+      "columnGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0145",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 8,
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0146",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 10,
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0147",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0148",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 0.5,
+      "align": "center",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "gridspan-0149",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 1,
+      "columnGap": 6,
+      "align": "end",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "gridspan-0150",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 1.5,
+      "columnGap": 8,
+      "align": "stretch",
+      "justify": "stretch"
+     }
+    },
+    {
+     "id": "gridspan-0151",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 2,
+      "columnGap": 0.5
+     }
+    },
+    {
+     "id": "gridspan-0152",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 3,
+      "columnGap": 1
+     }
+    },
+    {
+     "id": "gridspan-0153",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 4,
+      "columnGap": 1.5
+     }
+    },
+    {
+     "id": "gridspan-0154",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 5,
+      "columnGap": 2
+     }
+    },
+    {
+     "id": "gridspan-0155",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 6,
+      "columnGap": 5
+     }
+    },
+    {
+     "id": "gridspan-0156",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 8,
+      "columnGap": 3
+     }
+    },
+    {
+     "id": "gridspan-0157",
+     "kind": "pairwise",
+     "props": {
+      "gap": 10,
+      "rowGap": 10,
+      "columnGap": 4
+     }
+    },
+    {
+     "id": "gridspan-0158",
+     "kind": "pairwise",
+     "props": {
+      "gap": 0.5,
+      "rowGap": 0.5,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0159",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1,
+      "rowGap": 1,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0160",
+     "kind": "pairwise",
+     "props": {
+      "gap": 1.5,
+      "rowGap": 1.5,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0161",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 2,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0162",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 2,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0163",
+     "kind": "pairwise",
+     "props": {
+      "gap": 2,
+      "rowGap": 2,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0164",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 3,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0165",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 3,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0166",
+     "kind": "pairwise",
+     "props": {
+      "gap": 3,
+      "rowGap": 3,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0167",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 4,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0168",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 4,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0169",
+     "kind": "pairwise",
+     "props": {
+      "gap": 4,
+      "rowGap": 4,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0170",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 5,
+      "columnGap": 6
+     }
+    },
+    {
+     "id": "gridspan-0171",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 5,
+      "columnGap": 8
+     }
+    },
+    {
+     "id": "gridspan-0172",
+     "kind": "pairwise",
+     "props": {
+      "gap": 5,
+      "rowGap": 5,
+      "columnGap": 10
+     }
+    },
+    {
+     "id": "gridspan-0173",
+     "kind": "pairwise",
+     "props": {
+      "gap": 8,
+      "rowGap": 8,
+      "columnGap": 5
+     }
+    }
+   ]
+  }
+ ]
+}

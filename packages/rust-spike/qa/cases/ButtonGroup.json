@@ -1,0 +1,199 @@
+{
+ "family": "ButtonGroup",
+ "source": "packages/core/src/ButtonGroup/ButtonGroup.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "ButtonGroup",
+   "visualProps": {
+    "orientation": [
+     "horizontal",
+     "vertical"
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "elevation": [
+     "none",
+     "low",
+     "med",
+     "high"
+    ]
+   },
+   "defaults": {
+    "orientation": "horizontal",
+    "size": "md",
+    "isDisabled": false,
+    "elevation": "none"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "buttongroup-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "buttongroup-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "buttongroup-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "buttongroup-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "buttongroup-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "buttongroup-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "buttongroup-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "buttongroup-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "buttongroup-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "buttongroup-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "buttongroup-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical",
+      "size": "sm",
+      "isDisabled": true,
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "buttongroup-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "buttongroup-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical",
+      "size": "lg",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "buttongroup-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isDisabled": true,
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "buttongroup-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical",
+      "size": "sm",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "buttongroup-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "buttongroup-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "elevation": "high"
+     }
+    }
+   ]
+  }
+ ]
+}

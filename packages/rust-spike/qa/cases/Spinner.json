@@ -1,0 +1,158 @@
+{
+ "family": "Spinner",
+ "source": "packages/core/src/Spinner/Spinner.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Spinner",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg",
+     "xl"
+    ],
+    "shade": [
+     "default",
+     "onMedia",
+     "subtle",
+     "inherit"
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "shade": "default"
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "spinner-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "spinner-0002",
+     "kind": "sweep",
+     "props": {
+      "size": "sm"
+     }
+    },
+    {
+     "id": "spinner-0003",
+     "kind": "sweep",
+     "props": {
+      "size": "lg"
+     }
+    },
+    {
+     "id": "spinner-0004",
+     "kind": "sweep",
+     "props": {
+      "size": "xl"
+     }
+    },
+    {
+     "id": "spinner-0005",
+     "kind": "sweep",
+     "props": {
+      "shade": "onMedia"
+     }
+    },
+    {
+     "id": "spinner-0006",
+     "kind": "sweep",
+     "props": {
+      "shade": "subtle"
+     }
+    },
+    {
+     "id": "spinner-0007",
+     "kind": "sweep",
+     "props": {
+      "shade": "inherit"
+     }
+    },
+    {
+     "id": "spinner-0008",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "shade": "onMedia"
+     }
+    },
+    {
+     "id": "spinner-0009",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "shade": "subtle"
+     }
+    },
+    {
+     "id": "spinner-0010",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "shade": "inherit"
+     }
+    },
+    {
+     "id": "spinner-0011",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "shade": "onMedia"
+     }
+    },
+    {
+     "id": "spinner-0012",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "shade": "subtle"
+     }
+    },
+    {
+     "id": "spinner-0013",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "shade": "inherit"
+     }
+    },
+    {
+     "id": "spinner-0014",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "shade": "onMedia"
+     }
+    },
+    {
+     "id": "spinner-0015",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "shade": "subtle"
+     }
+    },
+    {
+     "id": "spinner-0016",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "shade": "inherit"
+     }
+    }
+   ]
+  }
+ ]
+}

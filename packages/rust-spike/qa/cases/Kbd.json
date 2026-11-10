@@ -1,0 +1,32 @@
+{
+ "family": "Kbd",
+ "source": "packages/core/src/Kbd/Kbd.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Kbd",
+   "visualProps": {},
+   "defaults": {},
+   "base": {
+    "keys": "keys"
+   },
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "kbd-0001",
+     "kind": "default",
+     "props": {
+      "keys": "keys"
+     }
+    }
+   ]
+  }
+ ]
+}

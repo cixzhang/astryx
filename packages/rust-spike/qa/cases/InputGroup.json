@@ -1,0 +1,166 @@
+{
+ "family": "InputGroup",
+ "source": "packages/core/src/InputGroup/InputGroup.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "InputGroupText",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isDisabled": false,
+    "isOptional": false,
+    "isRequired": false,
+    "size": "md"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "inputgrouptext-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "inputgrouptext-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "inputgrouptext-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "inputgrouptext-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "inputgrouptext-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "inputgrouptext-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "inputgrouptext-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "inputgrouptext-0008",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isOptional": true,
+      "isRequired": true
+     }
+    },
+    {
+     "id": "inputgrouptext-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "size": "lg"
+     }
+    },
+    {
+     "id": "inputgrouptext-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isDisabled": true,
+      "isRequired": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "inputgrouptext-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "size": "lg"
+     }
+    },
+    {
+     "id": "inputgrouptext-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "size": "lg"
+     }
+    },
+    {
+     "id": "inputgrouptext-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "size": "sm"
+     }
+    }
+   ]
+  }
+ ]
+}

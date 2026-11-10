@@ -1,0 +1,1025 @@
+{
+ "family": "Text",
+ "source": "packages/core/src/Text/Text.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Heading",
+   "visualProps": {
+    "size": [
+     "4xs",
+     "3xs",
+     "2xs",
+     "xsm",
+     "sm",
+     "base",
+     "lg",
+     "xl",
+     "2xl",
+     "3xl",
+     "4xl"
+    ],
+    "color": [
+     "primary",
+     "secondary",
+     "disabled",
+     "placeholder",
+     "accent",
+     "inherit"
+    ],
+    "weight": [
+     "normal",
+     "medium",
+     "semibold",
+     "bold"
+    ],
+    "display": [
+     "inline",
+     "block"
+    ],
+    "as": [
+     "span",
+     "p",
+     "div",
+     "label"
+    ],
+    "wordBreak": [
+     "break-word",
+     "break-all"
+    ],
+    "textWrap": [
+     "wrap",
+     "nowrap",
+     "balance",
+     "pretty"
+    ],
+    "justify": [
+     "start",
+     "center",
+     "end"
+    ],
+    "hasCapsize": [
+     false,
+     true
+    ],
+    "hasStrikethrough": [
+     false,
+     true
+    ],
+    "hasTabularNumbers": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "size": "4xs",
+    "color": "primary",
+    "weight": "normal",
+    "display": "inline",
+    "as": "span",
+    "wordBreak": "break-word",
+    "textWrap": "wrap",
+    "justify": "start",
+    "hasCapsize": false,
+    "hasStrikethrough": false,
+    "hasTabularNumbers": false
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "heading-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "heading-0002",
+     "kind": "sweep",
+     "props": {
+      "size": "3xs"
+     }
+    },
+    {
+     "id": "heading-0003",
+     "kind": "sweep",
+     "props": {
+      "size": "2xs"
+     }
+    },
+    {
+     "id": "heading-0004",
+     "kind": "sweep",
+     "props": {
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "heading-0005",
+     "kind": "sweep",
+     "props": {
+      "size": "sm"
+     }
+    },
+    {
+     "id": "heading-0006",
+     "kind": "sweep",
+     "props": {
+      "size": "base"
+     }
+    },
+    {
+     "id": "heading-0007",
+     "kind": "sweep",
+     "props": {
+      "size": "lg"
+     }
+    },
+    {
+     "id": "heading-0008",
+     "kind": "sweep",
+     "props": {
+      "size": "xl"
+     }
+    },
+    {
+     "id": "heading-0009",
+     "kind": "sweep",
+     "props": {
+      "size": "2xl"
+     }
+    },
+    {
+     "id": "heading-0010",
+     "kind": "sweep",
+     "props": {
+      "size": "3xl"
+     }
+    },
+    {
+     "id": "heading-0011",
+     "kind": "sweep",
+     "props": {
+      "size": "4xl"
+     }
+    },
+    {
+     "id": "heading-0012",
+     "kind": "sweep",
+     "props": {
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "heading-0013",
+     "kind": "sweep",
+     "props": {
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "heading-0014",
+     "kind": "sweep",
+     "props": {
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "heading-0015",
+     "kind": "sweep",
+     "props": {
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0016",
+     "kind": "sweep",
+     "props": {
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0017",
+     "kind": "sweep",
+     "props": {
+      "weight": "medium"
+     }
+    },
+    {
+     "id": "heading-0018",
+     "kind": "sweep",
+     "props": {
+      "weight": "semibold"
+     }
+    },
+    {
+     "id": "heading-0019",
+     "kind": "sweep",
+     "props": {
+      "weight": "bold"
+     }
+    },
+    {
+     "id": "heading-0020",
+     "kind": "sweep",
+     "props": {
+      "display": "block"
+     }
+    },
+    {
+     "id": "heading-0021",
+     "kind": "sweep",
+     "props": {
+      "as": "p"
+     }
+    },
+    {
+     "id": "heading-0022",
+     "kind": "sweep",
+     "props": {
+      "as": "div"
+     }
+    },
+    {
+     "id": "heading-0023",
+     "kind": "sweep",
+     "props": {
+      "as": "label"
+     }
+    },
+    {
+     "id": "heading-0024",
+     "kind": "sweep",
+     "props": {
+      "wordBreak": "break-all"
+     }
+    },
+    {
+     "id": "heading-0025",
+     "kind": "sweep",
+     "props": {
+      "textWrap": "nowrap"
+     }
+    },
+    {
+     "id": "heading-0026",
+     "kind": "sweep",
+     "props": {
+      "textWrap": "balance"
+     }
+    },
+    {
+     "id": "heading-0027",
+     "kind": "sweep",
+     "props": {
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0028",
+     "kind": "sweep",
+     "props": {
+      "justify": "center"
+     }
+    },
+    {
+     "id": "heading-0029",
+     "kind": "sweep",
+     "props": {
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0030",
+     "kind": "sweep",
+     "props": {
+      "hasCapsize": true
+     }
+    },
+    {
+     "id": "heading-0031",
+     "kind": "sweep",
+     "props": {
+      "hasStrikethrough": true
+     }
+    },
+    {
+     "id": "heading-0032",
+     "kind": "sweep",
+     "props": {
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0033",
+     "kind": "pairwise",
+     "props": {
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0034",
+     "kind": "pairwise",
+     "props": {
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "wordBreak": "break-all",
+      "textWrap": "balance",
+      "justify": "end",
+      "hasStrikethrough": true
+     }
+    },
+    {
+     "id": "heading-0035",
+     "kind": "pairwise",
+     "props": {
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0036",
+     "kind": "pairwise",
+     "props": {
+      "color": "accent",
+      "display": "block",
+      "as": "div",
+      "textWrap": "nowrap",
+      "justify": "end",
+      "hasCapsize": true
+     }
+    },
+    {
+     "id": "heading-0037",
+     "kind": "pairwise",
+     "props": {
+      "color": "inherit",
+      "as": "p",
+      "textWrap": "balance",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0038",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "weight": "medium",
+      "as": "div",
+      "textWrap": "pretty",
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0039",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "secondary",
+      "as": "label",
+      "wordBreak": "break-all",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0040",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "disabled",
+      "weight": "bold",
+      "display": "block",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0041",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "placeholder",
+      "weight": "semibold",
+      "display": "block",
+      "as": "p",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "heading-0042",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "accent",
+      "weight": "medium",
+      "wordBreak": "break-all",
+      "textWrap": "balance",
+      "justify": "center",
+      "hasCapsize": true
+     }
+    },
+    {
+     "id": "heading-0043",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "inherit",
+      "weight": "medium",
+      "display": "block",
+      "as": "label",
+      "wordBreak": "break-all",
+      "textWrap": "pretty",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0044",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "weight": "semibold",
+      "display": "block",
+      "as": "label",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0045",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "secondary",
+      "weight": "bold",
+      "as": "div",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "heading-0046",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "disabled",
+      "as": "p",
+      "textWrap": "pretty",
+      "justify": "center",
+      "hasCapsize": true
+     }
+    },
+    {
+     "id": "heading-0047",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "placeholder",
+      "weight": "medium",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "end",
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0048",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "accent",
+      "weight": "semibold",
+      "textWrap": "pretty",
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0049",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "inherit",
+      "weight": "semibold",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0050",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "weight": "bold",
+      "as": "p",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0051",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "secondary",
+      "weight": "semibold",
+      "display": "block",
+      "wordBreak": "break-all",
+      "textWrap": "balance",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0052",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "disabled",
+      "weight": "medium",
+      "as": "label",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "heading-0053",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "placeholder",
+      "as": "div",
+      "textWrap": "nowrap"
+     }
+    },
+    {
+     "id": "heading-0054",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "accent",
+      "weight": "bold",
+      "as": "p"
+     }
+    },
+    {
+     "id": "heading-0055",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "inherit",
+      "weight": "bold",
+      "as": "div",
+      "textWrap": "nowrap"
+     }
+    },
+    {
+     "id": "heading-0056",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "justify": "center"
+     }
+    },
+    {
+     "id": "heading-0057",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "pretty",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0058",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "nowrap",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0059",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "balance"
+     }
+    },
+    {
+     "id": "heading-0060",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "accent",
+      "as": "label"
+     }
+    },
+    {
+     "id": "heading-0061",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0062",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0063",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0064",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0065",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0066",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0067",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0068",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0069",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0070",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0071",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0072",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0073",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0074",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0075",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0076",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0077",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0078",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0079",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0080",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0081",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0082",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0083",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0084",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0085",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0086",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0087",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "secondary",
+      "weight": "medium",
+      "display": "block",
+      "as": "p",
+      "wordBreak": "break-all",
+      "textWrap": "nowrap",
+      "justify": "center",
+      "hasCapsize": true,
+      "hasStrikethrough": true,
+      "hasTabularNumbers": true
+     }
+    },
+    {
+     "id": "heading-0088",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "disabled",
+      "weight": "semibold",
+      "as": "div",
+      "textWrap": "balance",
+      "justify": "end"
+     }
+    },
+    {
+     "id": "heading-0089",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "placeholder",
+      "weight": "bold",
+      "as": "label",
+      "textWrap": "pretty"
+     }
+    },
+    {
+     "id": "heading-0090",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "accent"
+     }
+    },
+    {
+     "id": "heading-0091",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "heading-0092",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "textWrap": "balance"
+     }
+    },
+    {
+     "id": "heading-0093",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "textWrap": "pretty"
+     }
+    }
+   ]
+  }
+ ]
+}
