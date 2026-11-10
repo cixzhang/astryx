@@ -90,7 +90,12 @@ pub fn collapse(t: &MotionTokens) -> Resize {
 /// A color change of state (hover, selection): instant under Reduce Motion
 /// on any pointer.
 pub fn color_change(t: &MotionTokens, channel: Channel, to: f32) -> Anim {
-    Anim::new(channel, to, Motion::curve(t.durations.fast, t.ease_standard)).change(Change::Color)
+    Anim::new(
+        channel,
+        to,
+        Motion::curve(t.durations.fast, t.ease_standard),
+    )
+    .change(Change::Color)
 }
 
 #[cfg(test)]

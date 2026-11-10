@@ -3,7 +3,7 @@
 //! Reduce Motion.
 
 use super::*;
-use astryx_core::authoring::{element, Build, BoxDraw, Draw, Node};
+use astryx_core::authoring::{element, BoxDraw, Build, Draw, Node};
 use astryx_core::testing::{frame, FixedMeasure};
 use astryx_core::{
     App, Color, Command, DisplayList, DrawCmd, Element, Preferences, Radii, Runtime, Surface,
@@ -84,7 +84,11 @@ impl App for Scene {
         let t = motion_tokens::DEFAULT;
         let mut v = VStack::new();
         let mut thumb = block(20.0);
-        thumb.anims = vec![state_change(t, Channel::TranslateX, if self.on { 20.0 } else { 0.0 })];
+        thumb.anims = vec![state_change(
+            t,
+            Channel::TranslateX,
+            if self.on { 20.0 } else { 0.0 },
+        )];
         v = v.child(element(thumb));
         if self.open {
             let mut layer = block(40.0);
@@ -128,7 +132,9 @@ fn thumb_x(list: &DisplayList) -> f32 {
     list.commands
         .iter()
         .find_map(|c| match c {
-            DrawCmd::PushTransform { translate, scale, .. } if *scale == 1.0 => Some(translate.x),
+            DrawCmd::PushTransform {
+                translate, scale, ..
+            } if *scale == 1.0 => Some(translate.x),
             _ => None,
         })
         .unwrap_or(0.0)
@@ -161,11 +167,17 @@ fn a_toggle_retargets_from_where_it_is_without_a_jump() {
     // The first frame after the retarget continues from the same place: the
     // step is no larger than the steps before it.
     let last_step = (xs[6] - xs[5]).abs();
-    assert!((after - mid).abs() <= last_step * 1.5 + 0.5, "{mid} -> {after}, step {last_step}");
+    assert!(
+        (after - mid).abs() <= last_step * 1.5 + 0.5,
+        "{mid} -> {after}, step {last_step}"
+    );
     for _ in 0..120 {
         step(&mut rt, 16.0);
     }
-    assert!(thumb_x(&step(&mut rt, 16.0)).abs() < 0.01, "settles back at 0");
+    assert!(
+        thumb_x(&step(&mut rt, 16.0)).abs() < 0.01,
+        "settles back at 0"
+    );
     assert!(!rt.wants_frames());
 }
 
@@ -192,7 +204,10 @@ fn the_spring_settles_within_ten_percent_of_astryx_spring() {
     assert!(worst <= 2.0, "worst deviation {worst} of 20");
     let expected = curve.settle_time(0.01);
     let got = settled_at.expect("settles");
-    assert!((got - expected).abs() <= expected * 0.1 + 1.0 / 60.0, "{got} vs {expected}");
+    assert!(
+        (got - expected).abs() <= expected * 0.1 + 1.0 / 60.0,
+        "{got} vs {expected}"
+    );
 }
 
 #[test]
@@ -209,7 +224,13 @@ fn a_layer_enters_and_its_exit_plays_once() {
         step(&mut rt, 16.0);
     }
     let open = step(&mut rt, 16.0);
-    assert!(!open.commands.iter().any(|c| matches!(c, DrawCmd::PushOpacity(_))), "fully in");
+    assert!(
+        !open
+            .commands
+            .iter()
+            .any(|c| matches!(c, DrawCmd::PushOpacity(_))),
+        "fully in"
+    );
     // Close: one exit copy fades, then it is gone.
     rt.app_mut().open = false;
     // The layer is closed, so every 40-point block drawn is an exit copy.
@@ -230,7 +251,11 @@ fn a_layer_enters_and_its_exit_plays_once() {
     for _ in 0..40 {
         step(&mut rt, 16.0);
     }
-    assert_eq!(count_copies(&step(&mut rt, 16.0)), 0, "removed when it settles");
+    assert_eq!(
+        count_copies(&step(&mut rt, 16.0)),
+        0,
+        "removed when it settles"
+    );
     assert!(!rt.wants_frames());
 }
 
@@ -243,9 +268,18 @@ fn collapsible_height_animates_and_content_below_reflows() {
     for _ in 0..40 {
         ys.push(last_y(&step(&mut rt, 16.0)));
     }
-    assert!(ys.windows(2).all(|w| w[1] >= w[0] - 0.01), "moves down steadily: {ys:?}");
-    assert!(ys[3] > closed + 1.0 && ys[3] < closed + 99.0, "in between: {ys:?}");
-    assert!((ys.last().unwrap() - (closed + 100.0)).abs() < 0.5, "lands at the full height");
+    assert!(
+        ys.windows(2).all(|w| w[1] >= w[0] - 0.01),
+        "moves down steadily: {ys:?}"
+    );
+    assert!(
+        ys[3] > closed + 1.0 && ys[3] < closed + 99.0,
+        "in between: {ys:?}"
+    );
+    assert!(
+        (ys.last().unwrap() - (closed + 100.0)).abs() < 0.5,
+        "lands at the full height"
+    );
     // Collapse reverses; interrupting mid-way turns around without a jump.
     rt.app_mut().expanded = false;
     let a = last_y(&step(&mut rt, 16.0));
