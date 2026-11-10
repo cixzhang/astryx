@@ -5,7 +5,5 @@
     "build": "bun exact.mjs web-build --out dist",
     "start": "bun exact.mjs serve dist"
   },
-  "dependencies": {
-    "@astryx-spike/astryx-layers": "file:../../astryx-layers"
-  }
+  "dependencies": {}
 }

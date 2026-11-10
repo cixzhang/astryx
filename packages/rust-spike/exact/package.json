@@ -1,6 +1,0 @@
-{
-  "name": "astryx-spike-exact",
-  "private": true,
-  "description": "Installs the Astryx library where @astryx-spike/astryx-layers finds it: Contract resolves a package's own imports from its real path.",
-  "dependencies": { "@astryx-spike/astryx": "file:./astryx" }
-}

@@ -86,26 +86,26 @@
  "Indicator": {
   "wave": 1,
   "status": "ported",
-  "evidence": "gallery indicator-*",
+  "evidence": "gallery checkbox-indicator-*, check-indicator-*, radio-indicator-*",
   "notes": "Checkbox, radio and check indicators."
  },
  "Stack": {
   "wave": 2,
   "status": "workaround",
-  "evidence": "gallery stack-*",
-  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped."
+  "evidence": "gallery stack-*, stack-item-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. StackItem ported."
  },
  "HStack": {
   "wave": 2,
-  "status": "ported",
-  "evidence": "gallery hstack-*",
-  "notes": ""
+  "status": "workaround",
+  "evidence": "gallery h-stack-*",
+  "notes": "Contract forwards no slot into another component, so HStack repeats Stack's body instead of wrapping Stack."
  },
  "VStack": {
   "wave": 2,
-  "status": "ported",
-  "evidence": "gallery vstack-*",
-  "notes": ""
+  "status": "workaround",
+  "evidence": "gallery v-stack-*",
+  "notes": "As HStack: no slot forwarding, so it repeats Stack's body."
  },
  "Grid": {
   "wave": 2,

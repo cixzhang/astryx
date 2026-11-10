@@ -35,8 +35,7 @@ function qaCases(family, def) {
   const names = def.qa?.components ?? [def.component, family];
   const picked = doc.components.filter(c => names.includes(c.component));
   if (!picked.length) return null;
-  const rename = id => (def.qa?.idFrom ? id.replace(def.qa.idFrom, def.qa.idTo) : id);
-  return picked.flatMap(c => c.cases.map(k => ({ id: rename(k.id), title: `${c.component} ${k.kind} ${JSON.stringify(k.props)}`, props: { ...(c.base ?? {}), ...k.props } })));
+  return picked.flatMap(c => c.cases.map(k => ({ id: k.id, title: `${c.component} ${k.kind} ${JSON.stringify(k.props)}`, props: { ...(c.base ?? {}), ...k.props } })));
 }
 
 const typeOf = (v, k, def) => def.types?.[k] ?? (typeof v === 'string' ? 'string' : typeof v === 'number' ? 'number' : typeof v === 'boolean' ? 'bool' : null);

@@ -22,8 +22,7 @@ Exact is not vendored. Check it out at
 ```sh
 ln -s /path/to/exact .exact-sdk
 cargo build -q -p contract --manifest-path .exact-sdk/Cargo.toml
-bun install                      # installs the library where astryx-layers resolves it
-cd apps/astryx-gallery && bun install
+tools/link.sh                    # links both packages where every app finds them
 ```
 
 The gallery's cases are data in `apps/astryx-gallery/cases.contract`, written by

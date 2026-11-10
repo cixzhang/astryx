@@ -4,7 +4,7 @@ Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2
 
 - Dependency closure ported (core, by source files): 341 of 689 (49.5%).
 - With the stretch rows: 347 of 720 (48.2%).
-- Rows: 17 ported, 15 workaround, 0 blocked, 45 not started.
+- Rows: 15 ported, 17 workaround, 0 blocked, 45 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -40,12 +40,12 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | FieldStatus | 3 | core, stretch, template, weakness |  | not started |  |  |
 | FormLayout | 1 | core, stretch, template, weakness | 2 | ported | used by settings-dialog (wave 8) |  |
 | Grid | 3 | core | 2 | workaround | gallery grid-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. rowHeight not yet wired. |
-| HStack | 2 | core, stretch, template | 2 | ported | gallery hstack-* |  |
+| HStack | 2 | core, stretch, template | 2 | workaround | gallery h-stack-* | Contract forwards no slot into another component, so HStack repeats Stack's body instead of wrapping Stack. |
 | Heading | 2 | core, stretch, template | 1 | ported | gallery heading-0001..0007 |  |
 | HoverCard | 5 | weakness |  | not started |  |  |
 | Icon | 8 | core, stretch, template, weakness | 1 | ported | astryx/icons.contract (29 icons from defaultIcons.tsx as one path each); gallery icon-* | Contract expands a component at each use, so a branch per icon repeated all 29 icons at every Icon: one path chosen by a function keeps Icon small. Custom icon registry (registerIcons) has no Contract equivalent: icons are known at build. |
 | IconButton | 2 | core, stretch |  | not started |  |  |
-| Indicator | 7 | core, stretch, template, weakness | 1 | ported | gallery indicator-* | Checkbox, radio and check indicators. |
+| Indicator | 7 | core, stretch, template, weakness | 1 | ported | gallery checkbox-indicator-*, check-indicator-*, radio-indicator-* | Checkbox, radio and check indicators. |
 | InfoTip | 1 | core, stretch, template, weakness |  | not started |  |  |
 | InputGroup | 6 | core, stretch, template, weakness |  | not started |  |  |
 | InteractiveRoleContext | 1 | core, stretch | 0 | workaround | - | No context through a slot: role is a prop. |
@@ -70,7 +70,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | SideNav | 2 | core |  | not started |  |  |
 | SizeContext | 2 | core, stretch, template, weakness | 0 | workaround | - | No context through a slot: size is a prop each child takes. |
 | Spinner | 4 | core, stretch, template, weakness | 1 | ported | gallery spinner-* | Turn is a CSS keyframe; reduced motion not yet wired. |
-| Stack | 5 | core, stretch, template | 2 | workaround | gallery stack-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. |
+| Stack | 5 | core, stretch, template | 2 | workaround | gallery stack-*, stack-item-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. StackItem ported. |
 | Switch | 6 | core |  | not started |  |  |
 | Table | 55 | core |  | not started |  |  |
 | Text | 6 | core, stretch, template, weakness | 1 | ported | gallery text-0001..0024; web + Linux | `font` takes only literals, so the type role is a chain of literals. No inline-flex. `textWrap` keeps auto/balance plus nowrap; `pretty` is refused. Truncation tooltip waits for Tooltip (wave 4). |
@@ -83,7 +83,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | TopNav | 2 | core |  | not started |  |  |
 | TreeList | 5 | stretch, template |  | not started |  |  |
 | Typeahead | 8 | core, stretch |  | not started |  |  |
-| VStack | 2 | core, stretch, template | 2 | ported | gallery vstack-* |  |
+| VStack | 2 | core, stretch, template | 2 | workaround | gallery v-stack-* | As HStack: no slot forwarding, so it repeats Stack's body. |
 | VisuallyHidden | 2 | core, stretch, template, weakness | 0 | workaround | primitives.contract VisuallyHidden | Contract refuses clip-path inset(); a 1 px clipped box stands in. |
 | infra:Foundations | 158 | core, stretch, template, weakness | 0 | workaround | astryx/astryx.tamber (251 tokens) and tokens/themes.tamber (8 themes, 1,066 per-theme values), imported by Exact's own `contract tamber import astryx`; gallery case foundations-0001 on web and Linux. | 279 of 286 resolved tokens map; 7 do not (duration min/max tiers, focus outline style). The 4 motion tokens cannot vary by theme (Tamber writes a duration or easing into its transition at build), so every theme uses the default theme's motion. A type role (`font`) varies by theme, so it must sit on each text, not on a container. Number and date formatting stay en-US in Contract (a data module would localise, but the Linux build carries none). |
 | infra:Gestures | 68 | core, stretch, template, weakness |  | not started |  |  |

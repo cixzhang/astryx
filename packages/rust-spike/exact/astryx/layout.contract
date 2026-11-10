@@ -59,28 +59,84 @@ component Stack
       min-width=0
       children
 
-// HStack and VStack: a Stack in one direction.
+// HStack and VStack: a Stack in one direction. Contract forwards no slot
+// into another component, so each repeats Stack's body.
 component HStack
   props
     gap: number
     padding: number
+    paddingInline: number
+    paddingInlineStart: number
+    paddingInlineEnd: number
+    paddingBlock: number
+    paddingBlockStart: number
+    paddingBlockEnd: number
+    hAlign: string
+    vAlign: string
     align: string
     justify: string
     wrap: string
+    isScrollable: bool
   slot
   view
-    row gap=stepOr(gap, 0) padding=stepOr(padding, 0) align-items=flexAlign(align) justify-content=flexJustify(justify) flex-wrap=(wrap == "wrap" ? "wrap" : "nowrap") min-width=0
+    view display="flex"
+      flex-direction="row"
+      gap=stepOr(gap, 0)
+      padding-top=stepOr(firstSet(paddingBlockStart, paddingBlock, padding), 0)
+      padding-bottom=stepOr(firstSet(paddingBlockEnd, paddingBlock, padding), 0)
+      padding-left=stepOr(firstSet(paddingInlineStart, paddingInline, padding), 0)
+      padding-right=stepOr(firstSet(paddingInlineEnd, paddingInline, padding), 0)
+      align-items=flexAlign(vAlign == "" ? align : vAlign)
+      justify-content=flexJustify(hAlign == "" ? justify : hAlign)
+      flex-wrap=(wrap == "wrap" ? "wrap" : wrap == "wrap-reverse" ? "wrap-reverse" : "nowrap")
+      overflow=(isScrollable ? "auto" : "visible")
+      min-width=0
       children
 
 component VStack
   props
     gap: number
     padding: number
+    paddingInline: number
+    paddingInlineStart: number
+    paddingInlineEnd: number
+    paddingBlock: number
+    paddingBlockStart: number
+    paddingBlockEnd: number
+    hAlign: string
+    vAlign: string
     align: string
     justify: string
+    wrap: string
+    isScrollable: bool
   slot
   view
-    column gap=stepOr(gap, 0) padding=stepOr(padding, 0) align-items=flexAlign(align) justify-content=flexJustify(justify) min-width=0
+    view display="flex"
+      flex-direction="column"
+      gap=stepOr(gap, 0)
+      padding-top=stepOr(firstSet(paddingBlockStart, paddingBlock, padding), 0)
+      padding-bottom=stepOr(firstSet(paddingBlockEnd, paddingBlock, padding), 0)
+      padding-left=stepOr(firstSet(paddingInlineStart, paddingInline, padding), 0)
+      padding-right=stepOr(firstSet(paddingInlineEnd, paddingInline, padding), 0)
+      align-items=flexAlign(hAlign == "" ? align : hAlign)
+      justify-content=flexJustify(vAlign == "" ? justify : vAlign)
+      flex-wrap=(wrap == "wrap" ? "wrap" : wrap == "wrap-reverse" ? "wrap-reverse" : "nowrap")
+      overflow=(isScrollable ? "auto" : "visible")
+      min-width=0
+      children
+
+// StackItem: one child of a Stack that fills the free space or keeps its
+// size, and may scroll.
+component StackItem
+  props
+    size: string
+    isScrollable: bool
+    crossAlignSelf: string
+  slot
+  view
+    view flex=(size == "fill" ? "1 1 0px" : "0 0 auto") min-width=0 min-height=0
+      overflow=(isScrollable ? "auto" : "visible")
+      align-self=(crossAlignSelf == "" ? "auto" : flexAlign(crossAlignSelf))
       children
 
 // Grid: equal columns, or as many columns of `minWidth` as fit.
@@ -108,13 +164,22 @@ component Center
   props
     axis: string
     padding: number
+    paddingInline: number
+    paddingInlineStart: number
+    paddingInlineEnd: number
+    paddingBlock: number
+    paddingBlockStart: number
+    paddingBlockEnd: number
   slot
   view
     view display="flex"
       align-items=(axis == "horizontal" ? "stretch" : "center")
       justify-content=(axis == "vertical" ? "flex-start" : "center")
       flex-direction="column" width="100%" height="100%"
-      padding=stepOr(padding, 0)
+      padding-top=stepOr(firstSet(paddingBlockStart, paddingBlock, padding), 0)
+      padding-bottom=stepOr(firstSet(paddingBlockEnd, paddingBlock, padding), 0)
+      padding-left=stepOr(firstSet(paddingInlineStart, paddingInline, padding), 0)
+      padding-right=stepOr(firstSet(paddingInlineEnd, paddingInline, padding), 0)
       children
 
 // AspectRatio: a box held to width / height, its child filling it.
@@ -122,11 +187,14 @@ component AspectRatio
   props
     ratio: number
     shape: string
+    fit: string
   slot
   view
     view aspect-ratio=ratio width="100%" overflow="hidden" position="relative"
       border-radius=(shape == "ellipse" ? "astryx.radius.full" : "astryx.radius.none")
       view position="absolute" inset=0 display="flex"
+        align-items=(fit == "center" or fit == "contain" ? "center" : "stretch")
+        justify-content=(fit == "center" or fit == "contain" ? "center" : "flex-start")
         children
 
 // Layout: a page frame. Its children are LayoutHeader, LayoutPanel (start or
@@ -207,13 +275,22 @@ component Section
   props
     variant: string
     padding: number
+    paddingInline: number
+    paddingInlineStart: number
+    paddingInlineEnd: number
+    paddingBlock: number
+    paddingBlockStart: number
+    paddingBlockEnd: number
     dividers: string[]
     bleed: number
   slot
   view
     view
       background-color=(variant == "transparent" ? "transparent" : variant == "muted" ? "astryx.surface.muted" : "astryx.surface.surface")
-      padding=stepOr(padding, 4)
+      padding-top=stepOr(firstSet(paddingBlockStart, paddingBlock, padding), 4)
+      padding-bottom=stepOr(firstSet(paddingBlockEnd, paddingBlock, padding), 4)
+      padding-left=stepOr(firstSet(paddingInlineStart, paddingInline, padding), 4)
+      padding-right=stepOr(firstSet(paddingInlineEnd, paddingInline, padding), 4)
       margin-left=(bleed > 0 ? `calc(-1 * ${bleed}px)` : "0px") margin-right=(bleed > 0 ? `calc(-1 * ${bleed}px)` : "0px")
       border-top-width=(dividers.includes("top") ? 1 : 0)
       border-bottom-width=(dividers.includes("bottom") ? 1 : 0)

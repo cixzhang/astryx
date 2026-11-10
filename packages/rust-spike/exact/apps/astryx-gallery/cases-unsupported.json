@@ -11,6 +11,12 @@
  "Link": [
   "display"
  ],
+ "AvatarGroup": [
+  "shape"
+ ],
+ "Center": [
+  "isInline"
+ ],
  "Popover": [
   "hasAutoFocus",
   "hasEscapeDismiss",
