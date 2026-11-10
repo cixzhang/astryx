@@ -69,7 +69,7 @@ for (const comp of doc.components) {
   }
 }
 const ctxs = {};
-const shoot = job => Promise.race([shootOnce(job), new Promise(res => setTimeout(() => { index.cases.push({ id: job.c.id, component: job.comp.component, scheme: job.scheme, width: job.width, error: 'timeout 90s' }); res(); }, 90000))]);
+const shoot = job => { let t; return Promise.race([shootOnce(job).finally(() => clearTimeout(t)), new Promise(res => { t = setTimeout(() => { index.cases.push({ id: job.c.id, component: job.comp.component, scheme: job.scheme, width: job.width, error: 'timeout 90s' }); res(); }, 90000); })]); };
 const shootOnce = async ({ comp, c, scheme, width }) => {
   const key = `${scheme}`;
   ctxs[key] ??= await browser.newContext({ colorScheme: scheme });
