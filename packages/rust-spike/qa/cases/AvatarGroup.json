@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "AvatarGroupOverflow",
+   "component": "AvatarGroup",
    "visualProps": {
     "shape": [
      "circle",
@@ -24,21 +24,22 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
-     "id": "avatargroupoverflow-0001",
+     "id": "avatar-group-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "avatargroupoverflow-0002",
+     "id": "avatar-group-0002",
      "kind": "sweep",
      "props": {
       "shape": "rounded"
      }
     },
     {
-     "id": "avatargroupoverflow-0003",
+     "id": "avatar-group-0003",
      "kind": "sweep",
      "props": {
       "shape": "square"

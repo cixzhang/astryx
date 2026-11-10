@@ -1,0 +1,2922 @@
+{
+ "family": "Center",
+ "source": "packages/core/src/Center/Center.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Center",
+   "visualProps": {
+    "axis": [
+     "both",
+     "horizontal",
+     "vertical"
+    ],
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInline": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInlineStart": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInlineEnd": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlock": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlockStart": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlockEnd": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "isInline": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "axis": "both",
+    "padding": 0,
+    "paddingInline": 0,
+    "paddingInlineStart": 0,
+    "paddingInlineEnd": 0,
+    "paddingBlock": 0,
+    "paddingBlockStart": 0,
+    "paddingBlockEnd": 0,
+    "isInline": false
+   },
+   "base": {},
+   "takesChildren": true,
+   "fixture": "boxes",
+   "cases": [
+    {
+     "id": "center-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "center-0002",
+     "kind": "sweep",
+     "props": {
+      "axis": "horizontal"
+     }
+    },
+    {
+     "id": "center-0003",
+     "kind": "sweep",
+     "props": {
+      "axis": "vertical"
+     }
+    },
+    {
+     "id": "center-0004",
+     "kind": "sweep",
+     "props": {
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "center-0005",
+     "kind": "sweep",
+     "props": {
+      "padding": 1
+     }
+    },
+    {
+     "id": "center-0006",
+     "kind": "sweep",
+     "props": {
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "center-0007",
+     "kind": "sweep",
+     "props": {
+      "padding": 2
+     }
+    },
+    {
+     "id": "center-0008",
+     "kind": "sweep",
+     "props": {
+      "padding": 3
+     }
+    },
+    {
+     "id": "center-0009",
+     "kind": "sweep",
+     "props": {
+      "padding": 4
+     }
+    },
+    {
+     "id": "center-0010",
+     "kind": "sweep",
+     "props": {
+      "padding": 5
+     }
+    },
+    {
+     "id": "center-0011",
+     "kind": "sweep",
+     "props": {
+      "padding": 6
+     }
+    },
+    {
+     "id": "center-0012",
+     "kind": "sweep",
+     "props": {
+      "padding": 8
+     }
+    },
+    {
+     "id": "center-0013",
+     "kind": "sweep",
+     "props": {
+      "padding": 10
+     }
+    },
+    {
+     "id": "center-0014",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 0.5
+     }
+    },
+    {
+     "id": "center-0015",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 1
+     }
+    },
+    {
+     "id": "center-0016",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 1.5
+     }
+    },
+    {
+     "id": "center-0017",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 2
+     }
+    },
+    {
+     "id": "center-0018",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 3
+     }
+    },
+    {
+     "id": "center-0019",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 4
+     }
+    },
+    {
+     "id": "center-0020",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 5
+     }
+    },
+    {
+     "id": "center-0021",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 6
+     }
+    },
+    {
+     "id": "center-0022",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 8
+     }
+    },
+    {
+     "id": "center-0023",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 10
+     }
+    },
+    {
+     "id": "center-0024",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 0.5
+     }
+    },
+    {
+     "id": "center-0025",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 1
+     }
+    },
+    {
+     "id": "center-0026",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 1.5
+     }
+    },
+    {
+     "id": "center-0027",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 2
+     }
+    },
+    {
+     "id": "center-0028",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 3
+     }
+    },
+    {
+     "id": "center-0029",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 4
+     }
+    },
+    {
+     "id": "center-0030",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 5
+     }
+    },
+    {
+     "id": "center-0031",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 6
+     }
+    },
+    {
+     "id": "center-0032",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 8
+     }
+    },
+    {
+     "id": "center-0033",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 10
+     }
+    },
+    {
+     "id": "center-0034",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0035",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 1
+     }
+    },
+    {
+     "id": "center-0036",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0037",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 2
+     }
+    },
+    {
+     "id": "center-0038",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 3
+     }
+    },
+    {
+     "id": "center-0039",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 4
+     }
+    },
+    {
+     "id": "center-0040",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 5
+     }
+    },
+    {
+     "id": "center-0041",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 6
+     }
+    },
+    {
+     "id": "center-0042",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 8
+     }
+    },
+    {
+     "id": "center-0043",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 10
+     }
+    },
+    {
+     "id": "center-0044",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 0.5
+     }
+    },
+    {
+     "id": "center-0045",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 1
+     }
+    },
+    {
+     "id": "center-0046",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 1.5
+     }
+    },
+    {
+     "id": "center-0047",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 2
+     }
+    },
+    {
+     "id": "center-0048",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 3
+     }
+    },
+    {
+     "id": "center-0049",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 4
+     }
+    },
+    {
+     "id": "center-0050",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 5
+     }
+    },
+    {
+     "id": "center-0051",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 6
+     }
+    },
+    {
+     "id": "center-0052",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 8
+     }
+    },
+    {
+     "id": "center-0053",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 10
+     }
+    },
+    {
+     "id": "center-0054",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "center-0055",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "center-0056",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 1.5
+     }
+    },
+    {
+     "id": "center-0057",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "center-0058",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "center-0059",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "center-0060",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 5
+     }
+    },
+    {
+     "id": "center-0061",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 6
+     }
+    },
+    {
+     "id": "center-0062",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "center-0063",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "center-0064",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0065",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0066",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0067",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0068",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0069",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0070",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0071",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0072",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0073",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0074",
+     "kind": "sweep",
+     "props": {
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0075",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 0.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0076",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 1,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0077",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0078",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 2,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 2,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0079",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 3,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 3,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0080",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 4,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 4,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0081",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0082",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 6,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 6,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0083",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 8,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 8,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0084",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 10,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 10,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0085",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "paddingInline": 0.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 4,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0086",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 0.5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 3,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0087",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 1,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 2,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0088",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 1.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 3,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0089",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 2,
+      "paddingInline": 3,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0090",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 3,
+      "paddingInline": 2,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockEnd": 1.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0091",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 4,
+      "paddingInline": 5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0092",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 5,
+      "paddingInline": 4,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 0.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0093",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 6,
+      "paddingInline": 8,
+      "paddingInlineStart": 10,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 2,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0094",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 8,
+      "paddingInline": 6,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0095",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 10,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 6,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0096",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "paddingInline": 1,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 10,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0097",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 0.5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1,
+      "paddingBlock": 8,
+      "paddingBlockStart": 6
+     }
+    },
+    {
+     "id": "center-0098",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 1,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 10,
+      "paddingBlockEnd": 8,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0099",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 1.5,
+      "paddingInline": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0100",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 2,
+      "paddingInline": 4,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0101",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 3,
+      "paddingInline": 5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 1,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0102",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 4,
+      "paddingInline": 2,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0103",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 5,
+      "paddingInline": 3,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0104",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 6,
+      "paddingInline": 10,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 4,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0105",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 8,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0106",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 10,
+      "paddingInline": 6,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 5
+     }
+    },
+    {
+     "id": "center-0107",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "paddingInline": 10,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 8,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1.5,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0108",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "paddingInline": 8,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0109",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "paddingInline": 1.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0110",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "paddingInline": 2,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0111",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 0.5,
+      "paddingInline": 2,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0112",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "paddingInline": 3,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 4,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 8,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0113",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 0.5,
+      "paddingInline": 3,
+      "paddingInlineStart": 6,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0114",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "paddingInline": 4,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 8,
+      "isInline": true
+     }
+    },
+    {
+     "id": "center-0115",
+     "kind": "pairwise",
+     "props": {
+      "axis": "vertical",
+      "padding": 0.5,
+      "paddingInline": 5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 6,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0116",
+     "kind": "pairwise",
+     "props": {
+      "axis": "horizontal",
+      "padding": 0.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 8,
+      "paddingBlock": 2,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0117",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0118",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 6,
+      "paddingInlineStart": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0119",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 1.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0120",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0121",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "center-0122",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 10,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0123",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0124",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 2,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 3,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0125",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 3,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "center-0126",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 4,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0127",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 3,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0128",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 6,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0129",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 8,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0130",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 10,
+      "paddingInlineStart": 4,
+      "paddingBlock": 6,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0131",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0132",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 2,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 4,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "center-0133",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 3,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0134",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 3,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0135",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 6,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0136",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0137",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0138",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 10,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0139",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 6,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0140",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 8,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0141",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0142",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0143",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 5,
+      "paddingInlineStart": 1,
+      "paddingBlock": 4,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0144",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 6,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0145",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 8,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0146",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 10,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0147",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInlineStart": 2,
+      "paddingBlock": 5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0148",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 6,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0149",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "center-0150",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0151",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0152",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 6,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 10,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0153",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 8,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 2,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0154",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 10,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0155",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInlineStart": 5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0156",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "center-0157",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 1,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0158",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0159",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 3,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0160",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 6,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 4,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0161",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 8,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 6,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0162",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 10,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "center-0163",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0164",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 0.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 10,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0165",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 1,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0166",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0167",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 2,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0168",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 6,
+      "paddingInlineStart": 8,
+      "paddingBlock": 3,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0169",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 8,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0170",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 10,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0171",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0172",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 10,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0173",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "center-0174",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 2,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0175",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 2,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0176",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 3,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0177",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 4,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 1,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0178",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 8,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0179",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0180",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 0.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0181",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 6,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0182",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 2,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0183",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 3,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0184",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 4,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 10,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0185",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0186",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 10,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0187",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0188",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 1,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0189",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 8,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0190",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 2,
+      "paddingInlineEnd": 0.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0191",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 3,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0192",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 4,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0193",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0194",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 8,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0195",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 2,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0196",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0197",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0198",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0199",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 6,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 2,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0200",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0201",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 10,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "center-0202",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0203",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0204",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0205",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 6,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "center-0206",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 1,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0207",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 3,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 6,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0208",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 6,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0209",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0210",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0211",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0212",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0213",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0214",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0215",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0216",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 4,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0217",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0218",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0219",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0220",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 3,
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "center-0221",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0222",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10,
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "center-0223",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0224",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 2,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 8,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0225",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0226",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 4,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0227",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingBlock": 6,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0228",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 1,
+      "paddingInlineStart": 1,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0229",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0230",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0231",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 4,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0232",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0233",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInlineStart": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0234",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 8,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0235",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 1,
+      "paddingBlock": 2,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0236",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "center-0237",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 3,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0238",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "center-0239",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 6,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "center-0240",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineStart": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "center-0241",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "center-0242",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 10,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "center-0243",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10
+     }
+    },
+    {
+     "id": "center-0244",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0245",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 4,
+      "paddingBlock": 8,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0246",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 8,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0247",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 8,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0248",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 0.5,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "center-0249",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 2,
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "center-0250",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 10,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0251",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 6,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "center-0252",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 4,
+      "paddingBlock": 10,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0253",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 5,
+      "paddingBlockStart": 1.5
+     }
+    },
+    {
+     "id": "center-0254",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 8,
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "center-0255",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "center-0256",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 3,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "center-0257",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "center-0258",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "center-0259",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 5,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "center-0260",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "center-0261",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "center-0262",
+     "kind": "pairwise",
+     "props": {
+      "paddingBlock": 5,
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "center-0263",
+     "kind": "pairwise",
+     "props": {
+      "paddingBlock": 6,
+      "paddingBlockStart": 10
+     }
+    }
+   ]
+  }
+ ]
+}

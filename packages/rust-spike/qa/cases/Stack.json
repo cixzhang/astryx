@@ -182,6 +182,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "stack-0001",
@@ -4283,707 +4284,708 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
-     "id": "hstack-0001",
+     "id": "h-stack-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "hstack-0002",
+     "id": "h-stack-0002",
      "kind": "sweep",
      "props": {
       "gap": 0.5
      }
     },
     {
-     "id": "hstack-0003",
+     "id": "h-stack-0003",
      "kind": "sweep",
      "props": {
       "gap": 1
      }
     },
     {
-     "id": "hstack-0004",
+     "id": "h-stack-0004",
      "kind": "sweep",
      "props": {
       "gap": 1.5
      }
     },
     {
-     "id": "hstack-0005",
+     "id": "h-stack-0005",
      "kind": "sweep",
      "props": {
       "gap": 2
      }
     },
     {
-     "id": "hstack-0006",
+     "id": "h-stack-0006",
      "kind": "sweep",
      "props": {
       "gap": 3
      }
     },
     {
-     "id": "hstack-0007",
+     "id": "h-stack-0007",
      "kind": "sweep",
      "props": {
       "gap": 4
      }
     },
     {
-     "id": "hstack-0008",
+     "id": "h-stack-0008",
      "kind": "sweep",
      "props": {
       "gap": 5
      }
     },
     {
-     "id": "hstack-0009",
+     "id": "h-stack-0009",
      "kind": "sweep",
      "props": {
       "gap": 6
      }
     },
     {
-     "id": "hstack-0010",
+     "id": "h-stack-0010",
      "kind": "sweep",
      "props": {
       "gap": 8
      }
     },
     {
-     "id": "hstack-0011",
+     "id": "h-stack-0011",
      "kind": "sweep",
      "props": {
       "gap": 10
      }
     },
     {
-     "id": "hstack-0012",
+     "id": "h-stack-0012",
      "kind": "sweep",
      "props": {
       "padding": 0.5
      }
     },
     {
-     "id": "hstack-0013",
+     "id": "h-stack-0013",
      "kind": "sweep",
      "props": {
       "padding": 1
      }
     },
     {
-     "id": "hstack-0014",
+     "id": "h-stack-0014",
      "kind": "sweep",
      "props": {
       "padding": 1.5
      }
     },
     {
-     "id": "hstack-0015",
+     "id": "h-stack-0015",
      "kind": "sweep",
      "props": {
       "padding": 2
      }
     },
     {
-     "id": "hstack-0016",
+     "id": "h-stack-0016",
      "kind": "sweep",
      "props": {
       "padding": 3
      }
     },
     {
-     "id": "hstack-0017",
+     "id": "h-stack-0017",
      "kind": "sweep",
      "props": {
       "padding": 4
      }
     },
     {
-     "id": "hstack-0018",
+     "id": "h-stack-0018",
      "kind": "sweep",
      "props": {
       "padding": 5
      }
     },
     {
-     "id": "hstack-0019",
+     "id": "h-stack-0019",
      "kind": "sweep",
      "props": {
       "padding": 6
      }
     },
     {
-     "id": "hstack-0020",
+     "id": "h-stack-0020",
      "kind": "sweep",
      "props": {
       "padding": 8
      }
     },
     {
-     "id": "hstack-0021",
+     "id": "h-stack-0021",
      "kind": "sweep",
      "props": {
       "padding": 10
      }
     },
     {
-     "id": "hstack-0022",
+     "id": "h-stack-0022",
      "kind": "sweep",
      "props": {
       "paddingInline": 0.5
      }
     },
     {
-     "id": "hstack-0023",
+     "id": "h-stack-0023",
      "kind": "sweep",
      "props": {
       "paddingInline": 1
      }
     },
     {
-     "id": "hstack-0024",
+     "id": "h-stack-0024",
      "kind": "sweep",
      "props": {
       "paddingInline": 1.5
      }
     },
     {
-     "id": "hstack-0025",
+     "id": "h-stack-0025",
      "kind": "sweep",
      "props": {
       "paddingInline": 2
      }
     },
     {
-     "id": "hstack-0026",
+     "id": "h-stack-0026",
      "kind": "sweep",
      "props": {
       "paddingInline": 3
      }
     },
     {
-     "id": "hstack-0027",
+     "id": "h-stack-0027",
      "kind": "sweep",
      "props": {
       "paddingInline": 4
      }
     },
     {
-     "id": "hstack-0028",
+     "id": "h-stack-0028",
      "kind": "sweep",
      "props": {
       "paddingInline": 5
      }
     },
     {
-     "id": "hstack-0029",
+     "id": "h-stack-0029",
      "kind": "sweep",
      "props": {
       "paddingInline": 6
      }
     },
     {
-     "id": "hstack-0030",
+     "id": "h-stack-0030",
      "kind": "sweep",
      "props": {
       "paddingInline": 8
      }
     },
     {
-     "id": "hstack-0031",
+     "id": "h-stack-0031",
      "kind": "sweep",
      "props": {
       "paddingInline": 10
      }
     },
     {
-     "id": "hstack-0032",
+     "id": "h-stack-0032",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 0.5
      }
     },
     {
-     "id": "hstack-0033",
+     "id": "h-stack-0033",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 1
      }
     },
     {
-     "id": "hstack-0034",
+     "id": "h-stack-0034",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 1.5
      }
     },
     {
-     "id": "hstack-0035",
+     "id": "h-stack-0035",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 2
      }
     },
     {
-     "id": "hstack-0036",
+     "id": "h-stack-0036",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 3
      }
     },
     {
-     "id": "hstack-0037",
+     "id": "h-stack-0037",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 4
      }
     },
     {
-     "id": "hstack-0038",
+     "id": "h-stack-0038",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 5
      }
     },
     {
-     "id": "hstack-0039",
+     "id": "h-stack-0039",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 6
      }
     },
     {
-     "id": "hstack-0040",
+     "id": "h-stack-0040",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 8
      }
     },
     {
-     "id": "hstack-0041",
+     "id": "h-stack-0041",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 10
      }
     },
     {
-     "id": "hstack-0042",
+     "id": "h-stack-0042",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 0.5
      }
     },
     {
-     "id": "hstack-0043",
+     "id": "h-stack-0043",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 1
      }
     },
     {
-     "id": "hstack-0044",
+     "id": "h-stack-0044",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 1.5
      }
     },
     {
-     "id": "hstack-0045",
+     "id": "h-stack-0045",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 2
      }
     },
     {
-     "id": "hstack-0046",
+     "id": "h-stack-0046",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 3
      }
     },
     {
-     "id": "hstack-0047",
+     "id": "h-stack-0047",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 4
      }
     },
     {
-     "id": "hstack-0048",
+     "id": "h-stack-0048",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 5
      }
     },
     {
-     "id": "hstack-0049",
+     "id": "h-stack-0049",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 6
      }
     },
     {
-     "id": "hstack-0050",
+     "id": "h-stack-0050",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 8
      }
     },
     {
-     "id": "hstack-0051",
+     "id": "h-stack-0051",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 10
      }
     },
     {
-     "id": "hstack-0052",
+     "id": "h-stack-0052",
      "kind": "sweep",
      "props": {
       "paddingBlock": 0.5
      }
     },
     {
-     "id": "hstack-0053",
+     "id": "h-stack-0053",
      "kind": "sweep",
      "props": {
       "paddingBlock": 1
      }
     },
     {
-     "id": "hstack-0054",
+     "id": "h-stack-0054",
      "kind": "sweep",
      "props": {
       "paddingBlock": 1.5
      }
     },
     {
-     "id": "hstack-0055",
+     "id": "h-stack-0055",
      "kind": "sweep",
      "props": {
       "paddingBlock": 2
      }
     },
     {
-     "id": "hstack-0056",
+     "id": "h-stack-0056",
      "kind": "sweep",
      "props": {
       "paddingBlock": 3
      }
     },
     {
-     "id": "hstack-0057",
+     "id": "h-stack-0057",
      "kind": "sweep",
      "props": {
       "paddingBlock": 4
      }
     },
     {
-     "id": "hstack-0058",
+     "id": "h-stack-0058",
      "kind": "sweep",
      "props": {
       "paddingBlock": 5
      }
     },
     {
-     "id": "hstack-0059",
+     "id": "h-stack-0059",
      "kind": "sweep",
      "props": {
       "paddingBlock": 6
      }
     },
     {
-     "id": "hstack-0060",
+     "id": "h-stack-0060",
      "kind": "sweep",
      "props": {
       "paddingBlock": 8
      }
     },
     {
-     "id": "hstack-0061",
+     "id": "h-stack-0061",
      "kind": "sweep",
      "props": {
       "paddingBlock": 10
      }
     },
     {
-     "id": "hstack-0062",
+     "id": "h-stack-0062",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 0.5
      }
     },
     {
-     "id": "hstack-0063",
+     "id": "h-stack-0063",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 1
      }
     },
     {
-     "id": "hstack-0064",
+     "id": "h-stack-0064",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 1.5
      }
     },
     {
-     "id": "hstack-0065",
+     "id": "h-stack-0065",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 2
      }
     },
     {
-     "id": "hstack-0066",
+     "id": "h-stack-0066",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 3
      }
     },
     {
-     "id": "hstack-0067",
+     "id": "h-stack-0067",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 4
      }
     },
     {
-     "id": "hstack-0068",
+     "id": "h-stack-0068",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 5
      }
     },
     {
-     "id": "hstack-0069",
+     "id": "h-stack-0069",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 6
      }
     },
     {
-     "id": "hstack-0070",
+     "id": "h-stack-0070",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 8
      }
     },
     {
-     "id": "hstack-0071",
+     "id": "h-stack-0071",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 10
      }
     },
     {
-     "id": "hstack-0072",
+     "id": "h-stack-0072",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 0.5
      }
     },
     {
-     "id": "hstack-0073",
+     "id": "h-stack-0073",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 1
      }
     },
     {
-     "id": "hstack-0074",
+     "id": "h-stack-0074",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 1.5
      }
     },
     {
-     "id": "hstack-0075",
+     "id": "h-stack-0075",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 2
      }
     },
     {
-     "id": "hstack-0076",
+     "id": "h-stack-0076",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 3
      }
     },
     {
-     "id": "hstack-0077",
+     "id": "h-stack-0077",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 4
      }
     },
     {
-     "id": "hstack-0078",
+     "id": "h-stack-0078",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 5
      }
     },
     {
-     "id": "hstack-0079",
+     "id": "h-stack-0079",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 6
      }
     },
     {
-     "id": "hstack-0080",
+     "id": "h-stack-0080",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 8
      }
     },
     {
-     "id": "hstack-0081",
+     "id": "h-stack-0081",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 10
      }
     },
     {
-     "id": "hstack-0082",
+     "id": "h-stack-0082",
      "kind": "sweep",
      "props": {
       "isScrollable": true
      }
     },
     {
-     "id": "hstack-0083",
+     "id": "h-stack-0083",
      "kind": "sweep",
      "props": {
       "hAlign": "center"
      }
     },
     {
-     "id": "hstack-0084",
+     "id": "h-stack-0084",
      "kind": "sweep",
      "props": {
       "hAlign": "end"
      }
     },
     {
-     "id": "hstack-0085",
+     "id": "h-stack-0085",
      "kind": "sweep",
      "props": {
       "hAlign": "between"
      }
     },
     {
-     "id": "hstack-0086",
+     "id": "h-stack-0086",
      "kind": "sweep",
      "props": {
       "hAlign": "around"
      }
     },
     {
-     "id": "hstack-0087",
+     "id": "h-stack-0087",
      "kind": "sweep",
      "props": {
       "hAlign": "evenly"
      }
     },
     {
-     "id": "hstack-0088",
+     "id": "h-stack-0088",
      "kind": "sweep",
      "props": {
       "vAlign": "start"
      }
     },
     {
-     "id": "hstack-0089",
+     "id": "h-stack-0089",
      "kind": "sweep",
      "props": {
       "vAlign": "center"
      }
     },
     {
-     "id": "hstack-0090",
+     "id": "h-stack-0090",
      "kind": "sweep",
      "props": {
       "vAlign": "end"
      }
     },
     {
-     "id": "hstack-0091",
+     "id": "h-stack-0091",
      "kind": "sweep",
      "props": {
       "justify": "center"
      }
     },
     {
-     "id": "hstack-0092",
+     "id": "h-stack-0092",
      "kind": "sweep",
      "props": {
       "justify": "end"
      }
     },
     {
-     "id": "hstack-0093",
+     "id": "h-stack-0093",
      "kind": "sweep",
      "props": {
       "justify": "between"
      }
     },
     {
-     "id": "hstack-0094",
+     "id": "h-stack-0094",
      "kind": "sweep",
      "props": {
       "justify": "around"
      }
     },
     {
-     "id": "hstack-0095",
+     "id": "h-stack-0095",
      "kind": "sweep",
      "props": {
       "justify": "evenly"
      }
     },
     {
-     "id": "hstack-0096",
+     "id": "h-stack-0096",
      "kind": "sweep",
      "props": {
       "align": "center"
      }
     },
     {
-     "id": "hstack-0097",
+     "id": "h-stack-0097",
      "kind": "sweep",
      "props": {
       "align": "end"
      }
     },
     {
-     "id": "hstack-0098",
+     "id": "h-stack-0098",
      "kind": "sweep",
      "props": {
       "align": "stretch"
      }
     },
     {
-     "id": "hstack-0099",
+     "id": "h-stack-0099",
      "kind": "sweep",
      "props": {
       "wrap": "wrap"
      }
     },
     {
-     "id": "hstack-0100",
+     "id": "h-stack-0100",
      "kind": "sweep",
      "props": {
       "wrap": "wrap-reverse"
      }
     },
     {
-     "id": "hstack-0101",
+     "id": "h-stack-0101",
      "kind": "pairwise",
      "props": {
       "padding": 0.5,
@@ -5002,7 +5004,7 @@
      }
     },
     {
-     "id": "hstack-0102",
+     "id": "h-stack-0102",
      "kind": "pairwise",
      "props": {
       "padding": 1,
@@ -5020,7 +5022,7 @@
      }
     },
     {
-     "id": "hstack-0103",
+     "id": "h-stack-0103",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -5037,7 +5039,7 @@
      }
     },
     {
-     "id": "hstack-0104",
+     "id": "h-stack-0104",
      "kind": "pairwise",
      "props": {
       "padding": 2,
@@ -5054,7 +5056,7 @@
      }
     },
     {
-     "id": "hstack-0105",
+     "id": "h-stack-0105",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -5072,7 +5074,7 @@
      }
     },
     {
-     "id": "hstack-0106",
+     "id": "h-stack-0106",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -5089,7 +5091,7 @@
      }
     },
     {
-     "id": "hstack-0107",
+     "id": "h-stack-0107",
      "kind": "pairwise",
      "props": {
       "padding": 5,
@@ -5105,7 +5107,7 @@
      }
     },
     {
-     "id": "hstack-0108",
+     "id": "h-stack-0108",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -5121,7 +5123,7 @@
      }
     },
     {
-     "id": "hstack-0109",
+     "id": "h-stack-0109",
      "kind": "pairwise",
      "props": {
       "padding": 8,
@@ -5136,7 +5138,7 @@
      }
     },
     {
-     "id": "hstack-0110",
+     "id": "h-stack-0110",
      "kind": "pairwise",
      "props": {
       "padding": 10,
@@ -5153,7 +5155,7 @@
      }
     },
     {
-     "id": "hstack-0111",
+     "id": "h-stack-0111",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5170,7 +5172,7 @@
      }
     },
     {
-     "id": "hstack-0112",
+     "id": "h-stack-0112",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5187,7 +5189,7 @@
      }
     },
     {
-     "id": "hstack-0113",
+     "id": "h-stack-0113",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5205,7 +5207,7 @@
      }
     },
     {
-     "id": "hstack-0114",
+     "id": "h-stack-0114",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5224,7 +5226,7 @@
      }
     },
     {
-     "id": "hstack-0115",
+     "id": "h-stack-0115",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5242,7 +5244,7 @@
      }
     },
     {
-     "id": "hstack-0116",
+     "id": "h-stack-0116",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5260,7 +5262,7 @@
      }
     },
     {
-     "id": "hstack-0117",
+     "id": "h-stack-0117",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5279,7 +5281,7 @@
      }
     },
     {
-     "id": "hstack-0118",
+     "id": "h-stack-0118",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5296,7 +5298,7 @@
      }
     },
     {
-     "id": "hstack-0119",
+     "id": "h-stack-0119",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5314,7 +5316,7 @@
      }
     },
     {
-     "id": "hstack-0120",
+     "id": "h-stack-0120",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5333,7 +5335,7 @@
      }
     },
     {
-     "id": "hstack-0121",
+     "id": "h-stack-0121",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -5351,7 +5353,7 @@
      }
     },
     {
-     "id": "hstack-0122",
+     "id": "h-stack-0122",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5369,7 +5371,7 @@
      }
     },
     {
-     "id": "hstack-0123",
+     "id": "h-stack-0123",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5385,7 +5387,7 @@
      }
     },
     {
-     "id": "hstack-0124",
+     "id": "h-stack-0124",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5403,7 +5405,7 @@
      }
     },
     {
-     "id": "hstack-0125",
+     "id": "h-stack-0125",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5419,7 +5421,7 @@
      }
     },
     {
-     "id": "hstack-0126",
+     "id": "h-stack-0126",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5435,7 +5437,7 @@
      }
     },
     {
-     "id": "hstack-0127",
+     "id": "h-stack-0127",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5451,7 +5453,7 @@
      }
     },
     {
-     "id": "hstack-0128",
+     "id": "h-stack-0128",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5467,7 +5469,7 @@
      }
     },
     {
-     "id": "hstack-0129",
+     "id": "h-stack-0129",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5485,7 +5487,7 @@
      }
     },
     {
-     "id": "hstack-0130",
+     "id": "h-stack-0130",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5503,7 +5505,7 @@
      }
     },
     {
-     "id": "hstack-0131",
+     "id": "h-stack-0131",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5521,7 +5523,7 @@
      }
     },
     {
-     "id": "hstack-0132",
+     "id": "h-stack-0132",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -5537,7 +5539,7 @@
      }
     },
     {
-     "id": "hstack-0133",
+     "id": "h-stack-0133",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5555,7 +5557,7 @@
      }
     },
     {
-     "id": "hstack-0134",
+     "id": "h-stack-0134",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5571,7 +5573,7 @@
      }
     },
     {
-     "id": "hstack-0135",
+     "id": "h-stack-0135",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5588,7 +5590,7 @@
      }
     },
     {
-     "id": "hstack-0136",
+     "id": "h-stack-0136",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5605,7 +5607,7 @@
      }
     },
     {
-     "id": "hstack-0137",
+     "id": "h-stack-0137",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5624,7 +5626,7 @@
      }
     },
     {
-     "id": "hstack-0138",
+     "id": "h-stack-0138",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5642,7 +5644,7 @@
      }
     },
     {
-     "id": "hstack-0139",
+     "id": "h-stack-0139",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5659,7 +5661,7 @@
      }
     },
     {
-     "id": "hstack-0140",
+     "id": "h-stack-0140",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5677,7 +5679,7 @@
      }
     },
     {
-     "id": "hstack-0141",
+     "id": "h-stack-0141",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5693,7 +5695,7 @@
      }
     },
     {
-     "id": "hstack-0142",
+     "id": "h-stack-0142",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5711,7 +5713,7 @@
      }
     },
     {
-     "id": "hstack-0143",
+     "id": "h-stack-0143",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -5728,7 +5730,7 @@
      }
     },
     {
-     "id": "hstack-0144",
+     "id": "h-stack-0144",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5745,7 +5747,7 @@
      }
     },
     {
-     "id": "hstack-0145",
+     "id": "h-stack-0145",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5763,7 +5765,7 @@
      }
     },
     {
-     "id": "hstack-0146",
+     "id": "h-stack-0146",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5780,7 +5782,7 @@
      }
     },
     {
-     "id": "hstack-0147",
+     "id": "h-stack-0147",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5798,7 +5800,7 @@
      }
     },
     {
-     "id": "hstack-0148",
+     "id": "h-stack-0148",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5813,7 +5815,7 @@
      }
     },
     {
-     "id": "hstack-0149",
+     "id": "h-stack-0149",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5829,7 +5831,7 @@
      }
     },
     {
-     "id": "hstack-0150",
+     "id": "h-stack-0150",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5846,7 +5848,7 @@
      }
     },
     {
-     "id": "hstack-0151",
+     "id": "h-stack-0151",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5864,7 +5866,7 @@
      }
     },
     {
-     "id": "hstack-0152",
+     "id": "h-stack-0152",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5882,7 +5884,7 @@
      }
     },
     {
-     "id": "hstack-0153",
+     "id": "h-stack-0153",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5898,7 +5900,7 @@
      }
     },
     {
-     "id": "hstack-0154",
+     "id": "h-stack-0154",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -5917,7 +5919,7 @@
      }
     },
     {
-     "id": "hstack-0155",
+     "id": "h-stack-0155",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -5934,7 +5936,7 @@
      }
     },
     {
-     "id": "hstack-0156",
+     "id": "h-stack-0156",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -5951,7 +5953,7 @@
      }
     },
     {
-     "id": "hstack-0157",
+     "id": "h-stack-0157",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -5969,7 +5971,7 @@
      }
     },
     {
-     "id": "hstack-0158",
+     "id": "h-stack-0158",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -5985,7 +5987,7 @@
      }
     },
     {
-     "id": "hstack-0159",
+     "id": "h-stack-0159",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6003,7 +6005,7 @@
      }
     },
     {
-     "id": "hstack-0160",
+     "id": "h-stack-0160",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6021,7 +6023,7 @@
      }
     },
     {
-     "id": "hstack-0161",
+     "id": "h-stack-0161",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6038,7 +6040,7 @@
      }
     },
     {
-     "id": "hstack-0162",
+     "id": "h-stack-0162",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6054,7 +6056,7 @@
      }
     },
     {
-     "id": "hstack-0163",
+     "id": "h-stack-0163",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6072,7 +6074,7 @@
      }
     },
     {
-     "id": "hstack-0164",
+     "id": "h-stack-0164",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6088,7 +6090,7 @@
      }
     },
     {
-     "id": "hstack-0165",
+     "id": "h-stack-0165",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -6105,7 +6107,7 @@
      }
     },
     {
-     "id": "hstack-0166",
+     "id": "h-stack-0166",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6121,7 +6123,7 @@
      }
     },
     {
-     "id": "hstack-0167",
+     "id": "h-stack-0167",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6140,7 +6142,7 @@
      }
     },
     {
-     "id": "hstack-0168",
+     "id": "h-stack-0168",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6158,7 +6160,7 @@
      }
     },
     {
-     "id": "hstack-0169",
+     "id": "h-stack-0169",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6173,7 +6175,7 @@
      }
     },
     {
-     "id": "hstack-0170",
+     "id": "h-stack-0170",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6191,7 +6193,7 @@
      }
     },
     {
-     "id": "hstack-0171",
+     "id": "h-stack-0171",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6206,7 +6208,7 @@
      }
     },
     {
-     "id": "hstack-0172",
+     "id": "h-stack-0172",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6223,7 +6225,7 @@
      }
     },
     {
-     "id": "hstack-0173",
+     "id": "h-stack-0173",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6241,7 +6243,7 @@
      }
     },
     {
-     "id": "hstack-0174",
+     "id": "h-stack-0174",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6259,7 +6261,7 @@
      }
     },
     {
-     "id": "hstack-0175",
+     "id": "h-stack-0175",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6275,7 +6277,7 @@
      }
     },
     {
-     "id": "hstack-0176",
+     "id": "h-stack-0176",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -6292,7 +6294,7 @@
      }
     },
     {
-     "id": "hstack-0177",
+     "id": "h-stack-0177",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6309,7 +6311,7 @@
      }
     },
     {
-     "id": "hstack-0178",
+     "id": "h-stack-0178",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6329,7 +6331,7 @@
      }
     },
     {
-     "id": "hstack-0179",
+     "id": "h-stack-0179",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6345,7 +6347,7 @@
      }
     },
     {
-     "id": "hstack-0180",
+     "id": "h-stack-0180",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6363,7 +6365,7 @@
      }
     },
     {
-     "id": "hstack-0181",
+     "id": "h-stack-0181",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6380,7 +6382,7 @@
      }
     },
     {
-     "id": "hstack-0182",
+     "id": "h-stack-0182",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6395,7 +6397,7 @@
      }
     },
     {
-     "id": "hstack-0183",
+     "id": "h-stack-0183",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6410,7 +6412,7 @@
      }
     },
     {
-     "id": "hstack-0184",
+     "id": "h-stack-0184",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6425,7 +6427,7 @@
      }
     },
     {
-     "id": "hstack-0185",
+     "id": "h-stack-0185",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6441,7 +6443,7 @@
      }
     },
     {
-     "id": "hstack-0186",
+     "id": "h-stack-0186",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6457,7 +6459,7 @@
      }
     },
     {
-     "id": "hstack-0187",
+     "id": "h-stack-0187",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -6475,7 +6477,7 @@
      }
     },
     {
-     "id": "hstack-0188",
+     "id": "h-stack-0188",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6491,7 +6493,7 @@
      }
     },
     {
-     "id": "hstack-0189",
+     "id": "h-stack-0189",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6511,7 +6513,7 @@
      }
     },
     {
-     "id": "hstack-0190",
+     "id": "h-stack-0190",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6527,7 +6529,7 @@
      }
     },
     {
-     "id": "hstack-0191",
+     "id": "h-stack-0191",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6544,7 +6546,7 @@
      }
     },
     {
-     "id": "hstack-0192",
+     "id": "h-stack-0192",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6561,7 +6563,7 @@
      }
     },
     {
-     "id": "hstack-0193",
+     "id": "h-stack-0193",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6577,7 +6579,7 @@
      }
     },
     {
-     "id": "hstack-0194",
+     "id": "h-stack-0194",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6592,7 +6594,7 @@
      }
     },
     {
-     "id": "hstack-0195",
+     "id": "h-stack-0195",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6609,7 +6611,7 @@
      }
     },
     {
-     "id": "hstack-0196",
+     "id": "h-stack-0196",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6625,7 +6627,7 @@
      }
     },
     {
-     "id": "hstack-0197",
+     "id": "h-stack-0197",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6642,7 +6644,7 @@
      }
     },
     {
-     "id": "hstack-0198",
+     "id": "h-stack-0198",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -6657,7 +6659,7 @@
      }
     },
     {
-     "id": "hstack-0199",
+     "id": "h-stack-0199",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6672,7 +6674,7 @@
      }
     },
     {
-     "id": "hstack-0200",
+     "id": "h-stack-0200",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6690,7 +6692,7 @@
      }
     },
     {
-     "id": "hstack-0201",
+     "id": "h-stack-0201",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6707,7 +6709,7 @@
      }
     },
     {
-     "id": "hstack-0202",
+     "id": "h-stack-0202",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6723,7 +6725,7 @@
      }
     },
     {
-     "id": "hstack-0203",
+     "id": "h-stack-0203",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6739,7 +6741,7 @@
      }
     },
     {
-     "id": "hstack-0204",
+     "id": "h-stack-0204",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6757,7 +6759,7 @@
      }
     },
     {
-     "id": "hstack-0205",
+     "id": "h-stack-0205",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6773,7 +6775,7 @@
      }
     },
     {
-     "id": "hstack-0206",
+     "id": "h-stack-0206",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6790,7 +6792,7 @@
      }
     },
     {
-     "id": "hstack-0207",
+     "id": "h-stack-0207",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6807,7 +6809,7 @@
      }
     },
     {
-     "id": "hstack-0208",
+     "id": "h-stack-0208",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6823,7 +6825,7 @@
      }
     },
     {
-     "id": "hstack-0209",
+     "id": "h-stack-0209",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -6839,7 +6841,7 @@
      }
     },
     {
-     "id": "hstack-0210",
+     "id": "h-stack-0210",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6854,7 +6856,7 @@
      }
     },
     {
-     "id": "hstack-0211",
+     "id": "h-stack-0211",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6873,7 +6875,7 @@
      }
     },
     {
-     "id": "hstack-0212",
+     "id": "h-stack-0212",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6892,7 +6894,7 @@
      }
     },
     {
-     "id": "hstack-0213",
+     "id": "h-stack-0213",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6907,7 +6909,7 @@
      }
     },
     {
-     "id": "hstack-0214",
+     "id": "h-stack-0214",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6922,7 +6924,7 @@
      }
     },
     {
-     "id": "hstack-0215",
+     "id": "h-stack-0215",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6938,7 +6940,7 @@
      }
     },
     {
-     "id": "hstack-0216",
+     "id": "h-stack-0216",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6953,7 +6955,7 @@
      }
     },
     {
-     "id": "hstack-0217",
+     "id": "h-stack-0217",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6969,7 +6971,7 @@
      }
     },
     {
-     "id": "hstack-0218",
+     "id": "h-stack-0218",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6982,7 +6984,7 @@
      }
     },
     {
-     "id": "hstack-0219",
+     "id": "h-stack-0219",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -6997,7 +6999,7 @@
      }
     },
     {
-     "id": "hstack-0220",
+     "id": "h-stack-0220",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -7013,7 +7015,7 @@
      }
     },
     {
-     "id": "hstack-0221",
+     "id": "h-stack-0221",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7028,7 +7030,7 @@
      }
     },
     {
-     "id": "hstack-0222",
+     "id": "h-stack-0222",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -7044,7 +7046,7 @@
      }
     },
     {
-     "id": "hstack-0223",
+     "id": "h-stack-0223",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -7061,7 +7063,7 @@
      }
     },
     {
-     "id": "hstack-0224",
+     "id": "h-stack-0224",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -7076,7 +7078,7 @@
      }
     },
     {
-     "id": "hstack-0225",
+     "id": "h-stack-0225",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -7091,7 +7093,7 @@
      }
     },
     {
-     "id": "hstack-0226",
+     "id": "h-stack-0226",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -7108,7 +7110,7 @@
      }
     },
     {
-     "id": "hstack-0227",
+     "id": "h-stack-0227",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -7122,7 +7124,7 @@
      }
     },
     {
-     "id": "hstack-0228",
+     "id": "h-stack-0228",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -7139,7 +7141,7 @@
      }
     },
     {
-     "id": "hstack-0229",
+     "id": "h-stack-0229",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -7155,7 +7157,7 @@
      }
     },
     {
-     "id": "hstack-0230",
+     "id": "h-stack-0230",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -7170,7 +7172,7 @@
      }
     },
     {
-     "id": "hstack-0231",
+     "id": "h-stack-0231",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -7185,7 +7187,7 @@
      }
     },
     {
-     "id": "hstack-0232",
+     "id": "h-stack-0232",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -7200,7 +7202,7 @@
      }
     },
     {
-     "id": "hstack-0233",
+     "id": "h-stack-0233",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7215,7 +7217,7 @@
      }
     },
     {
-     "id": "hstack-0234",
+     "id": "h-stack-0234",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7230,7 +7232,7 @@
      }
     },
     {
-     "id": "hstack-0235",
+     "id": "h-stack-0235",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7246,7 +7248,7 @@
      }
     },
     {
-     "id": "hstack-0236",
+     "id": "h-stack-0236",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -7262,7 +7264,7 @@
      }
     },
     {
-     "id": "hstack-0237",
+     "id": "h-stack-0237",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7276,7 +7278,7 @@
      }
     },
     {
-     "id": "hstack-0238",
+     "id": "h-stack-0238",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -7291,7 +7293,7 @@
      }
     },
     {
-     "id": "hstack-0239",
+     "id": "h-stack-0239",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -7303,7 +7305,7 @@
      }
     },
     {
-     "id": "hstack-0240",
+     "id": "h-stack-0240",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -7317,7 +7319,7 @@
      }
     },
     {
-     "id": "hstack-0241",
+     "id": "h-stack-0241",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7332,7 +7334,7 @@
      }
     },
     {
-     "id": "hstack-0242",
+     "id": "h-stack-0242",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7345,7 +7347,7 @@
      }
     },
     {
-     "id": "hstack-0243",
+     "id": "h-stack-0243",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -7359,7 +7361,7 @@
      }
     },
     {
-     "id": "hstack-0244",
+     "id": "h-stack-0244",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -7372,7 +7374,7 @@
      }
     },
     {
-     "id": "hstack-0245",
+     "id": "h-stack-0245",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -7385,7 +7387,7 @@
      }
     },
     {
-     "id": "hstack-0246",
+     "id": "h-stack-0246",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -7399,7 +7401,7 @@
      }
     },
     {
-     "id": "hstack-0247",
+     "id": "h-stack-0247",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -7412,7 +7414,7 @@
      }
     },
     {
-     "id": "hstack-0248",
+     "id": "h-stack-0248",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7427,7 +7429,7 @@
      }
     },
     {
-     "id": "hstack-0249",
+     "id": "h-stack-0249",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -7441,7 +7443,7 @@
      }
     },
     {
-     "id": "hstack-0250",
+     "id": "h-stack-0250",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -7453,7 +7455,7 @@
      }
     },
     {
-     "id": "hstack-0251",
+     "id": "h-stack-0251",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -7466,7 +7468,7 @@
      }
     },
     {
-     "id": "hstack-0252",
+     "id": "h-stack-0252",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -7480,7 +7482,7 @@
      }
     },
     {
-     "id": "hstack-0253",
+     "id": "h-stack-0253",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7495,7 +7497,7 @@
      }
     },
     {
-     "id": "hstack-0254",
+     "id": "h-stack-0254",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7510,7 +7512,7 @@
      }
     },
     {
-     "id": "hstack-0255",
+     "id": "h-stack-0255",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7525,7 +7527,7 @@
      }
     },
     {
-     "id": "hstack-0256",
+     "id": "h-stack-0256",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -7539,7 +7541,7 @@
      }
     },
     {
-     "id": "hstack-0257",
+     "id": "h-stack-0257",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -7552,7 +7554,7 @@
      }
     },
     {
-     "id": "hstack-0258",
+     "id": "h-stack-0258",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7565,7 +7567,7 @@
      }
     },
     {
-     "id": "hstack-0259",
+     "id": "h-stack-0259",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -7578,7 +7580,7 @@
      }
     },
     {
-     "id": "hstack-0260",
+     "id": "h-stack-0260",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -7592,7 +7594,7 @@
      }
     },
     {
-     "id": "hstack-0261",
+     "id": "h-stack-0261",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -7605,7 +7607,7 @@
      }
     },
     {
-     "id": "hstack-0262",
+     "id": "h-stack-0262",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -7617,7 +7619,7 @@
      }
     },
     {
-     "id": "hstack-0263",
+     "id": "h-stack-0263",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -7632,7 +7634,7 @@
      }
     },
     {
-     "id": "hstack-0264",
+     "id": "h-stack-0264",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -7647,7 +7649,7 @@
      }
     },
     {
-     "id": "hstack-0265",
+     "id": "h-stack-0265",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -7661,7 +7663,7 @@
      }
     },
     {
-     "id": "hstack-0266",
+     "id": "h-stack-0266",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -7671,7 +7673,7 @@
      }
     },
     {
-     "id": "hstack-0267",
+     "id": "h-stack-0267",
      "kind": "pairwise",
      "props": {
       "padding": 8,
@@ -7682,7 +7684,7 @@
      }
     },
     {
-     "id": "hstack-0268",
+     "id": "h-stack-0268",
      "kind": "pairwise",
      "props": {
       "padding": 10,
@@ -7695,7 +7697,7 @@
      }
     },
     {
-     "id": "hstack-0269",
+     "id": "h-stack-0269",
      "kind": "pairwise",
      "props": {
       "padding": 1,
@@ -7708,7 +7710,7 @@
      }
     },
     {
-     "id": "hstack-0270",
+     "id": "h-stack-0270",
      "kind": "pairwise",
      "props": {
       "padding": 5,
@@ -7720,7 +7722,7 @@
      }
     },
     {
-     "id": "hstack-0271",
+     "id": "h-stack-0271",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -7730,7 +7732,7 @@
      }
     },
     {
-     "id": "hstack-0272",
+     "id": "h-stack-0272",
      "kind": "pairwise",
      "props": {
       "padding": 0.5,
@@ -7742,7 +7744,7 @@
      }
     },
     {
-     "id": "hstack-0273",
+     "id": "h-stack-0273",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -7754,7 +7756,7 @@
      }
     },
     {
-     "id": "hstack-0274",
+     "id": "h-stack-0274",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -7763,7 +7765,7 @@
      }
     },
     {
-     "id": "hstack-0275",
+     "id": "h-stack-0275",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -7772,7 +7774,7 @@
      }
     },
     {
-     "id": "hstack-0276",
+     "id": "h-stack-0276",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -7784,7 +7786,7 @@
      }
     },
     {
-     "id": "hstack-0277",
+     "id": "h-stack-0277",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -7796,7 +7798,7 @@
      }
     },
     {
-     "id": "hstack-0278",
+     "id": "h-stack-0278",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -7808,7 +7810,7 @@
      }
     },
     {
-     "id": "hstack-0279",
+     "id": "h-stack-0279",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -7819,7 +7821,7 @@
      }
     },
     {
-     "id": "hstack-0280",
+     "id": "h-stack-0280",
      "kind": "pairwise",
      "props": {
       "paddingInline": 3,
@@ -7829,7 +7831,7 @@
      }
     },
     {
-     "id": "hstack-0281",
+     "id": "h-stack-0281",
      "kind": "pairwise",
      "props": {
       "paddingInline": 6,
@@ -7841,7 +7843,7 @@
      }
     },
     {
-     "id": "hstack-0282",
+     "id": "h-stack-0282",
      "kind": "pairwise",
      "props": {
       "paddingInline": 6,
@@ -7851,7 +7853,7 @@
      }
     },
     {
-     "id": "hstack-0283",
+     "id": "h-stack-0283",
      "kind": "pairwise",
      "props": {
       "paddingInline": 10,
@@ -7862,7 +7864,7 @@
      }
     },
     {
-     "id": "hstack-0284",
+     "id": "h-stack-0284",
      "kind": "pairwise",
      "props": {
       "paddingInline": 5,
@@ -7874,7 +7876,7 @@
      }
     },
     {
-     "id": "hstack-0285",
+     "id": "h-stack-0285",
      "kind": "pairwise",
      "props": {
       "paddingInline": 5,
@@ -7885,7 +7887,7 @@
      }
     },
     {
-     "id": "hstack-0286",
+     "id": "h-stack-0286",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 6,
@@ -7894,7 +7896,7 @@
      }
     },
     {
-     "id": "hstack-0287",
+     "id": "h-stack-0287",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 10,
@@ -7903,7 +7905,7 @@
      }
     },
     {
-     "id": "hstack-0288",
+     "id": "h-stack-0288",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 2,
@@ -7913,7 +7915,7 @@
      }
     },
     {
-     "id": "hstack-0289",
+     "id": "h-stack-0289",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 4,
@@ -7921,7 +7923,7 @@
      }
     },
     {
-     "id": "hstack-0290",
+     "id": "h-stack-0290",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 8,
@@ -7932,7 +7934,7 @@
      }
     },
     {
-     "id": "hstack-0291",
+     "id": "h-stack-0291",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 3,
@@ -7943,7 +7945,7 @@
      }
     },
     {
-     "id": "hstack-0292",
+     "id": "h-stack-0292",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 8,
@@ -7952,7 +7954,7 @@
      }
     },
     {
-     "id": "hstack-0293",
+     "id": "h-stack-0293",
      "kind": "pairwise",
      "props": {
       "paddingInlineEnd": 8,
@@ -7961,7 +7963,7 @@
      }
     },
     {
-     "id": "hstack-0294",
+     "id": "h-stack-0294",
      "kind": "pairwise",
      "props": {
       "paddingInlineEnd": 8,
@@ -7970,7 +7972,7 @@
      }
     },
     {
-     "id": "hstack-0295",
+     "id": "h-stack-0295",
      "kind": "pairwise",
      "props": {
       "paddingBlock": 5,
@@ -7978,7 +7980,7 @@
      }
     },
     {
-     "id": "hstack-0296",
+     "id": "h-stack-0296",
      "kind": "pairwise",
      "props": {
       "paddingBlock": 6,
@@ -7987,7 +7989,7 @@
      }
     },
     {
-     "id": "hstack-0297",
+     "id": "h-stack-0297",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 1,
@@ -7996,7 +7998,7 @@
      }
     },
     {
-     "id": "hstack-0298",
+     "id": "h-stack-0298",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 4,
@@ -8005,7 +8007,7 @@
      }
     },
     {
-     "id": "hstack-0299",
+     "id": "h-stack-0299",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 10,
@@ -8178,707 +8180,708 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
-     "id": "vstack-0001",
+     "id": "v-stack-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "vstack-0002",
+     "id": "v-stack-0002",
      "kind": "sweep",
      "props": {
       "gap": 0.5
      }
     },
     {
-     "id": "vstack-0003",
+     "id": "v-stack-0003",
      "kind": "sweep",
      "props": {
       "gap": 1
      }
     },
     {
-     "id": "vstack-0004",
+     "id": "v-stack-0004",
      "kind": "sweep",
      "props": {
       "gap": 1.5
      }
     },
     {
-     "id": "vstack-0005",
+     "id": "v-stack-0005",
      "kind": "sweep",
      "props": {
       "gap": 2
      }
     },
     {
-     "id": "vstack-0006",
+     "id": "v-stack-0006",
      "kind": "sweep",
      "props": {
       "gap": 3
      }
     },
     {
-     "id": "vstack-0007",
+     "id": "v-stack-0007",
      "kind": "sweep",
      "props": {
       "gap": 4
      }
     },
     {
-     "id": "vstack-0008",
+     "id": "v-stack-0008",
      "kind": "sweep",
      "props": {
       "gap": 5
      }
     },
     {
-     "id": "vstack-0009",
+     "id": "v-stack-0009",
      "kind": "sweep",
      "props": {
       "gap": 6
      }
     },
     {
-     "id": "vstack-0010",
+     "id": "v-stack-0010",
      "kind": "sweep",
      "props": {
       "gap": 8
      }
     },
     {
-     "id": "vstack-0011",
+     "id": "v-stack-0011",
      "kind": "sweep",
      "props": {
       "gap": 10
      }
     },
     {
-     "id": "vstack-0012",
+     "id": "v-stack-0012",
      "kind": "sweep",
      "props": {
       "padding": 0.5
      }
     },
     {
-     "id": "vstack-0013",
+     "id": "v-stack-0013",
      "kind": "sweep",
      "props": {
       "padding": 1
      }
     },
     {
-     "id": "vstack-0014",
+     "id": "v-stack-0014",
      "kind": "sweep",
      "props": {
       "padding": 1.5
      }
     },
     {
-     "id": "vstack-0015",
+     "id": "v-stack-0015",
      "kind": "sweep",
      "props": {
       "padding": 2
      }
     },
     {
-     "id": "vstack-0016",
+     "id": "v-stack-0016",
      "kind": "sweep",
      "props": {
       "padding": 3
      }
     },
     {
-     "id": "vstack-0017",
+     "id": "v-stack-0017",
      "kind": "sweep",
      "props": {
       "padding": 4
      }
     },
     {
-     "id": "vstack-0018",
+     "id": "v-stack-0018",
      "kind": "sweep",
      "props": {
       "padding": 5
      }
     },
     {
-     "id": "vstack-0019",
+     "id": "v-stack-0019",
      "kind": "sweep",
      "props": {
       "padding": 6
      }
     },
     {
-     "id": "vstack-0020",
+     "id": "v-stack-0020",
      "kind": "sweep",
      "props": {
       "padding": 8
      }
     },
     {
-     "id": "vstack-0021",
+     "id": "v-stack-0021",
      "kind": "sweep",
      "props": {
       "padding": 10
      }
     },
     {
-     "id": "vstack-0022",
+     "id": "v-stack-0022",
      "kind": "sweep",
      "props": {
       "paddingInline": 0.5
      }
     },
     {
-     "id": "vstack-0023",
+     "id": "v-stack-0023",
      "kind": "sweep",
      "props": {
       "paddingInline": 1
      }
     },
     {
-     "id": "vstack-0024",
+     "id": "v-stack-0024",
      "kind": "sweep",
      "props": {
       "paddingInline": 1.5
      }
     },
     {
-     "id": "vstack-0025",
+     "id": "v-stack-0025",
      "kind": "sweep",
      "props": {
       "paddingInline": 2
      }
     },
     {
-     "id": "vstack-0026",
+     "id": "v-stack-0026",
      "kind": "sweep",
      "props": {
       "paddingInline": 3
      }
     },
     {
-     "id": "vstack-0027",
+     "id": "v-stack-0027",
      "kind": "sweep",
      "props": {
       "paddingInline": 4
      }
     },
     {
-     "id": "vstack-0028",
+     "id": "v-stack-0028",
      "kind": "sweep",
      "props": {
       "paddingInline": 5
      }
     },
     {
-     "id": "vstack-0029",
+     "id": "v-stack-0029",
      "kind": "sweep",
      "props": {
       "paddingInline": 6
      }
     },
     {
-     "id": "vstack-0030",
+     "id": "v-stack-0030",
      "kind": "sweep",
      "props": {
       "paddingInline": 8
      }
     },
     {
-     "id": "vstack-0031",
+     "id": "v-stack-0031",
      "kind": "sweep",
      "props": {
       "paddingInline": 10
      }
     },
     {
-     "id": "vstack-0032",
+     "id": "v-stack-0032",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 0.5
      }
     },
     {
-     "id": "vstack-0033",
+     "id": "v-stack-0033",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 1
      }
     },
     {
-     "id": "vstack-0034",
+     "id": "v-stack-0034",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 1.5
      }
     },
     {
-     "id": "vstack-0035",
+     "id": "v-stack-0035",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 2
      }
     },
     {
-     "id": "vstack-0036",
+     "id": "v-stack-0036",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 3
      }
     },
     {
-     "id": "vstack-0037",
+     "id": "v-stack-0037",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 4
      }
     },
     {
-     "id": "vstack-0038",
+     "id": "v-stack-0038",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 5
      }
     },
     {
-     "id": "vstack-0039",
+     "id": "v-stack-0039",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 6
      }
     },
     {
-     "id": "vstack-0040",
+     "id": "v-stack-0040",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 8
      }
     },
     {
-     "id": "vstack-0041",
+     "id": "v-stack-0041",
      "kind": "sweep",
      "props": {
       "paddingInlineStart": 10
      }
     },
     {
-     "id": "vstack-0042",
+     "id": "v-stack-0042",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 0.5
      }
     },
     {
-     "id": "vstack-0043",
+     "id": "v-stack-0043",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 1
      }
     },
     {
-     "id": "vstack-0044",
+     "id": "v-stack-0044",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 1.5
      }
     },
     {
-     "id": "vstack-0045",
+     "id": "v-stack-0045",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 2
      }
     },
     {
-     "id": "vstack-0046",
+     "id": "v-stack-0046",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 3
      }
     },
     {
-     "id": "vstack-0047",
+     "id": "v-stack-0047",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 4
      }
     },
     {
-     "id": "vstack-0048",
+     "id": "v-stack-0048",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 5
      }
     },
     {
-     "id": "vstack-0049",
+     "id": "v-stack-0049",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 6
      }
     },
     {
-     "id": "vstack-0050",
+     "id": "v-stack-0050",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 8
      }
     },
     {
-     "id": "vstack-0051",
+     "id": "v-stack-0051",
      "kind": "sweep",
      "props": {
       "paddingInlineEnd": 10
      }
     },
     {
-     "id": "vstack-0052",
+     "id": "v-stack-0052",
      "kind": "sweep",
      "props": {
       "paddingBlock": 0.5
      }
     },
     {
-     "id": "vstack-0053",
+     "id": "v-stack-0053",
      "kind": "sweep",
      "props": {
       "paddingBlock": 1
      }
     },
     {
-     "id": "vstack-0054",
+     "id": "v-stack-0054",
      "kind": "sweep",
      "props": {
       "paddingBlock": 1.5
      }
     },
     {
-     "id": "vstack-0055",
+     "id": "v-stack-0055",
      "kind": "sweep",
      "props": {
       "paddingBlock": 2
      }
     },
     {
-     "id": "vstack-0056",
+     "id": "v-stack-0056",
      "kind": "sweep",
      "props": {
       "paddingBlock": 3
      }
     },
     {
-     "id": "vstack-0057",
+     "id": "v-stack-0057",
      "kind": "sweep",
      "props": {
       "paddingBlock": 4
      }
     },
     {
-     "id": "vstack-0058",
+     "id": "v-stack-0058",
      "kind": "sweep",
      "props": {
       "paddingBlock": 5
      }
     },
     {
-     "id": "vstack-0059",
+     "id": "v-stack-0059",
      "kind": "sweep",
      "props": {
       "paddingBlock": 6
      }
     },
     {
-     "id": "vstack-0060",
+     "id": "v-stack-0060",
      "kind": "sweep",
      "props": {
       "paddingBlock": 8
      }
     },
     {
-     "id": "vstack-0061",
+     "id": "v-stack-0061",
      "kind": "sweep",
      "props": {
       "paddingBlock": 10
      }
     },
     {
-     "id": "vstack-0062",
+     "id": "v-stack-0062",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 0.5
      }
     },
     {
-     "id": "vstack-0063",
+     "id": "v-stack-0063",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 1
      }
     },
     {
-     "id": "vstack-0064",
+     "id": "v-stack-0064",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 1.5
      }
     },
     {
-     "id": "vstack-0065",
+     "id": "v-stack-0065",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 2
      }
     },
     {
-     "id": "vstack-0066",
+     "id": "v-stack-0066",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 3
      }
     },
     {
-     "id": "vstack-0067",
+     "id": "v-stack-0067",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 4
      }
     },
     {
-     "id": "vstack-0068",
+     "id": "v-stack-0068",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 5
      }
     },
     {
-     "id": "vstack-0069",
+     "id": "v-stack-0069",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 6
      }
     },
     {
-     "id": "vstack-0070",
+     "id": "v-stack-0070",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 8
      }
     },
     {
-     "id": "vstack-0071",
+     "id": "v-stack-0071",
      "kind": "sweep",
      "props": {
       "paddingBlockStart": 10
      }
     },
     {
-     "id": "vstack-0072",
+     "id": "v-stack-0072",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 0.5
      }
     },
     {
-     "id": "vstack-0073",
+     "id": "v-stack-0073",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 1
      }
     },
     {
-     "id": "vstack-0074",
+     "id": "v-stack-0074",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 1.5
      }
     },
     {
-     "id": "vstack-0075",
+     "id": "v-stack-0075",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 2
      }
     },
     {
-     "id": "vstack-0076",
+     "id": "v-stack-0076",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 3
      }
     },
     {
-     "id": "vstack-0077",
+     "id": "v-stack-0077",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 4
      }
     },
     {
-     "id": "vstack-0078",
+     "id": "v-stack-0078",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 5
      }
     },
     {
-     "id": "vstack-0079",
+     "id": "v-stack-0079",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 6
      }
     },
     {
-     "id": "vstack-0080",
+     "id": "v-stack-0080",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 8
      }
     },
     {
-     "id": "vstack-0081",
+     "id": "v-stack-0081",
      "kind": "sweep",
      "props": {
       "paddingBlockEnd": 10
      }
     },
     {
-     "id": "vstack-0082",
+     "id": "v-stack-0082",
      "kind": "sweep",
      "props": {
       "isScrollable": true
      }
     },
     {
-     "id": "vstack-0083",
+     "id": "v-stack-0083",
      "kind": "sweep",
      "props": {
       "hAlign": "start"
      }
     },
     {
-     "id": "vstack-0084",
+     "id": "v-stack-0084",
      "kind": "sweep",
      "props": {
       "hAlign": "center"
      }
     },
     {
-     "id": "vstack-0085",
+     "id": "v-stack-0085",
      "kind": "sweep",
      "props": {
       "hAlign": "end"
      }
     },
     {
-     "id": "vstack-0086",
+     "id": "v-stack-0086",
      "kind": "sweep",
      "props": {
       "vAlign": "center"
      }
     },
     {
-     "id": "vstack-0087",
+     "id": "v-stack-0087",
      "kind": "sweep",
      "props": {
       "vAlign": "end"
      }
     },
     {
-     "id": "vstack-0088",
+     "id": "v-stack-0088",
      "kind": "sweep",
      "props": {
       "vAlign": "between"
      }
     },
     {
-     "id": "vstack-0089",
+     "id": "v-stack-0089",
      "kind": "sweep",
      "props": {
       "vAlign": "around"
      }
     },
     {
-     "id": "vstack-0090",
+     "id": "v-stack-0090",
      "kind": "sweep",
      "props": {
       "vAlign": "evenly"
      }
     },
     {
-     "id": "vstack-0091",
+     "id": "v-stack-0091",
      "kind": "sweep",
      "props": {
       "justify": "center"
      }
     },
     {
-     "id": "vstack-0092",
+     "id": "v-stack-0092",
      "kind": "sweep",
      "props": {
       "justify": "end"
      }
     },
     {
-     "id": "vstack-0093",
+     "id": "v-stack-0093",
      "kind": "sweep",
      "props": {
       "justify": "between"
      }
     },
     {
-     "id": "vstack-0094",
+     "id": "v-stack-0094",
      "kind": "sweep",
      "props": {
       "justify": "around"
      }
     },
     {
-     "id": "vstack-0095",
+     "id": "v-stack-0095",
      "kind": "sweep",
      "props": {
       "justify": "evenly"
      }
     },
     {
-     "id": "vstack-0096",
+     "id": "v-stack-0096",
      "kind": "sweep",
      "props": {
       "align": "center"
      }
     },
     {
-     "id": "vstack-0097",
+     "id": "v-stack-0097",
      "kind": "sweep",
      "props": {
       "align": "end"
      }
     },
     {
-     "id": "vstack-0098",
+     "id": "v-stack-0098",
      "kind": "sweep",
      "props": {
       "align": "stretch"
      }
     },
     {
-     "id": "vstack-0099",
+     "id": "v-stack-0099",
      "kind": "sweep",
      "props": {
       "wrap": "wrap"
      }
     },
     {
-     "id": "vstack-0100",
+     "id": "v-stack-0100",
      "kind": "sweep",
      "props": {
       "wrap": "wrap-reverse"
      }
     },
     {
-     "id": "vstack-0101",
+     "id": "v-stack-0101",
      "kind": "pairwise",
      "props": {
       "padding": 0.5,
@@ -8897,7 +8900,7 @@
      }
     },
     {
-     "id": "vstack-0102",
+     "id": "v-stack-0102",
      "kind": "pairwise",
      "props": {
       "padding": 1,
@@ -8915,7 +8918,7 @@
      }
     },
     {
-     "id": "vstack-0103",
+     "id": "v-stack-0103",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -8932,7 +8935,7 @@
      }
     },
     {
-     "id": "vstack-0104",
+     "id": "v-stack-0104",
      "kind": "pairwise",
      "props": {
       "padding": 2,
@@ -8949,7 +8952,7 @@
      }
     },
     {
-     "id": "vstack-0105",
+     "id": "v-stack-0105",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -8967,7 +8970,7 @@
      }
     },
     {
-     "id": "vstack-0106",
+     "id": "v-stack-0106",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -8984,7 +8987,7 @@
      }
     },
     {
-     "id": "vstack-0107",
+     "id": "v-stack-0107",
      "kind": "pairwise",
      "props": {
       "padding": 5,
@@ -9001,7 +9004,7 @@
      }
     },
     {
-     "id": "vstack-0108",
+     "id": "v-stack-0108",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -9017,7 +9020,7 @@
      }
     },
     {
-     "id": "vstack-0109",
+     "id": "v-stack-0109",
      "kind": "pairwise",
      "props": {
       "padding": 8,
@@ -9033,7 +9036,7 @@
      }
     },
     {
-     "id": "vstack-0110",
+     "id": "v-stack-0110",
      "kind": "pairwise",
      "props": {
       "padding": 10,
@@ -9049,7 +9052,7 @@
      }
     },
     {
-     "id": "vstack-0111",
+     "id": "v-stack-0111",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9066,7 +9069,7 @@
      }
     },
     {
-     "id": "vstack-0112",
+     "id": "v-stack-0112",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9084,7 +9087,7 @@
      }
     },
     {
-     "id": "vstack-0113",
+     "id": "v-stack-0113",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9102,7 +9105,7 @@
      }
     },
     {
-     "id": "vstack-0114",
+     "id": "v-stack-0114",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9120,7 +9123,7 @@
      }
     },
     {
-     "id": "vstack-0115",
+     "id": "v-stack-0115",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9137,7 +9140,7 @@
      }
     },
     {
-     "id": "vstack-0116",
+     "id": "v-stack-0116",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9154,7 +9157,7 @@
      }
     },
     {
-     "id": "vstack-0117",
+     "id": "v-stack-0117",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9172,7 +9175,7 @@
      }
     },
     {
-     "id": "vstack-0118",
+     "id": "v-stack-0118",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9190,7 +9193,7 @@
      }
     },
     {
-     "id": "vstack-0119",
+     "id": "v-stack-0119",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9208,7 +9211,7 @@
      }
     },
     {
-     "id": "vstack-0120",
+     "id": "v-stack-0120",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9227,7 +9230,7 @@
      }
     },
     {
-     "id": "vstack-0121",
+     "id": "v-stack-0121",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -9246,7 +9249,7 @@
      }
     },
     {
-     "id": "vstack-0122",
+     "id": "v-stack-0122",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9263,7 +9266,7 @@
      }
     },
     {
-     "id": "vstack-0123",
+     "id": "v-stack-0123",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9280,7 +9283,7 @@
      }
     },
     {
-     "id": "vstack-0124",
+     "id": "v-stack-0124",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9297,7 +9300,7 @@
      }
     },
     {
-     "id": "vstack-0125",
+     "id": "v-stack-0125",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9314,7 +9317,7 @@
      }
     },
     {
-     "id": "vstack-0126",
+     "id": "v-stack-0126",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9331,7 +9334,7 @@
      }
     },
     {
-     "id": "vstack-0127",
+     "id": "v-stack-0127",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9349,7 +9352,7 @@
      }
     },
     {
-     "id": "vstack-0128",
+     "id": "v-stack-0128",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9366,7 +9369,7 @@
      }
     },
     {
-     "id": "vstack-0129",
+     "id": "v-stack-0129",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9384,7 +9387,7 @@
      }
     },
     {
-     "id": "vstack-0130",
+     "id": "v-stack-0130",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9403,7 +9406,7 @@
      }
     },
     {
-     "id": "vstack-0131",
+     "id": "v-stack-0131",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9420,7 +9423,7 @@
      }
     },
     {
-     "id": "vstack-0132",
+     "id": "v-stack-0132",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -9435,7 +9438,7 @@
      }
     },
     {
-     "id": "vstack-0133",
+     "id": "v-stack-0133",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9452,7 +9455,7 @@
      }
     },
     {
-     "id": "vstack-0134",
+     "id": "v-stack-0134",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9469,7 +9472,7 @@
      }
     },
     {
-     "id": "vstack-0135",
+     "id": "v-stack-0135",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9486,7 +9489,7 @@
      }
     },
     {
-     "id": "vstack-0136",
+     "id": "v-stack-0136",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9501,7 +9504,7 @@
      }
     },
     {
-     "id": "vstack-0137",
+     "id": "v-stack-0137",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9520,7 +9523,7 @@
      }
     },
     {
-     "id": "vstack-0138",
+     "id": "v-stack-0138",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9538,7 +9541,7 @@
      }
     },
     {
-     "id": "vstack-0139",
+     "id": "v-stack-0139",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9558,7 +9561,7 @@
      }
     },
     {
-     "id": "vstack-0140",
+     "id": "v-stack-0140",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9576,7 +9579,7 @@
      }
     },
     {
-     "id": "vstack-0141",
+     "id": "v-stack-0141",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9593,7 +9596,7 @@
      }
     },
     {
-     "id": "vstack-0142",
+     "id": "v-stack-0142",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9610,7 +9613,7 @@
      }
     },
     {
-     "id": "vstack-0143",
+     "id": "v-stack-0143",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -9626,7 +9629,7 @@
      }
     },
     {
-     "id": "vstack-0144",
+     "id": "v-stack-0144",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9643,7 +9646,7 @@
      }
     },
     {
-     "id": "vstack-0145",
+     "id": "v-stack-0145",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9660,7 +9663,7 @@
      }
     },
     {
-     "id": "vstack-0146",
+     "id": "v-stack-0146",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9677,7 +9680,7 @@
      }
     },
     {
-     "id": "vstack-0147",
+     "id": "v-stack-0147",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9694,7 +9697,7 @@
      }
     },
     {
-     "id": "vstack-0148",
+     "id": "v-stack-0148",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9711,7 +9714,7 @@
      }
     },
     {
-     "id": "vstack-0149",
+     "id": "v-stack-0149",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9728,7 +9731,7 @@
      }
     },
     {
-     "id": "vstack-0150",
+     "id": "v-stack-0150",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9745,7 +9748,7 @@
      }
     },
     {
-     "id": "vstack-0151",
+     "id": "v-stack-0151",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9762,7 +9765,7 @@
      }
     },
     {
-     "id": "vstack-0152",
+     "id": "v-stack-0152",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9779,7 +9782,7 @@
      }
     },
     {
-     "id": "vstack-0153",
+     "id": "v-stack-0153",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9796,7 +9799,7 @@
      }
     },
     {
-     "id": "vstack-0154",
+     "id": "v-stack-0154",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -9815,7 +9818,7 @@
      }
     },
     {
-     "id": "vstack-0155",
+     "id": "v-stack-0155",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9832,7 +9835,7 @@
      }
     },
     {
-     "id": "vstack-0156",
+     "id": "v-stack-0156",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9849,7 +9852,7 @@
      }
     },
     {
-     "id": "vstack-0157",
+     "id": "v-stack-0157",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9866,7 +9869,7 @@
      }
     },
     {
-     "id": "vstack-0158",
+     "id": "v-stack-0158",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9883,7 +9886,7 @@
      }
     },
     {
-     "id": "vstack-0159",
+     "id": "v-stack-0159",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9900,7 +9903,7 @@
      }
     },
     {
-     "id": "vstack-0160",
+     "id": "v-stack-0160",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9917,7 +9920,7 @@
      }
     },
     {
-     "id": "vstack-0161",
+     "id": "v-stack-0161",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9932,7 +9935,7 @@
      }
     },
     {
-     "id": "vstack-0162",
+     "id": "v-stack-0162",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9949,7 +9952,7 @@
      }
     },
     {
-     "id": "vstack-0163",
+     "id": "v-stack-0163",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9965,7 +9968,7 @@
      }
     },
     {
-     "id": "vstack-0164",
+     "id": "v-stack-0164",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -9984,7 +9987,7 @@
      }
     },
     {
-     "id": "vstack-0165",
+     "id": "v-stack-0165",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -10000,7 +10003,7 @@
      }
     },
     {
-     "id": "vstack-0166",
+     "id": "v-stack-0166",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10016,7 +10019,7 @@
      }
     },
     {
-     "id": "vstack-0167",
+     "id": "v-stack-0167",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10034,7 +10037,7 @@
      }
     },
     {
-     "id": "vstack-0168",
+     "id": "v-stack-0168",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10052,7 +10055,7 @@
      }
     },
     {
-     "id": "vstack-0169",
+     "id": "v-stack-0169",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10067,7 +10070,7 @@
      }
     },
     {
-     "id": "vstack-0170",
+     "id": "v-stack-0170",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10085,7 +10088,7 @@
      }
     },
     {
-     "id": "vstack-0171",
+     "id": "v-stack-0171",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10102,7 +10105,7 @@
      }
     },
     {
-     "id": "vstack-0172",
+     "id": "v-stack-0172",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10116,7 +10119,7 @@
      }
     },
     {
-     "id": "vstack-0173",
+     "id": "v-stack-0173",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10133,7 +10136,7 @@
      }
     },
     {
-     "id": "vstack-0174",
+     "id": "v-stack-0174",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10151,7 +10154,7 @@
      }
     },
     {
-     "id": "vstack-0175",
+     "id": "v-stack-0175",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10168,7 +10171,7 @@
      }
     },
     {
-     "id": "vstack-0176",
+     "id": "v-stack-0176",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -10185,7 +10188,7 @@
      }
     },
     {
-     "id": "vstack-0177",
+     "id": "v-stack-0177",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10202,7 +10205,7 @@
      }
     },
     {
-     "id": "vstack-0178",
+     "id": "v-stack-0178",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10220,7 +10223,7 @@
      }
     },
     {
-     "id": "vstack-0179",
+     "id": "v-stack-0179",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10237,7 +10240,7 @@
      }
     },
     {
-     "id": "vstack-0180",
+     "id": "v-stack-0180",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10255,7 +10258,7 @@
      }
     },
     {
-     "id": "vstack-0181",
+     "id": "v-stack-0181",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10272,7 +10275,7 @@
      }
     },
     {
-     "id": "vstack-0182",
+     "id": "v-stack-0182",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10288,7 +10291,7 @@
      }
     },
     {
-     "id": "vstack-0183",
+     "id": "v-stack-0183",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10304,7 +10307,7 @@
      }
     },
     {
-     "id": "vstack-0184",
+     "id": "v-stack-0184",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10320,7 +10323,7 @@
      }
     },
     {
-     "id": "vstack-0185",
+     "id": "v-stack-0185",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10336,7 +10339,7 @@
      }
     },
     {
-     "id": "vstack-0186",
+     "id": "v-stack-0186",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10352,7 +10355,7 @@
      }
     },
     {
-     "id": "vstack-0187",
+     "id": "v-stack-0187",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -10368,7 +10371,7 @@
      }
     },
     {
-     "id": "vstack-0188",
+     "id": "v-stack-0188",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10386,7 +10389,7 @@
      }
     },
     {
-     "id": "vstack-0189",
+     "id": "v-stack-0189",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10405,7 +10408,7 @@
      }
     },
     {
-     "id": "vstack-0190",
+     "id": "v-stack-0190",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10421,7 +10424,7 @@
      }
     },
     {
-     "id": "vstack-0191",
+     "id": "v-stack-0191",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10437,7 +10440,7 @@
      }
     },
     {
-     "id": "vstack-0192",
+     "id": "v-stack-0192",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10455,7 +10458,7 @@
      }
     },
     {
-     "id": "vstack-0193",
+     "id": "v-stack-0193",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10471,7 +10474,7 @@
      }
     },
     {
-     "id": "vstack-0194",
+     "id": "v-stack-0194",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10488,7 +10491,7 @@
      }
     },
     {
-     "id": "vstack-0195",
+     "id": "v-stack-0195",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10503,7 +10506,7 @@
      }
     },
     {
-     "id": "vstack-0196",
+     "id": "v-stack-0196",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10518,7 +10521,7 @@
      }
     },
     {
-     "id": "vstack-0197",
+     "id": "v-stack-0197",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10535,7 +10538,7 @@
      }
     },
     {
-     "id": "vstack-0198",
+     "id": "v-stack-0198",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -10549,7 +10552,7 @@
      }
     },
     {
-     "id": "vstack-0199",
+     "id": "v-stack-0199",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10566,7 +10569,7 @@
      }
     },
     {
-     "id": "vstack-0200",
+     "id": "v-stack-0200",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10583,7 +10586,7 @@
      }
     },
     {
-     "id": "vstack-0201",
+     "id": "v-stack-0201",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10600,7 +10603,7 @@
      }
     },
     {
-     "id": "vstack-0202",
+     "id": "v-stack-0202",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10617,7 +10620,7 @@
      }
     },
     {
-     "id": "vstack-0203",
+     "id": "v-stack-0203",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10631,7 +10634,7 @@
      }
     },
     {
-     "id": "vstack-0204",
+     "id": "v-stack-0204",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10648,7 +10651,7 @@
      }
     },
     {
-     "id": "vstack-0205",
+     "id": "v-stack-0205",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10664,7 +10667,7 @@
      }
     },
     {
-     "id": "vstack-0206",
+     "id": "v-stack-0206",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10680,7 +10683,7 @@
      }
     },
     {
-     "id": "vstack-0207",
+     "id": "v-stack-0207",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10697,7 +10700,7 @@
      }
     },
     {
-     "id": "vstack-0208",
+     "id": "v-stack-0208",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10714,7 +10717,7 @@
      }
     },
     {
-     "id": "vstack-0209",
+     "id": "v-stack-0209",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -10731,7 +10734,7 @@
      }
     },
     {
-     "id": "vstack-0210",
+     "id": "v-stack-0210",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10746,7 +10749,7 @@
      }
     },
     {
-     "id": "vstack-0211",
+     "id": "v-stack-0211",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10764,7 +10767,7 @@
      }
     },
     {
-     "id": "vstack-0212",
+     "id": "v-stack-0212",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10782,7 +10785,7 @@
      }
     },
     {
-     "id": "vstack-0213",
+     "id": "v-stack-0213",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10798,7 +10801,7 @@
      }
     },
     {
-     "id": "vstack-0214",
+     "id": "v-stack-0214",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10813,7 +10816,7 @@
      }
     },
     {
-     "id": "vstack-0215",
+     "id": "v-stack-0215",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10829,7 +10832,7 @@
      }
     },
     {
-     "id": "vstack-0216",
+     "id": "v-stack-0216",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10845,7 +10848,7 @@
      }
     },
     {
-     "id": "vstack-0217",
+     "id": "v-stack-0217",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10861,7 +10864,7 @@
      }
     },
     {
-     "id": "vstack-0218",
+     "id": "v-stack-0218",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10876,7 +10879,7 @@
      }
     },
     {
-     "id": "vstack-0219",
+     "id": "v-stack-0219",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10891,7 +10894,7 @@
      }
     },
     {
-     "id": "vstack-0220",
+     "id": "v-stack-0220",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -10907,7 +10910,7 @@
      }
     },
     {
-     "id": "vstack-0221",
+     "id": "v-stack-0221",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -10923,7 +10926,7 @@
      }
     },
     {
-     "id": "vstack-0222",
+     "id": "v-stack-0222",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -10938,7 +10941,7 @@
      }
     },
     {
-     "id": "vstack-0223",
+     "id": "v-stack-0223",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -10955,7 +10958,7 @@
      }
     },
     {
-     "id": "vstack-0224",
+     "id": "v-stack-0224",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -10971,7 +10974,7 @@
      }
     },
     {
-     "id": "vstack-0225",
+     "id": "v-stack-0225",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -10987,7 +10990,7 @@
      }
     },
     {
-     "id": "vstack-0226",
+     "id": "v-stack-0226",
      "kind": "pairwise",
      "props": {
       "gap": 2,
@@ -11003,7 +11006,7 @@
      }
     },
     {
-     "id": "vstack-0227",
+     "id": "v-stack-0227",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -11017,7 +11020,7 @@
      }
     },
     {
-     "id": "vstack-0228",
+     "id": "v-stack-0228",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -11033,7 +11036,7 @@
      }
     },
     {
-     "id": "vstack-0229",
+     "id": "v-stack-0229",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -11048,7 +11051,7 @@
      }
     },
     {
-     "id": "vstack-0230",
+     "id": "v-stack-0230",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -11063,7 +11066,7 @@
      }
     },
     {
-     "id": "vstack-0231",
+     "id": "v-stack-0231",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -11080,7 +11083,7 @@
      }
     },
     {
-     "id": "vstack-0232",
+     "id": "v-stack-0232",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -11095,7 +11098,7 @@
      }
     },
     {
-     "id": "vstack-0233",
+     "id": "v-stack-0233",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11110,7 +11113,7 @@
      }
     },
     {
-     "id": "vstack-0234",
+     "id": "v-stack-0234",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11125,7 +11128,7 @@
      }
     },
     {
-     "id": "vstack-0235",
+     "id": "v-stack-0235",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11139,7 +11142,7 @@
      }
     },
     {
-     "id": "vstack-0236",
+     "id": "v-stack-0236",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -11155,7 +11158,7 @@
      }
     },
     {
-     "id": "vstack-0237",
+     "id": "v-stack-0237",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11169,7 +11172,7 @@
      }
     },
     {
-     "id": "vstack-0238",
+     "id": "v-stack-0238",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -11184,7 +11187,7 @@
      }
     },
     {
-     "id": "vstack-0239",
+     "id": "v-stack-0239",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -11196,7 +11199,7 @@
      }
     },
     {
-     "id": "vstack-0240",
+     "id": "v-stack-0240",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -11210,7 +11213,7 @@
      }
     },
     {
-     "id": "vstack-0241",
+     "id": "v-stack-0241",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11225,7 +11228,7 @@
      }
     },
     {
-     "id": "vstack-0242",
+     "id": "v-stack-0242",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11239,7 +11242,7 @@
      }
     },
     {
-     "id": "vstack-0243",
+     "id": "v-stack-0243",
      "kind": "pairwise",
      "props": {
       "gap": 5,
@@ -11253,7 +11256,7 @@
      }
     },
     {
-     "id": "vstack-0244",
+     "id": "v-stack-0244",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -11266,7 +11269,7 @@
      }
     },
     {
-     "id": "vstack-0245",
+     "id": "v-stack-0245",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -11279,7 +11282,7 @@
      }
     },
     {
-     "id": "vstack-0246",
+     "id": "v-stack-0246",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -11293,7 +11296,7 @@
      }
     },
     {
-     "id": "vstack-0247",
+     "id": "v-stack-0247",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -11306,7 +11309,7 @@
      }
     },
     {
-     "id": "vstack-0248",
+     "id": "v-stack-0248",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11321,7 +11324,7 @@
      }
     },
     {
-     "id": "vstack-0249",
+     "id": "v-stack-0249",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -11335,7 +11338,7 @@
      }
     },
     {
-     "id": "vstack-0250",
+     "id": "v-stack-0250",
      "kind": "pairwise",
      "props": {
       "gap": 1.5,
@@ -11347,7 +11350,7 @@
      }
     },
     {
-     "id": "vstack-0251",
+     "id": "v-stack-0251",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -11360,7 +11363,7 @@
      }
     },
     {
-     "id": "vstack-0252",
+     "id": "v-stack-0252",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -11374,7 +11377,7 @@
      }
     },
     {
-     "id": "vstack-0253",
+     "id": "v-stack-0253",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11389,7 +11392,7 @@
      }
     },
     {
-     "id": "vstack-0254",
+     "id": "v-stack-0254",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11404,7 +11407,7 @@
      }
     },
     {
-     "id": "vstack-0255",
+     "id": "v-stack-0255",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11419,7 +11422,7 @@
      }
     },
     {
-     "id": "vstack-0256",
+     "id": "v-stack-0256",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -11434,7 +11437,7 @@
      }
     },
     {
-     "id": "vstack-0257",
+     "id": "v-stack-0257",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -11447,7 +11450,7 @@
      }
     },
     {
-     "id": "vstack-0258",
+     "id": "v-stack-0258",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11460,7 +11463,7 @@
      }
     },
     {
-     "id": "vstack-0259",
+     "id": "v-stack-0259",
      "kind": "pairwise",
      "props": {
       "gap": 0.5,
@@ -11473,7 +11476,7 @@
      }
     },
     {
-     "id": "vstack-0260",
+     "id": "v-stack-0260",
      "kind": "pairwise",
      "props": {
       "gap": 1,
@@ -11487,7 +11490,7 @@
      }
     },
     {
-     "id": "vstack-0261",
+     "id": "v-stack-0261",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -11500,7 +11503,7 @@
      }
     },
     {
-     "id": "vstack-0262",
+     "id": "v-stack-0262",
      "kind": "pairwise",
      "props": {
       "gap": 8,
@@ -11512,7 +11515,7 @@
      }
     },
     {
-     "id": "vstack-0263",
+     "id": "v-stack-0263",
      "kind": "pairwise",
      "props": {
       "gap": 10,
@@ -11527,7 +11530,7 @@
      }
     },
     {
-     "id": "vstack-0264",
+     "id": "v-stack-0264",
      "kind": "pairwise",
      "props": {
       "gap": 3,
@@ -11542,7 +11545,7 @@
      }
     },
     {
-     "id": "vstack-0265",
+     "id": "v-stack-0265",
      "kind": "pairwise",
      "props": {
       "gap": 4,
@@ -11556,7 +11559,7 @@
      }
     },
     {
-     "id": "vstack-0266",
+     "id": "v-stack-0266",
      "kind": "pairwise",
      "props": {
       "gap": 6,
@@ -11566,7 +11569,7 @@
      }
     },
     {
-     "id": "vstack-0267",
+     "id": "v-stack-0267",
      "kind": "pairwise",
      "props": {
       "padding": 8,
@@ -11577,7 +11580,7 @@
      }
     },
     {
-     "id": "vstack-0268",
+     "id": "v-stack-0268",
      "kind": "pairwise",
      "props": {
       "padding": 10,
@@ -11591,7 +11594,7 @@
      }
     },
     {
-     "id": "vstack-0269",
+     "id": "v-stack-0269",
      "kind": "pairwise",
      "props": {
       "padding": 1,
@@ -11604,7 +11607,7 @@
      }
     },
     {
-     "id": "vstack-0270",
+     "id": "v-stack-0270",
      "kind": "pairwise",
      "props": {
       "padding": 5,
@@ -11616,7 +11619,7 @@
      }
     },
     {
-     "id": "vstack-0271",
+     "id": "v-stack-0271",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -11626,7 +11629,7 @@
      }
     },
     {
-     "id": "vstack-0272",
+     "id": "v-stack-0272",
      "kind": "pairwise",
      "props": {
       "padding": 0.5,
@@ -11638,7 +11641,7 @@
      }
     },
     {
-     "id": "vstack-0273",
+     "id": "v-stack-0273",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -11650,7 +11653,7 @@
      }
     },
     {
-     "id": "vstack-0274",
+     "id": "v-stack-0274",
      "kind": "pairwise",
      "props": {
       "padding": 1.5,
@@ -11659,7 +11662,7 @@
      }
     },
     {
-     "id": "vstack-0275",
+     "id": "v-stack-0275",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -11668,7 +11671,7 @@
      }
     },
     {
-     "id": "vstack-0276",
+     "id": "v-stack-0276",
      "kind": "pairwise",
      "props": {
       "padding": 4,
@@ -11680,7 +11683,7 @@
      }
     },
     {
-     "id": "vstack-0277",
+     "id": "v-stack-0277",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -11692,7 +11695,7 @@
      }
     },
     {
-     "id": "vstack-0278",
+     "id": "v-stack-0278",
      "kind": "pairwise",
      "props": {
       "padding": 3,
@@ -11704,7 +11707,7 @@
      }
     },
     {
-     "id": "vstack-0279",
+     "id": "v-stack-0279",
      "kind": "pairwise",
      "props": {
       "padding": 6,
@@ -11715,7 +11718,7 @@
      }
     },
     {
-     "id": "vstack-0280",
+     "id": "v-stack-0280",
      "kind": "pairwise",
      "props": {
       "paddingInline": 3,
@@ -11725,7 +11728,7 @@
      }
     },
     {
-     "id": "vstack-0281",
+     "id": "v-stack-0281",
      "kind": "pairwise",
      "props": {
       "paddingInline": 6,
@@ -11737,7 +11740,7 @@
      }
     },
     {
-     "id": "vstack-0282",
+     "id": "v-stack-0282",
      "kind": "pairwise",
      "props": {
       "paddingInline": 6,
@@ -11747,7 +11750,7 @@
      }
     },
     {
-     "id": "vstack-0283",
+     "id": "v-stack-0283",
      "kind": "pairwise",
      "props": {
       "paddingInline": 10,
@@ -11758,7 +11761,7 @@
      }
     },
     {
-     "id": "vstack-0284",
+     "id": "v-stack-0284",
      "kind": "pairwise",
      "props": {
       "paddingInline": 5,
@@ -11770,7 +11773,7 @@
      }
     },
     {
-     "id": "vstack-0285",
+     "id": "v-stack-0285",
      "kind": "pairwise",
      "props": {
       "paddingInline": 5,
@@ -11781,7 +11784,7 @@
      }
     },
     {
-     "id": "vstack-0286",
+     "id": "v-stack-0286",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 6,
@@ -11790,7 +11793,7 @@
      }
     },
     {
-     "id": "vstack-0287",
+     "id": "v-stack-0287",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 10,
@@ -11799,7 +11802,7 @@
      }
     },
     {
-     "id": "vstack-0288",
+     "id": "v-stack-0288",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 2,
@@ -11809,7 +11812,7 @@
      }
     },
     {
-     "id": "vstack-0289",
+     "id": "v-stack-0289",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 4,
@@ -11817,7 +11820,7 @@
      }
     },
     {
-     "id": "vstack-0290",
+     "id": "v-stack-0290",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 8,
@@ -11828,7 +11831,7 @@
      }
     },
     {
-     "id": "vstack-0291",
+     "id": "v-stack-0291",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 3,
@@ -11839,7 +11842,7 @@
      }
     },
     {
-     "id": "vstack-0292",
+     "id": "v-stack-0292",
      "kind": "pairwise",
      "props": {
       "paddingInlineStart": 8,
@@ -11848,7 +11851,7 @@
      }
     },
     {
-     "id": "vstack-0293",
+     "id": "v-stack-0293",
      "kind": "pairwise",
      "props": {
       "paddingInlineEnd": 8,
@@ -11857,7 +11860,7 @@
      }
     },
     {
-     "id": "vstack-0294",
+     "id": "v-stack-0294",
      "kind": "pairwise",
      "props": {
       "paddingInlineEnd": 8,
@@ -11866,7 +11869,7 @@
      }
     },
     {
-     "id": "vstack-0295",
+     "id": "v-stack-0295",
      "kind": "pairwise",
      "props": {
       "paddingBlock": 5,
@@ -11874,7 +11877,7 @@
      }
     },
     {
-     "id": "vstack-0296",
+     "id": "v-stack-0296",
      "kind": "pairwise",
      "props": {
       "paddingBlock": 6,
@@ -11883,7 +11886,7 @@
      }
     },
     {
-     "id": "vstack-0297",
+     "id": "v-stack-0297",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 1,
@@ -11892,7 +11895,7 @@
      }
     },
     {
-     "id": "vstack-0298",
+     "id": "v-stack-0298",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 4,
@@ -11901,7 +11904,7 @@
      }
     },
     {
-     "id": "vstack-0299",
+     "id": "v-stack-0299",
      "kind": "pairwise",
      "props": {
       "paddingBlockStart": 10,
@@ -11936,49 +11939,50 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
-     "id": "stackitem-0001",
+     "id": "stack-item-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "stackitem-0002",
+     "id": "stack-item-0002",
      "kind": "sweep",
      "props": {
       "size": "fill"
      }
     },
     {
-     "id": "stackitem-0003",
+     "id": "stack-item-0003",
      "kind": "sweep",
      "props": {
       "isScrollable": true
      }
     },
     {
-     "id": "stackitem-0004",
+     "id": "stack-item-0004",
      "kind": "sweep",
      "props": {
       "crossAlignSelf": "center"
      }
     },
     {
-     "id": "stackitem-0005",
+     "id": "stack-item-0005",
      "kind": "sweep",
      "props": {
       "crossAlignSelf": "end"
      }
     },
     {
-     "id": "stackitem-0006",
+     "id": "stack-item-0006",
      "kind": "sweep",
      "props": {
       "crossAlignSelf": "stretch"
      }
     },
     {
-     "id": "stackitem-0007",
+     "id": "stack-item-0007",
      "kind": "pairwise",
      "props": {
       "isScrollable": true,
@@ -11986,7 +11990,7 @@
      }
     },
     {
-     "id": "stackitem-0008",
+     "id": "stack-item-0008",
      "kind": "pairwise",
      "props": {
       "size": "fill",
@@ -11994,7 +11998,7 @@
      }
     },
     {
-     "id": "stackitem-0009",
+     "id": "stack-item-0009",
      "kind": "pairwise",
      "props": {
       "size": "fill",
@@ -12002,7 +12006,7 @@
      }
     },
     {
-     "id": "stackitem-0010",
+     "id": "stack-item-0010",
      "kind": "pairwise",
      "props": {
       "size": "fill",
@@ -12011,7 +12015,7 @@
      }
     },
     {
-     "id": "stackitem-0011",
+     "id": "stack-item-0011",
      "kind": "pairwise",
      "props": {
       "size": "fill",

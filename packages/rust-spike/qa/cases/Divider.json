@@ -31,18 +31,24 @@
     "variant": "subtle",
     "isFullBleed": false
    },
-   "base": {},
+   "base": {
+    "label": "Label"
+   },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "divider-0001",
      "kind": "default",
-     "props": {}
+     "props": {
+      "label": "Label"
+     }
     },
     {
      "id": "divider-0002",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "orientation": "vertical"
      }
     },
@@ -50,6 +56,7 @@
      "id": "divider-0003",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "variant": "strong"
      }
     },
@@ -57,6 +64,7 @@
      "id": "divider-0004",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isFullBleed": true
      }
     },
@@ -64,6 +72,7 @@
      "id": "divider-0005",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "variant": "strong",
       "isFullBleed": true
      }
@@ -72,6 +81,7 @@
      "id": "divider-0006",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "orientation": "vertical",
       "isFullBleed": true
      }
@@ -80,6 +90,7 @@
      "id": "divider-0007",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "orientation": "vertical",
       "variant": "strong"
      }

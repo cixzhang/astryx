@@ -1,0 +1,201 @@
+{
+ "family": "RadioList",
+ "source": "packages/core/src/RadioList/RadioList.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "RadioList",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "orientation": [
+     "vertical",
+     "horizontal"
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "orientation": "vertical",
+    "isDisabled": false,
+    "isRequired": false,
+    "isOptional": false,
+    "size": "md"
+   },
+   "base": {
+    "label": "Label",
+    "value": "value",
+    "onChange": "onChange"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "radio-list-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange"
+     }
+    },
+    {
+     "id": "radio-list-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "radio-list-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "orientation": "horizontal"
+     }
+    },
+    {
+     "id": "radio-list-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "radio-list-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "radio-list-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "radio-list-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "radio-list-0008",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "orientation": "horizontal",
+      "isDisabled": true,
+      "isRequired": true,
+      "isOptional": true
+     }
+    },
+    {
+     "id": "radio-list-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isLabelHidden": true,
+      "isDisabled": true,
+      "isOptional": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "radio-list-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isLabelHidden": true,
+      "orientation": "horizontal",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "radio-list-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isRequired": true,
+      "isOptional": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "radio-list-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "orientation": "horizontal",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "radio-list-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "onChange": "onChange",
+      "isDisabled": true,
+      "size": "sm"
+     }
+    }
+   ]
+  }
+ ]
+}

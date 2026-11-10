@@ -1,0 +1,17 @@
+test "the index lists every case"
+  expect tree has "open-foundations-0001"
+  expect tree has "open-badge-0001"
+
+test "a badge case shows its label"
+  at "/?case=badge-0003"
+  expect tree has "case"
+  expect text "badge" == "Badge"
+
+test "a dark butter page applies after load"
+  at "/?case=foundations-0001&scheme=dark&theme=butter"
+  clock +1
+  expect tree has "case"
+
+test "an external link names its new tab"
+  at "/?case=link-0002"
+  expect tree has "link-Read the docs"

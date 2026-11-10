@@ -1,0 +1,2911 @@
+{
+ "family": "Section",
+ "source": "packages/core/src/Section/Section.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Section",
+   "visualProps": {
+    "variant": [
+     "section",
+     "transparent",
+     "muted"
+    ],
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInline": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInlineStart": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingInlineEnd": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlock": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlockStart": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "paddingBlockEnd": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ]
+   },
+   "defaults": {
+    "variant": "section",
+    "padding": 4,
+    "paddingInline": 0,
+    "paddingInlineStart": 0,
+    "paddingInlineEnd": 0,
+    "paddingBlock": 0,
+    "paddingBlockStart": 0,
+    "paddingBlockEnd": 0
+   },
+   "base": {},
+   "takesChildren": true,
+   "fixture": "boxes",
+   "cases": [
+    {
+     "id": "section-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "section-0002",
+     "kind": "sweep",
+     "props": {
+      "variant": "transparent"
+     }
+    },
+    {
+     "id": "section-0003",
+     "kind": "sweep",
+     "props": {
+      "variant": "muted"
+     }
+    },
+    {
+     "id": "section-0004",
+     "kind": "sweep",
+     "props": {
+      "padding": 0
+     }
+    },
+    {
+     "id": "section-0005",
+     "kind": "sweep",
+     "props": {
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "section-0006",
+     "kind": "sweep",
+     "props": {
+      "padding": 1
+     }
+    },
+    {
+     "id": "section-0007",
+     "kind": "sweep",
+     "props": {
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "section-0008",
+     "kind": "sweep",
+     "props": {
+      "padding": 2
+     }
+    },
+    {
+     "id": "section-0009",
+     "kind": "sweep",
+     "props": {
+      "padding": 3
+     }
+    },
+    {
+     "id": "section-0010",
+     "kind": "sweep",
+     "props": {
+      "padding": 5
+     }
+    },
+    {
+     "id": "section-0011",
+     "kind": "sweep",
+     "props": {
+      "padding": 6
+     }
+    },
+    {
+     "id": "section-0012",
+     "kind": "sweep",
+     "props": {
+      "padding": 8
+     }
+    },
+    {
+     "id": "section-0013",
+     "kind": "sweep",
+     "props": {
+      "padding": 10
+     }
+    },
+    {
+     "id": "section-0014",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 0.5
+     }
+    },
+    {
+     "id": "section-0015",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 1
+     }
+    },
+    {
+     "id": "section-0016",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 1.5
+     }
+    },
+    {
+     "id": "section-0017",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 2
+     }
+    },
+    {
+     "id": "section-0018",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 3
+     }
+    },
+    {
+     "id": "section-0019",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 4
+     }
+    },
+    {
+     "id": "section-0020",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 5
+     }
+    },
+    {
+     "id": "section-0021",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 6
+     }
+    },
+    {
+     "id": "section-0022",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 8
+     }
+    },
+    {
+     "id": "section-0023",
+     "kind": "sweep",
+     "props": {
+      "paddingInline": 10
+     }
+    },
+    {
+     "id": "section-0024",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 0.5
+     }
+    },
+    {
+     "id": "section-0025",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 1
+     }
+    },
+    {
+     "id": "section-0026",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 1.5
+     }
+    },
+    {
+     "id": "section-0027",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 2
+     }
+    },
+    {
+     "id": "section-0028",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 3
+     }
+    },
+    {
+     "id": "section-0029",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 4
+     }
+    },
+    {
+     "id": "section-0030",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 5
+     }
+    },
+    {
+     "id": "section-0031",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 6
+     }
+    },
+    {
+     "id": "section-0032",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 8
+     }
+    },
+    {
+     "id": "section-0033",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineStart": 10
+     }
+    },
+    {
+     "id": "section-0034",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0035",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 1
+     }
+    },
+    {
+     "id": "section-0036",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0037",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 2
+     }
+    },
+    {
+     "id": "section-0038",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 3
+     }
+    },
+    {
+     "id": "section-0039",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 4
+     }
+    },
+    {
+     "id": "section-0040",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 5
+     }
+    },
+    {
+     "id": "section-0041",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 6
+     }
+    },
+    {
+     "id": "section-0042",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 8
+     }
+    },
+    {
+     "id": "section-0043",
+     "kind": "sweep",
+     "props": {
+      "paddingInlineEnd": 10
+     }
+    },
+    {
+     "id": "section-0044",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 0.5
+     }
+    },
+    {
+     "id": "section-0045",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 1
+     }
+    },
+    {
+     "id": "section-0046",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 1.5
+     }
+    },
+    {
+     "id": "section-0047",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 2
+     }
+    },
+    {
+     "id": "section-0048",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 3
+     }
+    },
+    {
+     "id": "section-0049",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 4
+     }
+    },
+    {
+     "id": "section-0050",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 5
+     }
+    },
+    {
+     "id": "section-0051",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 6
+     }
+    },
+    {
+     "id": "section-0052",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 8
+     }
+    },
+    {
+     "id": "section-0053",
+     "kind": "sweep",
+     "props": {
+      "paddingBlock": 10
+     }
+    },
+    {
+     "id": "section-0054",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "section-0055",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "section-0056",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 1.5
+     }
+    },
+    {
+     "id": "section-0057",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "section-0058",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "section-0059",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "section-0060",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 5
+     }
+    },
+    {
+     "id": "section-0061",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 6
+     }
+    },
+    {
+     "id": "section-0062",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "section-0063",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "section-0064",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0065",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0066",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0067",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0068",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0069",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0070",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0071",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0072",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0073",
+     "kind": "sweep",
+     "props": {
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0074",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0075",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 1,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0076",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0077",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 2,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 2,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0078",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 3,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 3,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0079",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 4,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 4,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0080",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0081",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 6,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 6,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0082",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 8,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 8,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0083",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 10,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 10,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0084",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0085",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0.5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 3,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0086",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 1,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0087",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 1.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0088",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 2,
+      "paddingInline": 3,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0089",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 3,
+      "paddingInline": 2,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0090",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "paddingInline": 5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1.5
+     }
+    },
+    {
+     "id": "section-0091",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 5,
+      "paddingInline": 4,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0092",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 6,
+      "paddingInline": 8,
+      "paddingInlineStart": 10,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0093",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 8,
+      "paddingInline": 6,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0094",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 10,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0095",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 0,
+      "paddingInline": 1,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0096",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 0.5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1,
+      "paddingBlock": 8,
+      "paddingBlockStart": 6
+     }
+    },
+    {
+     "id": "section-0097",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 1,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 10,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0098",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 1.5,
+      "paddingInline": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0099",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 2,
+      "paddingInline": 4,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0100",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 3,
+      "paddingInline": 5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 1,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0101",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "paddingInline": 2,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0102",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 5,
+      "paddingInline": 3,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0103",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 6,
+      "paddingInline": 10,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0104",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 8,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0105",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 10,
+      "paddingInline": 6,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 5
+     }
+    },
+    {
+     "id": "section-0106",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0,
+      "paddingInline": 10,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 8,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0107",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 0,
+      "paddingInline": 8,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0108",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0109",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 0,
+      "paddingInline": 2,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0110",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0.5,
+      "paddingInline": 2,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0111",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0,
+      "paddingInline": 3,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 4,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0112",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0.5,
+      "paddingInline": 3,
+      "paddingInlineStart": 6,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0113",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0,
+      "paddingInline": 4,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0114",
+     "kind": "pairwise",
+     "props": {
+      "variant": "muted",
+      "padding": 0.5,
+      "paddingInline": 5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 6,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0115",
+     "kind": "pairwise",
+     "props": {
+      "variant": "transparent",
+      "padding": 0.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 8,
+      "paddingBlock": 2,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0116",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0117",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 6,
+      "paddingInlineStart": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0118",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 1.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0119",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0120",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "section-0121",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 10,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 5,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0122",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0123",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 2,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 3,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0124",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 3,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "section-0125",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 4,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0126",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 3,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0127",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 6,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0128",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 8,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0129",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 10,
+      "paddingInlineStart": 4,
+      "paddingBlock": 6,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0130",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0131",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 2,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 4,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "section-0132",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 3,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0133",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 3,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0134",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 6,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0135",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0136",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0137",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 10,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0138",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 6,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0139",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 8,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0140",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0141",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0142",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 5,
+      "paddingInlineStart": 1,
+      "paddingBlock": 4,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0143",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 6,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0144",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 8,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0145",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 10,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0146",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInlineStart": 2,
+      "paddingBlock": 5,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0147",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 6,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0148",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "section-0149",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0150",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0151",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 6,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 10,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0152",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 8,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 2,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0153",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 10,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0154",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0155",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 0.5,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "section-0156",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 1,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0157",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 1.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0158",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 3,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 8,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0159",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 6,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 4,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0160",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 8,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 6,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0161",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 10,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "section-0162",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0163",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 0.5,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 10,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0164",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 1,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0165",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0166",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 2,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0167",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 6,
+      "paddingInlineStart": 8,
+      "paddingBlock": 3,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0168",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 8,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0169",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 10,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0170",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0171",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 10,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0172",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "section-0173",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 2,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0174",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 2,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0175",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 3,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0176",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 4,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 1,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0177",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 5,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 8,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0178",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0179",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 0.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0180",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 6,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0181",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 2,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0182",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 3,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0183",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 4,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 10,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0184",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0185",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 10,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0186",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0187",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 1,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 3,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0188",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 8,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0189",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 2,
+      "paddingInlineEnd": 0.5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0190",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 3,
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0191",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 4,
+      "paddingInlineStart": 0.5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0192",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 5,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0193",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 8,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0194",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 2,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0195",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0196",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 8,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 8,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0197",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0198",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 6,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 2,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0199",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0200",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInline": 10,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 2,
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "section-0201",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0202",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0203",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0204",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 6,
+      "paddingBlockStart": 4
+     }
+    },
+    {
+     "id": "section-0205",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 1,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0206",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "paddingInline": 3,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 6,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0207",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1,
+      "paddingInlineStart": 10,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 6,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0208",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0209",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 5,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0210",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 1.5,
+      "paddingInlineStart": 1,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0211",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInlineEnd": 10,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0212",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 5,
+      "paddingBlockStart": 2,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0213",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineStart": 1.5,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0214",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 10,
+      "paddingBlock": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0215",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 4,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0216",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineEnd": 2,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0217",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 10,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0218",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0219",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 3,
+      "paddingBlockStart": 10
+     }
+    },
+    {
+     "id": "section-0220",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 6,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 5,
+      "paddingBlock": 4,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0221",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10,
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "section-0222",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0223",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 2,
+      "paddingInlineStart": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 8,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0224",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 1.5,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0225",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInline": 4,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 6,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0226",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingBlock": 6,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0227",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 1,
+      "paddingInlineStart": 1,
+      "paddingBlockStart": 1.5,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0228",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 2,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0229",
+     "kind": "pairwise",
+     "props": {
+      "paddingInlineEnd": 1,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0230",
+     "kind": "pairwise",
+     "props": {
+      "paddingInline": 0.5,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 3,
+      "paddingBlock": 4,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0231",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 3,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0232",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "paddingInlineStart": 6,
+      "paddingBlock": 10,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0233",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 6,
+      "paddingBlock": 8,
+      "paddingBlockStart": 8,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0234",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "paddingInline": 4,
+      "paddingInlineStart": 1,
+      "paddingBlock": 2,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0235",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "paddingInlineStart": 4,
+      "paddingInlineEnd": 8,
+      "paddingBlock": 2,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "section-0236",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "paddingInline": 3,
+      "paddingInlineStart": 0.5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 1,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0237",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "section-0238",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 6,
+      "paddingBlockEnd": 8
+     }
+    },
+    {
+     "id": "section-0239",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 1,
+      "paddingInlineStart": 2,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 1.5
+     }
+    },
+    {
+     "id": "section-0240",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "paddingInline": 0.5,
+      "paddingInlineStart": 8,
+      "paddingInlineEnd": 0.5,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 5
+     }
+    },
+    {
+     "id": "section-0241",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 1.5,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 10,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "section-0242",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 5,
+      "paddingInlineEnd": 1,
+      "paddingBlock": 10
+     }
+    },
+    {
+     "id": "section-0243",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 5,
+      "paddingInlineEnd": 1.5,
+      "paddingBlock": 3,
+      "paddingBlockStart": 6,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0244",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 4,
+      "paddingBlock": 8,
+      "paddingBlockStart": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0245",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 8,
+      "paddingBlock": 1.5,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0246",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 8,
+      "paddingBlock": 4,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0247",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 0.5,
+      "paddingBlockStart": 2
+     }
+    },
+    {
+     "id": "section-0248",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 2,
+      "paddingBlockStart": 0.5
+     }
+    },
+    {
+     "id": "section-0249",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 10,
+      "paddingBlockStart": 0.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0250",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInline": 6,
+      "paddingInlineStart": 3,
+      "paddingInlineEnd": 1.5,
+      "paddingBlockStart": 4,
+      "paddingBlockEnd": 10
+     }
+    },
+    {
+     "id": "section-0251",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 4,
+      "paddingBlock": 10,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0252",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 5,
+      "paddingBlockStart": 1.5
+     }
+    },
+    {
+     "id": "section-0253",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 8,
+      "paddingBlockStart": 3
+     }
+    },
+    {
+     "id": "section-0254",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 1.5,
+      "paddingBlockEnd": 1
+     }
+    },
+    {
+     "id": "section-0255",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 3,
+      "paddingBlockEnd": 6
+     }
+    },
+    {
+     "id": "section-0256",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineStart": 6,
+      "paddingInlineEnd": 8,
+      "paddingBlockStart": 10,
+      "paddingBlockEnd": 3
+     }
+    },
+    {
+     "id": "section-0257",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineEnd": 4,
+      "paddingBlock": 0.5,
+      "paddingBlockStart": 5,
+      "paddingBlockEnd": 4
+     }
+    },
+    {
+     "id": "section-0258",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineEnd": 5,
+      "paddingBlockStart": 1
+     }
+    },
+    {
+     "id": "section-0259",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineEnd": 3,
+      "paddingBlockEnd": 0.5
+     }
+    },
+    {
+     "id": "section-0260",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingInlineEnd": 3,
+      "paddingBlockEnd": 2
+     }
+    },
+    {
+     "id": "section-0261",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingBlock": 5,
+      "paddingBlockStart": 8
+     }
+    },
+    {
+     "id": "section-0262",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "paddingBlock": 6,
+      "paddingBlockStart": 10
+     }
+    }
+   ]
+  }
+ ]
+}

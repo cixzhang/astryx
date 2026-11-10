@@ -57,15 +57,18 @@
     "isIconOnly": false
    },
    "base": {
-    "label": "Label"
+    "label": "Label",
+    "name": "Ada Lovelace"
    },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "button-0001",
      "kind": "default",
      "props": {
-      "label": "Label"
+      "label": "Label",
+      "name": "Ada Lovelace"
      }
     },
     {
@@ -73,6 +76,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "primary"
      }
     },
@@ -81,6 +85,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "ghost"
      }
     },
@@ -89,6 +94,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "destructive"
      }
     },
@@ -97,6 +103,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "size": "sm"
      }
     },
@@ -105,6 +112,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "size": "lg"
      }
     },
@@ -113,6 +121,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "elevation": "low"
      }
     },
@@ -121,6 +130,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "elevation": "med"
      }
     },
@@ -129,6 +139,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "elevation": "high"
      }
     },
@@ -137,6 +148,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "isLoading": true
      }
     },
@@ -145,6 +157,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "isInterruptible": true
      }
     },
@@ -153,6 +166,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "isDisabled": true
      }
     },
@@ -161,6 +175,7 @@
      "kind": "sweep",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "isIconOnly": true
      }
     },
@@ -169,6 +184,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "primary",
       "size": "sm"
      }
@@ -178,6 +194,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "primary",
       "elevation": "low",
       "isLoading": true,
@@ -191,6 +208,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "primary",
       "size": "lg",
       "elevation": "med",
@@ -203,6 +221,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "size": "sm",
       "elevation": "low",
       "isDisabled": true
@@ -213,6 +232,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "isLoading": true,
       "isIconOnly": true
      }
@@ -222,6 +242,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "size": "lg",
       "elevation": "high",
       "isLoading": true,
@@ -233,6 +254,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "ghost",
       "size": "sm",
       "elevation": "med",
@@ -245,6 +267,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "ghost",
       "elevation": "high",
       "isInterruptible": true
@@ -255,6 +278,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "ghost",
       "size": "lg",
       "isInterruptible": true,
@@ -267,6 +291,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "destructive",
       "size": "sm",
       "elevation": "high",
@@ -279,6 +304,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "destructive",
       "elevation": "med",
       "isLoading": true,
@@ -290,6 +316,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "destructive",
       "size": "lg",
       "elevation": "low"
@@ -300,6 +327,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "primary",
       "size": "sm",
       "elevation": "high"
@@ -310,6 +338,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "size": "sm",
       "elevation": "med",
       "isInterruptible": true
@@ -320,6 +349,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "ghost",
       "size": "sm",
       "elevation": "low"
@@ -330,6 +360,7 @@
      "kind": "pairwise",
      "props": {
       "label": "Label",
+      "name": "Ada Lovelace",
       "variant": "destructive",
       "size": "sm"
      }

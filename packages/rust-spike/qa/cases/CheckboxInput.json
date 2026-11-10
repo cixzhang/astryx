@@ -1,0 +1,188 @@
+{
+ "family": "CheckboxInput",
+ "source": "packages/core/src/CheckboxInput/CheckboxInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "CheckboxInput",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isLoading": false,
+    "isDisabled": false,
+    "isReadOnly": false,
+    "isOptional": false,
+    "isRequired": false,
+    "size": "md"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "checkbox-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "checkbox-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "checkbox-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "checkbox-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "checkbox-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "checkbox-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "checkbox-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "checkbox-input-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isOptional": true,
+      "isRequired": true
+     }
+    },
+    {
+     "id": "checkbox-input-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isDisabled": true,
+      "isOptional": true
+     }
+    },
+    {
+     "id": "checkbox-input-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isLoading": true,
+      "isReadOnly": true,
+      "isRequired": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "checkbox-input-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true,
+      "isOptional": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "checkbox-input-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "checkbox-input-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "size": "sm"
+     }
+    }
+   ]
+  }
+ ]
+}

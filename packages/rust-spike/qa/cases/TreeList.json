@@ -29,35 +29,36 @@
    },
    "base": {},
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
-     "id": "treelist-0001",
+     "id": "tree-list-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "treelist-0002",
+     "id": "tree-list-0002",
      "kind": "sweep",
      "props": {
       "density": "compact"
      }
     },
     {
-     "id": "treelist-0003",
+     "id": "tree-list-0003",
      "kind": "sweep",
      "props": {
       "density": "spacious"
      }
     },
     {
-     "id": "treelist-0004",
+     "id": "tree-list-0004",
      "kind": "sweep",
      "props": {
       "variant": "noGuides"
      }
     },
     {
-     "id": "treelist-0005",
+     "id": "tree-list-0005",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -65,7 +66,7 @@
      }
     },
     {
-     "id": "treelist-0006",
+     "id": "tree-list-0006",
      "kind": "pairwise",
      "props": {
       "density": "spacious",

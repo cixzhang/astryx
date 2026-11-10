@@ -17,7 +17,7 @@ const families = args;
 // Props that change behavior or wiring but not pixels at rest.
 const NON_VISUAL = /^(on[A-Z]|aria|data|id$|name$|type$|form|autoFocus|autoComplete|inputMode|enterKeyHint|tabIndex|ref$|key$|htmlFor|href$|target$|rel$|xstyle$|className$|style$|testId$|value$|defaultValue$|defaultChecked$|checked$|isChecked$|children$)/;
 // Sample values for required free-form props.
-const SAMPLE = { label: 'Label', placeholder: 'Placeholder', description: 'Description', title: 'Title', helperText: 'Helper text', errorMessage: 'Error message' };
+const SAMPLE = { label: 'Label', placeholder: 'Placeholder', description: 'Description', title: 'Title', helperText: 'Helper text', errorMessage: 'Error message', name: 'Ada Lovelace', text: 'Label', heading: 'Heading', message: 'Message' };
 
 const literals = type => {
   const t = String(type).trim();
@@ -75,6 +75,8 @@ function pairwise(params) {
 }
 
 mkdirSync(out, { recursive: true });
+const allIds = new Set();
+const kebab = n => n.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase();
 const summary = {};
 for (const arg of families) {
   // "Dir/Name" reads packages/core/src/Dir/Name.doc.mjs (a doc beside another component's).
@@ -82,15 +84,20 @@ for (const arg of families) {
   const docPath = join(astryx, 'packages/core/src', dir, `${family}.doc.mjs`);
   if (!existsSync(docPath)) { console.error(`skip ${family}: no ${docPath}`); continue; }
   const { docs } = await import(pathToFileURL(docPath).href);
-  const comps = (docs.components?.length ? docs.components : [{ name: family, props: [] }]).map((c, i) =>
-    (i === 0 && !(c.props ?? []).length && (docs.props ?? []).length) ? { ...c, props: docs.props } : c);
+  // The root's props sit at the top level or in the component entry of the same name;
+  // other entries are parts with their own props. A part with no props has no cases.
+  const listed = docs.components ?? [];
+  const rootName = docs.name ?? family;
+  const rootEntry = listed.find(c => c.name === rootName);
+  const comps = [{ name: rootName, props: (docs.props ?? []).length ? docs.props : (rootEntry?.props ?? []) },
+    ...listed.filter(c => c.name !== rootName && (c.props ?? []).length)];
   const docOut = { family, source: `packages/core/src/${dir}/${family}.doc.mjs`, schemes: ['light', 'dark'], widths: [390, 1280], components: [] };
   for (const comp of comps) {
   const base = {}, visual = {}, defaults = {};
   for (const p of comp.props ?? []) {
     const values = literals(p.type);
     if (values && !NON_VISUAL.test(p.name)) { visual[p.name] = values; defaults[p.name] = parseDefault(p.default, values); }
-    else if (p.required && SAMPLE[p.name]) base[p.name] = SAMPLE[p.name];
+    else if ((p.required || ['name', 'label', 'text'].includes(p.name)) && SAMPLE[p.name] && /string|ReactNode/.test(String(p.type))) base[p.name] = SAMPLE[p.name];
     else if (p.required && /string/.test(String(p.type))) base[p.name] = p.name;
   }
   const seen = new Set(), cases = [];
@@ -98,7 +105,9 @@ for (const arg of families) {
     const full = { ...base, ...props };
     const key = JSON.stringify(Object.keys(full).sort().map(k => [k, full[k]]));
     if (seen.has(key)) return; seen.add(key);
-    cases.push({ id: `${comp.name.toLowerCase()}-${String(cases.length + 1).padStart(4, '0')}`, kind, props: full });
+    const id = `${kebab(comp.name)}-${String(cases.length + 1).padStart(4, '0')}`;
+    if (allIds.has(id)) { console.error(`skip duplicate id ${id} in ${family}`); return; }
+    allIds.add(id); cases.push({ id, kind, props: full });
   };
   add('default', {});
   for (const [name, values] of Object.entries(visual)) for (const v of values) if (v !== defaults[name]) add('sweep', { [name]: v });
@@ -106,7 +115,11 @@ for (const arg of families) {
     const diff = Object.fromEntries(Object.entries(row).filter(([k, v]) => v !== defaults[k]));
     add('pairwise', diff);
   }
-  docOut.components.push({ component: comp.name, visualProps: visual, defaults, base, takesChildren: (comp.props ?? []).some(p => p.name === 'children'), cases });
+  // Fixture children every stack renders the same way: three 40 x 24 boxes for layout
+  // components, the text "Label" for everything else that takes children.
+  const takesChildren = (comp.props ?? []).some(p => p.name === 'children');
+  const fixture = takesChildren ? (docs.category === 'Layout' || /Stack|Grid|Center|Section|Card|AspectRatio|Layout|Group|FormLayout/.test(comp.name) ? 'boxes' : 'text') : null;
+  docOut.components.push({ component: comp.name, visualProps: visual, defaults, base, takesChildren, fixture, cases });
   }
   const n = docOut.components.reduce((a, c) => a + c.cases.length, 0);
   writeFileSync(join(out, `${family}.json`), JSON.stringify(docOut, null, 1) + '\n');

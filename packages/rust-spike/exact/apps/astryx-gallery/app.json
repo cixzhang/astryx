@@ -1,0 +1,22 @@
+{
+  "$schema": "../../.exact-sdk/scripts/app.schema.json",
+  "name": "Astryx Gallery",
+  "short_name": "Astryx Gallery",
+  "id": "com.example.astryx-gallery",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.example.astryx-gallery",
+    "name": "Astryx Gallery"
+  },
+  "host": {
+    "web": {},
+    "linux": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0",
+      "linux": "0"
+    }
+  }
+}

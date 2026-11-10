@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "SegmentedControlItem",
+   "component": "SegmentedControl",
    "visualProps": {
     "size": [
      "sm",
@@ -38,9 +38,10 @@
     "label": "Label"
    },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
-     "id": "segmentedcontrolitem-0001",
+     "id": "segmented-control-0001",
      "kind": "default",
      "props": {
       "value": "value",
@@ -49,7 +50,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0002",
+     "id": "segmented-control-0002",
      "kind": "sweep",
      "props": {
       "value": "value",
@@ -59,7 +60,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0003",
+     "id": "segmented-control-0003",
      "kind": "sweep",
      "props": {
       "value": "value",
@@ -69,7 +70,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0004",
+     "id": "segmented-control-0004",
      "kind": "sweep",
      "props": {
       "value": "value",
@@ -79,7 +80,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0005",
+     "id": "segmented-control-0005",
      "kind": "sweep",
      "props": {
       "value": "value",
@@ -89,7 +90,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0006",
+     "id": "segmented-control-0006",
      "kind": "pairwise",
      "props": {
       "value": "value",
@@ -101,7 +102,7 @@
      }
     },
     {
-     "id": "segmentedcontrolitem-0007",
+     "id": "segmented-control-0007",
      "kind": "pairwise",
      "props": {
       "value": "value",

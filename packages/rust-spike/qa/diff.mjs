@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i < 0 ? d : args[i + 1]; };
-const host = opt('--host'), family = opt('--family'), baseHost = opt('--base-host', 'storybook');
+const host = opt('--host'), family = opt('--family'), baseHost = opt('--base-host', 'baseline');
 const tol = Number(opt('--tolerance', '8')), keep = Number(opt('--diffs', '20')), passPct = Number(opt('--pass', '2'));
 const shots = resolve(opt('--shots', join(here, 'shots')));
 const pw = opt('--playwright', process.env.PLAYWRIGHT_CORE ?? 'playwright-core');

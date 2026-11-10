@@ -11,6 +11,21 @@
  ],
  "components": [
   {
+   "component": "Indicator",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "indicator-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
    "component": "CheckboxIndicator",
    "visualProps": {
     "state": [
@@ -34,42 +49,43 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
-     "id": "checkboxindicator-0001",
+     "id": "checkbox-indicator-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "checkboxindicator-0002",
+     "id": "checkbox-indicator-0002",
      "kind": "sweep",
      "props": {
       "state": "checked"
      }
     },
     {
-     "id": "checkboxindicator-0003",
+     "id": "checkbox-indicator-0003",
      "kind": "sweep",
      "props": {
       "state": "indeterminate"
      }
     },
     {
-     "id": "checkboxindicator-0004",
+     "id": "checkbox-indicator-0004",
      "kind": "sweep",
      "props": {
       "size": "sm"
      }
     },
     {
-     "id": "checkboxindicator-0005",
+     "id": "checkbox-indicator-0005",
      "kind": "sweep",
      "props": {
       "isDisabled": true
      }
     },
     {
-     "id": "checkboxindicator-0006",
+     "id": "checkbox-indicator-0006",
      "kind": "pairwise",
      "props": {
       "state": "checked",
@@ -78,7 +94,7 @@
      }
     },
     {
-     "id": "checkboxindicator-0007",
+     "id": "checkbox-indicator-0007",
      "kind": "pairwise",
      "props": {
       "state": "indeterminate",
@@ -86,7 +102,7 @@
      }
     },
     {
-     "id": "checkboxindicator-0008",
+     "id": "checkbox-indicator-0008",
      "kind": "pairwise",
      "props": {
       "state": "indeterminate",
@@ -118,35 +134,36 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
-     "id": "checkindicator-0001",
+     "id": "check-indicator-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "checkindicator-0002",
+     "id": "check-indicator-0002",
      "kind": "sweep",
      "props": {
       "state": "checked"
      }
     },
     {
-     "id": "checkindicator-0003",
+     "id": "check-indicator-0003",
      "kind": "sweep",
      "props": {
       "size": "sm"
      }
     },
     {
-     "id": "checkindicator-0004",
+     "id": "check-indicator-0004",
      "kind": "sweep",
      "props": {
       "isDisabled": true
      }
     },
     {
-     "id": "checkindicator-0005",
+     "id": "check-indicator-0005",
      "kind": "pairwise",
      "props": {
       "state": "checked",
@@ -179,35 +196,36 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
-     "id": "radioindicator-0001",
+     "id": "radio-indicator-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "radioindicator-0002",
+     "id": "radio-indicator-0002",
      "kind": "sweep",
      "props": {
       "state": "checked"
      }
     },
     {
-     "id": "radioindicator-0003",
+     "id": "radio-indicator-0003",
      "kind": "sweep",
      "props": {
       "size": "sm"
      }
     },
     {
-     "id": "radioindicator-0004",
+     "id": "radio-indicator-0004",
      "kind": "sweep",
      "props": {
       "isDisabled": true
      }
     },
     {
-     "id": "radioindicator-0005",
+     "id": "radio-indicator-0005",
      "kind": "pairwise",
      "props": {
       "state": "checked",

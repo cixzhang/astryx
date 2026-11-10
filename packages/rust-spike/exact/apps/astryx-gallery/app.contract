@@ -1,0 +1,37 @@
+// Astryx Gallery: every ported family's visual cases, one per page, for QA.
+// A page is `/?case=<id>&scheme=light|dark&theme=<astryx theme>`; with no case
+// the page lists the cases. The gallery has no data module: its cases are
+// literal calls in cases.contract (tools/gallery-cases.mjs writes it).
+use space, radius from "@astryx-spike/astryx"
+use CaseRow, CaseView, caseRows from "./cases.contract"
+
+routes nav
+  home "/"
+
+component AstryxGallery
+  derive entry = top(nav)
+  derive caseId = searchParam(entry, "case")
+  derive scheme = searchParam(entry, "scheme")
+  derive themeName = searchParam(entry, "theme")
+  task applyPrefs mount
+    after(1, applyPrefs)
+  action applyPrefs
+    if scheme == "dark"
+      setScheme("dark")
+    if scheme == "light"
+      setScheme("light")
+    if themeName != ""
+      setMode("theme", themeName)
+  view
+    main testId="root" navigationKey=`${entry.id}` width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary"
+      scroll id="content" height="100%"
+        if caseId == ""
+          column padding=space("4") gap=space("2")
+            text "Astryx Gallery" role="heading" aria-level=1 font="astryx.type.heading-1"
+            for c in caseRows() key=c.id
+              link href=`/?case=${c.id}` testId=`open-${c.id}`
+                text `${c.id}  ${c.family}: ${c.title}` font="astryx.type.body"
+        else
+          column padding=16 testId="page" align-items="flex-start"
+            view testId="case"
+              CaseView(id=caseId)
