@@ -3050,19 +3050,6 @@ impl<A: App> Runtime<A> {
 impl<A: App> Runtime<A> {
     fn handle_input(&mut self, input: Input, phase: InputPhase) -> Command {
         self.repaint = true;
-        if phase == InputPhase::Pressed
-            && matches!(
-                input,
-                Input::Up
-                    | Input::Down
-                    | Input::Left
-                    | Input::Right
-                    | Input::Next
-                    | Input::Previous
-            )
-        {
-            self.focus_by_pointer = false;
-        }
         match (input, phase) {
             (Input::A, _) => {
                 let mut command = Command::None;
@@ -3237,21 +3224,12 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn key(&mut self, event: crate::contract::KeyEvent) -> crate::contract::KeyOutcome {
+        if event.phase == InputPhase::Pressed {
+            self.focus_by_pointer = false;
+        }
         let Some(command) = self.route_key(&event) else {
             return crate::contract::KeyOutcome::default();
         };
-        if event.phase == InputPhase::Pressed
-            && matches!(
-                event.key,
-                crate::contract::Key::Up
-                    | crate::contract::Key::Down
-                    | crate::contract::Key::Left
-                    | crate::contract::Key::Right
-                    | crate::contract::Key::Tab
-            )
-        {
-            self.focus_by_pointer = false;
-        }
         let followed = self.report_focus();
         let command = if command == Command::None {
             followed
@@ -3272,6 +3250,12 @@ impl<A: App> Surface for Runtime<A> {
     }
 
     fn input(&mut self, input: Input, phase: InputPhase) -> Command {
+        // Every input a shell sends is a key, a D-pad, or a face button:
+        // focus moved or used that way shows its ring, as `:focus-visible`
+        // does after a key. Only a pointer press hides it.
+        if phase == InputPhase::Pressed {
+            self.focus_by_pointer = false;
+        }
         let command = match self.capture(input, phase) {
             Some(command) => command,
             None => self.handle_input(input, phase),
