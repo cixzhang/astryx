@@ -93,6 +93,11 @@ pub struct Button<Msg> {
     tooltip: Option<String>,
     href: Option<String>,
     on_click: Option<Msg>,
+    /// The tooltip words, kept as the description once a Tooltip shows them.
+    described: Option<String>,
+    /// Runs on press before `on_click`, for components that keep their own
+    /// state (a DropdownMenu's trigger).
+    effect: Option<Rc<dyn Fn()>>,
 }
 
 impl<Msg> Button<Msg> {
@@ -113,7 +118,13 @@ impl<Msg> Button<Msg> {
             tooltip: None,
             href: None,
             on_click: None,
+            described: None,
+            effect: None,
         }
+    }
+    pub(crate) fn effect(mut self, f: Rc<dyn Fn()>) -> Self {
+        self.effect = Some(f);
+        self
     }
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
@@ -268,8 +279,21 @@ pub(crate) fn member_radii(r: f32, m: Option<GroupMember>, rtl: bool) -> Radii {
 }
 
 impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
-    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+    fn build(mut self: Box<Self>, cx: &mut BuildCx<Msg>) {
         if self.base.is_hidden {
+            return;
+        }
+        // A tooltip shows on hover and keyboard focus, as Astryx's does.
+        if let Some(tip) = self.tooltip.take() {
+            let id = self.base.id.clone().unwrap_or_else(|| {
+                let h = self.label.bytes().fold(0xcbf2_9ce4_8422_2325u64, |h, b| {
+                    (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
+                });
+                format!("button-tip-{h:x}")
+            });
+            self.described = Some(tip.clone());
+            let inner: Element<Msg> = astryx_core::authoring::element(*self);
+            cx.child(crate::overlays::Tooltip::new(id, inner, tip).into());
             return;
         }
         let t = cx.tokens;
@@ -344,7 +368,7 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
         if self.is_loading {
             sem.value = Some(cx.t("@astryx.button.loading", &args! {}));
         }
-        if let Some(tip) = &self.tooltip {
+        if let Some(tip) = &self.described {
             if tip.trim() != self.label.trim() {
                 sem.description = Some(tip.clone());
             }
@@ -354,18 +378,21 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
                 shadow: crate::layout::elevation_layers(self.elevation, t),
                 ..BoxDraw::fill(bg, radius)
             }))
-            .interact(
-                Interact::new(self.on_click, disabled)
+            .interact({
+                let mut i = Interact::new(self.on_click, disabled)
                     .busy(busy)
-                    .href(self.href.as_deref()),
-            )
+                    .href(self.href.as_deref());
+                if let Some(e) = self.effect {
+                    i = i.effect(move || e());
+                }
+                i
+            })
             .indicator(Indicator::ring(
                 ring,
                 radius,
                 Some(color(c.overlay_pressed)),
             ))
             .sem(sem)
-            .tooltip(self.tooltip)
             .opacity(if disabled { 0.5 } else { 1.0 });
         if member.is_none() {
             node = node.press_scale();

@@ -405,6 +405,7 @@ dependencies = [
  "astryx-core",
  "astryx-spike-foundations",
  "astryx-spike-layers",
+ "astryx-spike-motion",
  "astryx-tokens",
  "taffy",
 ]
