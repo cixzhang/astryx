@@ -839,24 +839,26 @@ impl<T: 'static, Msg: 'static> TablePlugin<T, Msg> for StickyColumns {
     }
 }
 
-/// Draws only the rows in view (`useTableRowsVirtualization`): fixed row
-/// height, a scroll offset, and a few rows of overscan.
+/// Draws only the rows in view (`useTableRowsVirtualization`): rows of a
+/// fixed height and a few rows of overscan, in a body that scrolls under
+/// the header (set the table's `max_height`).
 pub struct RowsVirtualization {
     pub row_height: f32,
-    pub viewport_height: f32,
-    pub scroll_top: f32,
     pub overscan: usize,
 }
 
 impl<T: 'static, Msg: 'static> TablePlugin<T, Msg> for RowsVirtualization {
-    fn window(&self, count: usize) -> Option<RowWindow> {
+    fn window(&self, count: usize, scroll_top: f32, viewport: f32) -> Option<RowWindow> {
         Some(row_window(
             count,
             self.row_height,
-            self.viewport_height,
-            self.scroll_top,
+            viewport,
+            scroll_top,
             self.overscan,
         ))
+    }
+    fn windows(&self) -> bool {
+        true
     }
 }
 

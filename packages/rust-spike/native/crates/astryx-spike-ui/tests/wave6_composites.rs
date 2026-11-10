@@ -420,3 +420,29 @@ fn escape_puts_a_picked_up_row_back() {
         .collect();
     assert_eq!(names, ["Reorder Item 1", "Reorder Item 2"]);
 }
+
+#[test]
+fn list_reorders_by_pointer_drag_on_the_grip() {
+    let mut rig = Rig::<RMsg>::new(|| {
+        List::new()
+            .reorderable(Reorderable::new(RMsg::Moved).labels(["Inbox", "Drafts", "Sent"]))
+            .child(ListItem::new("Inbox"))
+            .child(ListItem::new("Drafts"))
+            .child(ListItem::new("Sent"))
+            .into()
+    });
+    rig.redraw();
+    let tree = rig.tree();
+    let g0 = find(&tree, Role::Button, "Reorder Inbox").unwrap().bounds;
+    let g2 = find(&tree, Role::Button, "Reorder Sent").unwrap().bounds;
+    let from = Point {
+        x: g0.x + g0.width / 2.0,
+        y: g0.y + g0.height / 2.0,
+    };
+    let to = Point {
+        x: from.x,
+        y: g2.y + g2.height / 2.0,
+    };
+    rig.drag(from, to, 8);
+    assert_eq!(rig.messages(), vec![RMsg::Moved(0, 2)]);
+}

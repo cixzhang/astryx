@@ -163,6 +163,9 @@ struct Grips<Msg> {
     /// Row names in the order shown.
     labels: Rc<Vec<String>>,
     tr: Words,
+    /// The vertical middle of each row slot, from the last frame, for
+    /// pointer drags.
+    slots: Rc<Vec<f32>>,
 }
 
 fn reorder_grip<Msg: Clone + 'static>(
@@ -284,6 +287,45 @@ fn reorder_grip<Msg: Clone + 'static>(
         node = node.draw(Draw::Box(BoxDraw::fill(color(c.overlay_hover), r)));
     }
     node.on_key = Some(on_key);
+    // A pointer drag on the grip moves the row to the slot under the
+    // pointer, shown in place while it moves, and sends at the release.
+    {
+        use astryx_core::gesture::{DragEvent, DragPhase, DragSpec};
+        let state = g.state.clone();
+        let slots = g.slots.clone();
+        let on_reorder = g.on_reorder.clone();
+        let nearest = move |y: f32| -> Option<usize> {
+            slots
+                .iter()
+                .enumerate()
+                .min_by(|a, b| (a.1 - y).abs().total_cmp(&(b.1 - y).abs()))
+                .map(|(i, _)| i)
+        };
+        node.drag = Some(DragSpec {
+            wants: Rc::new(|d: astryx_core::Point| d.y.abs() >= d.x.abs()),
+            on_drag: Some(Rc::new(move |e: &DragEvent| -> Option<Msg> {
+                let to = nearest(e.at.y).unwrap_or(index);
+                match e.phase {
+                    DragPhase::Start | DragPhase::Move => {
+                        state.set(ReorderState {
+                            grabbed: Some((index, to)),
+                            announcement: String::new(),
+                        });
+                        None
+                    }
+                    DragPhase::End => {
+                        state.set(ReorderState::default());
+                        (to != index).then(|| on_reorder(index, to))
+                    }
+                    DragPhase::Cancel => {
+                        state.set(ReorderState::default());
+                        None
+                    }
+                }
+            })),
+            effect: None,
+        });
+    }
     cx.key(Some(&grip_id));
     cx.begin(node);
     if let Some(n) = icon_node::<Msg>("grip", 16.0, color(c.icon_secondary)) {
@@ -370,6 +412,16 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
             let i18n = cx.i18n();
             Rc::new(move |k: &str, p: usize| i18n.t(k, &args! {"position" => p + 1, "total" => n}))
         };
+        // Slot middles in screen order: which item drew in which slot last
+        // frame does not matter, only where the slots are.
+        let slots: Rc<Vec<f32>> = Rc::new({
+            let mut mids: Vec<f32> = (0..n)
+                .filter_map(|i| cx.last_rect(&format!("{list_id}:row-{i}")))
+                .map(|r| r.y + r.height / 2.0)
+                .collect();
+            mids.sort_by(f32::total_cmp);
+            mids
+        });
         let grips = reorder.as_ref().map(|(h, r)| Grips {
             list_id: list_id.clone(),
             total: n,
@@ -377,9 +429,10 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
             on_reorder: r.on_reorder.clone(),
             labels: labels.clone(),
             tr: tr.clone(),
+            slots: slots.clone(),
         });
         for (i, (orig, child)) in ordered.into_iter().enumerate() {
-            cx.key_slot(orig as u64);
+            cx.key(Some(&format!("{list_id}:row-{orig}")));
             cx.begin(Node::new(Style {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::CENTER,
