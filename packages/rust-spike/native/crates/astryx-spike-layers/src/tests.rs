@@ -382,3 +382,123 @@ fn an_uncontrolled_popover_opens_and_closes_on_local_state() {
         "state survives rebuilds"
     );
 }
+
+// A combobox: focus stays in the field; options are pressed by pointer and
+// read through the field's active descendant; the popup is just a list box.
+
+struct Combo;
+
+impl Build<()> for Combo {
+    fn build(self: Box<Self>, cx: &mut BuildCx<()>) {
+        cx.key(Some("combo"));
+        let chosen = cx.local_handle::<Option<usize>>();
+        let field = Node::new(taffy::Style {
+            size: taffy::Size {
+                width: taffy::Dimension::length(200.0),
+                height: taffy::Dimension::length(32.0),
+            },
+            ..Default::default()
+        })
+        .sem(
+            Semantics::new(Role::ComboBox, "Fruit")
+                .with_state(|s| s.expanded = Some(true))
+                .with_refs(|r| r.active_descendant = Some("opt-1".into())),
+        )
+        .interact(astryx_core::authoring::Interact::new(None, false));
+        cx.key(Some("combo"));
+        cx.begin(field);
+        cx.end();
+        let mut list = VStack::new();
+        for (i, label) in ["Apple", "Banana"].into_iter().enumerate() {
+            let set = chosen.clone();
+            list = list.child(astryx_core::authoring::element(Opt { i, label, set }));
+        }
+        cx.child(
+            Layer::popover("combo", list.into())
+                .no_role()
+                .match_anchor_width(true)
+                .into(),
+        );
+    }
+}
+
+struct Opt {
+    i: usize,
+    label: &'static str,
+    set: astryx_core::authoring::LocalHandle<Option<usize>>,
+}
+
+impl Build<()> for Opt {
+    fn build(self: Box<Self>, cx: &mut BuildCx<()>) {
+        let set = self.set.clone();
+        let i = self.i;
+        let node = Node::new(taffy::Style {
+            size: taffy::Size {
+                width: taffy::Dimension::length(200.0),
+                height: taffy::Dimension::length(30.0),
+            },
+            ..Default::default()
+        })
+        .sem(Semantics::new(Role::ListBoxOption, self.label))
+        .interact(
+            astryx_core::authoring::Interact::new(None, false)
+                .pointer_only()
+                .effect(move || set.set(Some(i))),
+        );
+        cx.key(Some(&format!("opt-{}", self.i)));
+        cx.leaf(node);
+        let _ = self.set.get();
+    }
+}
+
+struct ComboApp;
+
+impl App for ComboApp {
+    type Msg = ();
+    fn view(&self) -> Element<()> {
+        VStack::new()
+            .child(astryx_core::authoring::element(Combo))
+            .into()
+    }
+    fn update(&mut self, _: ()) -> Command {
+        Command::None
+    }
+}
+
+#[test]
+fn combobox_options_are_pointer_only_and_read_through_the_field() {
+    let mut rt = Runtime::new(ComboApp);
+    draw(&mut rt, 800, 600);
+    let tree = rt.accessibility().unwrap();
+    let field = find(&tree, "Fruit").unwrap();
+    let banana = find(&tree, "Banana").unwrap();
+    assert!(field.focused && field.focusable);
+    assert!(!banana.focusable, "options are not focus stops");
+    assert_eq!(field.state.active_descendant, Some(banana.id));
+    assert!(
+        !format!("{tree:?}").contains("role: Dialog"),
+        "no dialog around the list"
+    );
+    // Tab stays on the field: options are not in the order.
+    tap(&mut rt, Input::Next);
+    draw(&mut rt, 800, 600);
+    assert!(find(&rt.accessibility().unwrap(), "Fruit").unwrap().focused);
+    // A click on Banana chooses it and leaves focus in the field.
+    let b = banana.bounds;
+    let e = |phase| PointerEvent {
+        id: 1,
+        kind: PointerKind::Mouse,
+        phase,
+        at: b.center(),
+        button: 0,
+        time_ms: 0.0,
+    };
+    assert!(rt.pointer(e(PointerPhase::Down)).handled);
+    rt.pointer(e(PointerPhase::Up));
+    draw(&mut rt, 800, 600);
+    let tree = rt.accessibility().unwrap();
+    assert!(
+        find(&tree, "Fruit").unwrap().focused,
+        "focus stayed in the field"
+    );
+}
