@@ -60,6 +60,7 @@
     "label": "Label"
    },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "switch-0001",

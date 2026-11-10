@@ -29,6 +29,7 @@
    },
    "base": {},
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "tree-list-0001",

@@ -17,7 +17,7 @@ const families = args;
 // Props that change behavior or wiring but not pixels at rest.
 const NON_VISUAL = /^(on[A-Z]|aria|data|id$|name$|type$|form|autoFocus|autoComplete|inputMode|enterKeyHint|tabIndex|ref$|key$|htmlFor|href$|target$|rel$|xstyle$|className$|style$|testId$|value$|defaultValue$|defaultChecked$|checked$|isChecked$|children$)/;
 // Sample values for required free-form props.
-const SAMPLE = { label: 'Label', placeholder: 'Placeholder', description: 'Description', title: 'Title', helperText: 'Helper text', errorMessage: 'Error message' };
+const SAMPLE = { label: 'Label', placeholder: 'Placeholder', description: 'Description', title: 'Title', helperText: 'Helper text', errorMessage: 'Error message', name: 'Ada Lovelace', text: 'Label', heading: 'Heading', message: 'Message' };
 
 const literals = type => {
   const t = String(type).trim();
@@ -97,7 +97,7 @@ for (const arg of families) {
   for (const p of comp.props ?? []) {
     const values = literals(p.type);
     if (values && !NON_VISUAL.test(p.name)) { visual[p.name] = values; defaults[p.name] = parseDefault(p.default, values); }
-    else if (p.required && SAMPLE[p.name]) base[p.name] = SAMPLE[p.name];
+    else if ((p.required || ['name', 'label', 'text'].includes(p.name)) && SAMPLE[p.name] && /string|ReactNode/.test(String(p.type))) base[p.name] = SAMPLE[p.name];
     else if (p.required && /string/.test(String(p.type))) base[p.name] = p.name;
   }
   const seen = new Set(), cases = [];
@@ -115,7 +115,11 @@ for (const arg of families) {
     const diff = Object.fromEntries(Object.entries(row).filter(([k, v]) => v !== defaults[k]));
     add('pairwise', diff);
   }
-  docOut.components.push({ component: comp.name, visualProps: visual, defaults, base, takesChildren: (comp.props ?? []).some(p => p.name === 'children'), cases });
+  // Fixture children every stack renders the same way: three 40 x 24 boxes for layout
+  // components, the text "Label" for everything else that takes children.
+  const takesChildren = (comp.props ?? []).some(p => p.name === 'children');
+  const fixture = takesChildren ? (docs.category === 'Layout' || /Stack|Grid|Center|Section|Card|AspectRatio|Layout|Group|FormLayout/.test(comp.name) ? 'boxes' : 'text') : null;
+  docOut.components.push({ component: comp.name, visualProps: visual, defaults, base, takesChildren, fixture, cases });
   }
   const n = docOut.components.reduce((a, c) => a + c.cases.length, 0);
   writeFileSync(join(out, `${family}.json`), JSON.stringify(docOut, null, 1) + '\n');

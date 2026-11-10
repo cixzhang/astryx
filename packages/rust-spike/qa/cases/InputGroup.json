@@ -46,6 +46,7 @@
     "label": "Label"
    },
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "input-group-0001",

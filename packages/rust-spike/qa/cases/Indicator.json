@@ -16,6 +16,7 @@
    "defaults": {},
    "base": {},
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "indicator-0001",
@@ -48,6 +49,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "checkbox-indicator-0001",
@@ -132,6 +134,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "check-indicator-0001",
@@ -193,6 +196,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "radio-indicator-0001",

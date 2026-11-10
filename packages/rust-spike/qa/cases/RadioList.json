@@ -52,6 +52,7 @@
     "onChange": "onChange"
    },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "radio-list-0001",

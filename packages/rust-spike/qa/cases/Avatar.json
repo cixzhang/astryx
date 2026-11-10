@@ -22,18 +22,24 @@
    "defaults": {
     "shape": "circle"
    },
-   "base": {},
+   "base": {
+    "name": "Ada Lovelace"
+   },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "avatar-0001",
      "kind": "default",
-     "props": {}
+     "props": {
+      "name": "Ada Lovelace"
+     }
     },
     {
      "id": "avatar-0002",
      "kind": "sweep",
      "props": {
+      "name": "Ada Lovelace",
       "shape": "rounded"
      }
     },
@@ -41,6 +47,7 @@
      "id": "avatar-0003",
      "kind": "sweep",
      "props": {
+      "name": "Ada Lovelace",
       "shape": "square"
      }
     }

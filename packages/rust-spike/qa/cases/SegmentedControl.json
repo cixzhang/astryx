@@ -38,6 +38,7 @@
     "label": "Label"
    },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "segmented-control-0001",
