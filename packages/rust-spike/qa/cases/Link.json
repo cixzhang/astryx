@@ -1,0 +1,828 @@
+{
+ "family": "Link",
+ "source": "packages/core/src/Link/Link.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Link",
+   "visualProps": {
+    "hasUnderline": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isExternalLink": [
+     false,
+     true
+    ],
+    "isStandalone": [
+     false,
+     true
+    ],
+    "size": [
+     "4xs",
+     "3xs",
+     "2xs",
+     "xsm",
+     "sm",
+     "base",
+     "lg",
+     "xl",
+     "2xl",
+     "3xl",
+     "4xl"
+    ],
+    "weight": [
+     "normal",
+     "medium",
+     "semibold",
+     "bold"
+    ],
+    "color": [
+     "primary",
+     "secondary",
+     "disabled",
+     "placeholder",
+     "accent",
+     "inherit"
+    ],
+    "display": [
+     "inline",
+     "block"
+    ]
+   },
+   "defaults": {
+    "hasUnderline": false,
+    "isDisabled": false,
+    "isExternalLink": false,
+    "isStandalone": false,
+    "size": "4xs",
+    "weight": "normal",
+    "color": "accent",
+    "display": "inline"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "link-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "link-0002",
+     "kind": "sweep",
+     "props": {
+      "hasUnderline": true
+     }
+    },
+    {
+     "id": "link-0003",
+     "kind": "sweep",
+     "props": {
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "link-0004",
+     "kind": "sweep",
+     "props": {
+      "isExternalLink": true
+     }
+    },
+    {
+     "id": "link-0005",
+     "kind": "sweep",
+     "props": {
+      "isStandalone": true
+     }
+    },
+    {
+     "id": "link-0006",
+     "kind": "sweep",
+     "props": {
+      "size": "3xs"
+     }
+    },
+    {
+     "id": "link-0007",
+     "kind": "sweep",
+     "props": {
+      "size": "2xs"
+     }
+    },
+    {
+     "id": "link-0008",
+     "kind": "sweep",
+     "props": {
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "link-0009",
+     "kind": "sweep",
+     "props": {
+      "size": "sm"
+     }
+    },
+    {
+     "id": "link-0010",
+     "kind": "sweep",
+     "props": {
+      "size": "base"
+     }
+    },
+    {
+     "id": "link-0011",
+     "kind": "sweep",
+     "props": {
+      "size": "lg"
+     }
+    },
+    {
+     "id": "link-0012",
+     "kind": "sweep",
+     "props": {
+      "size": "xl"
+     }
+    },
+    {
+     "id": "link-0013",
+     "kind": "sweep",
+     "props": {
+      "size": "2xl"
+     }
+    },
+    {
+     "id": "link-0014",
+     "kind": "sweep",
+     "props": {
+      "size": "3xl"
+     }
+    },
+    {
+     "id": "link-0015",
+     "kind": "sweep",
+     "props": {
+      "size": "4xl"
+     }
+    },
+    {
+     "id": "link-0016",
+     "kind": "sweep",
+     "props": {
+      "weight": "medium"
+     }
+    },
+    {
+     "id": "link-0017",
+     "kind": "sweep",
+     "props": {
+      "weight": "semibold"
+     }
+    },
+    {
+     "id": "link-0018",
+     "kind": "sweep",
+     "props": {
+      "weight": "bold"
+     }
+    },
+    {
+     "id": "link-0019",
+     "kind": "sweep",
+     "props": {
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0020",
+     "kind": "sweep",
+     "props": {
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0021",
+     "kind": "sweep",
+     "props": {
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0022",
+     "kind": "sweep",
+     "props": {
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0023",
+     "kind": "sweep",
+     "props": {
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0024",
+     "kind": "sweep",
+     "props": {
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0025",
+     "kind": "pairwise",
+     "props": {
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "3xs",
+      "weight": "medium",
+      "color": "secondary",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0026",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isExternalLink": true,
+      "size": "2xs",
+      "weight": "semibold",
+      "color": "disabled",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0027",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isStandalone": true,
+      "size": "xsm",
+      "weight": "bold",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0028",
+     "kind": "pairwise",
+     "props": {
+      "isDisabled": true,
+      "size": "2xs",
+      "weight": "medium"
+     }
+    },
+    {
+     "id": "link-0029",
+     "kind": "pairwise",
+     "props": {
+      "isExternalLink": true,
+      "size": "xsm",
+      "weight": "bold",
+      "color": "inherit",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0030",
+     "kind": "pairwise",
+     "props": {
+      "isStandalone": true,
+      "size": "sm",
+      "weight": "semibold",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0031",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "weight": "medium",
+      "color": "placeholder",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0032",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0033",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "secondary",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0034",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0035",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0036",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0037",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "color": "primary",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0038",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "size": "3xs"
+     }
+    },
+    {
+     "id": "link-0039",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "size": "sm",
+      "weight": "medium",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0040",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "base",
+      "weight": "semibold"
+     }
+    },
+    {
+     "id": "link-0041",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "lg",
+      "weight": "medium",
+      "color": "disabled",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0042",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "xl",
+      "weight": "medium",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0043",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "2xl",
+      "weight": "medium",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0044",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "3xl",
+      "weight": "medium",
+      "color": "placeholder",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0045",
+     "kind": "pairwise",
+     "props": {
+      "hasUnderline": true,
+      "isDisabled": true,
+      "isExternalLink": true,
+      "isStandalone": true,
+      "size": "4xl",
+      "weight": "medium",
+      "color": "inherit",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0046",
+     "kind": "pairwise",
+     "props": {
+      "isStandalone": true,
+      "size": "2xs",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0047",
+     "kind": "pairwise",
+     "props": {
+      "weight": "medium",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0048",
+     "kind": "pairwise",
+     "props": {
+      "weight": "semibold",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0049",
+     "kind": "pairwise",
+     "props": {
+      "weight": "bold",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0050",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "weight": "semibold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0051",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "weight": "bold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0052",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "weight": "bold",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0053",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0054",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "weight": "medium",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0055",
+     "kind": "pairwise",
+     "props": {
+      "size": "xsm",
+      "weight": "semibold",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0056",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "primary",
+      "display": "block"
+     }
+    },
+    {
+     "id": "link-0057",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "weight": "bold"
+     }
+    },
+    {
+     "id": "link-0058",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0059",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "weight": "bold",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0060",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "weight": "semibold",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0061",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "weight": "bold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0062",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "weight": "semibold",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0063",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "weight": "bold",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0064",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "weight": "semibold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0065",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "weight": "bold",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0066",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "weight": "semibold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0067",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "weight": "bold",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0068",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "weight": "semibold",
+      "color": "primary"
+     }
+    },
+    {
+     "id": "link-0069",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "weight": "bold",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0070",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0071",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0072",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xs",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0073",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0074",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xs",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0075",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0076",
+     "kind": "pairwise",
+     "props": {
+      "size": "sm",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0077",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0078",
+     "kind": "pairwise",
+     "props": {
+      "size": "base",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0079",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "link-0080",
+     "kind": "pairwise",
+     "props": {
+      "size": "lg",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0081",
+     "kind": "pairwise",
+     "props": {
+      "size": "xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0082",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "placeholder"
+     }
+    },
+    {
+     "id": "link-0083",
+     "kind": "pairwise",
+     "props": {
+      "size": "2xl",
+      "color": "inherit"
+     }
+    },
+    {
+     "id": "link-0084",
+     "kind": "pairwise",
+     "props": {
+      "size": "3xl",
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "link-0085",
+     "kind": "pairwise",
+     "props": {
+      "size": "4xl",
+      "color": "disabled"
+     }
+    }
+   ]
+  },
+  {
+   "component": "LinkProvider",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "linkprovider-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "family": "Avatar",
+ "source": "packages/core/src/Avatar/Avatar.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "AvatarStatusDot",
+   "visualProps": {
+    "shape": [
+     "circle",
+     "rounded",
+     "square"
+    ]
+   },
+   "defaults": {
+    "shape": "circle"
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "avatarstatusdot-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "avatarstatusdot-0002",
+     "kind": "sweep",
+     "props": {
+      "shape": "rounded"
+     }
+    },
+    {
+     "id": "avatarstatusdot-0003",
+     "kind": "sweep",
+     "props": {
+      "shape": "square"
+     }
+    }
+   ]
+  }
+ ]
+}

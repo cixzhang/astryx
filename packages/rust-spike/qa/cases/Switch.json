@@ -1,0 +1,222 @@
+{
+ "family": "Switch",
+ "source": "packages/core/src/Switch/Switch.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Switch",
+   "visualProps": {
+    "isLoading": [
+     false,
+     true
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md"
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "labelPosition": [
+     "start",
+     "end"
+    ],
+    "labelSpacing": [
+     "hug",
+     "spread"
+    ]
+   },
+   "defaults": {
+    "isLoading": false,
+    "isLabelHidden": false,
+    "isDisabled": false,
+    "size": "md",
+    "isOptional": false,
+    "isRequired": false,
+    "labelPosition": "end",
+    "labelSpacing": "hug"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "switch-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "switch-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "switch-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "switch-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "switch-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "switch-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "switch-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "switch-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "labelPosition": "start"
+     }
+    },
+    {
+     "id": "switch-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "labelSpacing": "spread"
+     }
+    },
+    {
+     "id": "switch-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "labelPosition": "start"
+     }
+    },
+    {
+     "id": "switch-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isDisabled": true,
+      "isOptional": true,
+      "isRequired": true,
+      "labelSpacing": "spread"
+     }
+    },
+    {
+     "id": "switch-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "isDisabled": true,
+      "size": "sm",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "switch-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "isLabelHidden": true,
+      "isRequired": true,
+      "labelPosition": "start",
+      "labelSpacing": "spread"
+     }
+    },
+    {
+     "id": "switch-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "labelPosition": "start",
+      "labelSpacing": "spread"
+     }
+    },
+    {
+     "id": "switch-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "size": "sm"
+     }
+    },
+    {
+     "id": "switch-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "isRequired": true,
+      "labelPosition": "start"
+     }
+    },
+    {
+     "id": "switch-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "size": "sm",
+      "labelPosition": "start",
+      "labelSpacing": "spread"
+     }
+    }
+   ]
+  }
+ ]
+}

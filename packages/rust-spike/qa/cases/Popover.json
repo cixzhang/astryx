@@ -1,0 +1,879 @@
+{
+ "family": "Popover",
+ "source": "packages/core/src/Popover/Popover.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Popover",
+   "visualProps": {
+    "placement": [
+     "above",
+     "below",
+     "start",
+     "end"
+    ],
+    "alignment": [
+     "start",
+     "center",
+     "end"
+    ],
+    "isOpen": [
+     false,
+     true
+    ],
+    "isEnabled": [
+     false,
+     true
+    ],
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "role": [
+     "dialog",
+     "none"
+    ],
+    "isModal": [
+     false,
+     true
+    ],
+    "hasCloseButton": [
+     false,
+     true
+    ],
+    "hasAutoFocus": [
+     false,
+     true
+    ],
+    "hasLightDismiss": [
+     false,
+     true
+    ],
+    "hasEscapeDismiss": [
+     false,
+     true
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "adaptive"
+    ]
+   },
+   "defaults": {
+    "placement": "below",
+    "alignment": "start",
+    "isOpen": false,
+    "isEnabled": true,
+    "padding": 3,
+    "role": "dialog",
+    "isModal": true,
+    "hasCloseButton": true,
+    "hasAutoFocus": true,
+    "hasLightDismiss": true,
+    "hasEscapeDismiss": true,
+    "presentation": "popover"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "popover-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "popover-0002",
+     "kind": "sweep",
+     "props": {
+      "placement": "above"
+     }
+    },
+    {
+     "id": "popover-0003",
+     "kind": "sweep",
+     "props": {
+      "placement": "start"
+     }
+    },
+    {
+     "id": "popover-0004",
+     "kind": "sweep",
+     "props": {
+      "placement": "end"
+     }
+    },
+    {
+     "id": "popover-0005",
+     "kind": "sweep",
+     "props": {
+      "alignment": "center"
+     }
+    },
+    {
+     "id": "popover-0006",
+     "kind": "sweep",
+     "props": {
+      "alignment": "end"
+     }
+    },
+    {
+     "id": "popover-0007",
+     "kind": "sweep",
+     "props": {
+      "isOpen": true
+     }
+    },
+    {
+     "id": "popover-0008",
+     "kind": "sweep",
+     "props": {
+      "isEnabled": false
+     }
+    },
+    {
+     "id": "popover-0009",
+     "kind": "sweep",
+     "props": {
+      "padding": 0
+     }
+    },
+    {
+     "id": "popover-0010",
+     "kind": "sweep",
+     "props": {
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "popover-0011",
+     "kind": "sweep",
+     "props": {
+      "padding": 1
+     }
+    },
+    {
+     "id": "popover-0012",
+     "kind": "sweep",
+     "props": {
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "popover-0013",
+     "kind": "sweep",
+     "props": {
+      "padding": 2
+     }
+    },
+    {
+     "id": "popover-0014",
+     "kind": "sweep",
+     "props": {
+      "padding": 4
+     }
+    },
+    {
+     "id": "popover-0015",
+     "kind": "sweep",
+     "props": {
+      "padding": 5
+     }
+    },
+    {
+     "id": "popover-0016",
+     "kind": "sweep",
+     "props": {
+      "padding": 6
+     }
+    },
+    {
+     "id": "popover-0017",
+     "kind": "sweep",
+     "props": {
+      "padding": 8
+     }
+    },
+    {
+     "id": "popover-0018",
+     "kind": "sweep",
+     "props": {
+      "padding": 10
+     }
+    },
+    {
+     "id": "popover-0019",
+     "kind": "sweep",
+     "props": {
+      "role": "none"
+     }
+    },
+    {
+     "id": "popover-0020",
+     "kind": "sweep",
+     "props": {
+      "isModal": false
+     }
+    },
+    {
+     "id": "popover-0021",
+     "kind": "sweep",
+     "props": {
+      "hasCloseButton": false
+     }
+    },
+    {
+     "id": "popover-0022",
+     "kind": "sweep",
+     "props": {
+      "hasAutoFocus": false
+     }
+    },
+    {
+     "id": "popover-0023",
+     "kind": "sweep",
+     "props": {
+      "hasLightDismiss": false
+     }
+    },
+    {
+     "id": "popover-0024",
+     "kind": "sweep",
+     "props": {
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0025",
+     "kind": "sweep",
+     "props": {
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0026",
+     "kind": "sweep",
+     "props": {
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0027",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isEnabled": false,
+      "padding": 0,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0028",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 0.5,
+      "role": "none",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0029",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "end",
+      "padding": 1,
+      "hasCloseButton": false,
+      "hasLightDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0030",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "isEnabled": false,
+      "padding": 1,
+      "role": "none",
+      "isModal": false,
+      "hasAutoFocus": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0031",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "center",
+      "isEnabled": false,
+      "padding": 1.5,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0032",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "end",
+      "isOpen": true,
+      "isEnabled": false,
+      "padding": 2,
+      "isModal": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0033",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "padding": 2,
+      "role": "none",
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0034",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "center",
+      "isOpen": true,
+      "isEnabled": false,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasLightDismiss": false
+     }
+    },
+    {
+     "id": "popover-0035",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 0.5,
+      "isModal": false,
+      "hasAutoFocus": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0036",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 4,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasLightDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0037",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 0,
+      "role": "none",
+      "hasAutoFocus": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0038",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 5,
+      "role": "none",
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0039",
+     "kind": "pairwise",
+     "props": {
+      "role": "none",
+      "isModal": false,
+      "hasAutoFocus": false,
+      "hasEscapeDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0040",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isOpen": true,
+      "padding": 1.5,
+      "role": "none",
+      "isModal": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0041",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "center",
+      "isEnabled": false,
+      "padding": 2,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0042",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "end",
+      "isEnabled": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0043",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 4,
+      "role": "none",
+      "hasAutoFocus": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0044",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isOpen": true,
+      "padding": 5
+     }
+    },
+    {
+     "id": "popover-0045",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isEnabled": false,
+      "padding": 6,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0046",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isEnabled": false,
+      "padding": 8,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0047",
+     "kind": "pairwise",
+     "props": {
+      "placement": "above",
+      "isEnabled": false,
+      "padding": 10,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0048",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 0,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasLightDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0049",
+     "kind": "pairwise",
+     "props": {
+      "isEnabled": false,
+      "padding": 0.5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0050",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 4,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0051",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "center",
+      "isEnabled": false,
+      "padding": 5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0052",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 6,
+      "role": "none",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0053",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 8,
+      "role": "none",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0054",
+     "kind": "pairwise",
+     "props": {
+      "alignment": "center",
+      "isOpen": true,
+      "padding": 10,
+      "role": "none",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0055",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "isEnabled": false,
+      "padding": 0,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0056",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "center",
+      "isEnabled": false,
+      "padding": 1,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0057",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 1.5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0058",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "isEnabled": false,
+      "padding": 4,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0059",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "isEnabled": false,
+      "padding": 5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0060",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 6,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0061",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 8,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0062",
+     "kind": "pairwise",
+     "props": {
+      "placement": "start",
+      "alignment": "end",
+      "isEnabled": false,
+      "padding": 10,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0063",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 0.5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "adaptive"
+     }
+    },
+    {
+     "id": "popover-0064",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 1,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false,
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "popover-0065",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 1.5,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0066",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 2,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0067",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0068",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 6,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0069",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 8,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    },
+    {
+     "id": "popover-0070",
+     "kind": "pairwise",
+     "props": {
+      "placement": "end",
+      "isEnabled": false,
+      "padding": 10,
+      "isModal": false,
+      "hasCloseButton": false,
+      "hasAutoFocus": false,
+      "hasLightDismiss": false,
+      "hasEscapeDismiss": false
+     }
+    }
+   ]
+  }
+ ]
+}

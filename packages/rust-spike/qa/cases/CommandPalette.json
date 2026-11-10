@@ -1,0 +1,132 @@
+{
+ "family": "CommandPalette",
+ "source": "packages/core/src/CommandPalette/CommandPalette.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "CommandPaletteInput",
+   "visualProps": {
+    "isOpen": [
+     false,
+     true
+    ],
+    "isInline": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "isOpen": false,
+    "isInline": false
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpaletteinput-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "commandpaletteinput-0002",
+     "kind": "sweep",
+     "props": {
+      "isOpen": true
+     }
+    },
+    {
+     "id": "commandpaletteinput-0003",
+     "kind": "sweep",
+     "props": {
+      "isInline": true
+     }
+    },
+    {
+     "id": "commandpaletteinput-0004",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "isInline": true
+     }
+    }
+   ]
+  },
+  {
+   "component": "CommandPaletteList",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpalettelist-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "CommandPaletteItem",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpaletteitem-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "CommandPaletteGroup",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpalettegroup-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "CommandPaletteFooter",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpalettefooter-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "CommandPaletteEmpty",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "commandpaletteempty-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

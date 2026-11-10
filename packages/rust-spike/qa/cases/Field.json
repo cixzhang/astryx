@@ -1,0 +1,223 @@
+{
+ "family": "Field",
+ "source": "packages/core/src/Field/Field.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "FieldLabel",
+   "visualProps": {
+    "isGroupLabel": [
+     false,
+     true
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ]
+   },
+   "defaults": {
+    "isGroupLabel": false,
+    "isLabelHidden": false,
+    "isDisabled": false,
+    "isOptional": false,
+    "isRequired": false,
+    "statusVariant": "attached"
+   },
+   "base": {
+    "label": "Label",
+    "inputID": "inputID"
+   },
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "fieldlabel-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID"
+     }
+    },
+    {
+     "id": "fieldlabel-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isGroupLabel": true
+     }
+    },
+    {
+     "id": "fieldlabel-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "fieldlabel-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "fieldlabel-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "fieldlabel-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "fieldlabel-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "fieldlabel-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "fieldlabel-0009",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isLabelHidden": true,
+      "isDisabled": true,
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "fieldlabel-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isGroupLabel": true,
+      "isDisabled": true,
+      "isRequired": true,
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "fieldlabel-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isGroupLabel": true,
+      "isLabelHidden": true,
+      "isOptional": true,
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "fieldlabel-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isOptional": true,
+      "isRequired": true,
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "fieldlabel-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isGroupLabel": true,
+      "isLabelHidden": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "fieldlabel-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isGroupLabel": true,
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "fieldlabel-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "inputID": "inputID",
+      "isOptional": true,
+      "isRequired": true
+     }
+    }
+   ]
+  },
+  {
+   "component": "FieldStatus",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "fieldstatus-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

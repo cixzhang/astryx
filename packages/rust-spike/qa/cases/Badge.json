@@ -1,0 +1,155 @@
+{
+ "family": "Badge",
+ "source": "packages/core/src/Badge/Badge.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Badge",
+   "visualProps": {
+    "variant": [
+     "neutral",
+     "info",
+     "success",
+     "warning",
+     "error",
+     "blue",
+     "cyan",
+     "green",
+     "orange",
+     "pink",
+     "purple",
+     "red",
+     "teal",
+     "yellow"
+    ]
+   },
+   "defaults": {
+    "variant": "neutral"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "badge-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "badge-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "info"
+     }
+    },
+    {
+     "id": "badge-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "success"
+     }
+    },
+    {
+     "id": "badge-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "warning"
+     }
+    },
+    {
+     "id": "badge-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "error"
+     }
+    },
+    {
+     "id": "badge-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "blue"
+     }
+    },
+    {
+     "id": "badge-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "badge-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "green"
+     }
+    },
+    {
+     "id": "badge-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "badge-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "badge-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "badge-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "red"
+     }
+    },
+    {
+     "id": "badge-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "badge-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "variant": "yellow"
+     }
+    }
+   ]
+  }
+ ]
+}
