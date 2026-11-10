@@ -212,8 +212,8 @@ impl<Msg> Layout<Msg> {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn header(mut self, header: LayoutHeader<Msg>) -> Self {
-        self.header = Some(header);
+    pub fn header(mut self, header: impl Into<LayoutHeader<Msg>>) -> Self {
+        self.header = Some(header.into());
         self
     }
     pub fn footer(mut self, footer: LayoutFooter<Msg>) -> Self {

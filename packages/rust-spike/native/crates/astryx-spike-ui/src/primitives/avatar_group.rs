@@ -51,7 +51,10 @@ impl<Msg> Default for AvatarGroup<Msg> {
 impl<Msg> AvatarGroup<Msg> {
     pub fn new(avatars: impl IntoIterator<Item = Avatar<Msg>>) -> Self {
         AvatarGroup {
-            avatars: avatars.into_iter().map(|a| Member::Avatar(Box::new(a))).collect(),
+            avatars: avatars
+                .into_iter()
+                .map(|a| Member::Avatar(Box::new(a)))
+                .collect(),
             ..Self::default()
         }
     }

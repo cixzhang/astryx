@@ -16,11 +16,13 @@ mod util;
 #[doc(hidden)]
 pub mod testkit;
 
+pub mod composites;
 pub mod controls;
 pub mod layout;
 pub mod overlays;
 pub mod primitives;
 
+pub use composites::*;
 pub use controls::*;
 pub use layout::*;
 pub use overlays::*;
