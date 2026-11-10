@@ -355,6 +355,10 @@ pub struct Interact<Msg> {
     /// Runs on activation, before `on_activate` is sent: a change to the
     /// component's own state through a [`LocalHandle`].
     pub effect: Option<std::rc::Rc<dyn Fn()>>,
+    /// False for a control pressed only by pointer, never a focus stop: a
+    /// combobox's option, which the input points at through
+    /// `aria-activedescendant` while it keeps focus.
+    pub focusable: bool,
 }
 
 /// A text field's value and how to report a new one.
@@ -394,7 +398,14 @@ impl<Msg> Interact<Msg> {
             edit: None,
             hold: None,
             effect: None,
+            focusable: true,
         }
+    }
+
+    /// A control pressed only by pointer, never a focus stop.
+    pub fn pointer_only(mut self) -> Self {
+        self.focusable = false;
+        self
     }
 
     /// Runs `f` on activation, before `on_activate` is sent.
