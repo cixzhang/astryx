@@ -35,6 +35,11 @@ and splits by hunk along the rows below.
   `LayerSpec::dismiss_effect`, `HoverSpec::effect` (and `on_change`
   becoming optional), and the runtime's state store, pruned with the
   node tree.
+- **g. Drags**: `gesture.rs` (`DragSpec`, `DragEvent`, `DragPhase`),
+  `Node::drag`, `PointerEvent::time_ms`, the runtime's drag sessions
+  (innermost member that wants the direction takes the drag; finger
+  scrolling with a coast), and the shells' move forwarding while a button
+  is held.
 
 ## Changes
 
@@ -60,3 +65,4 @@ and splits by hunk along the rows below.
 | astryx-core `runtime.rs`, `paint.rs`, `layout.rs`, `a11y.rs` | One `Animated` per node and channel kept across rebuilds; exit copies from the last paint, drawn above everything, one per node; height animation with a second layout pass while it moves; `inert` subtrees out of the a11y tree and focus order; `paint` takes a capture list | Motion row: retarget without jumps, exit plays once, layout animation, Reduce Motion | Additive (inactive without anims, exit, resize or inert) |
 | astryx-core `element.rs`, `layer.rs`, `runtime.rs` | Component state kept by the runtime per node id and type (`LocalHandle`), changed from `Interact::effect`, `LayerSpec::dismiss_effect` and `HoverSpec::effect`; a change rebuilds; state is dropped with its node | Astryx's uncontrolled APIs (Tooltip, Popover, Collapsible `defaultIsOpen`, Table default sort) without an app message per bit of UI state | Additive; `HoverSpec::on_change` is now optional (introduced on this branch) |
 | astryx-core `runtime.rs` | The build sees the frame's viewport (it saw (0, 0) on the first frame), and a viewport change rebuilds | Layers and sheets size from `BuildCx::viewport` | Bug fix (one more rebuild per resize) |
+| astryx-core `gesture.rs` (new), `element.rs`, `runtime.rs`, `contract.rs`; astryx-desktop `lib.rs`; astryx-web `shell.rs` | `DragSpec` drag handlers; the runtime gives a drag to the innermost handler (or finger-scrolled container) that wants its direction after 10 points, cancels the press under it, scrolls containers under a finger with a coast at UIScrollView's deceleration; `PointerEvent::time_ms`; shells forward moves while pressed | Gestures row: sheets over scrolling lists, swipe rows, reorder, momentum | Additive (no drag handlers: only finger scrolling, which no shell sent before) |

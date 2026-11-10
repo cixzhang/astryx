@@ -113,6 +113,7 @@ fn press(rt: &mut Runtime<Demo>, x: f32, y: f32) -> bool {
         phase,
         at: astryx_core::Point { x, y },
         button: 0,
+        time_ms: 0.0,
     };
     let down = rt.pointer(e(PointerPhase::Down));
     rt.pointer(e(PointerPhase::Up));
