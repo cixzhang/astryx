@@ -91,6 +91,7 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         frames: 0,
         pointer: None,
         pointer_target: None,
+        pressing: false,
         cursor: CursorIcon::Default,
         #[cfg(feature = "gamepad")]
         gamepads: gilrs::Gilrs::new().ok(),
@@ -135,6 +136,8 @@ struct Shell<S: Surface> {
     pointer: Option<Point>,
     /// The node a press landed on, activated if the release lands on it too.
     pointer_target: Option<u64>,
+    /// The primary button is down, so moves drag.
+    pressing: bool,
     cursor: CursorIcon,
     #[cfg(feature = "gamepad")]
     gamepads: Option<gilrs::Gilrs>,
@@ -487,6 +490,18 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 });
                 self.update_cursor();
                 self.hover();
+                // A held button drags.
+                if let (true, Some(at)) = (self.pressing, self.pointer) {
+                    let outcome = self.surface.pointer(PointerEvent {
+                        id: 0,
+                        kind: PointerKind::Mouse,
+                        phase: PointerPhase::Move,
+                        at,
+                        button: 0,
+                        time_ms: shell_ms(),
+                    });
+                    self.handle(event_loop, outcome.command);
+                }
             }
             WindowEvent::CursorLeft { .. } => {
                 self.pointer = None;
@@ -504,12 +519,14 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                         ElementState::Pressed => PointerPhase::Down,
                         ElementState::Released => PointerPhase::Up,
                     };
+                    self.pressing = phase == PointerPhase::Down;
                     let outcome = self.surface.pointer(PointerEvent {
                         id: 0,
                         kind: PointerKind::Mouse,
                         phase,
                         at,
                         button: 0,
+                        time_ms: shell_ms(),
                     });
                     self.handle(event_loop, outcome.command);
                     if outcome.handled {
@@ -633,4 +650,10 @@ fn find_focused_text_field(node: &A11yNode) -> Option<astryx_core::Rect> {
         return Some(node.bounds);
     }
     node.children.iter().find_map(find_focused_text_field)
+}
+
+/// Milliseconds since the shell's first pointer event, for release velocity.
+fn shell_ms() -> f64 {
+    static START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+    START.get_or_init(Instant::now).elapsed().as_secs_f64() * 1000.0
 }

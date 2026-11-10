@@ -406,6 +406,7 @@ impl Shell {
                 y: (event.client_y() as f64 - rect.top()) as f32,
             },
             button: event.button().max(0) as u8,
+            time_ms: event.time_stamp(),
         });
         self.handle(outcome.command);
         outcome.handled
@@ -789,8 +790,14 @@ impl Runner {
             shell.cursor = cursor;
             let _ = shell.canvas.style().set_property("cursor", cursor);
         }
+        // A pressed pointer drags.
+        if event.buttons() != 0 {
+            shell.pointer(event, astryx_core::PointerPhase::Move);
+        }
         // Touch never hovers.
         if event.pointer_type() == "touch" {
+            drop(shell);
+            self.schedule();
             return;
         }
         let rect = shell.canvas.get_bounding_client_rect();

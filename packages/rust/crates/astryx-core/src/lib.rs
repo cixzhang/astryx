@@ -14,6 +14,7 @@ mod a11y;
 mod components;
 mod element;
 mod focus;
+pub mod gesture;
 pub mod lab;
 pub mod layer;
 mod layout;

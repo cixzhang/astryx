@@ -2,8 +2,9 @@
 
 use crate::contract::{
     A11yAction, A11yNode, Color, Command, DisplayList, DrawCmd, FontFamily, FrameInfo, ImageData,
-    ImageId, Input, InputPhase, Live, Point, PointerEvent, PointerOutcome, PointerPhase,
-    Preferences, Radii, Rect, Role, Size, SoundId, Surface, TextAlign, TextDirection, TextMeasure,
+    ImageId, Input, InputPhase, Live, Point, PointerEvent, PointerKind, PointerOutcome,
+    PointerPhase, Preferences, Radii, Rect, Role, Size, SoundId, Surface, TextAlign, TextDirection,
+    TextMeasure,
 };
 use crate::element::{Axis, BuildCx, Draw, Edit, Element, Node, PopupAction, Semantics};
 use crate::layer::{DismissReason, LayerAnchor, PlaceInput};
@@ -328,6 +329,27 @@ pub struct Runtime<A: App> {
     locals: crate::element::Locals,
     /// The drawable size the last build saw.
     build_viewport: (f32, f32),
+    /// The pointer drag in progress.
+    drag: Option<DragSession>,
+    /// Scroll containers coasting after a finger's throw: velocity in
+    /// points per second along the axis, by node id.
+    coasts: HashMap<u64, f32>,
+}
+
+/// One pointer's drag: the handlers under its press and the one that took it.
+struct DragSession {
+    pointer: u64,
+    kind: crate::contract::PointerKind,
+    start: Point,
+    start_ms: f64,
+    /// Drag handlers and finger-scroll containers, innermost first.
+    members: Vec<u64>,
+    /// The member that took the drag; `Some(None)` when none wanted it.
+    claimed: Option<Option<u64>>,
+    /// A claimed scroll container's offset at the start.
+    scroll_from: f32,
+    /// Recent positions along a claimed scroll container's axis.
+    samples: Vec<(f32, f64)>,
 }
 
 /// A closed node's last drawing, leaving.
@@ -424,6 +446,8 @@ impl<A: App> Runtime<A> {
             resizes: HashMap::new(),
             locals: Default::default(),
             build_viewport: (0.0, 0.0),
+            drag: None,
+            coasts: HashMap::new(),
         }
     }
 
@@ -2019,6 +2043,7 @@ impl<A: App> Runtime<A> {
         for a in self.anims.values_mut() {
             a.tick(dt);
         }
+        self.tick_coasts(dt);
         for e in &mut self.exits {
             e.opacity.tick(dt);
             e.scale.tick(dt);
@@ -2402,6 +2427,255 @@ impl<A: App> Runtime<A> {
         true
     }
 
+    /// Starts a drag session for a press: the drag handlers and (for a
+    /// finger) scroll containers on the path to the deepest node under it.
+    fn begin_drag(&mut self, event: PointerEvent) {
+        self.drag = None;
+        let Some(layout) = self.layout.as_ref() else {
+            return;
+        };
+        let deepest = (0..self.nodes.len())
+            .rev()
+            .find(|&ix| layout.rects.get(ix).is_some_and(|&r| contains(r, event.at)));
+        let mut members = Vec::new();
+        let mut at = deepest;
+        while let Some(ix) = at {
+            let node = &self.nodes[ix];
+            let finger_scroll = node.scroll.is_some() && event.kind == PointerKind::Touch;
+            if node.drag.is_some() || finger_scroll {
+                members.push(node.id);
+                self.coasts.remove(&node.id);
+            }
+            if node.inert {
+                members.clear();
+            }
+            at = node.parent.map(|p| p as usize);
+        }
+        // Behind a modal layer the page takes no drags.
+        let modal = self
+            .nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(|l| l.modal));
+        if members.is_empty() || modal.is_some_and(|m| deepest.is_none_or(|d| d < m)) {
+            return;
+        }
+        self.drag = Some(DragSession {
+            pointer: event.id,
+            kind: event.kind,
+            start: event.at,
+            start_ms: event.time_ms,
+            members,
+            claimed: None,
+            scroll_from: 0.0,
+            samples: Vec::new(),
+        });
+    }
+
+    /// Whether member `id` takes a drag that travelled `d`.
+    fn member_wants(&self, id: u64, d: Point) -> bool {
+        let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+            return false;
+        };
+        let node = &self.nodes[ix];
+        if let Some(spec) = &node.drag {
+            return (spec.wants)(d);
+        }
+        let Some(axis) = node.scroll else {
+            return false;
+        };
+        let (along, across) = match axis {
+            Axis::Vertical => (d.y, d.x),
+            Axis::Horizontal => (d.x * self.scroll_sign(ix), d.y),
+        };
+        if along.abs() < across.abs() {
+            return false;
+        }
+        let offset = self.scroll.get(&id).copied().unwrap_or(0.0);
+        let max = self.layout.as_ref().map_or(0.0, |l| l.overflow[ix]);
+        // Dragging content forward (positive) scrolls back toward 0.
+        if along > 0.0 {
+            offset > 0.5
+        } else {
+            offset < max - 0.5
+        }
+    }
+
+    /// Feeds a move, lift, or cancel to the drag in progress.
+    fn drag_event(&mut self, event: PointerEvent) -> PointerOutcome {
+        use crate::gesture::{DragPhase, DRAG_HYSTERESIS};
+        let Some(session) = self.drag.as_ref() else {
+            return PointerOutcome::default();
+        };
+        if session.pointer != event.id {
+            return PointerOutcome::default();
+        }
+        let d = Point {
+            x: event.at.x - session.start.x,
+            y: event.at.y - session.start.y,
+        };
+        let ending = matches!(event.phase, PointerPhase::Up | PointerPhase::Cancel);
+        if session.claimed.is_none() {
+            if d.x.abs().max(d.y.abs()) < DRAG_HYSTERESIS {
+                if ending {
+                    self.drag = None;
+                }
+                return PointerOutcome::default();
+            }
+            let members = session.members.clone();
+            let winner = members.into_iter().find(|&id| self.member_wants(id, d));
+            let session = self.drag.as_mut().expect("session");
+            session.claimed = Some(winner);
+            if let Some(id) = winner {
+                // The drag is not a press of the control under it.
+                self.end_press();
+                self.pressed = None;
+                self.repaint = true;
+                if let Some(ix) = self.nodes.iter().position(|n| n.id == id) {
+                    if self.nodes[ix].drag.is_some() {
+                        let command = self.send_drag(ix, DragPhase::Start, &event);
+                        if ending {
+                            let end = self.send_drag(ix, DragPhase::End, &event);
+                            self.drag = None;
+                            return PointerOutcome {
+                                command: command.and(end),
+                                handled: true,
+                            };
+                        }
+                        return PointerOutcome {
+                            command,
+                            handled: true,
+                        };
+                    } else {
+                        let from = self.scroll.get(&id).copied().unwrap_or(0.0);
+                        let session = self.drag.as_mut().expect("session");
+                        session.scroll_from = from;
+                    }
+                }
+            }
+        }
+        let Some(Some(id)) = self.drag.as_ref().and_then(|s| s.claimed) else {
+            if ending {
+                self.drag = None;
+            }
+            return PointerOutcome::default();
+        };
+        let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+            self.drag = None;
+            return PointerOutcome::default();
+        };
+        let phase = match event.phase {
+            PointerPhase::Up => DragPhase::End,
+            PointerPhase::Cancel => DragPhase::Cancel,
+            _ => DragPhase::Move,
+        };
+        let mut command = Command::None;
+        if self.nodes[ix].drag.is_some() {
+            command = self.send_drag(ix, phase, &event);
+        } else {
+            let along = match self.nodes[ix].scroll {
+                Some(Axis::Vertical) => d.y,
+                _ => d.x * self.scroll_sign(ix),
+            };
+            let session = self.drag.as_mut().expect("session");
+            let from = session.scroll_from;
+            if session.samples.last().is_none_or(|&(a, _)| a != along) {
+                session.samples.push((along, event.time_ms));
+            }
+            if session.samples.len() > 3 {
+                session.samples.remove(0);
+            }
+            let samples = session.samples.clone();
+            self.set_scroll(ix, from - along, false);
+            if phase == DragPhase::End {
+                if let [.., (a, ta), (b, tb)] = samples[..] {
+                    let dt = (tb - ta) as f32;
+                    let rested = event.time_ms - tb > 40.0;
+                    if dt > 0.0 && !rested {
+                        // Content moves with the finger; the offset moves
+                        // against it.
+                        let v = -(b - a) / dt * 1000.0;
+                        if v.abs() > 50.0 {
+                            self.coasts.insert(id, v);
+                        }
+                    }
+                }
+            }
+        }
+        if ending {
+            self.drag = None;
+        }
+        PointerOutcome {
+            command,
+            handled: true,
+        }
+    }
+
+    /// Sends drag `phase` to the handler at node `ix`.
+    fn send_drag(
+        &mut self,
+        ix: usize,
+        phase: crate::gesture::DragPhase,
+        event: &PointerEvent,
+    ) -> Command {
+        let Some(session) = self.drag.as_ref() else {
+            return Command::None;
+        };
+        let e = crate::gesture::DragEvent {
+            phase,
+            kind: session.kind,
+            at: event.at,
+            time_ms: event.time_ms,
+            start: session.start,
+            start_ms: session.start_ms,
+        };
+        let (effect, on_drag) = match &self.nodes[ix].drag {
+            Some(spec) => (spec.effect.clone(), spec.on_drag.clone()),
+            None => (None, None),
+        };
+        if let Some(effect) = effect {
+            effect(&e);
+            self.stale = true;
+        }
+        match on_drag {
+            Some(f) => self.send(f(&e)),
+            None => Command::None,
+        }
+    }
+
+    /// Advances the coasts of thrown scroll containers.
+    fn tick_coasts(&mut self, dt: f32) {
+        use crate::gesture::SCROLL_DECELERATION;
+        if self.coasts.is_empty() {
+            return;
+        }
+        let dt_ms = dt * 1000.0;
+        let decay = SCROLL_DECELERATION.powf(dt_ms);
+        let ln = SCROLL_DECELERATION.ln();
+        let coasts: Vec<(u64, f32)> = self.coasts.iter().map(|(&k, &v)| (k, v)).collect();
+        for (id, v) in coasts {
+            let Some(ix) = self.nodes.iter().position(|n| n.id == id) else {
+                self.coasts.remove(&id);
+                continue;
+            };
+            let moved = v / 1000.0 * (decay - 1.0) / ln;
+            let offset = self.scroll.get(&id).copied().unwrap_or(0.0);
+            let max = self.layout.as_ref().map_or(0.0, |l| l.overflow[ix]);
+            let next = offset + moved;
+            let v = v * decay;
+            self.scroll.insert(id, next.clamp(0.0, max));
+            self.shown.remove(&id);
+            if let Some(layout) = self.layout.as_mut() {
+                layout.place(&self.nodes, &self.scroll);
+            }
+            if v.abs() < 1.0 || next <= 0.0 || next >= max {
+                self.coasts.remove(&id);
+            } else {
+                self.coasts.insert(id, v);
+            }
+            self.repaint = true;
+        }
+    }
+
     /// The topmost layer root whose spec passes `f`.
     fn top_layer(&self, f: impl Fn(&crate::layer::LayerSpec<A::Msg>) -> bool) -> Option<usize> {
         self.nodes
@@ -2772,10 +3046,16 @@ impl<A: App> Runtime<A> {
 
 impl<A: App> Surface for Runtime<A> {
     fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
-        // Hover stays on `pointer_move`; this path carries presses.
+        // Hover stays on `pointer_move`; this path carries presses and drags.
         if event.phase != PointerPhase::Down {
-            return PointerOutcome::default();
+            let outcome = self.drag_event(event);
+            let pending = std::mem::take(&mut self.pending);
+            return PointerOutcome {
+                command: outcome.command.and(pending),
+                handled: outcome.handled,
+            };
         }
+        self.begin_drag(event);
         // A press outside the topmost layer closes it, if it closes on
         // outside presses, and goes no further: the same press neither
         // reaches the page nor closes the layer under it.
@@ -3215,6 +3495,7 @@ impl<A: App> Surface for Runtime<A> {
             || self.paging.wants_frames()
             || self.hover_pending()
             || self.locals.is_changed()
+            || !self.coasts.is_empty()
             || self.anims.values().any(|a| a.is_animating())
             || !self.exits.is_empty()
             || self.resizes.values().any(|r| r.shown.is_animating())
