@@ -20,6 +20,8 @@ const CHOICES = [['free', 'Free', 'For one person'], ['pro', 'Pro', 'For small t
 const ROWS = [['a', 'Write the brief'], ['b', 'Review the spec'], ['c', 'Ship the release'], ['d', 'Tell the team']].map(([key, label]) => ({ $shape: 'RowItem', key, label, description: '', icon: '', depth: 0, hasChildren: false, isExpanded: false }));
 const TREE = [['src', 'src', 0, true, true], ['button', 'Button.tsx', 1, false, false], ['dialog', 'Dialog', 1, true, true], ['dialog-tsx', 'Dialog.tsx', 2, false, false], ['docs', 'docs', 0, true, false]].map(([key, label, depth, hasChildren, isExpanded]) => ({ $shape: 'RowItem', key, label, description: '', icon: '', depth, hasChildren, isExpanded }));
 const MENU = [['edit', 'Edit', 'clock', '⌘E'], ['copy', 'Copy link', 'copy', '⌘C'], ['div', '', '', ''], ['delete', 'Delete', 'close', '']].map(([id, label, icon, shortcut]) => ({ $shape: 'MenuItem', id, label, icon, shortcut, isDestructive: id === 'delete', isDisabled: false, isChecked: false, isDivider: id === 'div' }));
+const TCOLS = [['name', 'Name', '', 'start', true], ['role', 'Role', '', 'start', false], ['year', 'Born', '80px', 'end', true]].map(([key, label, width, align, isSortable]) => ({ $shape: 'TableColumn', key, label, width, align, isSortable }));
+const TROWS = [['ada', 'Ada Lovelace', 'Analyst', '1815'], ['grace', 'Grace Hopper', 'Rear admiral', '1906'], ['alan', 'Alan Turing', 'Mathematician', '1912'], ['kj', 'Katherine Johnson', 'Mathematician', '1918']].map(([key, ...cells]) => ({ $shape: 'TableRow', key, cells, depth: 0, isExpanded: false, hasChildren: false }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
@@ -27,6 +29,10 @@ export const FAMILIES = {
   Playground2: {
     component: 'CompositesPlayground', uses: [], defaults: {},
     smoke: [{ id: 'playground-0002', title: 'Composites wired to state', props: {} }],
+  },
+  Playground3: {
+    component: 'DataPlayground', uses: [], defaults: {},
+    smoke: [{ id: 'playground-0003', title: 'Pickers and table wired to state', props: {} }],
   },
   Playground: {
     component: 'ControlsPlayground', uses: [], defaults: {},
@@ -64,7 +70,6 @@ export const FAMILIES = {
     component: 'Divider',
     defaults: { orientation: 'horizontal', label: '', variant: 'subtle', isFullBleed: false },
     smoke: sweep('Divider', {}, { variant: ['strong'], label: ['or'], orientation: ['vertical'] }),
-    wrap: inner => ['view width=240 height=80 display="flex" align-items="center" justify-content="center"', ...inner.map(l => `  ${l}`)],
   },
   Link: {
     component: 'Link', textProp: 'text', map: p => { const { label, ...r } = childrenAs('text')(p); return label === undefined ? r : { text: String(label), ...r }; },
@@ -112,14 +117,12 @@ export const FAMILIES = {
   },
   Grid: {
     component: 'Grid', defaults: { columns: 3, minWidth: 0, gap: 2, rowGap: -1, columnGap: -1, align: '', justify: '' },
-    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
     children: ['Filler(label="1")', 'Filler(label="2")', 'Filler(label="3")', 'Filler(label="4")', 'Filler(label="5")'],
     smoke: sweep('Grid', {}, { columns: [2, 4], minWidth: [90], gap: [0, 4] }),
   },
   Center: {
     component: 'Center', defaults: { axis: 'both', padding: -1, paddingInline: -1, paddingInlineStart: -1, paddingInlineEnd: -1, paddingBlock: -1, paddingBlockStart: -1, paddingBlockEnd: -1 }, children: ['Filler(label="Centred")'],
     smoke: sweep('Center', {}, { axis: ['horizontal', 'vertical'], padding: [4] }),
-    wrap: inner => ['view width=240 height=120', ...inner.map(l => `  ${l}`)],
   },
   AspectRatio: {
     component: 'AspectRatio', defaults: { ratio: 1.7778, shape: 'rectangle', fit: 'cover' }, children: ['view flex=1 background-color="astryx.surface.blue"'],
@@ -148,7 +151,6 @@ export const FAMILIES = {
       'LayoutFooter(hasDivider=true, isFullBleed=false)', '  Filler(label="Footer")',
     ],
     smoke: [{ id: 'layout-0001', props: {} }, { id: 'layout-0002', props: { height: 'auto' } }],
-    wrap: inner => ['view width=600 height=360 background-color="astryx.surface.surface"', ...inner.map(l => `  ${l}`)],
   },
   EmptyState: {
     component: 'EmptyState', defaults: { title: 'Title', description: '', icon: '', headingLevel: 3, isCompact: false },
@@ -365,5 +367,64 @@ export const FAMILIES = {
     children: ['Filler(label="Sidebar")'],
     wrap: inner => ['view width=360 height=160', ...inner.map(l => `  ${l}`)],
     smoke: sweep('Resizable', {}, { width: [240] }),
+  },
+  Typeahead: {
+    component: 'Typeahead', actions: { input: 'noopS', pick: 'noopS', clear: 'noop' }, uses: ['Typeahead', 'ChoiceItem'], types: { options: 'ChoiceItem[]' },
+    defaults: { id: 'case-typeahead', label: 'Label', query: '', options: CHOICES, selected: '', placeholder: 'Placeholder', size: 'md', isDisabled: false, isLabelHidden: false, hasClear: false, hasEntriesOnFocus: false },
+    map: p => { const { statusVariant, isRequired, isOptional, hasAutoFocus, ...r } = p; return r; },
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Typeahead', {}, { query: ['Pr'], size: ['sm', 'lg'], isDisabled: [true], hasClear: [true] }),
+  },
+  Tokenizer: {
+    component: 'Tokenizer', actions: { input: 'noopS', add: 'noopS', remove: 'noopS' }, uses: ['Tokenizer', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
+    defaults: { id: 'case-tokenizer', label: 'Label', query: '', options: CHOICES, values: ['free', 'pro'] },
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Tokenizer', {}, { values: [[]] }),
+  },
+  Selector: {
+    component: 'Selector', actions: { change: 'noopS' }, uses: ['Selector', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
+    defaults: { id: 'case-selector', label: 'Label', options: CHOICES, value: 'pro', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: false, values: [] },
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Selector', {}, { value: [''], size: ['sm', 'lg'], isDisabled: [true] }),
+  },
+  MultiSelector: {
+    component: 'Selector', actions: { change: 'noopS' }, uses: ['Selector', 'ChoiceItem'], types: { options: 'ChoiceItem[]', values: 'string[]' },
+    defaults: { id: 'case-multi', label: 'Label', options: CHOICES, value: '', placeholder: 'Choose', size: 'md', isDisabled: false, isMultiple: true, values: ['free', 'team'] },
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('MultiSelector', {}, { values: [[]] }),
+  },
+  Calendar: {
+    component: 'Calendar', actions: { pick: 'noopS', shift: 'noopN' },
+    defaults: { year: 2026, month: 11, selected: '2026-11-18', rangeStart: '', rangeEnd: '', today: '2026-11-10' },
+    smoke: sweep('Calendar', {}, { selected: [''], month: [2], rangeStart: ['2026-11-04'] }).map(c => (c.props.rangeStart ? { ...c, props: { ...c.props, selected: '', rangeEnd: '2026-11-12' } } : c)),
+  },
+  DateInput: {
+    component: 'DateInput', actions: { input: 'noopS', pick: 'noopS', shift: 'noopN' },
+    defaults: { id: 'case-date', label: 'Label', value: '2026-11-18', endValue: '', isRange: false, year: 2026, month: 11, today: '2026-11-10', size: 'md', isDisabled: false },
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('DateInput', {}, { value: [''], size: ['sm', 'lg'], isDisabled: [true] }),
+  },
+  DateRangeInput: {
+    component: 'DateInput', actions: { input: 'noopS', pick: 'noopS', shift: 'noopN' },
+    defaults: { id: 'case-range', label: 'Label', value: '2026-11-04', endValue: '2026-11-12', isRange: true, year: 2026, month: 11, today: '2026-11-10', size: 'md', isDisabled: false },
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('DateRangeInput', {}, { value: [''] }),
+  },
+  TimeInput: {
+    component: 'TimeInput', actions: { input: 'noopS' },
+    defaults: { id: 'case-time', label: 'Label', value: '09:30', size: 'md', isDisabled: false },
+    smoke: sweep('TimeInput', {}, { value: [''], size: ['sm', 'lg'], isDisabled: [true] }),
+  },
+  Pagination: {
+    component: 'Pagination', actions: { go: 'noopN' },
+    defaults: { page: 3, pageCount: 7, label: 'Pages' },
+    smoke: sweep('Pagination', {}, { page: [1, 7], pageCount: [3] }),
+  },
+  Table: {
+    component: 'Table', actions: { sort: 'noopS', toggleRow: 'noopSB2', toggleAll: 'noopB', toggleExpand: 'noopS' }, uses: ['Table', 'TableColumn', 'TableRow'], types: { columns: 'TableColumn[]', rows: 'TableRow[]', selected: 'string[]' },
+    noSlot: true,
+    defaults: { label: 'People', columns: TCOLS, rows: TROWS, density: 'balanced', dividers: 'rows', isStriped: false, hasHover: false, verticalAlign: 'middle', textOverflow: 'wrap', sortKey: '', sortDirection: 'asc', hasSelection: false, selected: [] },
+    wrap: inner => ['view width=480', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('Table', {}, { density: ['compact', 'spacious'], dividers: ['columns', 'grid', 'none'], isStriped: [true], hasSelection: [true], sortKey: ['name'] }),
   },
 };

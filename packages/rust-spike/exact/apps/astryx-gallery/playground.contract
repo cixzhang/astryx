@@ -95,3 +95,84 @@ component CompositesPlayground
         Resizable(label="Resize", width=width, minWidth=100, maxWidth=300, resize=resize)
           text "Sidebar"
       text width.toString() testId="width"
+
+// Data and pickers wired to state: typeahead, tokenizer, selectors, dates, table.
+use Table, TableColumn, TableRow, Pagination from "@astryx-spike/astryx"
+use Typeahead, Tokenizer, Selector, DateInput, TimeInput from "@astryx-spike/astryx-layers"
+
+fn people(): ChoiceItem[] = [ChoiceItem(value="ada", label="Ada Lovelace", description="Analyst", isDisabled=false), ChoiceItem(value="grace", label="Grace Hopper", description="Admiral", isDisabled=false), ChoiceItem(value="alan", label="Alan Turing", description="Mathematician", isDisabled=false)]
+fn cols(): TableColumn[] = [TableColumn(key="name", label="Name", width="", align="start", isSortable=true), TableColumn(key="role", label="Role", width="", align="start", isSortable=false), TableColumn(key="year", label="Born", width="80px", align="end", isSortable=true)]
+fn tableRows(): TableRow[] = [TableRow(key="ada", cells=["Ada Lovelace", "Analyst", "1815"], depth=0, isExpanded=false, hasChildren=false), TableRow(key="grace", cells=["Grace Hopper", "Admiral", "1906"], depth=0, isExpanded=false, hasChildren=false), TableRow(key="alan", cells=["Alan Turing", "Mathematician", "1912"], depth=0, isExpanded=false, hasChildren=false)]
+
+component DataPlayground
+  state query = ""
+  state person = ""
+  state tq = ""
+  state tags = ["ada"]
+  state one = ""
+  state many = []
+  state date = ""
+  state year = 2026
+  state month = 11
+  state time = "09:30"
+  state sortKey = "name"
+  state sortDir = "asc"
+  state picked = []
+  state page = 1
+  action setQuery(t: string)
+    query = t
+  action setPerson(v: string)
+    person = v
+    query = people().filter(p => p.value == v).map(p => p.label).join("")
+  action clearQuery
+    query = ""
+  action setTq(t: string)
+    tq = t
+  action addTag(v: string)
+    tags = tags.concat([v])
+    tq = ""
+  action removeTag(v: string)
+    tags = tags.filter(t => t != v)
+  action setOne(v: string)
+    one = v
+  action toggleMany(v: string)
+    many = many.includes(v) ? many.filter(m => m != v) : many.concat([v])
+  action setDateText(t: string)
+    date = t
+  action pickDate(d: string)
+    date = d
+  action shiftMonth(by: number)
+    let next = month + by
+    month = next > 12 ? 1 : next < 1 ? 12 : next
+    year = next > 12 ? year + 1 : next < 1 ? year - 1 : year
+  action setTime(t: string)
+    time = t
+  action sort(k: string)
+    sortDir = sortKey == k and sortDir == "asc" ? "desc" : "asc"
+    sortKey = k
+  action toggleRow(k: string, b: bool)
+    picked = b ? picked.concat([k]) : picked.filter(p => p != k)
+  action toggleAll(b: bool)
+    picked = b ? ["ada", "grace", "alan"] : []
+  action expand(k: string)
+    page = page
+  action go(p: number)
+    page = p
+  view
+    column gap="astryx.space.s4" width=420
+      Typeahead(id="who", label="Person", query=query, options=people(), selected=person, placeholder="Search people", size="md", isDisabled=false, isLabelHidden=false, hasClear=true, hasEntriesOnFocus=false, input=setQuery, pick=setPerson, clear=clearQuery)
+      text person testId="person"
+      Tokenizer(id="tags", label="People", query=tq, options=people(), values=tags, input=setTq, add=addTag, remove=removeTag)
+      text tags.join(",") testId="tags"
+      Selector(id="one", label="Owner", options=people(), value=one, placeholder="Choose", size="md", isDisabled=false, isMultiple=false, values=[], change=setOne)
+      text one testId="one"
+      Selector(id="many", label="Reviewers", options=people(), value="", placeholder="Choose", size="md", isDisabled=false, isMultiple=true, values=many, change=toggleMany)
+      text many.join(",") testId="many"
+      DateInput(id="due", label="Due", value=date, endValue="", isRange=false, year=year, month=month, today="2026-11-10", size="md", isDisabled=false, input=setDateText, pick=pickDate, shift=shiftMonth)
+      text `${date} ${year}-${month}` testId="date"
+      TimeInput(id="at", label="At", value=time, size="md", isDisabled=false, input=setTime)
+      text time testId="time"
+      Table(label="People", columns=cols(), rows=(sortDir == "desc" ? sortBy(tableRows(), r => sortKey == "year" ? r.cells.slice(2, 3).join("") : r.cells.slice(0, 1).join(""), "desc") : sortBy(tableRows(), r => sortKey == "year" ? r.cells.slice(2, 3).join("") : r.cells.slice(0, 1).join(""))), density="balanced", dividers="rows", isStriped=false, hasHover=true, verticalAlign="middle", textOverflow="wrap", sortKey=sortKey, sortDirection=sortDir, hasSelection=true, selected=picked, sort=sort, toggleRow=toggleRow, toggleAll=toggleAll, toggleExpand=expand)
+      text `${sortKey} ${sortDir} ${picked.join(",")}` testId="table-state"
+      Pagination(page=page, pageCount=5, label="Pages", go=go)
+      text page.toString() testId="page-value"

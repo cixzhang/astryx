@@ -79,7 +79,7 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     decl: [
       `shape ${family}Case`, '  caseId: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
-      `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  action noopB(b: bool)', '    presses = presses + 1', '  action noopS(t: string)', '    presses = presses + 1', '  action noopSB(t: string, b: bool)', '    presses = presses + 1', '  action noopN(n: number)', '    presses = presses + 1', '  action noopSO(k: string, before: option<string>)', '    presses = presses + 1', '  view',
+      `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  action noopB(b: bool)', '    presses = presses + 1', '  action noopS(t: string)', '    presses = presses + 1', '  action noopSB(t: string, b: bool)', '    presses = presses + 1', '  action noopN(n: number)', '    presses = presses + 1', '  action noopSB2(t: string, b: bool)', '    presses = presses + 1', '  action noopSO(k: string, before: option<string>)', '    presses = presses + 1', '  view',
       `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.caseId == id) key=c.caseId`,
       ...body.map(l => `      ${l}`),
     ],
@@ -87,7 +87,7 @@ for (const [family, def] of Object.entries(FAMILIES)) {
 }
 
 const uses = [...new Set(families.flatMap(f => f.uses))].sort();
-const LAYERS = new Set(['Popover', 'Collapsible', 'CollapsibleGroup', 'Tooltip', 'InfoTip', 'HoverCard', 'Dialog', 'DropdownMenu', 'ContextMenu', 'BottomSheet', 'MenuItem', 'MenuRows', 'Resizable']);
+const LAYERS = new Set(['Popover', 'Collapsible', 'CollapsibleGroup', 'Tooltip', 'InfoTip', 'HoverCard', 'Dialog', 'DropdownMenu', 'ContextMenu', 'BottomSheet', 'MenuItem', 'MenuRows', 'Resizable', 'Typeahead', 'Tokenizer', 'Selector', 'Calendar', 'DateInput', 'TimeInput']);
 const libUses = uses.filter(u => !LAYERS.has(u));
 const layerUses = uses.filter(u => LAYERS.has(u));
 const out = [
@@ -95,7 +95,7 @@ const out = [
   ...(libUses.length ? [`use ${libUses.join(', ')} from "@astryx-spike/astryx"`] : []),
   ...(layerUses.length ? [`use ${layerUses.join(', ')} from "@astryx-spike/astryx-layers"`] : []),
   'use Swatches, Filler, FixtureBox from "./swatches.contract"',
-  'use ControlsPlayground, CompositesPlayground from "./playground.contract"',
+  'use ControlsPlayground, CompositesPlayground, DataPlayground from "./playground.contract"',
   '',
   'shape CaseRow',
   '  id: string',

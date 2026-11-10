@@ -92,3 +92,52 @@ test "the panel resizes by its handle"
   at "/?case=playground-0002"
   tap "resize-handle" drag 60 0
   expect text "width" == "220"
+
+test "a typeahead filters and picks"
+  size 420x1800
+  at "/?case=playground-0003"
+  type "input-who" "gr"
+  expect tree has "who-option-grace"
+  tap "who-option-grace"
+  expect text "person" == "grace"
+
+test "a tokenizer adds and removes"
+  size 420x1800
+  at "/?case=playground-0003"
+  type "input-tags" "al"
+  tap "tags-option-alan"
+  expect text "tags" == "ada,alan"
+  tap "remove-ada"
+  expect text "tags" == "alan"
+
+test "selectors choose one and many"
+  size 420x1800
+  at "/?case=playground-0003"
+  tap "one-trigger"
+  tap "one-option-ada"
+  expect text "one" == "ada"
+  tap "many-trigger"
+  tap "many-option-grace"
+  expect text "many" == "grace"
+
+test "a date picks from the calendar"
+  size 420x1800
+  at "/?case=playground-0003"
+  tap "open-due"
+  tap "month-next"
+  tap "day-2026-12-24"
+  expect text "date" == "2026-12-24 2026-12"
+
+test "a table sorts, selects and pages"
+  size 420x1800
+  at "/?case=playground-0003"
+  tap "sort-year"
+  expect text "table-state" == "year asc "
+  tap "sort-year"
+  expect text "table-state" == "year desc "
+  tap "select-grace"
+  expect text "table-state" == "year desc grace"
+  tap "select-all"
+  expect text "table-state" == "year desc ada,grace,alan"
+  tap "page-next"
+  expect text "page-value" == "2"
