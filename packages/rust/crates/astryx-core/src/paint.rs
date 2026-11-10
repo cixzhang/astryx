@@ -18,6 +18,12 @@ pub const FOCUS_RING_OFFSET: f32 = 3.0;
 
 /// The interaction state the painter needs.
 pub(crate) struct PaintState {
+    /// Focus came from the keyboard (or a text field has it), so focus
+    /// rings show, as CSS `:focus-visible`.
+    pub focus_visible: bool,
+    /// A tint over the page, drawn just below the modal layer at this node
+    /// index.
+    pub backdrop: Option<(usize, Color)>,
     pub focused: Option<u64>,
     pub pressed: Option<u64>,
     /// The focus stop under a mouse or pen pointer, and the hover overlay.
@@ -43,6 +49,11 @@ pub(crate) struct PaintState {
     /// The band each resting pager shows (top and bottom, from its top
     /// edge), by node index.
     pub page_clips: HashMap<usize, (f32, f32)>,
+    /// Animated opacity by node index, multiplied into the node's own.
+    pub opacities: HashMap<usize, f32>,
+    /// Exit copies, drawn above everything: commands, rect, opacity,
+    /// scale, and translation.
+    pub exits: Vec<(Vec<DrawCmd>, Rect, f32, f32, Point)>,
     /// Page indicators, drawn after content.
     pub page_marks: Vec<DrawCmd>,
 }
@@ -121,8 +132,21 @@ pub(crate) struct Caret {
 #[derive(Clone, Copy, Default)]
 struct Owner {
     focused: bool,
+    focus_visible: bool,
     pressed: bool,
     hovered: bool,
+}
+
+impl Owner {
+    fn is(&self, when: crate::layer::When) -> bool {
+        use crate::layer::When;
+        match when {
+            When::Hovered => self.hovered,
+            When::Pressed => self.pressed,
+            When::Focused => self.focused,
+            When::FocusVisible => self.focus_visible,
+        }
+    }
 }
 
 /// What a node inherits from its ancestors while painting.
@@ -183,6 +207,7 @@ pub(crate) fn paint<Msg>(
     rects: &[Rect],
     state: &PaintState,
     clear: Color,
+    captures: &mut Vec<(usize, usize, usize)>,
 ) -> DisplayList {
     let mut list = DisplayList {
         clear,
@@ -203,8 +228,20 @@ pub(crate) fn paint<Msg>(
             layout,
             rects,
             state,
+            captures: std::cell::RefCell::new(captures),
         };
         paint_node(&scene, 0, ctx, &mut list.commands, &mut overlay);
+    }
+    for (commands, rect, opacity, scale, translate) in &state.exits {
+        list.commands.push(DrawCmd::PushTransform {
+            origin: rect.center(),
+            scale: *scale,
+            translate: *translate,
+        });
+        list.commands.push(DrawCmd::PushOpacity(*opacity));
+        list.commands.extend(commands.iter().cloned());
+        list.commands.push(DrawCmd::PopOpacity);
+        list.commands.push(DrawCmd::PopTransform);
     }
     list.commands.extend(state.page_marks.iter().cloned());
     list.commands.extend(overlay);
@@ -274,6 +311,8 @@ struct Scene<'a, Msg> {
     layout: &'a Layout,
     rects: &'a [Rect],
     state: &'a PaintState,
+    /// Where each node with an exit spec drew: node index and command range.
+    captures: std::cell::RefCell<&'a mut Vec<(usize, usize, usize)>>,
 }
 
 fn paint_node<Msg>(
@@ -316,11 +355,13 @@ fn paint_node<Msg>(
     let owner = match &node.interact {
         Some(i) => Owner {
             focused: state.focused == Some(node.id),
+            focus_visible: state.focused == Some(node.id) && state.focus_visible,
             pressed: state.pressed == Some(node.id) && !i.disabled && !i.busy,
             hovered: state.hovered == Some(node.id),
         },
         None => owner,
     };
+    let capture_start = out.len();
     let transform = state.transforms.get(&ix).copied();
     let transform = match grid {
         Some(cell) => transform.and_then(|t| t.on_grid(cell)),
@@ -329,15 +370,30 @@ fn paint_node<Msg>(
     if let Some(t) = transform {
         out.push(t.push());
     }
-    let faded = node.opacity < 1.0;
+    let opacity = node.opacity * state.opacities.get(&ix).copied().unwrap_or(1.0);
+    let faded = opacity < 1.0;
     if faded {
-        out.push(DrawCmd::PushOpacity(node.opacity));
+        out.push(DrawCmd::PushOpacity(opacity));
     }
     let opens_grid = grid.is_some() && grid != ctx.grid;
     if let (true, Some(cell)) = (opens_grid, grid) {
         out.push(DrawCmd::PushPixelGrid { cell });
     }
-    match (&node.draw, grid) {
+    if let Some((_, color)) = state.backdrop.filter(|&(b, _)| b == ix) {
+        out.push(DrawCmd::Rect {
+            rect: scene.rects[0],
+            radii: Radii::default(),
+            fill: color,
+            stroke: None,
+        });
+    }
+    let draw = node
+        .variants
+        .iter()
+        .rev()
+        .find(|(when, _)| owner.is(*when))
+        .map_or(&node.draw, |(_, d)| d);
+    match (draw, grid) {
         (Draw::Box(b), Some(cell)) => grid_box(out, rect, b, cell),
         (Draw::Box(b), None) => {
             let radii = clamp_radii(rect.width, rect.height, b.radii);
@@ -686,7 +742,7 @@ fn paint_node<Msg>(
         } else {
             ctx.viewport
         },
-        opacity: ctx.opacity * node.opacity,
+        opacity: ctx.opacity * opacity,
         grid: grid.or(ctx.grid),
     };
     for &child in &node.children {
@@ -698,7 +754,7 @@ fn paint_node<Msg>(
     if clip.is_some() {
         out.push(DrawCmd::PopClip);
     }
-    if let (Some(ind), true) = (node.indicator, owner.focused) {
+    if let (Some(ind), true) = (node.indicator, owner.focus_visible) {
         if let Some(ring) = ind.ring {
             if let Some(view) = ctx.viewport {
                 let reach = FOCUS_RING_OFFSET + FOCUS_RING_WIDTH;
@@ -773,6 +829,12 @@ fn paint_node<Msg>(
     }
     if transform.is_some() {
         out.push(DrawCmd::PopTransform);
+    }
+    if node.exit.is_some() {
+        scene
+            .captures
+            .borrow_mut()
+            .push((ix, capture_start, out.len()));
     }
 }
 

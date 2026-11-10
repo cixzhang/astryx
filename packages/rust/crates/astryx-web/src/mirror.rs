@@ -209,7 +209,68 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
             d.tag = "div";
             role = Some("img");
         }
+        // Containers and landmarks: a div with the ARIA role, named by
+        // aria-label.
+        Role::Dialog
+        | Role::AlertDialog
+        | Role::Menu
+        | Role::TabList
+        | Role::TabPanel
+        | Role::Toolbar
+        | Role::Grid
+        | Role::Table
+        | Role::RowGroup
+        | Role::Row
+        | Role::Tree
+        | Role::Navigation
+        | Role::Banner
+        | Role::Main
+        | Role::Complementary
+        | Role::ContentInfo
+        | Role::Region
+        | Role::Search
+        | Role::Form
+        | Role::ScrollBar => {
+            d.tag = "div";
+            role = Some(aria_role(node.role));
+            if let Some(selected) = node.selected {
+                d.attrs.push(("aria-selected", selected.to_string()));
+            }
+        }
+        // Items named by their own text.
+        Role::Link
+        | Role::Tooltip
+        | Role::MenuItem
+        | Role::MenuItemCheckbox
+        | Role::MenuItemRadio
+        | Role::Tab
+        | Role::Cell
+        | Role::GridCell
+        | Role::ColumnHeader
+        | Role::RowHeader
+        | Role::TreeItem
+        | Role::Status
+        | Role::Alert => {
+            d.tag = "div";
+            role = Some(aria_role(node.role));
+            if let Some(selected) = node.selected {
+                d.attrs.push(("aria-selected", selected.to_string()));
+            }
+            if let Some(checked) = node.checked {
+                d.attrs.push(("aria-checked", checked.to_string()));
+            }
+            d.text = join(&node.label, &node.value).filter(|_| leaf);
+            name_from_text = true;
+        }
+        Role::SearchBox | Role::SpinButton | Role::Slider => {
+            d.tag = "div";
+            role = Some(aria_role(node.role));
+            if let Some(value) = &node.value {
+                d.attrs.push(("aria-valuetext", value.clone()));
+            }
+        }
     }
+    add_state(&mut d, &node.state);
     if let Some(role) = role {
         d.attrs.push(("role", role.into()));
     }
@@ -250,6 +311,155 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
     }
     d.attrs.sort_by_key(|(name, _)| *name);
     d
+}
+
+/// The ARIA role name for a role the mirror draws as a plain div.
+fn aria_role(role: Role) -> &'static str {
+    match role {
+        Role::Link => "link",
+        Role::Dialog => "dialog",
+        Role::AlertDialog => "alertdialog",
+        Role::Tooltip => "tooltip",
+        Role::Menu => "menu",
+        Role::MenuItem => "menuitem",
+        Role::MenuItemCheckbox => "menuitemcheckbox",
+        Role::MenuItemRadio => "menuitemradio",
+        Role::TabList => "tablist",
+        Role::Tab => "tab",
+        Role::TabPanel => "tabpanel",
+        Role::Toolbar => "toolbar",
+        Role::Grid => "grid",
+        Role::Table => "table",
+        Role::RowGroup => "rowgroup",
+        Role::Row => "row",
+        Role::Cell => "cell",
+        Role::GridCell => "gridcell",
+        Role::ColumnHeader => "columnheader",
+        Role::RowHeader => "rowheader",
+        Role::Tree => "tree",
+        Role::TreeItem => "treeitem",
+        Role::Navigation => "navigation",
+        Role::Banner => "banner",
+        Role::Main => "main",
+        Role::Complementary => "complementary",
+        Role::ContentInfo => "contentinfo",
+        Role::Region => "region",
+        Role::Search => "search",
+        Role::Form => "form",
+        Role::Status => "status",
+        Role::Alert => "alert",
+        Role::SearchBox => "searchbox",
+        Role::SpinButton => "spinbutton",
+        Role::Slider => "slider",
+        Role::ScrollBar => "scrollbar",
+        _ => "group",
+    }
+}
+
+/// The DOM id the mirror gives the element for accessibility id `id`, so
+/// ARIA relations can name it.
+pub(crate) fn dom_id(id: u64) -> String {
+    format!("ax-{id}")
+}
+
+/// ARIA states and relations of `state` as attributes.
+fn add_state(d: &mut NodeDesc, state: &astryx_core::A11yState) {
+    use astryx_core::{A11yOrientation, Current, HasPopup, Sort};
+    let ids = |v: &[u64]| v.iter().map(|&i| dom_id(i)).collect::<Vec<_>>().join(" ");
+    if let Some(e) = state.expanded {
+        d.attrs.push(("aria-expanded", e.to_string()));
+    }
+    if let Some(p) = state.has_popup {
+        let v = match p {
+            HasPopup::Menu => "menu",
+            HasPopup::ListBox => "listbox",
+            HasPopup::Tree => "tree",
+            HasPopup::Grid => "grid",
+            HasPopup::Dialog => "dialog",
+        };
+        d.attrs.push(("aria-haspopup", v.into()));
+    }
+    if let Some(p) = state.pressed {
+        d.attrs.retain(|(n, _)| *n != "aria-pressed");
+        d.attrs.push(("aria-pressed", p.to_string()));
+    }
+    for (on, name) in [
+        (state.required, "aria-required"),
+        (state.invalid, "aria-invalid"),
+        (state.read_only, "aria-readonly"),
+        (state.multiselectable, "aria-multiselectable"),
+        (state.busy, "aria-busy"),
+        (state.modal, "aria-modal"),
+    ] {
+        if on {
+            d.attrs.push((name, "true".into()));
+        }
+    }
+    if let Some(c) = state.current {
+        let v = match c {
+            Current::True => "true",
+            Current::Page => "page",
+            Current::Step => "step",
+            Current::Location => "location",
+            Current::Date => "date",
+            Current::Time => "time",
+        };
+        d.attrs.push(("aria-current", v.into()));
+    }
+    if let Some(o) = state.orientation {
+        let v = match o {
+            A11yOrientation::Horizontal => "horizontal",
+            A11yOrientation::Vertical => "vertical",
+        };
+        d.attrs.push(("aria-orientation", v.into()));
+    }
+    if let Some(k) = &state.key_shortcuts {
+        d.attrs.push(("aria-keyshortcuts", k.clone()));
+    }
+    if let Some(id) = state.active_descendant {
+        d.attrs.push(("aria-activedescendant", dom_id(id)));
+    }
+    if !state.controls.is_empty() {
+        d.attrs.push(("aria-controls", ids(&state.controls)));
+    }
+    if !state.labelled_by.is_empty() {
+        d.attrs.push(("aria-labelledby", ids(&state.labelled_by)));
+    }
+    if !state.described_by.is_empty() {
+        d.attrs.push(("aria-describedby", ids(&state.described_by)));
+    }
+    if let Some(id) = state.error_message {
+        d.attrs.push(("aria-errormessage", dom_id(id)));
+    }
+    let numbers = [
+        (state.level, "aria-level"),
+        (state.pos_in_set, "aria-posinset"),
+        (state.set_size, "aria-setsize"),
+        (state.row_count, "aria-rowcount"),
+        (state.col_count, "aria-colcount"),
+        (state.row_index, "aria-rowindex"),
+        (state.col_index, "aria-colindex"),
+    ];
+    for (value, name) in numbers {
+        if let Some(n) = value {
+            d.attrs.push((name, n.to_string()));
+        }
+    }
+    if let Some(sort) = state.sort {
+        let v = match sort {
+            Sort::Ascending => "ascending",
+            Sort::Descending => "descending",
+            Sort::Other => "other",
+        };
+        d.attrs.push(("aria-sort", v.into()));
+    }
+    if let Some((min, max, now)) = state.range {
+        d.attrs
+            .retain(|(n, _)| !n.starts_with("aria-value") || *n == "aria-valuetext");
+        d.attrs.push(("aria-valuemin", min.to_string()));
+        d.attrs.push(("aria-valuemax", max.to_string()));
+        d.attrs.push(("aria-valuenow", now.to_string()));
+    }
 }
 
 /// Position style for a node relative to its parent's origin.
@@ -523,6 +733,7 @@ impl Mirror {
                     .expect("create element")
                     .unchecked_into();
                 let _ = el.set_attribute(ID_ATTR, &node.id.to_string());
+                let _ = el.set_attribute("id", &dom_id(node.id));
                 if let Some(old) = self.entries.remove(&node.id) {
                     old.el.remove();
                 }
@@ -587,6 +798,7 @@ mod tests {
             selected: None,
             focusable: false,
             live: None,
+            state: Default::default(),
             id: 7,
             role,
             label: Some("Wi-Fi".into()),
@@ -604,6 +816,43 @@ mod tests {
             .iter()
             .find(|(n, _)| *n == name)
             .map(|(_, v)| v.as_str())
+    }
+
+    #[test]
+    fn grid_rows_carry_count_and_index_and_combobox_relations() {
+        let mut grid = node(Role::Grid);
+        grid.state.row_count = Some(10_000);
+        let d = describe(&grid, None);
+        assert_eq!(attr(&d, "role"), Some("grid"));
+        assert_eq!(attr(&d, "aria-rowcount"), Some("10000"));
+        let mut row = node(Role::Row);
+        row.state.row_index = Some(5001);
+        assert_eq!(attr(&describe(&row, None), "aria-rowindex"), Some("5001"));
+        let mut combo = node(Role::ComboBox);
+        combo.state.expanded = Some(true);
+        combo.state.active_descendant = Some(42);
+        combo.state.controls = vec![9, 10];
+        let d = describe(&combo, Some(true));
+        assert_eq!(attr(&d, "aria-expanded"), Some("true"));
+        assert_eq!(attr(&d, "aria-activedescendant"), Some("ax-42"));
+        assert_eq!(attr(&d, "aria-controls"), Some("ax-9 ax-10"));
+    }
+
+    #[test]
+    fn dialogs_and_menu_items_map_to_their_roles() {
+        let mut dialog = node(Role::Dialog);
+        dialog.state.modal = true;
+        let d = describe(&dialog, None);
+        assert_eq!(
+            (attr(&d, "role"), attr(&d, "aria-modal")),
+            (Some("dialog"), Some("true"))
+        );
+        let mut item = node(Role::MenuItemCheckbox);
+        item.checked = Some(true);
+        let d = describe(&item, Some(false));
+        assert_eq!(attr(&d, "role"), Some("menuitemcheckbox"));
+        assert_eq!(attr(&d, "aria-checked"), Some("true"));
+        assert_eq!(d.text.as_deref(), Some("Wi-Fi"));
     }
 
     #[test]

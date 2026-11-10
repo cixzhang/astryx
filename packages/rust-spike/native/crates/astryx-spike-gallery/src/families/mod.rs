@@ -2,6 +2,9 @@
 
 mod wave1;
 mod wave2;
+mod wave4;
+mod wave5;
+mod wave6;
 
 use crate::props::Props;
 use crate::Msg;
@@ -33,6 +36,56 @@ pub struct Case {
     pub props: Value,
 }
 
+/// The children a case's fixture asks for, as the baseline renders them:
+/// `boxes` is three 40 × 24 muted boxes with 4 point corners, `text` is
+/// the word "Label", and none is no children.
+pub(crate) fn kids(p: &Props) -> Vec<Element<Msg>> {
+    match p.str("$fixture") {
+        Some("boxes") => (0..3).map(|_| fixture_box()).collect(),
+        Some("text") => vec![astryx_spike_ui::Text::new("Label").into()],
+        _ => Vec::new(),
+    }
+}
+
+/// The fixture's text child, when it has one.
+pub(crate) fn kid_text(p: &Props) -> Option<&'static str> {
+    (p.str("$fixture") == Some("text")).then_some("Label")
+}
+
+pub(crate) fn fixture_box() -> Element<Msg> {
+    astryx_core::authoring::element(FixtureBox)
+}
+
+struct FixtureBox;
+
+impl astryx_core::authoring::Build<Msg> for FixtureBox {
+    fn build(self: Box<Self>, cx: &mut astryx_core::authoring::BuildCx<Msg>) {
+        let ground = cx.tokens.color.background_muted.into();
+        cx.leaf(
+            astryx_core::authoring::Node::new(taffy::Style {
+                size: taffy::Size {
+                    width: taffy::Dimension::length(40.0),
+                    height: taffy::Dimension::length(24.0),
+                },
+                flex_shrink: 0.0,
+                ..taffy::Style::default()
+            })
+            .draw(astryx_core::authoring::Draw::Box(
+                astryx_core::authoring::BoxDraw::fill(
+                    ground,
+                    astryx_core::contract::Radii::all(4.0),
+                ),
+            )),
+        );
+    }
+}
+
+/// Lays an inline-level component (Button, Badge, Token …) out as the
+/// browser does in a block: at the start, at its own width.
+pub(crate) fn inline(el: impl Into<Element<Msg>>) -> Element<Msg> {
+    astryx_spike_ui::HStack::new().child(el).into()
+}
+
 pub(crate) fn v(values: &[&str]) -> Vec<Value> {
     values.iter().map(|s| json!(s)).collect()
 }
@@ -41,6 +94,9 @@ pub(crate) fn v(values: &[&str]) -> Vec<Value> {
 pub fn all() -> Vec<Family> {
     let mut out = wave1::families();
     out.extend(wave2::families());
+    out.extend(wave4::families());
+    out.extend(wave5::families());
+    out.extend(wave6::families());
     out
 }
 
@@ -59,17 +115,11 @@ fn prefix(name: &str) -> String {
 /// plus every single-prop sweep.
 pub fn cases(f: &Family) -> Vec<Case> {
     if let Some((_, text)) = QA_CASES.iter().find(|(name, _)| *name == f.name) {
-        if let Ok(Value::Array(items)) = serde_json::from_str::<Value>(text) {
-            return items
-                .into_iter()
-                .filter_map(|item| {
-                    Some(Case {
-                        id: item.get("id")?.as_str()?.to_string(),
-                        family: f.name,
-                        props: item.get("props").cloned().unwrap_or(json!({})),
-                    })
-                })
-                .collect();
+        if let Ok(doc) = serde_json::from_str::<Value>(text) {
+            let qa = qa_cases(f.name, &doc);
+            if !qa.is_empty() {
+                return qa;
+            }
         }
     }
     let base = (f.base)();
@@ -92,12 +142,54 @@ pub fn cases(f: &Family) -> Vec<Case> {
     out
 }
 
+/// Reads a QA case file: `{components: [{component, cases: [{id, props}]}]}`,
+/// or a bare `[{id, props}]` list. Each case's props gain `$component`, the
+/// part the case is for.
+fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
+    let mut out = Vec::new();
+    let mut push = |component: &str, fixture: &Value, items: &Value| {
+        for item in items.as_array().into_iter().flatten() {
+            let Some(id) = item.get("id").and_then(Value::as_str) else {
+                continue;
+            };
+            let mut props = item
+                .get("props")
+                .and_then(Value::as_object)
+                .cloned()
+                .unwrap_or_default();
+            props.insert("$component".into(), json!(component));
+            props.insert("$fixture".into(), fixture.clone());
+            out.push(Case {
+                id: id.to_string(),
+                family,
+                props: Value::Object(props),
+            });
+        }
+    };
+    match doc {
+        Value::Array(_) => push(family, &Value::Null, doc),
+        Value::Object(o) => {
+            for c in o
+                .get("components")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
+                let name = c.get("component").and_then(Value::as_str).unwrap_or(family);
+                let fixture = c.get("fixture").cloned().unwrap_or(Value::Null);
+                if let Some(cases) = c.get("cases") {
+                    push(name, &fixture, cases);
+                }
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
 /// Finds a case by id across every family.
 pub fn find_case(id: &str) -> Option<(Case, Render)> {
     for f in all() {
-        if !id.starts_with(&prefix(f.name)) {
-            continue;
-        }
         if let Some(c) = cases(&f).into_iter().find(|c| c.id == id) {
             return Some((c, f.render));
         }

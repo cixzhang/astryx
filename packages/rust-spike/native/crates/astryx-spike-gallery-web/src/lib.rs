@@ -28,9 +28,28 @@ pub fn start() -> Result<(), JsValue> {
         label: Some("Astryx spike gallery".into()),
         ..Options::default()
     };
-    astryx_web::run_with(
-        "#app",
-        Runtime::new(gallery.with_mode(mode).with_direction(dir)),
-        options,
+    let mut rt = Runtime::new(
+        gallery
+            .with_mode(mode)
+            .with_direction(dir)
+            .with_theme(&params.get("theme").unwrap_or_default()),
     )
+    .hide_focus_until_keyboard();
+    // A case page shows its settled state on the first frame, so captures
+    // do not catch a layer mid-entrance.
+    if params.get("case").is_some() {
+        let window = web_sys::window().expect("window");
+        let w = window
+            .inner_width()
+            .ok()
+            .and_then(|v| v.as_f64())
+            .unwrap_or(1280.0) as u32;
+        let h = window
+            .inner_height()
+            .ok()
+            .and_then(|v| v.as_f64())
+            .unwrap_or(800.0) as u32;
+        astryx_spike_gallery::settle(&mut rt, w, h);
+    }
+    astryx_web::run_with("#app", rt, options)
 }
