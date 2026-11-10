@@ -4,6 +4,7 @@ Measures both stacks against the same Astryx baseline. Nothing here ships.
 
 | Script | What it does |
 | --- | --- |
+| `baseline/` | The Astryx React gallery that every stack is diffed against. |
 | `gen-cases.mjs` | Writes `cases/<Family>.json` from Astryx `{Name}.doc.mjs` files: one case per value of each visual prop (single-prop sweep) plus a pairwise covering set. Ids are stable for a given doc. |
 | `capture.mjs` | Captures one PNG per case, scheme (light, dark) and width (390, 1280) from a web host: the Astryx Storybook baseline, the Exact web host, or our stack's web build. Crops to the rendered component plus 16 px. Records each case's accessibility snapshot. |
 | `capture-desktop.mjs` | The same captures from our stack's Linux gallery binary, under a virtual X display. |
@@ -15,8 +16,13 @@ Measures both stacks against the same Astryx baseline. Nothing here ships.
 
 Each stack's gallery renders exactly one case per page or run.
 
-- Cases come from `cases/<Family>.json`. A case's `props` are the component's props; a
-  component that takes children gets a fixed fixture of three 40 × 24 boxes.
+- Cases come from `cases/<Family>.json`. A case's `props` are the component's props. Each
+  component block has a `fixture`: `"boxes"` means three children, each a 40 × 24 box with
+  a 4 px radius on the theme's muted background; `"text"` means the child text `Label`;
+  `null` means no children. Content props use fixed samples (`label: "Label"`,
+  `name: "Ada Lovelace"`).
+- The baseline is Astryx React itself: `baseline/` renders every case with
+  `@astryxdesign/core` under this contract.
 - Theme: Astryx neutral. The case sits in a box with 16 px padding on the theme's
   surface background (`--color-background-surface`).
 - Web: `?case=<id>&scheme=light|dark&theme=neutral`. The case box has `data-testid="case"`

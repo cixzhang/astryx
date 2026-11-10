@@ -17,7 +17,7 @@ const out = resolve(opt('--out', join(here, 'shots')), host, family); mkdirSync(
 const doc = JSON.parse(readFileSync(join(here, 'cases', `${family}.json`), 'utf8'));
 const run = env => new Promise(res => {
   const t0 = Date.now();
-  const p = spawn('xvfb-run', ['-a', '-s', `-screen 0 ${env.W}x${height}x24`, bin], { env: { ...process.env, ...env.vars } });
+  const p = spawn('xvfb-run', ['-n', String(env.display), '-s', `-screen 0 ${env.W}x${height}x24 -nolisten tcp`, bin], { env: { ...process.env, ...env.vars } });
   let so = '', se = ''; p.stdout.on('data', d => so += d); p.stderr.on('data', d => se += d);
   const kill = setTimeout(() => p.kill('SIGKILL'), 60000);
   p.on('close', code => { clearTimeout(kill); res({ code, ms: Date.now() - t0, so, se }); });
@@ -26,16 +26,33 @@ const jobs = [];
 for (const comp of doc.components) for (const c of comp.cases) for (const scheme of doc.schemes) for (const width of doc.widths) jobs.push({ comp, c, scheme, width });
 const index = { host, family, theme, at: new Date().toISOString(), cases: [] };
 let next = 0;
-await Promise.all(Array.from({ length: jobsN }, async () => { while (next < jobs.length) {
+await Promise.all(Array.from({ length: jobsN }, async (_, worker) => { while (next < jobs.length) {
   const { comp, c, scheme, width } = jobs[next++];
   const file = `${c.id}.${scheme}.${width}.png`, a11y = `${c.id}.${scheme}.${width}.a11y.json`;
-  const r = await run({ W: width, vars: { ASTRYX_CASE: c.id, ASTRYX_SCHEME: scheme, ASTRYX_THEME: theme, ASTRYX_SIZE: `${width}x${height}`, ASTRYX_SHOT: join(out, file), ASTRYX_A11Y: join(out, a11y) } });
+  const r = await run({ display: 200 + worker, W: width, vars: { ASTRYX_CASE: c.id, ASTRYX_SCHEME: scheme, ASTRYX_THEME: theme, ASTRYX_SIZE: `${width}x${height}`, ASTRYX_SHOT: join(out, file), ASTRYX_A11Y: join(out, a11y) } });
   const ff = (r.so.match(/first_frame_ms=([\d.]+)/) ?? [])[1];
   const rec = { id: c.id, component: comp.component, scheme, width, ms: r.ms, firstFrameMs: ff ? Number(ff) : null };
   if (r.code === 0 && existsSync(join(out, file))) { rec.file = file; if (existsSync(join(out, a11y))) rec.a11yFile = a11y; }
   else rec.error = `exit ${r.code}: ${r.se.slice(-200)}`;
   index.cases.push(rec);
 } }));
+// Crop each window shot to the a11y node named "case" (the case box), in headless Chrome.
+const findCase = n => n?.label === 'case' ? n : (n?.children ?? []).map(findCase).find(Boolean);
+const { chromium } = await import(process.env.PLAYWRIGHT_CORE ?? 'playwright-core');
+const browser = await chromium.launch({ executablePath: process.env.CHROME, headless: true }); const page = await browser.newPage();
+for (const r of index.cases.filter(r => r.file && r.a11yFile)) {
+  const tree = JSON.parse(readFileSync(join(out, r.a11yFile), 'utf8')), box = findCase(tree)?.bounds;
+  if (!box) { r.cropError = 'no case node'; continue; }
+  r.box = { x: box[0], y: box[1], width: box[2] - box[0], height: box[3] - box[1] };
+  const b64 = await page.evaluate(async ({ png, b }) => {
+    const img = await createImageBitmap(await (await fetch('data:image/png;base64,' + png)).blob());
+    const c = new OffscreenCanvas(Math.max(1, Math.round(b.width)), Math.max(1, Math.round(b.height)));
+    c.getContext('2d').drawImage(img, Math.round(b.x), Math.round(b.y), c.width, c.height, 0, 0, c.width, c.height);
+    const u = new Uint8Array(await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer()); let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s);
+  }, { png: readFileSync(join(out, r.file)).toString('base64'), b: r.box });
+  writeFileSync(join(out, r.file), Buffer.from(b64, 'base64'));
+}
+await browser.close();
 index.cases.sort((a, b) => a.id.localeCompare(b.id) || a.scheme.localeCompare(b.scheme) || a.width - b.width);
 writeFileSync(join(out, 'index.json'), JSON.stringify(index, null, 1));
 console.log(`${host} ${family}: ${index.cases.filter(r => r.file).length} shots, ${index.cases.filter(r => r.error).length} failed -> ${out}`);

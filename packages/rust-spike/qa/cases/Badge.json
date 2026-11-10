@@ -37,6 +37,7 @@
     "label": "Label"
    },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "badge-0001",

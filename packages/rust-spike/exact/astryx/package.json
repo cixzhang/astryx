@@ -1,0 +1,7 @@
+{
+  "name": "@astryx-spike/astryx",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Astryx components as an Exact Contract library: the spike's port of @astryxdesign/core at 957d934.",
+  "exports": { ".": "./index.contract" }
+}

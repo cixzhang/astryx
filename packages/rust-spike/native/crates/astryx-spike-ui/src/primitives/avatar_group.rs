@@ -24,8 +24,15 @@ pub struct AvatarGroup<Msg> {
     size: AvatarSize,
     shape: AvatarShape,
     label: Option<String>,
-    avatars: Vec<Avatar<Msg>>,
+    avatars: Vec<Member<Msg>>,
     overflow: Option<AvatarGroupOverflow<Msg>>,
+}
+
+/// A member of a group: an Avatar the group sizes and shapes, or any other
+/// element, which only gets the ring and overlap.
+enum Member<Msg> {
+    Avatar(Box<Avatar<Msg>>),
+    Other(Element<Msg>),
 }
 
 impl<Msg> Default for AvatarGroup<Msg> {
@@ -44,7 +51,7 @@ impl<Msg> Default for AvatarGroup<Msg> {
 impl<Msg> AvatarGroup<Msg> {
     pub fn new(avatars: impl IntoIterator<Item = Avatar<Msg>>) -> Self {
         AvatarGroup {
-            avatars: avatars.into_iter().collect(),
+            avatars: avatars.into_iter().map(|a| Member::Avatar(Box::new(a))).collect(),
             ..Self::default()
         }
     }
@@ -59,6 +66,11 @@ impl<Msg> AvatarGroup<Msg> {
     /// The group's accessible name (`aria-label`).
     pub fn aria_label(mut self, label: impl Into<String>) -> Self {
         self.label = Some(label.into());
+        self
+    }
+    /// Any other member, such as an avatar wrapped in a HoverCard.
+    pub fn child(mut self, child: impl Into<Element<Msg>>) -> Self {
+        self.avatars.push(Member::Other(child.into()));
         self
     }
     pub fn overflow(mut self, overflow: AvatarGroupOverflow<Msg>) -> Self {
@@ -156,7 +168,10 @@ impl<Msg: Clone + 'static> Build<Msg> for AvatarGroup<Msg> {
                 })
                 .draw(Draw::Box(BoxDraw::fill(surface, radii(ring_radius)))),
             );
-            let el: Element<Msg> = avatar.size(self.size).shape(self.shape).into();
+            let el: Element<Msg> = match avatar {
+                Member::Avatar(a) => a.size(self.size).shape(self.shape).into(),
+                Member::Other(e) => e,
+            };
             cx.child(el);
             cx.end();
         }

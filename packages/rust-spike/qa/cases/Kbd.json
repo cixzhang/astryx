@@ -18,6 +18,7 @@
     "keys": "keys"
    },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "kbd-0001",

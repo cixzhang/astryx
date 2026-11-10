@@ -1,0 +1,578 @@
+{
+ "astryx": "957d9348bf8808373dcba68b9d32abb69ef12e15",
+ "families": {
+  "AppShell": {
+   "files": 5,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "AspectRatio": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "Avatar": {
+   "files": 5,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "AvatarGroup": {
+   "files": 1,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "Badge": {
+   "files": 2,
+   "groups": [
+    "core",
+    "weakness"
+   ]
+  },
+  "BottomSheet": {
+   "files": 11,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "Button": {
+   "files": 3,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "ButtonGroup": {
+   "files": 3,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Calendar": {
+   "files": 12,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Card": {
+   "files": 2,
+   "groups": [
+    "core",
+    "template"
+   ]
+  },
+  "Center": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "Chat": {
+   "files": 10,
+   "groups": [
+    "weakness"
+   ]
+  },
+  "CheckboxInput": {
+   "files": 3,
+   "groups": [
+    "core",
+    "stretch",
+    "weakness"
+   ]
+  },
+  "CheckboxList": {
+   "files": 4,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "Collapsible": {
+   "files": 5,
+   "groups": [
+    "weakness"
+   ]
+  },
+  "CommandPalette": {
+   "files": 10,
+   "groups": [
+    "template"
+   ]
+  },
+  "ContextMenu": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "DateInput": {
+   "files": 21,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "DateRangeInput": {
+   "files": 2,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "DateTimeInput": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Dialog": {
+   "files": 5,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "Divider": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "DropdownMenu": {
+   "files": 18,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "EmptyState": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Field": {
+   "files": 9,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "FieldStatus": {
+   "files": 3,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "FormLayout": {
+   "files": 1,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Grid": {
+   "files": 3,
+   "groups": [
+    "core"
+   ]
+  },
+  "HStack": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "Heading": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "HoverCard": {
+   "files": 5,
+   "groups": [
+    "weakness"
+   ]
+  },
+  "Icon": {
+   "files": 8,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "IconButton": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Indicator": {
+   "files": 7,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "InfoTip": {
+   "files": 1,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "InputGroup": {
+   "files": 6,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "InteractiveRoleContext": {
+   "files": 1,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Item": {
+   "files": 9,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Kbd": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "Layout": {
+   "files": 17,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Link": {
+   "files": 3,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "List": {
+   "files": 6,
+   "groups": [
+    "core",
+    "stretch",
+    "weakness"
+   ]
+  },
+  "MobileNav": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "MultiSelector": {
+   "files": 3,
+   "groups": [
+    "core"
+   ]
+  },
+  "NumberInput": {
+   "files": 4,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "OverflowList": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Pagination": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "Popover": {
+   "files": 8,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "PowerSearch": {
+   "files": 16,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "RadioList": {
+   "files": 3,
+   "groups": [
+    "stretch"
+   ]
+  },
+  "Resizable": {
+   "files": 6,
+   "groups": [
+    "core",
+    "template"
+   ]
+  },
+  "Section": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "SegmentedControl": {
+   "files": 6,
+   "groups": [
+    "template"
+   ]
+  },
+  "SelectableCard": {
+   "files": 3,
+   "groups": [
+    "template"
+   ]
+  },
+  "Selector": {
+   "files": 11,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "SideNav": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "SizeContext": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Spinner": {
+   "files": 4,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "Stack": {
+   "files": 5,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "Switch": {
+   "files": 6,
+   "groups": [
+    "core"
+   ]
+  },
+  "Table": {
+   "files": 55,
+   "groups": [
+    "core"
+   ]
+  },
+  "Text": {
+   "files": 6,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "TextInput": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "TimeInput": {
+   "files": 5,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Token": {
+   "files": 4,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Tokenizer": {
+   "files": 6,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "Toolbar": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "Tooltip": {
+   "files": 4,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "TopNav": {
+   "files": 2,
+   "groups": [
+    "core"
+   ]
+  },
+  "TreeList": {
+   "files": 5,
+   "groups": [
+    "stretch",
+    "template"
+   ]
+  },
+  "Typeahead": {
+   "files": 8,
+   "groups": [
+    "core",
+    "stretch"
+   ]
+  },
+  "VStack": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template"
+   ]
+  },
+  "VisuallyHidden": {
+   "files": 2,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "infra:Foundations": {
+   "files": 158,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "infra:Gestures": {
+   "files": 68,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "infra:Layers": {
+   "files": 41,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  },
+  "infra:Motion": {
+   "files": 42,
+   "groups": [
+    "core",
+    "stretch",
+    "template",
+    "weakness"
+   ]
+  }
+ }
+}

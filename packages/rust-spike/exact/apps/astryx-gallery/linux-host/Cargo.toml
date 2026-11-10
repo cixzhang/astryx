@@ -1,0 +1,24 @@
+# The gallery on the Linux host, without a TypeScript data module. Exact's generated shell bakes
+# through its TypeScript path, which needs the Hermes compiler; this workspace bakes the plan
+# with a Rust data source that answers nothing, as Exact's own Rust-data apps do.
+# Exact is the checkout linked at ../../../.exact-sdk.
+[workspace]
+members = ["data", "linux"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+license = "MIT"
+
+[patch.crates-io]
+accesskit_windows = { path = "../../../.exact-sdk/vendor/accesskit-windows" }
+taffy = { path = "../../../.exact-sdk/vendor/taffy" }
+parley = { path = "../../../.exact-sdk/vendor/parley" }
+fontique = { path = "../../../.exact-sdk/vendor/fontique" }
+wgpu-hal = { path = "../../../.exact-sdk/vendor/wgpu-hal" }
+
+[profile.host-dev]
+inherits = "dev"
+opt-level = 1
+debug = false

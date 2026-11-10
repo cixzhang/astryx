@@ -1,9 +1,9 @@
 //! Wave 4 families: light overlays, shown open.
 
-use super::{v, Family};
+use super::{inline, kid_text, kids, v, Family};
 use crate::props::Props;
 use crate::Msg;
-use astryx_core::{Element, Space};
+use astryx_core::Element;
 use astryx_spike_ui::*;
 use serde_json::json;
 
@@ -26,98 +26,81 @@ fn align(p: Props, default: OverlayAlign) -> OverlayAlign {
     }
 }
 
-/// Room around the trigger so the open layer stays inside the case box.
-fn stage(child: Element<Msg>) -> Element<Msg> {
-    Center::new()
-        .width(SizeValue::Points(360.0))
-        .height(SizeValue::Points(200.0))
-        .child(child)
-        .into()
+fn trigger(p: &Props) -> Element<Msg> {
+    match kid_text(p) {
+        Some(t) => Text::new(t).into(),
+        None => HStack::new().into(),
+    }
+}
+
+fn open(p: &Props) -> bool {
+    p.get("isOpen").and_then(|v| v.as_bool()).unwrap_or(false)
+        || p.get("isDefaultOpen")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
 }
 
 fn render_tooltip(p: Props) -> Element<Msg> {
-    stage(
-        Tooltip::new(
-            "tip",
-            Button::new("Hover me"),
-            p.str_or("content", "Saves your changes"),
-        )
-        .placement(side(p, OverlaySide::Above))
-        .alignment(align(p, OverlayAlign::Center))
-        .is_enabled(p.get("isEnabled").and_then(|v| v.as_bool()).unwrap_or(true))
-        .is_open(true)
-        .on_open_change(|_| Msg::Noop)
-        .into(),
+    inline(
+        Tooltip::new("tip", trigger(&p), p.str_or("content", "Content"))
+            .placement(side(p, OverlaySide::Above))
+            .alignment(align(p, OverlayAlign::Center))
+            .is_enabled(p.get("isEnabled").and_then(|v| v.as_bool()).unwrap_or(true))
+            .is_open(open(&p))
+            .on_open_change(|_| Msg::Noop),
     )
 }
 
 fn render_info_tip(p: Props) -> Element<Msg> {
     let size = super::wave1::icon_size(p.str_or("size", "sm"));
-    stage(
-        HStack::new()
-            .gap(Space::S1)
-            .v_align(StackAxisAlign::Center)
-            .child(Text::new("Visibility"))
-            .child(
-                InfoTip::new("info", p.str_or("content", "Who can see this project"))
-                    .size(size)
-                    .is_open(p.get("isOpen").and_then(|v| v.as_bool()).unwrap_or(true))
-                    .on_open_change(|_| Msg::Noop),
-            )
-            .into(),
-    )
+    let mut t = InfoTip::new("info", p.str_or("content", "Content"))
+        .size(size)
+        .is_open(open(&p))
+        .on_open_change(|_| Msg::Noop);
+    if let Some(l) = p.str("label") {
+        t = t.label(l);
+    }
+    inline(t)
 }
 
 fn render_hover_card(p: Props) -> Element<Msg> {
-    stage(
+    inline(
         HoverCard::new(
             "card",
-            Link::new("Ada Lovelace").href("#"),
-            VStack::new()
-                .gap(Space::S2)
-                .child(
-                    HStack::new()
-                        .gap(Space::S2)
-                        .v_align(StackAxisAlign::Center)
-                        .child(Avatar::new().name("Ada Lovelace"))
-                        .child(Text::new("Ada Lovelace").r#type(TextType::Label)),
-                )
-                .child(Text::new("Mathematician and writer.").color(TextColor::Secondary)),
+            trigger(&p),
+            Text::new(p.str_or("content", "Content")),
         )
         .placement(side(p, OverlaySide::Above))
         .alignment(align(p, OverlayAlign::Center))
-        .label("Ada Lovelace")
-        .is_open(true)
-        .on_open_change(|_| Msg::Noop)
-        .into(),
+        .is_open(open(&p))
+        .on_open_change(|_| Msg::Noop),
     )
 }
 
 fn render_popover(p: Props) -> Element<Msg> {
     let mut pop = Popover::new(
         "pop",
-        Button::new("Filters"),
-        VStack::new()
-            .gap(Space::S2)
-            .child(Text::new("Filter results").r#type(TextType::Label))
-            .child(Switch::new("Only mine", true).on_change(|_| Msg::Noop)),
+        trigger(&p),
+        Text::new(p.str_or("content", "Content")),
     )
     .placement(side(p, OverlaySide::Below))
     .alignment(align(p, OverlayAlign::Start))
-    .label("Filters")
-    .is_open(p.get("isOpen").and_then(|v| v.as_bool()).unwrap_or(true))
+    .is_open(open(&p))
     .on_open_change(|_| Msg::Noop);
+    if let Some(l) = p.str("label") {
+        pop = pop.label(l);
+    }
     if let Some(s) = p.space("padding") {
         pop = pop.padding(s);
     }
     if let Some(w) = p.num("width") {
         pop = pop.width(PopoverWidth::Points(w as f32));
     }
-    stage(pop.into())
+    inline(pop)
 }
 
 fn render_bottom_sheet(p: Props) -> Element<Msg> {
-    let mut s = BottomSheet::new("Share", true)
+    let mut s = BottomSheet::new(p.str_or("label", "Label"), open(&p))
         .purpose(match p.str_or("purpose", "info") {
             "required" => SheetPurpose::Required,
             "form" => SheetPurpose::Form,
@@ -128,23 +111,21 @@ fn render_bottom_sheet(p: Props) -> Element<Msg> {
             "tall" => SheetHeight::Tall,
             _ => SheetHeight::Capped,
         })
-        .on_open_change(|_| Msg::Noop)
-        .child(Heading::new(2, "Share"))
-        .child(Text::new("Anyone with the link can view.").color(TextColor::Secondary));
+        .on_open_change(|_| Msg::Noop);
+    for k in kids(&p) {
+        s = s.child(k);
+    }
     if let Some(pad) = p.space("padding") {
         s = s.padding(pad);
     }
-    VStack::new()
-        .child(Text::new("Page behind the sheet"))
-        .child(s)
-        .into()
+    s.into()
 }
 
 pub fn families() -> Vec<Family> {
     vec![
         Family {
             name: "Tooltip",
-            base: || json!({}),
+            base: || json!({"isOpen": true, "$fixture": "text"}),
             sweeps: || {
                 vec![
                     ("placement", v(&["above", "below", "start", "end"])),
@@ -155,13 +136,13 @@ pub fn families() -> Vec<Family> {
         },
         Family {
             name: "InfoTip",
-            base: || json!({}),
+            base: || json!({"isOpen": true, "$fixture": "text"}),
             sweeps: || vec![("size", v(&["xsm", "sm", "md", "lg"]))],
             render: render_info_tip,
         },
         Family {
             name: "HoverCard",
-            base: || json!({}),
+            base: || json!({"isOpen": true, "$fixture": "text"}),
             sweeps: || {
                 vec![
                     ("placement", v(&["above", "below", "start", "end"])),
@@ -172,7 +153,7 @@ pub fn families() -> Vec<Family> {
         },
         Family {
             name: "Popover",
-            base: || json!({}),
+            base: || json!({"isOpen": true, "$fixture": "text"}),
             sweeps: || {
                 vec![
                     ("placement", v(&["above", "below", "start", "end"])),
@@ -187,7 +168,7 @@ pub fn families() -> Vec<Family> {
         },
         Family {
             name: "BottomSheet",
-            base: || json!({}),
+            base: || json!({"isOpen": true}),
             sweeps: || {
                 vec![
                     ("purpose", v(&["required", "form", "info"])),

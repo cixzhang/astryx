@@ -1,0 +1,8 @@
+{
+  "11": {
+    "locked closure 688 files / 67 families (lane-reported)": { "exact": "205/720 files (stretch-inclusive denominator), wave 0–1", "ours-web": "pending lane report", "exact-linux": "same as web", "ours-linux": "same as web" }
+  },
+  "10": {
+    "environment": { "exact-linux": "TS data module needs Hermes built for glibc ≥ 2.36 (devserver has 2.34): gallery uses a Rust data source", "exact": "", "ours-web": "", "ours-linux": "" }
+  }
+}

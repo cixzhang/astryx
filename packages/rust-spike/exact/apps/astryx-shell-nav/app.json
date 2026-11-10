@@ -1,0 +1,22 @@
+{
+  "$schema": "../../.exact-sdk/scripts/app.schema.json",
+  "name": "Astryx Shell Nav",
+  "short_name": "Astryx Shell Nav",
+  "id": "com.example.astryx-shell-nav-f73e04",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.example.astryx-shell-nav-f73e04",
+    "name": "Astryx Shell Nav"
+  },
+  "host": {
+    "web": {},
+    "linux": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0",
+      "linux": "0"
+    }
+  }
+}

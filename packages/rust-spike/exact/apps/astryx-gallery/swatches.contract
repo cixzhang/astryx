@@ -1,0 +1,16 @@
+// The Foundations case: Astryx's colour roles, type roles and radii, drawn from tokens.
+use radius from "@astryx-spike/astryx"
+
+component Swatches
+  view
+    column gap="astryx.space.s2"
+      row gap="astryx.space.s2"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.accent"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.surface.card" border-width=1 border-style="solid" border-color="astryx.border"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.error"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.success"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.warning"
+      text "Display" font="astryx.type.display-3"
+      text "Heading" font="astryx.type.heading-2"
+      text "Body text" font="astryx.type.body"
+      text "Supporting" font="astryx.type.supporting" color="astryx.text.secondary"
