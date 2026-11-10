@@ -1,0 +1,485 @@
+{
+ "family": "BottomSheet",
+ "source": "packages/core/src/BottomSheet/BottomSheet.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "BottomSheet",
+   "visualProps": {
+    "isOpen": [
+     false,
+     true
+    ],
+    "purpose": [
+     "required",
+     "form",
+     "info"
+    ],
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "hasScrim": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "isOpen": false,
+    "purpose": "info",
+    "padding": 0,
+    "hasScrim": true
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "bottom-sheet-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "bottom-sheet-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOpen": true
+     }
+    },
+    {
+     "id": "bottom-sheet-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "purpose": "required"
+     }
+    },
+    {
+     "id": "bottom-sheet-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "purpose": "form"
+     }
+    },
+    {
+     "id": "bottom-sheet-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "bottom-sheet-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 1
+     }
+    },
+    {
+     "id": "bottom-sheet-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "bottom-sheet-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 2
+     }
+    },
+    {
+     "id": "bottom-sheet-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 3
+     }
+    },
+    {
+     "id": "bottom-sheet-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 4
+     }
+    },
+    {
+     "id": "bottom-sheet-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 5
+     }
+    },
+    {
+     "id": "bottom-sheet-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 6
+     }
+    },
+    {
+     "id": "bottom-sheet-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 8
+     }
+    },
+    {
+     "id": "bottom-sheet-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "padding": 10
+     }
+    },
+    {
+     "id": "bottom-sheet-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "form",
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "bottom-sheet-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 1,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "required",
+      "padding": 0.5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form"
+     }
+    },
+    {
+     "id": "bottom-sheet-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "bottom-sheet-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 1.5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 2
+     }
+    },
+    {
+     "id": "bottom-sheet-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 3,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 4,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 6,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 8,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "required",
+      "padding": 10,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "required",
+      "padding": 1
+     }
+    },
+    {
+     "id": "bottom-sheet-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 2,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 3
+     }
+    },
+    {
+     "id": "bottom-sheet-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 4
+     }
+    },
+    {
+     "id": "bottom-sheet-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 5
+     }
+    },
+    {
+     "id": "bottom-sheet-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 6
+     }
+    },
+    {
+     "id": "bottom-sheet-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 8
+     }
+    },
+    {
+     "id": "bottom-sheet-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOpen": true,
+      "purpose": "form",
+      "padding": 10
+     }
+    },
+    {
+     "id": "bottom-sheet-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "form",
+      "padding": 1,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "purpose": "form",
+      "padding": 1.5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 0.5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 2,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 3,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0043",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 4,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0044",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 5,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0045",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 6,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0046",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 8,
+      "hasScrim": false
+     }
+    },
+    {
+     "id": "bottom-sheet-0047",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "padding": 10,
+      "hasScrim": false
+     }
+    }
+   ]
+  }
+ ]
+}

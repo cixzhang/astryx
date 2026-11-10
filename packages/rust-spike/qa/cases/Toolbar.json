@@ -1,0 +1,427 @@
+{
+ "family": "Toolbar",
+ "source": "packages/core/src/Toolbar/Toolbar.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Toolbar",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "gap": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "orientation": [
+     "horizontal",
+     "vertical"
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "gap": 1,
+    "orientation": "horizontal"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "toolbar-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "toolbar-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "toolbar-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "toolbar-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 0
+     }
+    },
+    {
+     "id": "toolbar-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 0.5
+     }
+    },
+    {
+     "id": "toolbar-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 1.5
+     }
+    },
+    {
+     "id": "toolbar-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 2
+     }
+    },
+    {
+     "id": "toolbar-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 3
+     }
+    },
+    {
+     "id": "toolbar-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 4
+     }
+    },
+    {
+     "id": "toolbar-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 5
+     }
+    },
+    {
+     "id": "toolbar-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 6
+     }
+    },
+    {
+     "id": "toolbar-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 8
+     }
+    },
+    {
+     "id": "toolbar-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "gap": 10
+     }
+    },
+    {
+     "id": "toolbar-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 0
+     }
+    },
+    {
+     "id": "toolbar-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 0.5,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 1.5
+     }
+    },
+    {
+     "id": "toolbar-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 2
+     }
+    },
+    {
+     "id": "toolbar-0019",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 3
+     }
+    },
+    {
+     "id": "toolbar-0020",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 4
+     }
+    },
+    {
+     "id": "toolbar-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 5
+     }
+    },
+    {
+     "id": "toolbar-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 6
+     }
+    },
+    {
+     "id": "toolbar-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 8
+     }
+    },
+    {
+     "id": "toolbar-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "gap": 10
+     }
+    },
+    {
+     "id": "toolbar-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 0,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 1.5,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 2,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 3,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 4,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 5,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 6,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 8,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "gap": 10,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 0
+     }
+    },
+    {
+     "id": "toolbar-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 0.5,
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "toolbar-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 1.5
+     }
+    },
+    {
+     "id": "toolbar-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 2
+     }
+    },
+    {
+     "id": "toolbar-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 3
+     }
+    },
+    {
+     "id": "toolbar-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 4
+     }
+    },
+    {
+     "id": "toolbar-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 5
+     }
+    },
+    {
+     "id": "toolbar-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 6
+     }
+    },
+    {
+     "id": "toolbar-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 8
+     }
+    },
+    {
+     "id": "toolbar-0043",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "lg",
+      "gap": 10
+     }
+    }
+   ]
+  }
+ ]
+}

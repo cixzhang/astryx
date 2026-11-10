@@ -22,14 +22,16 @@ const run = env => new Promise(res => {
   const kill = setTimeout(() => p.kill('SIGKILL'), 60000);
   p.on('close', code => { clearTimeout(kill); res({ code, ms: Date.now() - t0, so, se }); });
 });
-const jobs = [];
+const jobs = []; let seq = 0;
 for (const comp of doc.components) for (const c of comp.cases) for (const scheme of doc.schemes) for (const width of doc.widths) jobs.push({ comp, c, scheme, width });
 const index = { host, family, theme, at: new Date().toISOString(), cases: [] };
 let next = 0;
 await Promise.all(Array.from({ length: jobsN }, async (_, worker) => { while (next < jobs.length) {
   const { comp, c, scheme, width } = jobs[next++];
   const file = `${c.id}.${scheme}.${width}.png`, a11y = `${c.id}.${scheme}.${width}.a11y.json`;
-  const r = await run({ display: 200 + worker, W: width, vars: { ASTRYX_CASE: c.id, ASTRYX_SCHEME: scheme, ASTRYX_THEME: theme, ASTRYX_SIZE: `${width}x${height}`, ASTRYX_SHOT: join(out, file), ASTRYX_A11Y: join(out, a11y) } });
+  let disp = 400 + ((seq++ * 37) % 1000);
+  let r = await run({ display: disp, W: width, vars: { ASTRYX_CASE: c.id, ASTRYX_SCHEME: scheme, ASTRYX_THEME: theme, ASTRYX_SIZE: `${width}x${height}`, ASTRYX_SHOT: join(out, file), ASTRYX_A11Y: join(out, a11y) } });
+  if (r.code !== 0) { disp = 400 + ((seq++ * 37) % 1000); r = await run({ display: disp, W: width, vars: { ASTRYX_CASE: c.id, ASTRYX_SCHEME: scheme, ASTRYX_THEME: theme, ASTRYX_SIZE: `${width}x${height}`, ASTRYX_SHOT: join(out, file), ASTRYX_A11Y: join(out, a11y) } }); }
   const ff = (r.so.match(/first_frame_ms=([\d.]+)/) ?? [])[1];
   const rec = { id: c.id, component: comp.component, scheme, width, ms: r.ms, firstFrameMs: ff ? Number(ff) : null };
   if (r.code === 0 && existsSync(join(out, file))) { rec.file = file; if (existsSync(join(out, a11y))) rec.a11yFile = a11y; }

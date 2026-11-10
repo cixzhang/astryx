@@ -1,0 +1,266 @@
+{
+ "family": "Resizable",
+ "source": "packages/core/src/Resizable/Resizable.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Resizable",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "resizable-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "useResizable",
+   "visualProps": {
+    "collapsible": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "collapsible": false
+   },
+   "base": {},
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "use-resizable-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "use-resizable-0002",
+     "kind": "sweep",
+     "props": {
+      "collapsible": true
+     }
+    }
+   ]
+  },
+  {
+   "component": "ResizeHandle",
+   "visualProps": {
+    "direction": [
+     "horizontal",
+     "vertical"
+    ],
+    "isReversed": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "hasDivider": [
+     false,
+     true
+    ],
+    "isAlwaysVisible": [
+     false,
+     true
+    ],
+    "pillPlacement": [
+     "start",
+     "end",
+     "center",
+     "auto"
+    ]
+   },
+   "defaults": {
+    "direction": "horizontal",
+    "isReversed": false,
+    "isDisabled": false,
+    "hasDivider": false,
+    "isAlwaysVisible": true,
+    "pillPlacement": "auto"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "boxes",
+   "cases": [
+    {
+     "id": "resize-handle-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "resize-handle-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "direction": "vertical"
+     }
+    },
+    {
+     "id": "resize-handle-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReversed": true
+     }
+    },
+    {
+     "id": "resize-handle-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "resize-handle-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasDivider": true
+     }
+    },
+    {
+     "id": "resize-handle-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isAlwaysVisible": false
+     }
+    },
+    {
+     "id": "resize-handle-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "pillPlacement": "start"
+     }
+    },
+    {
+     "id": "resize-handle-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "pillPlacement": "end"
+     }
+    },
+    {
+     "id": "resize-handle-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "pillPlacement": "center"
+     }
+    },
+    {
+     "id": "resize-handle-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isAlwaysVisible": false,
+      "pillPlacement": "start"
+     }
+    },
+    {
+     "id": "resize-handle-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isReversed": true,
+      "isDisabled": true,
+      "hasDivider": true,
+      "pillPlacement": "end"
+     }
+    },
+    {
+     "id": "resize-handle-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "direction": "vertical",
+      "isDisabled": true,
+      "pillPlacement": "center"
+     }
+    },
+    {
+     "id": "resize-handle-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "direction": "vertical",
+      "isReversed": true,
+      "hasDivider": true,
+      "isAlwaysVisible": false
+     }
+    },
+    {
+     "id": "resize-handle-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isReversed": true,
+      "isAlwaysVisible": false,
+      "pillPlacement": "center"
+     }
+    },
+    {
+     "id": "resize-handle-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isAlwaysVisible": false
+     }
+    },
+    {
+     "id": "resize-handle-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "direction": "vertical",
+      "isReversed": true,
+      "isDisabled": true,
+      "hasDivider": true,
+      "pillPlacement": "start"
+     }
+    },
+    {
+     "id": "resize-handle-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "direction": "vertical",
+      "isAlwaysVisible": false,
+      "pillPlacement": "end"
+     }
+    },
+    {
+     "id": "resize-handle-0018",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasDivider": true,
+      "pillPlacement": "center"
+     }
+    }
+   ]
+  }
+ ]
+}

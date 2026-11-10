@@ -1,0 +1,1663 @@
+{
+ "family": "DateTimeInput",
+ "source": "packages/core/src/DateTimeInput/DateTimeInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "DateTimeInput",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "hasSeconds": [
+     false,
+     true
+    ],
+    "hourFormat": [
+     "12h",
+     "24h"
+    ],
+    "timeIncrement": [
+     1,
+     5,
+     10,
+     15,
+     30
+    ],
+    "timeOptionInterval": [
+     5,
+     10,
+     15,
+     30,
+     60
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "calendar": [
+     "gregory",
+     "iso8601",
+     "buddhist",
+     "roc",
+     "japanese",
+     "persian",
+     "indian",
+     "hebrew",
+     "chinese",
+     "dangi",
+     "coptic",
+     "ethiopic",
+     "ethioaa",
+     "islamic-civil",
+     "islamic-tbla",
+     "islamic-umalqura"
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "numberOfMonths": [
+     1,
+     2
+    ],
+    "presentation": [
+     "popover",
+     "bottom-sheet",
+     "native",
+     "adaptive-bottom-sheet",
+     "adaptive-native"
+    ],
+    "nativePicker": [
+     "touch",
+     "always",
+     "never"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isLoading": false,
+    "hasSeconds": false,
+    "hourFormat": null,
+    "timeIncrement": 1,
+    "timeOptionInterval": 5,
+    "hasClear": false,
+    "calendar": null,
+    "size": "md",
+    "numberOfMonths": 1,
+    "presentation": "adaptive-native",
+    "nativePicker": "touch"
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "date-time-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "date-time-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "date-time-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "date-time-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "date-time-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "date-time-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "date-time-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasSeconds": true
+     }
+    },
+    {
+     "id": "date-time-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h"
+     }
+    },
+    {
+     "id": "date-time-input-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hourFormat": "24h"
+     }
+    },
+    {
+     "id": "date-time-input-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeIncrement": 5
+     }
+    },
+    {
+     "id": "date-time-input-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeIncrement": 10
+     }
+    },
+    {
+     "id": "date-time-input-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeIncrement": 15
+     }
+    },
+    {
+     "id": "date-time-input-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeIncrement": 30
+     }
+    },
+    {
+     "id": "date-time-input-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeOptionInterval": 10
+     }
+    },
+    {
+     "id": "date-time-input-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeOptionInterval": 15
+     }
+    },
+    {
+     "id": "date-time-input-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeOptionInterval": 30
+     }
+    },
+    {
+     "id": "date-time-input-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "timeOptionInterval": 60
+     }
+    },
+    {
+     "id": "date-time-input-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "date-time-input-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-time-input-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-time-input-0021",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-time-input-0022",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-time-input-0023",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-time-input-0024",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-time-input-0025",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-time-input-0026",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-time-input-0027",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-time-input-0028",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-time-input-0029",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-time-input-0030",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-time-input-0031",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-time-input-0032",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-time-input-0033",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-time-input-0034",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-time-input-0035",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0036",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "date-time-input-0037",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "numberOfMonths": 2
+     }
+    },
+    {
+     "id": "date-time-input-0038",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0039",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0040",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0041",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0042",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0043",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0044",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "calendar": "gregory",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0045",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "hasClear": true,
+      "calendar": "iso8601",
+      "numberOfMonths": 2,
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0046",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "hourFormat": "24h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 15,
+      "calendar": "buddhist",
+      "size": "lg",
+      "numberOfMonths": 2,
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0047",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isDisabled": true,
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "hasClear": true,
+      "calendar": "roc",
+      "size": "lg",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0048",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 60,
+      "calendar": "japanese",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0049",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 10,
+      "hasClear": true,
+      "calendar": "persian",
+      "size": "sm",
+      "numberOfMonths": 2
+     }
+    },
+    {
+     "id": "date-time-input-0050",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "indian",
+      "size": "sm",
+      "numberOfMonths": 2,
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0051",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "24h",
+      "hasClear": true,
+      "calendar": "hebrew",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0052",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 15,
+      "calendar": "chinese",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0053",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 30,
+      "calendar": "dangi",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0054",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "timeOptionInterval": 15,
+      "hasClear": true,
+      "calendar": "coptic",
+      "numberOfMonths": 2,
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0055",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLoading": true,
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 30,
+      "hasClear": true,
+      "calendar": "ethiopic",
+      "numberOfMonths": 2,
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0056",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "timeOptionInterval": 10,
+      "calendar": "ethioaa",
+      "size": "lg",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0057",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "hourFormat": "12h",
+      "timeOptionInterval": 60,
+      "hasClear": true,
+      "calendar": "islamic-civil",
+      "size": "lg",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0058",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "hasClear": true,
+      "calendar": "buddhist",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "date-time-input-0059",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "isLoading": true,
+      "hourFormat": "24h",
+      "timeIncrement": 15,
+      "calendar": "roc",
+      "numberOfMonths": 2,
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0060",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasSeconds": true,
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 30,
+      "calendar": "hebrew",
+      "size": "lg",
+      "numberOfMonths": 2,
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0061",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 10,
+      "hasClear": true,
+      "calendar": "chinese",
+      "size": "sm",
+      "numberOfMonths": 2,
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0062",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "12h",
+      "hasClear": true,
+      "calendar": "dangi",
+      "numberOfMonths": 2,
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0063",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "hasClear": true,
+      "calendar": "ethioaa",
+      "size": "sm",
+      "numberOfMonths": 2,
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0064",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "calendar": "islamic-civil",
+      "size": "sm",
+      "numberOfMonths": 2,
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0065",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeOptionInterval": 30,
+      "calendar": "islamic-tbla",
+      "size": "sm",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0066",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "calendar": "islamic-umalqura",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0067",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 60,
+      "hasClear": true,
+      "calendar": "gregory",
+      "numberOfMonths": 2
+     }
+    },
+    {
+     "id": "date-time-input-0068",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hourFormat": "12h",
+      "calendar": "iso8601",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0069",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hourFormat": "12h",
+      "hasClear": true,
+      "calendar": "japanese",
+      "size": "sm",
+      "numberOfMonths": 2,
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0070",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "calendar": "persian",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0071",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "hasClear": true,
+      "calendar": "indian",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0072",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "calendar": "coptic",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0073",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "calendar": "ethiopic",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0074",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "hasClear": true,
+      "calendar": "islamic-tbla",
+      "numberOfMonths": 2,
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0075",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasSeconds": true,
+      "hourFormat": "24h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "hasClear": true,
+      "calendar": "islamic-umalqura",
+      "numberOfMonths": 2,
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0076",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 10,
+      "calendar": "gregory",
+      "size": "lg",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0077",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "gregory",
+      "size": "sm",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0078",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 60,
+      "calendar": "iso8601",
+      "size": "lg",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0079",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "hasClear": true,
+      "calendar": "gregory",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0080",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 10,
+      "calendar": "buddhist",
+      "size": "sm",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0081",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 15,
+      "calendar": "iso8601",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "date-time-input-0082",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeOptionInterval": 10,
+      "calendar": "roc",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0083",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeOptionInterval": 10,
+      "calendar": "chinese",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0084",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 30,
+      "calendar": "buddhist",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0085",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 15,
+      "calendar": "roc",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0086",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "calendar": "japanese",
+      "size": "lg",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0087",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 15,
+      "calendar": "persian",
+      "size": "lg",
+      "presentation": "adaptive-bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0088",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "calendar": "indian",
+      "size": "lg",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0089",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "calendar": "dangi",
+      "size": "lg",
+      "presentation": "popover",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0090",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 5,
+      "timeOptionInterval": 10,
+      "calendar": "ethiopic",
+      "size": "lg",
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0091",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 30,
+      "calendar": "iso8601",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0092",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 60,
+      "calendar": "roc",
+      "size": "sm",
+      "presentation": "popover"
+     }
+    },
+    {
+     "id": "date-time-input-0093",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 30,
+      "calendar": "persian",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0094",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 15,
+      "calendar": "indian",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0095",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 10,
+      "calendar": "hebrew",
+      "size": "sm",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0096",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 15,
+      "calendar": "dangi",
+      "size": "sm",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0097",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 10,
+      "calendar": "coptic",
+      "size": "lg",
+      "presentation": "popover",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0098",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 15,
+      "calendar": "ethioaa",
+      "presentation": "bottom-sheet",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0099",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 10,
+      "calendar": "islamic-civil",
+      "presentation": "native",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0100",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 10,
+      "calendar": "islamic-tbla",
+      "size": "lg",
+      "presentation": "native",
+      "nativePicker": "never"
+     }
+    },
+    {
+     "id": "date-time-input-0101",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 10,
+      "timeOptionInterval": 15,
+      "calendar": "islamic-umalqura",
+      "size": "lg",
+      "presentation": "bottom-sheet",
+      "nativePicker": "always"
+     }
+    },
+    {
+     "id": "date-time-input-0102",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 60,
+      "calendar": "buddhist",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0103",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "japanese",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0104",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "calendar": "indian",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0105",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "hebrew",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0106",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "calendar": "chinese",
+      "size": "lg",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0107",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 60,
+      "calendar": "dangi",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0108",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "calendar": "coptic",
+      "size": "sm",
+      "presentation": "bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0109",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "ethiopic",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0110",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "calendar": "ethioaa",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0111",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "islamic-civil",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0112",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 15,
+      "calendar": "islamic-tbla",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0113",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 15,
+      "timeOptionInterval": 30,
+      "calendar": "islamic-umalqura",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0114",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "calendar": "roc",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0115",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 30,
+      "calendar": "japanese",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0116",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "persian",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0117",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "hebrew",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0118",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "chinese",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0119",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "coptic",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0120",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "ethiopic",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0121",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "ethioaa",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0122",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 30,
+      "calendar": "islamic-civil",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0123",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "islamic-tbla",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0124",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeIncrement": 30,
+      "timeOptionInterval": 60,
+      "calendar": "islamic-umalqura",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0125",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "timeOptionInterval": 30,
+      "calendar": "gregory",
+      "size": "sm",
+      "presentation": "native"
+     }
+    },
+    {
+     "id": "date-time-input-0126",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "calendar": "buddhist",
+      "size": "sm",
+      "presentation": "adaptive-bottom-sheet"
+     }
+    },
+    {
+     "id": "date-time-input-0127",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "calendar": "roc",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-time-input-0128",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hourFormat": "12h",
+      "calendar": "chinese",
+      "size": "sm"
+     }
+    }
+   ]
+  }
+ ]
+}

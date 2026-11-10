@@ -125,8 +125,26 @@ pub fn glyph(name: &str) -> Option<(&'static [PathCmd], bool, f32)> {
         "plus" => Some((PLUS, false, 1.5)),
         "minus" => Some((MINUS, false, 1.5)),
         "grip" => Some((GRIP, true, 0.0)),
-        _ => icon_path(name),
+        _ => icon_path(name).or_else(|| heroicon_commands(name).map(|c| (c, false, 1.5))),
     }
+}
+
+/// A Heroicons glyph's commands, parsed once and kept for the program's
+/// life (a few dozen small paths).
+fn heroicon_commands(name: &str) -> Option<&'static [PathCmd]> {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    thread_local! {
+        static CACHE: RefCell<HashMap<String, &'static [PathCmd]>> = RefCell::new(HashMap::new());
+    }
+    if let Some(c) = CACHE.with(|c| c.borrow().get(name).copied()) {
+        return Some(c);
+    }
+    let d = super::heroicons::heroicon(name)?;
+    let cmds: &'static [PathCmd] =
+        Box::leak(super::svg_path::parse_svg_path(d)?.into_boxed_slice());
+    CACHE.with(|c| c.borrow_mut().insert(name.to_string(), cmds));
+    Some(cmds)
 }
 
 /// An icon node of `side` points in `color`, or `None` for an unknown name.

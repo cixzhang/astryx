@@ -17,8 +17,8 @@ pub(crate) use section::{card_ground, elevation_layers};
 pub use section::{Card, CardVariant, Section, SectionDivider, SectionVariant};
 pub(crate) use stack::{size_auto, size_dim};
 pub use stack::{
-    HStack, SizeValue, Sizing, Stack, StackAlign, StackAxisAlign, StackDirection, StackJustify,
-    StackWrap, VStack,
+    HStack, SizeValue, Sizing, Stack, StackAlign, StackAxisAlign, StackDirection, StackItem,
+    StackItemSize, StackJustify, StackWrap, VStack,
 };
 
 use crate::util::len;

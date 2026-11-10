@@ -441,3 +441,110 @@ macro_rules! fixed_stack {
 
 fixed_stack!(HStack, StackDirection::Horizontal);
 fixed_stack!(VStack, StackDirection::Vertical);
+
+/// StackItem `size`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum StackItemSize {
+    /// Its own size; does not grow or shrink.
+    #[default]
+    Static,
+    /// Grows into the space the other items leave, shared evenly among fill
+    /// items.
+    Fill,
+}
+
+/// One item of a stack with its own flex rules (`StackItem`): static or
+/// fill, its own cross-axis alignment, and an optional scroll.
+pub struct StackItem<Msg> {
+    base: Base,
+    size: StackItemSize,
+    is_scrollable: bool,
+    cross_align_self: Option<StackAxisAlign>,
+    children: Vec<Element<Msg>>,
+}
+
+impl<Msg> StackItem<Msg> {
+    pub fn new() -> Self {
+        StackItem {
+            base: Base::default(),
+            size: StackItemSize::Static,
+            is_scrollable: false,
+            cross_align_self: None,
+            children: Vec::new(),
+        }
+    }
+    /// A fill item around `child`.
+    pub fn fill(child: impl Into<Element<Msg>>) -> Self {
+        Self::new().size(StackItemSize::Fill).child(child)
+    }
+    pub fn size(mut self, s: StackItemSize) -> Self {
+        self.size = s;
+        self
+    }
+    pub fn is_scrollable(mut self, on: bool) -> Self {
+        self.is_scrollable = on;
+        self
+    }
+    pub fn cross_align_self(mut self, a: StackAxisAlign) -> Self {
+        self.cross_align_self = Some(a);
+        self
+    }
+    pub fn child(mut self, c: impl Into<Element<Msg>>) -> Self {
+        self.children.push(c.into());
+        self
+    }
+    pub fn children<E: Into<Element<Msg>>>(mut self, cs: impl IntoIterator<Item = E>) -> Self {
+        self.children.extend(cs.into_iter().map(Into::into));
+        self
+    }
+}
+
+impl<Msg> Default for StackItem<Msg> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+component!(StackItem<Msg>);
+
+impl<Msg: Clone + 'static> Build<Msg> for StackItem<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        if self.base.is_hidden {
+            return;
+        }
+        let fill = self.size == StackItemSize::Fill;
+        let mut node = Node::new(Style {
+            flex_direction: FlexDirection::Column,
+            flex_grow: if fill { 1.0 } else { 0.0 },
+            flex_shrink: if fill { 1.0 } else { 0.0 },
+            min_size: taffy::Size {
+                width: taffy::LengthPercentageAuto::length(0.0),
+                height: taffy::LengthPercentageAuto::length(0.0),
+            },
+            align_self: self.cross_align_self.map(|a| match a {
+                StackAxisAlign::Start => AlignItems::FLEX_START,
+                StackAxisAlign::Center => AlignItems::CENTER,
+                StackAxisAlign::End => AlignItems::FLEX_END,
+                _ => AlignItems::STRETCH,
+            }),
+            overflow: if self.is_scrollable {
+                taffy::Point {
+                    x: taffy::Overflow::Scroll,
+                    y: taffy::Overflow::Scroll,
+                }
+            } else {
+                taffy::Point::default()
+            },
+            ..Style::default()
+        });
+        if self.is_scrollable {
+            node.scroll = Some(astryx_core::authoring::Axis::Vertical);
+        }
+        cx.key(self.base.id.as_deref());
+        cx.begin(node);
+        for c in self.children {
+            cx.child(c);
+        }
+        cx.end();
+    }
+}

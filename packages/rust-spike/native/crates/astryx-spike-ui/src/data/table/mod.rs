@@ -322,9 +322,14 @@ pub trait TablePlugin<T, Msg> {
     ) {
     }
     /// Rows to draw when only a window shows (virtualization): the range
-    /// and the space above and below it.
-    fn window(&self, _row_count: usize) -> Option<RowWindow> {
+    /// and the space above and below it, for the body's scroll offset and
+    /// height.
+    fn window(&self, _row_count: usize, _scroll_top: f32, _viewport: f32) -> Option<RowWindow> {
         None
+    }
+    /// Whether the table draws only a window of rows.
+    fn windows(&self) -> bool {
+        false
     }
     /// Content under the table (a pager).
     fn footer(&self, _total_rows: usize, _env: &TableEnv<T>) -> Option<Element<Msg>> {
@@ -642,7 +647,17 @@ impl<T: 'static, Msg: Clone + 'static> Build<Msg> for Table<T, Msg> {
         }
         cx.end();
         // Body.
-        let window = self.plugins.iter().find_map(|p| p.window(rows.len()));
+        // The body scrolls under the header; a windowing plugin draws only
+        // the rows in view, rebuilt as the body scrolls.
+        let windows = self.plugins.iter().any(|p| p.windows());
+        cx.key(Some("body"));
+        let body_id = cx.next_id();
+        let scroll_top = cx.scroll_offset(body_id);
+        let viewport = self.max_height.unwrap_or(400.0);
+        let window = self
+            .plugins
+            .iter()
+            .find_map(|p| p.window(rows.len(), scroll_top, viewport));
         let (start, end) = window.map_or((0, rows.len()), |w| (w.start, w.end.min(rows.len())));
         let mut body = Node::new(Style {
             flex_direction: FlexDirection::Column,
@@ -662,6 +677,7 @@ impl<T: 'static, Msg: Clone + 'static> Build<Msg> for Table<T, Msg> {
             },
             ..Style::default()
         });
+        body.rebuild_on_scroll = windows;
         if self.max_height.is_some() {
             body.scroll = Some(astryx_core::authoring::Axis::Vertical);
         }

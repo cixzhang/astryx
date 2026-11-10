@@ -228,3 +228,44 @@ fn grouped_rows_and_virtual_window() {
     assert_eq!(w.before, 98.0 * 40.0);
     assert_eq!(w.after, (1000 - 113) as f32 * 40.0);
 }
+
+#[test]
+fn virtualized_table_draws_only_rows_in_view_and_follows_scroll() {
+    #[derive(Clone)]
+    struct R(u32);
+    let mut rig = Rig::<Msg>::sized(
+        || {
+            let data: Rc<Vec<R>> = Rc::new((0..10_000).map(R).collect());
+            Table::new(
+                data,
+                vec![TableColumn::new("n", "Number")
+                    .value(|r: &R| r.0)
+                    .is_row_header(true)],
+                |r| r.0.to_string(),
+            )
+            .plugin(RowsVirtualization {
+                row_height: 37.0,
+                overscan: 2,
+            })
+            .max_height(370.0)
+            .into()
+        },
+        800,
+        600,
+    );
+    let shown = |rig: &Rig<Msg>| row_names(rig);
+    let first = shown(&rig);
+    assert!(first.len() < 20, "{} rows drawn", first.len());
+    assert_eq!(first[0], "0");
+    use astryx_core::contract::Surface;
+    rig.rt.scroll(
+        astryx_core::Point { x: 100.0, y: 200.0 },
+        astryx_core::Point { x: 0.0, y: 3700.0 },
+    );
+    rig.redraw();
+    rig.redraw();
+    let later = shown(&rig);
+    assert!(later.len() < 20);
+    let top: u32 = later[0].parse().unwrap();
+    assert!((95..=100).contains(&top), "top row {top}");
+}

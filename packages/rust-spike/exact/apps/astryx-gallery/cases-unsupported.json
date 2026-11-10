@@ -1,0 +1,78 @@
+{
+ "Text": [
+  "as",
+  "display",
+  "hasCapsize"
+ ],
+ "Heading": [
+  "display",
+  "hasCapsize"
+ ],
+ "Link": [
+  "display"
+ ],
+ "AvatarGroup": [
+  "shape"
+ ],
+ "Center": [
+  "isInline"
+ ],
+ "Token": [
+  "isLabelHidden"
+ ],
+ "Popover": [
+  "hasAutoFocus",
+  "hasEscapeDismiss",
+  "isEnabled",
+  "isModal",
+  "isOpen",
+  "presentation"
+ ],
+ "Tooltip": [
+  "isDefaultOpen",
+  "isOpen",
+  "touchTrigger"
+ ],
+ "Button": [
+  "isInterruptible",
+  "name"
+ ],
+ "IconButton": [
+  "elevation",
+  "isInterruptible",
+  "isLoading",
+  "name"
+ ],
+ "ButtonGroup": [
+  "isDisabled",
+  "size"
+ ],
+ "TextInput": [
+  "hasAutoCorrect",
+  "hasSpellCheck"
+ ],
+ "CheckboxInput": [
+  "isLabelHidden",
+  "isLoading",
+  "isOptional",
+  "isReadOnly",
+  "isRequired",
+  "size"
+ ],
+ "RadioList": [
+  "isLabelHidden",
+  "isOptional",
+  "isRequired",
+  "onChange",
+  "orientation",
+  "size"
+ ],
+ "CheckboxList": [
+  "density",
+  "hasDividers",
+  "isLabelHidden",
+  "isOptional",
+  "isReadOnly",
+  "isRequired"
+ ]
+}

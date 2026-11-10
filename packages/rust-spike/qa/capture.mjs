@@ -69,7 +69,7 @@ for (const comp of doc.components) {
   }
 }
 const ctxs = {};
-const shoot = job => Promise.race([shootOnce(job), new Promise(res => setTimeout(() => { index.cases.push({ id: job.c.id, component: job.comp.component, scheme: job.scheme, width: job.width, error: 'timeout 90s' }); res(); }, 90000))]);
+const shoot = job => { let t; return Promise.race([shootOnce(job).finally(() => clearTimeout(t)), new Promise(res => { t = setTimeout(() => { index.cases.push({ id: job.c.id, component: job.comp.component, scheme: job.scheme, width: job.width, error: 'timeout 90s' }); res(); }, 90000); })]); };
 const shootOnce = async ({ comp, c, scheme, width }) => {
   const key = `${scheme}`;
   ctxs[key] ??= await browser.newContext({ colorScheme: scheme });
@@ -91,12 +91,26 @@ const shootOnce = async ({ comp, c, scheme, width }) => {
   index.cases.push(rec); await page.close();
 };
 const browser = await chromium.launch({ executablePath: chrome, headless: true });
+// Preflight: one case per component; a component the host does not render is skipped whole.
+if (host !== 'storybook') {
+  const probe = await browser.newPage({ viewport: { width: 390, height: 900 } });
+  for (const comp of doc.components) {
+    const c = comp.cases[0]; if (!c) continue;
+    await probe.goto(urlFor(comp.component, c, 'light'), { waitUntil: 'load', timeout: 30000 }).catch(() => {});
+    const ok = await probe.waitForSelector(caseSelector, { timeout: 8000 }).then(() => true).catch(() => false);
+    if (!ok) {
+      for (let i = jobs.length - 1; i >= 0; i--) if (jobs[i].comp === comp) jobs.splice(i, 1);
+      index.cases.push({ component: comp.component, skipped: 'not rendered by this host' });
+    }
+  }
+  await probe.close();
+}
 const N = Number(opt('--jobs', '12'));
 let next = 0;
 await Promise.all(Array.from({ length: N }, async () => { while (next < jobs.length) { const j = jobs[next++]; await shoot(j); } }));
 // Retry failures with less concurrency: cold starts under load time out.
 for (let pass = 0; pass < 2; pass++) {
-  const failed = index.cases.filter(r => r.error && r.id);
+  const failed = index.cases.filter(r => r.error && r.id && r.error !== 'no case element');
   if (!failed.length) break;
   index.cases = index.cases.filter(r => !(r.error && r.id));
   const retry = failed.map(r => jobs.find(j => j.c.id === r.id && j.scheme === r.scheme && j.width === r.width)).filter(Boolean);

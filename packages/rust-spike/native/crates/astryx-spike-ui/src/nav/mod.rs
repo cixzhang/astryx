@@ -430,6 +430,7 @@ pub struct SideNav<Msg> {
     collapsible: bool,
     is_collapsed: Option<bool>,
     width: f32,
+    resizable: Option<(f32, f32)>,
     label: String,
     children: Vec<Element<Msg>>,
 }
@@ -444,6 +445,7 @@ impl<Msg> Default for SideNav<Msg> {
             collapsible: false,
             is_collapsed: None,
             width: 260.0,
+            resizable: None,
             label: "Side navigation".into(),
             children: Vec::new(),
         }
@@ -479,6 +481,12 @@ impl<Msg> SideNav<Msg> {
         self.width = w;
         self
     }
+    /// A drag handle on the end edge resizes it between `min` and `max`;
+    /// `width` is where it starts.
+    pub fn resizable(mut self, min: f32, max: f32) -> Self {
+        self.resizable = Some((min, max));
+        self
+    }
     pub fn label(mut self, l: impl Into<String>) -> Self {
         self.label = l.into();
         self
@@ -490,6 +498,12 @@ impl<Msg> SideNav<Msg> {
 }
 
 component!(SideNav<Msg>);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+struct NavWidth {
+    width: Option<f32>,
+    drag_from: Option<f32>,
+}
 
 /// What SideNav tells its items.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -508,6 +522,24 @@ impl<Msg: Clone + 'static> Build<Msg> for SideNav<Msg> {
         let h = cx.local_handle::<Option<bool>>();
         let collapsed = self.is_collapsed.or(h.get()).unwrap_or(false);
         let scope = Rc::new(SideNavScope { collapsed });
+        // The resize state lives on a wrapper around the navigation.
+        let resize = self.resizable;
+        let wkey = format!("{id}:width");
+        let width_state = resize.map(|_| {
+            cx.key(Some(&wkey));
+            cx.local_handle::<NavWidth>()
+        });
+        let width = width_state
+            .as_ref()
+            .and_then(|w| w.get().width)
+            .unwrap_or(self.width);
+        if width_state.is_some() {
+            cx.begin(Node::new(Style {
+                flex_direction: FlexDirection::Row,
+                flex_shrink: 0.0,
+                ..Style::default()
+            }));
+        }
         let col = |gap: f32| Style {
             flex_direction: FlexDirection::Column,
             gap: taffy::Size {
@@ -525,7 +557,7 @@ impl<Msg: Clone + 'static> Build<Msg> for SideNav<Msg> {
             Node::new(Style {
                 flex_direction: FlexDirection::Column,
                 size: taffy::Size {
-                    width: Dimension::length(if collapsed { t.space.s12 } else { self.width }),
+                    width: Dimension::length(if collapsed { t.space.s12 } else { width }),
                     height: Dimension::percent(1.0),
                 },
                 flex_shrink: 0.0,
@@ -614,6 +646,73 @@ impl<Msg: Clone + 'static> Build<Msg> for SideNav<Msg> {
             cx.child(f.provide(scope.clone()));
             cx.end();
         }
+        cx.end();
+        if let (Some(wh), Some((min, max))) = (width_state, resize) {
+            if !collapsed {
+                let hh = wh.clone();
+                let grip = astryx_core::authoring::element(EdgeHandle);
+                let sign = if cx.rtl() { -1.0 } else { 1.0 };
+                cx.child(
+                    astryx_spike_gestures::runtime::Drag::local(
+                        grip,
+                        astryx_spike_gestures::Axis::X,
+                        move |e| {
+                            let mut s = hh.get();
+                            let from = *s.drag_from.get_or_insert(s.width.unwrap_or(width));
+                            s.width = Some((from + sign * e.translation.x).clamp(min, max));
+                            if matches!(
+                                e.phase,
+                                astryx_spike_gestures::PanPhase::Ended
+                                    | astryx_spike_gestures::PanPhase::Cancelled
+                            ) {
+                                s.drag_from = None;
+                            }
+                            hh.set(s);
+                        },
+                    )
+                    .id(format!("{id}:resize"))
+                    .into(),
+                );
+            }
+            cx.end();
+        }
+    }
+}
+
+/// The resize handle on a side navigation's edge: a one-point rule with a
+/// wider hit area.
+struct EdgeHandle;
+
+impl<Msg: 'static> Build<Msg> for EdgeHandle {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let t = cx.tokens;
+        cx.begin(
+            Node::new(Style {
+                size: taffy::Size {
+                    width: Dimension::length(8.0),
+                    height: Dimension::percent(1.0),
+                },
+                margin: taffy::Rect {
+                    left: len_auto(-4.0),
+                    right: len_auto(-4.0),
+                    top: len_auto(0.0),
+                    bottom: len_auto(0.0),
+                },
+                justify_content: JustifyContent::CENTER,
+                ..Style::default()
+            })
+            .sem(Semantics::new(Role::Separator, "Resize navigation")),
+        );
+        cx.leaf(
+            Node::new(Style {
+                size: taffy::Size {
+                    width: Dimension::length(t.size.border_width),
+                    height: Dimension::percent(1.0),
+                },
+                ..Style::default()
+            })
+            .draw(Draw::Box(BoxDraw::fill(color(t.color.border), radii(0.0)))),
+        );
         cx.end();
     }
 }

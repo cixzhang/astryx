@@ -120,6 +120,7 @@ impl<Msg: Clone + 'static> Rig<Msg> {
                 K::Tab if modifiers.shift => Some(Input::Previous),
                 K::Tab => Some(Input::Next),
                 K::ContextMenu => Some(Input::Menu),
+                K::Backspace => Some(Input::Backspace),
                 _ => None,
             };
             if let Some(i) = input {

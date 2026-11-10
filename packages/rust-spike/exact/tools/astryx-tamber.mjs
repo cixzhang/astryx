@@ -61,7 +61,8 @@ const axis = [
   '// token that theme sets to another value than the default theme. Written by',
   '// tools/astryx-tamber.mjs; an app copies this block into its app.tamber.',
   'axes',
-  `  theme = ${THEMES.join(' | ')}`,
+  // Neutral first: an axis starts at its first value, and the spike's baseline is neutral.
+  `  theme = ${['neutral', ...THEMES.filter(t => t !== 'neutral')].join(' | ')}`,
   '',
   'theme',
 ];

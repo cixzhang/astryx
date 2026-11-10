@@ -1,0 +1,920 @@
+{
+ "family": "DateRangeInput",
+ "source": "packages/core/src/DateRangeInput/DateRangeInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "DateRangeInput",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "numberOfMonths": [
+     1,
+     2
+    ],
+    "calendar": [
+     "gregory",
+     "iso8601",
+     "buddhist",
+     "roc",
+     "japanese",
+     "persian",
+     "indian",
+     "hebrew",
+     "chinese",
+     "dangi",
+     "coptic",
+     "ethiopic",
+     "ethioaa",
+     "islamic-civil",
+     "islamic-tbla",
+     "islamic-umalqura"
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isLoading": false,
+    "hasClear": true,
+    "size": "md",
+    "statusVariant": "attached",
+    "numberOfMonths": 2,
+    "calendar": null
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": false,
+   "fixture": null,
+   "cases": [
+    {
+     "id": "date-range-input-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "date-range-input-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "date-range-input-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "date-range-input-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "date-range-input-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "date-range-input-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "date-range-input-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasClear": false
+     }
+    },
+    {
+     "id": "date-range-input-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "date-range-input-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "date-range-input-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "date-range-input-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "date-range-input-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "numberOfMonths": 1
+     }
+    },
+    {
+     "id": "date-range-input-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-range-input-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-range-input-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-range-input-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-range-input-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-range-input-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-range-input-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-range-input-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-range-input-0021",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-range-input-0022",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-range-input-0023",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-range-input-0024",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-range-input-0025",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-range-input-0026",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-range-input-0027",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-range-input-0028",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-range-input-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-range-input-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-range-input-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-range-input-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isDisabled": true,
+      "size": "lg",
+      "numberOfMonths": 1,
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-range-input-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "detached",
+      "numberOfMonths": 1,
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-range-input-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "size": "sm",
+      "statusVariant": "detached",
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-range-input-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hasClear": false,
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-range-input-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "hasClear": false,
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-range-input-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isDisabled": true,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-range-input-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "isLoading": true,
+      "hasClear": false,
+      "size": "sm",
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-range-input-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isDisabled": true,
+      "isLoading": true,
+      "hasClear": false,
+      "numberOfMonths": 1,
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-range-input-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-range-input-0041",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-range-input-0042",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-range-input-0043",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-range-input-0044",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-range-input-0045",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-range-input-0046",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-range-input-0047",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-range-input-0048",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-range-input-0049",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-range-input-0050",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "hasClear": false,
+      "size": "sm",
+      "numberOfMonths": 1,
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-range-input-0051",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "size": "sm",
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-range-input-0052",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isLoading": true,
+      "numberOfMonths": 1,
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-range-input-0053",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "hasClear": false,
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-range-input-0054",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-range-input-0055",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-range-input-0056",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-range-input-0057",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-range-input-0058",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-range-input-0059",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-range-input-0060",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-range-input-0061",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "statusVariant": "detached",
+      "numberOfMonths": 1,
+      "calendar": "buddhist"
+     }
+    },
+    {
+     "id": "date-range-input-0062",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "statusVariant": "detached",
+      "numberOfMonths": 1,
+      "calendar": "roc"
+     }
+    },
+    {
+     "id": "date-range-input-0063",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "japanese"
+     }
+    },
+    {
+     "id": "date-range-input-0064",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "gregory"
+     }
+    },
+    {
+     "id": "date-range-input-0065",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "iso8601"
+     }
+    },
+    {
+     "id": "date-range-input-0066",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "persian"
+     }
+    },
+    {
+     "id": "date-range-input-0067",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "detached",
+      "calendar": "indian"
+     }
+    },
+    {
+     "id": "date-range-input-0068",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "detached",
+      "numberOfMonths": 1,
+      "calendar": "hebrew"
+     }
+    },
+    {
+     "id": "date-range-input-0069",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "detached",
+      "numberOfMonths": 1,
+      "calendar": "chinese"
+     }
+    },
+    {
+     "id": "date-range-input-0070",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "dangi"
+     }
+    },
+    {
+     "id": "date-range-input-0071",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "coptic"
+     }
+    },
+    {
+     "id": "date-range-input-0072",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "ethiopic"
+     }
+    },
+    {
+     "id": "date-range-input-0073",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "ethioaa"
+     }
+    },
+    {
+     "id": "date-range-input-0074",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "islamic-civil"
+     }
+    },
+    {
+     "id": "date-range-input-0075",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "islamic-tbla"
+     }
+    },
+    {
+     "id": "date-range-input-0076",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "islamic-umalqura"
+     }
+    },
+    {
+     "id": "date-range-input-0077",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "hasClear": false,
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "numberOfMonths": 1,
+      "calendar": "roc"
+     }
+    }
+   ]
+  }
+ ]
+}

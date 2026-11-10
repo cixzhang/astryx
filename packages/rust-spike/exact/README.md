@@ -5,6 +5,7 @@ Contract library, plus apps that show them.
 
 | Path | What it is |
 | --- | --- |
+| `astryx-layers/` | `@astryx-spike/astryx-layers`: components that hide their content until opened (Popover, Collapsible, and later Tooltip, Dialog, menus). Exact holds a library to always showing its slot, so these are a plain package beside the library. |
 | `astryx/` | The library package (`@astryx-spike/astryx`): `.contract` components and `astryx.tamber`, Astryx's default theme as Tamber tokens. |
 | `tokens/` | Astryx themes resolved to light and dark values (one JSON per theme), the importer's report, and `themes.tamber`: the `theme` axis an app pastes into its `app.tamber`. |
 | `tools/astryx-tamber.mjs` | Writes `astryx/astryx.tamber` and `tokens/themes.tamber` from `tokens/*.json` through `contract tamber import astryx`. |
@@ -21,7 +22,7 @@ Exact is not vendored. Check it out at
 ```sh
 ln -s /path/to/exact .exact-sdk
 cargo build -q -p contract --manifest-path .exact-sdk/Cargo.toml
-cd apps/astryx-gallery && bun install
+tools/link.sh                    # links both packages where every app finds them
 ```
 
 The gallery's cases are data in `apps/astryx-gallery/cases.contract`, written by

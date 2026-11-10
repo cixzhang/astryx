@@ -1,0 +1,98 @@
+{
+ "family": "MobileNav",
+ "source": "packages/core/src/MobileNav/MobileNav.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "MobileNav",
+   "visualProps": {
+    "isOpen": [
+     false,
+     true
+    ],
+    "side": [
+     "start",
+     "end",
+     "auto"
+    ]
+   },
+   "defaults": {
+    "isOpen": false,
+    "side": "auto"
+   },
+   "base": {},
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "mobile-nav-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "mobile-nav-0002",
+     "kind": "sweep",
+     "props": {
+      "isOpen": true
+     }
+    },
+    {
+     "id": "mobile-nav-0003",
+     "kind": "sweep",
+     "props": {
+      "side": "start"
+     }
+    },
+    {
+     "id": "mobile-nav-0004",
+     "kind": "sweep",
+     "props": {
+      "side": "end"
+     }
+    },
+    {
+     "id": "mobile-nav-0005",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "side": "start"
+     }
+    },
+    {
+     "id": "mobile-nav-0006",
+     "kind": "pairwise",
+     "props": {
+      "isOpen": true,
+      "side": "end"
+     }
+    }
+   ]
+  },
+  {
+   "component": "MobileNavToggle",
+   "visualProps": {},
+   "defaults": {},
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "mobile-nav-toggle-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    }
+   ]
+  }
+ ]
+}

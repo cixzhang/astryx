@@ -2,7 +2,7 @@
 // token that theme sets to another value than the default theme. Written by
 // tools/astryx-tamber.mjs; an app copies this block into its app.tamber.
 axes
-  theme = default | neutral | stone | butter | chocolate | gothic | matcha | y2k
+  theme = neutral | default | stone | butter | chocolate | gothic | matcha | y2k
 
 theme
   astryx.accent = light-dark(#0064E0, #0171E3)

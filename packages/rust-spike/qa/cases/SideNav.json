@@ -1,0 +1,29 @@
+{
+ "family": "SideNav",
+ "source": "packages/core/src/SideNav/SideNav.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "SideNav",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "side-nav-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}
