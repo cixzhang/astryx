@@ -1,0 +1,34 @@
+Group
+  Heading(2) label="Switch"
+  Text label="Off and on, md and sm"
+  Switch label="Wi-Fi" checked=false focusable focused
+    Text live=Polite
+  Switch label="Bluetooth" checked=true focusable
+    Text live=Polite
+  Switch label="Small" checked=false focusable
+    Text live=Polite
+  Switch label="Small on" checked=true focusable
+    Text live=Polite
+  Text label="Disabled, loading, hidden label"
+  Switch label="Disabled off" checked=false focusable disabled
+    Text live=Polite
+  Switch label="Disabled on" description="Managed by your organization" checked=true focusable disabled
+    Text live=Polite
+  Switch label="Loading" checked=true focusable
+    Text label="Loading" live=Polite
+  Switch label="Hidden label" checked=true focusable
+    Text live=Polite
+  Text label="Description, required, optional, status"
+  Switch label="Notifications" description="Alerts for new messages" checked=true focusable
+    Text live=Polite
+  Switch label="Newsletter" checked=false focusable
+    Text live=Polite
+  Switch label="Backups" checked=false focusable
+    Text live=Polite
+  Text label="Turn on backups to continue" live=Assertive
+  Switch label="Sync" checked=true focusable
+    Text live=Polite
+  Text label="Syncing uses mobile data" live=Polite
+  Switch label="Updates" checked=true focusable
+    Text live=Polite
+  Text label="Up to date" live=Polite

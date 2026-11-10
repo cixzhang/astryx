@@ -1,0 +1,11 @@
+Group
+  Heading(2) label="SelectableCard"
+  Text label="Several can be on"
+  Checkbox label="Backups" checked=true focusable focused
+  Checkbox label="Analytics" checked=false focusable
+  Checkbox label="Support" checked=true focusable
+  Text label="Variants, elevation, and disabled"
+  Checkbox label="Blue" checked=false focusable
+  Checkbox label="Green" checked=true focusable
+  Checkbox label="Raised" checked=true focusable
+  Checkbox label="Disabled" checked=false focusable disabled

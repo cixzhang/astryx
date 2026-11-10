@@ -433,6 +433,11 @@ pub struct Semantics {
     pub state: crate::contract::A11yState,
     /// Relations to other elements, by their Astryx `id` prop.
     pub refs: A11yRefs,
+    /// A labeled node of any role reads as one stop: its label speaks for
+    /// its subtree, whose nodes are left out unless they are focus stops.
+    /// Roles named from content (buttons, rows, options) do this anyway;
+    /// set it on a labeled container that must read as one item.
+    pub one_stop: bool,
 }
 
 /// ARIA relations by element `id` prop, resolved to accessibility ids when
@@ -460,6 +465,7 @@ impl Semantics {
             live: None,
             state: Default::default(),
             refs: Default::default(),
+            one_stop: false,
         }
     }
 

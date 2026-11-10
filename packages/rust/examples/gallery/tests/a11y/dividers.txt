@@ -1,0 +1,18 @@
+Group
+  Heading(2) label="Divider"
+  Text label="Subtle"
+  Separator
+  Text label="Strong"
+  Separator
+  Text label="Label"
+  Separator label="or"
+  Text label="Vertical"
+  Text label="Left"
+  Separator
+  Text label="Middle"
+  Separator
+  Text label="Right"
+  Text label="Full bleed in a card"
+  Text label="Above"
+  Separator
+  Text label="Below"

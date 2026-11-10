@@ -1,0 +1,24 @@
+Group
+  Heading(2) label="Lab"
+  Text label="StatusBar"
+  Text label="Wi-Fi connected, battery 82% charging, 7:42 PM"
+  Text label="Wi-Fi on, not connected, Bluetooth connected, battery 15%, 9:05 AM"
+  Text label="Wi-Fi off, 12:00 PM"
+  Text label="HoldButton: hold A to confirm"
+  Button label="Hold to delete" description="Hold to confirm" focusable focused
+    Text live=Polite
+  Button label="Hold to plant" description="Hold to confirm" focusable
+    Text live=Polite
+  Button label="Disabled" description="Hold to confirm" focusable disabled
+    Text live=Polite
+  Text label="SelectableCardGroup: one choice, arrows move, A chooses"
+  RadioGroup label="Plan"
+    Radio label="Free" checked=false focusable
+    Radio label="Pro" checked=true focusable
+    Radio label="Team" checked=false focusable
+  Text label="HoldCard: hold A on the card to send"
+  Checkbox label="Send the plan to Ada" description="Hold to confirm" checked=false focusable
+  Text label="Image: cover, contain, and pixel-perfect"
+  Image label="A beach at sunset"
+  Image label="A sticker"
+  Image label="A pixel tree"
