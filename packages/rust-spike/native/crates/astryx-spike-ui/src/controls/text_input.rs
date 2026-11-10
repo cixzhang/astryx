@@ -45,6 +45,26 @@ pub struct TextInput<Msg> {
     has_clear: bool,
     has_auto_focus: bool,
     width: Option<SizeValue>,
+    edit_effect: Option<Rc<dyn Fn(String)>>,
+    combo: Option<ComboHooks<Msg>>,
+    role: Option<Role>,
+    end: Vec<astryx_core::Element<Msg>>,
+}
+
+/// Keys a field's owner takes while the field has focus.
+pub type FieldKeys<Msg> =
+    Rc<dyn Fn(&astryx_core::KeyEvent) -> astryx_core::authoring::KeyResponse<Msg>>;
+
+/// What a combobox adds to its text field: the popup state it reports and
+/// the keys it takes while the field keeps focus.
+pub struct ComboHooks<Msg> {
+    pub expanded: bool,
+    /// The id of the option the arrows point at.
+    pub active_descendant: Option<String>,
+    /// The id of the listbox.
+    pub controls: Option<String>,
+    pub on_key: Option<FieldKeys<Msg>>,
+    pub has_popup_listbox: bool,
 }
 
 impl<Msg> TextInput<Msg> {
@@ -65,7 +85,32 @@ impl<Msg> TextInput<Msg> {
             has_clear: false,
             has_auto_focus: false,
             width: None,
+            edit_effect: None,
+            combo: None,
+            role: None,
+            end: Vec::new(),
         }
+    }
+    /// The field's role when it is not a plain text field (a spin button).
+    pub(crate) fn role(mut self, r: Role) -> Self {
+        self.role = Some(r);
+        self
+    }
+    /// Content after the value inside the field (units, steppers).
+    pub(crate) fn end_content(mut self, e: Vec<astryx_core::Element<Msg>>) -> Self {
+        self.end = e;
+        self
+    }
+    /// Keeps the typed text in the caller's own state: `f` runs on each
+    /// edit, with or without `on_change`.
+    pub fn on_edit(mut self, f: Rc<dyn Fn(String)>) -> Self {
+        self.edit_effect = Some(f);
+        self
+    }
+    /// Makes the field a combobox's input.
+    pub fn combo(mut self, hooks: ComboHooks<Msg>) -> Self {
+        self.combo = Some(hooks);
+        self
     }
     pub fn r#type(mut self, t: TextInputType) -> Self {
         self.input_type = t;
@@ -123,7 +168,7 @@ impl<Msg> TextInput<Msg> {
 component!(TextInput<Msg>);
 
 impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
-    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+    fn build(mut self: Box<Self>, cx: &mut BuildCx<Msg>) {
         if self.base.is_hidden {
             return;
         }
@@ -170,7 +215,22 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         } else {
             self.value.clone()
         };
-        let mut sem = Semantics::new(Role::TextInput, f.name(cx));
+        let mut sem = Semantics::new(
+            self.role.unwrap_or(if self.combo.is_some() {
+                Role::ComboBox
+            } else {
+                Role::TextInput
+            }),
+            f.name(cx),
+        );
+        if let Some(cb) = &self.combo {
+            sem.state.expanded = Some(cb.expanded);
+            if cb.has_popup_listbox {
+                sem.state.has_popup = Some(astryx_core::contract::HasPopup::ListBox);
+            }
+            sem.refs.active_descendant = cb.active_descendant.clone();
+            sem.refs.controls = cb.controls.clone().into_iter().collect();
+        }
         sem.value = Some(shown.clone());
         sem.secure = masked;
         sem.description = f.described();
@@ -224,6 +284,9 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         })
         .opacity(if f.is_disabled { 0.5 } else { 1.0 });
         node.autofocus = self.has_auto_focus;
+        if let Some(cb) = &self.combo {
+            node.on_key = cb.on_key.clone();
+        }
         cx.key(self.base.id.as_deref());
         let field_ix = cx.begin(node);
         if let Some(icon) = self.start_icon {
@@ -247,8 +310,9 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         };
         text.sem = None;
         let editable = !f.is_disabled && !self.is_read_only;
-        match (&self.on_change, editable) {
-            (Some(on_change), true) => {
+        let edits = self.on_change.is_some() || self.edit_effect.is_some();
+        match (edits, editable) {
+            (true, true) => {
                 // The value is clipped by its field and scrolls to the caret,
                 // as a native input does, instead of truncating.
                 let mut area = Node::new(Style {
@@ -268,8 +332,8 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
                 cx.end();
                 let edit = Edit {
                     value: self.value.clone(),
-                    on_change: Some(on_change.clone()),
-                    effect: None,
+                    on_change: self.on_change.clone(),
+                    effect: self.edit_effect.clone(),
                     text_node: text_ix,
                     masked,
                     caret: color(c.text_primary),
@@ -309,13 +373,22 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
                 }
             }
         }
+        for e in std::mem::take(&mut self.end) {
+            cx.child(e);
+        }
         let clears = self.has_clear && !self.value.is_empty() && editable;
-        if let (true, Some(on_change)) = (clears, &self.on_change) {
+        if clears && edits {
             let words = cx.t(
                 "@astryx.textInput.clearLabel",
                 &args! {"label" => f.label.clone()},
             );
-            clear_button(cx, on_change(String::new()), words);
+            let effect = self.edit_effect.clone();
+            clear_button(
+                cx,
+                self.on_change.as_ref().map(|f| f(String::new())),
+                effect.map(|e| Rc::new(move || e(String::new())) as Rc<dyn Fn()>),
+                words,
+            );
         }
         cx.end();
         status_box(cx, f);
@@ -324,7 +397,12 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
 }
 
 /// A field's clear (×) action: its own focus stop, named after the field.
-pub(crate) fn clear_button<Msg>(cx: &mut BuildCx<Msg>, msg: Msg, name: String) {
+pub(crate) fn clear_button<Msg>(
+    cx: &mut BuildCx<Msg>,
+    msg: Option<Msg>,
+    effect: Option<Rc<dyn Fn()>>,
+    name: String,
+) {
     let t = cx.tokens;
     let c = &t.color;
     let pill = radii(t.radius.full);
@@ -336,7 +414,13 @@ pub(crate) fn clear_button<Msg>(cx: &mut BuildCx<Msg>, msg: Msg, name: String) {
             justify_content: taffy::JustifyContent::CENTER,
             ..Style::default()
         })
-        .interact(Interact::new(Some(msg), false))
+        .interact({
+            let mut i = Interact::new(msg, false);
+            if let Some(e) = effect {
+                i = i.effect(move || e());
+            }
+            i
+        })
         .indicator(Indicator::ring(
             color(c.accent),
             pill,

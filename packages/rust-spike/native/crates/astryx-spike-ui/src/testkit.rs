@@ -127,6 +127,11 @@ impl<Msg: Clone + 'static> Rig<Msg> {
             }
         }
     }
+    /// Types `text` into the focused field.
+    pub fn type_text(&mut self, text: &str) {
+        self.rt.text_input(text);
+        self.redraw();
+    }
     /// A secondary (right) click at `at`.
     pub fn right_click(&mut self, at: astryx_core::Point) {
         use astryx_core::contract::{PointerEvent, PointerKind, PointerPhase, Surface};
