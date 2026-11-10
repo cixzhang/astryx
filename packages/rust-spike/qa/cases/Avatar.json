@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "AvatarStatusDot",
+   "component": "Avatar",
    "visualProps": {
     "shape": [
      "circle",
@@ -26,19 +26,19 @@
    "takesChildren": false,
    "cases": [
     {
-     "id": "avatarstatusdot-0001",
+     "id": "avatar-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "avatarstatusdot-0002",
+     "id": "avatar-0002",
      "kind": "sweep",
      "props": {
       "shape": "rounded"
      }
     },
     {
-     "id": "avatarstatusdot-0003",
+     "id": "avatar-0003",
      "kind": "sweep",
      "props": {
       "shape": "square"

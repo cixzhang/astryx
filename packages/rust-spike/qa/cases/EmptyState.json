@@ -1,0 +1,141 @@
+{
+ "family": "EmptyState",
+ "source": "packages/core/src/EmptyState/EmptyState.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "EmptyState",
+   "visualProps": {
+    "headingLevel": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isCompact": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "headingLevel": 3,
+    "isCompact": false
+   },
+   "base": {
+    "title": "Title"
+   },
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "empty-state-0001",
+     "kind": "default",
+     "props": {
+      "title": "Title"
+     }
+    },
+    {
+     "id": "empty-state-0002",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "headingLevel": 1
+     }
+    },
+    {
+     "id": "empty-state-0003",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "headingLevel": 2
+     }
+    },
+    {
+     "id": "empty-state-0004",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "headingLevel": 4
+     }
+    },
+    {
+     "id": "empty-state-0005",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "headingLevel": 5
+     }
+    },
+    {
+     "id": "empty-state-0006",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "headingLevel": 6
+     }
+    },
+    {
+     "id": "empty-state-0007",
+     "kind": "sweep",
+     "props": {
+      "title": "Title",
+      "isCompact": true
+     }
+    },
+    {
+     "id": "empty-state-0008",
+     "kind": "pairwise",
+     "props": {
+      "title": "Title",
+      "headingLevel": 1,
+      "isCompact": true
+     }
+    },
+    {
+     "id": "empty-state-0009",
+     "kind": "pairwise",
+     "props": {
+      "title": "Title",
+      "headingLevel": 2,
+      "isCompact": true
+     }
+    },
+    {
+     "id": "empty-state-0010",
+     "kind": "pairwise",
+     "props": {
+      "title": "Title",
+      "headingLevel": 4,
+      "isCompact": true
+     }
+    },
+    {
+     "id": "empty-state-0011",
+     "kind": "pairwise",
+     "props": {
+      "title": "Title",
+      "headingLevel": 5,
+      "isCompact": true
+     }
+    },
+    {
+     "id": "empty-state-0012",
+     "kind": "pairwise",
+     "props": {
+      "title": "Title",
+      "headingLevel": 6,
+      "isCompact": true
+     }
+    }
+   ]
+  }
+ ]
+}

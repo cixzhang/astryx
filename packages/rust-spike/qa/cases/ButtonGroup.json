@@ -45,14 +45,14 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "buttongroup-0001",
+     "id": "button-group-0001",
      "kind": "default",
      "props": {
       "label": "Label"
      }
     },
     {
-     "id": "buttongroup-0002",
+     "id": "button-group-0002",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -60,7 +60,7 @@
      }
     },
     {
-     "id": "buttongroup-0003",
+     "id": "button-group-0003",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -68,7 +68,7 @@
      }
     },
     {
-     "id": "buttongroup-0004",
+     "id": "button-group-0004",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -76,7 +76,7 @@
      }
     },
     {
-     "id": "buttongroup-0005",
+     "id": "button-group-0005",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -84,7 +84,7 @@
      }
     },
     {
-     "id": "buttongroup-0006",
+     "id": "button-group-0006",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -92,7 +92,7 @@
      }
     },
     {
-     "id": "buttongroup-0007",
+     "id": "button-group-0007",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -100,7 +100,7 @@
      }
     },
     {
-     "id": "buttongroup-0008",
+     "id": "button-group-0008",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -108,7 +108,7 @@
      }
     },
     {
-     "id": "buttongroup-0009",
+     "id": "button-group-0009",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -117,7 +117,7 @@
      }
     },
     {
-     "id": "buttongroup-0010",
+     "id": "button-group-0010",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -126,7 +126,7 @@
      }
     },
     {
-     "id": "buttongroup-0011",
+     "id": "button-group-0011",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -137,7 +137,7 @@
      }
     },
     {
-     "id": "buttongroup-0012",
+     "id": "button-group-0012",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -146,7 +146,7 @@
      }
     },
     {
-     "id": "buttongroup-0013",
+     "id": "button-group-0013",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -156,7 +156,7 @@
      }
     },
     {
-     "id": "buttongroup-0014",
+     "id": "button-group-0014",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -166,7 +166,7 @@
      }
     },
     {
-     "id": "buttongroup-0015",
+     "id": "button-group-0015",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -176,7 +176,7 @@
      }
     },
     {
-     "id": "buttongroup-0016",
+     "id": "button-group-0016",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -185,7 +185,7 @@
      }
     },
     {
-     "id": "buttongroup-0017",
+     "id": "button-group-0017",
      "kind": "pairwise",
      "props": {
       "label": "Label",

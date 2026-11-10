@@ -75,6 +75,8 @@ function pairwise(params) {
 }
 
 mkdirSync(out, { recursive: true });
+const allIds = new Set();
+const kebab = n => n.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase();
 const summary = {};
 for (const arg of families) {
   // "Dir/Name" reads packages/core/src/Dir/Name.doc.mjs (a doc beside another component's).
@@ -82,8 +84,13 @@ for (const arg of families) {
   const docPath = join(astryx, 'packages/core/src', dir, `${family}.doc.mjs`);
   if (!existsSync(docPath)) { console.error(`skip ${family}: no ${docPath}`); continue; }
   const { docs } = await import(pathToFileURL(docPath).href);
-  const comps = (docs.components?.length ? docs.components : [{ name: family, props: [] }]).map((c, i) =>
-    (i === 0 && !(c.props ?? []).length && (docs.props ?? []).length) ? { ...c, props: docs.props } : c);
+  // The root's props sit at the top level or in the component entry of the same name;
+  // other entries are parts with their own props. A part with no props has no cases.
+  const listed = docs.components ?? [];
+  const rootName = docs.name ?? family;
+  const rootEntry = listed.find(c => c.name === rootName);
+  const comps = [{ name: rootName, props: (docs.props ?? []).length ? docs.props : (rootEntry?.props ?? []) },
+    ...listed.filter(c => c.name !== rootName && (c.props ?? []).length)];
   const docOut = { family, source: `packages/core/src/${dir}/${family}.doc.mjs`, schemes: ['light', 'dark'], widths: [390, 1280], components: [] };
   for (const comp of comps) {
   const base = {}, visual = {}, defaults = {};
@@ -98,7 +105,9 @@ for (const arg of families) {
     const full = { ...base, ...props };
     const key = JSON.stringify(Object.keys(full).sort().map(k => [k, full[k]]));
     if (seen.has(key)) return; seen.add(key);
-    cases.push({ id: `${comp.name.toLowerCase()}-${String(cases.length + 1).padStart(4, '0')}`, kind, props: full });
+    const id = `${kebab(comp.name)}-${String(cases.length + 1).padStart(4, '0')}`;
+    if (allIds.has(id)) { console.error(`skip duplicate id ${id} in ${family}`); return; }
+    allIds.add(id); cases.push({ id, kind, props: full });
   };
   add('default', {});
   for (const [name, values] of Object.entries(visual)) for (const v of values) if (v !== defaults[name]) add('sweep', { [name]: v });

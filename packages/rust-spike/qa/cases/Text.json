@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "Heading",
+   "component": "Text",
    "visualProps": {
     "size": [
      "4xs",
@@ -95,229 +95,229 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "heading-0001",
+     "id": "text-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "heading-0002",
+     "id": "text-0002",
      "kind": "sweep",
      "props": {
       "size": "3xs"
      }
     },
     {
-     "id": "heading-0003",
+     "id": "text-0003",
      "kind": "sweep",
      "props": {
       "size": "2xs"
      }
     },
     {
-     "id": "heading-0004",
+     "id": "text-0004",
      "kind": "sweep",
      "props": {
       "size": "xsm"
      }
     },
     {
-     "id": "heading-0005",
+     "id": "text-0005",
      "kind": "sweep",
      "props": {
       "size": "sm"
      }
     },
     {
-     "id": "heading-0006",
+     "id": "text-0006",
      "kind": "sweep",
      "props": {
       "size": "base"
      }
     },
     {
-     "id": "heading-0007",
+     "id": "text-0007",
      "kind": "sweep",
      "props": {
       "size": "lg"
      }
     },
     {
-     "id": "heading-0008",
+     "id": "text-0008",
      "kind": "sweep",
      "props": {
       "size": "xl"
      }
     },
     {
-     "id": "heading-0009",
+     "id": "text-0009",
      "kind": "sweep",
      "props": {
       "size": "2xl"
      }
     },
     {
-     "id": "heading-0010",
+     "id": "text-0010",
      "kind": "sweep",
      "props": {
       "size": "3xl"
      }
     },
     {
-     "id": "heading-0011",
+     "id": "text-0011",
      "kind": "sweep",
      "props": {
       "size": "4xl"
      }
     },
     {
-     "id": "heading-0012",
+     "id": "text-0012",
      "kind": "sweep",
      "props": {
       "color": "secondary"
      }
     },
     {
-     "id": "heading-0013",
+     "id": "text-0013",
      "kind": "sweep",
      "props": {
       "color": "disabled"
      }
     },
     {
-     "id": "heading-0014",
+     "id": "text-0014",
      "kind": "sweep",
      "props": {
       "color": "placeholder"
      }
     },
     {
-     "id": "heading-0015",
+     "id": "text-0015",
      "kind": "sweep",
      "props": {
       "color": "accent"
      }
     },
     {
-     "id": "heading-0016",
+     "id": "text-0016",
      "kind": "sweep",
      "props": {
       "color": "inherit"
      }
     },
     {
-     "id": "heading-0017",
+     "id": "text-0017",
      "kind": "sweep",
      "props": {
       "weight": "medium"
      }
     },
     {
-     "id": "heading-0018",
+     "id": "text-0018",
      "kind": "sweep",
      "props": {
       "weight": "semibold"
      }
     },
     {
-     "id": "heading-0019",
+     "id": "text-0019",
      "kind": "sweep",
      "props": {
       "weight": "bold"
      }
     },
     {
-     "id": "heading-0020",
+     "id": "text-0020",
      "kind": "sweep",
      "props": {
       "display": "block"
      }
     },
     {
-     "id": "heading-0021",
+     "id": "text-0021",
      "kind": "sweep",
      "props": {
       "as": "p"
      }
     },
     {
-     "id": "heading-0022",
+     "id": "text-0022",
      "kind": "sweep",
      "props": {
       "as": "div"
      }
     },
     {
-     "id": "heading-0023",
+     "id": "text-0023",
      "kind": "sweep",
      "props": {
       "as": "label"
      }
     },
     {
-     "id": "heading-0024",
+     "id": "text-0024",
      "kind": "sweep",
      "props": {
       "wordBreak": "break-all"
      }
     },
     {
-     "id": "heading-0025",
+     "id": "text-0025",
      "kind": "sweep",
      "props": {
       "textWrap": "nowrap"
      }
     },
     {
-     "id": "heading-0026",
+     "id": "text-0026",
      "kind": "sweep",
      "props": {
       "textWrap": "balance"
      }
     },
     {
-     "id": "heading-0027",
+     "id": "text-0027",
      "kind": "sweep",
      "props": {
       "textWrap": "pretty"
      }
     },
     {
-     "id": "heading-0028",
+     "id": "text-0028",
      "kind": "sweep",
      "props": {
       "justify": "center"
      }
     },
     {
-     "id": "heading-0029",
+     "id": "text-0029",
      "kind": "sweep",
      "props": {
       "justify": "end"
      }
     },
     {
-     "id": "heading-0030",
+     "id": "text-0030",
      "kind": "sweep",
      "props": {
       "hasCapsize": true
      }
     },
     {
-     "id": "heading-0031",
+     "id": "text-0031",
      "kind": "sweep",
      "props": {
       "hasStrikethrough": true
      }
     },
     {
-     "id": "heading-0032",
+     "id": "text-0032",
      "kind": "sweep",
      "props": {
       "hasTabularNumbers": true
      }
     },
     {
-     "id": "heading-0033",
+     "id": "text-0033",
      "kind": "pairwise",
      "props": {
       "color": "secondary",
@@ -333,7 +333,7 @@
      }
     },
     {
-     "id": "heading-0034",
+     "id": "text-0034",
      "kind": "pairwise",
      "props": {
       "color": "disabled",
@@ -346,7 +346,7 @@
      }
     },
     {
-     "id": "heading-0035",
+     "id": "text-0035",
      "kind": "pairwise",
      "props": {
       "color": "placeholder",
@@ -359,7 +359,7 @@
      }
     },
     {
-     "id": "heading-0036",
+     "id": "text-0036",
      "kind": "pairwise",
      "props": {
       "color": "accent",
@@ -371,7 +371,7 @@
      }
     },
     {
-     "id": "heading-0037",
+     "id": "text-0037",
      "kind": "pairwise",
      "props": {
       "color": "inherit",
@@ -383,7 +383,7 @@
      }
     },
     {
-     "id": "heading-0038",
+     "id": "text-0038",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -395,7 +395,7 @@
      }
     },
     {
-     "id": "heading-0039",
+     "id": "text-0039",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -406,7 +406,7 @@
      }
     },
     {
-     "id": "heading-0040",
+     "id": "text-0040",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -420,7 +420,7 @@
      }
     },
     {
-     "id": "heading-0041",
+     "id": "text-0041",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -432,7 +432,7 @@
      }
     },
     {
-     "id": "heading-0042",
+     "id": "text-0042",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -445,7 +445,7 @@
      }
     },
     {
-     "id": "heading-0043",
+     "id": "text-0043",
      "kind": "pairwise",
      "props": {
       "size": "3xs",
@@ -459,7 +459,7 @@
      }
     },
     {
-     "id": "heading-0044",
+     "id": "text-0044",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -474,7 +474,7 @@
      }
     },
     {
-     "id": "heading-0045",
+     "id": "text-0045",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -485,7 +485,7 @@
      }
     },
     {
-     "id": "heading-0046",
+     "id": "text-0046",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -497,7 +497,7 @@
      }
     },
     {
-     "id": "heading-0047",
+     "id": "text-0047",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -511,7 +511,7 @@
      }
     },
     {
-     "id": "heading-0048",
+     "id": "text-0048",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -523,7 +523,7 @@
      }
     },
     {
-     "id": "heading-0049",
+     "id": "text-0049",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -536,7 +536,7 @@
      }
     },
     {
-     "id": "heading-0050",
+     "id": "text-0050",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -547,7 +547,7 @@
      }
     },
     {
-     "id": "heading-0051",
+     "id": "text-0051",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -562,7 +562,7 @@
      }
     },
     {
-     "id": "heading-0052",
+     "id": "text-0052",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -573,7 +573,7 @@
      }
     },
     {
-     "id": "heading-0053",
+     "id": "text-0053",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -583,7 +583,7 @@
      }
     },
     {
-     "id": "heading-0054",
+     "id": "text-0054",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -593,7 +593,7 @@
      }
     },
     {
-     "id": "heading-0055",
+     "id": "text-0055",
      "kind": "pairwise",
      "props": {
       "size": "xsm",
@@ -604,7 +604,7 @@
      }
     },
     {
-     "id": "heading-0056",
+     "id": "text-0056",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -612,7 +612,7 @@
      }
     },
     {
-     "id": "heading-0057",
+     "id": "text-0057",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -628,7 +628,7 @@
      }
     },
     {
-     "id": "heading-0058",
+     "id": "text-0058",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -640,7 +640,7 @@
      }
     },
     {
-     "id": "heading-0059",
+     "id": "text-0059",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -651,7 +651,7 @@
      }
     },
     {
-     "id": "heading-0060",
+     "id": "text-0060",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -660,7 +660,7 @@
      }
     },
     {
-     "id": "heading-0061",
+     "id": "text-0061",
      "kind": "pairwise",
      "props": {
       "size": "sm",
@@ -668,7 +668,7 @@
      }
     },
     {
-     "id": "heading-0062",
+     "id": "text-0062",
      "kind": "pairwise",
      "props": {
       "size": "base",
@@ -685,7 +685,7 @@
      }
     },
     {
-     "id": "heading-0063",
+     "id": "text-0063",
      "kind": "pairwise",
      "props": {
       "size": "base",
@@ -697,7 +697,7 @@
      }
     },
     {
-     "id": "heading-0064",
+     "id": "text-0064",
      "kind": "pairwise",
      "props": {
       "size": "base",
@@ -708,7 +708,7 @@
      }
     },
     {
-     "id": "heading-0065",
+     "id": "text-0065",
      "kind": "pairwise",
      "props": {
       "size": "base",
@@ -716,7 +716,7 @@
      }
     },
     {
-     "id": "heading-0066",
+     "id": "text-0066",
      "kind": "pairwise",
      "props": {
       "size": "base",
@@ -724,7 +724,7 @@
      }
     },
     {
-     "id": "heading-0067",
+     "id": "text-0067",
      "kind": "pairwise",
      "props": {
       "size": "lg",
@@ -741,7 +741,7 @@
      }
     },
     {
-     "id": "heading-0068",
+     "id": "text-0068",
      "kind": "pairwise",
      "props": {
       "size": "lg",
@@ -753,7 +753,7 @@
      }
     },
     {
-     "id": "heading-0069",
+     "id": "text-0069",
      "kind": "pairwise",
      "props": {
       "size": "lg",
@@ -764,7 +764,7 @@
      }
     },
     {
-     "id": "heading-0070",
+     "id": "text-0070",
      "kind": "pairwise",
      "props": {
       "size": "lg",
@@ -772,7 +772,7 @@
      }
     },
     {
-     "id": "heading-0071",
+     "id": "text-0071",
      "kind": "pairwise",
      "props": {
       "size": "lg",
@@ -780,7 +780,7 @@
      }
     },
     {
-     "id": "heading-0072",
+     "id": "text-0072",
      "kind": "pairwise",
      "props": {
       "size": "xl",
@@ -797,7 +797,7 @@
      }
     },
     {
-     "id": "heading-0073",
+     "id": "text-0073",
      "kind": "pairwise",
      "props": {
       "size": "xl",
@@ -809,7 +809,7 @@
      }
     },
     {
-     "id": "heading-0074",
+     "id": "text-0074",
      "kind": "pairwise",
      "props": {
       "size": "xl",
@@ -820,7 +820,7 @@
      }
     },
     {
-     "id": "heading-0075",
+     "id": "text-0075",
      "kind": "pairwise",
      "props": {
       "size": "xl",
@@ -828,7 +828,7 @@
      }
     },
     {
-     "id": "heading-0076",
+     "id": "text-0076",
      "kind": "pairwise",
      "props": {
       "size": "xl",
@@ -836,7 +836,7 @@
      }
     },
     {
-     "id": "heading-0077",
+     "id": "text-0077",
      "kind": "pairwise",
      "props": {
       "size": "2xl",
@@ -853,7 +853,7 @@
      }
     },
     {
-     "id": "heading-0078",
+     "id": "text-0078",
      "kind": "pairwise",
      "props": {
       "size": "2xl",
@@ -865,7 +865,7 @@
      }
     },
     {
-     "id": "heading-0079",
+     "id": "text-0079",
      "kind": "pairwise",
      "props": {
       "size": "2xl",
@@ -876,7 +876,7 @@
      }
     },
     {
-     "id": "heading-0080",
+     "id": "text-0080",
      "kind": "pairwise",
      "props": {
       "size": "2xl",
@@ -884,7 +884,7 @@
      }
     },
     {
-     "id": "heading-0081",
+     "id": "text-0081",
      "kind": "pairwise",
      "props": {
       "size": "2xl",
@@ -892,7 +892,7 @@
      }
     },
     {
-     "id": "heading-0082",
+     "id": "text-0082",
      "kind": "pairwise",
      "props": {
       "size": "3xl",
@@ -909,7 +909,7 @@
      }
     },
     {
-     "id": "heading-0083",
+     "id": "text-0083",
      "kind": "pairwise",
      "props": {
       "size": "3xl",
@@ -921,7 +921,7 @@
      }
     },
     {
-     "id": "heading-0084",
+     "id": "text-0084",
      "kind": "pairwise",
      "props": {
       "size": "3xl",
@@ -932,7 +932,7 @@
      }
     },
     {
-     "id": "heading-0085",
+     "id": "text-0085",
      "kind": "pairwise",
      "props": {
       "size": "3xl",
@@ -940,7 +940,7 @@
      }
     },
     {
-     "id": "heading-0086",
+     "id": "text-0086",
      "kind": "pairwise",
      "props": {
       "size": "3xl",
@@ -948,7 +948,7 @@
      }
     },
     {
-     "id": "heading-0087",
+     "id": "text-0087",
      "kind": "pairwise",
      "props": {
       "size": "4xl",
@@ -965,7 +965,7 @@
      }
     },
     {
-     "id": "heading-0088",
+     "id": "text-0088",
      "kind": "pairwise",
      "props": {
       "size": "4xl",
@@ -977,7 +977,7 @@
      }
     },
     {
-     "id": "heading-0089",
+     "id": "text-0089",
      "kind": "pairwise",
      "props": {
       "size": "4xl",
@@ -988,7 +988,7 @@
      }
     },
     {
-     "id": "heading-0090",
+     "id": "text-0090",
      "kind": "pairwise",
      "props": {
       "size": "4xl",
@@ -996,7 +996,7 @@
      }
     },
     {
-     "id": "heading-0091",
+     "id": "text-0091",
      "kind": "pairwise",
      "props": {
       "size": "4xl",
@@ -1004,7 +1004,7 @@
      }
     },
     {
-     "id": "heading-0092",
+     "id": "text-0092",
      "kind": "pairwise",
      "props": {
       "size": "2xs",
@@ -1012,7 +1012,7 @@
      }
     },
     {
-     "id": "heading-0093",
+     "id": "text-0093",
      "kind": "pairwise",
      "props": {
       "size": "xsm",

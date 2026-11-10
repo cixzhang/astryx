@@ -69,14 +69,14 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "selectablecard-0001",
+     "id": "selectable-card-0001",
      "kind": "default",
      "props": {
       "label": "Label"
      }
     },
     {
-     "id": "selectablecard-0002",
+     "id": "selectable-card-0002",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -84,7 +84,7 @@
      }
     },
     {
-     "id": "selectablecard-0003",
+     "id": "selectable-card-0003",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -92,7 +92,7 @@
      }
     },
     {
-     "id": "selectablecard-0004",
+     "id": "selectable-card-0004",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -100,7 +100,7 @@
      }
     },
     {
-     "id": "selectablecard-0005",
+     "id": "selectable-card-0005",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -108,7 +108,7 @@
      }
     },
     {
-     "id": "selectablecard-0006",
+     "id": "selectable-card-0006",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -116,7 +116,7 @@
      }
     },
     {
-     "id": "selectablecard-0007",
+     "id": "selectable-card-0007",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -124,7 +124,7 @@
      }
     },
     {
-     "id": "selectablecard-0008",
+     "id": "selectable-card-0008",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -132,7 +132,7 @@
      }
     },
     {
-     "id": "selectablecard-0009",
+     "id": "selectable-card-0009",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -140,7 +140,7 @@
      }
     },
     {
-     "id": "selectablecard-0010",
+     "id": "selectable-card-0010",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -148,7 +148,7 @@
      }
     },
     {
-     "id": "selectablecard-0011",
+     "id": "selectable-card-0011",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -156,7 +156,7 @@
      }
     },
     {
-     "id": "selectablecard-0012",
+     "id": "selectable-card-0012",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -164,7 +164,7 @@
      }
     },
     {
-     "id": "selectablecard-0013",
+     "id": "selectable-card-0013",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -172,7 +172,7 @@
      }
     },
     {
-     "id": "selectablecard-0014",
+     "id": "selectable-card-0014",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -180,7 +180,7 @@
      }
     },
     {
-     "id": "selectablecard-0015",
+     "id": "selectable-card-0015",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -188,7 +188,7 @@
      }
     },
     {
-     "id": "selectablecard-0016",
+     "id": "selectable-card-0016",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -196,7 +196,7 @@
      }
     },
     {
-     "id": "selectablecard-0017",
+     "id": "selectable-card-0017",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -204,7 +204,7 @@
      }
     },
     {
-     "id": "selectablecard-0018",
+     "id": "selectable-card-0018",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -212,7 +212,7 @@
      }
     },
     {
-     "id": "selectablecard-0019",
+     "id": "selectable-card-0019",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -220,7 +220,7 @@
      }
     },
     {
-     "id": "selectablecard-0020",
+     "id": "selectable-card-0020",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -228,7 +228,7 @@
      }
     },
     {
-     "id": "selectablecard-0021",
+     "id": "selectable-card-0021",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -236,7 +236,7 @@
      }
     },
     {
-     "id": "selectablecard-0022",
+     "id": "selectable-card-0022",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -244,7 +244,7 @@
      }
     },
     {
-     "id": "selectablecard-0023",
+     "id": "selectable-card-0023",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -252,7 +252,7 @@
      }
     },
     {
-     "id": "selectablecard-0024",
+     "id": "selectable-card-0024",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -260,7 +260,7 @@
      }
     },
     {
-     "id": "selectablecard-0025",
+     "id": "selectable-card-0025",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -268,7 +268,7 @@
      }
     },
     {
-     "id": "selectablecard-0026",
+     "id": "selectable-card-0026",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -276,7 +276,7 @@
      }
     },
     {
-     "id": "selectablecard-0027",
+     "id": "selectable-card-0027",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -284,7 +284,7 @@
      }
     },
     {
-     "id": "selectablecard-0028",
+     "id": "selectable-card-0028",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -292,7 +292,7 @@
      }
     },
     {
-     "id": "selectablecard-0029",
+     "id": "selectable-card-0029",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -303,7 +303,7 @@
      }
     },
     {
-     "id": "selectablecard-0030",
+     "id": "selectable-card-0030",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -314,7 +314,7 @@
      }
     },
     {
-     "id": "selectablecard-0031",
+     "id": "selectable-card-0031",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -326,7 +326,7 @@
      }
     },
     {
-     "id": "selectablecard-0032",
+     "id": "selectable-card-0032",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -336,7 +336,7 @@
      }
     },
     {
-     "id": "selectablecard-0033",
+     "id": "selectable-card-0033",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -346,7 +346,7 @@
      }
     },
     {
-     "id": "selectablecard-0034",
+     "id": "selectable-card-0034",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -356,7 +356,7 @@
      }
     },
     {
-     "id": "selectablecard-0035",
+     "id": "selectable-card-0035",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -365,7 +365,7 @@
      }
     },
     {
-     "id": "selectablecard-0036",
+     "id": "selectable-card-0036",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -374,7 +374,7 @@
      }
     },
     {
-     "id": "selectablecard-0037",
+     "id": "selectable-card-0037",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -383,7 +383,7 @@
      }
     },
     {
-     "id": "selectablecard-0038",
+     "id": "selectable-card-0038",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -392,7 +392,7 @@
      }
     },
     {
-     "id": "selectablecard-0039",
+     "id": "selectable-card-0039",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -401,7 +401,7 @@
      }
     },
     {
-     "id": "selectablecard-0040",
+     "id": "selectable-card-0040",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -411,7 +411,7 @@
      }
     },
     {
-     "id": "selectablecard-0041",
+     "id": "selectable-card-0041",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -423,7 +423,7 @@
      }
     },
     {
-     "id": "selectablecard-0042",
+     "id": "selectable-card-0042",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -434,7 +434,7 @@
      }
     },
     {
-     "id": "selectablecard-0043",
+     "id": "selectable-card-0043",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -446,7 +446,7 @@
      }
     },
     {
-     "id": "selectablecard-0044",
+     "id": "selectable-card-0044",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -457,7 +457,7 @@
      }
     },
     {
-     "id": "selectablecard-0045",
+     "id": "selectable-card-0045",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -469,7 +469,7 @@
      }
     },
     {
-     "id": "selectablecard-0046",
+     "id": "selectable-card-0046",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -481,7 +481,7 @@
      }
     },
     {
-     "id": "selectablecard-0047",
+     "id": "selectable-card-0047",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -493,7 +493,7 @@
      }
     },
     {
-     "id": "selectablecard-0048",
+     "id": "selectable-card-0048",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -505,7 +505,7 @@
      }
     },
     {
-     "id": "selectablecard-0049",
+     "id": "selectable-card-0049",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -516,7 +516,7 @@
      }
     },
     {
-     "id": "selectablecard-0050",
+     "id": "selectable-card-0050",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -526,7 +526,7 @@
      }
     },
     {
-     "id": "selectablecard-0051",
+     "id": "selectable-card-0051",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -536,7 +536,7 @@
      }
     },
     {
-     "id": "selectablecard-0052",
+     "id": "selectable-card-0052",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -547,7 +547,7 @@
      }
     },
     {
-     "id": "selectablecard-0053",
+     "id": "selectable-card-0053",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -557,7 +557,7 @@
      }
     },
     {
-     "id": "selectablecard-0054",
+     "id": "selectable-card-0054",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -566,7 +566,7 @@
      }
     },
     {
-     "id": "selectablecard-0055",
+     "id": "selectable-card-0055",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -576,7 +576,7 @@
      }
     },
     {
-     "id": "selectablecard-0056",
+     "id": "selectable-card-0056",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -586,7 +586,7 @@
      }
     },
     {
-     "id": "selectablecard-0057",
+     "id": "selectable-card-0057",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -596,7 +596,7 @@
      }
     },
     {
-     "id": "selectablecard-0058",
+     "id": "selectable-card-0058",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -606,7 +606,7 @@
      }
     },
     {
-     "id": "selectablecard-0059",
+     "id": "selectable-card-0059",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -616,7 +616,7 @@
      }
     },
     {
-     "id": "selectablecard-0060",
+     "id": "selectable-card-0060",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -626,7 +626,7 @@
      }
     },
     {
-     "id": "selectablecard-0061",
+     "id": "selectable-card-0061",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -635,7 +635,7 @@
      }
     },
     {
-     "id": "selectablecard-0062",
+     "id": "selectable-card-0062",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -644,7 +644,7 @@
      }
     },
     {
-     "id": "selectablecard-0063",
+     "id": "selectable-card-0063",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -654,7 +654,7 @@
      }
     },
     {
-     "id": "selectablecard-0064",
+     "id": "selectable-card-0064",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -664,7 +664,7 @@
      }
     },
     {
-     "id": "selectablecard-0065",
+     "id": "selectable-card-0065",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -674,7 +674,7 @@
      }
     },
     {
-     "id": "selectablecard-0066",
+     "id": "selectable-card-0066",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -684,7 +684,7 @@
      }
     },
     {
-     "id": "selectablecard-0067",
+     "id": "selectable-card-0067",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -694,7 +694,7 @@
      }
     },
     {
-     "id": "selectablecard-0068",
+     "id": "selectable-card-0068",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -704,7 +704,7 @@
      }
     },
     {
-     "id": "selectablecard-0069",
+     "id": "selectable-card-0069",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -714,7 +714,7 @@
      }
     },
     {
-     "id": "selectablecard-0070",
+     "id": "selectable-card-0070",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -724,7 +724,7 @@
      }
     },
     {
-     "id": "selectablecard-0071",
+     "id": "selectable-card-0071",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -734,7 +734,7 @@
      }
     },
     {
-     "id": "selectablecard-0072",
+     "id": "selectable-card-0072",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -744,7 +744,7 @@
      }
     },
     {
-     "id": "selectablecard-0073",
+     "id": "selectable-card-0073",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -753,7 +753,7 @@
      }
     },
     {
-     "id": "selectablecard-0074",
+     "id": "selectable-card-0074",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -762,7 +762,7 @@
      }
     },
     {
-     "id": "selectablecard-0075",
+     "id": "selectable-card-0075",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -771,7 +771,7 @@
      }
     },
     {
-     "id": "selectablecard-0076",
+     "id": "selectable-card-0076",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -780,7 +780,7 @@
      }
     },
     {
-     "id": "selectablecard-0077",
+     "id": "selectable-card-0077",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -789,7 +789,7 @@
      }
     },
     {
-     "id": "selectablecard-0078",
+     "id": "selectable-card-0078",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -798,7 +798,7 @@
      }
     },
     {
-     "id": "selectablecard-0079",
+     "id": "selectable-card-0079",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -807,7 +807,7 @@
      }
     },
     {
-     "id": "selectablecard-0080",
+     "id": "selectable-card-0080",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -816,7 +816,7 @@
      }
     },
     {
-     "id": "selectablecard-0081",
+     "id": "selectable-card-0081",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -826,7 +826,7 @@
      }
     },
     {
-     "id": "selectablecard-0082",
+     "id": "selectable-card-0082",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -835,7 +835,7 @@
      }
     },
     {
-     "id": "selectablecard-0083",
+     "id": "selectable-card-0083",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -844,7 +844,7 @@
      }
     },
     {
-     "id": "selectablecard-0084",
+     "id": "selectable-card-0084",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -853,7 +853,7 @@
      }
     },
     {
-     "id": "selectablecard-0085",
+     "id": "selectable-card-0085",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -863,7 +863,7 @@
      }
     },
     {
-     "id": "selectablecard-0086",
+     "id": "selectable-card-0086",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -872,7 +872,7 @@
      }
     },
     {
-     "id": "selectablecard-0087",
+     "id": "selectable-card-0087",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -881,7 +881,7 @@
      }
     },
     {
-     "id": "selectablecard-0088",
+     "id": "selectable-card-0088",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -890,7 +890,7 @@
      }
     },
     {
-     "id": "selectablecard-0089",
+     "id": "selectable-card-0089",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -899,7 +899,7 @@
      }
     },
     {
-     "id": "selectablecard-0090",
+     "id": "selectable-card-0090",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -908,7 +908,7 @@
      }
     },
     {
-     "id": "selectablecard-0091",
+     "id": "selectable-card-0091",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -917,7 +917,7 @@
      }
     },
     {
-     "id": "selectablecard-0092",
+     "id": "selectable-card-0092",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -927,7 +927,7 @@
      }
     },
     {
-     "id": "selectablecard-0093",
+     "id": "selectable-card-0093",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -936,7 +936,7 @@
      }
     },
     {
-     "id": "selectablecard-0094",
+     "id": "selectable-card-0094",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -946,7 +946,7 @@
      }
     },
     {
-     "id": "selectablecard-0095",
+     "id": "selectable-card-0095",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -955,7 +955,7 @@
      }
     },
     {
-     "id": "selectablecard-0096",
+     "id": "selectable-card-0096",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -964,7 +964,7 @@
      }
     },
     {
-     "id": "selectablecard-0097",
+     "id": "selectable-card-0097",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -973,7 +973,7 @@
      }
     },
     {
-     "id": "selectablecard-0098",
+     "id": "selectable-card-0098",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -982,7 +982,7 @@
      }
     },
     {
-     "id": "selectablecard-0099",
+     "id": "selectable-card-0099",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -991,7 +991,7 @@
      }
     },
     {
-     "id": "selectablecard-0100",
+     "id": "selectable-card-0100",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1000,7 +1000,7 @@
      }
     },
     {
-     "id": "selectablecard-0101",
+     "id": "selectable-card-0101",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1009,7 +1009,7 @@
      }
     },
     {
-     "id": "selectablecard-0102",
+     "id": "selectable-card-0102",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1018,7 +1018,7 @@
      }
     },
     {
-     "id": "selectablecard-0103",
+     "id": "selectable-card-0103",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1027,7 +1027,7 @@
      }
     },
     {
-     "id": "selectablecard-0104",
+     "id": "selectable-card-0104",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1036,7 +1036,7 @@
      }
     },
     {
-     "id": "selectablecard-0105",
+     "id": "selectable-card-0105",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1046,7 +1046,7 @@
      }
     },
     {
-     "id": "selectablecard-0106",
+     "id": "selectable-card-0106",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1055,7 +1055,7 @@
      }
     },
     {
-     "id": "selectablecard-0107",
+     "id": "selectable-card-0107",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1064,7 +1064,7 @@
      }
     },
     {
-     "id": "selectablecard-0108",
+     "id": "selectable-card-0108",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1073,7 +1073,7 @@
      }
     },
     {
-     "id": "selectablecard-0109",
+     "id": "selectable-card-0109",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1082,7 +1082,7 @@
      }
     },
     {
-     "id": "selectablecard-0110",
+     "id": "selectable-card-0110",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1091,7 +1091,7 @@
      }
     },
     {
-     "id": "selectablecard-0111",
+     "id": "selectable-card-0111",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1100,7 +1100,7 @@
      }
     },
     {
-     "id": "selectablecard-0112",
+     "id": "selectable-card-0112",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1109,7 +1109,7 @@
      }
     },
     {
-     "id": "selectablecard-0113",
+     "id": "selectable-card-0113",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1118,7 +1118,7 @@
      }
     },
     {
-     "id": "selectablecard-0114",
+     "id": "selectable-card-0114",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1127,7 +1127,7 @@
      }
     },
     {
-     "id": "selectablecard-0115",
+     "id": "selectable-card-0115",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1136,7 +1136,7 @@
      }
     },
     {
-     "id": "selectablecard-0116",
+     "id": "selectable-card-0116",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1145,7 +1145,7 @@
      }
     },
     {
-     "id": "selectablecard-0117",
+     "id": "selectable-card-0117",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1155,7 +1155,7 @@
      }
     },
     {
-     "id": "selectablecard-0118",
+     "id": "selectable-card-0118",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1164,7 +1164,7 @@
      }
     },
     {
-     "id": "selectablecard-0119",
+     "id": "selectable-card-0119",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1173,7 +1173,7 @@
      }
     },
     {
-     "id": "selectablecard-0120",
+     "id": "selectable-card-0120",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1182,7 +1182,7 @@
      }
     },
     {
-     "id": "selectablecard-0121",
+     "id": "selectable-card-0121",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1191,7 +1191,7 @@
      }
     },
     {
-     "id": "selectablecard-0122",
+     "id": "selectable-card-0122",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1200,7 +1200,7 @@
      }
     },
     {
-     "id": "selectablecard-0123",
+     "id": "selectable-card-0123",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1209,7 +1209,7 @@
      }
     },
     {
-     "id": "selectablecard-0124",
+     "id": "selectable-card-0124",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1218,7 +1218,7 @@
      }
     },
     {
-     "id": "selectablecard-0125",
+     "id": "selectable-card-0125",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1227,7 +1227,7 @@
      }
     },
     {
-     "id": "selectablecard-0126",
+     "id": "selectable-card-0126",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1236,7 +1236,7 @@
      }
     },
     {
-     "id": "selectablecard-0127",
+     "id": "selectable-card-0127",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1245,7 +1245,7 @@
      }
     },
     {
-     "id": "selectablecard-0128",
+     "id": "selectable-card-0128",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1255,7 +1255,7 @@
      }
     },
     {
-     "id": "selectablecard-0129",
+     "id": "selectable-card-0129",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1264,7 +1264,7 @@
      }
     },
     {
-     "id": "selectablecard-0130",
+     "id": "selectable-card-0130",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1273,7 +1273,7 @@
      }
     },
     {
-     "id": "selectablecard-0131",
+     "id": "selectable-card-0131",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1282,7 +1282,7 @@
      }
     },
     {
-     "id": "selectablecard-0132",
+     "id": "selectable-card-0132",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1291,7 +1291,7 @@
      }
     },
     {
-     "id": "selectablecard-0133",
+     "id": "selectable-card-0133",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1300,7 +1300,7 @@
      }
     },
     {
-     "id": "selectablecard-0134",
+     "id": "selectable-card-0134",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1309,7 +1309,7 @@
      }
     },
     {
-     "id": "selectablecard-0135",
+     "id": "selectable-card-0135",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1318,7 +1318,7 @@
      }
     },
     {
-     "id": "selectablecard-0136",
+     "id": "selectable-card-0136",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1327,7 +1327,7 @@
      }
     },
     {
-     "id": "selectablecard-0137",
+     "id": "selectable-card-0137",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1336,7 +1336,7 @@
      }
     },
     {
-     "id": "selectablecard-0138",
+     "id": "selectable-card-0138",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1345,7 +1345,7 @@
      }
     },
     {
-     "id": "selectablecard-0139",
+     "id": "selectable-card-0139",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1355,7 +1355,7 @@
      }
     },
     {
-     "id": "selectablecard-0140",
+     "id": "selectable-card-0140",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1364,7 +1364,7 @@
      }
     },
     {
-     "id": "selectablecard-0141",
+     "id": "selectable-card-0141",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1373,7 +1373,7 @@
      }
     },
     {
-     "id": "selectablecard-0142",
+     "id": "selectable-card-0142",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1382,7 +1382,7 @@
      }
     },
     {
-     "id": "selectablecard-0143",
+     "id": "selectable-card-0143",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1391,7 +1391,7 @@
      }
     },
     {
-     "id": "selectablecard-0144",
+     "id": "selectable-card-0144",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1400,7 +1400,7 @@
      }
     },
     {
-     "id": "selectablecard-0145",
+     "id": "selectable-card-0145",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1409,7 +1409,7 @@
      }
     },
     {
-     "id": "selectablecard-0146",
+     "id": "selectable-card-0146",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1418,7 +1418,7 @@
      }
     },
     {
-     "id": "selectablecard-0147",
+     "id": "selectable-card-0147",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1427,7 +1427,7 @@
      }
     },
     {
-     "id": "selectablecard-0148",
+     "id": "selectable-card-0148",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1436,7 +1436,7 @@
      }
     },
     {
-     "id": "selectablecard-0149",
+     "id": "selectable-card-0149",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1445,7 +1445,7 @@
      }
     },
     {
-     "id": "selectablecard-0150",
+     "id": "selectable-card-0150",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1455,7 +1455,7 @@
      }
     },
     {
-     "id": "selectablecard-0151",
+     "id": "selectable-card-0151",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1464,7 +1464,7 @@
      }
     },
     {
-     "id": "selectablecard-0152",
+     "id": "selectable-card-0152",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1473,7 +1473,7 @@
      }
     },
     {
-     "id": "selectablecard-0153",
+     "id": "selectable-card-0153",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1482,7 +1482,7 @@
      }
     },
     {
-     "id": "selectablecard-0154",
+     "id": "selectable-card-0154",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1491,7 +1491,7 @@
      }
     },
     {
-     "id": "selectablecard-0155",
+     "id": "selectable-card-0155",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1500,7 +1500,7 @@
      }
     },
     {
-     "id": "selectablecard-0156",
+     "id": "selectable-card-0156",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1509,7 +1509,7 @@
      }
     },
     {
-     "id": "selectablecard-0157",
+     "id": "selectable-card-0157",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1518,7 +1518,7 @@
      }
     },
     {
-     "id": "selectablecard-0158",
+     "id": "selectable-card-0158",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -1527,7 +1527,7 @@
      }
     },
     {
-     "id": "selectablecard-0159",
+     "id": "selectable-card-0159",
      "kind": "pairwise",
      "props": {
       "label": "Label",

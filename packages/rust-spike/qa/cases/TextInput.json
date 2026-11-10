@@ -94,7 +94,7 @@
    "takesChildren": false,
    "cases": [
     {
-     "id": "textinput-0001",
+     "id": "text-input-0001",
      "kind": "default",
      "props": {
       "label": "Label",
@@ -102,7 +102,7 @@
      }
     },
     {
-     "id": "textinput-0002",
+     "id": "text-input-0002",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -111,7 +111,7 @@
      }
     },
     {
-     "id": "textinput-0003",
+     "id": "text-input-0003",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -120,7 +120,7 @@
      }
     },
     {
-     "id": "textinput-0004",
+     "id": "text-input-0004",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -129,7 +129,7 @@
      }
     },
     {
-     "id": "textinput-0005",
+     "id": "text-input-0005",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -138,7 +138,7 @@
      }
     },
     {
-     "id": "textinput-0006",
+     "id": "text-input-0006",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -147,7 +147,7 @@
      }
     },
     {
-     "id": "textinput-0007",
+     "id": "text-input-0007",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -156,7 +156,7 @@
      }
     },
     {
-     "id": "textinput-0008",
+     "id": "text-input-0008",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -165,7 +165,7 @@
      }
     },
     {
-     "id": "textinput-0009",
+     "id": "text-input-0009",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -174,7 +174,7 @@
      }
     },
     {
-     "id": "textinput-0010",
+     "id": "text-input-0010",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -183,7 +183,7 @@
      }
     },
     {
-     "id": "textinput-0011",
+     "id": "text-input-0011",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -192,7 +192,7 @@
      }
     },
     {
-     "id": "textinput-0012",
+     "id": "text-input-0012",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -201,7 +201,7 @@
      }
     },
     {
-     "id": "textinput-0013",
+     "id": "text-input-0013",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -210,7 +210,7 @@
      }
     },
     {
-     "id": "textinput-0014",
+     "id": "text-input-0014",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -219,7 +219,7 @@
      }
     },
     {
-     "id": "textinput-0015",
+     "id": "text-input-0015",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -228,7 +228,7 @@
      }
     },
     {
-     "id": "textinput-0016",
+     "id": "text-input-0016",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -237,7 +237,7 @@
      }
     },
     {
-     "id": "textinput-0017",
+     "id": "text-input-0017",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -246,7 +246,7 @@
      }
     },
     {
-     "id": "textinput-0018",
+     "id": "text-input-0018",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -255,7 +255,7 @@
      }
     },
     {
-     "id": "textinput-0019",
+     "id": "text-input-0019",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -264,7 +264,7 @@
      }
     },
     {
-     "id": "textinput-0020",
+     "id": "text-input-0020",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -273,7 +273,7 @@
      }
     },
     {
-     "id": "textinput-0021",
+     "id": "text-input-0021",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -294,7 +294,7 @@
      }
     },
     {
-     "id": "textinput-0022",
+     "id": "text-input-0022",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -309,7 +309,7 @@
      }
     },
     {
-     "id": "textinput-0023",
+     "id": "text-input-0023",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -324,7 +324,7 @@
      }
     },
     {
-     "id": "textinput-0024",
+     "id": "text-input-0024",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -339,7 +339,7 @@
      }
     },
     {
-     "id": "textinput-0025",
+     "id": "text-input-0025",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -355,7 +355,7 @@
      }
     },
     {
-     "id": "textinput-0026",
+     "id": "text-input-0026",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -368,7 +368,7 @@
      }
     },
     {
-     "id": "textinput-0027",
+     "id": "text-input-0027",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -383,7 +383,7 @@
      }
     },
     {
-     "id": "textinput-0028",
+     "id": "text-input-0028",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -394,7 +394,7 @@
      }
     },
     {
-     "id": "textinput-0029",
+     "id": "text-input-0029",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -406,7 +406,7 @@
      }
     },
     {
-     "id": "textinput-0030",
+     "id": "text-input-0030",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -418,7 +418,7 @@
      }
     },
     {
-     "id": "textinput-0031",
+     "id": "text-input-0031",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -430,7 +430,7 @@
      }
     },
     {
-     "id": "textinput-0032",
+     "id": "text-input-0032",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -446,7 +446,7 @@
      }
     },
     {
-     "id": "textinput-0033",
+     "id": "text-input-0033",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -457,7 +457,7 @@
      }
     },
     {
-     "id": "textinput-0034",
+     "id": "text-input-0034",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -476,7 +476,7 @@
      }
     },
     {
-     "id": "textinput-0035",
+     "id": "text-input-0035",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -486,7 +486,7 @@
      }
     },
     {
-     "id": "textinput-0036",
+     "id": "text-input-0036",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -496,7 +496,7 @@
      }
     },
     {
-     "id": "textinput-0037",
+     "id": "text-input-0037",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -506,7 +506,7 @@
      }
     },
     {
-     "id": "textinput-0038",
+     "id": "text-input-0038",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -518,7 +518,7 @@
      }
     },
     {
-     "id": "textinput-0039",
+     "id": "text-input-0039",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -531,7 +531,7 @@
      }
     },
     {
-     "id": "textinput-0040",
+     "id": "text-input-0040",
      "kind": "pairwise",
      "props": {
       "label": "Label",
