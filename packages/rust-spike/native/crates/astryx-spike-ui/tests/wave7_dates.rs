@@ -77,3 +77,100 @@ fn page_down_moves_a_month_and_range_marks_the_band() {
     rig.key(Key::PageDown, Default::default());
     assert!(find(&rig.tree(), Role::Grid, "April 2026").is_some());
 }
+
+#[derive(Clone, Debug, PartialEq)]
+enum NMsg {
+    Num(f64),
+    Date(CalendarValue),
+    Time(Option<ClockTime>),
+}
+
+#[test]
+fn number_input_commits_on_enter_and_steps_with_arrows() {
+    assert_eq!(parse_number("1,200", None, None, false), Some(1200.0));
+    assert_eq!(parse_number("7.6", Some(0.0), Some(5.0), true), Some(5.0));
+    assert_eq!(parse_number("-", None, None, false), None);
+    let mut rig = Rig::<NMsg>::new(|| {
+        NumberInput::new("qty", "Quantity", Some(3.0))
+            .min(0.0)
+            .max(10.0)
+            .has_number_steppers(true)
+            .on_change(NMsg::Num)
+            .into()
+    });
+    let field = find(&rig.tree(), Role::SpinButton, "Quantity")
+        .cloned()
+        .unwrap();
+    assert_eq!(field.value.as_deref(), Some("3"));
+    rig.key(Key::Up, Default::default());
+    assert_eq!(rig.messages(), vec![NMsg::Num(4.0)]);
+    rig.type_text("9");
+    rig.key(Key::Enter, Default::default());
+    assert_eq!(
+        rig.messages().last(),
+        Some(&NMsg::Num(10.0)),
+        "39 clamps to the max"
+    );
+    assert!(find(&rig.tree(), Role::Button, "Increase").is_some());
+}
+
+#[test]
+fn date_input_opens_a_calendar_and_formats_the_value() {
+    let mut rig = Rig::<NMsg>::sized(
+        || {
+            DateInput::single("due", "Due date", Some(d(2026, 11, 9)))
+                .on_change(NMsg::Date)
+                .into()
+        },
+        800,
+        600,
+    );
+    let b = find(&rig.tree(), Role::Button, "Due date")
+        .cloned()
+        .unwrap();
+    assert_eq!(b.value.as_deref(), Some("November 9, 2026"));
+    rig.press(astryx_core::contract::Input::A);
+    assert!(find(&rig.tree(), Role::Grid, "November 2026").is_some());
+    assert_eq!(format_date(d(2026, 11, 9), DateFormat::Date), "Nov 9, 2026");
+    let range = Rig::<NMsg>::new(|| {
+        DateInput::range(
+            "trip",
+            "Trip",
+            Some(DateRange {
+                start: d(2026, 3, 3),
+                end: Some(d(2026, 3, 6)),
+            }),
+        )
+        .into()
+    });
+    let b = find(&range.tree(), Role::Button, "Trip").cloned().unwrap();
+    assert_eq!(b.value.as_deref(), Some("Mar 3, 2026 – Mar 6, 2026"));
+}
+
+#[test]
+fn time_input_lists_times() {
+    assert_eq!(ClockTime::new(13, 5).label(true), "1:05 PM");
+    assert_eq!(ClockTime::parse("09:30"), Some(ClockTime::new(9, 30)));
+    let mut rig = Rig::<NMsg>::new(|| {
+        TimeInput::new("t", "Start", Some(ClockTime::new(9, 0)))
+            .min(ClockTime::new(9, 0))
+            .max(ClockTime::new(10, 0))
+            .on_change(NMsg::Time)
+            .into()
+    });
+    rig.key(Key::Down, Default::default());
+    let opts: Vec<String> = all(&rig.tree(), Role::ListBoxOption)
+        .iter()
+        .filter_map(|o| o.label.clone())
+        .collect();
+    assert_eq!(
+        opts,
+        ["9:00 AM", "9:15 AM", "9:30 AM", "9:45 AM", "10:00 AM"]
+    );
+    rig.key(Key::Down, Default::default());
+    rig.key(Key::Enter, Default::default());
+    assert_eq!(
+        rig.messages(),
+        vec![NMsg::Time(Some(ClockTime::new(9, 15)))]
+    );
+}

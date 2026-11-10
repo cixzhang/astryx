@@ -30,4 +30,4 @@ pub use pickers::{
 pub use switch::{LabelPosition, LabelSpacing, Switch, SwitchSize};
 #[allow(unused_imports)]
 pub(crate) use text_input::clear_button;
-pub use text_input::{TextInput, TextInputType};
+pub use text_input::{ComboHooks, FieldKeys, TextInput, TextInputType};
