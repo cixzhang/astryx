@@ -1,0 +1,28 @@
+{
+ "family": "VisuallyHidden",
+ "source": "packages/core/src/VisuallyHidden/VisuallyHidden.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "VisuallyHidden",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "visuallyhidden-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,547 @@
+{
+ "family": "TextInput",
+ "source": "packages/core/src/TextInput/TextInput.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "TextInput",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ],
+    "isLoading": [
+     false,
+     true
+    ],
+    "statusVariant": [
+     "attached",
+     "detached",
+     "tooltip"
+    ],
+    "hasClear": [
+     false,
+     true
+    ],
+    "hasAutoFocus": [
+     false,
+     true
+    ],
+    "autoCapitalize": [
+     "off",
+     "none",
+     "on",
+     "sentences",
+     "words",
+     "characters"
+    ],
+    "hasAutoCorrect": [
+     false,
+     true
+    ],
+    "hasSpellCheck": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "isDisabled": false,
+    "isReadOnly": false,
+    "isLoading": false,
+    "statusVariant": "attached",
+    "hasClear": false,
+    "hasAutoFocus": false,
+    "autoCapitalize": "off",
+    "hasAutoCorrect": false,
+    "hasSpellCheck": false
+   },
+   "base": {
+    "label": "Label",
+    "value": "value"
+   },
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "textinput-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label",
+      "value": "value"
+     }
+    },
+    {
+     "id": "textinput-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "textinput-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "textinput-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "textinput-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "textinput-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "textinput-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "textinput-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "textinput-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isLoading": true
+     }
+    },
+    {
+     "id": "textinput-0010",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "statusVariant": "detached"
+     }
+    },
+    {
+     "id": "textinput-0011",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "textinput-0012",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "hasClear": true
+     }
+    },
+    {
+     "id": "textinput-0013",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "hasAutoFocus": true
+     }
+    },
+    {
+     "id": "textinput-0014",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "autoCapitalize": "none"
+     }
+    },
+    {
+     "id": "textinput-0015",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "autoCapitalize": "on"
+     }
+    },
+    {
+     "id": "textinput-0016",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "autoCapitalize": "sentences"
+     }
+    },
+    {
+     "id": "textinput-0017",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "autoCapitalize": "words"
+     }
+    },
+    {
+     "id": "textinput-0018",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "autoCapitalize": "characters"
+     }
+    },
+    {
+     "id": "textinput-0019",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "hasAutoCorrect": true
+     }
+    },
+    {
+     "id": "textinput-0020",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0021",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "hasAutoFocus": true,
+      "autoCapitalize": "none",
+      "hasAutoCorrect": true,
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0022",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isOptional": true,
+      "isDisabled": true,
+      "isLoading": true,
+      "statusVariant": "tooltip",
+      "hasAutoFocus": true,
+      "autoCapitalize": "on",
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0023",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "isReadOnly": true,
+      "statusVariant": "tooltip",
+      "hasClear": true,
+      "autoCapitalize": "sentences",
+      "hasAutoCorrect": true
+     }
+    },
+    {
+     "id": "textinput-0024",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "isRequired": true,
+      "isDisabled": true,
+      "statusVariant": "detached",
+      "autoCapitalize": "words",
+      "hasAutoCorrect": true,
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0025",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isReadOnly": true,
+      "isLoading": true,
+      "hasClear": true,
+      "hasAutoFocus": true,
+      "autoCapitalize": "characters"
+     }
+    },
+    {
+     "id": "textinput-0026",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isReadOnly": true,
+      "isLoading": true,
+      "statusVariant": "tooltip",
+      "autoCapitalize": "none"
+     }
+    },
+    {
+     "id": "textinput-0027",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isRequired": true,
+      "isDisabled": true,
+      "hasClear": true,
+      "hasAutoFocus": true,
+      "autoCapitalize": "characters",
+      "hasAutoCorrect": true,
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0028",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "statusVariant": "detached",
+      "autoCapitalize": "on",
+      "hasAutoCorrect": true
+     }
+    },
+    {
+     "id": "textinput-0029",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "statusVariant": "tooltip",
+      "autoCapitalize": "sentences",
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0030",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "autoCapitalize": "on"
+     }
+    },
+    {
+     "id": "textinput-0031",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isOptional": true,
+      "isDisabled": true,
+      "autoCapitalize": "sentences"
+     }
+    },
+    {
+     "id": "textinput-0032",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isReadOnly": true,
+      "isLoading": true,
+      "hasClear": true,
+      "hasAutoFocus": true,
+      "autoCapitalize": "words"
+     }
+    },
+    {
+     "id": "textinput-0033",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "statusVariant": "detached",
+      "autoCapitalize": "characters"
+     }
+    },
+    {
+     "id": "textinput-0034",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "isRequired": true,
+      "isDisabled": true,
+      "isReadOnly": true,
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasClear": true,
+      "hasAutoFocus": true,
+      "hasAutoCorrect": true,
+      "hasSpellCheck": true
+     }
+    },
+    {
+     "id": "textinput-0035",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "statusVariant": "tooltip",
+      "autoCapitalize": "words"
+     }
+    },
+    {
+     "id": "textinput-0036",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "statusVariant": "tooltip"
+     }
+    },
+    {
+     "id": "textinput-0037",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "autoCapitalize": "none"
+     }
+    },
+    {
+     "id": "textinput-0038",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "lg",
+      "isReadOnly": true,
+      "hasClear": true,
+      "autoCapitalize": "on"
+     }
+    },
+    {
+     "id": "textinput-0039",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "isLoading": true,
+      "statusVariant": "detached",
+      "hasAutoFocus": true,
+      "autoCapitalize": "sentences"
+     }
+    },
+    {
+     "id": "textinput-0040",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "value": "value",
+      "size": "sm",
+      "statusVariant": "tooltip",
+      "autoCapitalize": "characters"
+     }
+    }
+   ]
+  }
+ ]
+}

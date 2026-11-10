@@ -1,0 +1,829 @@
+{
+ "family": "Icon",
+ "source": "packages/core/src/Icon/Icon.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Icon",
+   "visualProps": {
+    "color": [
+     "primary",
+     "secondary",
+     "tertiary",
+     "disabled",
+     "accent",
+     "info",
+     "success",
+     "error",
+     "warning",
+     "inherit",
+     "blue",
+     "red",
+     "green",
+     "gray",
+     "cyan",
+     "teal",
+     "yellow",
+     "orange",
+     "pink",
+     "purple"
+    ],
+    "size": [
+     "xsm",
+     "sm",
+     "md",
+     "lg"
+    ]
+   },
+   "defaults": {
+    "color": "inherit",
+    "size": null
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "icon-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "icon-0002",
+     "kind": "sweep",
+     "props": {
+      "color": "primary"
+     }
+    },
+    {
+     "id": "icon-0003",
+     "kind": "sweep",
+     "props": {
+      "color": "secondary"
+     }
+    },
+    {
+     "id": "icon-0004",
+     "kind": "sweep",
+     "props": {
+      "color": "tertiary"
+     }
+    },
+    {
+     "id": "icon-0005",
+     "kind": "sweep",
+     "props": {
+      "color": "disabled"
+     }
+    },
+    {
+     "id": "icon-0006",
+     "kind": "sweep",
+     "props": {
+      "color": "accent"
+     }
+    },
+    {
+     "id": "icon-0007",
+     "kind": "sweep",
+     "props": {
+      "color": "info"
+     }
+    },
+    {
+     "id": "icon-0008",
+     "kind": "sweep",
+     "props": {
+      "color": "success"
+     }
+    },
+    {
+     "id": "icon-0009",
+     "kind": "sweep",
+     "props": {
+      "color": "error"
+     }
+    },
+    {
+     "id": "icon-0010",
+     "kind": "sweep",
+     "props": {
+      "color": "warning"
+     }
+    },
+    {
+     "id": "icon-0011",
+     "kind": "sweep",
+     "props": {
+      "color": "blue"
+     }
+    },
+    {
+     "id": "icon-0012",
+     "kind": "sweep",
+     "props": {
+      "color": "red"
+     }
+    },
+    {
+     "id": "icon-0013",
+     "kind": "sweep",
+     "props": {
+      "color": "green"
+     }
+    },
+    {
+     "id": "icon-0014",
+     "kind": "sweep",
+     "props": {
+      "color": "gray"
+     }
+    },
+    {
+     "id": "icon-0015",
+     "kind": "sweep",
+     "props": {
+      "color": "cyan"
+     }
+    },
+    {
+     "id": "icon-0016",
+     "kind": "sweep",
+     "props": {
+      "color": "teal"
+     }
+    },
+    {
+     "id": "icon-0017",
+     "kind": "sweep",
+     "props": {
+      "color": "yellow"
+     }
+    },
+    {
+     "id": "icon-0018",
+     "kind": "sweep",
+     "props": {
+      "color": "orange"
+     }
+    },
+    {
+     "id": "icon-0019",
+     "kind": "sweep",
+     "props": {
+      "color": "pink"
+     }
+    },
+    {
+     "id": "icon-0020",
+     "kind": "sweep",
+     "props": {
+      "color": "purple"
+     }
+    },
+    {
+     "id": "icon-0021",
+     "kind": "sweep",
+     "props": {
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0022",
+     "kind": "sweep",
+     "props": {
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0023",
+     "kind": "sweep",
+     "props": {
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0024",
+     "kind": "sweep",
+     "props": {
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0025",
+     "kind": "pairwise",
+     "props": {
+      "color": "primary",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0026",
+     "kind": "pairwise",
+     "props": {
+      "color": "primary",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0027",
+     "kind": "pairwise",
+     "props": {
+      "color": "primary",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0028",
+     "kind": "pairwise",
+     "props": {
+      "color": "primary",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0029",
+     "kind": "pairwise",
+     "props": {
+      "color": "secondary",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0030",
+     "kind": "pairwise",
+     "props": {
+      "color": "secondary",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0031",
+     "kind": "pairwise",
+     "props": {
+      "color": "secondary",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0032",
+     "kind": "pairwise",
+     "props": {
+      "color": "secondary",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0033",
+     "kind": "pairwise",
+     "props": {
+      "color": "tertiary",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0034",
+     "kind": "pairwise",
+     "props": {
+      "color": "tertiary",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0035",
+     "kind": "pairwise",
+     "props": {
+      "color": "tertiary",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0036",
+     "kind": "pairwise",
+     "props": {
+      "color": "tertiary",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0037",
+     "kind": "pairwise",
+     "props": {
+      "color": "disabled",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0038",
+     "kind": "pairwise",
+     "props": {
+      "color": "disabled",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0039",
+     "kind": "pairwise",
+     "props": {
+      "color": "disabled",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0040",
+     "kind": "pairwise",
+     "props": {
+      "color": "disabled",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0041",
+     "kind": "pairwise",
+     "props": {
+      "color": "accent",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0042",
+     "kind": "pairwise",
+     "props": {
+      "color": "accent",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0043",
+     "kind": "pairwise",
+     "props": {
+      "color": "accent",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0044",
+     "kind": "pairwise",
+     "props": {
+      "color": "accent",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0045",
+     "kind": "pairwise",
+     "props": {
+      "color": "info",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0046",
+     "kind": "pairwise",
+     "props": {
+      "color": "info",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0047",
+     "kind": "pairwise",
+     "props": {
+      "color": "info",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0048",
+     "kind": "pairwise",
+     "props": {
+      "color": "info",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0049",
+     "kind": "pairwise",
+     "props": {
+      "color": "success",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0050",
+     "kind": "pairwise",
+     "props": {
+      "color": "success",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0051",
+     "kind": "pairwise",
+     "props": {
+      "color": "success",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0052",
+     "kind": "pairwise",
+     "props": {
+      "color": "success",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0053",
+     "kind": "pairwise",
+     "props": {
+      "color": "error",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0054",
+     "kind": "pairwise",
+     "props": {
+      "color": "error",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0055",
+     "kind": "pairwise",
+     "props": {
+      "color": "error",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0056",
+     "kind": "pairwise",
+     "props": {
+      "color": "error",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0057",
+     "kind": "pairwise",
+     "props": {
+      "color": "warning",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0058",
+     "kind": "pairwise",
+     "props": {
+      "color": "warning",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0059",
+     "kind": "pairwise",
+     "props": {
+      "color": "warning",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0060",
+     "kind": "pairwise",
+     "props": {
+      "color": "warning",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0061",
+     "kind": "pairwise",
+     "props": {
+      "color": "blue",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0062",
+     "kind": "pairwise",
+     "props": {
+      "color": "blue",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0063",
+     "kind": "pairwise",
+     "props": {
+      "color": "blue",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0064",
+     "kind": "pairwise",
+     "props": {
+      "color": "blue",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0065",
+     "kind": "pairwise",
+     "props": {
+      "color": "red",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0066",
+     "kind": "pairwise",
+     "props": {
+      "color": "red",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0067",
+     "kind": "pairwise",
+     "props": {
+      "color": "red",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0068",
+     "kind": "pairwise",
+     "props": {
+      "color": "red",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0069",
+     "kind": "pairwise",
+     "props": {
+      "color": "green",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0070",
+     "kind": "pairwise",
+     "props": {
+      "color": "green",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0071",
+     "kind": "pairwise",
+     "props": {
+      "color": "green",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0072",
+     "kind": "pairwise",
+     "props": {
+      "color": "green",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0073",
+     "kind": "pairwise",
+     "props": {
+      "color": "gray",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0074",
+     "kind": "pairwise",
+     "props": {
+      "color": "gray",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0075",
+     "kind": "pairwise",
+     "props": {
+      "color": "gray",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0076",
+     "kind": "pairwise",
+     "props": {
+      "color": "gray",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0077",
+     "kind": "pairwise",
+     "props": {
+      "color": "cyan",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0078",
+     "kind": "pairwise",
+     "props": {
+      "color": "cyan",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0079",
+     "kind": "pairwise",
+     "props": {
+      "color": "cyan",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0080",
+     "kind": "pairwise",
+     "props": {
+      "color": "cyan",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0081",
+     "kind": "pairwise",
+     "props": {
+      "color": "teal",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0082",
+     "kind": "pairwise",
+     "props": {
+      "color": "teal",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0083",
+     "kind": "pairwise",
+     "props": {
+      "color": "teal",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0084",
+     "kind": "pairwise",
+     "props": {
+      "color": "teal",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0085",
+     "kind": "pairwise",
+     "props": {
+      "color": "yellow",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0086",
+     "kind": "pairwise",
+     "props": {
+      "color": "yellow",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0087",
+     "kind": "pairwise",
+     "props": {
+      "color": "yellow",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0088",
+     "kind": "pairwise",
+     "props": {
+      "color": "yellow",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0089",
+     "kind": "pairwise",
+     "props": {
+      "color": "orange",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0090",
+     "kind": "pairwise",
+     "props": {
+      "color": "orange",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0091",
+     "kind": "pairwise",
+     "props": {
+      "color": "orange",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0092",
+     "kind": "pairwise",
+     "props": {
+      "color": "orange",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0093",
+     "kind": "pairwise",
+     "props": {
+      "color": "pink",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0094",
+     "kind": "pairwise",
+     "props": {
+      "color": "pink",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0095",
+     "kind": "pairwise",
+     "props": {
+      "color": "pink",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0096",
+     "kind": "pairwise",
+     "props": {
+      "color": "pink",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "icon-0097",
+     "kind": "pairwise",
+     "props": {
+      "color": "purple",
+      "size": "xsm"
+     }
+    },
+    {
+     "id": "icon-0098",
+     "kind": "pairwise",
+     "props": {
+      "color": "purple",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "icon-0099",
+     "kind": "pairwise",
+     "props": {
+      "color": "purple",
+      "size": "md"
+     }
+    },
+    {
+     "id": "icon-0100",
+     "kind": "pairwise",
+     "props": {
+      "color": "purple",
+      "size": "lg"
+     }
+    }
+   ]
+  }
+ ]
+}

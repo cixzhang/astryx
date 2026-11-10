@@ -1,0 +1,78 @@
+{
+ "family": "TreeList",
+ "source": "packages/core/src/TreeList/TreeList.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "TreeList",
+   "visualProps": {
+    "density": [
+     "compact",
+     "balanced",
+     "spacious"
+    ],
+    "variant": [
+     "lineGuides",
+     "noGuides"
+    ]
+   },
+   "defaults": {
+    "density": "balanced",
+    "variant": "lineGuides"
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "treelist-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "treelist-0002",
+     "kind": "sweep",
+     "props": {
+      "density": "compact"
+     }
+    },
+    {
+     "id": "treelist-0003",
+     "kind": "sweep",
+     "props": {
+      "density": "spacious"
+     }
+    },
+    {
+     "id": "treelist-0004",
+     "kind": "sweep",
+     "props": {
+      "variant": "noGuides"
+     }
+    },
+    {
+     "id": "treelist-0005",
+     "kind": "pairwise",
+     "props": {
+      "density": "compact",
+      "variant": "noGuides"
+     }
+    },
+    {
+     "id": "treelist-0006",
+     "kind": "pairwise",
+     "props": {
+      "density": "spacious",
+      "variant": "noGuides"
+     }
+    }
+   ]
+  }
+ ]
+}
