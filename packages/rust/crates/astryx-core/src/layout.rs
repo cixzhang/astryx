@@ -86,6 +86,20 @@ impl Layout {
         change
     }
 
+    /// Lays node `ix` out at `height` (or back at its own style with
+    /// `None`) on the next compute.
+    pub fn override_height<Msg>(&mut self, nodes: &[Node<Msg>], ix: usize, height: Option<f32>) {
+        let mut style = taffy_style(&nodes[ix]);
+        if let Some(h) = height {
+            style.size.height = taffy::Dimension::length(h);
+            style.min_size.height = taffy::LengthPercentageAuto::length(0.0);
+            style.max_size.height = taffy::LengthPercentageAuto::length(h);
+        }
+        self.tree
+            .set_style(self.ids[ix], style)
+            .expect("taffy style");
+    }
+
     pub fn new<Msg>(nodes: &[Node<Msg>]) -> Self {
         let mut tree = TaffyTree::with_capacity(nodes.len());
         let mut ids = vec![NodeId::new(0); nodes.len()];

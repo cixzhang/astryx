@@ -583,6 +583,15 @@ pub struct Node<Msg> {
     /// Draws that replace `draw` while the nearest focus stop around the
     /// node is in a state; the last match wins.
     pub variants: Vec<(crate::layer::When, Draw)>,
+    /// Animated paint channels; see [`crate::motion`].
+    pub anims: Vec<crate::motion::Anim>,
+    /// How the node leaves when it goes away.
+    pub exit: Option<crate::motion::Exit>,
+    /// Animates the node's laid-out height when it changes.
+    pub resize: Option<crate::motion::Resize>,
+    /// The subtree is drawn but inert: out of the accessibility tree and
+    /// unreachable by focus, as the web's `inert` (collapsed content).
+    pub inert: bool,
 }
 
 impl<Msg> Node<Msg> {
@@ -619,7 +628,18 @@ impl<Msg> Node<Msg> {
             layer: None,
             hover: None,
             variants: Vec::new(),
+            anims: Vec::new(),
+            exit: None,
+            resize: None,
+            inert: false,
         }
+    }
+
+    /// Animates `anim.channel` toward `anim.to`.
+    pub fn animate(mut self, anim: crate::motion::Anim) -> Self {
+        self.anims.retain(|a| a.channel != anim.channel);
+        self.anims.push(anim);
+        self
     }
 
     /// Draws `draw` instead while the nearest focus stop is in `when`.

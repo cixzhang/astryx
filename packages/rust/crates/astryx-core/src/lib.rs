@@ -18,6 +18,7 @@ pub mod lab;
 pub mod layer;
 mod layout;
 mod light;
+pub mod motion;
 pub mod paged;
 mod paint;
 mod pixel;
