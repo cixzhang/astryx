@@ -18,7 +18,7 @@ pub use crate::components::keyboard::{
     ChordKey, ChordLayer, ChordLayout, GridLayout, KeyboardAction, KeyboardKind, KeyboardState,
     KeyboardUpdate, OnScreenKeyboard, DIRECTIONS, FACE_BUTTONS,
 };
-use crate::components::text::{text_node, type_style};
+use crate::components::text::{text_draw, text_node, type_style};
 use crate::components::{
     dim, len, radii, square, Button, ButtonSize, ButtonVariant, IconSize, SelectableCard,
 };
@@ -74,17 +74,27 @@ impl StatusBar {
 base_props!(StatusBar);
 
 /// `h:mm AM` on a 12-hour clock.
-fn clock((hours, minutes): (u8, u8)) -> String {
+fn clock(time: (u8, u8)) -> String {
+    let (digits, half) = clock_parts(time);
+    format!("{digits} {half}")
+}
+
+/// `h:mm` and `AM` or `PM`.
+fn clock_parts((hours, minutes): (u8, u8)) -> (String, &'static str) {
     let h = match hours % 12 {
         0 => 12,
         h => h,
     };
-    format!(
-        "{h}:{:02} {}",
-        minutes.min(59),
-        if hours % 24 < 12 { "AM" } else { "PM" }
+    (
+        format!("{h}:{:02}", minutes.min(59)),
+        if hours % 24 < 12 { "AM" } else { "PM" },
     )
 }
+
+/// How much more readily an item gives up width than the clock when the
+/// bar is short: the battery percent goes first, then `PM` turns into a
+/// small `p`. Icons and the clock's digits never shrink.
+const PERCENT_SHRINK: f32 = 1000.0;
 
 /// The status as one sentence for assistive technology.
 fn status_label(d: &DeviceStatus, sound_off: bool) -> String {
@@ -309,7 +319,23 @@ impl<Msg> Build<Msg> for StatusBar {
             })
             .sem(sem),
         );
-        cx.leaf(text_node(clock(device.time), style, c.text_primary.into()));
+        // The time is one line: when the bar is short, `PM` becomes a small
+        // raised `p` rather than wrapping under the digits.
+        let (digits, half) = clock_parts(device.time);
+        cx.begin(Node::new(Style {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::FLEX_START,
+            ..Style::default()
+        }));
+        let mut digits = text_node(digits, style, c.text_primary.into());
+        digits.style.flex_shrink = 0.0;
+        cx.leaf(digits);
+        let mut small = style;
+        small.size = (style.size * 0.75).round();
+        let mut half_node = text_node(format!(" {half}"), style, c.text_primary.into());
+        text_draw(&mut half_node).shorter = vec![(half[..1].to_lowercase(), small)];
+        cx.leaf(half_node);
+        cx.end();
         cx.leaf(Node::new(Style {
             flex_grow: 1.0,
             ..Style::default()
@@ -373,11 +399,18 @@ fn battery<Msg>(
 ) {
     let t = cx.tokens;
     let c = &t.color;
-    cx.leaf(text_node(
-        format!("{percent}%"),
-        style,
-        c.text_primary.into(),
-    ));
+    // The percent is the first thing to go when the bar is short; its
+    // space before the gauge goes with it.
+    cx.begin(Node::new(Style {
+        flex_direction: FlexDirection::Row,
+        align_items: AlignItems::CENTER,
+        flex_shrink: PERCENT_SHRINK,
+        ..Style::default()
+    }));
+    let mut text = text_node(format!("{percent}%"), style, c.text_primary.into());
+    text.style.margin.right = LengthPercentageAuto::length(t.space.s2);
+    text_draw(&mut text).shorter = vec![(String::new(), style)];
+    cx.leaf(text);
     let fill: Color = if charging {
         c.icon_success
     } else if percent <= 20 {
@@ -450,6 +483,7 @@ fn battery<Msg>(
         let icon = named_icon(cx, ("bolt", BOLT_BITS), BOLT.to_vec(), 12.0, fill, true);
         cx.leaf(icon);
     }
+    cx.end();
     cx.end();
 }
 
