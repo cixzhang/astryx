@@ -6,7 +6,10 @@
 //! choice indicators are built here.
 
 mod avatar_group;
+mod heroicons;
 mod icon;
+mod svg_path;
+pub use svg_path::parse_svg_path;
 mod indicators;
 mod link;
 mod spinner;

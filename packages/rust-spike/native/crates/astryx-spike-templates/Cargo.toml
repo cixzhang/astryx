@@ -1,0 +1,17 @@
+[package]
+name = "astryx-spike-templates"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Astryx page templates (shell-nav, settings-dialog) on the Rust spike stack."
+
+[dependencies]
+astryx-core.workspace = true
+astryx-spike-ui = { path = "../astryx-spike-ui" }
+astryx-spike-foundations = { path = "../astryx-spike-foundations" }
+
+taffy.workspace = true
+
+[dev-dependencies]
+astryx-headless.workspace = true
