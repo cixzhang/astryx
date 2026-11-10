@@ -629,6 +629,7 @@ fn paint_node<Msg>(
             Some(cell) => out.extend(pixel::spinner(rect, *color, state.time, cell)),
             None => out.push(spinner(rect, *color, state.time)),
         },
+        Draw::Paint(p) => out.extend((p.paint)(rect, state.time)),
         _ => {}
     }
     if let Some(line) = caret.and_then(|c| c.underline) {

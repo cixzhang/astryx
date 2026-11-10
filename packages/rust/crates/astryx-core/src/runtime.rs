@@ -614,6 +614,7 @@ impl<A: App> Runtime<A> {
         self.nodes.iter().enumerate().any(|(ix, node)| {
             let plays = match &node.draw {
                 Draw::Spinner(_) => true,
+                Draw::Paint(p) => p.plays,
                 Draw::Sprite(s) => s.frames > 1,
                 Draw::Light(l) => l.plays(),
                 _ => false,
