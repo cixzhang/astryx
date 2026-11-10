@@ -337,3 +337,24 @@ fn input_group_joins_text_field_and_button() {
     // Borders overlap by one point.
     assert_eq!(go.bounds.x, field.bounds.x + field.bounds.width - 1.0);
 }
+
+#[test]
+fn radio_arrows_move_focus_and_check() {
+    #[derive(Clone, Debug, PartialEq)]
+    enum M {
+        Plan(String),
+    }
+    let mut rig = Rig::<M>::new(|| {
+        RadioList::new("Plan", "free")
+            .item(RadioListItem::new("Free", "free"))
+            .item(RadioListItem::new("Pro", "pro"))
+            .item(RadioListItem::new("Team", "team").is_disabled(true))
+            .on_change(M::Plan)
+            .into()
+    });
+    rig.key(astryx_core::Key::Down, Default::default());
+    assert_eq!(rig.messages(), vec![M::Plan("pro".into())]);
+    // Team is disabled, so Down from Pro wraps to Free.
+    rig.key(astryx_core::Key::Down, Default::default());
+    assert_eq!(rig.messages().last(), Some(&M::Plan("free".into())));
+}

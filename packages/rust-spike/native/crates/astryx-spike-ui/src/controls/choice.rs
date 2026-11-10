@@ -573,6 +573,14 @@ impl<Msg: Clone + 'static> Build<Msg> for RadioList<Msg> {
             ..Style::default()
         }));
         let any_selected = self.items.iter().any(|i| i.value == self.value);
+        // Arrow keys move to the next enabled radio and check it, as the
+        // radio group pattern does: focus follows the selection.
+        let enabled: Vec<(String, bool)> = self
+            .items
+            .iter()
+            .map(|i| (i.value.clone(), !(f.is_disabled || i.is_disabled)))
+            .collect();
+        let radio_key = |index: usize| -> String { format!("radio:{}:{}", group, index) };
         for (i, item) in self.items.into_iter().enumerate() {
             let on = item.value == self.value;
             let disabled = f.is_disabled || item.is_disabled;
@@ -596,7 +604,39 @@ impl<Msg: Clone + 'static> Build<Msg> for RadioList<Msg> {
             .sem(sem);
             node.group = Some(group);
             node.group_entry = on || (!any_selected && i == 0);
-            cx.key_slot(i as u64);
+            if let Some(change) = &self.on_change {
+                let change = change.clone();
+                let enabled = enabled.clone();
+                let focus = cx.focus_requests();
+                let keys: Vec<String> = (0..enabled.len()).map(radio_key).collect();
+                node.on_key = Some(std::rc::Rc::new(move |e: &astryx_core::KeyEvent| {
+                    use astryx_core::authoring::KeyResponse;
+                    use astryx_core::{InputPhase, Key};
+                    if e.phase != InputPhase::Pressed {
+                        return KeyResponse::Pass;
+                    }
+                    let n = enabled.len() as isize;
+                    let step: isize = match e.key {
+                        Key::Down | Key::Right => 1,
+                        Key::Up | Key::Left => -1,
+                        _ => return KeyResponse::Pass,
+                    };
+                    let mut j = i as isize;
+                    for _ in 0..n {
+                        j = (j + step).rem_euclid(n);
+                        if enabled[j as usize].1 {
+                            break;
+                        }
+                    }
+                    let j = j as usize;
+                    if j == i || !enabled[j].1 {
+                        return KeyResponse::Handled;
+                    }
+                    focus.request(keys[j].clone());
+                    KeyResponse::Send(change(enabled[j].0.clone()))
+                }));
+            }
+            cx.key(Some(&radio_key(i)));
             cx.begin(node);
             let mark = RadioIndicator::new(on)
                 .size(self.size.into())
