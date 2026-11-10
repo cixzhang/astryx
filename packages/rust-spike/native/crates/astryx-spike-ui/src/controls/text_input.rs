@@ -1,7 +1,9 @@
 //! TextInput: a single-line text field with the full field system.
 
 use super::button::element_height;
-use super::field::{field_methods, label_column, status_border, status_box, status_icon, FieldParts, StatusVariant};
+use super::field::{
+    field_methods, label_column, status_border, status_box, status_icon, FieldParts, StatusVariant,
+};
 use crate::layout::{size_dim, SizeValue};
 use crate::primitives::{icon_node, spinner_painter, Icon, IconSize};
 use crate::util::{color, component, len, len_auto, radii, square};
@@ -127,7 +129,15 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         }
         let t = cx.tokens;
         let c = &t.color;
-        let f = &self.field;
+        let member = cx.context::<super::button::GroupMember>().map(|m| *m);
+        let mut field = self.field.clone();
+        if let Some(m) = member {
+            // The group owns the label and status; the field fills its slot.
+            field.is_label_hidden = true;
+            field.status = None;
+            field.is_disabled |= m.is_disabled;
+        }
+        let f = &field;
         let size = cx.size(self.size, ComponentSize::Md);
         let mut outer = Style {
             flex_direction: FlexDirection::Column,
@@ -139,6 +149,17 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         };
         if let Some(w) = self.width {
             outer.size.width = size_dim(w);
+        }
+        if let Some(m) = member {
+            outer.flex_grow = 1.0;
+            outer.flex_shrink = 1.0;
+            outer.min_size.width = len_auto(0.0);
+            if !m.first {
+                let bw = t.size.border_width;
+                let (l, r) = cx.inline(-bw, 0.0);
+                outer.margin.left = len_auto(l);
+                outer.margin.right = len_auto(r);
+            }
         }
         cx.begin(Node::new(outer));
         label_column(cx, f);
@@ -154,7 +175,7 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         sem.secure = masked;
         sem.description = f.described();
         sem.disabled = f.is_disabled;
-        let radius = radii(t.radius.element);
+        let radius = super::button::member_radii(t.radius.element, member, cx.rtl());
         let bw = t.size.border_width;
         // In the attached status, the field's border takes the status color.
         let border = status_border(cx, f);
@@ -268,16 +289,19 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         cx.live_region(self.is_loading.then_some(loading.as_str()), Live::Polite);
         if self.is_loading {
             let (d, s) = crate::primitives::SpinnerSize::Sm.geometry();
+            let painter = spinner_painter(cx, d, s, color(c.text_secondary));
             cx.leaf(
                 Node::new(Style {
                     size: square(d + 2.0 * s),
                     flex_shrink: 0.0,
                     ..Style::default()
                 })
-                .draw(Draw::Paint(spinner_painter(cx, d, s, color(c.text_secondary)))),
+                .draw(Draw::Paint(painter)),
             );
         }
-        if f.status_variant != StatusVariant::Attached || f.status.as_ref().is_some_and(|s| s.message.is_none()) {
+        if f.status_variant != StatusVariant::Attached
+            || f.status.as_ref().is_some_and(|s| s.message.is_none())
+        {
             if let Some((icon, ink)) = status_icon(cx, f) {
                 if let Some(n) = icon_node::<Msg>(icon, 16.0, ink) {
                     cx.leaf(n);
@@ -286,7 +310,10 @@ impl<Msg: Clone + 'static> Build<Msg> for TextInput<Msg> {
         }
         let clears = self.has_clear && !self.value.is_empty() && editable;
         if let (true, Some(on_change)) = (clears, &self.on_change) {
-            let words = cx.t("@astryx.textInput.clearLabel", &args! {"label" => f.label.clone()});
+            let words = cx.t(
+                "@astryx.textInput.clearLabel",
+                &args! {"label" => f.label.clone()},
+            );
             clear_button(cx, on_change(String::new()), words);
         }
         cx.end();

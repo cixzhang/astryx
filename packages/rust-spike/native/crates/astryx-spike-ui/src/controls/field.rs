@@ -2,9 +2,7 @@
 //! label tooltip, and status message, shared by every input.
 
 use crate::util::{color, len, radii};
-use astryx_core::authoring::{
-    text_node, type_style, BoxDraw, BuildCx, Draw, Node, Semantics,
-};
+use astryx_core::authoring::{text_node, type_style, BoxDraw, BuildCx, Draw, Node, Semantics};
 use astryx_core::contract::{Color, FontFamily, Live, Role};
 use astryx_spike_foundations::{args, CxExt};
 use taffy::{AlignItems, FlexDirection, Style};
@@ -119,9 +117,17 @@ impl FieldParts {
     /// The control's accessible name: the label, with the marker spoken.
     pub fn name<Msg>(&self, cx: &BuildCx<Msg>) -> String {
         if self.is_required {
-            format!("{}, {}", self.label, cx.t("@astryx.field.required", &args! {}))
+            format!(
+                "{}, {}",
+                self.label,
+                cx.t("@astryx.field.required", &args! {})
+            )
         } else if self.is_optional {
-            format!("{}, {}", self.label, cx.t("@astryx.field.optional", &args! {}))
+            format!(
+                "{}, {}",
+                self.label,
+                cx.t("@astryx.field.optional", &args! {})
+            )
         } else {
             self.label.clone()
         }
@@ -207,9 +213,13 @@ pub(crate) fn label_column<Msg>(cx: &mut BuildCx<Msg>, f: &FieldParts) {
         if let Some(tip) = &f.label_tooltip {
             // The InfoTip shows the words on hover or focus once layers land;
             // until then the icon carries them as its description.
-            let mut icon = crate::primitives::icon_node::<Msg>("info", 14.0, color(c.icon_secondary))
-                .expect("info glyph");
-            let about = cx.t("@astryx.field.labelTooltip", &args! {"label" => f.label.clone()});
+            let mut icon =
+                crate::primitives::icon_node::<Msg>("info", 14.0, color(c.icon_secondary))
+                    .expect("info glyph");
+            let about = cx.t(
+                "@astryx.field.labelTooltip",
+                &args! {"label" => f.label.clone()},
+            );
             let mut sem = Semantics::new(Role::Image, about);
             sem.description = Some(tip.clone());
             icon.sem = Some(sem);
@@ -254,9 +264,19 @@ pub(crate) fn field_status<Msg>(
     let t = cx.tokens;
     let c = &t.color;
     let (bg, fg, icon, ink) = match status_type {
-        StatusType::Warning => (c.warning_muted, c.on_warning_muted, "warning", c.icon_warning),
+        StatusType::Warning => (
+            c.warning_muted,
+            c.on_warning_muted,
+            "warning",
+            c.icon_warning,
+        ),
         StatusType::Error => (c.error_muted, c.on_error_muted, "error", c.icon_error),
-        StatusType::Success => (c.success_muted, c.on_success_muted, "success", c.icon_success),
+        StatusType::Success => (
+            c.success_muted,
+            c.on_success_muted,
+            "success",
+            c.icon_success,
+        ),
     };
     let detached = variant == StatusVariant::Detached;
     // Attached, the box tucks 6 points under the control above it, so it

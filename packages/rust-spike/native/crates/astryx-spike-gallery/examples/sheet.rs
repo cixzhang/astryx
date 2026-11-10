@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     std::fs::create_dir_all(&out)?;
     for (i, f) in families::all().iter().enumerate() {
-        let mut rt = Runtime::new(Gallery::new().with_mode(mode));
+        let mut rt = Runtime::new(Gallery::new().with_mode(mode)).hide_focus_until_keyboard();
         rt.send(Msg::Family(i));
         let png = astryx_headless::render_png(&mut rt, 1280, 900, 1.0, &[]);
         std::fs::write(format!("{out}/{:02}-{}.png", i, f.name), png)?;

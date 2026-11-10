@@ -2,6 +2,7 @@
 
 mod wave1;
 mod wave2;
+mod wave5;
 
 use crate::props::Props;
 use crate::Msg;
@@ -41,6 +42,7 @@ pub(crate) fn v(values: &[&str]) -> Vec<Value> {
 pub fn all() -> Vec<Family> {
     let mut out = wave1::families();
     out.extend(wave2::families());
+    out.extend(wave5::families());
     out
 }
 
@@ -112,7 +114,12 @@ fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
     match doc {
         Value::Array(_) => push(family, doc),
         Value::Object(o) => {
-            for c in o.get("components").and_then(Value::as_array).into_iter().flatten() {
+            for c in o
+                .get("components")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
                 let name = c.get("component").and_then(Value::as_str).unwrap_or(family);
                 if let Some(cases) = c.get("cases") {
                     push(name, cases);

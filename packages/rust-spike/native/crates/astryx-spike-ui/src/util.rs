@@ -88,12 +88,3 @@ macro_rules! component {
     };
 }
 pub(crate) use component;
-
-/// Words shown to people, keyed by Astryx's locale catalog keys. English
-/// until the foundations catalog lands.
-pub(crate) mod strings {
-    /// `@astryx.spinner.loading`
-    pub const LOADING: &str = "Loading";
-    /// `@astryx.link.newTab`
-    pub const NEW_TAB: &str = "(opens in new tab)";
-}

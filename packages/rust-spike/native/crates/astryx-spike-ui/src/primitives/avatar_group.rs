@@ -7,6 +7,7 @@ use astryx_core::authoring::{
 };
 use astryx_core::contract::{FontFamily, Role};
 use astryx_core::{Avatar, AvatarShape, AvatarSize, Element};
+use astryx_spike_foundations::{args, CxExt};
 use taffy::{AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentageAuto, Style};
 
 /// Each avatar overlaps the one before it by this share of its size.
@@ -130,7 +131,9 @@ impl<Msg: Clone + 'static> Build<Msg> for AvatarGroup<Msg> {
                 padding.right = len(overlap);
             }
         }
-        let label = self.label.unwrap_or_else(|| "Avatar group".to_string());
+        let label = self
+            .label
+            .unwrap_or_else(|| cx.t("@astryx.avatarGroup.label", &args! {}));
         cx.key(self.base.id.as_deref());
         cx.begin(
             Node::new(Style {
@@ -194,7 +197,7 @@ impl<Msg: Clone + 'static> Build<Msg> for AvatarGroup<Msg> {
                     radius,
                 )
             }));
-            let more = format!("{} more", o.count);
+            let more = cx.t("@astryx.avatarGroup.overflow", &args! {"count" => o.count});
             if let Some(msg) = o.on_click {
                 node = node
                     .interact(Interact::new(Some(msg), false))

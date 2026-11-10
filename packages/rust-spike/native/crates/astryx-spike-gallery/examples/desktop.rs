@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .unwrap_or((1280, 800));
     if let Ok(path) = std::env::var("ASTRYX_A11Y") {
-        let mut rt = Runtime::new(gallery());
+        let mut rt = Runtime::new(gallery()).hide_focus_until_keyboard();
         let renderer = astryx_render_soft::SoftRenderer::new();
         let frame = astryx_headless::frame_info(w, h, 1.0);
         let _ = rt.frame(&frame, renderer.text());
@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         screenshot,
     };
     let shooting = options.exit_after_screenshot;
-    run_with(Runtime::new(gallery()), options)?;
+    run_with(Runtime::new(gallery()).hide_focus_until_keyboard(), options)?;
     if shooting {
         println!("first_frame_ms={}", start.elapsed().as_millis());
     }

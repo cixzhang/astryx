@@ -8,7 +8,7 @@ use astryx_core::authoring::{
     Node, Semantics,
 };
 use astryx_core::contract::{Color, FontFamily, Live, Radii, Role};
-use astryx_core::{Elevation, Element};
+use astryx_core::{Element, Elevation};
 use astryx_spike_foundations::{args, provide_size, ComponentSize, CxExt};
 use std::rc::Rc;
 use taffy::{
@@ -53,11 +53,21 @@ pub enum Orientation {
     Vertical,
 }
 
+/// Which group a member is in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum GroupKind {
+    /// A ButtonGroup: members draw a divider on their leading edge.
+    Buttons,
+    /// An InputGroup: members overlap their borders by one point.
+    Inputs,
+}
+
 /// What a ButtonGroup tells each member: its orientation, whether the group
 /// is disabled, and where the member sits, so it squares its inner corners
 /// and draws the divider on its leading edge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct GroupMember {
+    pub kind: GroupKind,
     pub orientation: Orientation,
     pub is_disabled: bool,
     pub first: bool,
@@ -319,8 +329,14 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
             flex_shrink: if self.is_icon_only { 0.0 } else { 1.0 },
             ..Style::default()
         };
-        if member.is_some() {
+        if let Some(m) = member {
             style.align_self = Some(AlignItems::STRETCH);
+            if m.kind == GroupKind::Inputs && !m.first {
+                let bw = t.size.border_width;
+                let (l, r) = cx.inline(-bw, 0.0);
+                style.margin.left = LengthPercentageAuto::length(l);
+                style.margin.right = LengthPercentageAuto::length(r);
+            }
         }
         let busy = self.is_loading && !self.is_interruptible;
         let mut sem = Semantics::new(Role::Button, self.label.clone());
@@ -343,22 +359,29 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
                     .busy(busy)
                     .href(self.href.as_deref()),
             )
-            .indicator(Indicator::ring(ring, radius, Some(color(c.overlay_pressed))))
+            .indicator(Indicator::ring(
+                ring,
+                radius,
+                Some(color(c.overlay_pressed)),
+            ))
             .sem(sem)
             .tooltip(self.tooltip)
             .opacity(if disabled { 0.5 } else { 1.0 });
         if member.is_none() {
             node = node.press_scale();
         }
-        if let Some(m) = member {
+        if let Some(m) = member.filter(|m| m.kind == GroupKind::Buttons) {
             node.group = Some(m.group);
             node.group_entry = m.first;
         }
         cx.key(self.base.id.as_deref());
         cx.begin(node);
-        if let Some(m) = member.filter(|m| !m.first) {
+        if let Some(m) = member.filter(|m| !m.first && m.kind == GroupKind::Buttons) {
             // The divider on the member's leading edge.
-            let solid = matches!(self.variant, ButtonVariant::Primary | ButtonVariant::Destructive);
+            let solid = matches!(
+                self.variant,
+                ButtonVariant::Primary | ButtonVariant::Destructive
+            );
             let ink = if solid {
                 color(c.on_accent)
             } else {
@@ -366,7 +389,11 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
             };
             divider(cx, m.orientation, ink, t.size.border_width);
         }
-        let label_color = if self.is_loading { Color::TRANSPARENT } else { fg };
+        let label_color = if self.is_loading {
+            Color::TRANSPARENT
+        } else {
+            fg
+        };
         if let Some(icon) = self.icon {
             let mut wrap = Node::new(Style {
                 align_items: AlignItems::CENTER,
@@ -410,7 +437,10 @@ impl<Msg: Clone + 'static> Build<Msg> for Button<Msg> {
         }
         // The busy start is announced politely.
         let loading_words = cx.t("@astryx.button.loading", &args! {});
-        cx.live_region(self.is_loading.then_some(loading_words.as_str()), Live::Polite);
+        cx.live_region(
+            self.is_loading.then_some(loading_words.as_str()),
+            Live::Polite,
+        );
         if self.is_loading {
             let (d, s) = crate::primitives::SpinnerSize::Sm.geometry();
             let side = d + 2.0 * s;
@@ -519,7 +549,10 @@ impl<Msg> ButtonGroup<Msg> {
         self.children.push(child.into());
         self
     }
-    pub fn children<E: Into<Element<Msg>>>(mut self, children: impl IntoIterator<Item = E>) -> Self {
+    pub fn children<E: Into<Element<Msg>>>(
+        mut self,
+        children: impl IntoIterator<Item = E>,
+    ) -> Self {
         self.children.extend(children.into_iter().map(Into::into));
         self
     }
@@ -561,6 +594,7 @@ impl<Msg: Clone + 'static> Build<Msg> for ButtonGroup<Msg> {
         let n = self.children.len();
         for (i, child) in self.children.into_iter().enumerate() {
             let member = GroupMember {
+                kind: GroupKind::Buttons,
                 orientation: self.orientation,
                 is_disabled: self.is_disabled,
                 first: i == 0,

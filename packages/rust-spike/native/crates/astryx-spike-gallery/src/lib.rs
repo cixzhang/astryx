@@ -82,11 +82,13 @@ impl Gallery {
         self
     }
 
+    /// Renders a case with its part's family when the gallery has one
+    /// (`$component` HStack inside Stack.json), else its file's family.
     fn render(&self, case: &Case) -> Element<Msg> {
-        let render = self
-            .families
-            .iter()
-            .find(|f| f.name == case.family)
+        let part = case.props.get("$component").and_then(|v| v.as_str());
+        let render = part
+            .and_then(|p| self.families.iter().find(|f| f.name == p))
+            .or_else(|| self.families.iter().find(|f| f.name == case.family))
             .map(|f| f.render)
             .expect("family of case");
         render(Props(&case.props))

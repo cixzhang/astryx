@@ -1,9 +1,10 @@
 //! Spinner: an arc turning on a track, for work of unknown length.
 
-use crate::util::{color, component, len, square, strings};
+use crate::util::{color, component, len, square};
 use astryx_core::authoring::{Base, Build, BuildCx, Draw, Node, Painter, Semantics};
 use astryx_core::contract::{Color, DrawCmd, PathCmd, Point, Rect, Role};
 use astryx_core::Text;
+use astryx_spike_foundations::{args, CxExt};
 use taffy::{AlignItems, FlexDirection, Style};
 
 /// Ring diameter: 10, 14, 18 or 28 points.
@@ -161,7 +162,7 @@ impl<Msg: 'static> Build<Msg> for Spinner {
             .label
             .clone()
             .or(self.aria_label)
-            .unwrap_or_else(|| strings::LOADING.to_string());
+            .unwrap_or_else(|| cx.t("@astryx.spinner.loading", &args! {}));
         let turn = if cx.prefs.reduced_motion {
             REDUCED_TURN_SECONDS
         } else {
@@ -181,8 +182,7 @@ impl<Msg: 'static> Build<Msg> for Spinner {
                 flex_shrink: 0.0,
                 ..Style::default()
             })
-            // `role="status"` on the web; a11y-role: Status.
-            .sem(Semantics::new(Role::ProgressBar, name)),
+            .sem(Semantics::new(Role::Status, name)),
         );
         cx.leaf(
             Node::new(Style {

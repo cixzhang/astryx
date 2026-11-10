@@ -4,7 +4,9 @@ use super::field::{field_methods, label_column, status_box, FieldParts};
 use crate::layout::{size_dim, SizeValue};
 use crate::primitives::spinner_painter;
 use crate::util::{color, component, dim, len, len_auto, radii, square};
-use astryx_core::authoring::{Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, Node, Semantics};
+use astryx_core::authoring::{
+    Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, Node, Semantics,
+};
 use astryx_core::contract::{Live, Role};
 use astryx_spike_foundations::{args, CxExt};
 use std::rc::Rc;
@@ -239,7 +241,12 @@ impl<Msg: Clone + 'static> Build<Msg> for Switch<Msg> {
                 size: square(side - 2.0),
                 ..Style::default()
             })
-            .draw(Draw::Paint(spinner_painter(cx, d, 2.0, color(c.text_secondary))));
+            .draw(Draw::Paint(spinner_painter(
+                cx,
+                d,
+                2.0,
+                color(c.text_secondary),
+            )));
             spinner.centered = true;
             cx.leaf(spinner);
         }

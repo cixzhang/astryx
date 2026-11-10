@@ -124,6 +124,7 @@ pub struct LayoutPanel<Msg> {
     is_scrollable: bool,
     label: Option<String>,
     width: Option<f32>,
+    role: Role,
 }
 
 impl<Msg> Default for LayoutPanel<Msg> {
@@ -135,6 +136,7 @@ impl<Msg> Default for LayoutPanel<Msg> {
             is_scrollable: true,
             label: None,
             width: None,
+            role: Role::Complementary,
         }
     }
 }
@@ -166,6 +168,11 @@ impl<Msg> LayoutPanel<Msg> {
     /// Width in points.
     pub fn width(mut self, width: f32) -> Self {
         self.width = Some(width);
+        self
+    }
+    /// The panel's landmark: `Complementary` (default) or `Navigation`.
+    pub fn role(mut self, role: Role) -> Self {
+        self.role = role;
         self
     }
 }
@@ -410,9 +417,11 @@ impl<Msg: Clone + 'static> Build<Msg> for Layout<Msg> {
             if let Some(height) = h.height {
                 s.size.height = size_dim(height);
             }
-            // a11y-role: Banner.
             let mut node = Node::new(s);
-            node.sem = h.label.map(|l| Semantics::new(Role::Group, l));
+            node.sem = Some(match h.label {
+                Some(l) => Semantics::new(Role::Banner, l),
+                None => Semantics::role(Role::Banner),
+            });
             cx.begin(node);
             cx.begin(Node::new(inner(taffy::Rect {
                 left: len(hp),
@@ -479,8 +488,10 @@ impl<Msg: Clone + 'static> Build<Msg> for Layout<Msg> {
             if panel.is_scrollable {
                 node.scroll = Some(Axis::Vertical);
             }
-            // a11y-role: Complementary or Navigation (caller's role prop).
-            node.sem = panel.label.clone().map(|l| Semantics::new(Role::Group, l));
+            node.sem = Some(match panel.label.clone() {
+                Some(l) => Semantics::new(panel.role, l),
+                None => Semantics::role(panel.role),
+            });
             cx.begin(node);
             cx.container_padding.push(pp);
             for c in panel.children {
@@ -518,8 +529,10 @@ impl<Msg: Clone + 'static> Build<Msg> for Layout<Msg> {
         if content.is_scrollable {
             cnode.scroll = Some(Axis::Vertical);
         }
-        // a11y-role: Main.
-        cnode.sem = content.label.map(|l| Semantics::new(Role::Group, l));
+        cnode.sem = Some(match content.label {
+            Some(l) => Semantics::new(Role::Main, l),
+            None => Semantics::role(Role::Main),
+        });
         cx.begin(cnode);
         cx.begin(Node::new(inner(taffy::Rect {
             left: len(cp),
@@ -548,7 +561,10 @@ impl<Msg: Clone + 'static> Build<Msg> for Layout<Msg> {
                 s.size.height = size_dim(height);
             }
             let mut node = Node::new(s);
-            node.sem = f.label.map(|l| Semantics::new(Role::Group, l));
+            node.sem = Some(match f.label {
+                Some(l) => Semantics::new(Role::ContentInfo, l),
+                None => Semantics::role(Role::ContentInfo),
+            });
             cx.begin(node);
             cx.begin(Node::new(inner(crate::util::rect(len(fp)))));
             cx.container_padding.push(fp);
