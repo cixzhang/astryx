@@ -1,13 +1,13 @@
 // The gallery's cases, written by tools/gallery-cases.mjs; do not edit.
-use Avatar, AvatarGroup, AvatarItem, Badge, CheckIndicator, CheckboxIndicator, Divider, Heading, Icon, Kbd, Link, RadioIndicator, Spinner, Text from "@astryx-spike/astryx"
-use Swatches from "./swatches.contract"
+use AspectRatio, Avatar, AvatarGroup, AvatarItem, Badge, Card, Center, CheckIndicator, CheckboxIndicator, Divider, EmptyState, Grid, HStack, Heading, Icon, Kbd, Layout, LayoutContent, LayoutFooter, LayoutHeader, LayoutPanel, Link, RadioIndicator, Section, Spinner, Stack, Text, Token, VStack from "@astryx-spike/astryx"
+use Swatches, Filler from "./swatches.contract"
 
 shape CaseRow
   id: string
   family: string
   title: string
 
-fn caseRows(): CaseRow[] = [CaseRow(id="foundations-0001", family="Foundations", title="Token swatches"), CaseRow(id="text-0001", family="Text", title="defaults"), CaseRow(id="text-0002", family="Text", title="type=\"large\""), CaseRow(id="text-0003", family="Text", title="type=\"label\""), CaseRow(id="text-0004", family="Text", title="type=\"supporting\""), CaseRow(id="text-0005", family="Text", title="type=\"code\""), CaseRow(id="text-0006", family="Text", title="type=\"display-1\""), CaseRow(id="text-0007", family="Text", title="type=\"display-2\""), CaseRow(id="text-0008", family="Text", title="type=\"display-3\""), CaseRow(id="text-0009", family="Text", title="size=\"xsm\""), CaseRow(id="text-0010", family="Text", title="size=\"sm\""), CaseRow(id="text-0011", family="Text", title="size=\"base\""), CaseRow(id="text-0012", family="Text", title="size=\"lg\""), CaseRow(id="text-0013", family="Text", title="size=\"xl\""), CaseRow(id="text-0014", family="Text", title="size=\"2xl\""), CaseRow(id="text-0015", family="Text", title="color=\"secondary\""), CaseRow(id="text-0016", family="Text", title="color=\"disabled\""), CaseRow(id="text-0017", family="Text", title="color=\"accent\""), CaseRow(id="text-0018", family="Text", title="weight=\"medium\""), CaseRow(id="text-0019", family="Text", title="weight=\"semibold\""), CaseRow(id="text-0020", family="Text", title="weight=\"bold\""), CaseRow(id="text-0021", family="Text", title="maxLines=1"), CaseRow(id="text-0022", family="Text", title="hasStrikethrough=true"), CaseRow(id="text-0023", family="Text", title="hasTabularNumbers=true"), CaseRow(id="heading-0001", family="Heading", title="defaults"), CaseRow(id="heading-0002", family="Heading", title="level=1"), CaseRow(id="heading-0003", family="Heading", title="level=3"), CaseRow(id="heading-0004", family="Heading", title="level=4"), CaseRow(id="heading-0005", family="Heading", title="level=5"), CaseRow(id="heading-0006", family="Heading", title="level=6"), CaseRow(id="heading-0007", family="Heading", title="color=\"secondary\""), CaseRow(id="icon-0001", family="Icon", title="defaults"), CaseRow(id="icon-0002", family="Icon", title="icon=\"close\""), CaseRow(id="icon-0003", family="Icon", title="icon=\"check\""), CaseRow(id="icon-0004", family="Icon", title="icon=\"success\""), CaseRow(id="icon-0005", family="Icon", title="icon=\"error\""), CaseRow(id="icon-0006", family="Icon", title="icon=\"warning\""), CaseRow(id="icon-0007", family="Icon", title="icon=\"info\""), CaseRow(id="icon-0008", family="Icon", title="icon=\"calendar\""), CaseRow(id="icon-0009", family="Icon", title="icon=\"clock\""), CaseRow(id="icon-0010", family="Icon", title="icon=\"chevronDown\""), CaseRow(id="icon-0011", family="Icon", title="icon=\"copy\""), CaseRow(id="icon-0012", family="Icon", title="size=\"xsm\""), CaseRow(id="icon-0013", family="Icon", title="size=\"sm\""), CaseRow(id="icon-0014", family="Icon", title="size=\"lg\""), CaseRow(id="icon-0015", family="Icon", title="color=\"primary\""), CaseRow(id="icon-0016", family="Icon", title="color=\"secondary\""), CaseRow(id="icon-0017", family="Icon", title="color=\"accent\""), CaseRow(id="icon-0018", family="Icon", title="color=\"success\""), CaseRow(id="icon-0019", family="Icon", title="color=\"error\""), CaseRow(id="icon-0020", family="Icon", title="color=\"warning\""), CaseRow(id="spinner-0001", family="Spinner", title="defaults"), CaseRow(id="spinner-0002", family="Spinner", title="size=\"sm\""), CaseRow(id="spinner-0003", family="Spinner", title="size=\"lg\""), CaseRow(id="spinner-0004", family="Spinner", title="size=\"xl\""), CaseRow(id="spinner-0005", family="Spinner", title="shade=\"subtle\""), CaseRow(id="spinner-0006", family="Spinner", title="shade=\"inherit\""), CaseRow(id="spinner-0007", family="Spinner", title="label=\"Loading results\""), CaseRow(id="kbd-0001", family="Kbd", title="defaults"), CaseRow(id="kbd-0002", family="Kbd", title="keys=\"Esc\""), CaseRow(id="kbd-0003", family="Kbd", title="keys=\"Shift+Enter\""), CaseRow(id="kbd-0004", family="Kbd", title="keys=\"Ctrl+Alt+Delete\""), CaseRow(id="divider-0001", family="Divider", title="defaults"), CaseRow(id="divider-0002", family="Divider", title="variant=\"strong\""), CaseRow(id="divider-0003", family="Divider", title="label=\"or\""), CaseRow(id="divider-0004", family="Divider", title="orientation=\"vertical\""), CaseRow(id="link-0001", family="Link", title="defaults"), CaseRow(id="link-0002", family="Link", title="isExternal=true"), CaseRow(id="badge-0001", family="Badge", title="defaults"), CaseRow(id="badge-0002", family="Badge", title="variant=\"info\""), CaseRow(id="badge-0003", family="Badge", title="variant=\"success\""), CaseRow(id="badge-0004", family="Badge", title="variant=\"warning\""), CaseRow(id="badge-0005", family="Badge", title="variant=\"error\""), CaseRow(id="badge-0006", family="Badge", title="variant=\"blue\""), CaseRow(id="badge-0007", family="Badge", title="variant=\"cyan\""), CaseRow(id="badge-0008", family="Badge", title="variant=\"green\""), CaseRow(id="badge-0009", family="Badge", title="variant=\"orange\""), CaseRow(id="badge-0010", family="Badge", title="variant=\"pink\""), CaseRow(id="badge-0011", family="Badge", title="variant=\"purple\""), CaseRow(id="badge-0012", family="Badge", title="variant=\"red\""), CaseRow(id="badge-0013", family="Badge", title="variant=\"teal\""), CaseRow(id="badge-0014", family="Badge", title="variant=\"yellow\""), CaseRow(id="badge-0015", family="Badge", title="variant=\"gray\""), CaseRow(id="badge-0016", family="Badge", title="icon=\"check\""), CaseRow(id="avatar-0001", family="Avatar", title="defaults"), CaseRow(id="avatar-0002", family="Avatar", title="size=\"xsm\""), CaseRow(id="avatar-0003", family="Avatar", title="size=\"sm\""), CaseRow(id="avatar-0004", family="Avatar", title="size=\"lg\""), CaseRow(id="avatar-0005", family="Avatar", title="size=\"xl\""), CaseRow(id="avatar-0006", family="Avatar", title="shape=\"rounded\""), CaseRow(id="avatar-0007", family="Avatar", title="shape=\"square\""), CaseRow(id="avatar-0008", family="Avatar", title="status=\"success\""), CaseRow(id="avatar-0009", family="Avatar", title="status=\"neutral\""), CaseRow(id="avatar-0010", family="Avatar", title="status=\"error\""), CaseRow(id="avatar-0011", family="Avatar", title="name=\"Alice\""), CaseRow(id="avatargroup-0001", family="AvatarGroup", title="defaults"), CaseRow(id="avatargroup-0002", family="AvatarGroup", title="size=\"sm\""), CaseRow(id="avatargroup-0003", family="AvatarGroup", title="size=\"lg\""), CaseRow(id="avatargroup-0004", family="AvatarGroup", title="max=2"), CaseRow(id="avatargroup-0005", family="AvatarGroup", title="max=6"), CaseRow(id="indicator-0001", family="Indicator", title="defaults"), CaseRow(id="indicator-0002", family="Indicator", title="checked=\"true\""), CaseRow(id="indicator-0003", family="Indicator", title="checked=\"mixed\""), CaseRow(id="indicator-0004", family="Indicator", title="disabled=true")]
+fn caseRows(): CaseRow[] = [CaseRow(id="foundations-0001", family="Foundations", title="Token swatches"), CaseRow(id="text-0001", family="Text", title="defaults"), CaseRow(id="text-0002", family="Text", title="type=\"large\""), CaseRow(id="text-0003", family="Text", title="type=\"label\""), CaseRow(id="text-0004", family="Text", title="type=\"supporting\""), CaseRow(id="text-0005", family="Text", title="type=\"code\""), CaseRow(id="text-0006", family="Text", title="type=\"display-1\""), CaseRow(id="text-0007", family="Text", title="type=\"display-2\""), CaseRow(id="text-0008", family="Text", title="type=\"display-3\""), CaseRow(id="text-0009", family="Text", title="size=\"xsm\""), CaseRow(id="text-0010", family="Text", title="size=\"sm\""), CaseRow(id="text-0011", family="Text", title="size=\"base\""), CaseRow(id="text-0012", family="Text", title="size=\"lg\""), CaseRow(id="text-0013", family="Text", title="size=\"xl\""), CaseRow(id="text-0014", family="Text", title="size=\"2xl\""), CaseRow(id="text-0015", family="Text", title="color=\"secondary\""), CaseRow(id="text-0016", family="Text", title="color=\"disabled\""), CaseRow(id="text-0017", family="Text", title="color=\"accent\""), CaseRow(id="text-0018", family="Text", title="weight=\"medium\""), CaseRow(id="text-0019", family="Text", title="weight=\"semibold\""), CaseRow(id="text-0020", family="Text", title="weight=\"bold\""), CaseRow(id="text-0021", family="Text", title="maxLines=1"), CaseRow(id="text-0022", family="Text", title="hasStrikethrough=true"), CaseRow(id="text-0023", family="Text", title="hasTabularNumbers=true"), CaseRow(id="heading-0001", family="Heading", title="defaults"), CaseRow(id="heading-0002", family="Heading", title="level=1"), CaseRow(id="heading-0003", family="Heading", title="level=3"), CaseRow(id="heading-0004", family="Heading", title="level=4"), CaseRow(id="heading-0005", family="Heading", title="level=5"), CaseRow(id="heading-0006", family="Heading", title="level=6"), CaseRow(id="heading-0007", family="Heading", title="color=\"secondary\""), CaseRow(id="icon-0001", family="Icon", title="defaults"), CaseRow(id="icon-0002", family="Icon", title="icon=\"close\""), CaseRow(id="icon-0003", family="Icon", title="icon=\"check\""), CaseRow(id="icon-0004", family="Icon", title="icon=\"success\""), CaseRow(id="icon-0005", family="Icon", title="icon=\"error\""), CaseRow(id="icon-0006", family="Icon", title="icon=\"warning\""), CaseRow(id="icon-0007", family="Icon", title="icon=\"info\""), CaseRow(id="icon-0008", family="Icon", title="icon=\"calendar\""), CaseRow(id="icon-0009", family="Icon", title="icon=\"clock\""), CaseRow(id="icon-0010", family="Icon", title="icon=\"chevronDown\""), CaseRow(id="icon-0011", family="Icon", title="icon=\"copy\""), CaseRow(id="icon-0012", family="Icon", title="size=\"xsm\""), CaseRow(id="icon-0013", family="Icon", title="size=\"sm\""), CaseRow(id="icon-0014", family="Icon", title="size=\"lg\""), CaseRow(id="icon-0015", family="Icon", title="color=\"primary\""), CaseRow(id="icon-0016", family="Icon", title="color=\"secondary\""), CaseRow(id="icon-0017", family="Icon", title="color=\"accent\""), CaseRow(id="icon-0018", family="Icon", title="color=\"success\""), CaseRow(id="icon-0019", family="Icon", title="color=\"error\""), CaseRow(id="icon-0020", family="Icon", title="color=\"warning\""), CaseRow(id="spinner-0001", family="Spinner", title="defaults"), CaseRow(id="spinner-0002", family="Spinner", title="size=\"sm\""), CaseRow(id="spinner-0003", family="Spinner", title="size=\"lg\""), CaseRow(id="spinner-0004", family="Spinner", title="size=\"xl\""), CaseRow(id="spinner-0005", family="Spinner", title="shade=\"subtle\""), CaseRow(id="spinner-0006", family="Spinner", title="shade=\"inherit\""), CaseRow(id="spinner-0007", family="Spinner", title="label=\"Loading results\""), CaseRow(id="kbd-0001", family="Kbd", title="defaults"), CaseRow(id="kbd-0002", family="Kbd", title="keys=\"Esc\""), CaseRow(id="kbd-0003", family="Kbd", title="keys=\"Shift+Enter\""), CaseRow(id="kbd-0004", family="Kbd", title="keys=\"Ctrl+Alt+Delete\""), CaseRow(id="divider-0001", family="Divider", title="defaults"), CaseRow(id="divider-0002", family="Divider", title="variant=\"strong\""), CaseRow(id="divider-0003", family="Divider", title="label=\"or\""), CaseRow(id="divider-0004", family="Divider", title="orientation=\"vertical\""), CaseRow(id="link-0001", family="Link", title="defaults"), CaseRow(id="link-0002", family="Link", title="isExternal=true"), CaseRow(id="badge-0001", family="Badge", title="defaults"), CaseRow(id="badge-0002", family="Badge", title="variant=\"info\""), CaseRow(id="badge-0003", family="Badge", title="variant=\"success\""), CaseRow(id="badge-0004", family="Badge", title="variant=\"warning\""), CaseRow(id="badge-0005", family="Badge", title="variant=\"error\""), CaseRow(id="badge-0006", family="Badge", title="variant=\"blue\""), CaseRow(id="badge-0007", family="Badge", title="variant=\"cyan\""), CaseRow(id="badge-0008", family="Badge", title="variant=\"green\""), CaseRow(id="badge-0009", family="Badge", title="variant=\"orange\""), CaseRow(id="badge-0010", family="Badge", title="variant=\"pink\""), CaseRow(id="badge-0011", family="Badge", title="variant=\"purple\""), CaseRow(id="badge-0012", family="Badge", title="variant=\"red\""), CaseRow(id="badge-0013", family="Badge", title="variant=\"teal\""), CaseRow(id="badge-0014", family="Badge", title="variant=\"yellow\""), CaseRow(id="badge-0015", family="Badge", title="variant=\"gray\""), CaseRow(id="badge-0016", family="Badge", title="icon=\"check\""), CaseRow(id="avatar-0001", family="Avatar", title="defaults"), CaseRow(id="avatar-0002", family="Avatar", title="size=\"xsm\""), CaseRow(id="avatar-0003", family="Avatar", title="size=\"sm\""), CaseRow(id="avatar-0004", family="Avatar", title="size=\"lg\""), CaseRow(id="avatar-0005", family="Avatar", title="size=\"xl\""), CaseRow(id="avatar-0006", family="Avatar", title="shape=\"rounded\""), CaseRow(id="avatar-0007", family="Avatar", title="shape=\"square\""), CaseRow(id="avatar-0008", family="Avatar", title="status=\"success\""), CaseRow(id="avatar-0009", family="Avatar", title="status=\"neutral\""), CaseRow(id="avatar-0010", family="Avatar", title="status=\"error\""), CaseRow(id="avatar-0011", family="Avatar", title="name=\"Alice\""), CaseRow(id="avatargroup-0001", family="AvatarGroup", title="defaults"), CaseRow(id="avatargroup-0002", family="AvatarGroup", title="size=\"sm\""), CaseRow(id="avatargroup-0003", family="AvatarGroup", title="size=\"lg\""), CaseRow(id="avatargroup-0004", family="AvatarGroup", title="max=2"), CaseRow(id="avatargroup-0005", family="AvatarGroup", title="max=6"), CaseRow(id="indicator-0001", family="Indicator", title="defaults"), CaseRow(id="indicator-0002", family="Indicator", title="checked=\"true\""), CaseRow(id="indicator-0003", family="Indicator", title="checked=\"mixed\""), CaseRow(id="indicator-0004", family="Indicator", title="disabled=true"), CaseRow(id="stack-0001", family="Stack", title="defaults"), CaseRow(id="stack-0002", family="Stack", title="direction=\"horizontal\""), CaseRow(id="stack-0003", family="Stack", title="gap=0"), CaseRow(id="stack-0004", family="Stack", title="gap=1"), CaseRow(id="stack-0005", family="Stack", title="gap=4"), CaseRow(id="stack-0006", family="Stack", title="gap=8"), CaseRow(id="stack-0007", family="Stack", title="padding=2"), CaseRow(id="stack-0008", family="Stack", title="padding=4"), CaseRow(id="stack-0009", family="Stack", title="align=\"start\""), CaseRow(id="stack-0010", family="Stack", title="align=\"center\""), CaseRow(id="stack-0011", family="Stack", title="align=\"end\""), CaseRow(id="stack-0012", family="Stack", title="justify=\"center\""), CaseRow(id="stack-0013", family="Stack", title="justify=\"between\""), CaseRow(id="stack-0014", family="Stack", title="wrap=\"wrap\""), CaseRow(id="hstack-0001", family="HStack", title="defaults"), CaseRow(id="hstack-0002", family="HStack", title="gap=0"), CaseRow(id="hstack-0003", family="HStack", title="gap=4"), CaseRow(id="hstack-0004", family="HStack", title="align=\"center\""), CaseRow(id="hstack-0005", family="HStack", title="justify=\"between\""), CaseRow(id="vstack-0001", family="VStack", title="defaults"), CaseRow(id="vstack-0002", family="VStack", title="gap=0"), CaseRow(id="vstack-0003", family="VStack", title="gap=4"), CaseRow(id="vstack-0004", family="VStack", title="align=\"center\""), CaseRow(id="vstack-0005", family="VStack", title="align=\"end\""), CaseRow(id="grid-0001", family="Grid", title="defaults"), CaseRow(id="grid-0002", family="Grid", title="columns=2"), CaseRow(id="grid-0003", family="Grid", title="columns=4"), CaseRow(id="grid-0004", family="Grid", title="minWidth=90"), CaseRow(id="grid-0005", family="Grid", title="gap=0"), CaseRow(id="grid-0006", family="Grid", title="gap=4"), CaseRow(id="center-0001", family="Center", title="defaults"), CaseRow(id="center-0002", family="Center", title="axis=\"horizontal\""), CaseRow(id="center-0003", family="Center", title="axis=\"vertical\""), CaseRow(id="center-0004", family="Center", title="padding=4"), CaseRow(id="aspectratio-0001", family="AspectRatio", title="defaults"), CaseRow(id="aspectratio-0002", family="AspectRatio", title="ratio=1"), CaseRow(id="aspectratio-0003", family="AspectRatio", title="ratio=0.75"), CaseRow(id="aspectratio-0004", family="AspectRatio", title="shape=\"ellipse\""), CaseRow(id="section-0001", family="Section", title="defaults"), CaseRow(id="section-0002", family="Section", title="variant=\"transparent\""), CaseRow(id="section-0003", family="Section", title="variant=\"muted\""), CaseRow(id="section-0004", family="Section", title="padding=0"), CaseRow(id="section-0005", family="Section", title="padding=2"), CaseRow(id="section-0006", family="Section", title="padding=8"), CaseRow(id="section-0007", family="Section", title="dividers=[\"top\",\"bottom\"]"), CaseRow(id="card-0001", family="Card", title="defaults"), CaseRow(id="card-0002", family="Card", title="variant=\"transparent\""), CaseRow(id="card-0003", family="Card", title="variant=\"muted\""), CaseRow(id="card-0004", family="Card", title="variant=\"blue\""), CaseRow(id="card-0005", family="Card", title="variant=\"green\""), CaseRow(id="card-0006", family="Card", title="variant=\"red\""), CaseRow(id="card-0007", family="Card", title="padding=0"), CaseRow(id="card-0008", family="Card", title="padding=2"), CaseRow(id="card-0009", family="Card", title="padding=8"), CaseRow(id="card-0010", family="Card", title="elevation=\"low\""), CaseRow(id="card-0011", family="Card", title="elevation=\"med\""), CaseRow(id="card-0012", family="Card", title="elevation=\"high\""), CaseRow(id="layout-0001", family="Layout", title="defaults"), CaseRow(id="layout-0002", family="Layout", title="height=\"auto\""), CaseRow(id="emptystate-0001", family="EmptyState", title="defaults"), CaseRow(id="emptystate-0002", family="EmptyState", title="isCompact=true"), CaseRow(id="emptystate-0003", family="EmptyState", title="icon=\"\""), CaseRow(id="emptystate-0004", family="EmptyState", title="description=\"\""), CaseRow(id="token-0001", family="Token", title="defaults"), CaseRow(id="token-0002", family="Token", title="size=\"sm\""), CaseRow(id="token-0003", family="Token", title="size=\"lg\""), CaseRow(id="token-0004", family="Token", title="color=\"red\""), CaseRow(id="token-0005", family="Token", title="color=\"green\""), CaseRow(id="token-0006", family="Token", title="color=\"blue\""), CaseRow(id="token-0007", family="Token", title="color=\"purple\""), CaseRow(id="token-0008", family="Token", title="icon=\"check\""), CaseRow(id="token-0009", family="Token", title="isDisabled=true"), CaseRow(id="token-0010", family="Token", title="removable=true")]
 
 component CaseView
   props
@@ -38,6 +38,28 @@ component CaseView
         AvatarGroupCases(id=id)
       if id.startsWith("indicator-")
         IndicatorCases(id=id)
+      if id.startsWith("stack-")
+        StackCases(id=id)
+      if id.startsWith("hstack-")
+        HStackCases(id=id)
+      if id.startsWith("vstack-")
+        VStackCases(id=id)
+      if id.startsWith("grid-")
+        GridCases(id=id)
+      if id.startsWith("center-")
+        CenterCases(id=id)
+      if id.startsWith("aspectratio-")
+        AspectRatioCases(id=id)
+      if id.startsWith("section-")
+        SectionCases(id=id)
+      if id.startsWith("card-")
+        CardCases(id=id)
+      if id.startsWith("layout-")
+        LayoutCases(id=id)
+      if id.startsWith("emptystate-")
+        EmptyStateCases(id=id)
+      if id.startsWith("token-")
+        TokenCases(id=id)
 
 shape FoundationsCase
   id: string
@@ -47,6 +69,9 @@ fn foundationsCases(): FoundationsCase[] = [FoundationsCase(id="foundations-0001
 component FoundationsCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in foundationsCases().filter(c => c.id == id) key=c.id
       Swatches()
@@ -69,6 +94,9 @@ fn textCases(): TextCase[] = [TextCase(id="text-0001", text="The quick brown fox
 component TextCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in textCases().filter(c => c.id == id) key=c.id
       Text(text=c.text, type=c.type, size=c.size, color=c.color, weight=c.weight, maxLines=c.maxLines, textWrap=c.textWrap, justify=c.justify, hasStrikethrough=c.hasStrikethrough, hasTabularNumbers=c.hasTabularNumbers)
@@ -84,6 +112,9 @@ fn headingCases(): HeadingCase[] = [HeadingCase(id="heading-0001", text="Section
 component HeadingCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in headingCases().filter(c => c.id == id) key=c.id
       Heading(text=c.text, level=c.level, color=c.color)
@@ -100,6 +131,9 @@ fn iconCases(): IconCase[] = [IconCase(id="icon-0001", icon="search", size="md",
 component IconCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in iconCases().filter(c => c.id == id) key=c.id
       Icon(icon=c.icon, size=c.size, color=c.color, label=c.label)
@@ -115,6 +149,9 @@ fn spinnerCases(): SpinnerCase[] = [SpinnerCase(id="spinner-0001", size="md", sh
 component SpinnerCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in spinnerCases().filter(c => c.id == id) key=c.id
       Spinner(size=c.size, shade=c.shade, label=c.label)
@@ -128,6 +165,9 @@ fn kbdCases(): KbdCase[] = [KbdCase(id="kbd-0001", keys="Mod+K"), KbdCase(id="kb
 component KbdCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in kbdCases().filter(c => c.id == id) key=c.id
       Kbd(keys=c.keys)
@@ -144,6 +184,9 @@ fn dividerCases(): DividerCase[] = [DividerCase(id="divider-0001", orientation="
 component DividerCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in dividerCases().filter(c => c.id == id) key=c.id
       view width=240 height=80 display="flex" align-items="center" justify-content="center"
@@ -160,6 +203,9 @@ fn linkCases(): LinkCase[] = [LinkCase(id="link-0001", text="Read the docs", hre
 component LinkCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in linkCases().filter(c => c.id == id) key=c.id
       Link(text=c.text, href=c.href, isExternal=c.isExternal)
@@ -175,6 +221,9 @@ fn badgeCases(): BadgeCase[] = [BadgeCase(id="badge-0001", variant="neutral", la
 component BadgeCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in badgeCases().filter(c => c.id == id) key=c.id
       Badge(variant=c.variant, label=c.label, icon=c.icon)
@@ -194,6 +243,9 @@ fn avatarCases(): AvatarCase[] = [AvatarCase(id="avatar-0001", src="", name="Ada
 component AvatarCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in avatarCases().filter(c => c.id == id) key=c.id
       Avatar(src=c.src, name=c.name, size=c.size, px=c.px, shape=c.shape, status=c.status, statusLabel=c.statusLabel)
@@ -209,6 +261,9 @@ fn avatarGroupCases(): AvatarGroupCase[] = [AvatarGroupCase(id="avatargroup-0001
 component AvatarGroupCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in avatarGroupCases().filter(c => c.id == id) key=c.id
       AvatarGroup(items=c.items, size=c.size, max=c.max)
@@ -223,6 +278,261 @@ fn indicatorCases(): IndicatorCase[] = [IndicatorCase(id="indicator-0001", check
 component IndicatorCases
   props
     id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
   view
     for c in indicatorCases().filter(c => c.id == id) key=c.id
       CheckboxIndicator(checked=c.checked, disabled=c.disabled)
+
+shape StackCase
+  id: string
+  direction: string
+  gap: number
+  padding: number
+  paddingInline: number
+  paddingBlock: number
+  align: string
+  justify: string
+  wrap: string
+  isScrollable: bool
+
+fn stackCases(): StackCase[] = [StackCase(id="stack-0001", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0002", direction="horizontal", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0003", direction="vertical", gap=0, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0004", direction="vertical", gap=1, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0005", direction="vertical", gap=4, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0006", direction="vertical", gap=8, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0007", direction="vertical", gap=2, padding=2, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0008", direction="vertical", gap=2, padding=4, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0009", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="start", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0010", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="center", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0011", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="end", justify="start", wrap="nowrap", isScrollable=false), StackCase(id="stack-0012", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="center", wrap="nowrap", isScrollable=false), StackCase(id="stack-0013", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="between", wrap="nowrap", isScrollable=false), StackCase(id="stack-0014", direction="vertical", gap=2, padding=-1, paddingInline=-1, paddingBlock=-1, align="stretch", justify="start", wrap="wrap", isScrollable=false)]
+
+component StackCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in stackCases().filter(c => c.id == id) key=c.id
+      view width=320 height=200 background-color="astryx.surface.muted"
+        Stack(direction=c.direction, gap=c.gap, padding=c.padding, paddingInline=c.paddingInline, paddingBlock=c.paddingBlock, align=c.align, justify=c.justify, wrap=c.wrap, isScrollable=c.isScrollable)
+          Filler(label="One")
+          Filler(label="Two")
+          Filler(label="Three")
+
+shape HStackCase
+  id: string
+  gap: number
+  padding: number
+  align: string
+  justify: string
+  wrap: string
+
+fn hStackCases(): HStackCase[] = [HStackCase(id="hstack-0001", gap=2, padding=-1, align="stretch", justify="start", wrap="nowrap"), HStackCase(id="hstack-0002", gap=0, padding=-1, align="stretch", justify="start", wrap="nowrap"), HStackCase(id="hstack-0003", gap=4, padding=-1, align="stretch", justify="start", wrap="nowrap"), HStackCase(id="hstack-0004", gap=2, padding=-1, align="center", justify="start", wrap="nowrap"), HStackCase(id="hstack-0005", gap=2, padding=-1, align="stretch", justify="between", wrap="nowrap")]
+
+component HStackCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in hStackCases().filter(c => c.id == id) key=c.id
+      view width=320 background-color="astryx.surface.muted"
+        HStack(gap=c.gap, padding=c.padding, align=c.align, justify=c.justify, wrap=c.wrap)
+          Filler(label="One")
+          Filler(label="Two")
+          Filler(label="Three")
+
+shape VStackCase
+  id: string
+  gap: number
+  padding: number
+  align: string
+  justify: string
+
+fn vStackCases(): VStackCase[] = [VStackCase(id="vstack-0001", gap=2, padding=-1, align="stretch", justify="start"), VStackCase(id="vstack-0002", gap=0, padding=-1, align="stretch", justify="start"), VStackCase(id="vstack-0003", gap=4, padding=-1, align="stretch", justify="start"), VStackCase(id="vstack-0004", gap=2, padding=-1, align="center", justify="start"), VStackCase(id="vstack-0005", gap=2, padding=-1, align="end", justify="start")]
+
+component VStackCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in vStackCases().filter(c => c.id == id) key=c.id
+      view width=320 background-color="astryx.surface.muted"
+        VStack(gap=c.gap, padding=c.padding, align=c.align, justify=c.justify)
+          Filler(label="One")
+          Filler(label="Two")
+          Filler(label="Three")
+
+shape GridCase
+  id: string
+  columns: number
+  minWidth: number
+  gap: number
+  rowGap: number
+  columnGap: number
+  align: string
+  justify: string
+
+fn gridCases(): GridCase[] = [GridCase(id="grid-0001", columns=3, minWidth=0, gap=2, rowGap=-1, columnGap=-1, align="", justify=""), GridCase(id="grid-0002", columns=2, minWidth=0, gap=2, rowGap=-1, columnGap=-1, align="", justify=""), GridCase(id="grid-0003", columns=4, minWidth=0, gap=2, rowGap=-1, columnGap=-1, align="", justify=""), GridCase(id="grid-0004", columns=3, minWidth=90, gap=2, rowGap=-1, columnGap=-1, align="", justify=""), GridCase(id="grid-0005", columns=3, minWidth=0, gap=0, rowGap=-1, columnGap=-1, align="", justify=""), GridCase(id="grid-0006", columns=3, minWidth=0, gap=4, rowGap=-1, columnGap=-1, align="", justify="")]
+
+component GridCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in gridCases().filter(c => c.id == id) key=c.id
+      view width=320
+        Grid(columns=c.columns, minWidth=c.minWidth, gap=c.gap, rowGap=c.rowGap, columnGap=c.columnGap, align=c.align, justify=c.justify)
+          Filler(label="1")
+          Filler(label="2")
+          Filler(label="3")
+          Filler(label="4")
+          Filler(label="5")
+
+shape CenterCase
+  id: string
+  axis: string
+  padding: number
+
+fn centerCases(): CenterCase[] = [CenterCase(id="center-0001", axis="both", padding=-1), CenterCase(id="center-0002", axis="horizontal", padding=-1), CenterCase(id="center-0003", axis="vertical", padding=-1), CenterCase(id="center-0004", axis="both", padding=4)]
+
+component CenterCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in centerCases().filter(c => c.id == id) key=c.id
+      view width=240 height=120 background-color="astryx.surface.muted"
+        Center(axis=c.axis, padding=c.padding)
+          Filler(label="Centred")
+
+shape AspectRatioCase
+  id: string
+  ratio: number
+  shape: string
+
+fn aspectRatioCases(): AspectRatioCase[] = [AspectRatioCase(id="aspectratio-0001", ratio=1.7778, shape="rectangle"), AspectRatioCase(id="aspectratio-0002", ratio=1, shape="rectangle"), AspectRatioCase(id="aspectratio-0003", ratio=0.75, shape="rectangle"), AspectRatioCase(id="aspectratio-0004", ratio=1.7778, shape="ellipse")]
+
+component AspectRatioCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in aspectRatioCases().filter(c => c.id == id) key=c.id
+      view width=240
+        AspectRatio(ratio=c.ratio, shape=c.shape)
+          view flex=1 background-color="astryx.surface.blue"
+
+shape SectionCase
+  id: string
+  variant: string
+  padding: number
+  dividers: string[]
+  bleed: number
+
+fn sectionCases(): SectionCase[] = [SectionCase(id="section-0001", variant="section", padding=4, dividers=[], bleed=0), SectionCase(id="section-0002", variant="transparent", padding=4, dividers=[], bleed=0), SectionCase(id="section-0003", variant="muted", padding=4, dividers=[], bleed=0), SectionCase(id="section-0004", variant="section", padding=0, dividers=[], bleed=0), SectionCase(id="section-0005", variant="section", padding=2, dividers=[], bleed=0), SectionCase(id="section-0006", variant="section", padding=8, dividers=[], bleed=0), SectionCase(id="section-0007", variant="section", padding=4, dividers=["top", "bottom"], bleed=0)]
+
+component SectionCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in sectionCases().filter(c => c.id == id) key=c.id
+      view width=320
+        Section(variant=c.variant, padding=c.padding, dividers=c.dividers, bleed=c.bleed)
+          Text(text="Section content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false)
+
+shape CardCase
+  id: string
+  variant: string
+  padding: number
+  elevation: string
+
+fn cardCases(): CardCase[] = [CardCase(id="card-0001", variant="default", padding=4, elevation="none"), CardCase(id="card-0002", variant="transparent", padding=4, elevation="none"), CardCase(id="card-0003", variant="muted", padding=4, elevation="none"), CardCase(id="card-0004", variant="blue", padding=4, elevation="none"), CardCase(id="card-0005", variant="green", padding=4, elevation="none"), CardCase(id="card-0006", variant="red", padding=4, elevation="none"), CardCase(id="card-0007", variant="default", padding=0, elevation="none"), CardCase(id="card-0008", variant="default", padding=2, elevation="none"), CardCase(id="card-0009", variant="default", padding=8, elevation="none"), CardCase(id="card-0010", variant="default", padding=4, elevation="low"), CardCase(id="card-0011", variant="default", padding=4, elevation="med"), CardCase(id="card-0012", variant="default", padding=4, elevation="high")]
+
+component CardCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in cardCases().filter(c => c.id == id) key=c.id
+      view width=280
+        Card(variant=c.variant, padding=c.padding, elevation=c.elevation)
+          Text(text="Card content", type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", hasStrikethrough=false, hasTabularNumbers=false)
+
+shape LayoutCase
+  id: string
+  height: string
+  padding: number
+
+fn layoutCases(): LayoutCase[] = [LayoutCase(id="layout-0001", height="fill", padding=4), LayoutCase(id="layout-0002", height="auto", padding=4)]
+
+component LayoutCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in layoutCases().filter(c => c.id == id) key=c.id
+      view width=600 height=360 background-color="astryx.surface.surface"
+        Layout(height=c.height, padding=c.padding)
+          LayoutHeader(hasDivider=true, isFullBleed=false)
+            Filler(label="Header")
+          LayoutPanel(side="start", width="120px", hasDivider=true)
+            Filler(label="Start")
+          LayoutContent(contentWidth="", padding=4)
+            Filler(label="Content")
+          LayoutPanel(side="end", width="100px", hasDivider=true)
+            Filler(label="End")
+          LayoutFooter(hasDivider=true, isFullBleed=false)
+            Filler(label="Footer")
+
+shape EmptyStateCase
+  id: string
+  title: string
+  description: string
+  icon: string
+  headingLevel: number
+  isCompact: bool
+
+fn emptyStateCases(): EmptyStateCase[] = [EmptyStateCase(id="emptystate-0001", title="No results", description="Try a different search.", icon="search", headingLevel=3, isCompact=false), EmptyStateCase(id="emptystate-0002", title="No results", description="Try a different search.", icon="search", headingLevel=3, isCompact=true), EmptyStateCase(id="emptystate-0003", title="No results", description="Try a different search.", icon="", headingLevel=3, isCompact=false), EmptyStateCase(id="emptystate-0004", title="No results", description="", icon="search", headingLevel=3, isCompact=false)]
+
+component EmptyStateCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in emptyStateCases().filter(c => c.id == id) key=c.id
+      EmptyState(title=c.title, description=c.description, icon=c.icon, headingLevel=c.headingLevel, isCompact=c.isCompact)
+        Filler(label="Action")
+
+shape TokenCase
+  id: string
+  label: string
+  size: string
+  color: string
+  icon: string
+  isDisabled: bool
+  removable: bool
+
+fn tokenCases(): TokenCase[] = [TokenCase(id="token-0001", label="Design", size="md", color="default", icon="", isDisabled=false, removable=false), TokenCase(id="token-0002", label="Design", size="sm", color="default", icon="", isDisabled=false, removable=false), TokenCase(id="token-0003", label="Design", size="lg", color="default", icon="", isDisabled=false, removable=false), TokenCase(id="token-0004", label="Design", size="md", color="red", icon="", isDisabled=false, removable=false), TokenCase(id="token-0005", label="Design", size="md", color="green", icon="", isDisabled=false, removable=false), TokenCase(id="token-0006", label="Design", size="md", color="blue", icon="", isDisabled=false, removable=false), TokenCase(id="token-0007", label="Design", size="md", color="purple", icon="", isDisabled=false, removable=false), TokenCase(id="token-0008", label="Design", size="md", color="default", icon="check", isDisabled=false, removable=false), TokenCase(id="token-0009", label="Design", size="md", color="default", icon="", isDisabled=true, removable=false), TokenCase(id="token-0010", label="Design", size="md", color="default", icon="", isDisabled=false, removable=true)]
+
+component TokenCases
+  props
+    id: string
+  state presses = 0
+  action noop
+    presses = presses + 1
+  view
+    for c in tokenCases().filter(c => c.id == id) key=c.id
+      Token(label=c.label, size=c.size, color=c.color, icon=c.icon, isDisabled=c.isDisabled, removable=c.removable, remove=noop)

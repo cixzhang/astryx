@@ -1,0 +1,297 @@
+// Wave 2 layout: Stack, HStack, VStack, Grid, Center, AspectRatio, Layout
+// (with LayoutHeader, LayoutContent, LayoutPanel, LayoutFooter), Section,
+// Card, FormLayout, Toolbar, EmptyState and Token.
+//
+// Astryx layout passes its padding down through CSS custom properties so a
+// full-bleed child can cancel its container's padding. Contract has no
+// runtime custom properties and no context through a slot, so a child that
+// bleeds is told the padding by a prop (`bleed`).
+//
+// A library cannot size a node on its slot's chain from a prop (Contract keeps a
+// slot's fill from collapsing), so free sizes (`width`, `maxWidth` …) are the
+// caller's: it wraps the component in a sized `view`.
+//
+// Spacing props are Astryx steps (0, 0.5, 1 … 10); -1 means unset. Size props
+// are CSS lengths as text ("320px", "100%"); "" means unset.
+use space from "./foundations.contract"
+use Icon, Heading, Text from "./primitives.contract"
+use IconGlyph from "./icons.contract"
+
+fn step(n: number): string = space(n.toString())
+fn stepOr(n: number, fallback: number): string = n < 0 ? step(fallback) : step(n)
+fn sizeOr(v: string, fallback: string): string = v == "" ? fallback : v
+fn flexAlign(a: string): string = a == "start" ? "flex-start" : a == "end" ? "flex-end" : a == "center" ? "center" : a == "baseline" ? "baseline" : "stretch"
+fn flexJustify(j: string): string = j == "end" ? "flex-end" : j == "center" ? "center" : j == "between" or j == "space-between" ? "space-between" : j == "around" or j == "space-around" ? "space-around" : j == "evenly" or j == "space-evenly" ? "space-evenly" : "flex-start"
+
+// Stack: children in a row or a column, with a gap and padding.
+component Stack
+  props
+    direction: string
+    gap: number
+    padding: number
+    paddingInline: number
+    paddingBlock: number
+    align: string
+    justify: string
+    wrap: string
+    isScrollable: bool
+  slot
+  view
+    view display="flex"
+      flex-direction=(direction == "horizontal" or direction == "row" ? "row" : "column")
+      gap=stepOr(gap, 0)
+      padding-top=stepOr(paddingBlock < 0 ? padding : paddingBlock, 0)
+      padding-bottom=stepOr(paddingBlock < 0 ? padding : paddingBlock, 0)
+      padding-left=stepOr(paddingInline < 0 ? padding : paddingInline, 0)
+      padding-right=stepOr(paddingInline < 0 ? padding : paddingInline, 0)
+      align-items=flexAlign(align)
+      justify-content=flexJustify(justify)
+      flex-wrap=(wrap == "wrap" ? "wrap" : "nowrap")
+      overflow=(isScrollable ? "auto" : "visible")
+      min-width=0
+      children
+
+// HStack and VStack: a Stack in one direction.
+component HStack
+  props
+    gap: number
+    padding: number
+    align: string
+    justify: string
+    wrap: string
+  slot
+  view
+    row gap=stepOr(gap, 0) padding=stepOr(padding, 0) align-items=flexAlign(align) justify-content=flexJustify(justify) flex-wrap=(wrap == "wrap" ? "wrap" : "nowrap") min-width=0
+      children
+
+component VStack
+  props
+    gap: number
+    padding: number
+    align: string
+    justify: string
+  slot
+  view
+    column gap=stepOr(gap, 0) padding=stepOr(padding, 0) align-items=flexAlign(align) justify-content=flexJustify(justify) min-width=0
+      children
+
+// Grid: equal columns, or as many columns of `minWidth` as fit.
+component Grid
+  props
+    columns: number
+    minWidth: number
+    gap: number
+    rowGap: number
+    columnGap: number
+    align: string
+    justify: string
+  slot
+  view
+    view display="grid"
+      grid-template-columns=(minWidth > 0 ? `repeat(auto-fill, minmax(${minWidth}px, 1fr))` : `repeat(${columns}, minmax(0, 1fr))`)
+      row-gap=stepOr(rowGap < 0 ? gap : rowGap, 0)
+      column-gap=stepOr(columnGap < 0 ? gap : columnGap, 0)
+      align-items=(align == "" ? "stretch" : align)
+      justify-items=(justify == "" ? "stretch" : justify)
+      children
+
+// Center: its child centred on one or both axes.
+component Center
+  props
+    axis: string
+    padding: number
+  slot
+  view
+    view display="flex"
+      align-items=(axis == "horizontal" ? "stretch" : "center")
+      justify-content=(axis == "vertical" ? "flex-start" : "center")
+      flex-direction="column" width="100%" height="100%"
+      padding=stepOr(padding, 0)
+      children
+
+// AspectRatio: a box held to width / height, its child filling it.
+component AspectRatio
+  props
+    ratio: number
+    shape: string
+  slot
+  view
+    view aspect-ratio=ratio width="100%" overflow="hidden" position="relative"
+      border-radius=(shape == "ellipse" ? "astryx.radius.full" : "astryx.radius.none")
+      view position="absolute" inset=0 display="flex"
+        children
+
+// Layout: a page frame. Its children are LayoutHeader, LayoutPanel (start or
+// end), LayoutContent and LayoutFooter, each placing itself on the frame's
+// grid. Astryx takes them as named props (`header`, `start`, …); a Contract
+// component has one slot, so each part is a child that knows its place.
+component Layout
+  props
+    height: string
+    padding: number
+  slot
+  view
+    view display="grid"
+      grid-template-columns="auto minmax(0, 1fr) auto"
+      grid-template-rows="auto minmax(0, 1fr) auto"
+      height=(height == "auto" ? "auto" : "100%")
+      min-height=(height == "auto" ? "100%" : "auto")
+      width="100%"
+      children
+
+component LayoutHeader
+  props
+    hasDivider: bool
+    isFullBleed: bool
+  slot
+  view
+    view grid-row=1 grid-column="1 / 4" flex-shrink=0
+      padding=(isFullBleed ? "astryx.space.s0" : "astryx.space.s4")
+      border-bottom-width=(hasDivider ? 1 : 0) border-bottom-style="solid" border-bottom-color="astryx.border"
+      children
+
+component LayoutFooter
+  props
+    hasDivider: bool
+    isFullBleed: bool
+  slot
+  view
+    view grid-row=3 grid-column="1 / 4" flex-shrink=0
+      padding=(isFullBleed ? "astryx.space.s0" : "astryx.space.s4")
+      border-top-width=(hasDivider ? 1 : 0) border-top-style="solid" border-top-color="astryx.border"
+      children
+
+component LayoutPanel
+  props
+    side: string
+    width: string
+    hasDivider: bool
+  slot
+  view
+    view grid-row=2 grid-column=(side == "end" ? 3 : 1)
+      overflow="auto" padding="astryx.space.s4"
+      border-right-width=(side == "start" and hasDivider ? 1 : 0)
+      border-left-width=(side == "end" and hasDivider ? 1 : 0)
+      border-right-style="solid" border-left-style="solid"
+      border-right-color="astryx.border" border-left-color="astryx.border"
+      // A library cannot size a node on its slot's chain from a prop, so a
+      // zero-height strut beside the content sets the panel's width.
+      view width=(width == "" ? "208px" : `calc(${width} - 2 * 16px)`) height=0 flex-shrink=0
+      children
+
+component LayoutContent
+  props
+    contentWidth: string
+    padding: number
+  slot
+  view
+    view grid-row=2 grid-column=2 overflow="auto" min-height=0
+      // The reading width is padding, not max-width: a library cannot cap a
+      // node on its slot's chain with a prop.
+      view width="100%" padding-top=stepOr(padding, 4) padding-bottom=stepOr(padding, 4)
+        padding-left=(contentWidth == "" ? stepOr(padding, 4) : `max(${(padding < 0 ? 4 : padding) * 4}px, calc((100% - ${contentWidth}) / 2))`)
+        padding-right=(contentWidth == "" ? stepOr(padding, 4) : `max(${(padding < 0 ? 4 : padding) * 4}px, calc((100% - ${contentWidth}) / 2))`)
+        children
+
+// Section: a band of content with a surface and optional dividers.
+component Section
+  props
+    variant: string
+    padding: number
+    dividers: string[]
+    bleed: number
+  slot
+  view
+    view
+      background-color=(variant == "transparent" ? "transparent" : variant == "muted" ? "astryx.surface.muted" : "astryx.surface.surface")
+      padding=stepOr(padding, 4)
+      margin-left=(bleed > 0 ? `calc(-1 * ${bleed}px)` : "0px") margin-right=(bleed > 0 ? `calc(-1 * ${bleed}px)` : "0px")
+      border-top-width=(dividers.includes("top") ? 1 : 0)
+      border-bottom-width=(dividers.includes("bottom") ? 1 : 0)
+      border-left-width=(dividers.includes("start") ? 1 : 0)
+      border-right-width=(dividers.includes("end") ? 1 : 0)
+      border-style="solid" border-color="astryx.border"
+      children
+
+// Card: a raised surface. Default cards have a border; elevation adds a
+// shadow.
+component Card
+  props
+    variant: string
+    padding: number
+    elevation: string
+  slot
+  view
+    view border-radius="astryx.radius.container" min-width=0 overflow="hidden"
+      background-color=cardFill(variant)
+      border-width=(variant == "default" or variant == "" ? 1 : 0) border-style="solid" border-color="astryx.border"
+      padding=stepOr(padding, 4)
+      box-shadow=(elevation == "low" ? "astryx.shadow.low" : elevation == "med" ? "astryx.shadow.med" : elevation == "high" ? "astryx.shadow.high" : "none")
+      children
+
+fn cardFill(v: string): string = v == "default" or v == "" ? "astryx.surface.card" : v == "transparent" ? "transparent" : v == "muted" ? "astryx.surface.muted" : `astryx.surface.${v}`
+
+// FormLayout: fields stacked with Astryx's form spacing.
+component FormLayout
+  props
+    gap: number
+  slot
+  view
+    column gap=stepOr(gap, 4) width="100%"
+      children
+
+// Toolbar: a row of controls; a reader moves between them with arrow keys.
+component Toolbar
+  props
+    label: string
+    gap: number
+  slot
+  view
+    row role="toolbar" aria-label=label align-items="center" gap=stepOr(gap, 1) min-width=0
+      children
+
+// EmptyState: a title, a description, an icon and actions, centred.
+component EmptyState
+  props
+    title: string
+    description: string
+    icon: string
+    headingLevel: number
+    isCompact: bool
+  slot
+  view
+    column align-items="center" gap=(isCompact ? "astryx.space.s2" : "astryx.space.s3") padding=(isCompact ? "astryx.space.s4" : "astryx.space.s8") text-align="center"
+      if icon != ""
+        view width=(isCompact ? 24 : 40) height=(isCompact ? 24 : 40) color="astryx.icon.secondary"
+          IconGlyph(icon=icon)
+      Heading(text=title, level=headingLevel, color="primary")
+      if description != ""
+        text description font="astryx.type.body" color="astryx.text.secondary" max-width=400
+      row gap="astryx.space.s2" justify-content="center"
+        children
+
+// Token: a compact label, removable when `removable`.
+component Token
+  props
+    label: string
+    size: string
+    color: string
+    icon: string
+    isDisabled: bool
+    removable: bool
+    remove: action
+  view
+    row align-items="center" gap="astryx.space.s1" border-radius="astryx.radius.inner"
+      height=(size == "sm" ? "astryx.space.s5" : size == "lg" ? "astryx.size.element-sm" : "astryx.space.s6")
+      padding-left="astryx.space.s2" padding-right=(removable ? "astryx.space.s1" : "astryx.space.s2")
+      background-color=(color == "default" or color == "" ? "astryx.neutral" : `astryx.surface.${color}`)
+      opacity=(isDisabled ? 0.5 : 1)
+      if icon != ""
+        Icon(icon=icon, size="xsm", color="inherit", label="")
+      text label font="astryx.type.supporting" font-weight="astryx.weight.medium" white-space="nowrap"
+        color=(color == "default" or color == "" ? "astryx.text.primary" : `astryx.text.${color}`)
+      if removable
+        button press=remove disabled=isDisabled aria-label=`Remove ${label}` testId=`remove-${label}`
+          width=16 height=16 padding=0 border-radius="astryx.radius.inner" background-color="transparent"
+          view width=12 height=12 color="astryx.icon.secondary"
+            IconGlyph(icon="close")

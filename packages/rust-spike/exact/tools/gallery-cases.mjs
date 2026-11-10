@@ -40,13 +40,14 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     records.push(`${family}Case(${['id', ...keys].map(k => `${k}=${lit(k === 'id' ? c.id : props[k])}`).join(', ')})`);
   }
   const call = `${def.component}(${keys.map(k => `${k}=c.${k}`).join(', ')})`;
-  const body = def.wrap ? def.wrap(call) : [call];
+  const inner = def.children ? [call, ...def.children.map(l => `  ${l}`)] : [call];
+  const body = def.wrap ? def.wrap(inner) : inner;
   families.push({
     family, uses: def.uses ?? [def.component],
     decl: [
       `shape ${family}Case`, '  id: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
-      `component ${family}Cases`, '  props', '    id: string', '  view',
+      `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  view',
       `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.id == id) key=c.id`,
       ...body.map(l => `      ${l}`),
     ],
@@ -57,7 +58,7 @@ const uses = [...new Set(families.flatMap(f => f.uses))].sort();
 const out = [
   '// The gallery\'s cases, written by tools/gallery-cases.mjs; do not edit.',
   ...(uses.length ? [`use ${uses.join(', ')} from "@astryx-spike/astryx"`] : []),
-  'use Swatches from "./swatches.contract"',
+  'use Swatches, Filler from "./swatches.contract"',
   '',
   'shape CaseRow',
   '  id: string',

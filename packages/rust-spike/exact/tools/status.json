@@ -88,5 +88,83 @@
   "status": "ported",
   "evidence": "gallery indicator-*",
   "notes": "Checkbox, radio and check indicators."
+ },
+ "Stack": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery stack-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped."
+ },
+ "HStack": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery hstack-*",
+  "notes": ""
+ },
+ "VStack": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery vstack-*",
+  "notes": ""
+ },
+ "Grid": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery grid-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. rowHeight not yet wired."
+ },
+ "Center": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery center-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. isInline dropped (no inline-flex)."
+ },
+ "AspectRatio": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery aspectratio-*",
+  "notes": "fit (cover/contain) applies to an image child, set by the caller."
+ },
+ "Layout": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery layout-0001, layout-0002",
+  "notes": "Astryx takes header/start/end/footer as named props; Contract has one slot, so LayoutHeader, LayoutPanel, LayoutContent and LayoutFooter are children that place themselves on the frame's grid. Edge compensation through --container-padding-* custom properties has no equivalent. Panel width is a zero-height strut; content width is padding. No container queries."
+ },
+ "Section": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery section-*",
+  "notes": "Nested full-bleed (cancel the container's padding) needs the padding by prop (`bleed`): no runtime custom properties, no context through a slot."
+ },
+ "Card": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "gallery card-*",
+  "notes": "A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Border inset compensation (padding minus border) dropped."
+ },
+ "FormLayout": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "used by settings-dialog (wave 8)",
+  "notes": ""
+ },
+ "Toolbar": {
+  "wave": 2,
+  "status": "workaround",
+  "evidence": "-",
+  "notes": "Arrow-key roving focus waits for wave 5 controls; overflow menu waits for OverflowList (wave 6)."
+ },
+ "EmptyState": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery emptystate-*",
+  "notes": "actions are the slot."
+ },
+ "Token": {
+  "wave": 2,
+  "status": "ported",
+  "evidence": "gallery token-*",
+  "notes": "href/onClick variants and endContent not yet wired."
  }
 }
