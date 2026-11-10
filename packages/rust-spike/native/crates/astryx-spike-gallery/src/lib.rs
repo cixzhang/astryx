@@ -106,7 +106,7 @@ struct Page {
 impl Build<Msg> for Page {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let _ = &self.base;
-        // Case pages sit on the surface color, as the Storybook baseline does.
+        // Case pages sit on the surface color, as the baseline does.
         let ground = if self.name.is_some() {
             cx.tokens.color.background_surface.into()
         } else {
@@ -114,11 +114,7 @@ impl Build<Msg> for Page {
         };
         let node = Node::new(taffy::Style {
             flex_direction: taffy::FlexDirection::Column,
-            align_items: if self.name.is_some() {
-                taffy::AlignItems::FLEX_START
-            } else {
-                taffy::AlignItems::STRETCH
-            },
+            align_items: taffy::AlignItems::STRETCH,
             size: taffy::Size {
                 width: taffy::Dimension::percent(1.0),
                 height: taffy::Dimension::percent(1.0),
@@ -140,9 +136,10 @@ impl Build<Msg> for Page {
             // The case box hugs the component, with 16 points of ground
             // around it, so a capture can crop to it.
             cx.begin(
+                // A block box: as wide as the page, children stretch.
                 Node::new(taffy::Style {
                     flex_direction: taffy::FlexDirection::Column,
-                    align_items: taffy::AlignItems::FLEX_START,
+                    align_items: taffy::AlignItems::STRETCH,
                     padding: taffy::Rect {
                         left: taffy::LengthPercentage::length(16.0),
                         right: taffy::LengthPercentage::length(16.0),

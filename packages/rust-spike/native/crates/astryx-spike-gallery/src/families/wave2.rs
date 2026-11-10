@@ -1,6 +1,6 @@
 //! Wave 2 families: layout primitives and containers.
 
-use super::{v, Family};
+use super::{kids, v, Family};
 use crate::props::{Props, SPACE_STEPS};
 use crate::Msg;
 use astryx_core::contract::Color;
@@ -10,15 +10,6 @@ use serde_json::{json, Value};
 
 fn steps() -> Vec<Value> {
     SPACE_STEPS.iter().map(|s| json!(s)).collect()
-}
-
-/// A tinted tile, so spacing and alignment show in screenshots.
-pub(crate) fn tile(label: &str) -> Element<Msg> {
-    Card::new()
-        .variant(CardVariant::Blue)
-        .padding(Space::S2)
-        .child(Text::new(label).r#type(TextType::Label))
-        .into()
 }
 
 fn axis_align(s: &str) -> Option<StackAxisAlign> {
@@ -45,16 +36,21 @@ fn wrap(s: &str) -> StackWrap {
 fn stack(p: Props, direction: StackDirection) -> Element<Msg> {
     let mut s = Stack::new()
         .direction(direction)
-        .children(["One", "Two", "Three"].map(tile))
-        .wrap(wrap(p.str_or("wrap", "nowrap")));
-    // Room to show alignment and distribution.
-    s = if direction == StackDirection::Horizontal {
-        s.width(p.size("width").unwrap_or(SizeValue::Points(360.0)))
-            .height(p.size("height").unwrap_or(SizeValue::Points(96.0)))
-    } else {
-        s.width(p.size("width").unwrap_or(SizeValue::Points(240.0)))
-            .height(p.size("height").unwrap_or(SizeValue::Points(220.0)))
-    };
+        .children(kids(&p))
+        .wrap(wrap(p.str_or("wrap", "nowrap")))
+        .is_scrollable(p.bool("isScrollable"));
+    if let Some(w) = p.size("width") {
+        s = s.width(w);
+    }
+    if let Some(h) = p.size("height") {
+        s = s.height(h);
+    }
+    if let Some(w) = p.size("maxWidth") {
+        s = s.max_width(w);
+    }
+    if let Some(h) = p.size("minHeight") {
+        s = s.min_height(h);
+    }
     if let Some(g) = p.space("gap") {
         s = s.gap(g);
     }
@@ -80,12 +76,19 @@ fn stack(p: Props, direction: StackDirection) -> Element<Msg> {
     if let Some(a) = p.str("vAlign").and_then(axis_align) {
         s = s.v_align(a);
     }
-    // A dashed frame would be nicer; a muted ground shows the box.
-    Card::new()
-        .variant(CardVariant::Muted)
-        .padding(Space::S0)
-        .child(s)
-        .into()
+    if let Some(a) = p.str("justify").and_then(axis_align) {
+        s = match direction {
+            StackDirection::Horizontal => s.h_align(a),
+            StackDirection::Vertical => s.v_align(a),
+        };
+    }
+    if let Some(a) = p.str("align").and_then(axis_align) {
+        s = match direction {
+            StackDirection::Horizontal => s.v_align(a),
+            StackDirection::Vertical => s.h_align(a),
+        };
+    }
+    s.into()
 }
 
 fn render_stack(p: Props) -> Element<Msg> {
@@ -125,12 +128,10 @@ fn render_grid(p: Props) -> Element<Msg> {
                 GridRepeat::Fill
             },
         },
-        Some(n) => GridColumns::Count(n.as_u64().unwrap_or(3) as u16),
-        None => GridColumns::Count(3),
+        Some(n) => GridColumns::Count(n.as_u64().unwrap_or(1) as u16),
+        None => GridColumns::Count(1),
     };
-    let mut g = Grid::new(columns)
-        .width(p.size("width").unwrap_or(SizeValue::Points(360.0)))
-        .children(["A", "B", "C", "D", "E", "F", "G"].map(tile));
+    let mut g = Grid::new(columns).children(kids(&p));
     if let Some(s) = p.space("gap") {
         g = g.gap(s);
     }
@@ -149,6 +150,18 @@ fn render_grid(p: Props) -> Element<Msg> {
     if let Some(h) = p.num("rowHeight") {
         g = g.row_height(h as f32);
     }
+    if let Some(w) = p.size("width") {
+        g = g.width(w);
+    }
+    if let Some(h) = p.size("height") {
+        g = g.height(h);
+    }
+    if let Some(w) = p.size("maxWidth") {
+        g = g.max_width(w);
+    }
+    if let Some(h) = p.size("minHeight") {
+        g = g.min_height(h);
+    }
     g.into()
 }
 
@@ -159,10 +172,21 @@ fn render_center(p: Props) -> Element<Msg> {
             "vertical" => CenterAxis::Vertical,
             _ => CenterAxis::Both,
         })
-        .width(p.size("width").unwrap_or(SizeValue::Points(280.0)))
-        .height(p.size("height").unwrap_or(SizeValue::Points(140.0)))
-        .is_inline(p.bool("isInline"))
-        .child(tile("Centered"));
+        .is_inline(p.bool("isInline"));
+    // Center lays its children out in a row, as display:flex does.
+    c = c.child(HStack::new().children(kids(&p)));
+    if let Some(w) = p.size("width") {
+        c = c.width(w);
+    }
+    if let Some(h) = p.size("height") {
+        c = c.height(h);
+    }
+    if let Some(w) = p.size("maxWidth") {
+        c = c.max_width(w);
+    }
+    if let Some(h) = p.size("minHeight") {
+        c = c.min_height(h);
+    }
     for (k, f) in [
         (
             "padding",
@@ -179,26 +203,18 @@ fn render_center(p: Props) -> Element<Msg> {
             c = f(c, step);
         }
     }
-    Card::new()
-        .variant(CardVariant::Muted)
-        .padding(Space::S0)
-        .child(c)
-        .into()
+    c.into()
 }
 
 fn render_aspect_ratio(p: Props) -> Element<Msg> {
-    let ratio = p.num("ratio").unwrap_or(16.0 / 9.0) as f32;
-    let mut a = AspectRatio::new(
-        ratio,
-        Card::new()
-            .variant(CardVariant::Purple)
-            .child(Text::new(format!("{ratio:.2}:1"))),
-    )
-    .shape(if p.str("shape") == Some("ellipse") {
-        AspectRatioShape::Ellipse
-    } else {
-        AspectRatioShape::Rectangle
-    });
+    let ratio = p.num("ratio").unwrap_or(1.0) as f32;
+    let mut a = AspectRatio::new(ratio, HStack::new().children(kids(&p))).shape(
+        if p.str("shape") == Some("ellipse") {
+            AspectRatioShape::Ellipse
+        } else {
+            AspectRatioShape::Rectangle
+        },
+    );
     if let Some(f) = p.str("fit") {
         a = a.fit(match f {
             "contain" => AspectRatioFit::Contain,
@@ -206,10 +222,7 @@ fn render_aspect_ratio(p: Props) -> Element<Msg> {
             _ => AspectRatioFit::Cover,
         });
     }
-    VStack::new()
-        .width(SizeValue::Points(280.0))
-        .child(a)
-        .into()
+    a.into()
 }
 
 fn section_variant(s: &str) -> SectionVariant {
@@ -223,9 +236,19 @@ fn section_variant(s: &str) -> SectionVariant {
 fn render_section(p: Props) -> Element<Msg> {
     let mut s = Section::new()
         .variant(section_variant(p.str_or("variant", "section")))
-        .width(p.size("width").unwrap_or(SizeValue::Points(320.0)))
-        .child(Text::new("Section content"))
-        .child(Text::new("Second line").color(TextColor::Secondary));
+        .children(kids(&p));
+    if let Some(w) = p.size("width") {
+        s = s.width(w);
+    }
+    if let Some(h) = p.size("height") {
+        s = s.height(h);
+    }
+    if let Some(w) = p.size("maxWidth") {
+        s = s.max_width(w);
+    }
+    if let Some(h) = p.size("minHeight") {
+        s = s.min_height(h);
+    }
     for (k, f) in [
         (
             "padding",
@@ -291,81 +314,55 @@ fn render_card(p: Props) -> Element<Msg> {
     let mut c = Card::new()
         .variant(card_variant(p.str_or("variant", "default")))
         .elevation(elevation(p.str_or("elevation", "none")))
-        .width(p.size("width").unwrap_or(SizeValue::Points(280.0)))
-        .child(Text::new("Card title").r#type(TextType::Label))
-        .child(Text::new("Supporting text for this card.").color(TextColor::Secondary));
+        .children(kids(&p));
     if let Some(s) = p.space("padding") {
         c = c.padding(s);
+    }
+    if let Some(w) = p.size("width") {
+        c = c.width(w);
+    }
+    if let Some(h) = p.size("height") {
+        c = c.height(h);
+    }
+    if let Some(w) = p.size("maxWidth") {
+        c = c.max_width(w);
+    }
+    if let Some(h) = p.size("minHeight") {
+        c = c.min_height(h);
     }
     c.into()
 }
 
 fn render_empty_state(p: Props) -> Element<Msg> {
-    let mut e = EmptyState::new(p.words("No projects yet"))
-        .description(p.str_or("description", "Create a project to get started."))
-        .icon(
-            Icon::new("search")
-                .size(IconSize::Lg)
-                .color(IconColor::Secondary),
-        )
+    let mut e = EmptyState::new(p.words("Title"))
         .heading_level(p.num("headingLevel").unwrap_or(3.0) as u8)
         .is_compact(p.bool("isCompact"));
-    if !p.bool("noActions") {
-        e = e.action(
-            Link::new("Learn more")
-                .is_standalone(true)
-                .on_click(Msg::Noop),
-        );
+    if let Some(d) = p.str("description") {
+        e = e.description(d);
     }
-    VStack::new()
-        .width(SizeValue::Points(360.0))
-        .child(e)
-        .into()
+    e.into()
 }
 
 fn render_layout(p: Props) -> Element<Msg> {
-    let pad = p.space("padding");
-    let header_divider = p.get("hasDivider").and_then(Value::as_bool);
-    let mut header = LayoutHeader::new().child(Text::new("Header").r#type(TextType::Label));
-    let mut footer = LayoutFooter::new().child(Text::new("Footer").color(TextColor::Secondary));
-    if let Some(d) = header_divider {
-        header = header.has_divider(d);
-        footer = footer.has_divider(d);
-    }
-    let part = p.str_or("part", "Layout");
-    if part == "LayoutHeader" {
-        if let Some(s) = p.space("paddingBlockEnd") {
-            header = header.padding_block_end(s);
-        }
-    }
     let mut l = Layout::new()
-        .header(header)
-        .content(LayoutContent::new().child(Text::new("Content")))
-        .footer(footer)
+        .height(if p.str("height") == Some("auto") {
+            LayoutHeight::Auto
+        } else {
+            LayoutHeight::Fill
+        })
         .default_has_dividers(p.bool("defaultHasDividers"));
-    if part == "LayoutPanel" || p.bool("withPanel") {
-        let mut panel = LayoutPanel::new()
-            .width(120.0)
-            .child(Text::new("Panel"))
-            .has_divider(header_divider.unwrap_or(true));
-        if let Some(s) = pad {
-            panel = panel.padding(s);
-        }
-        l = l.start(panel);
+    let mut content = LayoutContent::new();
+    for k in kids(&p) {
+        content = content.child(k);
     }
-    if let Some(s) = pad {
+    l = l.content(content);
+    if let Some(s) = p.space("padding") {
         l = l.padding(s);
     }
-    VStack::new()
-        .width(SizeValue::Points(360.0))
-        .height(SizeValue::Points(240.0))
-        .child(
-            Card::new()
-                .padding(Space::S0)
-                .height(SizeValue::Percent(100.0))
-                .child(l),
-        )
-        .into()
+    if let Some(w) = p.size("contentWidth") {
+        l = l.content_width(w);
+    }
+    l.into()
 }
 
 #[allow(dead_code)]

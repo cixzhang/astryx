@@ -35,6 +35,56 @@ pub struct Case {
     pub props: Value,
 }
 
+/// The children a case's fixture asks for, as the baseline renders them:
+/// `boxes` is three 40 × 24 muted boxes with 4 point corners, `text` is
+/// the word "Label", and none is no children.
+pub(crate) fn kids(p: &Props) -> Vec<Element<Msg>> {
+    match p.str("$fixture") {
+        Some("boxes") => (0..3).map(|_| fixture_box()).collect(),
+        Some("text") => vec![astryx_spike_ui::Text::new("Label").into()],
+        _ => Vec::new(),
+    }
+}
+
+/// The fixture's text child, when it has one.
+pub(crate) fn kid_text(p: &Props) -> Option<&'static str> {
+    (p.str("$fixture") == Some("text")).then_some("Label")
+}
+
+pub(crate) fn fixture_box() -> Element<Msg> {
+    astryx_core::authoring::element(FixtureBox)
+}
+
+struct FixtureBox;
+
+impl astryx_core::authoring::Build<Msg> for FixtureBox {
+    fn build(self: Box<Self>, cx: &mut astryx_core::authoring::BuildCx<Msg>) {
+        let ground = cx.tokens.color.background_muted.into();
+        cx.leaf(
+            astryx_core::authoring::Node::new(taffy::Style {
+                size: taffy::Size {
+                    width: taffy::Dimension::length(40.0),
+                    height: taffy::Dimension::length(24.0),
+                },
+                flex_shrink: 0.0,
+                ..taffy::Style::default()
+            })
+            .draw(astryx_core::authoring::Draw::Box(
+                astryx_core::authoring::BoxDraw::fill(
+                    ground,
+                    astryx_core::contract::Radii::all(4.0),
+                ),
+            )),
+        );
+    }
+}
+
+/// Lays an inline-level component (Button, Badge, Token …) out as the
+/// browser does in a block: at the start, at its own width.
+pub(crate) fn inline(el: impl Into<Element<Msg>>) -> Element<Msg> {
+    astryx_spike_ui::HStack::new().child(el).into()
+}
+
 pub(crate) fn v(values: &[&str]) -> Vec<Value> {
     values.iter().map(|s| json!(s)).collect()
 }
@@ -95,7 +145,7 @@ pub fn cases(f: &Family) -> Vec<Case> {
 /// part the case is for.
 fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
     let mut out = Vec::new();
-    let mut push = |component: &str, items: &Value| {
+    let mut push = |component: &str, fixture: &Value, items: &Value| {
         for item in items.as_array().into_iter().flatten() {
             let Some(id) = item.get("id").and_then(Value::as_str) else {
                 continue;
@@ -106,6 +156,7 @@ fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
                 .cloned()
                 .unwrap_or_default();
             props.insert("$component".into(), json!(component));
+            props.insert("$fixture".into(), fixture.clone());
             out.push(Case {
                 id: id.to_string(),
                 family,
@@ -114,7 +165,7 @@ fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
         }
     };
     match doc {
-        Value::Array(_) => push(family, doc),
+        Value::Array(_) => push(family, &Value::Null, doc),
         Value::Object(o) => {
             for c in o
                 .get("components")
@@ -123,8 +174,9 @@ fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
                 .flatten()
             {
                 let name = c.get("component").and_then(Value::as_str).unwrap_or(family);
+                let fixture = c.get("fixture").cloned().unwrap_or(Value::Null);
                 if let Some(cases) = c.get("cases") {
-                    push(name, cases);
+                    push(name, &fixture, cases);
                 }
             }
         }
