@@ -87,7 +87,7 @@ component CompositesPlayground
         text "Open sheet"
       BottomSheet(id="pg-sheet", title="Share", still=true)
         text "Sheet body" testId="sheet-body"
-      DropdownMenu(id="pg-menu", label="Actions", items=[menu("edit", "Edit"), menu("copy", "Copy")], select=choose)
+      DropdownMenu(id="pg-menu", label="Actions", items=[menu("edit", "Edit"), menu("copy", "Copy")], variant="secondary", size="md", hasChevron=true, select=choose)
       ContextMenu(id="pg-context", label="Row actions", items=[menu("pin", "Pin"), menu("hide", "Hide")], select=choose)
         text "Row" testId="context-row"
       text chosen testId="chosen"

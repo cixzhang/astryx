@@ -318,7 +318,7 @@ component MenuRows
         else
           button press=select(it.id) popovertarget=id popovertargetaction="hide" disabled=it.isDisabled destructive=it.isDestructive
             role=(it.isChecked ? "menuitemcheckbox" : "menuitem") aria-checked=it.isChecked aria-label=it.label testId=`menu-${it.id}`
-            display="flex" align-items="center" gap="astryx.space.s2" width="100%" border-width=0 background-color="transparent"
+            display="flex" align-items="center" gap="astryx.space.s2" width="100%" box-sizing="border-box" border-width=0 background-color="transparent"
             padding-top="astryx.space.s1-5" padding-bottom="astryx.space.s1-5" padding-left="astryx.space.s2" padding-right="astryx.space.s2"
             border-radius="astryx.radius.inner" opacity=(it.isDisabled ? 0.5 : 1)
             view width=16 height=16 flex-shrink=0 color=(it.isDestructive ? "astryx.icon.error" : "astryx.icon.secondary")
@@ -333,16 +333,21 @@ component DropdownMenu
     id: string
     label: string
     items: MenuItem[]
+    variant: string
+    size: string
+    hasChevron: bool
     select: action
   view
     column
       button id=`${id}-trigger` popovertarget=id aria-haspopup="menu" aria-label=label testId=`${id}-trigger`
-        display="flex" align-items="center" gap="astryx.space.s1" height="astryx.size.element-md"
-        padding-left="astryx.space.s3" padding-right="astryx.space.s2" border-width=0
-        border-radius="astryx.radius.element" background-color="astryx.neutral" color="astryx.text.primary"
+        display="flex" align-items="center" gap="astryx.space.s1"
+        height=(size == "sm" ? "astryx.size.element-sm" : size == "lg" ? "astryx.size.element-lg" : "astryx.size.element-md")
+        padding-left="astryx.space.s3" padding-right=(hasChevron ? "astryx.space.s2" : "astryx.space.s3") border-width=0
+        border-radius="astryx.radius.element" background-color=(variant == "ghost" ? "transparent" : "astryx.neutral") color="astryx.text.primary"
         text label font="astryx.type.label" font-weight="astryx.weight.medium"
-        view width=16 height=16
-          IconGlyph(icon="chevronDown")
+        if hasChevron
+          view width=16 height=16
+            IconGlyph(icon="chevronDown")
       MenuRows(id=id, label=label, items=items, select=select)
 
 // ContextMenu: a menu opened by a right click or a long press on its slot.

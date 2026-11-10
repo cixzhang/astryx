@@ -349,7 +349,7 @@ export const FAMILIES = {
   },
   DropdownMenu: {
     component: 'DropdownMenu', actions: { select: 'noopS' }, uses: ['DropdownMenu', 'MenuItem'], types: { items: 'MenuItem[]' },
-    defaults: { id: 'case-popover', label: 'Actions', items: MENU },
+    defaults: { id: 'case-popover', label: 'Actions', items: MENU, variant: 'secondary', size: 'md', hasChevron: true },
     opens: () => true,
     wrap: inner => ['column width=320 height=280', ...inner.map(l => `  ${l}`)],
     smoke: sweep('DropdownMenu', {}, { label: ['More'] }),

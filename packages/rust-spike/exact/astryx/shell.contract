@@ -1,0 +1,95 @@
+// Wave 8 shell: AppShell (with AppShellContent), TopNav, SideNav, SideNavItem
+// and MobileNav.
+//
+// Astryx's AppShell takes `topNav`, `sideNav` and its content as separate
+// props. A Contract component has one slot, so each part is a child that
+// places itself on the shell's grid, as Layout's parts do.
+use IconGlyph from "./icons.contract"
+use space from "./foundations.contract"
+
+component AppShell
+  props
+    label: string
+  slot
+  view
+    view display="grid" grid-template-columns="auto minmax(0, 1fr)" grid-template-rows="auto minmax(0, 1fr) auto"
+      width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary" aria-label=label
+      children
+
+// The shell's main area, beside the side navigation.
+component AppShellContent
+  props
+    padding: number
+  slot
+  view
+    view grid-row=2 grid-column=2 overflow="auto" min-height=0 background-color="astryx.surface.surface"
+      padding=space(padding < 0 ? "4" : padding.toString()) role="main"
+      children
+
+// TopNav: the bar across the top. Its content is the slot: a `view flex=1`
+// between the start and end items pushes the end items right.
+component TopNav
+  props
+    label: string
+  slot
+  view
+    row grid-row=1 grid-column="1 / 3" role="navigation" aria-label=label align-items="center" gap="astryx.space.s1"
+      padding="astryx.space.s2" min-height=48 border-bottom-width="astryx.border.width" border-bottom-style="solid" border-bottom-color="astryx.border"
+      background-color="astryx.surface.body"
+      children
+
+// SideNav: the column of navigation at the start edge, 260 wide (the caller
+// wraps it in a Resizable to let the reader resize it).
+component SideNav
+  props
+    label: string
+    isCollapsed: bool
+  slot
+  view
+    column grid-row=2 grid-column=1 role="navigation" aria-label=label gap="astryx.space.s0-5"
+      padding="astryx.space.s2" overflow="auto" min-height=0
+      border-right-width="astryx.border.width" border-right-style="solid" border-right-color="astryx.border"
+      children
+
+// SideNavItem: one destination in the side navigation.
+component SideNavItem
+  props
+    label: string
+    icon: string
+    isSelected: bool
+    isCollapsed: bool
+    press: action
+  view
+    button press=press aria-current=isSelected aria-label=label testId=`nav-${label}`
+      display="flex" align-items="center" gap="astryx.space.s2" width="100%" border-width=0 text-align="left"
+      height="astryx.size.element-md" padding-left="astryx.space.s2" padding-right="astryx.space.s2" border-radius="astryx.radius.element"
+      background-color=(isSelected ? "astryx.neutral" : "transparent")
+      if icon != ""
+        view width=16 height=16 flex-shrink=0 color=(isSelected ? "astryx.icon.primary" : "astryx.icon.secondary")
+          IconGlyph(icon=icon)
+      if not isCollapsed
+        text label font="astryx.type.label" font-weight=(isSelected ? "astryx.weight.semibold" : "astryx.weight.medium") color="astryx.text.primary"
+
+// A destination of a MobileNav.
+shape NavItem
+  id: string
+  label: string
+  icon: string
+
+// MobileNav: the tab bar along the bottom of a narrow screen.
+component MobileNav
+  props
+    label: string
+    items: NavItem[]
+    selected: string
+    go: action
+  view
+    row grid-row=3 grid-column="1 / 3" role="tablist" aria-label=label justify-content="space-around"
+      padding-top="astryx.space.s1" padding-bottom="astryx.space.s2"
+      border-top-width="astryx.border.width" border-top-style="solid" border-top-color="astryx.border" background-color="astryx.surface.body"
+      for it in items key=it.id
+        button press=go(it.id) role="tab" aria-selected=(selected == it.id) aria-label=it.label testId=`tab-${it.id}`
+          display="flex" flex-direction="column" align-items="center" gap="astryx.space.s0-5" border-width=0 background-color="transparent" padding="astryx.space.s1"
+          view width=20 height=20 color=(selected == it.id ? "astryx.icon.accent" : "astryx.icon.secondary")
+            IconGlyph(icon=it.icon)
+          text it.label font="astryx.type.supporting" color=(selected == it.id ? "astryx.text.accent" : "astryx.text.secondary")
