@@ -266,3 +266,19 @@ pub fn all_case_ids() -> Vec<String> {
         .filter(|id| seen.insert(id.clone()))
         .collect()
 }
+
+/// Plays a runtime's entrance animations (layers fading in, for example)
+/// to their end, so a capture shows the settled state, as a browser
+/// capture taken after the page settles does.
+pub fn settle(rt: &mut dyn astryx_core::contract::Surface, width: u32, height: u32) {
+    let measure = astryx_core::testing::FixedMeasure::default();
+    for _ in 0..20 {
+        let frame = astryx_core::contract::FrameInfo {
+            width,
+            height,
+            scale: 1.0,
+            dt: 0.05,
+        };
+        let _ = rt.frame(&frame, &measure);
+    }
+}

@@ -37,6 +37,7 @@ pub struct Dialog<Msg> {
     purpose: DialogPurpose,
     padding: Option<Space>,
     label: Option<String>,
+    is_inline: bool,
     children: Vec<Element<Msg>>,
 }
 
@@ -51,8 +52,15 @@ impl<Msg> Dialog<Msg> {
             purpose: DialogPurpose::Info,
             padding: None,
             label: None,
+            is_inline: false,
             children: Vec::new(),
         }
+    }
+    /// Draws the dialog in the page flow, not as a modal layer (for
+    /// documentation previews).
+    pub fn is_inline(mut self, on: bool) -> Self {
+        self.is_inline = on;
+        self
     }
     pub fn width(mut self, w: f32) -> Self {
         self.width = w;
@@ -159,6 +167,21 @@ impl<Msg: Clone + 'static> Build<Msg> for Dialog<Msg> {
             padding: pad,
             children: self.children,
         });
+        if self.is_inline {
+            let role = if self.purpose == DialogPurpose::Required {
+                Role::AlertDialog
+            } else {
+                Role::Dialog
+            };
+            let sem = match self.label {
+                Some(l) => Semantics::new(role, l),
+                None => Semantics::role(role),
+            };
+            cx.begin(Node::new(Style::default()).sem(sem));
+            cx.child(surface);
+            cx.end();
+            return;
+        }
         let on = self.on_open_change.clone();
         let mut layer = Layer::dialog(surface)
             .backdrop(color(t.color.overlay))

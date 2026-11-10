@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut rt = Runtime::new(gallery()).hide_focus_until_keyboard();
         let renderer = astryx_render_soft::SoftRenderer::new();
         let frame = astryx_headless::frame_info(w, h, 1.0);
-        let _ = rt.frame(&frame, renderer.text());
+        astryx_spike_gallery::settle(&mut rt, w, h);
         let _ = rt.frame(&frame, renderer.text());
         let tree = rt.accessibility().map(|t| a11y_json::to_json(&t));
         std::fs::write(&path, serde_json::to_string_pretty(&tree)?)?;
@@ -62,7 +62,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         screenshot,
     };
     let shooting = options.exit_after_screenshot;
-    run_with(Runtime::new(gallery()).hide_focus_until_keyboard(), options)?;
+    let mut rt = Runtime::new(gallery()).hide_focus_until_keyboard();
+    if shooting {
+        astryx_spike_gallery::settle(&mut rt, w, h);
+    }
+    run_with(rt, options)?;
     if shooting {
         println!("first_frame_ms={}", start.elapsed().as_millis());
     }

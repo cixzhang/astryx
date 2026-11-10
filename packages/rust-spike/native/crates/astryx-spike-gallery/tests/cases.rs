@@ -18,7 +18,9 @@ fn every_case_renders_in_a_named_box() {
         // A modal layer (BottomSheet) makes the page, case box included,
         // inert, so only the layer is in the tree.
         let named = astryx_spike_ui::testkit::flatten(&tree).iter().any(|c| {
-            (c.role == Role::Group && c.label.as_deref() == Some("case")) || c.role == Role::Dialog
+            (c.role == Role::Group && c.label.as_deref() == Some("case"))
+                || c.role == Role::Dialog
+                || c.role == Role::AlertDialog
         });
         assert!(named, "{id}: {tree:#?}");
     }

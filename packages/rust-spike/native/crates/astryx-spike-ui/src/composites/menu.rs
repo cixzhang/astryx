@@ -144,6 +144,8 @@ pub(crate) struct MenuList<Msg> {
     pub footer: Option<Element<Msg>>,
     /// Sent after a row acts, so the menu closes.
     pub on_close: Option<Msg>,
+    /// Runs after a row acts, for a menu that keeps its own open state.
+    pub close_effect: Option<Rc<dyn Fn()>>,
 }
 
 fn row_pad<Msg>(cx: &BuildCx<Msg>, size: ComponentSize) -> (f32, f32) {
@@ -169,6 +171,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
         disabled: bool,
         destructive: bool,
         end: Option<Element<Msg>>,
+        effect: Option<Rc<dyn Fn()>>,
     ) {
         let t = cx.tokens;
         let c = &t.color;
@@ -198,7 +201,13 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
                 },
                 ..Style::default()
             })
-            .interact(Interact::new(msg, disabled))
+            .interact({
+                let mut i = Interact::new(msg, disabled);
+                if let Some(e) = effect {
+                    i = i.effect(move || e());
+                }
+                i
+            })
             .indicator(Indicator::ring(
                 color(c.accent),
                 r,
@@ -254,6 +263,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
         size: ComponentSize,
         options: Vec<MenuOption<Msg>>,
         close: &Option<Msg>,
+        effect: &Option<Rc<dyn Fn()>>,
     ) {
         let t = cx.tokens;
         let c = &t.color;
@@ -290,6 +300,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
                         is_disabled,
                         destructive,
                         end_content,
+                        effect.clone(),
                     );
                 }
                 MenuOption::Checkbox {
@@ -311,6 +322,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
                         is_disabled,
                         false,
                         None,
+                        None,
                     );
                 }
                 MenuOption::Radio {
@@ -331,6 +343,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
                         is_disabled,
                         false,
                         None,
+                        effect.clone(),
                     );
                 }
                 MenuOption::Group { label, options } => {
@@ -364,7 +377,7 @@ impl<Msg: Clone + 'static> MenuList<Msg> {
                         h.sem = None;
                         cx.leaf(h);
                     }
-                    Self::options(cx, size, options, close);
+                    Self::options(cx, size, options, close, effect);
                     cx.end();
                 }
                 MenuOption::Divider => {
@@ -432,7 +445,13 @@ impl<Msg: Clone + 'static> Build<Msg> for MenuList<Msg> {
         if let Some(h) = self.header {
             cx.child(h);
         }
-        Self::options(cx, self.size, self.options, &self.on_close);
+        Self::options(
+            cx,
+            self.size,
+            self.options,
+            &self.on_close,
+            &self.close_effect,
+        );
         if let Some(f) = self.footer {
             cx.child(f);
         }
@@ -450,7 +469,7 @@ pub struct DropdownMenu<Msg> {
     icon: Option<Icon>,
     is_icon_only: bool,
     items: Vec<MenuOption<Msg>>,
-    is_menu_open: bool,
+    is_menu_open: Option<bool>,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
     menu_width: Option<f32>,
     menu_max_height: Option<f32>,
@@ -473,7 +492,7 @@ impl<Msg> DropdownMenu<Msg> {
             icon: None,
             is_icon_only: false,
             items,
-            is_menu_open: false,
+            is_menu_open: None,
             on_open_change: None,
             menu_width: None,
             menu_max_height: None,
@@ -502,8 +521,9 @@ impl<Msg> DropdownMenu<Msg> {
         self.is_icon_only = on;
         self
     }
+    /// Controls it; without this, the trigger opens and closes it.
     pub fn is_menu_open(mut self, open: bool) -> Self {
-        self.is_menu_open = open;
+        self.is_menu_open = Some(open);
         self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
@@ -552,6 +572,10 @@ impl<Msg: Clone + 'static> Build<Msg> for DropdownMenu<Msg> {
             return;
         }
         let t = cx.tokens;
+        let owner = format!("{}:menu", self.id);
+        let (open, h) = crate::overlays::open_state(cx, &owner, self.is_menu_open, false);
+        cx.begin(crate::overlays::owner_node());
+        let uncontrolled = self.is_menu_open.is_none();
         let mut b = Button::new(self.label)
             .variant(self.variant)
             .is_icon_only(self.is_icon_only)
@@ -566,11 +590,14 @@ impl<Msg: Clone + 'static> Build<Msg> for DropdownMenu<Msg> {
             b = b.end_content(Icon::new("chevronDown"));
         }
         if let Some(f) = &self.on_open_change {
-            b = b.on_click(f(!self.is_menu_open));
+            b = b.on_click(f(!open));
         }
-        // a11y: aria-haspopup="menu" and aria-expanded on the trigger.
+        if uncontrolled {
+            let h = h.clone();
+            b = b.effect(Rc::new(move || h.set(Some(!open))));
+        }
         cx.child(b.into());
-        if self.is_menu_open {
+        if open {
             let list = MenuList {
                 options: self.items,
                 size: self.size.unwrap_or(ComponentSize::Md),
@@ -579,16 +606,22 @@ impl<Msg: Clone + 'static> Build<Msg> for DropdownMenu<Msg> {
                 header: self.header,
                 footer: self.footer,
                 on_close: self.on_open_change.as_ref().map(|f| f(false)),
+                close_effect: uncontrolled.then(|| {
+                    let h = h.clone();
+                    Rc::new(move || h.set(Some(false))) as Rc<dyn Fn()>
+                }),
             };
             let mut layer = Layer::menu(&self.id, astryx_core::authoring::element(list))
                 .placement(Placement::new(self.placement, self.alignment).offset(t.space.s1))
-                .role(Role::Menu);
+                .role(Role::Menu)
+                .on_dismiss_effect(move |_| h.set(Some(false)));
             if let Some(f) = &self.on_open_change {
                 let f = f.clone();
                 layer = layer.on_dismiss(move |_| f(false));
             }
             cx.child(layer.into());
         }
+        cx.end();
     }
 }
 
@@ -687,6 +720,7 @@ impl<Msg: Clone + 'static> Build<Msg> for ContextMenu<Msg> {
                 header: None,
                 footer: None,
                 on_close: self.on_open_change.as_ref().map(|f| f(None)),
+                close_effect: None,
             };
             let mut layer = Layer::menu_at(at, astryx_core::authoring::element(list))
                 .role(Role::Menu)

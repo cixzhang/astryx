@@ -166,11 +166,7 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
                     height: len(0.0),
                 },
                 padding: taffy::Rect {
-                    left: len(if self.edge == ListEdge::Flush {
-                        0.0
-                    } else {
-                        0.0
-                    }),
+                    left: len(0.0),
                     right: len(0.0),
                     top: len(pad_block.max(0.0)),
                     bottom: len(pad_block.max(0.0)),
@@ -239,7 +235,8 @@ pub enum ChevronPosition {
 pub struct Collapsible<Msg> {
     base: Base,
     trigger: String,
-    is_open: bool,
+    is_open: Option<bool>,
+    default_is_open: bool,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
     is_disabled: bool,
     chevron_position: ChevronPosition,
@@ -247,16 +244,27 @@ pub struct Collapsible<Msg> {
 }
 
 impl<Msg> Collapsible<Msg> {
-    pub fn new(trigger: impl Into<String>, is_open: bool) -> Self {
+    /// Starts open and opens and closes itself; use [`Self::is_open`] to
+    /// control it.
+    pub fn new(trigger: impl Into<String>) -> Self {
         Collapsible {
             base: Base::default(),
             trigger: trigger.into(),
-            is_open,
+            is_open: None,
+            default_is_open: true,
             on_open_change: None,
             is_disabled: false,
             chevron_position: ChevronPosition::End,
             children: Vec::new(),
         }
+    }
+    pub fn is_open(mut self, open: bool) -> Self {
+        self.is_open = Some(open);
+        self
+    }
+    pub fn default_is_open(mut self, open: bool) -> Self {
+        self.default_is_open = open;
+        self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
         self.on_open_change = Some(Rc::new(f));
@@ -297,14 +305,20 @@ impl<Msg: Clone + 'static> Build<Msg> for Collapsible<Msg> {
         let pad = scope
             .and_then(|s| s.density)
             .map_or(0.0, |d| super::super::controls::density_pad(t, d));
-        cx.key(self.base.id.as_deref());
+        let owner = self
+            .base
+            .id
+            .clone()
+            .unwrap_or_else(|| format!("collapsible:{}", self.trigger));
+        let (open, h) = crate::overlays::open_state(cx, &owner, self.is_open, self.default_is_open);
+        let uncontrolled = self.is_open.is_none();
         cx.begin(Node::new(Style {
             flex_direction: FlexDirection::Column,
             ..Style::default()
         }));
         let large = t.font.large;
         let mut sem = Semantics::new(Role::Button, self.trigger.clone())
-            .with_state(|s| s.expanded = Some(self.is_open));
+            .with_state(|s| s.expanded = Some(open));
         sem.disabled = self.is_disabled;
         let r = radii(t.radius.inner);
         cx.begin(
@@ -328,10 +342,17 @@ impl<Msg: Clone + 'static> Build<Msg> for Collapsible<Msg> {
                 },
                 ..Style::default()
             })
-            .interact(Interact::new(
-                self.on_open_change.as_ref().map(|f| f(!self.is_open)),
-                self.is_disabled,
-            ))
+            .interact({
+                let mut i = Interact::new(
+                    self.on_open_change.as_ref().map(|f| f(!open)),
+                    self.is_disabled,
+                );
+                if uncontrolled {
+                    let h = h.clone();
+                    i = i.effect(move || h.set(Some(!open)));
+                }
+                i
+            })
             .indicator(Indicator::ring(color(c.accent), r, None))
             .sem(sem)
             .opacity(if self.is_disabled { 0.5 } else { 1.0 }),
@@ -342,31 +363,53 @@ impl<Msg: Clone + 'static> Build<Msg> for Collapsible<Msg> {
         label.style.flex_grow = 1.0;
         label.sem = None;
         cx.leaf(label);
-        let glyph = if self.is_open {
-            "chevronUp"
-        } else {
-            "chevronDown"
-        };
+        let glyph = if open { "chevronUp" } else { "chevronDown" };
         if let Some(n) = icon_node::<Msg>(glyph, large.size, color(c.text_primary)) {
             cx.leaf(n);
         }
         cx.end();
-        if self.is_open {
-            cx.begin(Node::new(Style {
-                flex_direction: FlexDirection::Column,
-                padding: taffy::Rect {
-                    left: len(0.0),
-                    right: len(0.0),
-                    top: len(t.space.s2),
-                    bottom: len(pad),
+        // The content stays in the tree so its height can animate; closed,
+        // it is zero tall, clipped, and inert (out of focus and the
+        // accessibility tree).
+        let mut region = Node::new(Style {
+            flex_direction: FlexDirection::Column,
+            size: taffy::Size {
+                width: Dimension::auto(),
+                height: if open {
+                    Dimension::auto()
+                } else {
+                    Dimension::length(0.0)
                 },
-                ..Style::default()
-            }));
-            for ch in self.children {
-                cx.child(ch);
-            }
-            cx.end();
+            },
+            overflow: taffy::Point {
+                x: taffy::Overflow::Clip,
+                y: taffy::Overflow::Clip,
+            },
+            ..Style::default()
+        });
+        region.clip = Some(astryx_core::contract::Radii::default());
+        region.resize = Some(astryx_spike_motion::collapse(astryx_spike_motion::tokens(
+            cx,
+        )));
+        region.inert = !open;
+        cx.key(Some("content"));
+        cx.begin(region);
+        cx.begin(Node::new(Style {
+            flex_direction: FlexDirection::Column,
+            padding: taffy::Rect {
+                left: len(0.0),
+                right: len(0.0),
+                top: len(t.space.s2),
+                bottom: len(pad),
+            },
+            flex_shrink: 0.0,
+            ..Style::default()
+        }));
+        for ch in self.children {
+            cx.child(ch);
         }
+        cx.end();
+        cx.end();
         cx.end();
     }
 }

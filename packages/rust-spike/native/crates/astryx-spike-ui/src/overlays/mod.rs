@@ -10,8 +10,8 @@ use crate::layout::Padding;
 use crate::primitives::icon_node;
 use crate::util::{color, len, radii, rect};
 use astryx_core::authoring::{
-    text_node, type_style, Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, Node,
-    Semantics,
+    text_node, type_style, Base, BoxDraw, Build, BuildCx, Draw, Indicator, Interact, LocalHandle,
+    Node, Semantics,
 };
 use astryx_core::contract::{Color, FontFamily, Role};
 use astryx_core::layer::{DismissReason, LayerAnchor, LayerSpec, PlaceInput};
@@ -112,6 +112,29 @@ fn anchor<Msg: 'static>(id: &str, child: Element<Msg>) -> Element<Msg> {
     })
 }
 
+/// Open state: the controlled value when the caller gives one, else the
+/// component's own state (starting at `default`).
+pub(crate) fn open_state<Msg>(
+    cx: &mut BuildCx<Msg>,
+    owner: &str,
+    controlled: Option<bool>,
+    default: bool,
+) -> (bool, LocalHandle<Option<bool>>) {
+    cx.key(Some(owner));
+    let h = cx.local_handle::<Option<bool>>();
+    let open = controlled.unwrap_or_else(|| h.get().unwrap_or(default));
+    (open, h)
+}
+
+/// A plain column node for an owner of local state.
+pub(crate) fn owner_node<Msg>() -> Node<Msg> {
+    Node::new(Style {
+        flex_direction: FlexDirection::Column,
+        align_self: Some(AlignItems::FLEX_START),
+        ..Style::default()
+    })
+}
+
 /// A short hint about its child, shown while the pointer rests on it or
 /// keyboard focus is in it (`Tooltip`).
 pub struct Tooltip<Msg> {
@@ -123,7 +146,8 @@ pub struct Tooltip<Msg> {
     delay: f64,
     hide_delay: f64,
     is_enabled: bool,
-    is_open: bool,
+    is_open: Option<bool>,
+    is_default_open: bool,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
 }
 
@@ -143,7 +167,8 @@ impl<Msg: 'static> Tooltip<Msg> {
             delay: 200.0,
             hide_delay: 0.0,
             is_enabled: true,
-            is_open: false,
+            is_open: None,
+            is_default_open: false,
             on_open_change: None,
         }
     }
@@ -167,8 +192,14 @@ impl<Msg: 'static> Tooltip<Msg> {
         self.is_enabled = on;
         self
     }
+    /// Controls it: the caller keeps the open state. Without this the
+    /// tooltip opens and closes itself.
     pub fn is_open(mut self, open: bool) -> Self {
-        self.is_open = open;
+        self.is_open = Some(open);
+        self
+    }
+    pub fn is_default_open(mut self, open: bool) -> Self {
+        self.is_default_open = open;
         self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
@@ -180,17 +211,26 @@ impl<Msg: 'static> Tooltip<Msg> {
 impl<Msg: 'static> Build<Msg> for Tooltip<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let t = cx.tokens;
-        let child = match (&self.on_open_change, self.is_enabled) {
-            (Some(on), true) => {
+        let owner = format!("{}:tooltip", self.id);
+        let (open, h) = open_state(cx, &owner, self.is_open, self.is_default_open);
+        cx.begin(owner_node());
+        let child = match (&self.on_open_change, self.is_enabled, self.is_open) {
+            (Some(on), true, Some(_)) => {
                 let on = on.clone();
-                Hover::new(self.child, move |h| on(h))
+                Hover::new(self.child, move |o| on(o))
+                    .delays(self.delay, self.hide_delay)
+                    .into()
+            }
+            (_, true, None) => {
+                let h = h.clone();
+                Hover::local(self.child, move |o| h.set(Some(o)))
                     .delays(self.delay, self.hide_delay)
                     .into()
             }
             _ => self.child,
         };
         cx.child(anchor(&self.id, child));
-        if self.is_open && self.is_enabled {
+        if open && self.is_enabled {
             let bubble = surface(Surface {
                 ground: color(t.color.text_primary),
                 radius: t.radius.container,
@@ -202,13 +242,15 @@ impl<Msg: 'static> Build<Msg> for Tooltip<Msg> {
             });
             let mut layer = Layer::tooltip(&self.id, bubble)
                 .placement(Placement::new(self.placement, self.alignment).offset(t.space.s1))
-                .label(self.content);
+                .label(self.content)
+                .on_dismiss_effect(move |_| h.set(Some(false)));
             if let Some(on) = &self.on_open_change {
                 let on = on.clone();
                 layer = layer.on_dismiss(move |_| on(false));
             }
             cx.child(layer.into());
         }
+        cx.end();
     }
 }
 
@@ -227,7 +269,7 @@ pub struct InfoTip<Msg> {
     content: String,
     label: String,
     size: InfoTipSize,
-    is_open: bool,
+    is_open: Option<bool>,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
 }
 
@@ -238,7 +280,7 @@ impl<Msg: 'static> InfoTip<Msg> {
             content: content.into(),
             label: "More information".into(),
             size: InfoTipSize::Sm,
-            is_open: false,
+            is_open: None,
             on_open_change: None,
         }
     }
@@ -251,7 +293,7 @@ impl<Msg: 'static> InfoTip<Msg> {
         self
     }
     pub fn is_open(mut self, open: bool) -> Self {
-        self.is_open = open;
+        self.is_open = Some(open);
         self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
@@ -266,6 +308,7 @@ struct InfoTrigger<Msg> {
     side: f32,
     describes: String,
     on_press: Option<Msg>,
+    effect: Option<Rc<dyn Fn()>>,
 }
 
 impl<Msg: 'static> Build<Msg> for InfoTrigger<Msg> {
@@ -282,7 +325,13 @@ impl<Msg: 'static> Build<Msg> for InfoTrigger<Msg> {
                 flex_shrink: 0.0,
                 ..Style::default()
             })
-            .interact(Interact::new(self.on_press, false))
+            .interact({
+                let mut i = Interact::new(self.on_press, false);
+                if let Some(e) = self.effect {
+                    i = i.effect(move || e());
+                }
+                i
+            })
             .indicator(Indicator::ring(
                 color(t.color.accent),
                 pill,
@@ -299,17 +348,28 @@ impl<Msg: 'static> Build<Msg> for InfoTrigger<Msg> {
 
 impl<Msg: Clone + 'static> Build<Msg> for InfoTip<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let this = *self;
+        let owner = format!("{}:infotip", this.id);
+        let (open, h) = open_state(cx, &owner, this.is_open, false);
+        cx.begin(owner_node());
+        let uncontrolled = this.is_open.is_none();
         let trigger = astryx_core::authoring::element(InfoTrigger {
-            label: self.label,
-            side: self.size.points(),
-            describes: self.content.clone(),
-            on_press: self.on_open_change.as_ref().map(|f| f(!self.is_open)),
+            label: this.label,
+            side: this.size.points(),
+            describes: this.content.clone(),
+            on_press: this.on_open_change.as_ref().map(|f| f(!open)),
+            effect: uncontrolled.then(|| {
+                let h = h.clone();
+                Rc::new(move || h.set(Some(!open))) as Rc<dyn Fn()>
+            }),
         });
-        let mut tip = Tooltip::new(self.id, trigger, self.content).is_open(self.is_open);
-        if let Some(f) = self.on_open_change {
-            tip = tip.on_open_change(move |o| f(o));
+        let mut tip = Tooltip::new(this.id, trigger, this.content).is_open(open);
+        match this.on_open_change {
+            Some(f) if !uncontrolled => tip = tip.on_open_change(move |o| f(o)),
+            _ => {}
         }
         cx.child(tip.into());
+        cx.end();
     }
 }
 
@@ -332,7 +392,7 @@ pub struct HoverCard<Msg> {
     hide_delay: f64,
     is_enabled: bool,
     label: Option<String>,
-    is_open: bool,
+    is_open: Option<bool>,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
 }
 
@@ -352,7 +412,7 @@ impl<Msg: 'static> HoverCard<Msg> {
             hide_delay: 200.0,
             is_enabled: true,
             label: None,
-            is_open: false,
+            is_open: None,
             on_open_change: None,
         }
     }
@@ -380,8 +440,9 @@ impl<Msg: 'static> HoverCard<Msg> {
         self.label = Some(l.into());
         self
     }
+    /// Controls it; without this it opens and closes itself.
     pub fn is_open(mut self, open: bool) -> Self {
-        self.is_open = open;
+        self.is_open = Some(open);
         self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
@@ -393,17 +454,26 @@ impl<Msg: 'static> HoverCard<Msg> {
 impl<Msg: 'static> Build<Msg> for HoverCard<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let t = cx.tokens;
-        let child = match (&self.on_open_change, self.is_enabled) {
-            (Some(on), true) => {
+        let owner = format!("{}:hovercard", self.id);
+        let (open, h) = open_state(cx, &owner, self.is_open, false);
+        cx.begin(owner_node());
+        let child = match (&self.on_open_change, self.is_enabled, self.is_open) {
+            (Some(on), true, Some(_)) => {
                 let on = on.clone();
-                Hover::new(self.child, move |h| on(h))
+                Hover::new(self.child, move |o| on(o))
+                    .delays(self.delay, self.hide_delay)
+                    .into()
+            }
+            (_, true, None) => {
+                let h = h.clone();
+                Hover::local(self.child, move |o| h.set(Some(o)))
                     .delays(self.delay, self.hide_delay)
                     .into()
             }
             _ => self.child,
         };
         cx.child(anchor(&self.id, child));
-        if self.is_open && self.is_enabled {
+        if open && self.is_enabled {
             let card = surface(Surface {
                 ground: color(t.color.background_surface),
                 radius: t.radius.container,
@@ -416,7 +486,8 @@ impl<Msg: 'static> Build<Msg> for HoverCard<Msg> {
             let mut layer = Layer::popover(&self.id, card)
                 .placement(Placement::new(self.placement, self.alignment).offset(t.space.s1))
                 .restore_focus(false)
-                .role(Role::Dialog);
+                .role(Role::Dialog)
+                .on_dismiss_effect(move |_| h.set(Some(false)));
             if let Some(l) = self.label {
                 layer = layer.label(l);
             }
@@ -426,6 +497,7 @@ impl<Msg: 'static> Build<Msg> for HoverCard<Msg> {
             }
             cx.child(layer.into());
         }
+        cx.end();
     }
 }
 
@@ -446,8 +518,7 @@ pub enum PopoverWidth {
 
 /// Content anchored to a trigger, opened by pressing it (`Popover`). It
 /// closes on Escape and outside presses and gives focus back to the
-/// trigger. The trigger is the child; give it an `on_click` that sends
-/// `on_open_change(!is_open)`, or use [`Popover::trigger_msg`].
+/// trigger. The child is the trigger's content.
 pub struct Popover<Msg> {
     base: Base,
     id: String,
@@ -455,7 +526,7 @@ pub struct Popover<Msg> {
     content: Element<Msg>,
     placement: Side,
     alignment: Align,
-    is_open: bool,
+    is_open: Option<bool>,
     on_open_change: Option<Rc<dyn Fn(bool) -> Msg>>,
     is_enabled: bool,
     width: PopoverWidth,
@@ -480,7 +551,7 @@ impl<Msg: 'static> Popover<Msg> {
             content: content.into(),
             placement: Side::Below,
             alignment: Align::Start,
-            is_open: false,
+            is_open: None,
             on_open_change: None,
             is_enabled: true,
             width: PopoverWidth::Auto,
@@ -500,8 +571,9 @@ impl<Msg: 'static> Popover<Msg> {
         self.alignment = align;
         self
     }
+    /// Controls it; without this, pressing the trigger opens and closes it.
     pub fn is_open(mut self, open: bool) -> Self {
-        self.is_open = open;
+        self.is_open = Some(open);
         self
     }
     pub fn on_open_change(mut self, f: impl Fn(bool) -> Msg + 'static) -> Self {
@@ -544,48 +616,99 @@ impl<Msg: 'static> Popover<Msg> {
     }
 }
 
-impl<Msg: 'static> Build<Msg> for Popover<Msg> {
+/// The popover's trigger: presses toggle it, and it reads as a button with
+/// a dialog popup.
+struct Trigger<Msg> {
+    child: Element<Msg>,
+    open: bool,
+    msg: Option<Msg>,
+    effect: Option<Rc<dyn Fn()>>,
+}
+
+impl<Msg: 'static> Build<Msg> for Trigger<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let t = cx.tokens;
+        let r = radii(t.radius.element);
+        let mut interact = Interact::new(self.msg, false);
+        if let Some(e) = self.effect {
+            interact = interact.effect(move || e());
+        }
+        let open = self.open;
+        cx.begin(
+            Node::new(Style {
+                flex_direction: FlexDirection::Column,
+                align_self: Some(AlignItems::FLEX_START),
+                ..Style::default()
+            })
+            .interact(interact)
+            .indicator(Indicator::ring(color(t.color.accent), r, None))
+            .sem(Semantics::role(Role::Button).with_state(|s| {
+                s.expanded = Some(open);
+                s.has_popup = Some(astryx_core::contract::HasPopup::Dialog);
+            })),
+        );
+        cx.child(self.child);
+        cx.end();
+    }
+}
+
+impl<Msg: Clone + 'static> Build<Msg> for Popover<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         if self.base.is_hidden {
             return;
         }
         let t = cx.tokens;
-        cx.child(anchor(&self.id, self.child));
-        if !(self.is_open && self.is_enabled) {
-            return;
-        }
-        let pad = Padding::all(self.padding).resolve(t).0;
-        let card = surface(Surface {
-            ground: color(t.color.background_popover),
-            radius: t.radius.container,
-            shadow: t.shadow.low,
-            padding: (pad, pad),
-            max_width: None,
-            width: match self.width {
-                PopoverWidth::Points(w) => Some(w),
-                _ => None,
-            },
-            child: self.content,
+        let owner = format!("{}:popover", self.id);
+        let (open, h) = open_state(cx, &owner, self.is_open, false);
+        cx.begin(owner_node());
+        let uncontrolled = self.is_open.is_none();
+        let toggle = {
+            let h = h.clone();
+            Rc::new(move || h.set(Some(!open))) as Rc<dyn Fn()>
+        };
+        let trigger = astryx_core::authoring::element(Trigger {
+            child: self.child,
+            open,
+            msg: self.on_open_change.as_ref().map(|f| f(!open)),
+            effect: (uncontrolled && self.is_enabled).then_some(toggle),
         });
-        let mut layer = Layer::popover(&self.id, card)
-            .placement(Placement::new(self.placement, self.alignment).offset(t.space.s1))
-            .role(self.role)
-            .trap_focus(self.is_modal)
-            .light_dismiss(self.has_light_dismiss)
-            .escape_dismiss(self.has_escape_dismiss)
-            .match_anchor_width(self.width == PopoverWidth::Trigger);
-        if let Some(l) = self.label {
-            layer = layer.label(l);
+        cx.child(anchor(&self.id, trigger));
+        if open && self.is_enabled {
+            let pad = Padding::all(self.padding).resolve(t).0;
+            let card = surface(Surface {
+                ground: color(t.color.background_popover),
+                radius: t.radius.container,
+                shadow: t.shadow.low,
+                padding: (pad, pad),
+                max_width: None,
+                width: match self.width {
+                    PopoverWidth::Points(w) => Some(w),
+                    _ => None,
+                },
+                child: self.content,
+            });
+            let mut layer = Layer::popover(&self.id, card)
+                .placement(Placement::new(self.placement, self.alignment).offset(t.space.s1))
+                .role(self.role)
+                .trap_focus(self.is_modal)
+                .light_dismiss(self.has_light_dismiss)
+                .escape_dismiss(self.has_escape_dismiss)
+                .match_anchor_width(self.width == PopoverWidth::Trigger)
+                .on_dismiss_effect(move |_| h.set(Some(false)));
+            if let Some(l) = self.label {
+                layer = layer.label(l);
+            }
+            if let Some(on) = &self.on_open_change {
+                let on = on.clone();
+                layer = layer.on_dismiss(move |_| on(false));
+            }
+            cx.child(layer.into());
         }
-        if let Some(on) = &self.on_open_change {
-            let on = on.clone();
-            layer = layer.on_dismiss(move |_| on(false));
-        }
-        cx.child(layer.into());
+        cx.end();
     }
 }
 
-impl<Msg: 'static> From<Popover<Msg>> for Element<Msg> {
+impl<Msg: Clone + 'static> From<Popover<Msg>> for Element<Msg> {
     fn from(p: Popover<Msg>) -> Self {
         astryx_core::authoring::element(p)
     }

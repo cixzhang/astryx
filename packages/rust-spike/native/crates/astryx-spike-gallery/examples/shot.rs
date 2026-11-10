@@ -20,6 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let g = Gallery::case(&id).expect("case").with_mode(mode);
         let mut rt = Runtime::new(g).hide_focus_until_keyboard();
+        astryx_spike_gallery::settle(&mut rt, 420, 300);
         let png = astryx_headless::render_png(&mut rt, 420, 300, 2.0, &[]);
         std::fs::write(format!("{out}/{id}.png"), png)?;
         n += 1;

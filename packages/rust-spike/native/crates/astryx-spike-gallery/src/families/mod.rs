@@ -4,6 +4,7 @@ mod wave1;
 mod wave2;
 mod wave4;
 mod wave5;
+mod wave6;
 
 use crate::props::Props;
 use crate::Msg;
@@ -95,6 +96,7 @@ pub fn all() -> Vec<Family> {
     out.extend(wave2::families());
     out.extend(wave4::families());
     out.extend(wave5::families());
+    out.extend(wave6::families());
     out
 }
 
