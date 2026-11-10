@@ -602,6 +602,8 @@ pub struct Node<Msg> {
     /// The subtree is drawn but inert: out of the accessibility tree and
     /// unreachable by focus, as the web's `inert` (collapsed content).
     pub inert: bool,
+    /// Makes the node a drag handler. See [`crate::gesture`].
+    pub drag: Option<crate::gesture::DragSpec<Msg>>,
 }
 
 impl<Msg> Node<Msg> {
@@ -642,6 +644,7 @@ impl<Msg> Node<Msg> {
             exit: None,
             resize: None,
             inert: false,
+            drag: None,
         }
     }
 

@@ -1267,6 +1267,9 @@ pub struct PointerEvent {
     pub at: Point,
     /// The button that went down or up: 0 primary, 1 middle, 2 secondary.
     pub button: u8,
+    /// When it happened, in milliseconds on the shell's clock, for
+    /// release velocity.
+    pub time_ms: f64,
 }
 
 /// What the surface did with a pointer event.

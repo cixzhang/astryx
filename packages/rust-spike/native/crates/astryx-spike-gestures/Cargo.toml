@@ -1,0 +1,11 @@
+[package]
+name = "astryx-spike-gestures"
+description = "Astryx gestures for the Rust stack: release velocity, pan recognition, a gesture arena for nested drags, scroll versus drag, momentum, snap points, and reorder"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core = { workspace = true }
+astryx-motion = { workspace = true }
+taffy = { workspace = true }
