@@ -24,6 +24,10 @@ cargo build -q -p contract --manifest-path .exact-sdk/Cargo.toml
 cd apps/astryx-gallery && bun install
 ```
 
+The gallery's cases are data in `apps/astryx-gallery/cases.contract`, written by
+`bun tools/gallery-cases.mjs` from QA's case files (or `tools/families.mjs` smoke cases).
+Icons come from `bun tools/astryx-icons.mjs`; `STATUS.md` from `bun tools/status.mjs`.
+
 ## Run
 
 ```sh
@@ -32,7 +36,16 @@ bun exact.mjs contract build app.contract --json --errors-only   # compile
 bun exact.mjs web-build                                          # the web build
 bun exact.mjs agent web --url "/?case=<id>&scheme=dark&theme=butter" "clock data" "clock +1" "screenshot out.png"
 bun exact.mjs test web                                           # app.test.contract
-bun exact.mjs linux && bun exact.mjs agent linux "clock data" "screenshot out.png"
+```
+
+Linux host (headless). Exact's generated Linux shell bakes through its TypeScript path,
+which needs a Hermes compiler built for glibc 2.36 or later; `linux-host/` bakes with an empty
+Rust data source instead:
+
+```sh
+BIN=$(apps/astryx-gallery/linux-host/build.sh)
+cd .exact-sdk && EXACT_APP_DIR=$PWD/../apps/astryx-gallery EXACT_LINUX_BIN=$BIN \
+  bun scripts/agent.mjs linux --url "/?case=<id>" "clock data" "clock +1" "screenshot out.png"
 ```
 
 A gallery page is `/?case=<id>&scheme=light|dark&theme=<astryx theme>`. The

@@ -1,0 +1,81 @@
+// The gallery's cases → apps/astryx-gallery/cases.contract. The gallery has no data module (the
+// Linux host builds without one), so each case is a literal call in Contract, written here.
+//
+// A case is {id, props}. Cases come from QA's packages/rust-spike/qa/cases/<Family>.json when it
+// exists, else from SMOKE below. Each family names its Contract component and Astryx's defaults:
+// Contract props have no defaults, so every call passes every prop.
+//
+//   bun tools/gallery-cases.mjs
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { FAMILIES } from './families.mjs';
+
+const HERE = resolve(dirname(new URL(import.meta.url).pathname), '..');
+const QA = resolve(HERE, '../qa/cases');
+
+const lit = v => {
+  if (typeof v === 'string') return JSON.stringify(v);
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (Array.isArray(v)) return `[${v.map(lit).join(', ')}]`;
+  if (v && typeof v === 'object' && v.$shape) {
+    const { $shape, ...fields } = v;
+    return `${$shape}(${Object.entries(fields).map(([k, x]) => `${k}=${lit(x)}`).join(', ')})`;
+  }
+  throw new Error(`no Contract literal for ${JSON.stringify(v)}`);
+};
+
+// Each family's cases are data: a list of one shape, read by one call. Contract expands a
+// component at each place it is used, so one call per case would repeat the component per case.
+const typeOf = (v, k, def) => def.types?.[k] ?? (typeof v === 'string' ? 'string' : typeof v === 'number' ? 'number' : typeof v === 'boolean' ? 'bool' : null);
+const rows = [];
+const families = [];
+for (const [family, def] of Object.entries(FAMILIES)) {
+  const qaFile = resolve(QA, `${family}.json`);
+  const cases = existsSync(qaFile) ? JSON.parse(readFileSync(qaFile, 'utf8')) : def.smoke;
+  const keys = Object.keys(def.defaults);
+  const records = [];
+  for (const c of cases) {
+    const props = { ...def.defaults, ...(def.map ? def.map(c.props ?? {}) : c.props ?? {}) };
+    rows.push({ id: c.id, family, title: c.title ?? (Object.entries(c.props ?? {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ') || 'defaults') });
+    records.push(`${family}Case(${['id', ...keys].map(k => `${k}=${lit(k === 'id' ? c.id : props[k])}`).join(', ')})`);
+  }
+  const call = `${def.component}(${keys.map(k => `${k}=c.${k}`).join(', ')})`;
+  const body = def.wrap ? def.wrap(call) : [call];
+  families.push({
+    family, uses: def.uses ?? [def.component],
+    decl: [
+      `shape ${family}Case`, '  id: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
+      `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
+      `component ${family}Cases`, '  props', '    id: string', '  view',
+      `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.id == id) key=c.id`,
+      ...body.map(l => `      ${l}`),
+    ],
+  });
+}
+
+const uses = [...new Set(families.flatMap(f => f.uses))].sort();
+const out = [
+  '// The gallery\'s cases, written by tools/gallery-cases.mjs; do not edit.',
+  ...(uses.length ? [`use ${uses.join(', ')} from "@astryx-spike/astryx"`] : []),
+  'use Swatches from "./swatches.contract"',
+  '',
+  'shape CaseRow',
+  '  id: string',
+  '  family: string',
+  '  title: string',
+  '',
+  `fn caseRows(): CaseRow[] = [${rows.map(r => `CaseRow(id=${lit(r.id)}, family=${lit(r.family)}, title=${lit(r.title)})`).join(', ')}]`,
+  '',
+  'component CaseView',
+  '  props',
+  '    id: string',
+  '  view',
+  '    column',
+];
+for (const f of families) {
+  out.push(`      if id.startsWith(${JSON.stringify(f.family.toLowerCase() + '-')})`);
+  out.push(`        ${f.family}Cases(id=id)`);
+}
+for (const f of families) out.push('', ...f.decl);
+writeFileSync(resolve(HERE, 'apps/astryx-gallery/cases.contract'), out.join('\n') + '\n');
+console.log(`cases ${rows.length} in ${families.length} families`);
