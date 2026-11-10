@@ -56,7 +56,8 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     rows.push({ id: c.id, family, title: c.title ?? (Object.entries(c.props ?? {}).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(' ') || 'defaults') });
     records.push(`${family}Case(${['caseId', ...keys].map(k => `${k}=${lit(k === 'caseId' ? c.id : props[k])}`).join(', ')})`);
   }
-  const call = `${def.component}(${keys.map(k => `${k}=c.${k}`).join(', ')})`;
+  const acts = Object.entries(def.actions ?? {}).map(([k, a]) => `${k}=${a}`);
+  const call = `${def.component}(${[...keys.map(k => `${k}=c.${k}`), ...acts].join(', ')})`;
   const inner = def.children ? [call, ...def.children.map(l => `  ${l}`)] : [call];
   const body = def.wrap ? def.wrap(inner) : inner;
   families.push({
@@ -64,7 +65,7 @@ for (const [family, def] of Object.entries(FAMILIES)) {
     decl: [
       `shape ${family}Case`, '  caseId: string', ...keys.map(k => `  ${k}: ${typeOf(def.defaults[k], k, def)}`), '',
       `fn ${family[0].toLowerCase() + family.slice(1)}Cases(): ${family}Case[] = [${records.join(', ')}]`, '',
-      `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  view',
+      `component ${family}Cases`, '  props', '    id: string', '  state presses = 0', '  action noop', '    presses = presses + 1', '  action noopB(b: bool)', '    presses = presses + 1', '  action noopS(t: string)', '    presses = presses + 1', '  action noopSB(t: string, b: bool)', '    presses = presses + 1', '  view',
       `    for c in ${family[0].toLowerCase() + family.slice(1)}Cases().filter(c => c.caseId == id) key=c.caseId`,
       ...body.map(l => `      ${l}`),
     ],
@@ -80,6 +81,7 @@ const out = [
   ...(libUses.length ? [`use ${libUses.join(', ')} from "@astryx-spike/astryx"`] : []),
   ...(layerUses.length ? [`use ${layerUses.join(', ')} from "@astryx-spike/astryx-layers"`] : []),
   'use Swatches, Filler from "./swatches.contract"',
+  'use ControlsPlayground from "./playground.contract"',
   '',
   'shape CaseRow',
   '  id: string',

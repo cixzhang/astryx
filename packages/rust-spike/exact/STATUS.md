@@ -2,9 +2,9 @@
 
 Astryx source: `957d9348bf8808373dcba68b9d32abb69ef12e15`. Exact: `94b8671f70fe2e25b307a40e7fce66dc27c9f802`.
 
-- Dependency closure ported (core, by source files): 351 of 689 (50.9%).
-- With the stretch rows: 357 of 720 (49.6%).
-- Rows: 16 ported, 19 workaround, 0 blocked, 42 not started.
+- Dependency closure ported (core, by source files): 401 of 689 (58.2%).
+- With the stretch rows: 414 of 720 (57.5%).
+- Rows: 25 ported, 24 workaround, 0 blocked, 28 not started.
 
 A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
@@ -18,14 +18,14 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | AvatarGroup | 1 | stretch | 1 | ported | gallery avatargroup-* | Members are data (AvatarItem[]), not child elements: one slot cannot be counted. |
 | Badge | 2 | core, weakness | 1 | ported | gallery badge-* (15 variants) | Forced-colours outline not expressible. |
 | BottomSheet | 11 | core, stretch, template |  | not started |  |  |
-| Button | 3 | core, stretch, template, weakness |  | not started |  |  |
-| ButtonGroup | 3 | core, stretch, template, weakness |  | not started |  |  |
+| Button | 3 | core, stretch, template, weakness | 5 | ported | gallery button-*; playground test presses Save (web and Linux) | A native button drawn in Astryx's look. isInterruptible not wired. Press scale is a paint-only :active opacity (a state row cannot scale). |
+| ButtonGroup | 3 | core, stretch, template, weakness | 5 | workaround | gallery button-group-* | A slot passes no context and Contract has no :first-child, so each Button takes `groupEdge` from the caller to square its inner corners. Group-wide size and isDisabled are each Button's props. |
 | Calendar | 12 | core, stretch |  | not started |  |  |
 | Card | 2 | core, template | 2 | workaround | gallery card-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Border inset compensation (padding minus border) dropped. |
 | Center | 2 | core | 2 | workaround | gallery center-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. isInline dropped (no inline-flex). |
 | Chat | 10 | weakness |  | not started |  |  |
-| CheckboxInput | 3 | core, stretch, weakness |  | not started |  |  |
-| CheckboxList | 4 | stretch |  | not started |  |  |
+| CheckboxInput | 3 | core, stretch, weakness | 5 | workaround | gallery checkboxinput-*; playground test checks it | aria-checked takes only a bool: an indeterminate box reads as unchecked. |
+| CheckboxList | 4 | stretch | 5 | workaround | gallery checkboxlist-* | Options are data, as RadioList. |
 | Collapsible | 5 | weakness | 3 | workaround | gallery collapsible-* | Trigger is a `title` (one slot, used by the content). Open state is the caller's (`isOpen`, `toggle`): a slot passes no context, so CollapsibleGroup cannot coordinate its children; single/multiple is the caller's state. Not a library component: it hides its slot. |
 | CommandPalette | 10 | template |  | not started |  |  |
 | ContextMenu | 2 | core |  | not started |  |  |
@@ -36,18 +36,18 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Divider | 2 | core, stretch, template | 1 | ported | gallery divider-* | isFullBleed needs the container's padding, which Contract cannot read (no runtime CSS variables): ignored. |
 | DropdownMenu | 18 | core, stretch, template |  | not started |  |  |
 | EmptyState | 2 | core, stretch | 2 | ported | gallery emptystate-* | actions are the slot. |
-| Field | 9 | core, stretch, template, weakness |  | not started |  |  |
-| FieldStatus | 3 | core, stretch, template, weakness |  | not started |  |  |
+| Field | 9 | core, stretch, template, weakness | 5 | ported | gallery field-* | The control is the slot and names itself by the label's id. |
+| FieldStatus | 3 | core, stretch, template, weakness | 5 | ported | gallery fieldstatus-* |  |
 | FormLayout | 1 | core, stretch, template, weakness | 2 | ported | used by settings-dialog (wave 8) |  |
 | Grid | 3 | core | 2 | workaround | gallery grid-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. rowHeight not yet wired. |
 | HStack | 2 | core, stretch, template | 2 | workaround | gallery h-stack-* | Contract forwards no slot into another component, so HStack repeats Stack's body instead of wrapping Stack. |
 | Heading | 2 | core, stretch, template | 1 | ported | gallery heading-0001..0007 |  |
 | HoverCard | 5 | weakness | 4 | workaround | gallery hovercard-* | Card content is a title and body text: the one slot is the trigger. Same delay limit as Tooltip. |
 | Icon | 8 | core, stretch, template, weakness | 1 | ported | astryx/icons.contract (29 icons from defaultIcons.tsx as one path each); gallery icon-* | Contract expands a component at each use, so a branch per icon repeated all 29 icons at every Icon: one path chosen by a function keeps Icon small. Custom icon registry (registerIcons) has no Contract equivalent: icons are known at build. |
-| IconButton | 2 | core, stretch |  | not started |  |  |
+| IconButton | 2 | core, stretch | 5 | ported | gallery iconbutton-* |  |
 | Indicator | 7 | core, stretch, template, weakness | 1 | ported | gallery checkbox-indicator-*, check-indicator-*, radio-indicator-* | Checkbox, radio and check indicators. |
 | InfoTip | 1 | core, stretch, template, weakness | 4 | ported | gallery infotip-* | Opens on hover and on press (popovertarget). |
-| InputGroup | 6 | core, stretch, template, weakness |  | not started |  |  |
+| InputGroup | 6 | core, stretch, template, weakness | 5 | ported | gallery input-group-* | Parts are the slot (InputGroupText, an input). |
 | InteractiveRoleContext | 1 | core, stretch | 0 | workaround | - | No context through a slot: role is a prop. |
 | Item | 9 | core, stretch, template, weakness |  | not started |  |  |
 | Kbd | 2 | core, stretch, template | 1 | ported | gallery kbd-* | Mod shows as the Command sign on every platform for now. |
@@ -56,25 +56,25 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | List | 6 | core, stretch, weakness |  | not started |  |  |
 | MobileNav | 2 | core |  | not started |  |  |
 | MultiSelector | 3 | core |  | not started |  |  |
-| NumberInput | 4 | core, stretch |  | not started |  |  |
+| NumberInput | 4 | core, stretch | 5 | ported | gallery numberinput-*; playground test steps it | Value is text; parse and clamp are the caller's (parseNumber). |
 | OverflowList | 2 | core, stretch |  | not started |  |  |
 | Pagination | 2 | core |  | not started |  |  |
 | Popover | 8 | core, stretch, template, weakness | 3 | workaround | gallery popover-*; web and Linux | Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run. |
 | PowerSearch | 16 | stretch |  | not started |  |  |
-| RadioList | 3 | stretch |  | not started |  |  |
+| RadioList | 3 | stretch | 5 | workaround | gallery radiolist-*; playground test picks an option | Options are data (ChoiceItem[]), not RadioListItem children: one slot cannot tell a list which child is chosen. |
 | Resizable | 6 | core, template |  | not started |  |  |
 | Section | 2 | core, stretch, template | 2 | workaround | gallery section-* | Nested full-bleed (cancel the container's padding) needs the padding by prop (`bleed`): no runtime custom properties, no context through a slot. |
-| SegmentedControl | 6 | template |  | not started |  |  |
-| SelectableCard | 3 | template |  | not started |  |  |
+| SegmentedControl | 6 | template | 5 | workaround | gallery segmented-control-*; playground test picks a segment | A library control must be the native one, so each segment is a transparent radio input over its drawn segment. Items are data. |
+| SelectableCard | 3 | template | 5 | ported | gallery selectable-card-* | A native button with aria-pressed. |
 | Selector | 11 | core, stretch, template |  | not started |  |  |
 | SideNav | 2 | core |  | not started |  |  |
 | SizeContext | 2 | core, stretch, template, weakness | 0 | workaround | - | No context through a slot: size is a prop each child takes. |
 | Spinner | 4 | core, stretch, template, weakness | 1 | ported | gallery spinner-* | Turn is a CSS keyframe; reduced motion not yet wired. |
 | Stack | 5 | core, stretch, template | 2 | workaround | gallery stack-*, stack-item-* | A library cannot size a node on its slot's chain from a prop, so free sizes (width, height, maxWidth, minHeight) are the caller's wrapping view. Padding is physical (left/right): Contract refuses logical CSS; the page mirrors under RTL. `as` (element type) dropped. StackItem ported. |
-| Switch | 6 | core |  | not started |  |  |
+| Switch | 6 | core | 5 | ported | gallery switch-*; playground test toggles it (web and Linux) | A native checkbox (role switch) lies transparent over the drawn track and thumb. Drag-to-toggle (touch) not wired. |
 | Table | 55 | core |  | not started |  |  |
 | Text | 6 | core, stretch, template, weakness | 1 | ported | gallery text-0001..0024; web + Linux | `font` takes only literals, so the type role is a chain of literals. No inline-flex. `textWrap` keeps auto/balance plus nowrap; `pretty` is refused. Truncation tooltip waits for Tooltip (wave 4). |
-| TextInput | 2 | core, stretch |  | not started |  |  |
+| TextInput | 2 | core, stretch | 5 | ported | gallery text-input-*; playground test types and clears (web; Linux by the agent's type) | No :focus-within: the field's focus and blur set the ring through component state. hasAutoCorrect and hasSpellCheck have no Contract attribute. Real-keyboard editing on Linux not verified (the agent sets the value). |
 | TimeInput | 5 | core, stretch |  | not started |  |  |
 | Token | 4 | core, stretch | 2 | ported | gallery token-* | href/onClick variants and endContent not yet wired. |
 | Tokenizer | 6 | core, stretch |  | not started |  |  |

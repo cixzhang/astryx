@@ -1,0 +1,49 @@
+// Interactive cases: controls wired to real state, for behavior tests.
+use Switch, TextInput, CheckboxInput, RadioList, SegmentedControl, ChoiceItem, Button, NumberInput from "@astryx-spike/astryx"
+
+fn plans(): ChoiceItem[] = [ChoiceItem(value="free", label="Free", description="", isDisabled=false), ChoiceItem(value="pro", label="Pro", description="", isDisabled=false), ChoiceItem(value="team", label="Team", description="", isDisabled=false)]
+
+component ControlsPlayground
+  state on = false
+  state name = ""
+  state agreed = false
+  state plan = "free"
+  state view = "pro"
+  state count = 1
+  state presses = 0
+  action setOn(b: bool)
+    on = b
+  action setName(t: string)
+    name = t
+  action clearName
+    name = ""
+  action setAgreed(b: bool)
+    agreed = b
+  action setPlan(v: string)
+    plan = v
+  action setView(v: string)
+    view = v
+  action press
+    presses = presses + 1
+  action typed(t: string)
+    count = match parseNumber(t) { case some(n) => n, case none => count }
+  action up
+    count = count + 1
+  action down
+    count = count - 1
+  view
+    column gap="astryx.space.s4" width=320
+      Switch(label="Wi-Fi", isOn=on, size="md", isDisabled=false, isLoading=false, isLabelHidden=false, labelPosition="end", labelSpacing="hug", isRequired=false, isOptional=false, still=true, change=setOn)
+      text (on ? "on" : "off") testId="switch-state"
+      TextInput(id="name", label="Name", value=name, placeholder="Your name", description="", size="md", isLabelHidden=false, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=true, hasAutoFocus=false, autoCapitalize="", statusMessage="", statusVariant="error", statusPlacement="attached", input=setName, clear=clearName)
+      text name testId="name-value"
+      CheckboxInput(label="I agree", state=(agreed ? "checked" : "unchecked"), description="", isDisabled=false, change=setAgreed)
+      text (agreed ? "agreed" : "not agreed") testId="agreed-state"
+      RadioList(name="plan", label="Plan", items=plans(), value=plan, isDisabled=false, change=setPlan)
+      text plan testId="plan-value"
+      SegmentedControl(label="View", items=plans(), value=view, size="md", layout="hug", isDisabled=false, change=setView)
+      text view testId="view-value"
+      NumberInput(id="count", label="Count", value=count.toString(), size="md", isDisabled=false, input=typed, stepUp=up, stepDown=down)
+      text count.toString() testId="count-value"
+      Button(label="Save", variant="primary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge="", press=press)
+      text presses.toString() testId="presses"

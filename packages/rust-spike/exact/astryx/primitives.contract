@@ -100,7 +100,7 @@ component Spinner
         svg viewBox=`0 0 ${spinnerBox(size)} ${spinnerBox(size)}` width="100%" height="100%" aria-hidden=true
           circle cx=(spinnerBox(size) / 2) cy=(spinnerBox(size) / 2) r=(spinnerDiameter(size) / 2) fill="none" stroke-width=spinnerStroke(size)
             stroke=(shade == "onMedia" ? "astryx.on-dark" : shade == "inherit" ? "currentColor" : "astryx.track")
-            stroke-opacity=(shade == "onMedia" ? 0.3 : shade == "subtle" ? 0.5 : 1)
+            stroke-opacity=(shade == "onMedia" ? 0.3 : shade == "subtle" ? 0.5 : shade == "inherit" ? 0.25 : 1)
           circle cx=(spinnerBox(size) / 2) cy=(spinnerBox(size) / 2) r=(spinnerDiameter(size) / 2) fill="none" stroke-width=spinnerStroke(size) stroke-linecap="round"
             stroke=(shade == "subtle" ? "astryx.text.secondary" : shade == "onMedia" ? "astryx.on-dark" : shade == "inherit" ? "currentColor" : "astryx.accent")
             stroke-dasharray=`${spinnerDiameter(size) * 3.14159 * 0.375} ${spinnerDiameter(size) * 3.14159 * 0.625}`

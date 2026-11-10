@@ -16,10 +16,15 @@ const childrenAs = key => p => {
 
 const TEXT = t => `Text(text=${JSON.stringify(t)}, type="body", size="", color="primary", weight="", maxLines=0, textWrap="", justify="start", wordBreak="break-word", hasStrikethrough=false, hasTabularNumbers=false)`;
 const STACK_CALL = 'gap=2, padding=-1, paddingInline=-1, paddingInlineStart=-1, paddingInlineEnd=-1, paddingBlock=-1, paddingBlockStart=-1, paddingBlockEnd=-1, hAlign="", vAlign="", align="stretch", justify="start", wrap="nowrap", isScrollable=false';
+const CHOICES = [['free', 'Free', 'For one person'], ['pro', 'Pro', 'For small teams'], ['team', 'Team', 'For companies']].map(([value, label, description]) => ({ $shape: 'ChoiceItem', value, label, description, isDisabled: false }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
 export const FAMILIES = {
+  Playground: {
+    component: 'ControlsPlayground', uses: [], defaults: {},
+    smoke: [{ id: 'playground-0001', title: 'Controls wired to state', props: {} }],
+  },
   Foundations: {
     component: 'Swatches', uses: [], defaults: {},
     smoke: [{ id: 'foundations-0001', title: 'Token swatches', props: {} }],
@@ -204,5 +209,93 @@ export const FAMILIES = {
     children: ['Filler(label="@ada")'],
     wrap: inner => ['column align-items="center" justify-content="center" width=360 height=200', ...inner.map(l => `  ${l}`)],
     smoke: sweep('HoverCard', {}, { placement: ['above', 'end'], alignment: ['start'] }),
+  },
+  Button: {
+    component: 'Button', actions: { press: 'noop' },
+    defaults: { label: 'Label', variant: 'secondary', size: 'md', elevation: 'none', icon: '', isLoading: false, isDisabled: false, isIconOnly: false, groupEdge: '' },
+    map: p => (p.isIconOnly && !p.icon ? { ...p, icon: 'search' } : p),
+    smoke: sweep('Button', {}, { variant: ['primary', 'ghost', 'destructive'], size: ['sm', 'lg'], isLoading: [true], isDisabled: [true], isIconOnly: [true], icon: ['check'] }),
+  },
+  IconButton: {
+    component: 'IconButton', actions: { press: 'noop' },
+    defaults: { label: 'Search', icon: 'search', variant: 'ghost', size: 'md', isDisabled: false },
+    smoke: sweep('IconButton', {}, { variant: ['primary', 'secondary'], size: ['sm', 'lg'], isDisabled: [true] }),
+  },
+  ButtonGroup: {
+    component: 'ButtonGroup', uses: ['ButtonGroup', 'Button'],
+    defaults: { label: 'Label', orientation: 'horizontal', elevation: 'none' },
+    children: ['first', 'middle', 'last'].map((e, i) => `Button(label=${JSON.stringify(['Day', 'Week', 'Month'][i])}, variant="secondary", size="md", elevation="none", icon="", isLoading=false, isDisabled=false, isIconOnly=false, groupEdge=${JSON.stringify(e)}, press=noop)`),
+    smoke: sweep('ButtonGroup', {}, { orientation: ['vertical'], elevation: ['low'] }),
+  },
+  Switch: {
+    component: 'Switch', actions: { change: 'noopB' },
+    defaults: { label: 'Label', isOn: false, size: 'md', isDisabled: false, isLoading: false, isLabelHidden: false, labelPosition: 'end', labelSpacing: 'hug', isRequired: false, isOptional: false, still: true },
+    map: p => { const { value, isChecked, ...r } = p; return { ...r, ...(isChecked !== undefined ? { isOn: isChecked } : {}) }; },
+    smoke: sweep('Switch', {}, { isOn: [true], size: ['sm'], isDisabled: [true], isLoading: [true], isLabelHidden: [true], labelPosition: ['start'], labelSpacing: ['spread'] }),
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
+  },
+  TextInput: {
+    component: 'TextInput', actions: { input: 'noopS', clear: 'noop' },
+    defaults: { id: 'case-input', label: 'Label', value: '', placeholder: 'Placeholder', description: '', size: 'md', isLabelHidden: false, isDisabled: false, isReadOnly: false, isRequired: false, isOptional: false, isLoading: false, hasClear: false, hasAutoFocus: false, autoCapitalize: '', statusMessage: '', statusVariant: 'error', statusPlacement: 'attached' },
+    map: p => { const { statusVariant, ...r } = p; return statusVariant ? { ...r, statusPlacement: statusVariant, statusMessage: 'Enter a valid value.' } : r; },
+    smoke: sweep('TextInput', {}, { value: ['value'], size: ['sm', 'lg'], isDisabled: [true], hasClear: [true], statusMessage: ['Enter a valid value.'] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  NumberInput: {
+    component: 'NumberInput', actions: { input: 'noopS', stepUp: 'noop', stepDown: 'noop' },
+    defaults: { id: 'case-number', label: 'Quantity', value: '12', size: 'md', isDisabled: false },
+    smoke: sweep('NumberInput', {}, { size: ['sm', 'lg'], isDisabled: [true] }),
+    wrap: inner => ['view width=200', ...inner.map(l => `  ${l}`)],
+  },
+  CheckboxInput: {
+    component: 'CheckboxInput', actions: { change: 'noopB' },
+    defaults: { label: 'Email me updates', state: 'unchecked', description: '', isDisabled: false },
+    smoke: sweep('CheckboxInput', {}, { state: ['checked', 'indeterminate'], description: ['Once a week.'], isDisabled: [true] }),
+  },
+  RadioList: {
+    component: 'RadioList', actions: { change: 'noopS' }, uses: ['RadioList', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
+    defaults: { name: 'plan', label: 'Plan', items: CHOICES, value: 'pro', isDisabled: false },
+    smoke: sweep('RadioList', {}, { value: ['free'], isDisabled: [true] }),
+  },
+  CheckboxList: {
+    component: 'CheckboxList', actions: { change: 'noopSB' }, uses: ['CheckboxList', 'ChoiceItem'], types: { items: 'ChoiceItem[]', values: 'string[]' },
+    defaults: { label: 'Plans', items: CHOICES, values: ['pro'], isDisabled: false },
+    smoke: sweep('CheckboxList', {}, { values: [['free', 'team']], isDisabled: [true] }),
+  },
+  Field: {
+    component: 'Field', uses: ['Field', 'TextInput'],
+    defaults: { label: 'Label', inputID: 'inputID', description: '', isLabelHidden: false, isDisabled: false, isRequired: false, isOptional: false, statusMessage: '', statusVariant: 'error', statusPlacement: 'attached' },
+    map: p => { const { statusVariant, isGroupLabel, ...r } = p; return statusVariant ? { ...r, statusPlacement: statusVariant, statusMessage: 'Enter a valid value.' } : r; },
+    children: ['TextInput(id="inputID", label="Label", value="", placeholder="Placeholder", description="", size="md", isLabelHidden=true, isDisabled=false, isReadOnly=false, isRequired=false, isOptional=false, isLoading=false, hasClear=false, hasAutoFocus=false, autoCapitalize="", statusMessage="", statusVariant="error", statusPlacement="attached", input=noopS, clear=noop)'],
+    smoke: sweep('Field', {}, { description: ['Shown on your profile.'], isRequired: [true], statusMessage: ['Enter a valid value.'] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  FieldStatus: {
+    component: 'FieldStatus',
+    defaults: { message: 'Enter a valid email address.', variant: 'error', placement: 'detached' },
+    smoke: sweep('FieldStatus', {}, { variant: ['warning', 'success', 'info'], placement: ['attached'] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  InputGroup: {
+    component: 'InputGroup', uses: ['InputGroup', 'InputGroupText'],
+    defaults: { label: 'Label', size: 'md', isDisabled: false },
+    map: p => { const { isLabelHidden, isOptional, isRequired, ...r } = p; return r; },
+    children: ['InputGroupText(text="https://")', 'input value="astryx.design" aria-label="Website" flex=1 min-width=0 border-width=0 background-color="transparent" font="astryx.type.body" color="astryx.text.primary"'],
+    smoke: sweep('InputGroup', {}, { size: ['sm', 'lg'], isDisabled: [true] }),
+    wrap: inner => ['view width=320', ...inner.map(l => `  ${l}`)],
+  },
+  SegmentedControl: {
+    component: 'SegmentedControl', actions: { change: 'noopS' }, uses: ['SegmentedControl', 'ChoiceItem'], types: { items: 'ChoiceItem[]' },
+    defaults: { label: 'Label', items: CHOICES, value: 'pro', size: 'md', layout: 'hug', isDisabled: false },
+    map: p => { const { value, onChange, ...r } = p; return r; },
+    smoke: sweep('SegmentedControl', {}, { size: ['sm', 'lg'], layout: ['fill'], isDisabled: [true] }),
+    wrap: inner => ['view width=360', ...inner.map(l => `  ${l}`)],
+  },
+  SelectableCard: {
+    component: 'SelectableCard', actions: { press: 'noop' }, uses: ['SelectableCard', 'Text'],
+    defaults: { label: 'Label', isSelected: false, isDisabled: false, padding: 4, variant: 'default', elevation: 'none' },
+    children: [TEXT('Pro plan, billed yearly')],
+    smoke: sweep('SelectableCard', {}, { isSelected: [true], isDisabled: [true], elevation: ['low'] }),
+    wrap: inner => ['view width=280', ...inner.map(l => `  ${l}`)],
   },
 };

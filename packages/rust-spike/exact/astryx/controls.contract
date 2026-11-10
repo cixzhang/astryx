@@ -1,0 +1,427 @@
+// Wave 5 controls: Button, IconButton, ButtonGroup, Switch, TextInput,
+// NumberInput, CheckboxInput, RadioList, CheckboxList, Field, FieldStatus,
+// InputGroup, SegmentedControl and SelectableCard.
+//
+// Each control is the platform's own control underneath (a native `button`,
+// an `input`), drawn in Astryx's look: Exact holds a library's control to the
+// native control's role. State is the caller's: a control takes its value and
+// an action for the change, as Contract props are read-only.
+use IconGlyph from "./icons.contract"
+use Icon, Spinner from "./primitives.contract"
+use space from "./foundations.contract"
+
+fn elementHeight(size: string): string = size == "sm" ? "astryx.size.element-sm" : size == "lg" ? "astryx.size.element-lg" : "astryx.size.element-md"
+fn shadowOf(elevation: string): string = elevation == "low" ? "astryx.shadow.low" : elevation == "med" ? "astryx.shadow.med" : elevation == "high" ? "astryx.shadow.high" : "none"
+fn buttonFill(variant: string): string = variant == "primary" ? "astryx.accent" : variant == "ghost" ? "transparent" : variant == "destructive" ? "astryx.error" : "astryx.neutral"
+fn buttonInk(variant: string): string = variant == "primary" ? "astryx.on-accent" : variant == "destructive" ? "astryx.on-error" : "astryx.text.primary"
+
+// Button: a labelled action. Pressing scales it to 0.98; a loading button
+// shows a spinner in place of its icon and does not press. `groupEdge` is
+// set by ButtonGroup's caller ("first", "middle", "last", "only" or "") and
+// squares the corners that meet a neighbour: a slot passes no context.
+style ButtonLook
+  display="flex" align-items="center" justify-content="center"
+  gap="astryx.space.s2"
+  padding-top="astryx.space.s2" padding-bottom="astryx.space.s2"
+  border-width=0
+  white-space="nowrap" min-width=0 max-width="100%"
+  transition="background-color 175ms cubic-bezier(0.24, 1, 0.4, 1), scale 175ms cubic-bezier(0.24, 1, 0.4, 1)"
+  :active
+    opacity=0.92
+
+component Button
+  props
+    label: string
+    variant: string
+    size: string
+    elevation: string
+    icon: string
+    isLoading: bool
+    isDisabled: bool
+    isIconOnly: bool
+    groupEdge: string
+    press: action
+  view
+    button class=ButtonLook press=press disabled=(isDisabled or isLoading)
+      aria-label=label aria-busy=isLoading testId=`button-${label}`
+      height=elementHeight(size)
+      aspect-ratio=(isIconOnly ? 1 : "auto")
+      padding-left=(isIconOnly ? "astryx.space.s0" : "astryx.space.s3")
+      padding-right=(isIconOnly ? "astryx.space.s0" : "astryx.space.s3")
+      background-color=buttonFill(variant) color=buttonInk(variant)
+      box-shadow=shadowOf(elevation)
+      opacity=(isDisabled ? 0.5 : 1)
+      border-top-left-radius=(groupEdge == "middle" or groupEdge == "last" ? "astryx.radius.none" : "astryx.radius.element")
+      border-bottom-left-radius=(groupEdge == "middle" or groupEdge == "last" ? "astryx.radius.none" : "astryx.radius.element")
+      border-top-right-radius=(groupEdge == "middle" or groupEdge == "first" ? "astryx.radius.none" : "astryx.radius.element")
+      border-bottom-right-radius=(groupEdge == "middle" or groupEdge == "first" ? "astryx.radius.none" : "astryx.radius.element")
+      if isLoading
+        Spinner(size="sm", shade="inherit", label="")
+      else if icon != ""
+        view width=(size == "lg" ? "1.25rem" : "1rem") height=(size == "lg" ? "1.25rem" : "1rem") flex-shrink=0
+          IconGlyph(icon=icon)
+      if not isIconOnly
+        text label font="astryx.type.label" font-weight="astryx.weight.medium" overflow="hidden" text-overflow="ellipsis" min-width=0
+
+// IconButton: a Button showing only its icon; the label is spoken.
+component IconButton
+  props
+    label: string
+    icon: string
+    variant: string
+    size: string
+    isDisabled: bool
+    press: action
+  view
+    Button(label=label, variant=variant, size=size, elevation="none", icon=icon, isLoading=false, isDisabled=isDisabled, isIconOnly=true, groupEdge="", press=press)
+
+// ButtonGroup: buttons joined in a row or a column. Each Button squares its
+// inner corners by `groupEdge`, which the caller sets.
+component ButtonGroup
+  props
+    label: string
+    orientation: string
+    elevation: string
+  slot
+  view
+    view display="flex" role="group" aria-label=label
+      flex-direction=(orientation == "vertical" ? "column" : "row")
+      gap="astryx.space.s0-5" border-radius="astryx.radius.element" box-shadow=shadowOf(elevation)
+      children
+
+// Switch: an on/off control with its label. The native checkbox sits over
+// the drawn track, transparent, so it takes the press, the keys and the
+// reader's role.
+component Switch
+  props
+    label: string
+    isOn: bool
+    size: string
+    isDisabled: bool
+    isLoading: bool
+    isLabelHidden: bool
+    labelPosition: string
+    labelSpacing: string
+    isRequired: bool
+    isOptional: bool
+    still: bool
+    change: action
+  view
+    row align-items="center" gap=(isLabelHidden ? "astryx.space.s0" : "astryx.space.s2")
+      justify-content=(labelSpacing == "spread" ? "space-between" : "flex-start")
+      flex-direction=(labelPosition == "start" ? "row-reverse" : "row")
+      opacity=(isDisabled ? 0.5 : 1)
+      view position="relative" flex-shrink=0 width=(size == "sm" ? 32 : 40) height=(size == "sm" ? 20 : 24)
+        view position="absolute" inset=0 border-radius="astryx.radius.full"
+          background-color=(isOn ? "astryx.accent" : "astryx.surface.gray")
+          transition=(still ? "none" : "background-color 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+        view position="absolute" border-radius="astryx.radius.full" background-color="astryx.surface.surface"
+          box-shadow="astryx.shadow.low"
+          top=(size == "sm" ? (isOn ? 2 : 3) : (isOn ? 2 : 4))
+          left=(size == "sm" ? (isOn ? 14 : 3) : (isOn ? 18 : 4))
+          width=(size == "sm" ? (isOn ? 16 : 14) : (isOn ? 20 : 16))
+          height=(size == "sm" ? (isOn ? 16 : 14) : (isOn ? 20 : 16))
+          transition=(still ? "none" : "translate 175ms cubic-bezier(0.24, 1, 0.4, 1)")
+        input type="checkbox" role="switch" checked=isOn change=change disabled=(isDisabled or isLoading)
+          aria-label=label testId=`switch-${label}`
+          position="absolute" inset=0 opacity=0 margin=0 width="100%" height="100%"
+      if not isLabelHidden
+        row gap="astryx.space.s1" align-items="center"
+          text label font="astryx.type.body" color="astryx.text.primary"
+          if isRequired
+            text "*" font="astryx.type.body" color="astryx.text.error" aria-hidden=true
+          if isOptional
+            text "(optional)" font="astryx.type.supporting" color="astryx.text.secondary"
+      if isLoading
+        Spinner(size="sm", shade="subtle", label="")
+
+// FieldStatus: a message under a field, in its status colour.
+component FieldStatus
+  props
+    message: string
+    variant: string
+    placement: string
+  view
+    row gap="astryx.space.s1" align-items="flex-start"
+      padding="astryx.space.s2" border-radius="astryx.radius.element"
+      margin-top=(placement == "attached" ? "astryx.space.s0" : "astryx.space.s1")
+      background-color=(variant == "error" ? "astryx.error-muted" : variant == "warning" ? "astryx.warning-muted" : variant == "success" ? "astryx.success-muted" : "astryx.neutral")
+      role=(variant == "error" ? "alert" : "status")
+      view width=14 height=14 flex-shrink=0 margin-top="astryx.space.s0-5"
+        color=(variant == "error" ? "astryx.icon.error" : variant == "warning" ? "astryx.icon.warning" : variant == "success" ? "astryx.icon.success" : "astryx.icon.info")
+        IconGlyph(icon=(variant == "error" ? "error" : variant == "warning" ? "warning" : variant == "success" ? "success" : "info"))
+      text message font="astryx.type.supporting" overflow-wrap="anywhere"
+        color=(variant == "error" ? "astryx.text.error" : variant == "warning" ? "astryx.text.warning" : variant == "success" ? "astryx.text.success" : "astryx.text.primary")
+
+// Field: a label, an optional description, a control and its status. The
+// control is the slot; it names itself by the label's id (`aria-labelledby`).
+component Field
+  props
+    label: string
+    inputID: string
+    description: string
+    isLabelHidden: bool
+    isDisabled: bool
+    isRequired: bool
+    isOptional: bool
+    statusMessage: string
+    statusVariant: string
+    statusPlacement: string
+  slot
+  view
+    column gap="astryx.space.s1" width="100%"
+      row gap="astryx.space.s1" align-items="center"
+        position=(isLabelHidden ? "absolute" : "relative") width=(isLabelHidden ? 1 : "auto") height=(isLabelHidden ? 1 : "auto") overflow="hidden"
+        text label id=`${inputID}-label` font="astryx.type.label" font-weight="astryx.weight.medium"
+          color=(isDisabled ? "astryx.text.disabled" : "astryx.text.secondary")
+        if isRequired
+          text "*" font="astryx.type.label" color="astryx.text.error" aria-hidden=true
+        if isOptional
+          text "(optional)" font="astryx.type.supporting" color="astryx.text.secondary"
+      if description != ""
+        text description font="astryx.type.supporting" color="astryx.text.secondary"
+      children
+      if statusMessage != ""
+        FieldStatus(message=statusMessage, variant=statusVariant, placement=statusPlacement)
+
+// The box around a text entry: border and status colour. Contract has no
+// :focus-within, so the field's own focus and blur set the ring (`focused`).
+style InputBox
+  display="flex" align-items="center" gap="astryx.space.s2"
+  padding-top="astryx.space.s1" padding-bottom="astryx.space.s1"
+  padding-left="astryx.space.s2" padding-right="astryx.space.s2"
+  border-width="astryx.border.width" border-style="solid"
+  border-radius="astryx.radius.element" background-color="astryx.surface.surface"
+
+// TextInput: a one-line text field with its label and status. `value` is
+// the caller's; `input` receives each change.
+component TextInput
+  props
+    id: string
+    label: string
+    value: string
+    placeholder: string
+    description: string
+    size: string
+    isLabelHidden: bool
+    isDisabled: bool
+    isReadOnly: bool
+    isRequired: bool
+    isOptional: bool
+    isLoading: bool
+    hasClear: bool
+    hasAutoFocus: bool
+    autoCapitalize: string
+    statusMessage: string
+    statusVariant: string
+    statusPlacement: string
+    input: action
+    clear: action
+  state focused = false
+  action focusIn
+    focused = true
+  action focusOut
+    focused = false
+  view
+    column gap="astryx.space.s1" width="100%"
+      if not isLabelHidden
+        row gap="astryx.space.s1" align-items="center"
+          text label id=`${id}-label` font="astryx.type.label" font-weight="astryx.weight.medium"
+            color=(isDisabled ? "astryx.text.disabled" : "astryx.text.secondary")
+          if isRequired
+            text "*" font="astryx.type.label" color="astryx.text.error" aria-hidden=true
+          if isOptional
+            text "(optional)" font="astryx.type.supporting" color="astryx.text.secondary"
+      if description != ""
+        text description font="astryx.type.supporting" color="astryx.text.secondary"
+      row class=InputBox height=elementHeight(size) opacity=(isDisabled ? 0.5 : 1)
+        border-color=(statusVariant == "error" and statusMessage != "" ? "astryx.border.error" : statusVariant == "warning" and statusMessage != "" ? "astryx.border.warning" : statusVariant == "success" and statusMessage != "" ? "astryx.border.success" : focused ? "astryx.accent" : "astryx.border.emphasized")
+        box-shadow=(focused ? "inset 0px 0px 0px 2px astryx.accent-muted" : "none")
+        input id=id value=value input=input placeholder=placeholder disabled=isDisabled readonly=isReadOnly focus=focusIn blur=focusOut
+          autofocus=hasAutoFocus autocapitalize=(autoCapitalize == "" ? "sentences" : autoCapitalize)
+          aria-label=label aria-required=isRequired aria-invalid=(statusVariant == "error" and statusMessage != "")
+          testId=`input-${id}` flex=1 min-width=0 border-width=0 background-color="transparent" padding=0
+          font="astryx.type.body" color="astryx.text.primary"
+        if isLoading
+          Spinner(size="sm", shade="subtle", label="")
+        if hasClear and value != ""
+          button press=clear aria-label=`Clear ${label}` testId=`clear-${id}`
+            width=20 height=20 padding=0 border-width=0 border-radius="astryx.radius.full" background-color="transparent" color="astryx.icon.secondary"
+            view width=14 height=14
+              IconGlyph(icon="close")
+      if statusMessage != ""
+        FieldStatus(message=statusMessage, variant=statusVariant, placement=statusPlacement)
+
+// NumberInput: a number field with step buttons. `value` is text so a
+// half-typed number survives; `step` adds or subtracts.
+component NumberInput
+  props
+    id: string
+    label: string
+    value: string
+    size: string
+    isDisabled: bool
+    input: action
+    stepUp: action
+    stepDown: action
+  view
+    column gap="astryx.space.s1"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row class=InputBox height=elementHeight(size) border-color="astryx.border.emphasized" opacity=(isDisabled ? 0.5 : 1)
+        input id=id value=value input=input inputmode="decimal" disabled=isDisabled aria-label=label testId=`input-${id}`
+          flex=1 min-width=0 border-width=0 background-color="transparent" padding=0 font="astryx.type.body" color="astryx.text.primary"
+          font-variant-numeric="tabular-nums"
+        column
+          button press=stepUp disabled=isDisabled aria-label=`Increase ${label}` testId=`up-${id}`
+            width=16 height=12 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary" rotate="180deg"
+            IconGlyph(icon="numberInput:stepperDown")
+          button press=stepDown disabled=isDisabled aria-label=`Decrease ${label}` testId=`down-${id}`
+            width=16 height=12 padding=0 border-width=0 background-color="transparent" color="astryx.icon.secondary"
+            IconGlyph(icon="numberInput:stepperDown")
+
+// CheckboxInput: a checkbox and its label. The native checkbox sits over the
+// drawn box, transparent. `aria-checked` takes only a bool, so a reader hears
+// an indeterminate box as unchecked.
+component CheckboxInput
+  props
+    label: string
+    state: string
+    description: string
+    isDisabled: bool
+    change: action
+  view
+    row gap="astryx.space.s2" align-items="flex-start" opacity=(isDisabled ? 0.5 : 1)
+      view position="relative" width=16 height=16 margin-top="astryx.space.s0-5" flex-shrink=0 border-radius="astryx.radius.inner" display="flex" align-items="center" justify-content="center"
+        border-width=(state == "unchecked" ? 1.5 : 0) border-style="solid" border-color="astryx.border.emphasized"
+        background-color=(state == "unchecked" ? "astryx.surface.surface" : "astryx.accent") color="astryx.on-accent"
+        if state == "checked"
+          view width=12 height=12
+            IconGlyph(icon="check")
+        if state == "indeterminate"
+          view width=8 height=2 border-radius="astryx.radius.inner" background-color="astryx.on-accent"
+        input type="checkbox" checked=(state == "checked") change=change disabled=isDisabled aria-label=label
+          testId=`checkbox-${label}` position="absolute" inset=0 opacity=0 margin=0 width="100%" height="100%"
+      column gap="astryx.space.s0-5"
+        text label font="astryx.type.body" color="astryx.text.primary"
+        if description != ""
+          text description font="astryx.type.supporting" color="astryx.text.secondary"
+
+// An option of a RadioList, CheckboxList or SegmentedControl.
+shape ChoiceItem
+  value: string
+  label: string
+  description: string
+  isDisabled: bool
+
+// RadioList: one choice among options. Options are data (one slot cannot
+// tell the list which child is chosen).
+component RadioList
+  props
+    name: string
+    label: string
+    items: ChoiceItem[]
+    value: string
+    isDisabled: bool
+    change: action
+  view
+    column role="radiogroup" aria-label=label gap="astryx.space.s2"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      for it in items key=it.value
+        row gap="astryx.space.s2" align-items="flex-start" opacity=(isDisabled or it.isDisabled ? 0.5 : 1)
+          view position="relative" width=16 height=16 margin-top="astryx.space.s0-5" flex-shrink=0 border-radius="astryx.radius.full" display="flex" align-items="center" justify-content="center"
+            border-width=(value == it.value ? 0 : 1.5) border-style="solid" border-color="astryx.border.emphasized"
+            background-color=(value == it.value ? "astryx.accent" : "astryx.surface.surface")
+            if value == it.value
+              view width=6 height=6 border-radius="astryx.radius.full" background-color="astryx.on-accent"
+            input type="radio" name=name value=it.value checked=(value == it.value) change=change disabled=(isDisabled or it.isDisabled)
+              aria-label=it.label testId=`radio-${it.value}` position="absolute" inset=0 opacity=0 margin=0 width="100%" height="100%"
+          column gap="astryx.space.s0-5"
+            text it.label font="astryx.type.body" color="astryx.text.primary"
+            if it.description != ""
+              text it.description font="astryx.type.supporting" color="astryx.text.secondary"
+
+// CheckboxList: several choices among options, as data.
+component CheckboxList
+  props
+    label: string
+    items: ChoiceItem[]
+    values: string[]
+    isDisabled: bool
+    change: action
+  view
+    column role="group" aria-label=label gap="astryx.space.s2"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      for it in items key=it.value
+        CheckboxInput(label=it.label, state=(values.includes(it.value) ? "checked" : "unchecked"), description=it.description, isDisabled=(isDisabled or it.isDisabled), change=change(it.value))
+
+// InputGroup: a field with attached text or buttons on its sides. The
+// parts are the slot.
+component InputGroup
+  props
+    label: string
+    size: string
+    isDisabled: bool
+  slot
+  view
+    column gap="astryx.space.s1"
+      text label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.secondary"
+      row class=InputBox border-color="astryx.border.emphasized" opacity=(isDisabled ? 0.5 : 1) role="group" aria-label=label
+        height=(size == "sm" ? "astryx.size.element-sm" : size == "lg" ? "astryx.size.element-lg" : "astryx.size.element-md")
+        children
+
+// InputGroupText: a fixed text part inside an InputGroup ("https://", "kg").
+component InputGroupText
+  props
+    text: string
+  view
+    text text font="astryx.type.body" color="astryx.text.secondary" white-space="nowrap"
+
+// SegmentedControl: one choice among a few segments, shown side by side. A
+// library control is the native one, so each segment is a radio input laid
+// transparent over its drawn segment.
+component SegmentedControl
+  props
+    label: string
+    items: ChoiceItem[]
+    value: string
+    size: string
+    layout: string
+    isDisabled: bool
+    change: action
+  view
+    row role="radiogroup" aria-label=label padding="astryx.space.s0-5" gap="astryx.space.s0-5"
+      border-radius="astryx.radius.element" background-color="astryx.neutral"
+      height=elementHeight(size) opacity=(isDisabled ? 0.5 : 1)
+      for it in items key=it.value
+        view position="relative" flex=(layout == "fill" ? 1 : "0 0 auto") display="flex" align-items="center" justify-content="center"
+          padding-left="astryx.space.s3" padding-right="astryx.space.s3"
+          border-radius="astryx.radius.inner"
+          background-color=(value == it.value ? "astryx.surface.surface" : "transparent")
+          box-shadow=(value == it.value ? "astryx.shadow.low" : "none")
+          text it.label font="astryx.type.label" font-weight="astryx.weight.medium" color="astryx.text.primary"
+          input type="radio" name=label value=it.value checked=(value == it.value) change=change disabled=(isDisabled or it.isDisabled)
+            aria-label=it.label testId=`segment-${it.value}` position="absolute" inset=0 opacity=0 margin=0 width="100%" height="100%"
+
+// SelectableCard: a card that is pressed to select it. Its content is the
+// slot; selection shows as an accent ring.
+component SelectableCard
+  props
+    label: string
+    isSelected: bool
+    isDisabled: bool
+    padding: number
+    variant: string
+    elevation: string
+    press: action
+  slot
+  view
+    button press=press disabled=isDisabled aria-pressed=isSelected aria-label=label testId=`card-${label}`
+      display="flex" flex-direction="column" align-items="stretch" text-align="left"
+      border-radius="astryx.radius.container" border-style="solid"
+      border-width=(isSelected ? 2 : 1)
+      border-color=(isSelected ? "astryx.accent" : "astryx.border")
+      background-color=(variant == "default" or variant == "" ? "astryx.surface.card" : variant == "transparent" ? "transparent" : variant == "muted" ? "astryx.surface.muted" : `astryx.surface.${variant}`)
+      padding=space(padding < 0 ? "4" : padding.toString())
+      box-shadow=shadowOf(elevation)
+      opacity=(isDisabled ? 0.5 : 1)
+      children

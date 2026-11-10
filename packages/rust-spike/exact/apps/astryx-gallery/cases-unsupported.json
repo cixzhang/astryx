@@ -29,5 +29,16 @@
   "isDefaultOpen",
   "isOpen",
   "touchTrigger"
+ ],
+ "Button": [
+  "isInterruptible"
+ ],
+ "ButtonGroup": [
+  "isDisabled",
+  "size"
+ ],
+ "TextInput": [
+  "hasAutoCorrect",
+  "hasSpellCheck"
  ]
 }

@@ -208,5 +208,89 @@
   "status": "workaround",
   "evidence": "gallery hovercard-*",
   "notes": "Card content is a title and body text: the one slot is the trigger. Same delay limit as Tooltip."
+ },
+ "Button": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery button-*; playground test presses Save (web and Linux)",
+  "notes": "A native button drawn in Astryx's look. isInterruptible not wired. Press scale is a paint-only :active opacity (a state row cannot scale)."
+ },
+ "IconButton": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery iconbutton-*",
+  "notes": ""
+ },
+ "ButtonGroup": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery button-group-*",
+  "notes": "A slot passes no context and Contract has no :first-child, so each Button takes `groupEdge` from the caller to square its inner corners. Group-wide size and isDisabled are each Button's props."
+ },
+ "Switch": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery switch-*; playground test toggles it (web and Linux)",
+  "notes": "A native checkbox (role switch) lies transparent over the drawn track and thumb. Drag-to-toggle (touch) not wired."
+ },
+ "TextInput": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery text-input-*; playground test types and clears (web; Linux by the agent's type)",
+  "notes": "No :focus-within: the field's focus and blur set the ring through component state. hasAutoCorrect and hasSpellCheck have no Contract attribute. Real-keyboard editing on Linux not verified (the agent sets the value)."
+ },
+ "NumberInput": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery numberinput-*; playground test steps it",
+  "notes": "Value is text; parse and clamp are the caller's (parseNumber)."
+ },
+ "CheckboxInput": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery checkboxinput-*; playground test checks it",
+  "notes": "aria-checked takes only a bool: an indeterminate box reads as unchecked."
+ },
+ "RadioList": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery radiolist-*; playground test picks an option",
+  "notes": "Options are data (ChoiceItem[]), not RadioListItem children: one slot cannot tell a list which child is chosen."
+ },
+ "CheckboxList": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery checkboxlist-*",
+  "notes": "Options are data, as RadioList."
+ },
+ "Field": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery field-*",
+  "notes": "The control is the slot and names itself by the label's id."
+ },
+ "FieldStatus": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery fieldstatus-*",
+  "notes": ""
+ },
+ "InputGroup": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery input-group-*",
+  "notes": "Parts are the slot (InputGroupText, an input)."
+ },
+ "SegmentedControl": {
+  "wave": 5,
+  "status": "workaround",
+  "evidence": "gallery segmented-control-*; playground test picks a segment",
+  "notes": "A library control must be the native one, so each segment is a transparent radio input over its drawn segment. Items are data."
+ },
+ "SelectableCard": {
+  "wave": 5,
+  "status": "ported",
+  "evidence": "gallery selectable-card-*",
+  "notes": "A native button with aria-pressed."
  }
 }
