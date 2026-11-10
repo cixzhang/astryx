@@ -264,7 +264,9 @@ fn the_status_bar_shows_the_device_and_reads_as_one_line() {
         0,
         "one line, not its parts"
     );
-    assert!(texts(&list).iter().any(|t| t.1 == "7:42 PM"));
+    // The digits and PM draw apart, so PM can shrink without wrapping.
+    assert!(texts(&list).iter().any(|t| t.1 == "7:42"));
+    assert!(texts(&list).iter().any(|t| t.1 == " PM"));
     assert!(texts(&list).iter().any(|t| t.1 == "82%"));
     let t = light();
     assert!(

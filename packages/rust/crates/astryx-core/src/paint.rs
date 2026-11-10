@@ -546,7 +546,12 @@ fn paint_node<Msg>(
                 rect.width = rect.width.max(*width);
                 color = caret.map_or(color, |c| c.color);
             }
-            let t = &crate::element::TextDraw { color, ..t.clone() };
+            let style = layout.text_styles[ix].unwrap_or(t.style);
+            let t = &crate::element::TextDraw {
+                color,
+                style,
+                ..t.clone()
+            };
             if t.color.a > 0.0 {
                 // Renderers align physically; start is the right edge under RTL.
                 let align = match (t.align, node.rtl) {

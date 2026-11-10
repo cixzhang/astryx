@@ -152,6 +152,7 @@ pub(crate) fn text_node<Msg>(text: impl Into<String>, style: TextStyle, color: C
             align: TextAlign::Start,
             max_lines: None,
             strikethrough: false,
+            shorter: Vec::new(),
         }))
 }
 

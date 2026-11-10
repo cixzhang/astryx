@@ -20,8 +20,12 @@ pub(crate) struct Layout {
     pub overflow: Vec<f32>,
     /// Text as painted, when it differs from the node's own (truncated).
     pub texts: Vec<Option<String>>,
+    /// The style of the shorter form a text leaf shows, if any.
+    pub text_styles: Vec<Option<crate::contract::TextStyle>>,
     /// Each camera viewport's offset (x, y), by node id.
     pub camera: HashMap<u64, (f32, f32)>,
+    /// Text leaves held at the width of the shorter form they show.
+    snapped: Vec<usize>,
 }
 
 /// How a rebuilt node list differs from the last one, for layout.
@@ -51,9 +55,15 @@ impl Layout {
     /// the tree's shape is the same, changed styles are set and leaves whose
     /// text changed are marked, so taffy lays out only what they touch.
     pub fn update<Msg>(&mut self, old: &[Node<Msg>], new: &[Node<Msg>]) -> Change {
-        fn text<Msg>(n: &Node<Msg>) -> Option<(&str, crate::contract::TextStyle, Option<u32>)> {
+        type TextKey<'a> = (
+            &'a str,
+            crate::contract::TextStyle,
+            Option<u32>,
+            &'a [(String, crate::contract::TextStyle)],
+        );
+        fn text<Msg>(n: &Node<Msg>) -> Option<TextKey<'_>> {
             match &n.draw {
-                Draw::Text(t) => Some((&t.text, t.style, t.max_lines)),
+                Draw::Text(t) => Some((&t.text, t.style, t.max_lines, &t.shorter)),
                 _ => None,
             }
         }
@@ -109,7 +119,9 @@ impl Layout {
             rects: Vec::new(),
             overflow: Vec::new(),
             texts: Vec::new(),
+            text_styles: Vec::new(),
             camera: HashMap::new(),
+            snapped: Vec::new(),
         }
     }
 
@@ -135,20 +147,45 @@ impl Layout {
             width: AvailableSpace::Definite(viewport.0),
             height: AvailableSpace::Definite(viewport.1),
         };
-        self.tree
-            .compute_layout_with_measure(root, available, |input, _, ix, style| match ix {
-                Some(ix) => match &nodes[*ix as usize].draw {
-                    Draw::Text(t) => measure_leaf(input, style, t, text),
-                    _ => empty_leaf(input, style),
-                },
-                None => empty_leaf(input, style),
-            })
-            .expect("taffy layout");
+        for ix in std::mem::take(&mut self.snapped) {
+            self.tree
+                .set_style(self.ids[ix], taffy_style(&nodes[ix]))
+                .expect("taffy style");
+        }
+        self.run(nodes, root, available, text);
+        // Text that shows a shorter form keeps only that form's width, so
+        // a dropped item leaves no gap; the rest of its row lays out again.
+        for (ix, node) in nodes.iter().enumerate().skip(1) {
+            let Draw::Text(t) = &node.draw else { continue };
+            if t.shorter.is_empty() {
+                continue;
+            }
+            let width = self.tree.layout(self.ids[ix]).expect("layout").size.width;
+            let Some(form) = fitting_form(t, width, text) else {
+                continue;
+            };
+            let (s, st) = &t.shorter[form];
+            let form_width = ceil(text.measure(s, st, None).width);
+            if width > form_width + 0.5 {
+                let mut style = taffy_style(node);
+                style.size.width = taffy::Dimension::length(form_width);
+                style.flex_shrink = 0.0;
+                style.flex_grow = 0.0;
+                self.tree
+                    .set_style(self.ids[ix], style)
+                    .expect("taffy style");
+                self.snapped.push(ix);
+            }
+        }
+        if !self.snapped.is_empty() {
+            self.run(nodes, root, available, text);
+        }
 
         let n = nodes.len();
         self.boxes = vec![Rect::default(); n];
         self.overflow = vec![0.0; n];
         self.texts = vec![None; n];
+        self.text_styles = vec![None; n];
         for (ix, node) in nodes.iter().enumerate() {
             let l = self.tree.layout(self.ids[ix]).expect("layout");
             let origin = node.parent.map_or((0.0, 0.0), |p| {
@@ -187,7 +224,12 @@ impl Layout {
                 self.overflow[ix] = (end - size).max(0.0);
             }
             if let Draw::Text(t) = &node.draw {
-                self.texts[ix] = truncate(t, self.boxes[ix].width, text);
+                if t.shorter.is_empty() {
+                    self.texts[ix] = truncate(t, self.boxes[ix].width, text);
+                } else if let Some(form) = fitting_form(t, self.boxes[ix].width, text) {
+                    self.texts[ix] = Some(t.shorter[form].0.clone());
+                    self.text_styles[ix] = Some(t.shorter[form].1);
+                }
             }
         }
     }
@@ -236,6 +278,26 @@ impl Layout {
     }
 }
 
+impl Layout {
+    fn run<Msg>(
+        &mut self,
+        nodes: &[Node<Msg>],
+        root: NodeId,
+        available: taffy::Size<AvailableSpace>,
+        text: &dyn TextMeasure,
+    ) {
+        self.tree
+            .compute_layout_with_measure(root, available, |input, _, ix, style| match ix {
+                Some(ix) => match &nodes[*ix as usize].draw {
+                    Draw::Text(t) => measure_leaf(input, style, t, text),
+                    _ => empty_leaf(input, style),
+                },
+                None => empty_leaf(input, style),
+            })
+            .expect("taffy layout");
+    }
+}
+
 fn empty_leaf(input: LayoutInput, style: &taffy::Style) -> LayoutOutput {
     taffy::compute_leaf_layout(input, style, |_, _| 0.0, |_, _| taffy::Size::ZERO)
 }
@@ -264,6 +326,47 @@ pub(crate) fn line_height(t: &TextDraw) -> f32 {
     t.style.size * t.style.leading
 }
 
+/// For text with shorter forms: the index of the shorter form that fits
+/// `width`, the last when none does, or `None` when the text itself fits.
+fn fitting_form(t: &TextDraw, width: f32, text: &dyn TextMeasure) -> Option<usize> {
+    let fits = |s: &str, style| ceil(text.measure(s, style, None).width) <= width + 0.5;
+    if fits(&t.text, &t.style) {
+        return None;
+    }
+    let last = t.shorter.len().checked_sub(1)?;
+    Some(
+        t.shorter
+            .iter()
+            .position(|(s, style)| fits(s, style))
+            .unwrap_or(last),
+    )
+}
+
+/// The size of text with shorter forms: one line, as wide as the longest
+/// form that fits what it is offered, and as tall as its own style's line.
+fn measure_forms(
+    t: &TextDraw,
+    known: Option<f32>,
+    available: AvailableSpace,
+    text: &dyn TextMeasure,
+) -> (f32, f32) {
+    let width = |s: &str, style| ceil(text.measure(s, style, None).width);
+    let full = width(&t.text, &t.style);
+    let (narrowest, narrowest_style) = t
+        .shorter
+        .last()
+        .map_or((&t.text, &t.style), |(s, st)| (s, st));
+    let w = match (known, available) {
+        (Some(w), _) | (None, AvailableSpace::Definite(w)) => match fitting_form(t, w, text) {
+            None => full,
+            Some(i) => width(&t.shorter[i].0, &t.shorter[i].1),
+        },
+        (None, AvailableSpace::MaxContent) => full,
+        (None, AvailableSpace::MinContent) => width(narrowest, narrowest_style),
+    };
+    (w, ceil(line_height(t)))
+}
+
 /// The size of a text leaf: wrapped at the width it is offered, with height
 /// in whole lines of the style's line height.
 fn measure_text(
@@ -272,6 +375,9 @@ fn measure_text(
     available: AvailableSpace,
     text: &dyn TextMeasure,
 ) -> (f32, f32) {
+    if !t.shorter.is_empty() {
+        return measure_forms(t, known, available, text);
+    }
     let lh = line_height(t);
     let limit = match (known, available) {
         (Some(w), _) => Some(w),
@@ -365,6 +471,7 @@ mod tests {
             align: TextAlign::Start,
             max_lines,
             strikethrough: false,
+            shorter: Vec::new(),
         }
     }
 

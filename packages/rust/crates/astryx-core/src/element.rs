@@ -239,6 +239,10 @@ pub(crate) struct TextDraw {
     /// Lines shown before an ellipsis; `None` shows every line.
     pub max_lines: Option<u32>,
     pub strikethrough: bool,
+    /// Shorter forms, tried in order when the text does not fit its box,
+    /// each with its own style. Text with shorter forms is one line that
+    /// never wraps; its narrowest width is its last form's.
+    pub shorter: Vec<(String, TextStyle)>,
 }
 
 /// A vector shape in a square `view_box`, scaled to the node's box.

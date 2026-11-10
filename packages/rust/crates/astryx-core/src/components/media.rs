@@ -446,6 +446,7 @@ impl<Msg> Build<Msg> for Avatar<Msg> {
                 align: TextAlign::Center,
                 max_lines: Some(1),
                 strikethrough: false,
+                shorter: Vec::new(),
             })));
         }
         cx.end();
