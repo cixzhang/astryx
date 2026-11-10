@@ -197,6 +197,45 @@ pub enum Draw {
     Sprite(crate::world::SpriteDraw),
     /// A light pass, a light, or a glowing rect.
     Light(crate::light::LightDraw),
+    /// Draw commands a component computes from its box and the clock, for
+    /// shapes the other kinds do not cover.
+    Paint(Painter),
+}
+
+/// Paints a node from its box (in points) and the runtime clock (seconds).
+/// `plays` says whether the result changes with the clock, so the shell keeps
+/// drawing frames while the node is visible. Two painters are equal only when
+/// they share one closure, so give a stable painter a fresh value each build.
+#[derive(Clone)]
+pub struct Painter {
+    pub paint: std::rc::Rc<dyn Fn(crate::contract::Rect, f32) -> Vec<crate::contract::DrawCmd>>,
+    pub plays: bool,
+}
+
+impl Painter {
+    pub fn new(
+        plays: bool,
+        paint: impl Fn(crate::contract::Rect, f32) -> Vec<crate::contract::DrawCmd> + 'static,
+    ) -> Self {
+        Painter {
+            paint: std::rc::Rc::new(paint),
+            plays,
+        }
+    }
+}
+
+impl std::fmt::Debug for Painter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Painter")
+            .field("plays", &self.plays)
+            .finish()
+    }
+}
+
+impl PartialEq for Painter {
+    fn eq(&self, other: &Self) -> bool {
+        self.plays == other.plays && std::rc::Rc::ptr_eq(&self.paint, &other.paint)
+    }
 }
 
 /// A registered image filling the node's box.
