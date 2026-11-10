@@ -1,0 +1,78 @@
+{
+ "family": "FormLayout",
+ "source": "packages/core/src/FormLayout/FormLayout.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "FormLayout",
+   "visualProps": {
+    "direction": [
+     "vertical",
+     "horizontal",
+     "horizontal-labels"
+    ],
+    "defaultOptionality": [
+     "optional",
+     "required"
+    ]
+   },
+   "defaults": {
+    "direction": "vertical",
+    "defaultOptionality": "optional"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "form-layout-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "form-layout-0002",
+     "kind": "sweep",
+     "props": {
+      "direction": "horizontal"
+     }
+    },
+    {
+     "id": "form-layout-0003",
+     "kind": "sweep",
+     "props": {
+      "direction": "horizontal-labels"
+     }
+    },
+    {
+     "id": "form-layout-0004",
+     "kind": "sweep",
+     "props": {
+      "defaultOptionality": "required"
+     }
+    },
+    {
+     "id": "form-layout-0005",
+     "kind": "pairwise",
+     "props": {
+      "direction": "horizontal",
+      "defaultOptionality": "required"
+     }
+    },
+    {
+     "id": "form-layout-0006",
+     "kind": "pairwise",
+     "props": {
+      "direction": "horizontal-labels",
+      "defaultOptionality": "required"
+     }
+    }
+   ]
+  }
+ ]
+}
