@@ -8,6 +8,7 @@
 
 pub mod a11y_json;
 pub mod families;
+pub mod playground;
 pub mod props;
 
 use astryx_core::authoring::{Base, BoxDraw, Build, BuildCx, Draw, Node, Semantics};
@@ -22,6 +23,8 @@ use props::Props;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Msg {
     Noop,
+    /// A change on a playground page.
+    Play(Box<playground::PlayMsg>),
     Family(usize),
     ToggleScheme,
     ToggleDirection,
@@ -34,6 +37,7 @@ pub struct Gallery {
     mode: Mode,
     direction: Direction,
     theme: &'static astryx_core::Theme,
+    play: playground::PlayState,
 }
 
 impl Default for Gallery {
@@ -51,11 +55,27 @@ impl Gallery {
             mode: Mode::Light,
             direction: Direction::Ltr,
             theme: astryx_core::Theme::NEUTRAL,
+            play: playground::PlayState::default(),
         }
     }
 
     /// One case by id, or `None` when no family has it.
     pub fn case(id: &str) -> Option<Self> {
+        if let Some(n) = id
+            .strip_prefix("playground-")
+            .and_then(|n| n.parse::<u32>().ok())
+        {
+            if (1..=4).contains(&n) {
+                return Some(Gallery {
+                    case: Some(Case {
+                        id: id.to_string(),
+                        family: "Playground",
+                        props: serde_json::json!({ "page": n }),
+                    }),
+                    ..Self::new()
+                });
+            }
+        }
         let (case, _) = families::find_case(id)?;
         Some(Gallery {
             case: Some(case),
@@ -85,6 +105,10 @@ impl Gallery {
     /// Renders a case with its part's family when the gallery has one
     /// (`$component` HStack inside Stack.json), else its file's family.
     fn render(&self, case: &Case) -> Element<Msg> {
+        if case.family == "Playground" {
+            let n = case.props.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
+            return playground::page(n, &self.play);
+        }
         let part = case.props.get("$component").and_then(|v| v.as_str());
         let render = part
             .and_then(|p| self.families.iter().find(|f| f.name == p))
@@ -231,6 +255,7 @@ impl App for Gallery {
     fn update(&mut self, msg: Msg) -> Command {
         match msg {
             Msg::Noop => {}
+            Msg::Play(m) => self.play.update(*m),
             Msg::Family(i) => self.family = i.min(self.families.len() - 1),
             Msg::ToggleScheme => self.mode = self.mode.toggled(),
             Msg::ToggleDirection => {

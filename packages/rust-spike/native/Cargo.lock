@@ -335,6 +335,7 @@ version = "0.1.0"
 dependencies = [
  "astryx-core",
  "astryx-spike-gallery",
+ "astryx-spike-templates",
  "astryx-web",
  "wasm-bindgen",
  "web-sys",
