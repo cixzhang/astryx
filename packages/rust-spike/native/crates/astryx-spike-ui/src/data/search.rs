@@ -194,7 +194,9 @@ impl<Msg: Clone + 'static> Build<Msg> for Listbox<Msg> {
             } else {
                 astryx_core::contract::Color::TRANSPARENT
             };
-            let mut interact = Interact::new(row.msg, row.disabled);
+            // Pointer only: the field keeps keyboard focus and points at
+            // the active option.
+            let mut interact = Interact::new(row.msg, row.disabled).pointer_only();
             if let Some(e) = row.effect {
                 interact = interact.effect(move || e());
             }
@@ -572,6 +574,7 @@ impl<T: SearchItem, Msg: Clone + 'static> Build<Msg> for Typeahead<T, Msg> {
                     .match_anchor_width(true)
                     .trap_focus(false)
                     .restore_focus(false)
+                    .no_role()
                     .on_dismiss_effect(move |_| {
                         let mut st = hh.get();
                         st.open = false;
@@ -1016,6 +1019,8 @@ impl<Msg: Clone + 'static> Build<Msg> for Selector<Msg> {
                     .placement(Placement::new(Side::Below, Align::Start).offset(t.space.s1))
                     .match_anchor_width(true)
                     .trap_focus(false)
+                    .restore_focus(false)
+                    .no_role()
                     .on_dismiss_effect(move |_| hh.set(SelectState::default()))
                     .into(),
             );

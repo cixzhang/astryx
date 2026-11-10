@@ -191,6 +191,25 @@ fn render_top_nav(p: Props) -> Element<Msg> {
     t.into()
 }
 
+fn render_chat_composer(p: Props) -> Element<Msg> {
+    let mut c = ChatComposer::new("composer", |_| Msg::Noop)
+        .is_stop_shown(p.bool("isStopShown"))
+        .is_disabled(p.bool("isDisabled"))
+        .is_elevated(p.str("elevation") != Some("none"))
+        .density(match p.str_or("density", "balanced") {
+            "compact" => ListDensity::Compact,
+            "spacious" => ListDensity::Spacious,
+            _ => ListDensity::Balanced,
+        });
+    if let Some(v) = p.str("value") {
+        c = c.value(v).on_change(|_| Msg::Noop);
+    }
+    if let Some(ph) = p.str("placeholder") {
+        c = c.placeholder(ph);
+    }
+    c.into()
+}
+
 pub fn families() -> Vec<Family> {
     vec![
         Family {
@@ -264,6 +283,19 @@ pub fn families() -> Vec<Family> {
             base: || json!({"$fixture": "text"}),
             sweeps: || vec![],
             render: render_side_nav,
+        },
+        Family {
+            name: "ChatComposer",
+            base: || json!({}),
+            sweeps: || {
+                vec![
+                    ("density", v(&["compact", "balanced", "spacious"])),
+                    ("isStopShown", vec![json!(true)]),
+                    ("value", v(&["Draft a reply about the launch plan"])),
+                    ("elevation", v(&["none", "low"])),
+                ]
+            },
+            render: render_chat_composer,
         },
         Family {
             name: "TopNav",
