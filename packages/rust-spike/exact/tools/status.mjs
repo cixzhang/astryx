@@ -18,6 +18,7 @@ const rows = Object.entries(fams).map(([k, f]) => {
   const s = status[k] ?? { status: 'not started', wave: '', evidence: '', notes: '' };
   return `| ${k} | ${f.files} | ${f.groups.join(', ')} | ${s.wave} | ${s.status} | ${s.evidence} | ${s.notes} |`;
 });
+const ceilings = JSON.parse(readFileSync(resolve(HERE, 'tools/ceilings.json'), 'utf8'));
 const count = st => Object.keys(fams).filter(k => (status[k]?.status ?? 'not started') === st).length;
 const md = [
   '# Exact lane status',
@@ -31,6 +32,18 @@ const md = [
   'A row counts as ported when its Contract port gives the Astryx behavior and look its cases test,',
   'workaround when it needs a different shape or an escape hatch (the note says which), and blocked',
   'when Contract cannot express it (the note gives the smallest failing snippet).',
+  '',
+  'Tests: `apps/astryx-gallery` (cases for every family, four interactive playgrounds, 23 tests),',
+  '`apps/astryx-shell-nav` (6 tests) and `apps/astryx-settings-dialog` (5 tests) pass on the web host;',
+  'all three build and respond on the Linux host. `gaps.test.contract` keeps the known failing test.',
+  '',
+  '## Ceilings found',
+  '',
+  '| Area | Finding | Evidence |',
+  '| --- | --- | --- |',
+  ...ceilings.map(c => `| ${c.area} | ${c.finding} | ${c.evidence} |`),
+  '',
+  '## Ledger rows',
   '',
   '| Row | Files | Groups | Wave | Status | Evidence | Notes |',
   '| --- | --- | --- | --- | --- | --- | --- |',

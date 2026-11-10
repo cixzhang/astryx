@@ -4,3 +4,4 @@
 // use its tokens.
 use Popover, Collapsible, CollapsibleGroup, Tooltip, InfoTip, HoverCard, Dialog, BottomSheet, MenuItem, MenuRows, DropdownMenu, ContextMenu, Resizable, enterMotion, fadeMotion, popoverArea from "./layers.contract"
 use Typeahead, Tokenizer, Selector, Calendar, DateInput, TimeInput, Command, CommandPalette, daysIn, weekday, isoDate, monthName from "./pickers.contract"
+use ChatMsg, ChatTokenizedText, ChatMessageMetadata, ChatMessageBubble, ChatToolCalls, ChatSystemMessage, ChatMessage, ChatMessageList, ChatSendButton, ChatComposer, ChatLayout, SearchFilter, SearchField, PowerSearch, OverflowList from "./chat.contract"

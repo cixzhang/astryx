@@ -23,6 +23,8 @@ const MENU = [['edit', 'Edit', 'clock', '⌘E'], ['copy', 'Copy link', 'copy', '
 const TCOLS = [['name', 'Name', '', 'start', true], ['role', 'Role', '', 'start', false], ['year', 'Born', '80px', 'end', true]].map(([key, label, width, align, isSortable]) => ({ $shape: 'TableColumn', key, label, width, align, isSortable }));
 const TROWS = [['ada', 'Ada Lovelace', 'Analyst', '1815'], ['grace', 'Grace Hopper', 'Rear admiral', '1906'], ['alan', 'Alan Turing', 'Mathematician', '1912'], ['kj', 'Katherine Johnson', 'Mathematician', '1918']].map(([key, ...cells]) => ({ $shape: 'TableRow', key, cells, depth: 0, isExpanded: false, hasChildren: false }));
 const CMDS = [['new-file', 'New File', 'Command'], ['save-all', 'Save All', 'Command'], ['theme', 'theme.ts', 'File']].map(([id, label, group]) => ({ $shape: 'Command', id, label, group }));
+const PSFIELDS = [['status', 'Status', ['Open', 'Closed', 'Draft']], ['owner', 'Owner', ['Ada', 'Grace', 'Alan']]].map(([key, label, values]) => ({ $shape: 'SearchField', key, label, values }));
+const NAVITEMS = [['home', 'Home', 'info'], ['search', 'Search', 'search'], ['inbox', 'Inbox', 'calendar']].map(([id, label, icon]) => ({ $shape: 'NavItem', id, label, icon }));
 const FILL3 = ['Filler(label="One")', 'Filler(label="Two")', 'Filler(label="Three")'];
 const avatars = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson', 'Edsger Dijkstra', 'Barbara Liskov'].map(name => ({ $shape: 'AvatarItem', name, src: '' }));
 
@@ -34,6 +36,10 @@ export const FAMILIES = {
   Playground3: {
     component: 'DataPlayground', uses: [], defaults: {},
     smoke: [{ id: 'playground-0003', title: 'Pickers and table wired to state', props: {} }],
+  },
+  Playground4: {
+    component: 'ChatPlayground', uses: [], defaults: {},
+    smoke: [{ id: 'playground-0004', title: 'Chat and PowerSearch wired to state', props: {} }],
   },
   Playground: {
     component: 'ControlsPlayground', uses: [], defaults: {},
@@ -349,14 +355,15 @@ export const FAMILIES = {
   BottomSheet: {
     component: 'BottomSheet', uses: ['BottomSheet', 'Text'],
     defaults: { id: 'case-dialog', title: 'Share', still: true },
-    opensModal: () => true,
+    opensModal: p => p.isOpen !== false,
     children: [TEXT('Send this page to someone.')],
     smoke: sweep('BottomSheet', {}, { title: ['Filters'] }),
   },
   DropdownMenu: {
+    noSlot: true,
     component: 'DropdownMenu', actions: { select: 'noopS' }, uses: ['DropdownMenu', 'MenuItem'], types: { items: 'MenuItem[]' },
     defaults: { id: 'case-popover', label: 'Actions', items: MENU, variant: 'secondary', size: 'md', hasChevron: true },
-    opens: () => true,
+    opens: p => p.isMenuOpen !== false,
     wrap: inner => ['column width=320 height=280', ...inner.map(l => `  ${l}`)],
     smoke: sweep('DropdownMenu', {}, { label: ['More'] }),
   },
@@ -456,5 +463,65 @@ export const FAMILIES = {
     map: p => ({}),
     children: ['FixtureBox()', 'FixtureBox()', 'FixtureBox()'],
     smoke: sweep('FormLayout', {}, {}),
+  },
+  ChatMessage: {
+    component: 'ChatMessage', uses: ['ChatMessage', 'ChatMsg'], types: { msg: 'ChatMsg', faces: 'AtomFace[]' }, block: true,
+    defaults: { msg: { $shape: 'ChatMsg', id: 'm1', role: 'assistant', author: 'Assistant', text: 'Hi! Ask me about the **release**.', time: '9:41', status: '', tools: [] }, faces: [] },
+    smoke: [
+      { id: 'chatmessage-0001', props: {} },
+      { id: 'chatmessage-0002', props: { msg: { $shape: 'ChatMsg', id: 'm2', role: 'user', author: 'Grace', text: 'Can you review the notes?', time: '9:42', status: 'Read', tools: [] } } },
+      { id: 'chatmessage-0003', props: { msg: { $shape: 'ChatMsg', id: 'm3', role: 'assistant', author: 'Assistant', text: 'Done.', time: '9:43', status: '', tools: ['search_docs', 'read_changelog'] } } },
+      { id: 'chatmessage-0004', props: { msg: { $shape: 'ChatMsg', id: 'm4', role: 'system', author: '', text: 'Ada joined the conversation', time: '', status: '', tools: [] } } },
+    ],
+  },
+  ChatComposer: {
+    component: 'ChatComposer', actions: { input: 'noopS', send: 'noop' }, uses: ['ChatComposer'], types: { faces: 'AtomFace[]' }, block: true,
+    defaults: { id: 'case-composer', value: '', placeholder: 'Message', faces: [], isSending: false },
+    smoke: sweep('ChatComposer', {}, { value: ['Hello @ada'], isSending: [true] }),
+  },
+  PowerSearch: {
+    component: 'PowerSearch', actions: { input: 'noopS', add: 'noopSS', remove: 'noopS' }, uses: ['PowerSearch', 'SearchField', 'SearchFilter'], types: { fields: 'SearchField[]', filters: 'SearchFilter[]' }, block: true,
+    defaults: { id: 'case-search', label: 'Filter issues', query: '', fields: PSFIELDS, filters: [{ $shape: 'SearchFilter', field: 'status', op: 'is', value: 'Open' }] },
+    smoke: sweep('PowerSearch', {}, { filters: [[]], query: ['own'] }),
+  },
+  OverflowList: {
+    noSlot: true,
+    component: 'OverflowList', uses: ['OverflowList'], types: { items: 'ChoiceItem[]' }, libUses: ['ChoiceItem'],
+    defaults: { id: 'case-overflow', items: CHOICES.concat(CHOICES.map(c => ({ ...c, value: c.value + '2', label: c.label + ' 2' }))), maxVisible: 3, gap: 2 },
+    smoke: sweep('OverflowList', {}, { maxVisible: [1, 6] }),
+  },
+  TopNav: {
+    component: 'TopNav', uses: ['TopNav'], block: true,
+    defaults: { label: 'Label' },
+    children: ['FixtureBox()', 'view flex=1', 'FixtureBox()'],
+    keepChildren: true,
+    smoke: sweep('TopNav', {}, {}),
+  },
+  SideNav: {
+    component: 'SideNav', uses: ['SideNav', 'SideNavItem'],
+    defaults: { label: 'Label', isCollapsed: false },
+    children: ['SideNavItem(label="Label", icon="", isSelected=true, isCollapsed=false, press=noop)', 'SideNavItem(label="Label 2", icon="", isSelected=false, isCollapsed=false, press=noop)'],
+    keepChildren: true,
+    wrap: inner => ['view width=260', ...inner.map(l => `  ${l}`)],
+    smoke: sweep('SideNav', {}, {}),
+  },
+  MobileNav: {
+    component: 'MobileNav', noSlot: true, actions: { go: 'noopS' }, uses: ['MobileNav', 'NavItem'], types: { items: 'NavItem[]' }, block: true,
+    defaults: { label: 'Label', items: NAVITEMS, selected: 'home' },
+    smoke: sweep('MobileNav', {}, { selected: ['search'] }),
+  },
+  Toolbar: {
+    component: 'Toolbar', uses: ['Toolbar', 'IconButton'],
+    defaults: { label: 'Label', gap: 1 },
+    map: p => { const { size, orientation, ...r } = p; return r; },
+    children: ['IconButton(label="Copy", icon="copy", variant="ghost", size="md", isDisabled=false, press=noop)', 'IconButton(label="Search", icon="search", variant="ghost", size="md", isDisabled=false, press=noop)', 'IconButton(label="Filter", icon="funnel", variant="ghost", size="md", isDisabled=false, press=noop)'],
+    keepChildren: true,
+    smoke: sweep('Toolbar', {}, { gap: [0, 4] }),
+  },
+  DateTimeInput: {
+    component: 'DateInput', actions: { input: 'noopS', pick: 'noopS', shift: 'noopN' }, uses: ['DateInput', 'TimeInput'],
+    defaults: { id: 'case-datetime', label: 'Label', value: '2026-11-18', endValue: '', isRange: false, year: 2026, month: 11, today: '2026-11-10', size: 'md', isDisabled: false },
+    wrap: inner => ['row width="100%" gap="astryx.space.s2" align-items="flex-end"', '  view flex=1', ...inner.map(l => `    ${l}`), '  TimeInput(id="case-time", label="Time", value="09:30", size=c.size, isDisabled=c.isDisabled, input=noopS)'],
+    smoke: sweep('DateTimeInput', {}, { size: ['sm', 'lg'], isDisabled: [true] }),
   },
 };

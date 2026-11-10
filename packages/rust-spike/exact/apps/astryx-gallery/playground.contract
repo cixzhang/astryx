@@ -176,3 +176,37 @@ component DataPlayground
       text `${sortKey} ${sortDir} ${picked.join(",")}` testId="table-state"
       Pagination(page=page, pageCount=5, label="Pages", go=go)
       text page.toString() testId="page-value"
+
+// Chat and search wired to state: send a message with a mention; filter.
+use ChatLayout, ChatMessageList, ChatComposer, ChatMsg, PowerSearch, SearchField, SearchFilter, OverflowList from "@astryx-spike/astryx-layers"
+
+fn faces(): AtomFace[] = [AtomFace(source="@ada", label="Ada", icon="", title="Ada Lovelace", color="", backgroundColor="", direction="", ariaLabel="Ada Lovelace"), AtomFace(source="@grace", label="Grace", icon="", title="Grace Hopper", color="", backgroundColor="", direction="", ariaLabel="Grace Hopper")]
+fn searchFields(): SearchField[] = [SearchField(key="status", label="Status", values=["Open", "Closed", "Draft"]), SearchField(key="owner", label="Owner", values=["Ada", "Grace", "Alan"]), SearchField(key="priority", label="Priority", values=["High", "Low"])]
+
+component ChatPlayground
+  state messages = [ChatMsg(id="1", role="system", author="", text="Ada joined the conversation", time="", status="", tools=[]), ChatMsg(id="2", role="assistant", author="Assistant", text="Hi! Ask me about the **release**.", time="9:41", status="", tools=["search_docs", "read_changelog"]), ChatMsg(id="3", role="user", author="Grace", text="Can @ada review the notes?", time="9:42", status="Read", tools=[])]
+  state draft = ""
+  state query = ""
+  state filters = [SearchFilter(field="status", op="is", value="Open")]
+  action edit(t: string)
+    draft = t
+  action send
+    messages = messages.concat([ChatMsg(id=(messages.length + 1).toString(), role="user", author="Grace", text=draft, time="9:43", status="Sent", tools=[])])
+    draft = ""
+  action setQuery(t: string)
+    query = t
+  action add(field: string, value: string)
+    filters = filters.filter(f => f.field != field).concat([SearchFilter(field=field, op="is", value=value)])
+    query = ""
+  action remove(field: string)
+    filters = filters.filter(f => f.field != field)
+  view
+    column gap="astryx.space.s4" width=420
+      view height=380 border-width="astryx.border.width" border-style="solid" border-color="astryx.border" border-radius="astryx.radius.container" overflow="hidden"
+        ChatLayout(label="Conversation")
+          ChatMessageList(id="messages", messages=messages, faces=faces())
+          ChatComposer(id="composer", value=draft, placeholder="Message", faces=faces(), isSending=false, input=edit, send=send)
+      text messages.length.toString() testId="count"
+      PowerSearch(id="ps", label="Filter issues", query=query, fields=searchFields(), filters=filters, input=setQuery, add=add, remove=remove)
+      text filters.map(f => `${f.field}=${f.value}`).join(",") testId="filters"
+      OverflowList(id="tags", items=[ChoiceItem(value="a", label="Design", description="", isDisabled=false), ChoiceItem(value="b", label="Research", description="", isDisabled=false), ChoiceItem(value="c", label="Docs", description="", isDisabled=false), ChoiceItem(value="d", label="Release", description="", isDisabled=false)], maxVisible=2, gap=2)

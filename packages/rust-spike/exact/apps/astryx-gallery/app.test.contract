@@ -141,3 +141,32 @@ test "a table sorts, selects and pages"
   expect text "table-state" == "year desc ada,grace,alan"
   tap "page-next"
   expect text "page-value" == "2"
+
+test "a chat message sends with a mention"
+  size 420x1400
+  at "/?case=playground-0004"
+  type "input-composer" "Thanks @grace"
+  tap "chat-send"
+  expect text "count" == "4"
+  expect tree has "msg-4"
+
+test "tool calls fold open"
+  size 420x1400
+  at "/?case=playground-0004"
+  tap "tools-2"
+  expect tree has "tools-2"
+
+test "power search adds and removes filters"
+  size 420x1400
+  at "/?case=playground-0004"
+  type "input-ps" "owner:gr"
+  tap "ps-value-Grace"
+  expect text "filters" == "status=Open,owner=Grace"
+  tap "remove-status"
+  expect text "filters" == "owner=Grace"
+
+test "the overflow list shows the rest in a menu"
+  size 420x1400
+  at "/?case=playground-0004"
+  tap "tags-more"
+  expect tree has "tags-rest"

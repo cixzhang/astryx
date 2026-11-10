@@ -10,9 +10,10 @@ Contract library, plus apps that show them.
 | `tokens/` | Astryx themes resolved to light and dark values (one JSON per theme), the importer's report, and `themes.tamber`: the `theme` axis an app pastes into its `app.tamber`. |
 | `tools/astryx-tamber.mjs` | Writes `astryx/astryx.tamber` and `tokens/themes.tamber` from `tokens/*.json` through `contract tamber import astryx`. |
 | `apps/astryx-gallery/` | Every ported family's visual cases, one per page, for QA. |
-| `apps/astryx-shell-nav/` | The `shell-nav` template, rebuilt. |
-| `apps/astryx-settings-dialog/` | The `settings-dialog` template, rebuilt. |
-| `STATUS.md` | Each ledger row: ported, workaround or blocked, with evidence. |
+| `apps/astryx-shell-nav/` | The `shell-nav` template, rebuilt: menu bar, resizable file tree, editor placeholders, command palette (⌘K); narrow screens fold the tree into a sheet. |
+| `apps/astryx-settings-dialog/` | The `settings-dialog` template, rebuilt: ten panels, search across every setting, a narrow layout with tabs. |
+| `STATUS.md` | Each ledger row: ported, workaround or blocked, with evidence; and the ceilings found. Written by `bun tools/status.mjs` from `tools/status.json`, `tools/ceilings.json` and `tools/closure.json`. |
+| `apps/*/linux-host/` | Each app on the Linux host without a TypeScript data module (`build.sh` prints the binary). |
 
 ## Setup
 
