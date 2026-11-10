@@ -90,6 +90,37 @@ impl<Msg: Clone + 'static> Rig<Msg> {
         self.rt.pointer(e(PointerPhase::Up, to, t + 4.0));
         self.redraw();
     }
+    /// Presses and releases `key` with `modifiers`.
+    pub fn key(&mut self, key: astryx_core::Key, modifiers: astryx_core::Modifiers) {
+        use astryx_core::contract::Surface;
+        for phase in [
+            astryx_core::InputPhase::Pressed,
+            astryx_core::InputPhase::Released,
+        ] {
+            self.rt.key(astryx_core::KeyEvent {
+                key: key.clone(),
+                phase,
+                modifiers,
+                repeat: false,
+            });
+        }
+        self.redraw();
+    }
+    /// A secondary (right) click at `at`.
+    pub fn right_click(&mut self, at: astryx_core::Point) {
+        use astryx_core::contract::{PointerEvent, PointerKind, PointerPhase, Surface};
+        for phase in [PointerPhase::Down, PointerPhase::Up] {
+            self.rt.pointer(PointerEvent {
+                id: 2,
+                kind: PointerKind::Mouse,
+                phase,
+                at,
+                button: 2,
+                time_ms: 0.0,
+            });
+        }
+        self.redraw();
+    }
     pub fn messages(&self) -> Vec<Msg> {
         self.sent.borrow().clone()
     }

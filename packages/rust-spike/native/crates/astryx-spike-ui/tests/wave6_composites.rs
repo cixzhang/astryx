@@ -85,8 +85,19 @@ fn menu_checkbox_and_radio_rows_report_state() {
 
 #[test]
 fn context_menu_opens_at_a_point() {
-    // Opening from Shift+F10, the Menu key or a secondary press waits on a
-    // bubbling key handler and secondary press events in the runtime.
+    let mut rig = Rig::new(|| {
+        ContextMenu::new(
+            Button::new("Row"),
+            vec![MenuOption::item("Copy").on_click(Msg::Act("copy"))],
+        )
+        .on_open_change(Msg::Ctx)
+        .into()
+    });
+    rig.right_click(Point { x: 10.0, y: 10.0 });
+    assert_eq!(
+        rig.messages(),
+        vec![Msg::Ctx(Some(Point { x: 10.0, y: 10.0 }))]
+    );
     let open = Rig::new(|| {
         ContextMenu::new(Button::new("Row"), vec![MenuOption::item("Copy")])
             .open_at(Some(Point { x: 120.0, y: 80.0 }))
@@ -319,4 +330,93 @@ fn resizable_collapses_and_snaps() {
         resolve_size(205.0, 120.0, 400.0, false, 40.0, &[200.0], false),
         205.0
     );
+}
+
+#[test]
+fn uncontrolled_context_menu_opens_from_shift_f10_and_closes_on_act() {
+    let mut rig = Rig::new(|| {
+        ContextMenu::new(
+            Button::new("Row"),
+            vec![MenuOption::item("Copy").on_click(Msg::Act("copy"))],
+        )
+        .into()
+    });
+    assert!(all(&rig.tree(), Role::Menu).is_empty());
+    rig.key(
+        astryx_core::Key::F(10),
+        astryx_core::Modifiers {
+            shift: true,
+            ..Default::default()
+        },
+    );
+    assert!(
+        !all(&rig.tree(), Role::Menu).is_empty(),
+        "opens from the keyboard"
+    );
+    rig.press(Input::A);
+    assert_eq!(rig.messages(), vec![Msg::Act("copy")]);
+    assert!(all(&rig.tree(), Role::Menu).is_empty());
+    rig.right_click(Point { x: 10.0, y: 10.0 });
+    assert!(
+        !all(&rig.tree(), Role::Menu).is_empty(),
+        "opens from a right click"
+    );
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum RMsg {
+    Moved(usize, usize),
+}
+
+#[test]
+fn list_reorders_by_keyboard_with_announcements() {
+    let mut rig = Rig::<RMsg>::new(|| {
+        List::new()
+            .reorderable(Reorderable::new(RMsg::Moved).labels(["Inbox", "Drafts", "Sent"]))
+            .child(ListItem::new("Inbox"))
+            .child(ListItem::new("Drafts"))
+            .child(ListItem::new("Sent"))
+            .into()
+    });
+    let tree = rig.tree();
+    assert!(find(&tree, Role::Button, "Reorder Inbox").is_some());
+    // Focus starts on the first grip: pick up, move down twice, drop.
+    rig.key(astryx_core::Key::Space, Default::default());
+    let status = |rig: &Rig<RMsg>| {
+        all(&rig.tree(), Role::Status)
+            .first()
+            .and_then(|s| s.label.clone())
+    };
+    assert_eq!(status(&rig).as_deref(), Some("Picked up, position 1 of 3."));
+    rig.key(astryx_core::Key::Down, Default::default());
+    rig.key(astryx_core::Key::Down, Default::default());
+    // The row shows at its new place while it is held.
+    let names: Vec<String> = all(&rig.tree(), Role::Button)
+        .iter()
+        .filter_map(|b| b.label.clone())
+        .collect();
+    assert_eq!(names, ["Reorder Drafts", "Reorder Sent", "Reorder Inbox"]);
+    rig.key(astryx_core::Key::Space, Default::default());
+    assert_eq!(rig.messages(), vec![RMsg::Moved(0, 2)]);
+    assert_eq!(status(&rig).as_deref(), Some("Dropped, position 3 of 3"));
+}
+
+#[test]
+fn escape_puts_a_picked_up_row_back() {
+    let mut rig = Rig::<RMsg>::new(|| {
+        List::new()
+            .reorderable(Reorderable::new(RMsg::Moved))
+            .child(ListItem::new("A"))
+            .child(ListItem::new("B"))
+            .into()
+    });
+    rig.key(astryx_core::Key::Enter, Default::default());
+    rig.key(astryx_core::Key::Down, Default::default());
+    rig.key(astryx_core::Key::Escape, Default::default());
+    assert!(rig.messages().is_empty());
+    let names: Vec<String> = all(&rig.tree(), Role::Button)
+        .iter()
+        .filter_map(|b| b.label.clone())
+        .collect();
+    assert_eq!(names, ["Reorder Item 1", "Reorder Item 2"]);
 }
