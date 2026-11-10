@@ -1,0 +1,90 @@
+{
+ "family": "Divider",
+ "source": "packages/core/src/Divider/Divider.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Divider",
+   "visualProps": {
+    "orientation": [
+     "horizontal",
+     "vertical"
+    ],
+    "variant": [
+     "subtle",
+     "strong"
+    ],
+    "isFullBleed": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "orientation": "horizontal",
+    "variant": "subtle",
+    "isFullBleed": false
+   },
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "divider-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "divider-0002",
+     "kind": "sweep",
+     "props": {
+      "orientation": "vertical"
+     }
+    },
+    {
+     "id": "divider-0003",
+     "kind": "sweep",
+     "props": {
+      "variant": "strong"
+     }
+    },
+    {
+     "id": "divider-0004",
+     "kind": "sweep",
+     "props": {
+      "isFullBleed": true
+     }
+    },
+    {
+     "id": "divider-0005",
+     "kind": "pairwise",
+     "props": {
+      "variant": "strong",
+      "isFullBleed": true
+     }
+    },
+    {
+     "id": "divider-0006",
+     "kind": "pairwise",
+     "props": {
+      "orientation": "vertical",
+      "isFullBleed": true
+     }
+    },
+    {
+     "id": "divider-0007",
+     "kind": "pairwise",
+     "props": {
+      "orientation": "vertical",
+      "variant": "strong"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -91,6 +91,15 @@ const browser = await chromium.launch({ executablePath: chrome, headless: true }
 const N = Number(opt('--jobs', '12'));
 let next = 0;
 await Promise.all(Array.from({ length: N }, async () => { while (next < jobs.length) { const j = jobs[next++]; await shoot(j); } }));
+// Retry failures with less concurrency: cold starts under load time out.
+for (let pass = 0; pass < 2; pass++) {
+  const failed = index.cases.filter(r => r.error && r.id);
+  if (!failed.length) break;
+  index.cases = index.cases.filter(r => !(r.error && r.id));
+  const retry = failed.map(r => jobs.find(j => j.c.id === r.id && j.scheme === r.scheme && j.width === r.width)).filter(Boolean);
+  let k = 0;
+  await Promise.all(Array.from({ length: 4 }, async () => { while (k < retry.length) { const j = retry[k++]; await shoot(j); } }));
+}
 index.cases.sort((a, b) => (a.id ?? '').localeCompare(b.id ?? '') || (a.scheme ?? '').localeCompare(b.scheme ?? '') || (a.width ?? 0) - (b.width ?? 0));
 writeFileSync(join(out, 'index.json'), JSON.stringify(index, null, 1));
 await browser.close();

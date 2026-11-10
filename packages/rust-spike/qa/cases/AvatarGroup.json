@@ -1,0 +1,50 @@
+{
+ "family": "AvatarGroup",
+ "source": "packages/core/src/AvatarGroup/AvatarGroup.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "AvatarGroupOverflow",
+   "visualProps": {
+    "shape": [
+     "circle",
+     "rounded",
+     "square"
+    ]
+   },
+   "defaults": {
+    "shape": "circle"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "avatargroupoverflow-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "avatargroupoverflow-0002",
+     "kind": "sweep",
+     "props": {
+      "shape": "rounded"
+     }
+    },
+    {
+     "id": "avatargroupoverflow-0003",
+     "kind": "sweep",
+     "props": {
+      "shape": "square"
+     }
+    }
+   ]
+  }
+ ]
+}

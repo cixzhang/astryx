@@ -76,13 +76,15 @@ function pairwise(params) {
 
 mkdirSync(out, { recursive: true });
 const summary = {};
-for (const family of families) {
-  const docPath = join(astryx, 'packages/core/src', family, `${family}.doc.mjs`);
+for (const arg of families) {
+  // "Dir/Name" reads packages/core/src/Dir/Name.doc.mjs (a doc beside another component's).
+  const [dir, family] = arg.includes('/') ? arg.split('/') : [arg, arg];
+  const docPath = join(astryx, 'packages/core/src', dir, `${family}.doc.mjs`);
   if (!existsSync(docPath)) { console.error(`skip ${family}: no ${docPath}`); continue; }
   const { docs } = await import(pathToFileURL(docPath).href);
   const comps = (docs.components?.length ? docs.components : [{ name: family, props: [] }]).map((c, i) =>
     (i === 0 && !(c.props ?? []).length && (docs.props ?? []).length) ? { ...c, props: docs.props } : c);
-  const docOut = { family, source: `packages/core/src/${family}/${family}.doc.mjs`, schemes: ['light', 'dark'], widths: [390, 1280], components: [] };
+  const docOut = { family, source: `packages/core/src/${dir}/${family}.doc.mjs`, schemes: ['light', 'dark'], widths: [390, 1280], components: [] };
   for (const comp of comps) {
   const base = {}, visual = {}, defaults = {};
   for (const p of comp.props ?? []) {
