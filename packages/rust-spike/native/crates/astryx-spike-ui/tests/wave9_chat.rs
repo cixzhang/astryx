@@ -36,8 +36,17 @@ fn composer_sends_on_enter_and_clears() {
             .as_deref(),
         Some("Hello\n")
     );
+    rig.type_text("there");
+    assert_eq!(
+        find(&rig.tree(), Role::TextInput, "Message input")
+            .unwrap()
+            .value
+            .as_deref(),
+        Some("Hello\nthere"),
+        "the next text lands after the line break"
+    );
     rig.key(Key::Enter, Default::default());
-    assert_eq!(rig.messages(), vec![Msg::Send("Hello\n".into())]);
+    assert_eq!(rig.messages(), vec![Msg::Send("Hello\nthere".into())]);
     assert_eq!(
         find(&rig.tree(), Role::TextInput, "Message input")
             .unwrap()
