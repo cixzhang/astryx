@@ -2,6 +2,7 @@
 
 mod wave1;
 mod wave2;
+mod wave4;
 mod wave5;
 
 use crate::props::Props;
@@ -42,6 +43,7 @@ pub(crate) fn v(values: &[&str]) -> Vec<Value> {
 pub fn all() -> Vec<Family> {
     let mut out = wave1::families();
     out.extend(wave2::families());
+    out.extend(wave4::families());
     out.extend(wave5::families());
     out
 }
