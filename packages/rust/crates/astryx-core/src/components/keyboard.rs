@@ -913,6 +913,7 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
                 effect: None,
                 text_node: text_ix,
                 masked: false,
+                multiline: false,
                 caret: c.text_primary.into(),
             });
         }

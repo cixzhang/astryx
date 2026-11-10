@@ -1011,6 +1011,11 @@ pub struct A11yState {
     pub sort: Option<Sort>,
     /// A range value: minimum, maximum, and current.
     pub range: Option<(f64, f64, f64)>,
+    /// A text field that takes several lines.
+    pub multiline: bool,
+    /// The node edits text (a text field, an editable combobox, a spin
+    /// button), so platforms give it a text input.
+    pub editable: bool,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to

@@ -94,3 +94,14 @@ and splits by hunk along the rows below.
 | Desktop IME commit | astryx-desktop `lib.rs` (`Ime::Commit`) | Calls `Surface::text_input`; no change |
 | Web mirror input | astryx-web `shell.rs` (`beforeinput`, composition end) | Calls `Surface::text_input`; no change |
 | Spike TextInput | spike `astryx-spike-ui` `controls/text_input.rs` | Same as core TextInput |
+
+`Edit::multiline` (default `false` in every literal above) makes a field
+multi-line: Shift+Enter, or Enter when the field sends nothing on
+activate, types a line break at the caret; Up and Down move the caret
+between wrapped lines and move focus on the first and last line; the
+caret sits on its wrapped line. `A11yState::multiline` exposes it
+(AccessKit `MultilineTextInput`, DOM `aria-multiline`). Tests:
+`tests/multiline.rs` and `wrap_tests` in `runtime.rs`. Known gap: the
+DOM mirror keeps an `<input>` for the field, so the browser's own editing
+of a line break in the hidden field is not used; the runtime edits it.
+| astryx-core `runtime.rs`, `paint.rs`, `contract.rs`, `a11y.rs`; astryx-web `mirror.rs` | Text selection in a focused field: Ctrl or Cmd+A selects all; Shift with Left, Right, Home and End extends; a plain arrow collapses a selection; typing, Backspace and Delete replace it; the selection paints behind the text and reaches assistive technology as `text_selection` (anchor, caret). `A11yState::editable` marks any node with an `Edit`, and the DOM mirror gives an editable combobox, search box or spin button a text `<input>` with its role, so browser text input reaches the app | Typeahead, Selector search, CommandPalette, PowerSearch and NumberInput on the web; select-all parity | Additive for fields (select all was not handled before); mirror change only for editable non-TextInput roles |

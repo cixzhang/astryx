@@ -62,6 +62,18 @@ fn playground_pages_keep_live_state() {
         Some(true)
     );
     assert!(find(&tree, Role::Text, "Notifications: on").is_some());
+    // The arrow keys check the next radio and move focus to it.
+    let _ = tap(&mut rt, Input::Next);
+    rt.key(astryx_core::KeyEvent {
+        key: astryx_core::Key::Down,
+        phase: astryx_core::InputPhase::Pressed,
+        modifiers: Default::default(),
+        repeat: false,
+    });
+    astryx_core::testing::draw(&mut rt, 800, 600);
+    let tree = rt.accessibility().unwrap();
+    assert_eq!(find(&tree, Role::Radio, "Pro").unwrap().checked, Some(true));
+    assert!(find(&tree, Role::Text, "Plan: pro").is_some());
     // Page 2: typing changes the field.
     let mut rt = astryx_core::Runtime::new(Gallery::case("playground-0002").unwrap());
     astryx_core::testing::draw(&mut rt, 800, 600);

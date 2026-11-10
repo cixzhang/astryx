@@ -23,7 +23,7 @@ File counts are the ledger's per-family closure counts. `files ported` counts th
 | Calendar | 12 | 11 | workaround | calendar-*; wave7_dates calendar_* | Single/range, 1-2 months, keyboard grid, week numbers. Gregorian only; other calendar systems render gregorian. |
 | Card | 2 | 2 | ported | card-*; wave2_layout | 13 variants, elevation, padding. |
 | Center | 2 | 2 | ported | center-*; wave2_layout |  |
-| Chat | 10 | 4 | workaround | chat-composer-* (gallery sweep); wave9_chat | ChatComposer, ChatComposerInput, ChatSendButton, ChatComposerDrawer. No paste-as-token, @-trigger menu, dictation; Shift+Enter appends at the end until the runtime edits multi-line text at the caret. |
+| Chat | 10 | 4 | workaround | chat-composer-* (gallery sweep); wave9_chat | ChatComposer, ChatComposerInput, ChatSendButton, ChatComposerDrawer. Multi-line editing at the caret. No paste-as-token, @-trigger menu or dictation. |
 | CheckboxInput | 3 | 3 | ported | checkbox-input-*; wave5_controls |  |
 | Collapsible | 5 | 5 | ported | collapsible-*; wave6_composites collapsible_* | Uncontrolled or controlled, animated height, inert when closed, CollapsibleGroup. |
 | CommandPalette | 10 | 6 | workaround | command-palette-*; wave7_search command_palette_* | Modal or inline, search, arrows/Enter, activedescendant. No result groups or custom footer. |

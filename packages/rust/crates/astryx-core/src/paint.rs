@@ -127,6 +127,8 @@ pub(crate) struct Caret {
     pub text: Option<(String, f32)>,
     /// The line under the composing text.
     pub underline: Option<Rect>,
+    /// The selected text's boxes, one per line, drawn behind the text.
+    pub selection: Vec<Rect>,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -588,6 +590,16 @@ fn paint_node<Msg>(
                 rect,
                 radii: clamp_radii(rect.width, rect.height, ind.radii),
                 fill: overlay.with_alpha(overlay.a * state.press_strength),
+                stroke: None,
+            });
+        }
+    }
+    if let Some(c) = caret {
+        for r in &c.selection {
+            out.push(DrawCmd::Rect {
+                rect: *r,
+                radii: Radii::default(),
+                fill: c.color.with_alpha(0.25),
                 stroke: None,
             });
         }

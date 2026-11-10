@@ -193,7 +193,11 @@ fn add_state(ak: &mut Node, state: &astryx_core::A11yState) {
 }
 
 fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut Option<NodeId>) {
-    let mut ak = Node::new(role(node.role));
+    let ak_role = match role(node.role) {
+        AkRole::TextInput if node.state.multiline => AkRole::MultilineTextInput,
+        r => r,
+    };
+    let mut ak = Node::new(ak_role);
     if let Some(label) = &node.label {
         ak.set_label(label.clone());
     }

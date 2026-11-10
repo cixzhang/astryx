@@ -241,6 +241,9 @@ pub struct Runtime<A: App> {
     direction: Direction,
     /// Caret positions of text fields, in characters, by node id.
     carets: HashMap<u64, usize>,
+    /// The other end of a text field's selection, in characters, by node
+    /// id; the caret is the moving end.
+    anchors: HashMap<u64, usize>,
     measure_generation: u64,
     /// A field's value typed since the last rebuild.
     typed: Option<(u64, String)>,
@@ -338,6 +341,12 @@ pub struct Runtime<A: App> {
     focus_requests: crate::element::FocusRequests,
     /// A pointer-only control pressed and not yet released.
     pointer_only_press: Option<u64>,
+    /// The focused multi-line field's lines as last laid out: its id and
+    /// each line's character range.
+    caret_lines: Option<(u64, Vec<(usize, usize)>)>,
+    /// An Up (-1) or Down (+1) for the focused multi-line field's caret,
+    /// resolved in the next frame, where text can be measured.
+    caret_line_move: Option<i32>,
     /// The offsets builds saw, for containers that rebuild on scroll, and
     /// the offsets last reported, by node id.
     built_scroll: HashMap<u64, f32>,
@@ -405,6 +414,7 @@ impl<A: App> Runtime<A> {
             prefs: Preferences::default(),
             direction: Direction::Ltr,
             carets: HashMap::new(),
+            anchors: HashMap::new(),
             measure_generation: 0,
             typed: None,
             composing: None,
@@ -458,6 +468,8 @@ impl<A: App> Runtime<A> {
             coasts: HashMap::new(),
             focus_requests: Default::default(),
             pointer_only_press: None,
+            caret_lines: None,
+            caret_line_move: None,
             built_scroll: HashMap::new(),
             reported_scroll: HashMap::new(),
         }
@@ -2213,6 +2225,78 @@ impl<A: App> Runtime<A> {
         self.carets.get(&id).copied().unwrap_or(len).min(len)
     }
 
+    /// A field's selection as an ordered character range, when it selects
+    /// at least one character.
+    fn selection(&self, id: u64, value: &str) -> Option<(usize, usize)> {
+        let caret = self.caret(id, value);
+        let len = value.chars().count();
+        let anchor = self.anchors.get(&id).copied()?.min(len);
+        (anchor != caret).then(|| (anchor.min(caret), anchor.max(caret)))
+    }
+
+    /// Select all, and Shift with the arrows, Home and End, in the focused
+    /// field. A plain arrow over a selection collapses it to that side.
+    fn selection_key(
+        &mut self,
+        event: &crate::contract::KeyEvent,
+    ) -> Option<crate::contract::KeyOutcome> {
+        use crate::contract::{Key, KeyOutcome};
+        let (ix, edit) = self.focused_edit()?;
+        if self.composing.is_some() {
+            return None;
+        }
+        let id = self.nodes[ix].id;
+        let value = self.field_value(id, edit);
+        let len = value.chars().count();
+        let caret = self.caret(id, &value);
+        let m = event.modifiers;
+        let command = m.ctrl || m.meta;
+        let handled = Some(KeyOutcome {
+            command: Command::None,
+            handled: true,
+        });
+        let pressed = event.phase == InputPhase::Pressed;
+        match &event.key {
+            Key::Character(c) if command && c.eq_ignore_ascii_case("a") => {
+                if pressed {
+                    self.anchors.insert(id, 0);
+                    self.carets.insert(id, len);
+                    self.repaint = true;
+                }
+                handled
+            }
+            Key::Left | Key::Right | Key::Home | Key::End if m.shift => {
+                if pressed {
+                    let rtl = self.nodes[ix].rtl;
+                    let back = matches!((&event.key, rtl), (Key::Left, false) | (Key::Right, true));
+                    let next = match event.key {
+                        Key::Home => 0,
+                        Key::End => len,
+                        _ if back => caret.saturating_sub(1),
+                        _ => (caret + 1).min(len),
+                    };
+                    self.anchors.entry(id).or_insert(caret);
+                    self.carets.insert(id, next);
+                    self.repaint = true;
+                }
+                handled
+            }
+            Key::Left | Key::Right if !m.shift => {
+                let (a, b) = self.selection(id, &value)?;
+                if pressed {
+                    let rtl = self.nodes[ix].rtl;
+                    let to_start =
+                        matches!((&event.key, rtl), (Key::Left, false) | (Key::Right, true));
+                    self.carets.insert(id, if to_start { a } else { b });
+                    self.anchors.remove(&id);
+                    self.repaint = true;
+                }
+                handled
+            }
+            _ => None,
+        }
+    }
+
     /// Moves the caret of a focused text field one character. Returns false
     /// at either end, so the arrow moves focus instead.
     fn move_caret(&mut self, input: Input) -> bool {
@@ -2230,6 +2314,7 @@ impl<A: App> Runtime<A> {
             Input::End => len,
             _ => return false,
         };
+        self.anchors.remove(&id);
         self.carets.insert(id, next);
         true
     }
@@ -2246,6 +2331,47 @@ impl<A: App> Runtime<A> {
         let id = self.nodes[ix].id;
         let value = self.field_value(id, edit);
         let caret = self.caret(id, &value);
+        if let (true, Some((lid, lines))) = (edit.multiline, &self.caret_lines) {
+            if *lid == id && self.composing.is_none() {
+                // A multi-line field wraps instead of sliding: the caret sits
+                // on its line at the width of the text before it there.
+                let line = line_of(lines, caret);
+                let start = lines[line].0;
+                let before: String = value.chars().skip(start).take(caret - start).collect();
+                let x = text.measure(&before, &t.style, None).width;
+                let rect = layout.rects[edit.text_node as usize];
+                let line_h = t.style.size * t.style.leading;
+                let h = (line_h - 0.01).ceil();
+                let mut selection = Vec::new();
+                if let Some((a, b)) = self.selection(id, &value) {
+                    for (n, &(ls, le)) in lines.iter().enumerate() {
+                        let (sa, sb) = (a.max(ls), b.min(le));
+                        if sa >= sb {
+                            continue;
+                        }
+                        let w = |from: usize, to: usize| {
+                            let s: String = value.chars().skip(from).take(to - from).collect();
+                            text.measure(&s, &t.style, None).width
+                        };
+                        selection.push(Rect::new(
+                            rect.x + w(ls, sa),
+                            rect.y + n as f32 * line_h,
+                            w(sa, sb),
+                            h,
+                        ));
+                    }
+                }
+                return Some(paint::Caret {
+                    text_node: edit.text_node as usize,
+                    shift: 0.0,
+                    rect: Rect::new((rect.x + x).round(), rect.y + line as f32 * line_h, 1.0, h),
+                    color: edit.caret,
+                    text: None,
+                    underline: None,
+                    selection,
+                });
+            }
+        }
         let shown = |s: &str| {
             if edit.masked {
                 "\u{2022}".repeat(s.chars().count())
@@ -2298,7 +2424,16 @@ impl<A: App> Runtime<A> {
         };
         let line = (t.style.size * t.style.leading - 0.01).ceil();
         let top = rect.y + (rect.height - line) / 2.0;
+        let selection = match (self.selection(id, &value), &composing) {
+            (Some((a, b)), None) => {
+                let upto = |n: usize| width(&shown(&value.chars().take(n).collect::<String>()));
+                let (xa, xb) = (upto(a), upto(b));
+                vec![Rect::new(rect.x + xa - shift, top, xb - xa, line)]
+            }
+            _ => Vec::new(),
+        };
         Some(paint::Caret {
+            selection,
             text_node: edit.text_node as usize,
             shift,
             rect: Rect::new((rect.x + x - shift).round(), top, caret_width, line),
@@ -2321,11 +2456,20 @@ impl<A: App> Runtime<A> {
         let id = self.nodes[ix].id;
         let value = self.field_value(id, edit);
         let caret = self.caret(id, &value);
-        let bytes: usize = if edit.masked {
-            caret * '\u{2022}'.len_utf8()
-        } else {
-            value.chars().take(caret).map(char::len_utf8).sum()
+        let anchor = self
+            .anchors
+            .get(&id)
+            .copied()
+            .unwrap_or(caret)
+            .min(value.chars().count());
+        let to_bytes = |chars: usize| -> u32 {
+            if edit.masked {
+                (chars * '\u{2022}'.len_utf8()) as u32
+            } else {
+                value.chars().take(chars).map(char::len_utf8).sum::<usize>() as u32
+            }
         };
+        let (anchor_bytes, caret_bytes) = (to_bytes(anchor), to_bytes(caret));
         fn find(n: &mut A11yNode, id: u64) -> Option<&mut A11yNode> {
             if n.id == id {
                 return Some(n);
@@ -2333,7 +2477,7 @@ impl<A: App> Runtime<A> {
             n.children.iter_mut().find_map(|c| find(c, id))
         }
         if let Some(node) = self.a11y.as_mut().and_then(|root| find(root, id)) {
-            node.text_selection = Some((bytes as u32, bytes as u32));
+            node.text_selection = Some((anchor_bytes, caret_bytes));
         }
     }
 
@@ -2737,6 +2881,110 @@ impl<A: App> Runtime<A> {
         for (report, y) in calls {
             report(y);
         }
+    }
+
+    /// Line breaks and line-to-line caret moves in a focused multi-line
+    /// field. `None` when the key is not one of those.
+    fn multiline_key(
+        &mut self,
+        event: &crate::contract::KeyEvent,
+    ) -> Option<crate::contract::KeyOutcome> {
+        use crate::contract::{Key, KeyOutcome};
+        let (ix, edit) = self.focused_edit()?;
+        if !edit.multiline || self.composing.is_some() {
+            return None;
+        }
+        let id = self.nodes[ix].id;
+        let sends_on_activate = self.nodes[ix]
+            .interact
+            .as_ref()
+            .is_some_and(|i| i.on_activate.is_some() || i.effect.is_some());
+        let handled = KeyOutcome {
+            command: Command::None,
+            handled: true,
+        };
+        match event.key {
+            Key::Enter if event.modifiers.shift || !sends_on_activate => {
+                if event.phase == InputPhase::Pressed {
+                    let command = self.text_input("\n");
+                    return Some(KeyOutcome {
+                        command: command.and(std::mem::take(&mut self.pending)),
+                        handled: true,
+                    });
+                }
+                Some(handled)
+            }
+            Key::Up | Key::Down => {
+                let step = if event.key == Key::Up { -1 } else { 1 };
+                let value = self.field_value(id, edit);
+                let caret = self.caret(id, &value);
+                let lines = match &self.caret_lines {
+                    Some((lid, lines)) if *lid == id => lines.clone(),
+                    _ => return None,
+                };
+                let line = line_of(&lines, caret);
+                let target = line as i32 + step;
+                // On the first or last line the arrow moves focus as usual.
+                if target < 0 || target >= lines.len() as i32 {
+                    return None;
+                }
+                if event.phase == InputPhase::Pressed {
+                    self.caret_line_move = Some(step);
+                    self.repaint = true;
+                }
+                Some(handled)
+            }
+            _ => None,
+        }
+    }
+
+    /// Lays out the focused multi-line field's lines and applies a pending
+    /// Up or Down to its caret.
+    fn layout_caret_lines(&mut self, text: &dyn TextMeasure) {
+        let Some((ix, edit)) = self.focused_edit() else {
+            self.caret_lines = None;
+            return;
+        };
+        if !edit.multiline {
+            self.caret_lines = None;
+            return;
+        }
+        let id = self.nodes[ix].id;
+        let crate::element::Draw::Text(t) = &self.nodes[edit.text_node as usize].draw else {
+            return;
+        };
+        let style = t.style;
+        let Some(width) = self
+            .layout
+            .as_ref()
+            .and_then(|l| l.rects.get(edit.text_node as usize))
+            .map(|r| r.width)
+        else {
+            return;
+        };
+        let value = self.field_value(id, edit);
+        let lines = wrap_lines(&value, width, &|s| text.measure(s, &style, None).width);
+        if let Some(step) = self.caret_line_move.take() {
+            let caret = self.caret(id, &value);
+            let line = line_of(&lines, caret);
+            let chars: Vec<char> = value.chars().collect();
+            let width_of = |a: usize, b: usize| -> f32 {
+                text.measure(&chars[a..b].iter().collect::<String>(), &style, None)
+                    .width
+            };
+            let x = width_of(lines[line].0, caret);
+            let target = (line as i32 + step).clamp(0, lines.len() as i32 - 1) as usize;
+            let (start, end) = lines[target];
+            let best = (start..=end)
+                .min_by(|&a, &b| {
+                    (width_of(start, a) - x)
+                        .abs()
+                        .total_cmp(&(width_of(start, b) - x).abs())
+                })
+                .unwrap_or(start);
+            self.carets.insert(id, best);
+        }
+        self.caret_lines = Some((id, lines));
     }
 
     /// The deepest enabled pointer-only control under `at`.
@@ -3316,8 +3564,13 @@ impl<A: App> Surface for Runtime<A> {
         if event.phase == InputPhase::Pressed {
             self.focus_by_pointer = false;
         }
+        // Component key handlers come first; a multi-line field's own line
+        // breaks and line moves apply when they pass.
         let Some(command) = self.route_key(&event) else {
-            return crate::contract::KeyOutcome::default();
+            return self
+                .selection_key(&event)
+                .or_else(|| self.multiline_key(&event))
+                .unwrap_or_default();
         };
         let followed = self.report_focus();
         let command = if command == Command::None {
@@ -3484,6 +3737,7 @@ impl<A: App> Surface for Runtime<A> {
             layout.placed(&self.nodes, &shown)
         };
         self.track_hover(&rects);
+        self.layout_caret_lines(text);
         let caret = self.caret_paint(text);
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
@@ -3674,13 +3928,24 @@ impl<A: App> Surface for Runtime<A> {
             return Command::None;
         };
         let id = self.nodes[ix].id;
-        let (old, on_change, effect) = (
+        let (old, on_change, effect, multiline) = (
             self.field_value(id, edit),
             edit.on_change.clone(),
             edit.effect.clone(),
+            edit.multiline,
         );
         let mut caret = self.caret(id, &old);
         let mut value: Vec<char> = old.chars().collect();
+        // Typing or deleting over a selection replaces it.
+        let mut text = text;
+        if let Some((a, b)) = self.selection(id, &old) {
+            value.drain(a..b);
+            caret = a;
+            if matches!(text, "\u{8}" | "\u{7f}") {
+                text = "";
+            }
+        }
+        self.anchors.remove(&id);
         for ch in text.chars() {
             match ch {
                 // Backspace and Delete arrive as their control characters.
@@ -3690,6 +3955,10 @@ impl<A: App> Surface for Runtime<A> {
                 }
                 '\u{7f}' if caret < value.len() => {
                     value.remove(caret);
+                }
+                '\n' if multiline => {
+                    value.insert(caret, '\n');
+                    caret += 1;
                 }
                 // A single-line field takes no other control characters.
                 c if c.is_control() => {}
@@ -3702,6 +3971,7 @@ impl<A: App> Surface for Runtime<A> {
         let value: String = value.into_iter().collect();
         self.carets.insert(id, caret);
         if value == old {
+            self.repaint = true;
             return Command::None;
         }
         if let Some(effect) = effect {
@@ -3802,4 +4072,70 @@ fn report<Msg>(
 
 fn contains(r: Rect, p: Point) -> bool {
     p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height
+}
+
+/// Lines of `value` as a text box `width` wide wraps them: hard breaks at
+/// `\n`, soft breaks after spaces where the next word would pass the width.
+/// Each line is a character range without its line break.
+fn wrap_lines(value: &str, width: f32, measure: &dyn Fn(&str) -> f32) -> Vec<(usize, usize)> {
+    let chars: Vec<char> = value.chars().collect();
+    let mut lines = Vec::new();
+    let mut start = 0;
+    let breaks = chars
+        .iter()
+        .enumerate()
+        .filter(|&(_, &c)| c == '\n')
+        .map(|(i, _)| i)
+        .chain([chars.len()]);
+    for end in breaks {
+        // One paragraph, chars[start..end], broken greedily after spaces.
+        let mut line_start = start;
+        for j in start..end {
+            let soft_break = chars[j] == ' ' && j + 1 < end && chars[j + 1] != ' ';
+            if !soft_break {
+                continue;
+            }
+            let word_end = (j + 1..end).find(|&k| chars[k] == ' ').unwrap_or(end);
+            let candidate: String = chars[line_start..word_end].iter().collect();
+            if measure(candidate.trim_end()) > width + 0.5 {
+                lines.push((line_start, j + 1));
+                line_start = j + 1;
+            }
+        }
+        lines.push((line_start, end));
+        start = end + 1;
+    }
+    lines
+}
+
+/// The line holding caret position `caret`: at a soft break the caret shows
+/// at the start of the next line.
+fn line_of(lines: &[(usize, usize)], caret: usize) -> usize {
+    lines.iter().rposition(|&(s, _)| s <= caret).unwrap_or(0)
+}
+
+#[cfg(test)]
+mod wrap_tests {
+    use super::{line_of, wrap_lines};
+
+    #[test]
+    fn wraps_at_spaces_and_breaks_at_newlines() {
+        // Every character is 10 points wide.
+        let m = |s: &str| s.chars().count() as f32 * 10.0;
+        let lines = wrap_lines("aaa bbb ccc\ndd", 75.0, &m);
+        assert_eq!(lines, vec![(0, 8), (8, 11), (12, 14)]);
+        assert_eq!(line_of(&lines, 3), 0);
+        assert_eq!(
+            line_of(&lines, 8),
+            1,
+            "at a soft break the caret starts the next line"
+        );
+        assert_eq!(line_of(&lines, 12), 2);
+        assert_eq!(wrap_lines("", 50.0, &m), vec![(0, 0)]);
+        assert_eq!(
+            wrap_lines("a\n", 50.0, &m),
+            vec![(0, 1), (2, 2)],
+            "a trailing break opens a line"
+        );
+    }
 }
