@@ -38,11 +38,33 @@ implementation starts. A change to them is a scope change.
 
 ## Status
 
-Setup only. No component code is in this folder yet.
+Build phase. Component code lands on the lane branches first.
+
+## Branches and how changes land
+
+| Branch | Who writes it | Paths it may change |
+| --- | --- | --- |
+| `rust-spike/main` | QA lane: merges of the lane branches, the README, `qa/` | `packages/rust-spike/**` |
+| `rust-spike/exact` | Exact lane | `packages/rust-spike/exact/**` |
+| `rust-spike/native` | Native lanes (infrastructure and UI share it) | `packages/rust-spike/native/**`, and `packages/rust/**` only when no other way exists |
+
+Every push goes through one maintainer-run push script. It refuses a push when:
+
+- the push is not a fast-forward of the remote branch (nothing is ever force-pushed);
+- a new commit changes a path outside the branch's allowlist;
+- a new commit touches `pr-assets`;
+- a new commit's added lines, messages or file names match the leak check
+  (internal domains, host names, user names, internal ids).
+
+Lanes that share a branch fetch it and merge it before they push. The QA lane
+merges the lane branches into `rust-spike/main` with merge commits after each
+wave, then runs both stacks' tests.
 
 ## Rules for this folder
 
 - This is a public repository. Do not add internal links, hostnames, user
   names or other private identifiers.
 - Do not copy Exact's source into this repository. Refer to it by commit.
-- Each lane works on its own branch and merges into `rust-spike/main`.
+- Each lane works on its own branch. The QA lane merges the lane branches into
+  `rust-spike/main`.
+- Measurement code lives in `qa/`.
