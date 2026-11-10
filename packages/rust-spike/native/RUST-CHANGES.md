@@ -94,3 +94,13 @@ and splits by hunk along the rows below.
 | Desktop IME commit | astryx-desktop `lib.rs` (`Ime::Commit`) | Calls `Surface::text_input`; no change |
 | Web mirror input | astryx-web `shell.rs` (`beforeinput`, composition end) | Calls `Surface::text_input`; no change |
 | Spike TextInput | spike `astryx-spike-ui` `controls/text_input.rs` | Same as core TextInput |
+
+`Edit::multiline` (default `false` in every literal above) makes a field
+multi-line: Shift+Enter, or Enter when the field sends nothing on
+activate, types a line break at the caret; Up and Down move the caret
+between wrapped lines and move focus on the first and last line; the
+caret sits on its wrapped line. `A11yState::multiline` exposes it
+(AccessKit `MultilineTextInput`, DOM `aria-multiline`). Tests:
+`tests/multiline.rs` and `wrap_tests` in `runtime.rs`. Known gap: the
+DOM mirror keeps an `<input>` for the field, so the browser's own editing
+of a line break in the hidden field is not used; the runtime edits it.
