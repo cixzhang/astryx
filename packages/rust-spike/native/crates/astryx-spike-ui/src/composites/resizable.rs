@@ -321,3 +321,98 @@ impl<Msg: 'static> Build<Msg> for HitArea {
         }));
     }
 }
+
+/// A standalone resize handle (`ResizeHandle`): the one-point rule between
+/// two panes, named for assistive technology, with optional content.
+pub struct ResizeHandle<Msg> {
+    label: String,
+    direction: ResizeDirection,
+    has_divider: bool,
+    is_disabled: bool,
+    children: Vec<Element<Msg>>,
+}
+
+impl<Msg> ResizeHandle<Msg> {
+    pub fn new(label: impl Into<String>) -> Self {
+        ResizeHandle {
+            label: label.into(),
+            direction: ResizeDirection::Horizontal,
+            has_divider: false,
+            is_disabled: false,
+            children: Vec::new(),
+        }
+    }
+    pub fn direction(mut self, d: ResizeDirection) -> Self {
+        self.direction = d;
+        self
+    }
+    pub fn has_divider(mut self, on: bool) -> Self {
+        self.has_divider = on;
+        self
+    }
+    pub fn is_disabled(mut self, on: bool) -> Self {
+        self.is_disabled = on;
+        self
+    }
+    pub fn child(mut self, c: impl Into<Element<Msg>>) -> Self {
+        self.children.push(c.into());
+        self
+    }
+}
+
+impl<Msg: 'static> From<ResizeHandle<Msg>> for Element<Msg> {
+    fn from(h: ResizeHandle<Msg>) -> Self {
+        astryx_core::authoring::element(h)
+    }
+}
+
+impl<Msg: 'static> Build<Msg> for ResizeHandle<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let t = cx.tokens;
+        let row = self.direction == ResizeDirection::Horizontal;
+        let mut sem = Semantics::new(Role::Separator, self.label);
+        sem.disabled = self.is_disabled;
+        sem.state.orientation = Some(if row {
+            A11yOrientation::Vertical
+        } else {
+            A11yOrientation::Horizontal
+        });
+        let bw = t.size.border_width;
+        cx.begin(
+            Node::new(Style {
+                flex_direction: if row {
+                    FlexDirection::Column
+                } else {
+                    FlexDirection::Row
+                },
+                align_items: AlignItems::CENTER,
+                justify_content: taffy::JustifyContent::CENTER,
+                align_self: Some(AlignItems::FLEX_START),
+                flex_shrink: 0.0,
+                size: if row {
+                    taffy::Size {
+                        width: Dimension::length(bw),
+                        height: Dimension::auto(),
+                    }
+                } else {
+                    taffy::Size {
+                        width: Dimension::percent(1.0),
+                        height: Dimension::length(bw),
+                    }
+                },
+                overflow: taffy::Point {
+                    x: taffy::Overflow::Visible,
+                    y: taffy::Overflow::Visible,
+                },
+                ..Style::default()
+            })
+            .draw(Draw::Box(BoxDraw::fill(color(t.color.border), radii(0.0))))
+            .sem(sem),
+        );
+        let _ = self.has_divider;
+        for c in self.children {
+            cx.child(c);
+        }
+        cx.end();
+    }
+}

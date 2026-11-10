@@ -29,7 +29,7 @@ fn align(p: Props, default: OverlayAlign) -> OverlayAlign {
 fn trigger(p: &Props) -> Element<Msg> {
     match kid_text(p) {
         Some(t) => Text::new(t).into(),
-        None => HStack::new().into(),
+        None => HStack::new().children(kids(p)).into(),
     }
 }
 
@@ -111,6 +111,7 @@ fn render_bottom_sheet(p: Props) -> Element<Msg> {
             "tall" => SheetHeight::Tall,
             _ => SheetHeight::Capped,
         })
+        .has_scrim(p.get("hasScrim").and_then(|v| v.as_bool()).unwrap_or(true))
         .on_open_change(|_| Msg::Noop);
     for k in kids(&p) {
         s = s.child(k);

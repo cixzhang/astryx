@@ -33,7 +33,10 @@ impl Default for ShellNav {
 }
 
 /// A menu: its label and groups of (item, shortcut).
-type Menu = (&'static str, &'static [&'static [(&'static str, &'static str)]]);
+type Menu = (
+    &'static str,
+    &'static [&'static [(&'static str, &'static str)]],
+);
 
 const MENUS: &[Menu] = &[
     (

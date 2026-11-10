@@ -12,4 +12,4 @@ pub use lists::{
     Pagination, PaginationVariant, Reorderable, Toolbar, ToolbarOrientation,
 };
 pub use menu::{ContextMenu, DropdownMenu, MenuItemVariant, MenuOption};
-pub use resizable::{resolve_size, Resizable, ResizeDirection};
+pub use resizable::{resolve_size, ResizeDirection, ResizeHandle, Resizable};
