@@ -71,18 +71,24 @@
     "color": "accent",
     "display": "inline"
    },
-   "base": {},
+   "base": {
+    "label": "Label"
+   },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "link-0001",
      "kind": "default",
-     "props": {}
+     "props": {
+      "label": "Label"
+     }
     },
     {
      "id": "link-0002",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "hasUnderline": true
      }
     },
@@ -90,6 +96,7 @@
      "id": "link-0003",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isDisabled": true
      }
     },
@@ -97,6 +104,7 @@
      "id": "link-0004",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isExternalLink": true
      }
     },
@@ -104,6 +112,7 @@
      "id": "link-0005",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isStandalone": true
      }
     },
@@ -111,6 +120,7 @@
      "id": "link-0006",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "3xs"
      }
     },
@@ -118,6 +128,7 @@
      "id": "link-0007",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "2xs"
      }
     },
@@ -125,6 +136,7 @@
      "id": "link-0008",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "xsm"
      }
     },
@@ -132,6 +144,7 @@
      "id": "link-0009",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "sm"
      }
     },
@@ -139,6 +152,7 @@
      "id": "link-0010",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "base"
      }
     },
@@ -146,6 +160,7 @@
      "id": "link-0011",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "lg"
      }
     },
@@ -153,6 +168,7 @@
      "id": "link-0012",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "xl"
      }
     },
@@ -160,6 +176,7 @@
      "id": "link-0013",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "2xl"
      }
     },
@@ -167,6 +184,7 @@
      "id": "link-0014",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "3xl"
      }
     },
@@ -174,6 +192,7 @@
      "id": "link-0015",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "size": "4xl"
      }
     },
@@ -181,6 +200,7 @@
      "id": "link-0016",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "weight": "medium"
      }
     },
@@ -188,6 +208,7 @@
      "id": "link-0017",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "weight": "semibold"
      }
     },
@@ -195,6 +216,7 @@
      "id": "link-0018",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "weight": "bold"
      }
     },
@@ -202,6 +224,7 @@
      "id": "link-0019",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "color": "primary"
      }
     },
@@ -209,6 +232,7 @@
      "id": "link-0020",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "color": "secondary"
      }
     },
@@ -216,6 +240,7 @@
      "id": "link-0021",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "color": "disabled"
      }
     },
@@ -223,6 +248,7 @@
      "id": "link-0022",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "color": "placeholder"
      }
     },
@@ -230,6 +256,7 @@
      "id": "link-0023",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "color": "inherit"
      }
     },
@@ -237,6 +264,7 @@
      "id": "link-0024",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "display": "block"
      }
     },
@@ -244,6 +272,7 @@
      "id": "link-0025",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isDisabled": true,
       "isExternalLink": true,
       "isStandalone": true,
@@ -257,6 +286,7 @@
      "id": "link-0026",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isExternalLink": true,
       "size": "2xs",
@@ -269,6 +299,7 @@
      "id": "link-0027",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isStandalone": true,
@@ -281,6 +312,7 @@
      "id": "link-0028",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isDisabled": true,
       "size": "2xs",
       "weight": "medium"
@@ -290,6 +322,7 @@
      "id": "link-0029",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isExternalLink": true,
       "size": "xsm",
       "weight": "bold",
@@ -301,6 +334,7 @@
      "id": "link-0030",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isStandalone": true,
       "size": "sm",
       "weight": "semibold",
@@ -311,6 +345,7 @@
      "id": "link-0031",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "base",
       "weight": "medium",
       "color": "placeholder",
@@ -321,6 +356,7 @@
      "id": "link-0032",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "lg",
       "color": "disabled"
      }
@@ -329,6 +365,7 @@
      "id": "link-0033",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xl",
       "color": "secondary",
       "display": "block"
@@ -338,6 +375,7 @@
      "id": "link-0034",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xl",
       "display": "block"
      }
@@ -346,6 +384,7 @@
      "id": "link-0035",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xl",
       "color": "inherit"
      }
@@ -354,6 +393,7 @@
      "id": "link-0036",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "4xl",
       "color": "placeholder"
      }
@@ -362,6 +402,7 @@
      "id": "link-0037",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -374,6 +415,7 @@
      "id": "link-0038",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "size": "3xs"
      }
@@ -382,6 +424,7 @@
      "id": "link-0039",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -394,6 +437,7 @@
      "id": "link-0040",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -406,6 +450,7 @@
      "id": "link-0041",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -420,6 +465,7 @@
      "id": "link-0042",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -433,6 +479,7 @@
      "id": "link-0043",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -446,6 +493,7 @@
      "id": "link-0044",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -460,6 +508,7 @@
      "id": "link-0045",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "hasUnderline": true,
       "isDisabled": true,
       "isExternalLink": true,
@@ -474,6 +523,7 @@
      "id": "link-0046",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isStandalone": true,
       "size": "2xs",
       "color": "primary"
@@ -483,6 +533,7 @@
      "id": "link-0047",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "weight": "medium",
       "color": "secondary"
      }
@@ -491,6 +542,7 @@
      "id": "link-0048",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "weight": "semibold",
       "color": "placeholder"
      }
@@ -499,6 +551,7 @@
      "id": "link-0049",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "weight": "bold",
       "color": "disabled"
      }
@@ -507,6 +560,7 @@
      "id": "link-0050",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xs",
       "weight": "semibold",
       "color": "primary"
@@ -516,6 +570,7 @@
      "id": "link-0051",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xs",
       "weight": "bold",
       "color": "primary"
@@ -525,6 +580,7 @@
      "id": "link-0052",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xs",
       "weight": "bold",
       "color": "secondary"
@@ -534,6 +590,7 @@
      "id": "link-0053",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xsm",
       "color": "primary"
      }
@@ -542,6 +599,7 @@
      "id": "link-0054",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xsm",
       "weight": "medium",
       "color": "secondary"
@@ -551,6 +609,7 @@
      "id": "link-0055",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xsm",
       "weight": "semibold",
       "color": "disabled"
@@ -560,6 +619,7 @@
      "id": "link-0056",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "sm",
       "color": "primary",
       "display": "block"
@@ -569,6 +629,7 @@
      "id": "link-0057",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "sm",
       "weight": "bold"
      }
@@ -577,6 +638,7 @@
      "id": "link-0058",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "base",
       "color": "primary"
      }
@@ -585,6 +647,7 @@
      "id": "link-0059",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "base",
       "weight": "bold",
       "color": "secondary"
@@ -594,6 +657,7 @@
      "id": "link-0060",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "lg",
       "weight": "semibold",
       "color": "inherit"
@@ -603,6 +667,7 @@
      "id": "link-0061",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "lg",
       "weight": "bold",
       "color": "primary"
@@ -612,6 +677,7 @@
      "id": "link-0062",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xl",
       "weight": "semibold",
       "color": "disabled"
@@ -621,6 +687,7 @@
      "id": "link-0063",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xl",
       "weight": "bold",
       "color": "placeholder"
@@ -630,6 +697,7 @@
      "id": "link-0064",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xl",
       "weight": "semibold",
       "color": "primary"
@@ -639,6 +707,7 @@
      "id": "link-0065",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xl",
       "weight": "bold",
       "color": "disabled"
@@ -648,6 +717,7 @@
      "id": "link-0066",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xl",
       "weight": "semibold",
       "color": "primary"
@@ -657,6 +727,7 @@
      "id": "link-0067",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xl",
       "weight": "bold",
       "color": "secondary"
@@ -666,6 +737,7 @@
      "id": "link-0068",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "4xl",
       "weight": "semibold",
       "color": "primary"
@@ -675,6 +747,7 @@
      "id": "link-0069",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "4xl",
       "weight": "bold",
       "color": "secondary"
@@ -684,6 +757,7 @@
      "id": "link-0070",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xs",
       "color": "disabled"
      }
@@ -692,6 +766,7 @@
      "id": "link-0071",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xs",
       "color": "placeholder"
      }
@@ -700,6 +775,7 @@
      "id": "link-0072",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xs",
       "color": "inherit"
      }
@@ -708,6 +784,7 @@
      "id": "link-0073",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xs",
       "color": "placeholder"
      }
@@ -716,6 +793,7 @@
      "id": "link-0074",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xs",
       "color": "inherit"
      }
@@ -724,6 +802,7 @@
      "id": "link-0075",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "sm",
       "color": "disabled"
      }
@@ -732,6 +811,7 @@
      "id": "link-0076",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "sm",
       "color": "placeholder"
      }
@@ -740,6 +820,7 @@
      "id": "link-0077",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "base",
       "color": "disabled"
      }
@@ -748,6 +829,7 @@
      "id": "link-0078",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "base",
       "color": "inherit"
      }
@@ -756,6 +838,7 @@
      "id": "link-0079",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "lg",
       "color": "secondary"
      }
@@ -764,6 +847,7 @@
      "id": "link-0080",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "lg",
       "color": "placeholder"
      }
@@ -772,6 +856,7 @@
      "id": "link-0081",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "xl",
       "color": "inherit"
      }
@@ -780,6 +865,7 @@
      "id": "link-0082",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xl",
       "color": "placeholder"
      }
@@ -788,6 +874,7 @@
      "id": "link-0083",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "2xl",
       "color": "inherit"
      }
@@ -796,6 +883,7 @@
      "id": "link-0084",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "3xl",
       "color": "disabled"
      }
@@ -804,6 +892,7 @@
      "id": "link-0085",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "size": "4xl",
       "color": "disabled"
      }
@@ -816,6 +905,7 @@
    "defaults": {},
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "link-provider-0001",

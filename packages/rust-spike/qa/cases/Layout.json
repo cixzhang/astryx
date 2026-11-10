@@ -42,6 +42,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "layout-0001",

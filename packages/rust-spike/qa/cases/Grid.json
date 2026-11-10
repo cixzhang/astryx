@@ -74,6 +74,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "grid-0001",

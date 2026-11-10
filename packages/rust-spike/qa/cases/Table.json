@@ -52,6 +52,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "table-0001",

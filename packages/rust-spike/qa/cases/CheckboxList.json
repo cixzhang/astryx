@@ -1,0 +1,218 @@
+{
+ "family": "CheckboxList",
+ "source": "packages/core/src/CheckboxList/CheckboxList.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "CheckboxList",
+   "visualProps": {
+    "isLabelHidden": [
+     false,
+     true
+    ],
+    "isOptional": [
+     false,
+     true
+    ],
+    "isRequired": [
+     false,
+     true
+    ],
+    "density": [
+     "compact",
+     "balanced",
+     "spacious"
+    ],
+    "hasDividers": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "isReadOnly": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "isLabelHidden": false,
+    "isOptional": false,
+    "isRequired": false,
+    "density": "balanced",
+    "hasDividers": false,
+    "isDisabled": false,
+    "isReadOnly": false
+   },
+   "base": {
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "fixture": "text",
+   "cases": [
+    {
+     "id": "checkbox-list-0001",
+     "kind": "default",
+     "props": {
+      "label": "Label"
+     }
+    },
+    {
+     "id": "checkbox-list-0002",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true
+     }
+    },
+    {
+     "id": "checkbox-list-0003",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isOptional": true
+     }
+    },
+    {
+     "id": "checkbox-list-0004",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isRequired": true
+     }
+    },
+    {
+     "id": "checkbox-list-0005",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "density": "compact"
+     }
+    },
+    {
+     "id": "checkbox-list-0006",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "density": "spacious"
+     }
+    },
+    {
+     "id": "checkbox-list-0007",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "hasDividers": true
+     }
+    },
+    {
+     "id": "checkbox-list-0008",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "checkbox-list-0009",
+     "kind": "sweep",
+     "props": {
+      "label": "Label",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-list-0010",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "isRequired": true,
+      "hasDividers": true,
+      "isDisabled": true,
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-list-0011",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isRequired": true,
+      "density": "spacious",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "checkbox-list-0012",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isLabelHidden": true,
+      "isOptional": true,
+      "density": "compact",
+      "hasDividers": true,
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-list-0013",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "density": "spacious",
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-list-0014",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "density": "spacious",
+      "hasDividers": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "checkbox-list-0015",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "density": "compact",
+      "isDisabled": true,
+      "isReadOnly": true
+     }
+    },
+    {
+     "id": "checkbox-list-0016",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isOptional": true,
+      "density": "compact"
+     }
+    },
+    {
+     "id": "checkbox-list-0017",
+     "kind": "pairwise",
+     "props": {
+      "label": "Label",
+      "isRequired": true,
+      "density": "compact"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -26,18 +26,24 @@
     "isOpen": false,
     "isInline": false
    },
-   "base": {},
+   "base": {
+    "label": "Label"
+   },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "command-palette-0001",
      "kind": "default",
-     "props": {}
+     "props": {
+      "label": "Label"
+     }
     },
     {
      "id": "command-palette-0002",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isOpen": true
      }
     },
@@ -45,6 +51,7 @@
      "id": "command-palette-0003",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isInline": true
      }
     },
@@ -52,6 +59,7 @@
      "id": "command-palette-0004",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isOpen": true,
       "isInline": true
      }

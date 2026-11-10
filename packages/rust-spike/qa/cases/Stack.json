@@ -182,6 +182,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "stack-0001",
@@ -4283,6 +4284,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "h-stack-0001",
@@ -8178,6 +8180,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "v-stack-0001",
@@ -11936,6 +11939,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "stack-item-0001",

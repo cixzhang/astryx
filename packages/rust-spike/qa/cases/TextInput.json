@@ -92,6 +92,7 @@
     "value": "value"
    },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "text-input-0001",

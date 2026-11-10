@@ -67,6 +67,7 @@
     "label": "Label"
    },
    "takesChildren": false,
+   "fixture": null,
    "cases": [
     {
      "id": "typeahead-0001",

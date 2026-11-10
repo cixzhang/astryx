@@ -122,6 +122,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "section-0001",

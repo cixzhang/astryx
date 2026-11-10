@@ -52,6 +52,7 @@
     "inputID": "inputID"
    },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "field-0001",

@@ -93,6 +93,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "text-0001",

@@ -53,6 +53,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "dialog-0001",

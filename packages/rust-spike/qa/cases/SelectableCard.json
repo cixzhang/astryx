@@ -67,6 +67,7 @@
     "label": "Label"
    },
    "takesChildren": true,
+   "fixture": "boxes",
    "cases": [
     {
      "id": "selectable-card-0001",

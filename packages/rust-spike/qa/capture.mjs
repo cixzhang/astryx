@@ -46,14 +46,16 @@ const urlFor = (comp, c, scheme) => {
   return `${base}${sep}case=${encodeURIComponent(c.id)}&scheme=${scheme}&theme=${theme}`;
 };
 // The element whose box is the case: Storybook's story content, or the lane's "case" box.
-const caseSelector = host === 'storybook' ? '#storybook-root div[style*="padding"]' : '[data-testid="case"], #case';
+const caseSelector = host === 'storybook' ? '#storybook-root div[style*="padding"]' : '[data-testid="case"], #case, [aria-label="case"]';
 // Crop: the union of the case box's children, grown by the 16 px case padding.
 const cropOf = el => el.evaluate(e => {
   const rs = [...e.children].map(c => c.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
   const o = e.getBoundingClientRect();
   if (!rs.length) return { x: o.x, y: o.y, width: Math.max(1, o.width), height: Math.max(1, o.height) };
-  const x0 = Math.max(o.left, Math.min(...rs.map(r => r.left)) - 16), y0 = Math.max(o.top, Math.min(...rs.map(r => r.top)) - 16);
-  const x1 = Math.min(o.right, Math.max(...rs.map(r => r.right)) + 16), y1 = Math.min(o.bottom, Math.max(...rs.map(r => r.bottom)) + 16);
+  // Not clipped to the case box: hosts differ in whether the box carries the padding.
+  const W = document.documentElement.clientWidth;
+  const x0 = Math.max(0, Math.min(...rs.map(r => r.left)) - 16), y0 = Math.max(0, Math.min(...rs.map(r => r.top)) - 16);
+  const x1 = Math.min(W, Math.max(...rs.map(r => r.right)) + 16), y1 = Math.max(...rs.map(r => r.bottom)) + 16;
   return { x: Math.floor(x0), y: Math.floor(y0 + scrollY), width: Math.ceil(x1 - x0), height: Math.ceil(y1 - y0) };
 });
 
@@ -67,7 +69,8 @@ for (const comp of doc.components) {
   }
 }
 const ctxs = {};
-const shoot = async ({ comp, c, scheme, width }) => {
+const shoot = job => Promise.race([shootOnce(job), new Promise(res => setTimeout(() => { index.cases.push({ id: job.c.id, component: job.comp.component, scheme: job.scheme, width: job.width, error: 'timeout 90s' }); res(); }, 90000))]);
+const shootOnce = async ({ comp, c, scheme, width }) => {
   const key = `${scheme}`;
   ctxs[key] ??= await browser.newContext({ colorScheme: scheme });
   const page = await ctxs[key].newPage(); await page.setViewportSize({ width, height: 900 });
@@ -76,13 +79,13 @@ const shoot = async ({ comp, c, scheme, width }) => {
   let rec = { id: c.id, component: comp.component, scheme, width };
   try {
     await page.goto(urlFor(comp.component, c, scheme), { waitUntil: 'networkidle', timeout: 30000 });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(Number(opt('--settle', '250')));
     const el = await page.waitForSelector(caseSelector, { timeout: 15000 }).catch(() => null);
     if (!el) throw new Error('no case element');
     const box = await cropOf(el);
     const file = `${c.id}.${scheme}.${width}.png`;
-    await page.screenshot({ path: join(out, file), clip: box, fullPage: true, animations: 'disabled' });
-    const ax = await page.locator(caseSelector).first().ariaSnapshot().catch(() => null);
+    await page.screenshot({ path: join(out, file), clip: box, fullPage: true, animations: 'disabled', timeout: 20000 });
+    const ax = await page.locator(caseSelector).first().ariaSnapshot({ timeout: 5000 }).catch(() => null);
     rec = { ...rec, file, box, ms: Date.now() - t0, ax, errors };
   } catch (e) { rec = { ...rec, error: e.message.slice(0, 200), errors }; }
   index.cases.push(rec); await page.close();
@@ -101,6 +104,7 @@ for (let pass = 0; pass < 2; pass++) {
   await Promise.all(Array.from({ length: 4 }, async () => { while (k < retry.length) { const j = retry[k++]; await shoot(j); } }));
 }
 index.cases.sort((a, b) => (a.id ?? '').localeCompare(b.id ?? '') || (a.scheme ?? '').localeCompare(b.scheme ?? '') || (a.width ?? 0) - (b.width ?? 0));
+{ const best = new Map(); for (const r of index.cases) { const k = `${r.id ?? r.component}.${r.scheme}.${r.width}`; const b = best.get(k); if (!b || (!b.file && r.file)) best.set(k, r); } index.cases = [...best.values()]; }
 writeFileSync(join(out, 'index.json'), JSON.stringify(index, null, 1));
 await browser.close();
 const ok = index.cases.filter(r => r.file).length, bad = index.cases.filter(r => r.error || r.skipped).length;

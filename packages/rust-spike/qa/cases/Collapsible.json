@@ -38,6 +38,7 @@
    },
    "base": {},
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "collapsible-0001",

@@ -89,18 +89,24 @@
     "hasEscapeDismiss": true,
     "presentation": "popover"
    },
-   "base": {},
+   "base": {
+    "label": "Label"
+   },
    "takesChildren": true,
+   "fixture": "text",
    "cases": [
     {
      "id": "popover-0001",
      "kind": "default",
-     "props": {}
+     "props": {
+      "label": "Label"
+     }
     },
     {
      "id": "popover-0002",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "placement": "above"
      }
     },
@@ -108,6 +114,7 @@
      "id": "popover-0003",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "placement": "start"
      }
     },
@@ -115,6 +122,7 @@
      "id": "popover-0004",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "placement": "end"
      }
     },
@@ -122,6 +130,7 @@
      "id": "popover-0005",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "alignment": "center"
      }
     },
@@ -129,6 +138,7 @@
      "id": "popover-0006",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "alignment": "end"
      }
     },
@@ -136,6 +146,7 @@
      "id": "popover-0007",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isOpen": true
      }
     },
@@ -143,6 +154,7 @@
      "id": "popover-0008",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isEnabled": false
      }
     },
@@ -150,6 +162,7 @@
      "id": "popover-0009",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 0
      }
     },
@@ -157,6 +170,7 @@
      "id": "popover-0010",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 0.5
      }
     },
@@ -164,6 +178,7 @@
      "id": "popover-0011",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 1
      }
     },
@@ -171,6 +186,7 @@
      "id": "popover-0012",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 1.5
      }
     },
@@ -178,6 +194,7 @@
      "id": "popover-0013",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 2
      }
     },
@@ -185,6 +202,7 @@
      "id": "popover-0014",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 4
      }
     },
@@ -192,6 +210,7 @@
      "id": "popover-0015",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 5
      }
     },
@@ -199,6 +218,7 @@
      "id": "popover-0016",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 6
      }
     },
@@ -206,6 +226,7 @@
      "id": "popover-0017",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 8
      }
     },
@@ -213,6 +234,7 @@
      "id": "popover-0018",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "padding": 10
      }
     },
@@ -220,6 +242,7 @@
      "id": "popover-0019",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "role": "none"
      }
     },
@@ -227,6 +250,7 @@
      "id": "popover-0020",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "isModal": false
      }
     },
@@ -234,6 +258,7 @@
      "id": "popover-0021",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "hasCloseButton": false
      }
     },
@@ -241,6 +266,7 @@
      "id": "popover-0022",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "hasAutoFocus": false
      }
     },
@@ -248,6 +274,7 @@
      "id": "popover-0023",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "hasLightDismiss": false
      }
     },
@@ -255,6 +282,7 @@
      "id": "popover-0024",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "hasEscapeDismiss": false
      }
     },
@@ -262,6 +290,7 @@
      "id": "popover-0025",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "presentation": "bottom-sheet"
      }
     },
@@ -269,6 +298,7 @@
      "id": "popover-0026",
      "kind": "sweep",
      "props": {
+      "label": "Label",
       "presentation": "adaptive"
      }
     },
@@ -276,6 +306,7 @@
      "id": "popover-0027",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isEnabled": false,
       "padding": 0,
@@ -290,6 +321,7 @@
      "id": "popover-0028",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "alignment": "center",
       "isOpen": true,
@@ -302,6 +334,7 @@
      "id": "popover-0029",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "alignment": "end",
       "padding": 1,
@@ -314,6 +347,7 @@
      "id": "popover-0030",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isOpen": true,
       "isEnabled": false,
       "padding": 1,
@@ -328,6 +362,7 @@
      "id": "popover-0031",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "center",
       "isEnabled": false,
       "padding": 1.5,
@@ -340,6 +375,7 @@
      "id": "popover-0032",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "end",
       "isOpen": true,
       "isEnabled": false,
@@ -353,6 +389,7 @@
      "id": "popover-0033",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "padding": 2,
       "role": "none",
@@ -367,6 +404,7 @@
      "id": "popover-0034",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "center",
       "isOpen": true,
@@ -380,6 +418,7 @@
      "id": "popover-0035",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "end",
       "isEnabled": false,
@@ -393,6 +432,7 @@
      "id": "popover-0036",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 4,
@@ -406,6 +446,7 @@
      "id": "popover-0037",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "alignment": "center",
       "isOpen": true,
@@ -419,6 +460,7 @@
      "id": "popover-0038",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "alignment": "end",
       "isEnabled": false,
@@ -436,6 +478,7 @@
      "id": "popover-0039",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "role": "none",
       "isModal": false,
       "hasAutoFocus": false,
@@ -447,6 +490,7 @@
      "id": "popover-0040",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isOpen": true,
       "padding": 1.5,
@@ -460,6 +504,7 @@
      "id": "popover-0041",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "alignment": "center",
       "isEnabled": false,
@@ -474,6 +519,7 @@
      "id": "popover-0042",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "alignment": "end",
       "isEnabled": false,
@@ -488,6 +534,7 @@
      "id": "popover-0043",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "alignment": "center",
       "isOpen": true,
@@ -501,6 +548,7 @@
      "id": "popover-0044",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isOpen": true,
       "padding": 5
@@ -510,6 +558,7 @@
      "id": "popover-0045",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isEnabled": false,
       "padding": 6,
@@ -524,6 +573,7 @@
      "id": "popover-0046",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isEnabled": false,
       "padding": 8,
@@ -538,6 +588,7 @@
      "id": "popover-0047",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "above",
       "isEnabled": false,
       "padding": 10,
@@ -552,6 +603,7 @@
      "id": "popover-0048",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "end",
       "isEnabled": false,
       "padding": 0,
@@ -565,6 +617,7 @@
      "id": "popover-0049",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "isEnabled": false,
       "padding": 0.5,
       "isModal": false,
@@ -579,6 +632,7 @@
      "id": "popover-0050",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "end",
       "isEnabled": false,
       "padding": 4,
@@ -594,6 +648,7 @@
      "id": "popover-0051",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "center",
       "isEnabled": false,
       "padding": 5,
@@ -609,6 +664,7 @@
      "id": "popover-0052",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "center",
       "isOpen": true,
       "padding": 6,
@@ -620,6 +676,7 @@
      "id": "popover-0053",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "center",
       "isOpen": true,
       "padding": 8,
@@ -631,6 +688,7 @@
      "id": "popover-0054",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "alignment": "center",
       "isOpen": true,
       "padding": 10,
@@ -642,6 +700,7 @@
      "id": "popover-0055",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "isEnabled": false,
       "padding": 0,
@@ -657,6 +716,7 @@
      "id": "popover-0056",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "center",
       "isEnabled": false,
@@ -672,6 +732,7 @@
      "id": "popover-0057",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "end",
       "isEnabled": false,
@@ -688,6 +749,7 @@
      "id": "popover-0058",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "isEnabled": false,
       "padding": 4,
@@ -702,6 +764,7 @@
      "id": "popover-0059",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "isEnabled": false,
       "padding": 5,
@@ -716,6 +779,7 @@
      "id": "popover-0060",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "end",
       "isEnabled": false,
@@ -732,6 +796,7 @@
      "id": "popover-0061",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "end",
       "isEnabled": false,
@@ -748,6 +813,7 @@
      "id": "popover-0062",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "start",
       "alignment": "end",
       "isEnabled": false,
@@ -764,6 +830,7 @@
      "id": "popover-0063",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 0.5,
@@ -779,6 +846,7 @@
      "id": "popover-0064",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 1,
@@ -794,6 +862,7 @@
      "id": "popover-0065",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 1.5,
@@ -808,6 +877,7 @@
      "id": "popover-0066",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 2,
@@ -822,6 +892,7 @@
      "id": "popover-0067",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "isModal": false,
@@ -835,6 +906,7 @@
      "id": "popover-0068",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 6,
@@ -849,6 +921,7 @@
      "id": "popover-0069",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 8,
@@ -863,6 +936,7 @@
      "id": "popover-0070",
      "kind": "pairwise",
      "props": {
+      "label": "Label",
       "placement": "end",
       "isEnabled": false,
       "padding": 10,
