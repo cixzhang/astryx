@@ -604,10 +604,39 @@ impl Runner {
         map_key(&event.key(), event.shift_key(), command, in_text_field)
     }
 
+    /// Offers a key to the app's key handlers; true when one took it.
+    fn offer_key(shell: &mut Shell, event: &KeyboardEvent, phase: InputPhase) -> bool {
+        let Some(key) = crate::keys::key_of(&event.key()) else {
+            return false;
+        };
+        if shell.stopped {
+            return false;
+        }
+        let outcome = shell.surface.key(astryx_core::KeyEvent {
+            key,
+            phase,
+            modifiers: astryx_core::Modifiers {
+                shift: event.shift_key(),
+                ctrl: event.ctrl_key(),
+                alt: event.alt_key(),
+                meta: event.meta_key(),
+            },
+            repeat: event.repeat(),
+        });
+        shell.handle(outcome.command);
+        outcome.handled
+    }
+
     fn on_keydown(&self, event: &KeyboardEvent) {
         let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
+        if Self::offer_key(&mut shell, event, InputPhase::Pressed) {
+            event.prevent_default();
+            drop(shell);
+            self.schedule();
+            return;
+        }
         let Some(input) = self.key_input(event, &shell) else {
             return;
         };
@@ -646,6 +675,12 @@ impl Runner {
         let Ok(mut shell) = self.shell.try_borrow_mut() else {
             return;
         };
+        if Self::offer_key(&mut shell, event, InputPhase::Released) {
+            event.prevent_default();
+            drop(shell);
+            self.schedule();
+            return;
+        }
         let Some(input) = self.key_input(event, &shell) else {
             return;
         };

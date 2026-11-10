@@ -334,6 +334,12 @@ pub struct Runtime<A: App> {
     /// Scroll containers coasting after a finger's throw: velocity in
     /// points per second along the axis, by node id.
     coasts: HashMap<u64, f32>,
+    /// Focus moves components asked for, shared with every build.
+    focus_requests: crate::element::FocusRequests,
+    /// The offsets builds saw, for containers that rebuild on scroll, and
+    /// the offsets last reported, by node id.
+    built_scroll: HashMap<u64, f32>,
+    reported_scroll: HashMap<u64, f32>,
 }
 
 /// One pointer's drag: the handlers under its press and the one that took it.
@@ -448,6 +454,9 @@ impl<A: App> Runtime<A> {
             build_viewport: (0.0, 0.0),
             drag: None,
             coasts: HashMap::new(),
+            focus_requests: Default::default(),
+            built_scroll: HashMap::new(),
+            reported_scroll: HashMap::new(),
         }
     }
 
@@ -635,6 +644,14 @@ impl<A: App> Runtime<A> {
         cx.image_sizes = self.image_sizes.clone();
         cx.now_ms = self.motion_ms;
         cx.locals = self.locals.clone();
+        cx.focus = self.focus_requests.clone();
+        cx.scroll_offsets = std::sync::Arc::new(
+            self.scroll
+                .keys()
+                .map(|&id| (id, self.shown_offset(id)))
+                .collect(),
+        );
+        let seen_scroll = cx.scroll_offsets.clone();
         if let Some(layout) = &self.layout {
             cx.last_rects = std::sync::Arc::new(
                 self.nodes
@@ -682,6 +699,30 @@ impl<A: App> Runtime<A> {
         self.sync_motion(&old);
         let ids: HashSet<u64> = self.nodes.iter().map(|n| n.id).collect();
         self.locals.retain(|id| ids.contains(&id));
+        self.built_scroll.clear();
+        let old_ids: HashSet<u64> = old.iter().map(|n| n.id).collect();
+        for node in &self.nodes {
+            // A container that just appeared starts at its initial offset.
+            if let (Some(y), true) = (node.initial_scroll, node.scroll.is_some()) {
+                if !old_ids.contains(&node.id) {
+                    self.scroll.insert(node.id, y.max(0.0));
+                    self.shown.remove(&node.id);
+                }
+            }
+            if node.scroll_adjust != 0.0 && node.scroll.is_some() {
+                let y = self.scroll.get(&node.id).copied().unwrap_or(0.0);
+                self.scroll
+                    .insert(node.id, (y + node.scroll_adjust).max(0.0));
+                self.shown.remove(&node.id);
+            }
+            if node.rebuild_on_scroll {
+                // What this build drew for; a different offset now (an
+                // initial offset just applied) rebuilds next frame.
+                let y = seen_scroll.get(&node.id).copied().unwrap_or(0.0);
+                self.built_scroll.insert(node.id, y);
+            }
+        }
+        self.reported_scroll.retain(|id, _| ids.contains(id));
         self.stale = false;
         self.rebuilt = true;
         // A rebuild that changes only paint, such as a switch to a theme
@@ -2676,6 +2717,105 @@ impl<A: App> Runtime<A> {
         }
     }
 
+    /// Tells scroll containers with a report hook their offsets when they
+    /// change.
+    fn report_scroll(&mut self) {
+        let mut calls = Vec::new();
+        for node in &self.nodes {
+            let Some(report) = &node.scroll_report else {
+                continue;
+            };
+            let y = self.scroll.get(&node.id).copied().unwrap_or(0.0);
+            if self.reported_scroll.get(&node.id) != Some(&y) {
+                self.reported_scroll.insert(node.id, y);
+                calls.push((report.clone(), y));
+            }
+        }
+        for (report, y) in calls {
+            report(y);
+        }
+    }
+
+    /// Moves focus to the element a component asked for: the stop with that
+    /// `id` prop, or the first stop inside it.
+    fn apply_focus_request(&mut self) {
+        let Some(name) = self.focus_requests.take() else {
+            return;
+        };
+        let Some(target) = self
+            .nodes
+            .iter()
+            .position(|n| n.name.as_deref() == Some(name.as_str()))
+        else {
+            return;
+        };
+        let inside = |mut ix: usize| loop {
+            if ix == target {
+                return true;
+            }
+            match self.nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
+        if let Some(stop) = self.stops.iter().position(|&(ix, _)| inside(ix)) {
+            self.set_focus(stop);
+            self.reveal = true;
+            self.repaint = true;
+        }
+    }
+
+    /// Offers a key to the handlers from the focused node out to the root.
+    fn route_key(&mut self, event: &crate::contract::KeyEvent) -> Option<Command> {
+        use crate::element::KeyResponse;
+        let focused = self.focused?;
+        let mut at = self.nodes.iter().position(|n| n.id == focused);
+        let mut handlers = Vec::new();
+        while let Some(ix) = at {
+            if let Some(h) = &self.nodes[ix].on_key {
+                handlers.push(h.clone());
+            }
+            at = self.nodes[ix].parent.map(|p| p as usize);
+        }
+        for h in handlers {
+            match h(event) {
+                KeyResponse::Pass => continue,
+                KeyResponse::Handled => {
+                    self.stale = true;
+                    self.repaint = true;
+                    return Some(Command::None);
+                }
+                KeyResponse::Send(msg) => {
+                    self.repaint = true;
+                    return Some(self.send(msg));
+                }
+            }
+        }
+        None
+    }
+
+    /// A secondary press at `at`: the deepest node under it with a context
+    /// handler gets it.
+    fn context_press(&mut self, at: Point) -> Option<Command> {
+        let layout = self.layout.as_ref()?;
+        let modal = self
+            .nodes
+            .iter()
+            .rposition(|n| n.layer.as_ref().is_some_and(|l| l.modal));
+        let ix = (0..self.nodes.len()).rev().find(|&ix| {
+            self.nodes[ix].on_context.is_some()
+                && modal.is_none_or(|m| ix >= m)
+                && layout.rects.get(ix).is_some_and(|&r| contains(r, at))
+        })?;
+        let f = self.nodes[ix].on_context.clone()?;
+        let msg = f(at);
+        self.stale = true;
+        Some(match msg {
+            Some(msg) => self.send(msg),
+            None => Command::None,
+        })
+    }
+
     /// The topmost layer root whose spec passes `f`.
     fn top_layer(&self, f: impl Fn(&crate::layer::LayerSpec<A::Msg>) -> bool) -> Option<usize> {
         self.nodes
@@ -3055,6 +3195,16 @@ impl<A: App> Surface for Runtime<A> {
                 handled: outcome.handled,
             };
         }
+        if event.button == 2 {
+            if let Some(command) = self.context_press(event.at) {
+                let command = command.and(std::mem::take(&mut self.pending));
+                return PointerOutcome {
+                    command,
+                    handled: true,
+                };
+            }
+            return PointerOutcome::default();
+        }
         self.begin_drag(event);
         // A press outside the topmost layer closes it, if it closes on
         // outside presses, and goes no further: the same press neither
@@ -3083,6 +3233,34 @@ impl<A: App> Surface for Runtime<A> {
         PointerOutcome {
             command: Command::None,
             handled: spec.modal,
+        }
+    }
+
+    fn key(&mut self, event: crate::contract::KeyEvent) -> crate::contract::KeyOutcome {
+        let Some(command) = self.route_key(&event) else {
+            return crate::contract::KeyOutcome::default();
+        };
+        if event.phase == InputPhase::Pressed
+            && matches!(
+                event.key,
+                crate::contract::Key::Up
+                    | crate::contract::Key::Down
+                    | crate::contract::Key::Left
+                    | crate::contract::Key::Right
+                    | crate::contract::Key::Tab
+            )
+        {
+            self.focus_by_pointer = false;
+        }
+        let followed = self.report_focus();
+        let command = if command == Command::None {
+            followed
+        } else {
+            command
+        };
+        crate::contract::KeyOutcome {
+            command: command.and(std::mem::take(&mut self.pending)),
+            handled: true,
         }
     }
 
@@ -3143,6 +3321,14 @@ impl<A: App> Surface for Runtime<A> {
         if self.locals.take_changed() {
             self.stale = true;
         }
+        // A windowed list renders the rows at its offset.
+        if self
+            .built_scroll
+            .iter()
+            .any(|(&id, &y)| (self.shown_offset(id) - y).abs() > 0.5)
+        {
+            self.stale = true;
+        }
         // Components may size themselves from the viewport while they
         // build, so a new viewport rebuilds, and the first build sees it.
         if viewport != self.build_viewport {
@@ -3182,6 +3368,8 @@ impl<A: App> Surface for Runtime<A> {
             self.update_pagers();
             self.settle_focus();
         }
+        self.apply_focus_request();
+        self.report_scroll();
         self.timings.laid_out = laid_out;
         if laid_out {
             // Only the same element stays in place; new focus is revealed.
@@ -3496,6 +3684,7 @@ impl<A: App> Surface for Runtime<A> {
             || self.hover_pending()
             || self.locals.is_changed()
             || !self.coasts.is_empty()
+            || self.focus_requests.is_pending()
             || self.anims.values().any(|a| a.is_animating())
             || !self.exits.is_empty()
             || self.resizes.values().any(|r| r.shown.is_animating())

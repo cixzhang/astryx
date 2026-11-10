@@ -18,3 +18,6 @@ icu_list = "2.1"
 fixed_decimal = { version = "0.7", features = ["ryu"] }
 unicode-normalization = "0.1"
 writeable = "0.6"
+
+[dev-dependencies]
+taffy = { workspace = true }

@@ -40,6 +40,14 @@ and splits by hunk along the rows below.
   (innermost member that wants the direction takes the drag; finger
   scrolling with a coast), and the shells' move forwarding while a button
   is held.
+- **h. Keys, context press, focus requests**: `Key`, `Modifiers`,
+  `KeyEvent`, `KeyOutcome`, `Surface::key`; `Node::{on_key, on_context}`,
+  `KeyResponse`; `BuildCx::focus_requests`, `FocusRequests`; the shells'
+  key and right-click forwarding.
+- **i. Scroll hooks for windowing**: `Node::{rebuild_on_scroll,
+  initial_scroll, scroll_report, scroll_adjust}`,
+  `BuildCx::{scroll_offsets, scroll_offset}`. Groups h and i share one
+  commit; they split by the rows below.
 
 ## Changes
 
@@ -66,3 +74,5 @@ and splits by hunk along the rows below.
 | astryx-core `element.rs`, `layer.rs`, `runtime.rs` | Component state kept by the runtime per node id and type (`LocalHandle`), changed from `Interact::effect`, `LayerSpec::dismiss_effect` and `HoverSpec::effect`; a change rebuilds; state is dropped with its node | Astryx's uncontrolled APIs (Tooltip, Popover, Collapsible `defaultIsOpen`, Table default sort) without an app message per bit of UI state | Additive; `HoverSpec::on_change` is now optional (introduced on this branch) |
 | astryx-core `runtime.rs` | The build sees the frame's viewport (it saw (0, 0) on the first frame), and a viewport change rebuilds | Layers and sheets size from `BuildCx::viewport` | Bug fix (one more rebuild per resize) |
 | astryx-core `gesture.rs` (new), `element.rs`, `runtime.rs`, `contract.rs`; astryx-desktop `lib.rs`; astryx-web `shell.rs` | `DragSpec` drag handlers; the runtime gives a drag to the innermost handler (or finger-scrolled container) that wants its direction after 10 points, cancels the press under it, scrolls containers under a finger with a coast at UIScrollView's deceleration; `PointerEvent::time_ms`; shells forward moves while pressed | Gestures row: sheets over scrolling lists, swipe rows, reorder, momentum | Additive (no drag handlers: only finger scrolling, which no shell sent before) |
+| astryx-core `contract.rs`, `element.rs`, `runtime.rs`; astryx-desktop `lib.rs`, `input.rs`; astryx-web `keys.rs`, `shell.rs` | `Surface::key` with `KeyEvent` (logical key, modifiers, repeat), offered first to `on_key` handlers from the focused node out (Pass keeps today's mapping); `on_context` for a right click at a point; `FocusRequests` move focus to an element by id after a build | Menus, comboboxes, grids, tree lists, reorder, context menus (Shift+F10, right click), roving focus | Additive (no handlers: shells map keys as before) |
+| astryx-core `element.rs`, `runtime.rs` | A scroll container can rebuild the view when its offset changes and read the offset while building; start at an initial offset when it appears; report offset changes; shift its offset once when content above the viewport changes height | Virtualizer: windowed rows, scroll restore, scroll anchoring | Additive |

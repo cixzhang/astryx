@@ -604,6 +604,39 @@ pub struct Node<Msg> {
     pub inert: bool,
     /// Makes the node a drag handler. See [`crate::gesture`].
     pub drag: Option<crate::gesture::DragSpec<Msg>>,
+    /// Sees key events while focus is on this node or inside it, nearest
+    /// first; see [`KeyResponse`].
+    pub on_key: Option<OnKey<Msg>>,
+    /// A secondary press (right click) on this node, at a point; the
+    /// deepest node under the pointer with one wins.
+    pub on_context: Option<OnContext<Msg>>,
+    /// A scroll container whose content depends on its scroll offset (a
+    /// windowed list): the view rebuilds when the offset changes, and
+    /// [`BuildCx::scroll_offset`] reads it.
+    pub rebuild_on_scroll: bool,
+    /// The scroll offset a scroll container starts at when it appears.
+    pub initial_scroll: Option<f32>,
+    /// Told the scroll offset whenever it changes (for scroll restore).
+    pub scroll_report: Option<std::rc::Rc<dyn Fn(f32)>>,
+    /// Moves the scroll offset by this much once, when built: content above
+    /// the viewport changed height, and what is in view stays in place.
+    pub scroll_adjust: f32,
+}
+
+/// A node's key handler.
+pub type OnKey<Msg> = std::rc::Rc<dyn Fn(&crate::contract::KeyEvent) -> KeyResponse<Msg>>;
+/// A node's secondary-press handler.
+pub type OnContext<Msg> = std::rc::Rc<dyn Fn(crate::contract::Point) -> Option<Msg>>;
+
+/// What a key handler did with a key.
+pub enum KeyResponse<Msg> {
+    /// Not this handler's key: the next handler out, then the runtime's
+    /// own keys (focus movement, activation), get it.
+    Pass,
+    /// Taken, with no app message (it changed component state).
+    Handled,
+    /// Taken: send this message.
+    Send(Msg),
 }
 
 impl<Msg> Node<Msg> {
@@ -645,6 +678,12 @@ impl<Msg> Node<Msg> {
             resize: None,
             inert: false,
             drag: None,
+            on_key: None,
+            on_context: None,
+            rebuild_on_scroll: false,
+            initial_scroll: None,
+            scroll_report: None,
+            scroll_adjust: 0.0,
         }
     }
 
@@ -758,6 +797,10 @@ pub struct BuildCx<Msg> {
     pub last_rects: std::sync::Arc<std::collections::HashMap<String, crate::contract::Rect>>,
     /// Component state kept by the runtime. See [`BuildCx::local_handle`].
     pub locals: Locals,
+    /// Focus moves asked for by components. See [`BuildCx::focus_requests`].
+    pub focus: FocusRequests,
+    /// The scroll offset each scroll container shows, by node id.
+    pub scroll_offsets: std::sync::Arc<std::collections::HashMap<u64, f32>>,
     /// Context values by type, innermost last. See [`Element::provide`].
     contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
     open: Vec<u32>,
@@ -785,6 +828,8 @@ impl<Msg> BuildCx<Msg> {
             now_ms: 0.0,
             last_rects: Default::default(),
             locals: Locals::default(),
+            focus: FocusRequests::default(),
+            scroll_offsets: Default::default(),
             contexts: Default::default(),
             open: Vec::new(),
             key: None,
@@ -847,6 +892,19 @@ impl<Msg> BuildCx<Msg> {
             id: self.next_id(),
             _t: std::marker::PhantomData,
         }
+    }
+
+    /// A handle that moves focus: `request("id")` moves it to the element
+    /// with that `id` prop (or its first focus stop) after the next build.
+    /// Clone it into callbacks.
+    pub fn focus_requests(&self) -> FocusRequests {
+        self.focus.clone()
+    }
+
+    /// The offset the scroll container with node id `id` shows (see
+    /// [`Self::next_id`]), or 0.
+    pub fn scroll_offset(&self, id: u64) -> f32 {
+        self.scroll_offsets.get(&id).copied().unwrap_or(0.0)
     }
 
     /// The current value of [`Self::local_handle`].
@@ -1122,6 +1180,26 @@ impl Locals {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+}
+
+/// Focus moves components ask for, applied by the runtime after a build.
+#[derive(Clone, Default)]
+pub struct FocusRequests(std::rc::Rc<std::cell::RefCell<Option<String>>>);
+
+impl FocusRequests {
+    /// Moves focus to the element with `id` prop `id` after the next build.
+    pub fn request(&self, id: impl Into<String>) {
+        *self.0.borrow_mut() = Some(id.into());
+    }
+
+    /// The pending request, cleared.
+    pub fn take(&self) -> Option<String> {
+        self.0.borrow_mut().take()
+    }
+
+    pub fn is_pending(&self) -> bool {
+        self.0.borrow().is_some()
     }
 }
 

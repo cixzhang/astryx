@@ -310,6 +310,7 @@ dependencies = [
  "icu_locale",
  "icu_locale_core",
  "icu_plurals",
+ "taffy",
  "unicode-normalization",
  "writeable",
 ]
@@ -349,6 +350,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "astryx-spike-infra-gallery"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-desktop",
+ "astryx-headless",
+ "astryx-render-soft",
+ "astryx-spike-foundations",
+ "astryx-spike-gestures",
+ "astryx-spike-layers",
+ "astryx-spike-motion",
+ "astryx-spike-virtual",
+ "astryx-tokens",
+ "serde_json",
+ "taffy",
+]
+
+[[package]]
+name = "astryx-spike-infra-gallery-web"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-spike-infra-gallery",
+ "astryx-web",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "astryx-spike-layers"
 version = "0.1.0"
 dependencies = [
@@ -378,6 +408,14 @@ dependencies = [
  "astryx-spike-layers",
  "astryx-spike-motion",
  "astryx-tokens",
+ "taffy",
+]
+
+[[package]]
+name = "astryx-spike-virtual"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
  "taffy",
 ]
 
