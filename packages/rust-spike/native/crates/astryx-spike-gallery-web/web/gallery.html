@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Astryx spike gallery</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  main { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+</style>
+<link rel="modulepreload" href="./astryx_spike_gallery_web.js">
+<link rel="preload" href="./astryx_spike_gallery_web_bg.wasm" as="fetch" type="application/wasm" crossorigin>
+<link rel="preload" href="./fonts/latin-400.ttf" as="fetch" crossorigin>
+<link rel="preload" href="./fonts/latin-500.ttf" as="fetch" crossorigin>
+<link rel="preload" href="./fonts/latin-700.ttf" as="fetch" crossorigin>
+</head>
+<body>
+<main>
+  <canvas id="app"></canvas>
+</main>
+<script>
+  // The shell marks its first painted frame; the QA harness waits for this name.
+  new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (entry.name === "astryx-first-frame") performance.mark("qa:first-frame");
+    }
+  }).observe({type: "mark", buffered: true});
+</script>
+<script type="module">
+  import init from "./astryx_spike_gallery_web.js";
+  init();
+</script>
+</body>
+</html>

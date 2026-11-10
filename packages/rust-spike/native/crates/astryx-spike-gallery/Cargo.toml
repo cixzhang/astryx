@@ -1,0 +1,19 @@
+[package]
+name = "astryx-spike-gallery"
+description = "Every spike component family in every visual state, for capture on web and desktop"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+astryx-core.workspace = true
+taffy.workspace = true
+astryx-spike-ui = { path = "../astryx-spike-ui" }
+astryx-spike-foundations = { path = "../astryx-spike-foundations" }
+serde_json.workspace = true
+
+[dev-dependencies]
+astryx-desktop.workspace = true
+astryx-headless.workspace = true
+astryx-render-soft.workspace = true

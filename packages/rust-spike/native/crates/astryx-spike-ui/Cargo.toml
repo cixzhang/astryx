@@ -1,0 +1,14 @@
+[package]
+name = "astryx-spike-ui"
+description = "Astryx components on the native Rust stack (spike)"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+astryx-core.workspace = true
+astryx-tokens.workspace = true
+astryx-spike-foundations = { path = "../astryx-spike-foundations" }
+# Grid lays out with CSS grid.
+taffy = { workspace = true, features = ["grid"] }

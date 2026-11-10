@@ -37,6 +37,7 @@ pub use theme::{Direction, Mode, ThemeChoice};
 /// converts into an [`Element`] with [`authoring::element`]. These types are
 /// the same ones the built-in components use, so they may change with them.
 pub mod authoring {
+    pub use crate::components::icon_paths::icon_path;
     pub use crate::components::text::{text_draw, text_node, type_style};
     pub use crate::element::{
         element, A11yRefs, Axis, Base, BoxDraw, Build, BuildCx, Capture, Draw, Edit, ImageDraw,
