@@ -33,6 +33,7 @@ pub struct Gallery {
     case: Option<Case>,
     mode: Mode,
     direction: Direction,
+    theme: &'static astryx_core::Theme,
 }
 
 impl Default for Gallery {
@@ -49,6 +50,7 @@ impl Gallery {
             case: None,
             mode: Mode::Light,
             direction: Direction::Ltr,
+            theme: astryx_core::Theme::NEUTRAL,
         }
     }
 
@@ -63,6 +65,15 @@ impl Gallery {
 
     pub fn with_mode(mut self, mode: Mode) -> Self {
         self.mode = mode;
+        self
+    }
+
+    /// A theme by name (`neutral`, `astryx`, `butter` …); unknown names keep
+    /// the default, `neutral`.
+    pub fn with_theme(mut self, name: &str) -> Self {
+        if let Some(t) = astryx_core::Theme::ALL.iter().find(|t| t.name == name) {
+            self.theme = t;
+        }
         self
     }
 
@@ -93,7 +104,12 @@ struct Page {
 impl Build<Msg> for Page {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let _ = &self.base;
-        let ground = cx.tokens.color.background_body.into();
+        // Case pages sit on the surface color, as the Storybook baseline does.
+        let ground = if self.name.is_some() {
+            cx.tokens.color.background_surface.into()
+        } else {
+            cx.tokens.color.background_body.into()
+        };
         let node = Node::new(taffy::Style {
             flex_direction: taffy::FlexDirection::Column,
             align_items: if self.name.is_some() {
@@ -231,8 +247,8 @@ impl App for Gallery {
 
     fn theme(&self) -> ThemeChoice {
         ThemeChoice {
+            theme: self.theme,
             mode: Some(self.mode),
-            ..ThemeChoice::default()
         }
     }
 
@@ -242,9 +258,12 @@ impl App for Gallery {
 }
 
 /// Every case id in the gallery, in family order.
+/// A repeated id keeps its first family.
 pub fn all_case_ids() -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
     families::all()
         .iter()
         .flat_map(|f| families::cases(f).into_iter().map(|c| c.id))
+        .filter(|id| seen.insert(id.clone()))
         .collect()
 }

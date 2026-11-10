@@ -30,7 +30,12 @@ pub fn start() -> Result<(), JsValue> {
     };
     astryx_web::run_with(
         "#app",
-        Runtime::new(gallery.with_mode(mode).with_direction(dir)),
+        Runtime::new(
+            gallery
+                .with_mode(mode)
+                .with_direction(dir)
+                .with_theme(&params.get("theme").unwrap_or_default()),
+        ),
         options,
     )
 }

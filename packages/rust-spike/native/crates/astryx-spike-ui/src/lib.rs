@@ -16,9 +16,11 @@ mod util;
 #[doc(hidden)]
 pub mod testkit;
 
+pub mod controls;
 pub mod layout;
 pub mod primitives;
 
+pub use controls::*;
 pub use layout::*;
 pub use primitives::*;
 

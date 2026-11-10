@@ -200,3 +200,20 @@ impl<Msg: 'static> Build<Msg> for Spinner {
         cx.end();
     }
 }
+
+/// The ring of an inherit-shade spinner in `ink`, for controls that show
+/// their own busy state (Button, Switch, inputs). Keeps frames coming.
+pub(crate) fn spinner_painter<Msg>(
+    cx: &mut BuildCx<Msg>,
+    diameter: f32,
+    stroke: f32,
+    ink: Color,
+) -> Painter {
+    cx.animating = true;
+    let turn = if cx.prefs.reduced_motion {
+        REDUCED_TURN_SECONDS
+    } else {
+        TURN_SECONDS
+    };
+    ring_painter(diameter, stroke, ink, ink.with_alpha(ink.a * 0.3), turn)
+}

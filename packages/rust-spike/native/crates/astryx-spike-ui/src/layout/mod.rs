@@ -13,9 +13,9 @@ pub use center::{Center, CenterAxis};
 pub use empty_state::EmptyState;
 pub use frame::{Layout, LayoutContent, LayoutFooter, LayoutHeader, LayoutHeight, LayoutPanel};
 pub use grid::{Grid, GridAlign, GridColumns, GridRepeat};
-#[allow(unused_imports)]
 pub(crate) use section::{card_ground, elevation_layers};
 pub use section::{Card, CardVariant, Section, SectionDivider, SectionVariant};
+pub(crate) use stack::size_dim;
 pub use stack::{
     HStack, SizeValue, Sizing, Stack, StackAlign, StackAxisAlign, StackDirection, StackJustify,
     StackWrap, VStack,

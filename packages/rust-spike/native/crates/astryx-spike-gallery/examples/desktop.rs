@@ -32,7 +32,8 @@ fn gallery() -> Gallery {
         Ok("rtl") => Direction::Rtl,
         _ => Direction::Ltr,
     };
-    g.with_mode(mode).with_direction(dir)
+    let theme = std::env::var("ASTRYX_THEME").unwrap_or_default();
+    g.with_mode(mode).with_direction(dir).with_theme(&theme)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
