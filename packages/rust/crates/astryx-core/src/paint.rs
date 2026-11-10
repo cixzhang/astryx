@@ -18,6 +18,12 @@ pub const FOCUS_RING_OFFSET: f32 = 3.0;
 
 /// The interaction state the painter needs.
 pub(crate) struct PaintState {
+    /// Focus came from the keyboard (or a text field has it), so focus
+    /// rings show, as CSS `:focus-visible`.
+    pub focus_visible: bool,
+    /// A tint over the page, drawn just below the modal layer at this node
+    /// index.
+    pub backdrop: Option<(usize, Color)>,
     pub focused: Option<u64>,
     pub pressed: Option<u64>,
     /// The focus stop under a mouse or pen pointer, and the hover overlay.
@@ -121,8 +127,21 @@ pub(crate) struct Caret {
 #[derive(Clone, Copy, Default)]
 struct Owner {
     focused: bool,
+    focus_visible: bool,
     pressed: bool,
     hovered: bool,
+}
+
+impl Owner {
+    fn is(&self, when: crate::layer::When) -> bool {
+        use crate::layer::When;
+        match when {
+            When::Hovered => self.hovered,
+            When::Pressed => self.pressed,
+            When::Focused => self.focused,
+            When::FocusVisible => self.focus_visible,
+        }
+    }
 }
 
 /// What a node inherits from its ancestors while painting.
@@ -316,6 +335,7 @@ fn paint_node<Msg>(
     let owner = match &node.interact {
         Some(i) => Owner {
             focused: state.focused == Some(node.id),
+            focus_visible: state.focused == Some(node.id) && state.focus_visible,
             pressed: state.pressed == Some(node.id) && !i.disabled && !i.busy,
             hovered: state.hovered == Some(node.id),
         },
@@ -337,7 +357,21 @@ fn paint_node<Msg>(
     if let (true, Some(cell)) = (opens_grid, grid) {
         out.push(DrawCmd::PushPixelGrid { cell });
     }
-    match (&node.draw, grid) {
+    if let Some((_, color)) = state.backdrop.filter(|&(b, _)| b == ix) {
+        out.push(DrawCmd::Rect {
+            rect: scene.rects[0],
+            radii: Radii::default(),
+            fill: color,
+            stroke: None,
+        });
+    }
+    let draw = node
+        .variants
+        .iter()
+        .rev()
+        .find(|(when, _)| owner.is(*when))
+        .map_or(&node.draw, |(_, d)| d);
+    match (draw, grid) {
         (Draw::Box(b), Some(cell)) => grid_box(out, rect, b, cell),
         (Draw::Box(b), None) => {
             let radii = clamp_radii(rect.width, rect.height, b.radii);
@@ -698,7 +732,7 @@ fn paint_node<Msg>(
     if clip.is_some() {
         out.push(DrawCmd::PopClip);
     }
-    if let (Some(ind), true) = (node.indicator, owner.focused) {
+    if let (Some(ind), true) = (node.indicator, owner.focus_visible) {
         if let Some(ring) = ind.ring {
             if let Some(view) = ctx.viewport {
                 let reach = FOCUS_RING_OFFSET + FOCUS_RING_WIDTH;

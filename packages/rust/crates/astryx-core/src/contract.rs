@@ -892,6 +892,125 @@ pub enum Role {
     RadioGroup,
     /// One choice in a `RadioGroup`. `checked` tells whether it is chosen.
     Radio,
+    Link,
+    /// A dialog; `state.modal` tells whether the page behind is inert.
+    Dialog,
+    AlertDialog,
+    Tooltip,
+    Menu,
+    MenuItem,
+    MenuItemCheckbox,
+    MenuItemRadio,
+    TabList,
+    Tab,
+    TabPanel,
+    Toolbar,
+    /// An interactive table: cells take focus.
+    Grid,
+    /// A static table.
+    Table,
+    RowGroup,
+    Row,
+    Cell,
+    GridCell,
+    ColumnHeader,
+    RowHeader,
+    Tree,
+    TreeItem,
+    /// Landmarks.
+    Navigation,
+    Banner,
+    Main,
+    Complementary,
+    ContentInfo,
+    Region,
+    Search,
+    Form,
+    /// A polite status message.
+    Status,
+    /// An assertive alert message.
+    Alert,
+    SearchBox,
+    SpinButton,
+    Slider,
+    ScrollBar,
+}
+
+/// What kind of popup a control opens, as ARIA `aria-haspopup`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HasPopup {
+    Menu,
+    ListBox,
+    Tree,
+    Grid,
+    Dialog,
+}
+
+/// The current item in a set, as ARIA `aria-current`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Current {
+    True,
+    Page,
+    Step,
+    Location,
+    Date,
+    Time,
+}
+
+/// A column's sort order, as ARIA `aria-sort`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Sort {
+    Ascending,
+    Descending,
+    Other,
+}
+
+/// The axis of a toolbar, list, slider, or separator.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum A11yOrientation {
+    Horizontal,
+    Vertical,
+}
+
+/// ARIA states and relations beyond the common ones on [`A11yNode`].
+/// Relations hold `A11yNode` ids of nodes in the same tree.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct A11yState {
+    pub expanded: Option<bool>,
+    pub has_popup: Option<HasPopup>,
+    /// A toggle button's state, as `aria-pressed`.
+    pub pressed: Option<bool>,
+    pub required: bool,
+    pub invalid: bool,
+    pub read_only: bool,
+    pub multiselectable: bool,
+    pub busy: bool,
+    pub modal: bool,
+    pub current: Option<Current>,
+    pub orientation: Option<A11yOrientation>,
+    pub key_shortcuts: Option<String>,
+    /// The option assistive technology reads as active while focus stays
+    /// on this node (a combobox's input).
+    pub active_descendant: Option<u64>,
+    pub controls: Vec<u64>,
+    pub labelled_by: Vec<u64>,
+    pub described_by: Vec<u64>,
+    pub error_message: Option<u64>,
+    /// Tree depth, 1-based, for tree items and nested rows.
+    pub level: Option<u32>,
+    /// Position in a set, 1-based, and the set's size, for items whose
+    /// set is not all in the tree (virtualized lists, trees).
+    pub pos_in_set: Option<u32>,
+    pub set_size: Option<u32>,
+    /// Rows and columns of a grid or table, including ones not rendered.
+    pub row_count: Option<u32>,
+    pub col_count: Option<u32>,
+    /// A row's or cell's position, 1-based, in the full grid.
+    pub row_index: Option<u32>,
+    pub col_index: Option<u32>,
+    pub sort: Option<Sort>,
+    /// A range value: minimum, maximum, and current.
+    pub range: Option<(f64, f64, f64)>,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to
@@ -925,6 +1044,8 @@ pub struct A11yNode {
     pub rtl: bool,
     /// Set when changes to the node's text must be announced.
     pub live: Option<Live>,
+    /// ARIA states and relations beyond the common ones above.
+    pub state: A11yState,
     pub children: Vec<A11yNode>,
 }
 
@@ -1087,6 +1208,15 @@ pub trait Surface {
     fn pointer_move(&mut self, at: Option<Point>) {
         let _ = at;
     }
+    /// A pointer went down, moved, or came up. Shells send it for mouse,
+    /// pen, and touch, before mapping a press to [`A11yAction::PressStart`]
+    /// on the node under it. When the outcome is `handled`, the shell skips
+    /// that mapping: a layer took the press (a light dismiss) or a gesture
+    /// claimed it.
+    fn pointer(&mut self, event: PointerEvent) -> PointerOutcome {
+        let _ = event;
+        PointerOutcome::default()
+    }
     /// A command the app returned outside an input, such as while a held
     /// press completes during a frame. Shells take it after each frame.
     fn take_command(&mut self) -> Command {
@@ -1106,6 +1236,46 @@ pub trait Surface {
     fn set_preferences(&mut self, preferences: &Preferences) {
         let _ = preferences;
     }
+}
+
+/// What kind of device a pointer is.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PointerKind {
+    #[default]
+    Mouse,
+    Pen,
+    Touch,
+}
+
+/// Where a pointer is in its press.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PointerPhase {
+    Down,
+    Move,
+    Up,
+    /// The platform took the pointer away (a system gesture).
+    Cancel,
+}
+
+/// One pointer event, in logical points.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PointerEvent {
+    /// Tells pointers apart while several touch at once.
+    pub id: u64,
+    pub kind: PointerKind,
+    pub phase: PointerPhase,
+    pub at: Point,
+    /// The button that went down or up: 0 primary, 1 middle, 2 secondary.
+    pub button: u8,
+}
+
+/// What the surface did with a pointer event.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PointerOutcome {
+    pub command: Command,
+    /// The surface used the event; the shell must not also press the node
+    /// under the pointer.
+    pub handled: bool,
 }
 
 /// What assistive technology can ask a node to do.

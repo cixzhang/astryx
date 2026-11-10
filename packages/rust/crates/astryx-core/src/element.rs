@@ -414,6 +414,22 @@ pub struct Semantics {
     /// Changes to the label are announced. Such a node is always in the
     /// accessibility tree, even inside a labeled control.
     pub live: Option<Live>,
+    /// ARIA states beyond the ones above. Its id relations are filled from
+    /// `refs` when the tree is built; ids set here directly are kept.
+    pub state: crate::contract::A11yState,
+    /// Relations to other elements, by their Astryx `id` prop.
+    pub refs: A11yRefs,
+}
+
+/// ARIA relations by element `id` prop, resolved to accessibility ids when
+/// the tree is built. A name with no element in the frame is dropped.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct A11yRefs {
+    pub active_descendant: Option<String>,
+    pub controls: Vec<String>,
+    pub labelled_by: Vec<String>,
+    pub described_by: Vec<String>,
+    pub error_message: Option<String>,
 }
 
 impl Semantics {
@@ -428,7 +444,29 @@ impl Semantics {
             secure: false,
             disabled: false,
             live: None,
+            state: Default::default(),
+            refs: Default::default(),
         }
+    }
+
+    /// Semantics with a role and no name of its own (a container).
+    pub fn role(role: Role) -> Self {
+        Self {
+            label: None,
+            ..Self::new(role, "")
+        }
+    }
+
+    /// Changes the ARIA states with `f`.
+    pub fn with_state(mut self, f: impl FnOnce(&mut crate::contract::A11yState)) -> Self {
+        f(&mut self.state);
+        self
+    }
+
+    /// Changes the relations with `f`.
+    pub fn with_refs(mut self, f: impl FnOnce(&mut A11yRefs)) -> Self {
+        f(&mut self.refs);
+        self
     }
 }
 
@@ -538,6 +576,13 @@ pub struct Node<Msg> {
     pub pager: bool,
     /// A `paged::CameraFollow` viewport, offset in both directions.
     pub camera: bool,
+    /// Makes the node the root of a layer. See [`BuildCx::layer`].
+    pub layer: Option<crate::layer::LayerSpec<Msg>>,
+    /// Reports pointer hover (and keyboard focus) after delays.
+    pub hover: Option<crate::layer::HoverSpec<Msg>>,
+    /// Draws that replace `draw` while the nearest focus stop around the
+    /// node is in a state; the last match wins.
+    pub variants: Vec<(crate::layer::When, Draw)>,
 }
 
 impl<Msg> Node<Msg> {
@@ -571,7 +616,16 @@ impl<Msg> Node<Msg> {
             timer: None,
             pager: false,
             camera: false,
+            layer: None,
+            hover: None,
+            variants: Vec::new(),
         }
+    }
+
+    /// Draws `draw` instead while the nearest focus stop is in `when`.
+    pub fn variant(mut self, when: crate::layer::When, draw: Draw) -> Self {
+        self.variants.push((when, draw));
+        self
     }
     pub fn draw(mut self, draw: Draw) -> Self {
         self.draw = draw;
@@ -664,6 +718,11 @@ pub struct BuildCx<Msg> {
     /// The pixel size of each ready image.
     pub image_sizes:
         std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, (u32, u32)>>,
+    /// The runtime's clock in milliseconds when this build started, for
+    /// timers.
+    pub now_ms: f64,
+    /// Where each element with an `id` prop was drawn in the last frame.
+    pub last_rects: std::sync::Arc<std::collections::HashMap<String, crate::contract::Rect>>,
     /// Context values by type, innermost last. See [`Element::provide`].
     contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
     open: Vec<u32>,
@@ -688,6 +747,8 @@ impl<Msg> BuildCx<Msg> {
             overlays: Vec::new(),
             images: Default::default(),
             image_sizes: Default::default(),
+            now_ms: 0.0,
+            last_rects: Default::default(),
             contexts: Default::default(),
             open: Vec::new(),
             key: None,
@@ -725,6 +786,87 @@ impl<Msg> BuildCx<Msg> {
             .last()?
             .clone();
         any.downcast::<T>().ok()
+    }
+
+    /// Where the element with `id` was drawn in the last frame.
+    pub fn last_rect(&self, id: &str) -> Option<crate::contract::Rect> {
+        self.last_rects.get(id).copied()
+    }
+
+    /// What a subtree inherits here: theme, direction, text style and
+    /// contexts, so content built elsewhere (a layer) looks as if built here.
+    pub fn scope(&self) -> Scope {
+        Scope {
+            tokens: self.tokens,
+            theme: self.theme,
+            direction: self.direction,
+            inherited: self.inherited(),
+            contexts: self.contexts.clone(),
+        }
+    }
+
+    /// Builds with `scope` in place, then puts the current one back.
+    pub fn in_scope(&mut self, scope: Scope, f: impl FnOnce(&mut Self)) {
+        let saved = self.scope();
+        self.tokens = scope.tokens;
+        self.theme = scope.theme;
+        self.direction = scope.direction;
+        self.inherit.push(scope.inherited);
+        self.contexts = scope.contexts;
+        f(self);
+        self.inherit.pop();
+        self.tokens = saved.tokens;
+        self.theme = saved.theme;
+        self.direction = saved.direction;
+        self.contexts = saved.contexts;
+    }
+
+    /// Builds a layer above the page: `content` is built after the view, in
+    /// this place's scope, under a root node carrying `spec`. Layers opened
+    /// inside layers stack above them.
+    pub fn layer(
+        &mut self,
+        spec: crate::layer::LayerSpec<Msg>,
+        content: impl FnOnce(&mut BuildCx<Msg>) + 'static,
+    ) where
+        Msg: 'static,
+    {
+        let scope = self.scope();
+        let key = self.key.take();
+        let name = self.name.take();
+        // The layer's identity comes from where it was declared, so it
+        // stays stable while the page around it changes.
+        let parent_id = self.open.last().map_or(0, |&p| self.nodes[p as usize].id);
+        let local = key.unwrap_or_else(|| {
+            self.open
+                .last()
+                .map_or(0, |&p| self.nodes[p as usize].children.len() as u64)
+        });
+        let id = mix(parent_id, local ^ LAYER);
+        self.overlays.push(Box::new(move |cx: &mut BuildCx<Msg>| {
+            cx.in_scope(scope, |cx| {
+                let modal = spec.modal;
+                let mut root = Node::new(Style {
+                    position: taffy::Position::Absolute,
+                    inset: taffy::Rect {
+                        left: taffy::LengthPercentageAuto::length(0.0),
+                        top: taffy::LengthPercentageAuto::length(0.0),
+                        right: taffy::LengthPercentageAuto::auto(),
+                        bottom: taffy::LengthPercentageAuto::auto(),
+                    },
+                    flex_direction: taffy::FlexDirection::Column,
+                    ..Style::default()
+                });
+                root.trap = spec.trap_focus || modal;
+                root.layer = Some(spec);
+                cx.key_slot(0);
+                let ix = cx.begin(root);
+                cx.nodes[ix as usize].id = id;
+                cx.nodes[ix as usize].name = name;
+                content(cx);
+                cx.end();
+            });
+        }));
     }
 
     pub fn inherited(&self) -> Inherited {
@@ -880,6 +1022,18 @@ impl<Msg> BuildCx<Msg> {
 
 /// Keeps keyed identities apart from sibling indexes.
 const KEYED: u64 = 0x9e37_79b9_7f4a_7c15;
+/// Keeps layer identities apart from the nodes declared beside them.
+const LAYER: u64 = 0x5851_f42d_4c95_7f2d;
+
+/// What a subtree inherits at one place in the tree. See [`BuildCx::scope`].
+#[derive(Clone)]
+pub struct Scope {
+    tokens: &'static Tokens,
+    theme: &'static Theme,
+    direction: Direction,
+    inherited: Inherited,
+    contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
+}
 
 pub(crate) fn fnv1a(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf2_9ce4_8422_2325, |h, b| {

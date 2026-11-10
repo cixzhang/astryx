@@ -61,6 +61,7 @@ impl Surface for Field {
             checked: None,
             selected: None,
             live: None,
+            state: Default::default(),
             children: Vec::new(),
         })
     }

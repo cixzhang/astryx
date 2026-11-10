@@ -37,6 +37,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "astryx-spike-layers"
+version = "0.1.0"
+dependencies = [
+ "astryx-core",
+ "astryx-tokens",
+ "taffy",
+]
+
+[[package]]
 name = "astryx-tokens"
 version = "0.1.0"
 dependencies = [

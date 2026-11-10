@@ -227,6 +227,7 @@ fn node(id: u64, role: Role, label: Option<String>, bounds: Rect) -> A11yNode {
         selected: None,
         focusable: false,
         live: None,
+        state: Default::default(),
         id,
         role,
         label,
