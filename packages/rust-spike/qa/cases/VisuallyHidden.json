@@ -18,7 +18,7 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "visuallyhidden-0001",
+     "id": "visually-hidden-0001",
      "kind": "default",
      "props": {}
     }

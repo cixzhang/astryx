@@ -210,7 +210,7 @@ impl<Msg> Build<Msg> for Sprite<Msg> {
 
 /// A sprite's image and frame strip.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct SpriteDraw {
+pub struct SpriteDraw {
     pub first: ImageId,
     pub frames: u32,
     pub fps: f32,

@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Άκυρο
+@astryx.appShell.mobileNavigation	Πλοήγηση για κινητά
+@astryx.appShell.skipToContent	Μετάβαση στο περιεχόμενο
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Χρησιμοποιήστε τα βέλη για να μετακινηθείτε ανάμεσα στα άβαταρ
+@astryx.avatarGroup.label	Άβαταρ
+@astryx.avatarGroup.overflow	{count, number} ακόμη
+@astryx.banner.collapse	Σύμπτυξη
+@astryx.banner.dismiss	Παράβλεψη
+@astryx.banner.dismissTitled	{dismiss} {title}
+@astryx.banner.expand	Ανάπτυξη
+@astryx.breadcrumbs.label	Διαδρομή πλοήγησης
+@astryx.button.loading	Φόρτωση
+@astryx.calendar.dayInRange	{date}, εντός εύρους
+@astryx.calendar.dayRangeEnd	{date}, τέλος εύρους
+@astryx.calendar.dayRangeStart	{date}, αρχή εύρους
+@astryx.calendar.dayRangeStartAndEnd	{date}, αρχή και τέλος εύρους
+@astryx.calendar.daySelected	{date}, επιλεγμένη
+@astryx.calendar.nextMonth	Επόμενος μήνας
+@astryx.calendar.previousMonth	Προηγούμενος μήνας
+@astryx.calendar.rangeClearedAnnounce	Η ημερομηνία έναρξης {date} απαλείφθηκε. Επιλέξτε ημερομηνία έναρξης.
+@astryx.calendar.rangeCompleteAnnounce	Επιλεγμένο εύρος: {start} έως {end}.
+@astryx.calendar.rangeStartAnnounce	Ημερομηνία έναρξης {date}. Επιλέξτε ημερομηνία λήξης.
+@astryx.carousel.label	Καρουζέλ
+@astryx.carousel.scrollLeft	Κύλιση αριστερά
+@astryx.carousel.scrollRight	Κύλιση δεξιά
+@astryx.carousel.slideLabel	Διαφάνεια {current, number} από {total, number}
+@astryx.chart.dataTableCaption	Δεδομένα για {label}
+@astryx.chart.label	Γράφημα
+@astryx.chart.labelWithSeries	Γράφημα {series} ανά {xKey}
+@astryx.chartLegend.label	Υπόμνημα γραφήματος
+@astryx.chat.composer.placeholder	Πληκτρολογήστε ένα μήνυμα…
+@astryx.chat.composerDrawer.label	Στοιχεία
+@astryx.chat.composerInput.label	Εισαγωγή μηνύματος
+@astryx.chat.messageAriaLabel	Μήνυμα {status}
+@astryx.chat.pastedText.expand	Ανάπτυξη
+@astryx.chat.speechRecognition.noSpeechDetected	Δεν εντοπίστηκε ομιλία.
+@astryx.chat.status.delivered	Παραδόθηκε
+@astryx.chat.status.failed	Απέτυχε
+@astryx.chat.status.read	Διαβάστηκε
+@astryx.chat.status.sending	Αποστολή
+@astryx.chat.status.sent	Απεστάλη
+@astryx.chatComposerDrawer.collapse	Σύμπτυξη {label}
+@astryx.chatComposerDrawer.expand	Ανάπτυξη {label}
+@astryx.chatDictationButton.startDictation	Έναρξη υπαγόρευσης
+@astryx.chatDictationButton.stopDictation	Διακοπή υπαγόρευσης
+@astryx.chatLayout.newMessages	Νέα μηνύματα
+@astryx.chatLayoutScrollButton.scrollToBottom	Κύλιση στο κάτω μέρος
+@astryx.chatMessage.messageFrom	Μήνυμα από {sender}
+@astryx.chatSendButton.send	Αποστολή
+@astryx.chatSendButton.stop	Διακοπή
+@astryx.chatToolCalls.error	Σφάλμα: {message}
+@astryx.chatToolCalls.groupLabel	{count} κλήσεις εργαλείων
+@astryx.chatToolCalls.status.complete	Ολοκληρώθηκε
+@astryx.chatToolCalls.status.error	Απέτυχε
+@astryx.chatToolCalls.status.pending	Σε αναμονή
+@astryx.chatToolCalls.status.running	Σε εξέλιξη
+@astryx.chatTriggerMenu.suggestions	Προτάσεις
+@astryx.chatTypingIndicator.many	{names} πληκτρολογούν…
+@astryx.chatTypingIndicator.one	{name} πληκτρολογεί…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {άλλος} other {άλλοι}}
+@astryx.checkboxList.item.checkbox	Πλαίσιο ελέγχου
+@astryx.citation.label	Παραπομπή {number}: {title}
+@astryx.codeBlock.code	Κώδικας
+@astryx.codeBlock.copied	Αντιγράφηκε
+@astryx.codeBlock.copyCode	Αντιγραφή κώδικα
+@astryx.commandPalette.emptyBootstrap	Πληκτρολογήστε για αναζήτηση
+@astryx.commandPalette.emptySearch	Κανένα αποτέλεσμα
+@astryx.commandPalette.footer.close	Κλείσιμο
+@astryx.commandPalette.footer.navigate	Πλοήγηση
+@astryx.commandPalette.footer.select	Επιλογή
+@astryx.commandPalette.input.placeholder	Αναζήτηση…
+@astryx.commandPalette.label	Παλέτα εντολών
+@astryx.commandPalette.list.label	Εντολές
+@astryx.commandPalette.loading	Φόρτωση
+@astryx.commandPalette.noResultsFor	Κανένα αποτέλεσμα για {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {αποτέλεσμα} other {αποτελέσματα}}
+@astryx.contextMenu.label	Μενού περιβάλλοντος
+@astryx.dateInput.chooseMonthYear	{monthYear}, Επιλογή μήνα και έτους
+@astryx.dateInput.clear	Απαλοιφή {label}
+@astryx.dateInput.closeCalendar	Κλείσιμο ημερολογίου
+@astryx.dateInput.dialogLabel	Επιλογή ημερομηνίας
+@astryx.dateInput.doneChoosingMonth	Τέλος
+@astryx.dateInput.invalidDate	Μη έγκυρη ημερομηνία
+@astryx.dateInput.monthWheel	Μήνας
+@astryx.dateInput.openCalendar	Άνοιγμα ημερολογίου
+@astryx.dateInput.placeholder	Επιλέξτε ημερομηνία
+@astryx.dateInput.resetPicking	Επαναφορά
+@astryx.dateInput.savePicking	Αποθήκευση
+@astryx.dateInput.toggleCalendarClose	Κλείσιμο ημερολογίου
+@astryx.dateInput.yearWheel	Έτος
+@astryx.dateRangeInput.dialogLabel	Επιλογή εύρους ημερομηνιών
+@astryx.dateRangeInput.placeholder	Επιλέξτε εύρος ημερομηνιών
+@astryx.dateRangeInput.presetDateRanges	Προκαθορισμένα εύρη ημερομηνιών
+@astryx.dateTimeInput.dateTab	Ημερομηνία
+@astryx.dateTimeInput.dialogLabel	Επιλογή ημερομηνίας και ώρας
+@astryx.dateTimeInput.hourWheel	Ώρα
+@astryx.dateTimeInput.meridiemAM	π.μ.
+@astryx.dateTimeInput.meridiemPM	μ.μ.
+@astryx.dateTimeInput.meridiemWheel	π.μ./μ.μ.
+@astryx.dateTimeInput.minuteWheel	Λεπτό
+@astryx.dateTimeInput.openTimePicker	Άνοιγμα {label}
+@astryx.dateTimeInput.pickerMode	Ενότητα ημερομηνίας/ώρας
+@astryx.dateTimeInput.placeholder	Επιλέξτε ημερομηνία
+@astryx.dateTimeInput.saveDatePicking	Αποθήκευση ημερομηνίας
+@astryx.dateTimeInput.secondWheel	Δευτερόλεπτο
+@astryx.dateTimeInput.timeHint12h	π.χ. 2:30 μ.μ.
+@astryx.dateTimeInput.timeHint24h	π.χ. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Επιλογές για {label}
+@astryx.dateTimeInput.timePlaceholder	Επιλέξτε ώρα
+@astryx.dateTimeInput.timeSuffix	Ώρα {label}
+@astryx.dateTimeInput.timeTab	Ώρα
+@astryx.dialog.close	Κλείσιμο
+@astryx.dropdownMenu.back	Πίσω
+@astryx.dropdownMenu.label	Μενού
+@astryx.field.optional	Προαιρετικό
+@astryx.field.required	Υποχρεωτικό
+@astryx.fileInput.clearLabel	Απαλοιφή {label}
+@astryx.fileInput.dropHint	Αποθέστε αρχεία εδώ
+@astryx.fileInput.errorInvalidType	Το αρχείο «{fileName}» δεν είναι αποδεκτού τύπου
+@astryx.fileInput.errorMaxFiles	Επιτρέπονται έως {maxFiles} αρχεία
+@astryx.fileInput.errorMaxSize	Το αρχείο «{fileName}» υπερβαίνει το όριο των {maxSize}
+@astryx.fileInput.fileSelected	Επιλέχθηκε 1 αρχείο: {fileName}
+@astryx.fileInput.filesSelected	Επιλέχθηκαν {count} αρχεία
+@astryx.fileInput.placeholder	Επιλογή αρχείου
+@astryx.fileInput.placeholderMultiple	Επιλογή αρχείων
+@astryx.fileInput.required	Υποχρεωτικό
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Μόνο για ανάγνωση
+@astryx.input.statusButton.error	Λεπτομέρειες σφάλματος
+@astryx.input.statusButton.success	Λεπτομέρειες επιτυχίας
+@astryx.input.statusButton.warning	Λεπτομέρειες προειδοποίησης
+@astryx.keyboardHint.toNavigate	για πλοήγηση
+@astryx.lightbox.close	Κλείσιμο
+@astryx.lightbox.imagePosition	Εικόνα {index, number} από {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} από {total, number}
+@astryx.lightbox.mediaViewer	Προβολή πολυμέσων
+@astryx.lightbox.next	Επόμενο
+@astryx.lightbox.previous	Προηγούμενο
+@astryx.lightbox.zoom	Ζουμ
+@astryx.lightbox.zoomedIn	Μεγέθυνση, χρησιμοποιήστε τα βέλη για μετακίνηση
+@astryx.lightbox.zoomedOut	Σμίκρυνση
+@astryx.link.newTab	(ανοίγει σε νέα καρτέλα)
+@astryx.listInput.addItem	Προσθήκη {itemName}
+@astryx.listInput.announceAdded	Προστέθηκε {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName}: βρίσκεται ήδη {boundary, select, first {στην πρώτη θέση} last {στην τελευταία θέση} other {}}.
+@astryx.listInput.announceDropped	{itemName}: τοποθετήθηκε στη θέση {position, number} από {total, number}.
+@astryx.listInput.announceGrabbed	{itemName} {position, number}: επιλέχθηκε για μετακίνηση. Χρησιμοποιήστε τα βέλη για μετακίνηση, Space ή Enter για απόθεση και Escape για ακύρωση.
+@astryx.listInput.announceMovedToPosition	{itemName}: μετακινήθηκε στη θέση {position, number} από {total, number}.
+@astryx.listInput.announceRemoved	Αφαιρέθηκε {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	Η αναδιάταξη ακυρώθηκε.
+@astryx.listInput.announceReturnedToPosition	{itemName}: επέστρεψε στη θέση {position, number}.
+@astryx.listInput.emptyDescription	Προσθέστε {itemName} για να ξεκινήσετε.
+@astryx.listInput.emptyTitle	Δεν έχει προστεθεί ακόμη {itemName}
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} από {total, number}
+@astryx.listInput.removeItem	Αφαίρεση {itemName} {position, number}
+@astryx.listInput.removeUnavailable	Η αφαίρεση δεν είναι διαθέσιμη όσο η λίστα είναι απενεργοποιημένη
+@astryx.listInput.reorderInstructions	Χρησιμοποιήστε τα πλήκτρα Arrow Up ή Arrow Down για να μετακινήσετε αυτό το στοιχείο κατά μία θέση. Πατήστε Space ή Enter για να το ανασηκώσετε και να κάνετε εκτεταμένη αναδιάταξη με το πληκτρολόγιο.
+@astryx.listInput.reorderItem	Αναδιάταξη {itemName} {position, number}
+@astryx.markdown.table	Πίνακας
+@astryx.markdown.taskList	Λίστα εργασιών
+@astryx.metadataList.showLess	Εμφάνιση λιγότερων
+@astryx.metadataList.showMore	Εμφάνιση περισσότερων
+@astryx.mobileNav.closeNavigation	Κλείσιμο πλοήγησης
+@astryx.mobileNav.navigation	Πλοήγηση
+@astryx.mobileNav.toggle.open	Άνοιγμα πλοήγησης
+@astryx.moreMenu.label	Περισσότερες επιλογές
+@astryx.multiSelector.allSelected	Επιλέχθηκαν όλα
+@astryx.multiSelector.clearAll	Απαλοιφή όλων {label}
+@astryx.multiSelector.empty	Καμία επιλογή
+@astryx.multiSelector.emptySearchResults	Δεν βρέθηκαν αποτελέσματα
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {αποτέλεσμα} other {αποτελέσματα}}
+@astryx.multiSelector.searchOptions	Επιλογές αναζήτησης
+@astryx.multiSelector.searchPlaceholder	Αναζήτηση…
+@astryx.multiSelector.selectAll	Επιλογή όλων
+@astryx.multiSelector.selectAllPartiallySelected	{label}, μερικώς επιλεγμένο
+@astryx.multiSelector.selectPlaceholder	Επιλογή…
+@astryx.multiSelector.selectionCleared	Η επιλογή απαλείφθηκε
+@astryx.multiSelector.selectionCount	Επιλέχθηκαν {count, number} από {total, number}
+@astryx.numberInput.clearLabel	Απαλοιφή {label}
+@astryx.numberInput.decrementLabel	Μείωση {label}
+@astryx.numberInput.incrementLabel	Αύξηση {label}
+@astryx.outline.label	Πίνακας περιεχομένων
+@astryx.pagination.count	{from, number}–{to, number} από {total, number}
+@astryx.pagination.first	Μετάβαση στην πρώτη σελίδα
+@astryx.pagination.goToPage	Μετάβαση στη σελίδα {page, number}
+@astryx.pagination.goToPageInput	Μετάβαση στη σελίδα
+@astryx.pagination.itemsPerPage	Στοιχεία ανά σελίδα
+@astryx.pagination.label	Σελιδοποίηση
+@astryx.pagination.last	Μετάβαση στην τελευταία σελίδα
+@astryx.pagination.next	Μετάβαση στην επόμενη σελίδα
+@astryx.pagination.nextBy	Μετάβαση εμπρός κατά {step, number} {step, plural, one {σελίδα} other {σελίδες}}
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Σελίδα {current, number}
+@astryx.pagination.pageIndicators	Δείκτες σελίδων
+@astryx.pagination.pageLabel	Σελίδα
+@astryx.pagination.pageOfTotal	Σελίδα {current, number} από {total, number}
+@astryx.pagination.previous	Μετάβαση στην προηγούμενη σελίδα
+@astryx.pagination.previousBy	Επιστροφή κατά {step, number} {step, plural, one {σελίδα} other {σελίδες}}
+@astryx.popover.close	Κλείσιμο αναδυόμενου παραθύρου
+@astryx.powersearch.editor.addFilter	+ Προσθήκη φίλτρου
+@astryx.powersearch.editor.apply	Εφαρμογή
+@astryx.powersearch.editor.cancel	Άκυρο
+@astryx.powersearch.editor.delete	Διαγραφή
+@astryx.powersearch.editor.field	Πεδίο
+@astryx.powersearch.editor.group	Ομάδα
+@astryx.powersearch.editor.groupOperator	Τελεστής ομάδας
+@astryx.powersearch.editor.operator	Τελεστής
+@astryx.powersearch.editor.removeFilter	Αφαίρεση φίλτρου
+@astryx.powersearch.label	Αναζήτηση
+@astryx.powersearch.operator.after	είναι μετά από
+@astryx.powersearch.operator.before	είναι πριν από
+@astryx.powersearch.operator.between	είναι μεταξύ
+@astryx.powersearch.operator.contains	περιέχει
+@astryx.powersearch.operator.endsWith	λήγει σε
+@astryx.powersearch.operator.equals	είναι
+@astryx.powersearch.operator.greaterThan	είναι μεγαλύτερο από
+@astryx.powersearch.operator.greaterThanOrEqual	είναι μεγαλύτερο ή ίσο με
+@astryx.powersearch.operator.is	είναι
+@astryx.powersearch.operator.isAnyOf	είναι οποιοδήποτε από
+@astryx.powersearch.operator.isFalse	είναι ψευδές
+@astryx.powersearch.operator.isNoneOf	δεν είναι κανένα από
+@astryx.powersearch.operator.isNot	δεν είναι
+@astryx.powersearch.operator.isTrue	είναι αληθές
+@astryx.powersearch.operator.lessThan	είναι μικρότερο από
+@astryx.powersearch.operator.lessThanOrEqual	είναι μικρότερο ή ίσο με
+@astryx.powersearch.operator.notContains	δεν περιέχει
+@astryx.powersearch.operator.notEndsWith	δεν λήγει σε
+@astryx.powersearch.operator.notEquals	δεν είναι
+@astryx.powersearch.operator.notStartsWith	δεν αρχίζει με
+@astryx.powersearch.operator.startsWith	αρχίζει με
+@astryx.powersearch.placeholder	Αναζήτηση…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {αποτέλεσμα} other {αποτελέσματα}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Προσθήκη τιμών…
+@astryx.powersearch.valueEditor.date	Ημερομηνία
+@astryx.powersearch.valueEditor.dateRange	εύρος ημερομηνιών
+@astryx.powersearch.valueEditor.endDate	Ημερομηνία λήξης
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Εισαγωγή αριθμού…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Εισαγωγή τιμής…
+@astryx.powersearch.valueEditor.entities	Οντότητες
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {οντότητα} other {οντότητες}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {φίλτρο} other {φίλτρα}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {στοιχείο} other {στοιχεία}}
+@astryx.powersearch.valueEditor.relativeDate	Σχετική ημερομηνία
+@astryx.powersearch.valueEditor.searchPlaceholder	Αναζήτηση…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Επιλογή τιμών…
+@astryx.powersearch.valueEditor.startDate	Ημερομηνία έναρξης
+@astryx.powersearch.valueEditor.time	Ώρα
+@astryx.powersearch.valueEditor.value	Τιμή
+@astryx.powersearch.valueEditor.values	Τιμές
+@astryx.resizable.collapsed	Συμπτυγμένο
+@astryx.resizable.handle.label	Λαβή αλλαγής μεγέθους
+@astryx.selector.clearLabel	Απαλοιφή {label}
+@astryx.selector.empty	Καμία επιλογή
+@astryx.selector.emptySearchResults	Δεν βρέθηκαν αποτελέσματα
+@astryx.selector.placeholder	Επιλογή…
+@astryx.selector.resultCount	{count, number} {count, plural, one {αποτέλεσμα} other {αποτελέσματα}}
+@astryx.selector.searchOptions	Επιλογές αναζήτησης
+@astryx.selector.searchPlaceholder	Αναζήτηση…
+@astryx.sideNav.heading.dialogLabel	Μενού πλοήγησης
+@astryx.sideNav.heading.openMenu	{heading}, Άνοιγμα μενού
+@astryx.sideNav.label	Πλευρική πλοήγηση
+@astryx.sideNav.resizeSidebar	Αλλαγή μεγέθους πλευρικής γραμμής
+@astryx.sideNavCollapseButton.collapseSidebar	Σύμπτυξη πλευρικής γραμμής
+@astryx.sideNavCollapseButton.expandSidebar	Ανάπτυξη πλευρικής γραμμής
+@astryx.sideNavItem.collapse	Σύμπτυξη {label}
+@astryx.sideNavItem.expand	Ανάπτυξη {label}
+@astryx.sideNavItem.submenuLabel	Υπομενού {label}
+@astryx.spinner.loading	Φόρτωση
+@astryx.step.goToStep	Μετάβαση στο βήμα {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Μετάβαση στο βήμα {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Προαιρετικό
+@astryx.step.status.completed	ολοκληρώθηκε
+@astryx.step.status.error	σφάλμα
+@astryx.step.status.warning	προειδοποίηση
+@astryx.stepper.label	Πρόοδος
+@astryx.stepper.nextStep	Επόμενο βήμα
+@astryx.stepper.previousStep	Προηγούμενο βήμα
+@astryx.tabList.label	Καρτέλες
+@astryx.table.filter.allPlaceholder	Όλα
+@astryx.table.filter.apply	Εφαρμογή
+@astryx.table.filter.reset	Επαναφορά
+@astryx.table.label	Πίνακας
+@astryx.table.noData	Δεν υπάρχουν δεδομένα
+@astryx.table.pagination.label	Σελιδοποίηση πίνακα
+@astryx.table.pagination.labelAbove	{label} (επάνω)
+@astryx.table.pagination.labelBelow	{label} (κάτω)
+@astryx.table.rowStatus.columnHeader	Κατάσταση γραμμής
+@astryx.table.selection.selectAllRows	Επιλογή όλων των γραμμών
+@astryx.table.selection.selectRow	Επιλογή γραμμής
+@astryx.table.selection.selectRowNamed	Επιλογή {label}
+@astryx.table.sort.ascending	Αύξουσα ταξινόμηση
+@astryx.table.sort.clear	Απαλοιφή ταξινόμησης
+@astryx.table.sort.descending	Φθίνουσα ταξινόμηση
+@astryx.tableFiltering.filterByColumn	Φιλτράρισμα {header}
+@astryx.tableGroupedRows.collapseGroup	Σύμπτυξη ομάδας {groupKey}
+@astryx.tableGroupedRows.expandGroup	Ανάπτυξη ομάδας {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	Σύμπτυξη όλων των γραμμών
+@astryx.tableRowExpansion.collapseRow	Σύμπτυξη γραμμής
+@astryx.tableRowExpansion.columnHeader	Ανάπτυξη γραμμής
+@astryx.tableRowExpansion.expandAllRows	Ανάπτυξη όλων των γραμμών
+@astryx.tableRowExpansion.expandRow	Ανάπτυξη γραμμής
+@astryx.tableTree.collapseAllRows	Σύμπτυξη όλων των γραμμών
+@astryx.tableTree.collapseRow	Σύμπτυξη γραμμής
+@astryx.tableTree.expandAllRows	Ανάπτυξη όλων των γραμμών
+@astryx.tableTree.expandRow	Ανάπτυξη γραμμής
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {χαρακτήρας} other {χαρακτήρες}} πάνω από το όριο
+@astryx.textArea.charactersRemaining	απομένουν {count, number} {count, plural, one {χαρακτήρας} other {χαρακτήρες}}
+@astryx.textInput.clearLabel	Απαλοιφή {label}
+@astryx.thumbnail.fallbackName	Μικρογραφία
+@astryx.thumbnail.open	Άνοιγμα {accessibleName}
+@astryx.thumbnail.remove	Αφαίρεση {accessibleName}
+@astryx.timeInput.clearLabel	Απαλοιφή {label}
+@astryx.timeInput.invalidTime	Μη έγκυρη ώρα
+@astryx.timeInput.openPicker	Άνοιγμα {label}
+@astryx.timeInput.placeholder	Επιλέξτε ώρα
+@astryx.timestamp.copied	Αντιγράφηκε
+@astryx.timestamp.copy	Αντιγραφή
+@astryx.timestamp.copyValue	Αντιγραφή {value}
+@astryx.timestamp.detailsLabel	Λεπτομέρειες χρονικής σήμανσης
+@astryx.toast.dismiss	Παράβλεψη ειδοποίησης
+@astryx.toast.viewport	Ειδοποιήσεις
+@astryx.token.remove	Αφαίρεση {label}
+@astryx.tokenizer.clearAll	Απαλοιφή όλων
+@astryx.tokenizer.tokenAdded	Προστέθηκε {label}
+@astryx.tokenizer.tokenRemoved	Αφαιρέθηκε {label}
+@astryx.topNav.heading.dialogLabel	Μενού πλοήγησης
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Άνοιγμα μενού
+@astryx.topNav.landmarkLabel	Επάνω πλοήγηση
+@astryx.transferList.addAll	Προσθήκη όλων
+@astryx.transferList.addOption	Προσθήκη {label}
+@astryx.transferList.announceAdded	Προστέθηκε {label}. {count, number} {count, plural, one {επιλεγμένο στοιχείο} other {επιλεγμένα στοιχεία}}.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {στοιχείο προστέθηκε} other {στοιχεία προστέθηκαν}}.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {στοιχείο αφαιρέθηκε} other {στοιχεία αφαιρέθηκαν}}.
+@astryx.transferList.announceDropped	{label}: τοποθετήθηκε στη θέση {position, number} από {total, number}.
+@astryx.transferList.announceGrabbed	{label}: επιλέχθηκε για μετακίνηση, θέση {position, number} από {total, number}. Χρησιμοποιήστε τα βέλη για μετακίνηση, Space ή Enter για απόθεση ή Escape για ακύρωση.
+@astryx.transferList.announceMoveCancelled	{label}: η μετακίνηση ακυρώθηκε.
+@astryx.transferList.announceMovedToPosition	{label}, θέση {position, number} από {total, number}.
+@astryx.transferList.announceRemoved	Αφαιρέθηκε {label}. {count, number} {count, plural, one {επιλεγμένο στοιχείο} other {επιλεγμένα στοιχεία}}.
+@astryx.transferList.announceReturned	{label}: επέστρεψε στη θέση {position, number}.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {στοιχείο βρέθηκε} other {στοιχεία βρέθηκαν}}.
+@astryx.transferList.availableEmpty	Δεν υπάρχουν διαθέσιμες επιλογές
+@astryx.transferList.availableLabel	Διαθέσιμα
+@astryx.transferList.clear	Απαλοιφή
+@astryx.transferList.noResults	Κανένα αποτέλεσμα
+@astryx.transferList.removeOption	Αφαίρεση {label}
+@astryx.transferList.reorderDisabled	{label}: δεν είναι δυνατή η αλλαγή σειράς
+@astryx.transferList.reorderInstructions	Πατήστε Space ή Enter για να επιλέξετε ένα στοιχείο για μετακίνηση. Χρησιμοποιήστε Arrow Up, Arrow Down, Home ή End για να το μετακινήσετε. Πατήστε Space ή Enter για απόθεση ή Escape για ακύρωση.
+@astryx.transferList.reorderOption	Αναδιάταξη {label}
+@astryx.transferList.searchLabel	Αναζήτηση {label}
+@astryx.transferList.searchPlaceholder	Αναζήτηση…
+@astryx.transferList.selectedEmpty	Δεν έχει επιλεγεί καμία επιλογή
+@astryx.transferList.selectedLabel	Επιλεγμένα
+@astryx.transferList.transferDisabled	{label}: δεν είναι δυνατή η μετακίνηση
+@astryx.transferList.ungroupedLabel	Άλλα
+@astryx.transferListSelector.apply	Εφαρμογή
+@astryx.transferListSelector.cancel	Άκυρο
+@astryx.transferListSelector.triggerLabel	{count, number} επιλεγμένα
+@astryx.treeList.toggleChildren	Εναλλαγή θυγατρικών
+@astryx.typeahead.clearSelection	Απαλοιφή επιλογής
+@astryx.typeahead.emptySearchResults	Δεν βρέθηκαν αποτελέσματα
+@astryx.typeahead.loading	Φόρτωση
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {αποτέλεσμα} other {αποτελέσματα}}
+@astryx.typeahead.searchPlaceholder	Αναζήτηση…
+@astryx.typeahead.searchResults	Αποτελέσματα αναζήτησης

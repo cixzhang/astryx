@@ -15,7 +15,7 @@ use taffy::prelude::*;
 
 /// What a light element draws.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum LightDraw {
+pub enum LightDraw {
     /// Opens a light pass around the node's children. `still` holds the
     /// lighting's motion: reduced motion, or nothing that moves.
     Pass { lighting: Lighting, still: bool },

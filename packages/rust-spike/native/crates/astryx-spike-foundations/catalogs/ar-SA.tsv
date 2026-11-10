@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	إلغاء
+@astryx.appShell.mobileNavigation	التنقل عبر الجوّال
+@astryx.appShell.skipToContent	الانتقال إلى المحتوى
+@astryx.avatar.nameWithStatus	{name}، {status}
+@astryx.avatarGroup.keyboardHint	استخدم مفاتيح الأسهم للتنقل بين الصور الرمزية
+@astryx.avatarGroup.label	الصور الرمزية
+@astryx.avatarGroup.overflow	{count, number} إضافي
+@astryx.banner.collapse	طيّ
+@astryx.banner.dismiss	تجاهل
+@astryx.banner.dismissTitled	{dismiss} {title}
+@astryx.banner.expand	توسيع
+@astryx.breadcrumbs.label	مسار التنقل
+@astryx.button.loading	جارٍ التحميل
+@astryx.calendar.dayInRange	{date}، ضمن النطاق
+@astryx.calendar.dayRangeEnd	{date}، نهاية النطاق
+@astryx.calendar.dayRangeStart	{date}، بداية النطاق
+@astryx.calendar.dayRangeStartAndEnd	{date}، بداية النطاق ونهايته
+@astryx.calendar.daySelected	{date}، محدَّد
+@astryx.calendar.nextMonth	الشهر التالي
+@astryx.calendar.previousMonth	الشهر السابق
+@astryx.calendar.rangeClearedAnnounce	تم مسح تاريخ البدء {date}. حدّد تاريخ البدء.
+@astryx.calendar.rangeCompleteAnnounce	النطاق المحدَّد: من {start} إلى {end}.
+@astryx.calendar.rangeStartAnnounce	تاريخ البدء {date}. حدّد تاريخ الانتهاء.
+@astryx.carousel.label	عارض الشرائح
+@astryx.carousel.scrollLeft	التمرير إلى اليسار
+@astryx.carousel.scrollRight	التمرير إلى اليمين
+@astryx.carousel.slideLabel	الشريحة {current, number} من {total, number}
+@astryx.chart.dataTableCaption	بيانات {label}
+@astryx.chart.label	رسم بياني
+@astryx.chart.labelWithSeries	رسم بياني لـ{series} حسب {xKey}
+@astryx.chartLegend.label	مفتاح الرسم البياني
+@astryx.chat.composer.placeholder	اكتب رسالة…
+@astryx.chat.composerDrawer.label	العناصر
+@astryx.chat.composerInput.label	إدخال الرسالة
+@astryx.chat.messageAriaLabel	رسالة {status}
+@astryx.chat.pastedText.expand	توسيع
+@astryx.chat.speechRecognition.noSpeechDetected	لم يتم اكتشاف أي كلام.
+@astryx.chat.status.delivered	تم التسليم
+@astryx.chat.status.failed	فشل
+@astryx.chat.status.read	تمت القراءة
+@astryx.chat.status.sending	جارٍ الإرسال
+@astryx.chat.status.sent	تم الإرسال
+@astryx.chatComposerDrawer.collapse	طيّ {label}
+@astryx.chatComposerDrawer.expand	توسيع {label}
+@astryx.chatDictationButton.startDictation	بدء الإملاء
+@astryx.chatDictationButton.stopDictation	إيقاف الإملاء
+@astryx.chatLayout.newMessages	رسائل جديدة
+@astryx.chatLayoutScrollButton.scrollToBottom	التمرير إلى الأسفل
+@astryx.chatMessage.messageFrom	رسالة من {sender}
+@astryx.chatSendButton.send	إرسال
+@astryx.chatSendButton.stop	إيقاف
+@astryx.chatToolCalls.error	خطأ: {message}
+@astryx.chatToolCalls.groupLabel	{count} من استدعاءات الأدوات
+@astryx.chatToolCalls.status.complete	مكتمل
+@astryx.chatToolCalls.status.error	فشل
+@astryx.chatToolCalls.status.pending	قيد الانتظار
+@astryx.chatToolCalls.status.running	قيد التنفيذ
+@astryx.chatTriggerMenu.suggestions	اقتراحات
+@astryx.chatTypingIndicator.many	{names} يكتبون…
+@astryx.chatTypingIndicator.one	{name} يكتب…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, zero {آخرين} one {آخر} two {آخران} few {آخرين} many {آخرًا} other {آخر}}
+@astryx.checkboxList.item.checkbox	مربع اختيار
+@astryx.citation.label	الاستشهاد {number}: {title}
+@astryx.codeBlock.code	الكود
+@astryx.codeBlock.copied	تم النسخ
+@astryx.codeBlock.copyCode	نسخ الكود
+@astryx.commandPalette.emptyBootstrap	اكتب للبحث
+@astryx.commandPalette.emptySearch	لا توجد نتائج
+@astryx.commandPalette.footer.close	إغلاق
+@astryx.commandPalette.footer.navigate	التنقل
+@astryx.commandPalette.footer.select	تحديد
+@astryx.commandPalette.input.placeholder	بحث…
+@astryx.commandPalette.label	لوحة الأوامر
+@astryx.commandPalette.list.label	الأوامر
+@astryx.commandPalette.loading	جارٍ التحميل
+@astryx.commandPalette.noResultsFor	لا توجد نتائج لـ {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, zero {نتائج} one {نتيجة} two {نتيجتان} few {نتائج} many {نتيجةً} other {نتيجة}}
+@astryx.contextMenu.label	قائمة السياق
+@astryx.dateInput.chooseMonthYear	{monthYear}، اختر الشهر والسنة
+@astryx.dateInput.clear	مسح {label}
+@astryx.dateInput.closeCalendar	إغلاق التقويم
+@astryx.dateInput.dialogLabel	اختر التاريخ
+@astryx.dateInput.doneChoosingMonth	تم
+@astryx.dateInput.invalidDate	تاريخ غير صالح
+@astryx.dateInput.monthWheel	الشهر
+@astryx.dateInput.openCalendar	فتح التقويم
+@astryx.dateInput.placeholder	حدّد تاريخًا
+@astryx.dateInput.resetPicking	إعادة تعيين
+@astryx.dateInput.savePicking	حفظ
+@astryx.dateInput.toggleCalendarClose	إغلاق التقويم
+@astryx.dateInput.yearWheel	السنة
+@astryx.dateRangeInput.dialogLabel	اختر نطاق التاريخ
+@astryx.dateRangeInput.placeholder	حدّد نطاق التاريخ
+@astryx.dateRangeInput.presetDateRanges	نطاقات تاريخ محدَّدة مسبقًا
+@astryx.dateTimeInput.dateTab	التاريخ
+@astryx.dateTimeInput.dialogLabel	اختر التاريخ والوقت
+@astryx.dateTimeInput.hourWheel	الساعة
+@astryx.dateTimeInput.meridiemAM	ص
+@astryx.dateTimeInput.meridiemPM	م
+@astryx.dateTimeInput.meridiemWheel	ص/م
+@astryx.dateTimeInput.minuteWheel	الدقيقة
+@astryx.dateTimeInput.openTimePicker	فتح {label}
+@astryx.dateTimeInput.pickerMode	قسم التاريخ/الوقت
+@astryx.dateTimeInput.placeholder	حدّد تاريخًا
+@astryx.dateTimeInput.saveDatePicking	حفظ التاريخ
+@astryx.dateTimeInput.secondWheel	الثانية
+@astryx.dateTimeInput.timeHint12h	مثال: 2:30 م
+@astryx.dateTimeInput.timeHint24h	مثال: 14:30
+@astryx.dateTimeInput.timeOptionsLabel	خيارات {label}
+@astryx.dateTimeInput.timePlaceholder	حدّد وقتًا
+@astryx.dateTimeInput.timeSuffix	وقت {label}
+@astryx.dateTimeInput.timeTab	الوقت
+@astryx.dialog.close	إغلاق
+@astryx.dropdownMenu.back	رجوع
+@astryx.dropdownMenu.label	القائمة
+@astryx.field.optional	اختياري
+@astryx.field.required	مطلوب
+@astryx.fileInput.clearLabel	مسح {label}
+@astryx.fileInput.dropHint	أفلِت الملفات هنا
+@astryx.fileInput.errorInvalidType	"{fileName}" ليس من أنواع الملفات المقبولة
+@astryx.fileInput.errorMaxFiles	الحد الأقصى المسموح به للملفات هو {maxFiles}
+@astryx.fileInput.errorMaxSize	يتجاوز "{fileName}" الحد الأقصى للحجم البالغ {maxSize}
+@astryx.fileInput.fileSelected	تم تحديد ملف واحد: {fileName}
+@astryx.fileInput.filesSelected	تم تحديد {count} من الملفات
+@astryx.fileInput.placeholder	اختر ملفًا
+@astryx.fileInput.placeholderMultiple	اختر ملفات
+@astryx.fileInput.required	مطلوب
+@astryx.fileInput.triggerWithFiles	{label}، {fileNames}
+@astryx.input.readOnly	للقراءة فقط
+@astryx.input.statusButton.error	تفاصيل الخطأ
+@astryx.input.statusButton.success	تفاصيل النجاح
+@astryx.input.statusButton.warning	تفاصيل التحذير
+@astryx.keyboardHint.toNavigate	للتنقل
+@astryx.lightbox.close	إغلاق
+@astryx.lightbox.imagePosition	الصورة {index, number} من {total, number}
+@astryx.lightbox.mediaPosition	{alt}، {index, number} من {total, number}
+@astryx.lightbox.mediaViewer	عارض الوسائط
+@astryx.lightbox.next	التالي
+@astryx.lightbox.previous	السابق
+@astryx.lightbox.zoom	تكبير
+@astryx.lightbox.zoomedIn	تم التكبير، استخدم مفاتيح الأسهم للتحريك
+@astryx.lightbox.zoomedOut	تم التصغير
+@astryx.link.newTab	(يُفتح في علامة تبويب جديدة)
+@astryx.listInput.addItem	إضافة {itemName}
+@astryx.listInput.announceAdded	تمت إضافة {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} بالفعل {boundary, select, first {في بداية القائمة} last {في نهاية القائمة} other {}}.
+@astryx.listInput.announceDropped	تم إفلات {itemName} في الموضع {position, number} من {total, number}.
+@astryx.listInput.announceGrabbed	تم التقاط {itemName} {position, number}. استخدم مفاتيح الأسهم للتحريك، وSpace أو Enter للإفلات، وEscape للإلغاء.
+@astryx.listInput.announceMovedToPosition	تم نقل {itemName} إلى الموضع {position, number} من {total, number}.
+@astryx.listInput.announceRemoved	تمت إزالة {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	تم إلغاء إعادة الترتيب.
+@astryx.listInput.announceReturnedToPosition	تمت إعادة {itemName} إلى الموضع {position, number}.
+@astryx.listInput.emptyDescription	أضف {itemName} للبدء.
+@astryx.listInput.emptyTitle	لم تتم إضافة {itemName} بعد
+@astryx.listInput.fieldLabelWithPosition	{header}، {itemName} {position, number} من {total, number}
+@astryx.listInput.removeItem	إزالة {itemName} {position, number}
+@astryx.listInput.removeUnavailable	الإزالة غير متاحة عندما تكون القائمة معطّلة
+@astryx.listInput.reorderInstructions	استخدم Arrow Up أو Arrow Down لتحريك هذا العنصر موضعًا واحدًا. اضغط على Space أو Enter لالتقاطه وإعادة ترتيبه بشكل موسّع باستخدام لوحة المفاتيح.
+@astryx.listInput.reorderItem	إعادة ترتيب {itemName} {position, number}
+@astryx.markdown.table	جدول
+@astryx.markdown.taskList	قائمة المهام
+@astryx.metadataList.showLess	عرض أقل
+@astryx.metadataList.showMore	عرض المزيد
+@astryx.mobileNav.closeNavigation	إغلاق التنقل
+@astryx.mobileNav.navigation	التنقل
+@astryx.mobileNav.toggle.open	فتح التنقل
+@astryx.moreMenu.label	المزيد من الخيارات
+@astryx.multiSelector.allSelected	تم تحديد الكل
+@astryx.multiSelector.clearAll	مسح كل {label}
+@astryx.multiSelector.empty	لا توجد خيارات
+@astryx.multiSelector.emptySearchResults	لم يُعثر على نتائج
+@astryx.multiSelector.resultCount	{count, number} {count, plural, zero {نتائج} one {نتيجة} two {نتيجتان} few {نتائج} many {نتيجةً} other {نتيجة}}
+@astryx.multiSelector.searchOptions	خيارات البحث
+@astryx.multiSelector.searchPlaceholder	بحث…
+@astryx.multiSelector.selectAll	تحديد الكل
+@astryx.multiSelector.selectAllPartiallySelected	{label}، محدَّد جزئيًا
+@astryx.multiSelector.selectPlaceholder	تحديد…
+@astryx.multiSelector.selectionCleared	تم مسح التحديد
+@astryx.multiSelector.selectionCount	تم تحديد {count, number} من {total, number}
+@astryx.numberInput.clearLabel	مسح {label}
+@astryx.numberInput.decrementLabel	إنقاص {label}
+@astryx.numberInput.incrementLabel	زيادة {label}
+@astryx.outline.label	جدول المحتويات
+@astryx.pagination.count	{from, number}–{to, number} من {total, number}
+@astryx.pagination.first	الانتقال إلى الصفحة الأولى
+@astryx.pagination.goToPage	الانتقال إلى الصفحة {page, number}
+@astryx.pagination.goToPageInput	الانتقال إلى الصفحة
+@astryx.pagination.itemsPerPage	العناصر في كل صفحة
+@astryx.pagination.label	التنقل بين الصفحات
+@astryx.pagination.last	الانتقال إلى الصفحة الأخيرة
+@astryx.pagination.next	الانتقال إلى الصفحة التالية
+@astryx.pagination.nextBy	التقدّم {step, number} {step, plural, zero {صفحات} one {صفحة} two {صفحتان} few {صفحات} many {صفحةً} other {صفحة}}
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	الصفحة {current, number}
+@astryx.pagination.pageIndicators	مؤشرات الصفحات
+@astryx.pagination.pageLabel	الصفحة
+@astryx.pagination.pageOfTotal	الصفحة {current, number} من {total, number}
+@astryx.pagination.previous	الانتقال إلى الصفحة السابقة
+@astryx.pagination.previousBy	الرجوع {step, number} {step, plural, zero {صفحات} one {صفحة} two {صفحتان} few {صفحات} many {صفحةً} other {صفحة}}
+@astryx.popover.close	إغلاق النافذة المنبثقة
+@astryx.powersearch.editor.addFilter	+ إضافة مُرشِّح
+@astryx.powersearch.editor.apply	تطبيق
+@astryx.powersearch.editor.cancel	إلغاء
+@astryx.powersearch.editor.delete	حذف
+@astryx.powersearch.editor.field	الحقل
+@astryx.powersearch.editor.group	المجموعة
+@astryx.powersearch.editor.groupOperator	عامل المجموعة
+@astryx.powersearch.editor.operator	العامل
+@astryx.powersearch.editor.removeFilter	إزالة المُرشِّح
+@astryx.powersearch.label	بحث
+@astryx.powersearch.operator.after	بعد
+@astryx.powersearch.operator.before	قبل
+@astryx.powersearch.operator.between	بين
+@astryx.powersearch.operator.contains	يحتوي على
+@astryx.powersearch.operator.endsWith	ينتهي بـ
+@astryx.powersearch.operator.equals	يساوي
+@astryx.powersearch.operator.greaterThan	أكبر من
+@astryx.powersearch.operator.greaterThanOrEqual	أكبر من أو يساوي
+@astryx.powersearch.operator.is	يساوي
+@astryx.powersearch.operator.isAnyOf	أيّ من
+@astryx.powersearch.operator.isFalse	خطأ
+@astryx.powersearch.operator.isNoneOf	لا شيء من
+@astryx.powersearch.operator.isNot	لا يساوي
+@astryx.powersearch.operator.isTrue	صحيح
+@astryx.powersearch.operator.lessThan	أصغر من
+@astryx.powersearch.operator.lessThanOrEqual	أصغر من أو يساوي
+@astryx.powersearch.operator.notContains	لا يحتوي على
+@astryx.powersearch.operator.notEndsWith	لا ينتهي بـ
+@astryx.powersearch.operator.notEquals	لا يساوي
+@astryx.powersearch.operator.notStartsWith	لا يبدأ بـ
+@astryx.powersearch.operator.startsWith	يبدأ بـ
+@astryx.powersearch.placeholder	بحث…
+@astryx.powersearch.resultCount	{count, number} {count, plural, zero {نتائج} one {نتيجة} two {نتيجتان} few {نتائج} many {نتيجةً} other {نتيجة}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	أضف قيمًا…
+@astryx.powersearch.valueEditor.date	التاريخ
+@astryx.powersearch.valueEditor.dateRange	نطاق التاريخ
+@astryx.powersearch.valueEditor.endDate	تاريخ الانتهاء
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	أدخل رقمًا…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	أدخل قيمة…
+@astryx.powersearch.valueEditor.entities	الكيانات
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, zero {كيانات} one {كيان} two {كيانان} few {كيانات} many {كيانًا} other {كيان}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, zero {مُرشِّحات} one {مُرشِّح} two {مُرشِّحان} few {مُرشِّحات} many {مُرشِّحًا} other {مُرشِّح}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}
+@astryx.powersearch.valueEditor.relativeDate	تاريخ نسبي
+@astryx.powersearch.valueEditor.searchPlaceholder	بحث…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	حدّد قيمًا…
+@astryx.powersearch.valueEditor.startDate	تاريخ البدء
+@astryx.powersearch.valueEditor.time	الوقت
+@astryx.powersearch.valueEditor.value	القيمة
+@astryx.powersearch.valueEditor.values	القيم
+@astryx.resizable.collapsed	مطوي
+@astryx.resizable.handle.label	مقبض تغيير الحجم
+@astryx.selector.clearLabel	مسح {label}
+@astryx.selector.empty	لا توجد خيارات
+@astryx.selector.emptySearchResults	لم يُعثر على نتائج
+@astryx.selector.placeholder	اختر…
+@astryx.selector.resultCount	{count, number} {count, plural, zero {نتائج} one {نتيجة} two {نتيجتان} few {نتائج} many {نتيجةً} other {نتيجة}}
+@astryx.selector.searchOptions	خيارات البحث
+@astryx.selector.searchPlaceholder	بحث…
+@astryx.sideNav.heading.dialogLabel	قائمة التنقل
+@astryx.sideNav.heading.openMenu	{heading}, فتح القائمة
+@astryx.sideNav.label	التنقل الجانبي
+@astryx.sideNav.resizeSidebar	تغيير حجم الشريط الجانبي
+@astryx.sideNavCollapseButton.collapseSidebar	طيّ الشريط الجانبي
+@astryx.sideNavCollapseButton.expandSidebar	توسيع الشريط الجانبي
+@astryx.sideNavItem.collapse	طيّ {label}
+@astryx.sideNavItem.expand	توسيع {label}
+@astryx.sideNavItem.submenuLabel	القائمة الفرعية لـ {label}
+@astryx.spinner.loading	جارٍ التحميل
+@astryx.step.goToStep	الانتقال إلى الخطوة {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	الانتقال إلى الخطوة {stepNumber, number}: {label}، {status}
+@astryx.step.optional	اختياري
+@astryx.step.status.completed	مكتملة
+@astryx.step.status.error	خطأ
+@astryx.step.status.warning	تحذير
+@astryx.stepper.label	التقدّم
+@astryx.stepper.nextStep	الخطوة التالية
+@astryx.stepper.previousStep	الخطوة السابقة
+@astryx.tabList.label	علامات التبويب
+@astryx.table.filter.allPlaceholder	الكل
+@astryx.table.filter.apply	تطبيق
+@astryx.table.filter.reset	إعادة تعيين
+@astryx.table.label	جدول
+@astryx.table.noData	لا توجد بيانات
+@astryx.table.pagination.label	تنقل الجدول بين الصفحات
+@astryx.table.pagination.labelAbove	{label} (أعلى)
+@astryx.table.pagination.labelBelow	{label} (أسفل)
+@astryx.table.rowStatus.columnHeader	حالة الصف
+@astryx.table.selection.selectAllRows	تحديد جميع الصفوف
+@astryx.table.selection.selectRow	تحديد الصف
+@astryx.table.selection.selectRowNamed	تحديد {label}
+@astryx.table.sort.ascending	ترتيب تصاعدي
+@astryx.table.sort.clear	مسح الترتيب
+@astryx.table.sort.descending	ترتيب تنازلي
+@astryx.tableFiltering.filterByColumn	تصفية {header}
+@astryx.tableGroupedRows.collapseGroup	طيّ المجموعة {groupKey}
+@astryx.tableGroupedRows.expandGroup	توسيع المجموعة {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	طيّ جميع الصفوف
+@astryx.tableRowExpansion.collapseRow	طيّ الصف
+@astryx.tableRowExpansion.columnHeader	توسيع الصف
+@astryx.tableRowExpansion.expandAllRows	توسيع جميع الصفوف
+@astryx.tableRowExpansion.expandRow	توسيع الصف
+@astryx.tableTree.collapseAllRows	طيّ جميع الصفوف
+@astryx.tableTree.collapseRow	طيّ الصف
+@astryx.tableTree.expandAllRows	توسيع جميع الصفوف
+@astryx.tableTree.expandRow	توسيع الصف
+@astryx.textArea.charactersOverLimit	تجاوز الحد بمقدار {count, number} {count, plural, zero {حرف} one {حرف} two {حرفان} few {أحرف} many {حرفًا} other {حرف}}
+@astryx.textArea.charactersRemaining	تبقّى {count, number} {count, plural, zero {حرف} one {حرف} two {حرفان} few {أحرف} many {حرفًا} other {حرف}}
+@astryx.textInput.clearLabel	مسح {label}
+@astryx.thumbnail.fallbackName	صورة مصغّرة
+@astryx.thumbnail.open	فتح {accessibleName}
+@astryx.thumbnail.remove	إزالة {accessibleName}
+@astryx.timeInput.clearLabel	مسح {label}
+@astryx.timeInput.invalidTime	وقت غير صالح
+@astryx.timeInput.openPicker	فتح {label}
+@astryx.timeInput.placeholder	حدّد وقتًا
+@astryx.timestamp.copied	تم النسخ
+@astryx.timestamp.copy	نسخ
+@astryx.timestamp.copyValue	نسخ {value}
+@astryx.timestamp.detailsLabel	تفاصيل الطابع الزمني
+@astryx.toast.dismiss	تجاهل الإشعار
+@astryx.toast.viewport	الإشعارات
+@astryx.token.remove	إزالة {label}
+@astryx.tokenizer.clearAll	مسح الكل
+@astryx.tokenizer.tokenAdded	تمت إضافة {label}
+@astryx.tokenizer.tokenRemoved	تمت إزالة {label}
+@astryx.topNav.heading.dialogLabel	قائمة التنقل
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}فتح القائمة
+@astryx.topNav.landmarkLabel	التنقل العلوي
+@astryx.transferList.addAll	إضافة الكل
+@astryx.transferList.addOption	إضافة {label}
+@astryx.transferList.announceAdded	تمت إضافة {label}. تم تحديد {count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}.
+@astryx.transferList.announceBulkAdded	تمت إضافة {count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}.
+@astryx.transferList.announceBulkRemoved	تمت إزالة {count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}.
+@astryx.transferList.announceDropped	تم إفلات {label} في الموضع {position, number} من {total, number}.
+@astryx.transferList.announceGrabbed	تم التقاط {label}، في الموضع {position, number} من {total, number}. استخدم مفاتيح الأسهم للتحريك، وSpace أو Enter للإفلات، أو Escape للإلغاء.
+@astryx.transferList.announceMoveCancelled	تم إلغاء نقل {label}.
+@astryx.transferList.announceMovedToPosition	{label}، في الموضع {position, number} من {total, number}.
+@astryx.transferList.announceRemoved	تمت إزالة {label}. تم تحديد {count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}.
+@astryx.transferList.announceReturned	تمت إعادة {label} إلى الموضع {position, number}.
+@astryx.transferList.announceSearchResults	تم العثور على {count, number} {count, plural, zero {عناصر} one {عنصر} two {عنصران} few {عناصر} many {عنصرًا} other {عنصر}}.
+@astryx.transferList.availableEmpty	لا توجد خيارات متاحة
+@astryx.transferList.availableLabel	الخيارات المتاحة
+@astryx.transferList.clear	مسح
+@astryx.transferList.noResults	لا توجد نتائج
+@astryx.transferList.removeOption	إزالة {label}
+@astryx.transferList.reorderDisabled	لا يمكن إعادة ترتيب {label}
+@astryx.transferList.reorderInstructions	اضغط على Space أو Enter لالتقاط عنصر. استخدم Arrow Up أو Arrow Down أو Home أو End لتحريكه. اضغط على Space أو Enter للإفلات، أو Escape للإلغاء.
+@astryx.transferList.reorderOption	إعادة ترتيب {label}
+@astryx.transferList.searchLabel	بحث في {label}
+@astryx.transferList.searchPlaceholder	بحث…
+@astryx.transferList.selectedEmpty	لا توجد خيارات محدَّدة
+@astryx.transferList.selectedLabel	الخيارات المحدَّدة
+@astryx.transferList.transferDisabled	لا يمكن نقل {label}
+@astryx.transferList.ungroupedLabel	أخرى
+@astryx.transferListSelector.apply	تطبيق
+@astryx.transferListSelector.cancel	إلغاء
+@astryx.transferListSelector.triggerLabel	تم تحديد {count, number}
+@astryx.treeList.toggleChildren	تبديل العناصر الفرعية
+@astryx.typeahead.clearSelection	مسح التحديد
+@astryx.typeahead.emptySearchResults	لم يُعثر على نتائج
+@astryx.typeahead.loading	جارٍ التحميل
+@astryx.typeahead.resultCount	{count, number} {count, plural, zero {نتائج} one {نتيجة} two {نتيجتان} few {نتائج} many {نتيجةً} other {نتيجة}}
+@astryx.typeahead.searchPlaceholder	بحث…
+@astryx.typeahead.searchResults	نتائج البحث

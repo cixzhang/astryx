@@ -1,0 +1,365 @@
+@astryx.alertDialog.cancel	Откажи
+@astryx.appShell.mobileNavigation	Мобилна навигација
+@astryx.appShell.skipToContent	Пређи на садржај
+@astryx.avatar.nameWithStatus	{name}, {status}
+@astryx.avatarGroup.keyboardHint	Користите стрелице за кретање између аватара
+@astryx.avatarGroup.label	Аватари
+@astryx.avatarGroup.overflow	још {count, number}
+@astryx.banner.collapse	Скупи
+@astryx.banner.dismiss	Одбаци
+@astryx.banner.dismissTitled	{dismiss} {title}
+@astryx.banner.expand	Прошири
+@astryx.breadcrumbs.label	Путања навигације
+@astryx.button.loading	Учитавање
+@astryx.calendar.dayInRange	{date}, у опсегу
+@astryx.calendar.dayRangeEnd	{date}, крај опсега
+@astryx.calendar.dayRangeStart	{date}, почетак опсега
+@astryx.calendar.dayRangeStartAndEnd	{date}, почетак и крај опсега
+@astryx.calendar.daySelected	{date}, изабрано
+@astryx.calendar.nextMonth	Следећи месец
+@astryx.calendar.previousMonth	Претходни месец
+@astryx.calendar.rangeClearedAnnounce	Датум почетка {date} је обрисан. Изаберите датум почетка.
+@astryx.calendar.rangeCompleteAnnounce	Изабрани опсег: од {start} до {end}.
+@astryx.calendar.rangeStartAnnounce	Датум почетка {date}. Изаберите датум завршетка.
+@astryx.carousel.label	Ротатор
+@astryx.carousel.scrollLeft	Помери улево
+@astryx.carousel.scrollRight	Помери удесно
+@astryx.carousel.slideLabel	Слајд {current, number} од {total, number}
+@astryx.chart.dataTableCaption	Подаци: {label}
+@astryx.chart.label	Графикон
+@astryx.chart.labelWithSeries	Графикон: {series} по {xKey}
+@astryx.chartLegend.label	Легенда графикона
+@astryx.chat.composer.placeholder	Унесите поруку…
+@astryx.chat.composerDrawer.label	Ставке
+@astryx.chat.composerInput.label	Поље за поруку
+@astryx.chat.messageAriaLabel	Порука {status}
+@astryx.chat.pastedText.expand	Прошири
+@astryx.chat.speechRecognition.noSpeechDetected	Говор није откривен.
+@astryx.chat.status.delivered	Испоручено
+@astryx.chat.status.failed	Неуспешно
+@astryx.chat.status.read	Прочитано
+@astryx.chat.status.sending	Слање
+@astryx.chat.status.sent	Послато
+@astryx.chatComposerDrawer.collapse	Скупи {label}
+@astryx.chatComposerDrawer.expand	Прошири {label}
+@astryx.chatDictationButton.startDictation	Започни диктирање
+@astryx.chatDictationButton.stopDictation	Заустави диктирање
+@astryx.chatLayout.newMessages	Нове поруке
+@astryx.chatLayoutScrollButton.scrollToBottom	Помери на дно
+@astryx.chatMessage.messageFrom	Порука од {sender}
+@astryx.chatSendButton.send	Пошаљи
+@astryx.chatSendButton.stop	Заустави
+@astryx.chatToolCalls.error	Грешка: {message}
+@astryx.chatToolCalls.groupLabel	Позиви алата: {count}
+@astryx.chatToolCalls.status.complete	Завршено
+@astryx.chatToolCalls.status.error	Неуспешно
+@astryx.chatToolCalls.status.pending	На чекању
+@astryx.chatToolCalls.status.running	У току
+@astryx.chatTriggerMenu.suggestions	Предлози
+@astryx.chatTypingIndicator.many	{names} куцају…
+@astryx.chatTypingIndicator.one	{name} куца…
+@astryx.chatTypingIndicator.others	{count, number} {count, plural, one {друга особа} few {друге особе} other {других особа}}
+@astryx.checkboxList.item.checkbox	Поље за потврду
+@astryx.citation.label	Извор {number}: {title}
+@astryx.codeBlock.code	Код
+@astryx.codeBlock.copied	Копирано
+@astryx.codeBlock.copyCode	Копирај код
+@astryx.commandPalette.emptyBootstrap	Куцајте за претрагу
+@astryx.commandPalette.emptySearch	Нема резултата
+@astryx.commandPalette.footer.close	Затвори
+@astryx.commandPalette.footer.navigate	Кретање
+@astryx.commandPalette.footer.select	Изабери
+@astryx.commandPalette.input.placeholder	Претрага…
+@astryx.commandPalette.label	Палета команди
+@astryx.commandPalette.list.label	Команде
+@astryx.commandPalette.loading	Учитавање
+@astryx.commandPalette.noResultsFor	Нема резултата за {query}
+@astryx.commandPalette.resultCount	{count, number} {count, plural, one {резултат} few {резултата} other {резултата}}
+@astryx.contextMenu.label	Контекстни мени
+@astryx.dateInput.chooseMonthYear	{monthYear}, изаберите месец и годину
+@astryx.dateInput.clear	Обриши {label}
+@astryx.dateInput.closeCalendar	Затвори календар
+@astryx.dateInput.dialogLabel	Изаберите датум
+@astryx.dateInput.doneChoosingMonth	Готово
+@astryx.dateInput.invalidDate	Неважећи датум
+@astryx.dateInput.monthWheel	Месец
+@astryx.dateInput.openCalendar	Отвори календар
+@astryx.dateInput.placeholder	Изаберите датум
+@astryx.dateInput.resetPicking	Ресетуј
+@astryx.dateInput.savePicking	Сачувај
+@astryx.dateInput.toggleCalendarClose	Затвори календар
+@astryx.dateInput.yearWheel	Година
+@astryx.dateRangeInput.dialogLabel	Изаберите опсег датума
+@astryx.dateRangeInput.placeholder	Изаберите опсег датума
+@astryx.dateRangeInput.presetDateRanges	Унапред задати опсези датума
+@astryx.dateTimeInput.dateTab	Датум
+@astryx.dateTimeInput.dialogLabel	Изаберите датум и време
+@astryx.dateTimeInput.hourWheel	Сат
+@astryx.dateTimeInput.meridiemAM	пре подне
+@astryx.dateTimeInput.meridiemPM	по подне
+@astryx.dateTimeInput.meridiemWheel	Пре подне/по подне
+@astryx.dateTimeInput.minuteWheel	Минут
+@astryx.dateTimeInput.openTimePicker	Отвори {label}
+@astryx.dateTimeInput.pickerMode	Одељак за датум и време
+@astryx.dateTimeInput.placeholder	Изаберите датум
+@astryx.dateTimeInput.saveDatePicking	Сачувај датум
+@astryx.dateTimeInput.secondWheel	Секунд
+@astryx.dateTimeInput.timeHint12h	нпр. 2:30 по подне
+@astryx.dateTimeInput.timeHint24h	нпр. 14:30
+@astryx.dateTimeInput.timeOptionsLabel	Опције: {label}
+@astryx.dateTimeInput.timePlaceholder	Изаберите време
+@astryx.dateTimeInput.timeSuffix	време: {label}
+@astryx.dateTimeInput.timeTab	Време
+@astryx.dialog.close	Затвори
+@astryx.dropdownMenu.back	Назад
+@astryx.dropdownMenu.label	Мени
+@astryx.field.optional	Опционо
+@astryx.field.required	Обавезно
+@astryx.fileInput.clearLabel	Обриши {label}
+@astryx.fileInput.dropHint	Превуците датотеке овде
+@astryx.fileInput.errorInvalidType	Тип датотеке „{fileName}“ није дозвољен
+@astryx.fileInput.errorMaxFiles	Дозвољено је највише {maxFiles} датотека
+@astryx.fileInput.errorMaxSize	Датотека „{fileName}“ премашује ограничење од {maxSize}
+@astryx.fileInput.fileSelected	Изабрана је 1 датотека: {fileName}
+@astryx.fileInput.filesSelected	Изабрано је {count} датотека
+@astryx.fileInput.placeholder	Изаберите датотеку
+@astryx.fileInput.placeholderMultiple	Изаберите датотеке
+@astryx.fileInput.required	Обавезно
+@astryx.fileInput.triggerWithFiles	{label}, {fileNames}
+@astryx.input.readOnly	Само за читање
+@astryx.input.statusButton.error	Детаљи грешке
+@astryx.input.statusButton.success	Детаљи успеха
+@astryx.input.statusButton.warning	Детаљи упозорења
+@astryx.keyboardHint.toNavigate	за навигацију
+@astryx.lightbox.close	Затвори
+@astryx.lightbox.imagePosition	Слика {index, number} од {total, number}
+@astryx.lightbox.mediaPosition	{alt}, {index, number} од {total, number}
+@astryx.lightbox.mediaViewer	Прегледач медија
+@astryx.lightbox.next	Следеће
+@astryx.lightbox.previous	Претходно
+@astryx.lightbox.zoom	Зумирање
+@astryx.lightbox.zoomedIn	Увећано, користите стрелице за померање
+@astryx.lightbox.zoomedOut	Умањено
+@astryx.link.newTab	(отвара се у новој картици)
+@astryx.listInput.addItem	Додај {itemName}
+@astryx.listInput.announceAdded	Додато: {itemName} {position, number}.
+@astryx.listInput.announceAlreadyAtBoundary	{itemName} је већ {boundary, select, first {на почетку листе} last {на крају листе} other {}}.
+@astryx.listInput.announceDropped	Ставка „{itemName}“ је спуштена на позицију {position, number} од {total, number}.
+@astryx.listInput.announceGrabbed	Ставка „{itemName}“ {position, number} је подигнута. Користите стрелице за померање, Space или Enter за спуштање и Escape за отказивање.
+@astryx.listInput.announceMovedToPosition	Ставка „{itemName}“ је померена на позицију {position, number} од {total, number}.
+@astryx.listInput.announceRemoved	Уклоњено: {itemName} {position, number}.
+@astryx.listInput.announceReorderCancelled	Промена редоследа је отказана.
+@astryx.listInput.announceReturnedToPosition	Ставка „{itemName}“ је враћена на позицију {position, number}.
+@astryx.listInput.emptyDescription	За почетак додајте ставку „{itemName}“.
+@astryx.listInput.emptyTitle	Још није додато: {itemName}
+@astryx.listInput.fieldLabelWithPosition	{header}, {itemName} {position, number} од {total, number}
+@astryx.listInput.removeItem	Уклони {itemName} {position, number}
+@astryx.listInput.removeUnavailable	Уклањање није доступно док је листа онемогућена
+@astryx.listInput.reorderInstructions	Користите Arrow Up или Arrow Down да померите ставку за једну позицију. Притисните Space или Enter да је подигнете за напредно мењање редоследа тастатуром.
+@astryx.listInput.reorderItem	Промени редослед: {itemName} {position, number}
+@astryx.markdown.table	Табела
+@astryx.markdown.taskList	Листа задатака
+@astryx.metadataList.showLess	Прикажи мање
+@astryx.metadataList.showMore	Прикажи више
+@astryx.mobileNav.closeNavigation	Затвори навигацију
+@astryx.mobileNav.navigation	Навигација
+@astryx.mobileNav.toggle.open	Отвори навигацију
+@astryx.moreMenu.label	Више опција
+@astryx.multiSelector.allSelected	Све је изабрано
+@astryx.multiSelector.clearAll	Обриши све: {label}
+@astryx.multiSelector.empty	Нема опција
+@astryx.multiSelector.emptySearchResults	Нема пронађених резултата
+@astryx.multiSelector.resultCount	{count, number} {count, plural, one {резултат} few {резултата} other {резултата}}
+@astryx.multiSelector.searchOptions	Претражи опције
+@astryx.multiSelector.searchPlaceholder	Претрага…
+@astryx.multiSelector.selectAll	Изабери све
+@astryx.multiSelector.selectAllPartiallySelected	{label}, делимично изабрано
+@astryx.multiSelector.selectPlaceholder	Изабери…
+@astryx.multiSelector.selectionCleared	Избор је обрисан
+@astryx.multiSelector.selectionCount	Изабрано {count, number} од {total, number}
+@astryx.numberInput.clearLabel	Обриши {label}
+@astryx.numberInput.decrementLabel	Смањи {label}
+@astryx.numberInput.incrementLabel	Повећај {label}
+@astryx.outline.label	Садржај
+@astryx.pagination.count	{from, number}–{to, number} од {total, number}
+@astryx.pagination.first	Иди на прву страницу
+@astryx.pagination.goToPage	Иди на страницу {page, number}
+@astryx.pagination.goToPageInput	Иди на страницу
+@astryx.pagination.itemsPerPage	Ставки по страници
+@astryx.pagination.label	Пагинација
+@astryx.pagination.last	Иди на последњу страницу
+@astryx.pagination.next	Иди на следећу страницу
+@astryx.pagination.nextBy	Напред за {step, number} {step, plural, one {страницу} few {странице} other {страница}}
+@astryx.pagination.ofTotalPages	/ {total, number}
+@astryx.pagination.pageAnnounce	Страница {current, number}
+@astryx.pagination.pageIndicators	Индикатори страница
+@astryx.pagination.pageLabel	Страница
+@astryx.pagination.pageOfTotal	Страница {current, number} од {total, number}
+@astryx.pagination.previous	Иди на претходну страницу
+@astryx.pagination.previousBy	Назад за {step, number} {step, plural, one {страницу} few {странице} other {страница}}
+@astryx.popover.close	Затвори прозор
+@astryx.powersearch.editor.addFilter	+ Додај филтер
+@astryx.powersearch.editor.apply	Примени
+@astryx.powersearch.editor.cancel	Откажи
+@astryx.powersearch.editor.delete	Избриши
+@astryx.powersearch.editor.field	Поље
+@astryx.powersearch.editor.group	Групиши
+@astryx.powersearch.editor.groupOperator	Оператор групе
+@astryx.powersearch.editor.operator	Оператор
+@astryx.powersearch.editor.removeFilter	Уклони филтер
+@astryx.powersearch.label	Претрага
+@astryx.powersearch.operator.after	после
+@astryx.powersearch.operator.before	пре
+@astryx.powersearch.operator.between	између
+@astryx.powersearch.operator.contains	садржи
+@astryx.powersearch.operator.endsWith	завршава се са
+@astryx.powersearch.operator.equals	једнако је
+@astryx.powersearch.operator.greaterThan	веће од
+@astryx.powersearch.operator.greaterThanOrEqual	веће или једнако
+@astryx.powersearch.operator.is	јесте
+@astryx.powersearch.operator.isAnyOf	је било које од
+@astryx.powersearch.operator.isFalse	је нетачно
+@astryx.powersearch.operator.isNoneOf	није ниједно од
+@astryx.powersearch.operator.isNot	није
+@astryx.powersearch.operator.isTrue	је тачно
+@astryx.powersearch.operator.lessThan	мање од
+@astryx.powersearch.operator.lessThanOrEqual	мање или једнако
+@astryx.powersearch.operator.notContains	не садржи
+@astryx.powersearch.operator.notEndsWith	не завршава се са
+@astryx.powersearch.operator.notEquals	није једнако
+@astryx.powersearch.operator.notStartsWith	не почиње са
+@astryx.powersearch.operator.startsWith	почиње са
+@astryx.powersearch.placeholder	Претрага…
+@astryx.powersearch.resultCount	{count, number} {count, plural, one {резултат} few {резултата} other {резултата}}
+@astryx.powersearch.valueEditor.addValuesPlaceholder	Додајте вредности…
+@astryx.powersearch.valueEditor.date	Датум
+@astryx.powersearch.valueEditor.dateRange	опсег датума
+@astryx.powersearch.valueEditor.endDate	Датум завршетка
+@astryx.powersearch.valueEditor.enterNumberPlaceholder	Унесите број…
+@astryx.powersearch.valueEditor.enterValuePlaceholder	Унесите вредност…
+@astryx.powersearch.valueEditor.entities	Ентитети
+@astryx.powersearch.valueEditor.entitiesCount	{count, number} {count, plural, one {ентитет} few {ентитета} other {ентитета}}
+@astryx.powersearch.valueEditor.filtersCount	{count, number} {count, plural, one {филтер} few {филтера} other {филтера}}
+@astryx.powersearch.valueEditor.itemsCount	{count, number} {count, plural, one {ставка} few {ставке} other {ставки}}
+@astryx.powersearch.valueEditor.relativeDate	Релативни датум
+@astryx.powersearch.valueEditor.searchPlaceholder	Претрага…
+@astryx.powersearch.valueEditor.selectValuesPlaceholder	Изаберите вредности…
+@astryx.powersearch.valueEditor.startDate	Датум почетка
+@astryx.powersearch.valueEditor.time	Време
+@astryx.powersearch.valueEditor.value	Вредност
+@astryx.powersearch.valueEditor.values	Вредности
+@astryx.resizable.collapsed	Скупљено
+@astryx.resizable.handle.label	Ручица за промену величине
+@astryx.selector.clearLabel	Обриши {label}
+@astryx.selector.empty	Нема опција
+@astryx.selector.emptySearchResults	Нема пронађених резултата
+@astryx.selector.placeholder	Изабери…
+@astryx.selector.resultCount	{count, number} {count, plural, one {резултат} few {резултата} other {резултата}}
+@astryx.selector.searchOptions	Претражи опције
+@astryx.selector.searchPlaceholder	Претрага…
+@astryx.sideNav.heading.dialogLabel	Мени навигације
+@astryx.sideNav.heading.openMenu	{heading}, Отвори мени
+@astryx.sideNav.label	Бочна навигација
+@astryx.sideNav.resizeSidebar	Промени величину бочне траке
+@astryx.sideNavCollapseButton.collapseSidebar	Скупи бочну траку
+@astryx.sideNavCollapseButton.expandSidebar	Прошири бочну траку
+@astryx.sideNavItem.collapse	Скупи {label}
+@astryx.sideNavItem.expand	Прошири {label}
+@astryx.sideNavItem.submenuLabel	Подмени: {label}
+@astryx.spinner.loading	Учитавање
+@astryx.step.goToStep	Иди на корак {stepNumber, number}: {label}
+@astryx.step.goToStepWithStatus	Иди на корак {stepNumber, number}: {label}, {status}
+@astryx.step.optional	Опционо
+@astryx.step.status.completed	завршено
+@astryx.step.status.error	грешка
+@astryx.step.status.warning	упозорење
+@astryx.stepper.label	Напредак
+@astryx.stepper.nextStep	Следећи корак
+@astryx.stepper.previousStep	Претходни корак
+@astryx.tabList.label	Картице
+@astryx.table.filter.allPlaceholder	Све
+@astryx.table.filter.apply	Примени
+@astryx.table.filter.reset	Ресетуј
+@astryx.table.label	Табела
+@astryx.table.noData	Нема података
+@astryx.table.pagination.label	Пагинација табеле
+@astryx.table.pagination.labelAbove	{label} (горе)
+@astryx.table.pagination.labelBelow	{label} (доле)
+@astryx.table.rowStatus.columnHeader	Статус реда
+@astryx.table.selection.selectAllRows	Изабери све редове
+@astryx.table.selection.selectRow	Изабери ред
+@astryx.table.selection.selectRowNamed	Изабери {label}
+@astryx.table.sort.ascending	Сортирај растуће
+@astryx.table.sort.clear	Обриши сортирање
+@astryx.table.sort.descending	Сортирај опадајуће
+@astryx.tableFiltering.filterByColumn	Филтрирај {header}
+@astryx.tableGroupedRows.collapseGroup	Скупи групу {groupKey}
+@astryx.tableGroupedRows.expandGroup	Прошири групу {groupKey}
+@astryx.tableRowExpansion.collapseAllRows	Скупи све редове
+@astryx.tableRowExpansion.collapseRow	Скупи ред
+@astryx.tableRowExpansion.columnHeader	Проширивање реда
+@astryx.tableRowExpansion.expandAllRows	Прошири све редове
+@astryx.tableRowExpansion.expandRow	Прошири ред
+@astryx.tableTree.collapseAllRows	Скупи све редове
+@astryx.tableTree.collapseRow	Скупи ред
+@astryx.tableTree.expandAllRows	Прошири све редове
+@astryx.tableTree.expandRow	Прошири ред
+@astryx.textArea.charactersOverLimit	{count, number} {count, plural, one {знак} few {знака} other {знакова}} преко ограничења
+@astryx.textArea.charactersRemaining	Преостало {count, number} {count, plural, one {знак} few {знака} other {знакова}}
+@astryx.textInput.clearLabel	Обриши {label}
+@astryx.thumbnail.fallbackName	Сличица
+@astryx.thumbnail.open	Отвори {accessibleName}
+@astryx.thumbnail.remove	Уклони {accessibleName}
+@astryx.timeInput.clearLabel	Обриши {label}
+@astryx.timeInput.invalidTime	Неважеће време
+@astryx.timeInput.openPicker	Отвори {label}
+@astryx.timeInput.placeholder	Изаберите време
+@astryx.timestamp.copied	Копирано
+@astryx.timestamp.copy	Копирај
+@astryx.timestamp.copyValue	Копирај {value}
+@astryx.timestamp.detailsLabel	Детаљи временске ознаке
+@astryx.toast.dismiss	Одбаци обавештење
+@astryx.toast.viewport	Обавештења
+@astryx.token.remove	Уклони {label}
+@astryx.tokenizer.clearAll	Обриши све
+@astryx.tokenizer.tokenAdded	Додато: {label}
+@astryx.tokenizer.tokenRemoved	Уклоњено: {label}
+@astryx.topNav.heading.dialogLabel	Мени навигације
+@astryx.topNav.heading.openMenu	{hasHeading, select, true {{heading}, } other {}}Отвори мени
+@astryx.topNav.landmarkLabel	Горња навигација
+@astryx.transferList.addAll	Додај све
+@astryx.transferList.addOption	Додај {label}
+@astryx.transferList.announceAdded	Додато: {label}. {count, number} {count, plural, one {ставка је изабрана} few {ставке су изабране} other {ставки је изабрано}}.
+@astryx.transferList.announceBulkAdded	{count, number} {count, plural, one {ставка је додата} few {ставке су додате} other {ставки је додато}}.
+@astryx.transferList.announceBulkRemoved	{count, number} {count, plural, one {ставка је уклоњена} few {ставке су уклоњене} other {ставки је уклоњено}}.
+@astryx.transferList.announceDropped	Ставка „{label}“ је спуштена на позицију {position, number} од {total, number}.
+@astryx.transferList.announceGrabbed	Ставка „{label}“ је подигнута, позиција {position, number} од {total, number}. Користите стрелице за померање, Space или Enter за спуштање или Escape за отказивање.
+@astryx.transferList.announceMoveCancelled	Премештање ставке „{label}“ је отказано.
+@astryx.transferList.announceMovedToPosition	{label}, позиција {position, number} од {total, number}.
+@astryx.transferList.announceRemoved	Уклоњено: {label}. {count, number} {count, plural, one {ставка је изабрана} few {ставке су изабране} other {ставки је изабрано}}.
+@astryx.transferList.announceReturned	Ставка „{label}“ је враћена на позицију {position, number}.
+@astryx.transferList.announceSearchResults	{count, number} {count, plural, one {ставка је пронађена} few {ставке су пронађене} other {ставки је пронађено}}.
+@astryx.transferList.availableEmpty	Нема доступних опција
+@astryx.transferList.availableLabel	Доступно
+@astryx.transferList.clear	Обриши
+@astryx.transferList.noResults	Нема резултата
+@astryx.transferList.removeOption	Уклони {label}
+@astryx.transferList.reorderDisabled	Редослед ставке „{label}“ не може да се промени
+@astryx.transferList.reorderInstructions	Притисните Space или Enter да подигнете ставку. Користите Arrow Up, Arrow Down, Home или End да је померите. Притисните Space или Enter за спуштање или Escape за отказивање.
+@astryx.transferList.reorderOption	Промени редослед: {label}
+@astryx.transferList.searchLabel	Претражи {label}
+@astryx.transferList.searchPlaceholder	Претрага…
+@astryx.transferList.selectedEmpty	Нема изабраних опција
+@astryx.transferList.selectedLabel	Изабрано
+@astryx.transferList.transferDisabled	{label} не може да се премести
+@astryx.transferList.ungroupedLabel	Остало
+@astryx.transferListSelector.apply	Примени
+@astryx.transferListSelector.cancel	Откажи
+@astryx.transferListSelector.triggerLabel	Изабрано: {count, number}
+@astryx.treeList.toggleChildren	Пребаци подставке
+@astryx.typeahead.clearSelection	Обриши избор
+@astryx.typeahead.emptySearchResults	Нема пронађених резултата
+@astryx.typeahead.loading	Учитавање
+@astryx.typeahead.resultCount	{count, number} {count, plural, one {резултат} few {резултата} other {резултата}}
+@astryx.typeahead.searchPlaceholder	Претрага…
+@astryx.typeahead.searchResults	Резултати претраге

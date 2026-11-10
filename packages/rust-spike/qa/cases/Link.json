@@ -818,7 +818,7 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "linkprovider-0001",
+     "id": "link-provider-0001",
      "kind": "default",
      "props": {}
     }

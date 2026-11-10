@@ -46,110 +46,110 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "appshell-0001",
+     "id": "app-shell-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "appshell-0002",
+     "id": "app-shell-0002",
      "kind": "sweep",
      "props": {
       "contentPadding": 0.5
      }
     },
     {
-     "id": "appshell-0003",
+     "id": "app-shell-0003",
      "kind": "sweep",
      "props": {
       "contentPadding": 1
      }
     },
     {
-     "id": "appshell-0004",
+     "id": "app-shell-0004",
      "kind": "sweep",
      "props": {
       "contentPadding": 1.5
      }
     },
     {
-     "id": "appshell-0005",
+     "id": "app-shell-0005",
      "kind": "sweep",
      "props": {
       "contentPadding": 2
      }
     },
     {
-     "id": "appshell-0006",
+     "id": "app-shell-0006",
      "kind": "sweep",
      "props": {
       "contentPadding": 3
      }
     },
     {
-     "id": "appshell-0007",
+     "id": "app-shell-0007",
      "kind": "sweep",
      "props": {
       "contentPadding": 4
      }
     },
     {
-     "id": "appshell-0008",
+     "id": "app-shell-0008",
      "kind": "sweep",
      "props": {
       "contentPadding": 5
      }
     },
     {
-     "id": "appshell-0009",
+     "id": "app-shell-0009",
      "kind": "sweep",
      "props": {
       "contentPadding": 6
      }
     },
     {
-     "id": "appshell-0010",
+     "id": "app-shell-0010",
      "kind": "sweep",
      "props": {
       "contentPadding": 8
      }
     },
     {
-     "id": "appshell-0011",
+     "id": "app-shell-0011",
      "kind": "sweep",
      "props": {
       "contentPadding": 10
      }
     },
     {
-     "id": "appshell-0012",
+     "id": "app-shell-0012",
      "kind": "sweep",
      "props": {
       "height": "auto"
      }
     },
     {
-     "id": "appshell-0013",
+     "id": "app-shell-0013",
      "kind": "sweep",
      "props": {
       "variant": "wash"
      }
     },
     {
-     "id": "appshell-0014",
+     "id": "app-shell-0014",
      "kind": "sweep",
      "props": {
       "variant": "surface"
      }
     },
     {
-     "id": "appshell-0015",
+     "id": "app-shell-0015",
      "kind": "sweep",
      "props": {
       "variant": "section"
      }
     },
     {
-     "id": "appshell-0016",
+     "id": "app-shell-0016",
      "kind": "pairwise",
      "props": {
       "height": "auto",
@@ -157,7 +157,7 @@
      }
     },
     {
-     "id": "appshell-0017",
+     "id": "app-shell-0017",
      "kind": "pairwise",
      "props": {
       "contentPadding": 0.5,
@@ -165,7 +165,7 @@
      }
     },
     {
-     "id": "appshell-0018",
+     "id": "app-shell-0018",
      "kind": "pairwise",
      "props": {
       "contentPadding": 0.5,
@@ -174,7 +174,7 @@
      }
     },
     {
-     "id": "appshell-0019",
+     "id": "app-shell-0019",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1,
@@ -182,7 +182,7 @@
      }
     },
     {
-     "id": "appshell-0020",
+     "id": "app-shell-0020",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1,
@@ -190,7 +190,7 @@
      }
     },
     {
-     "id": "appshell-0021",
+     "id": "app-shell-0021",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1.5,
@@ -199,7 +199,7 @@
      }
     },
     {
-     "id": "appshell-0022",
+     "id": "app-shell-0022",
      "kind": "pairwise",
      "props": {
       "contentPadding": 2,
@@ -207,7 +207,7 @@
      }
     },
     {
-     "id": "appshell-0023",
+     "id": "app-shell-0023",
      "kind": "pairwise",
      "props": {
       "contentPadding": 2,
@@ -216,7 +216,7 @@
      }
     },
     {
-     "id": "appshell-0024",
+     "id": "app-shell-0024",
      "kind": "pairwise",
      "props": {
       "contentPadding": 3,
@@ -224,7 +224,7 @@
      }
     },
     {
-     "id": "appshell-0025",
+     "id": "app-shell-0025",
      "kind": "pairwise",
      "props": {
       "contentPadding": 3,
@@ -233,7 +233,7 @@
      }
     },
     {
-     "id": "appshell-0026",
+     "id": "app-shell-0026",
      "kind": "pairwise",
      "props": {
       "contentPadding": 4,
@@ -241,7 +241,7 @@
      }
     },
     {
-     "id": "appshell-0027",
+     "id": "app-shell-0027",
      "kind": "pairwise",
      "props": {
       "contentPadding": 4,
@@ -250,7 +250,7 @@
      }
     },
     {
-     "id": "appshell-0028",
+     "id": "app-shell-0028",
      "kind": "pairwise",
      "props": {
       "contentPadding": 5,
@@ -258,7 +258,7 @@
      }
     },
     {
-     "id": "appshell-0029",
+     "id": "app-shell-0029",
      "kind": "pairwise",
      "props": {
       "contentPadding": 5,
@@ -267,7 +267,7 @@
      }
     },
     {
-     "id": "appshell-0030",
+     "id": "app-shell-0030",
      "kind": "pairwise",
      "props": {
       "contentPadding": 6,
@@ -275,7 +275,7 @@
      }
     },
     {
-     "id": "appshell-0031",
+     "id": "app-shell-0031",
      "kind": "pairwise",
      "props": {
       "contentPadding": 6,
@@ -284,7 +284,7 @@
      }
     },
     {
-     "id": "appshell-0032",
+     "id": "app-shell-0032",
      "kind": "pairwise",
      "props": {
       "contentPadding": 8,
@@ -292,7 +292,7 @@
      }
     },
     {
-     "id": "appshell-0033",
+     "id": "app-shell-0033",
      "kind": "pairwise",
      "props": {
       "contentPadding": 8,
@@ -301,7 +301,7 @@
      }
     },
     {
-     "id": "appshell-0034",
+     "id": "app-shell-0034",
      "kind": "pairwise",
      "props": {
       "contentPadding": 10,
@@ -309,7 +309,7 @@
      }
     },
     {
-     "id": "appshell-0035",
+     "id": "app-shell-0035",
      "kind": "pairwise",
      "props": {
       "contentPadding": 10,
@@ -318,7 +318,7 @@
      }
     },
     {
-     "id": "appshell-0036",
+     "id": "app-shell-0036",
      "kind": "pairwise",
      "props": {
       "contentPadding": 0.5,
@@ -326,7 +326,7 @@
      }
     },
     {
-     "id": "appshell-0037",
+     "id": "app-shell-0037",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1,
@@ -334,7 +334,7 @@
      }
     },
     {
-     "id": "appshell-0038",
+     "id": "app-shell-0038",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1,
@@ -342,7 +342,7 @@
      }
     },
     {
-     "id": "appshell-0039",
+     "id": "app-shell-0039",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1.5,
@@ -350,7 +350,7 @@
      }
     },
     {
-     "id": "appshell-0040",
+     "id": "app-shell-0040",
      "kind": "pairwise",
      "props": {
       "contentPadding": 1.5,
@@ -358,7 +358,7 @@
      }
     },
     {
-     "id": "appshell-0041",
+     "id": "app-shell-0041",
      "kind": "pairwise",
      "props": {
       "contentPadding": 2,
@@ -366,7 +366,7 @@
      }
     },
     {
-     "id": "appshell-0042",
+     "id": "app-shell-0042",
      "kind": "pairwise",
      "props": {
       "contentPadding": 3,
@@ -374,7 +374,7 @@
      }
     },
     {
-     "id": "appshell-0043",
+     "id": "app-shell-0043",
      "kind": "pairwise",
      "props": {
       "contentPadding": 4,
@@ -382,7 +382,7 @@
      }
     },
     {
-     "id": "appshell-0044",
+     "id": "app-shell-0044",
      "kind": "pairwise",
      "props": {
       "contentPadding": 5,
@@ -390,7 +390,7 @@
      }
     },
     {
-     "id": "appshell-0045",
+     "id": "app-shell-0045",
      "kind": "pairwise",
      "props": {
       "contentPadding": 6,
@@ -398,7 +398,7 @@
      }
     },
     {
-     "id": "appshell-0046",
+     "id": "app-shell-0046",
      "kind": "pairwise",
      "props": {
       "contentPadding": 8,
@@ -406,7 +406,7 @@
      }
     },
     {
-     "id": "appshell-0047",
+     "id": "app-shell-0047",
      "kind": "pairwise",
      "props": {
       "contentPadding": 10,

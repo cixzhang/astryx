@@ -1,0 +1,78 @@
+{
+ "family": "AspectRatio",
+ "source": "packages/core/src/AspectRatio/AspectRatio.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "AspectRatio",
+   "visualProps": {
+    "shape": [
+     "rectangle",
+     "ellipse"
+    ],
+    "fit": [
+     "cover",
+     "contain",
+     "center"
+    ]
+   },
+   "defaults": {
+    "shape": "rectangle",
+    "fit": "cover"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "aspect-ratio-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "aspect-ratio-0002",
+     "kind": "sweep",
+     "props": {
+      "shape": "ellipse"
+     }
+    },
+    {
+     "id": "aspect-ratio-0003",
+     "kind": "sweep",
+     "props": {
+      "fit": "contain"
+     }
+    },
+    {
+     "id": "aspect-ratio-0004",
+     "kind": "sweep",
+     "props": {
+      "fit": "center"
+     }
+    },
+    {
+     "id": "aspect-ratio-0005",
+     "kind": "pairwise",
+     "props": {
+      "shape": "ellipse",
+      "fit": "contain"
+     }
+    },
+    {
+     "id": "aspect-ratio-0006",
+     "kind": "pairwise",
+     "props": {
+      "shape": "ellipse",
+      "fit": "center"
+     }
+    }
+   ]
+  }
+ ]
+}

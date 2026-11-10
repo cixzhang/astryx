@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "CollapsibleGroup",
+   "component": "Collapsible",
    "visualProps": {
     "defaultIsOpen": [
      false,
@@ -40,40 +40,40 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "collapsiblegroup-0001",
+     "id": "collapsible-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "collapsiblegroup-0002",
+     "id": "collapsible-0002",
      "kind": "sweep",
      "props": {
       "defaultIsOpen": false
      }
     },
     {
-     "id": "collapsiblegroup-0003",
+     "id": "collapsible-0003",
      "kind": "sweep",
      "props": {
       "isOpen": true
      }
     },
     {
-     "id": "collapsiblegroup-0004",
+     "id": "collapsible-0004",
      "kind": "sweep",
      "props": {
       "isDisabled": true
      }
     },
     {
-     "id": "collapsiblegroup-0005",
+     "id": "collapsible-0005",
      "kind": "sweep",
      "props": {
       "chevronPosition": "start"
      }
     },
     {
-     "id": "collapsiblegroup-0006",
+     "id": "collapsible-0006",
      "kind": "pairwise",
      "props": {
       "defaultIsOpen": false,
@@ -81,7 +81,7 @@
      }
     },
     {
-     "id": "collapsiblegroup-0007",
+     "id": "collapsible-0007",
      "kind": "pairwise",
      "props": {
       "defaultIsOpen": false,
@@ -90,7 +90,7 @@
      }
     },
     {
-     "id": "collapsiblegroup-0008",
+     "id": "collapsible-0008",
      "kind": "pairwise",
      "props": {
       "isDisabled": true,
@@ -98,7 +98,7 @@
      }
     },
     {
-     "id": "collapsiblegroup-0009",
+     "id": "collapsible-0009",
      "kind": "pairwise",
      "props": {
       "defaultIsOpen": false,

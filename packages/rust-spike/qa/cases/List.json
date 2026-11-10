@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "ListItem",
+   "component": "List",
    "visualProps": {
     "density": [
      "compact",
@@ -45,75 +45,75 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "listitem-0001",
+     "id": "list-0001",
      "kind": "default",
      "props": {}
     },
     {
-     "id": "listitem-0002",
+     "id": "list-0002",
      "kind": "sweep",
      "props": {
       "density": "compact"
      }
     },
     {
-     "id": "listitem-0003",
+     "id": "list-0003",
      "kind": "sweep",
      "props": {
       "density": "spacious"
      }
     },
     {
-     "id": "listitem-0004",
+     "id": "list-0004",
      "kind": "sweep",
      "props": {
       "hasDividers": true
      }
     },
     {
-     "id": "listitem-0005",
+     "id": "list-0005",
      "kind": "sweep",
      "props": {
       "edge": "flush"
      }
     },
     {
-     "id": "listitem-0006",
+     "id": "list-0006",
      "kind": "sweep",
      "props": {
       "edge": "outset"
      }
     },
     {
-     "id": "listitem-0007",
+     "id": "list-0007",
      "kind": "sweep",
      "props": {
       "edge": "bleed"
      }
     },
     {
-     "id": "listitem-0008",
+     "id": "list-0008",
      "kind": "sweep",
      "props": {
       "listStyle": "disc"
      }
     },
     {
-     "id": "listitem-0009",
+     "id": "list-0009",
      "kind": "sweep",
      "props": {
       "listStyle": "decimal"
      }
     },
     {
-     "id": "listitem-0010",
+     "id": "list-0010",
      "kind": "sweep",
      "props": {
       "listStyle": "circle"
      }
     },
     {
-     "id": "listitem-0011",
+     "id": "list-0011",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -123,7 +123,7 @@
      }
     },
     {
-     "id": "listitem-0012",
+     "id": "list-0012",
      "kind": "pairwise",
      "props": {
       "edge": "flush",
@@ -131,7 +131,7 @@
      }
     },
     {
-     "id": "listitem-0013",
+     "id": "list-0013",
      "kind": "pairwise",
      "props": {
       "hasDividers": true,
@@ -139,7 +139,7 @@
      }
     },
     {
-     "id": "listitem-0014",
+     "id": "list-0014",
      "kind": "pairwise",
      "props": {
       "density": "spacious",
@@ -148,7 +148,7 @@
      }
     },
     {
-     "id": "listitem-0015",
+     "id": "list-0015",
      "kind": "pairwise",
      "props": {
       "density": "spacious",
@@ -157,7 +157,7 @@
      }
     },
     {
-     "id": "listitem-0016",
+     "id": "list-0016",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -167,7 +167,7 @@
      }
     },
     {
-     "id": "listitem-0017",
+     "id": "list-0017",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -176,7 +176,7 @@
      }
     },
     {
-     "id": "listitem-0018",
+     "id": "list-0018",
      "kind": "pairwise",
      "props": {
       "edge": "bleed",
@@ -184,7 +184,7 @@
      }
     },
     {
-     "id": "listitem-0019",
+     "id": "list-0019",
      "kind": "pairwise",
      "props": {
       "density": "spacious",
@@ -192,7 +192,7 @@
      }
     },
     {
-     "id": "listitem-0020",
+     "id": "list-0020",
      "kind": "pairwise",
      "props": {
       "density": "spacious",
@@ -201,7 +201,7 @@
      }
     },
     {
-     "id": "listitem-0021",
+     "id": "list-0021",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -209,7 +209,7 @@
      }
     },
     {
-     "id": "listitem-0022",
+     "id": "list-0022",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -217,7 +217,7 @@
      }
     },
     {
-     "id": "listitem-0023",
+     "id": "list-0023",
      "kind": "pairwise",
      "props": {
       "density": "compact",
@@ -226,7 +226,7 @@
      }
     },
     {
-     "id": "listitem-0024",
+     "id": "list-0024",
      "kind": "pairwise",
      "props": {
       "density": "compact",

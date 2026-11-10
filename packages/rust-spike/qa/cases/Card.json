@@ -1,0 +1,1386 @@
+{
+ "family": "Card",
+ "source": "packages/core/src/Card/Card.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "Card",
+   "visualProps": {
+    "padding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "variant": [
+     "default",
+     "transparent",
+     "muted",
+     "blue",
+     "cyan",
+     "gray",
+     "green",
+     "orange",
+     "pink",
+     "purple",
+     "red",
+     "teal",
+     "yellow"
+    ],
+    "elevation": [
+     "none",
+     "low",
+     "med",
+     "high"
+    ]
+   },
+   "defaults": {
+    "padding": null,
+    "variant": "default",
+    "elevation": "none"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "card-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "card-0002",
+     "kind": "sweep",
+     "props": {
+      "padding": 0
+     }
+    },
+    {
+     "id": "card-0003",
+     "kind": "sweep",
+     "props": {
+      "padding": 0.5
+     }
+    },
+    {
+     "id": "card-0004",
+     "kind": "sweep",
+     "props": {
+      "padding": 1
+     }
+    },
+    {
+     "id": "card-0005",
+     "kind": "sweep",
+     "props": {
+      "padding": 1.5
+     }
+    },
+    {
+     "id": "card-0006",
+     "kind": "sweep",
+     "props": {
+      "padding": 2
+     }
+    },
+    {
+     "id": "card-0007",
+     "kind": "sweep",
+     "props": {
+      "padding": 3
+     }
+    },
+    {
+     "id": "card-0008",
+     "kind": "sweep",
+     "props": {
+      "padding": 4
+     }
+    },
+    {
+     "id": "card-0009",
+     "kind": "sweep",
+     "props": {
+      "padding": 5
+     }
+    },
+    {
+     "id": "card-0010",
+     "kind": "sweep",
+     "props": {
+      "padding": 6
+     }
+    },
+    {
+     "id": "card-0011",
+     "kind": "sweep",
+     "props": {
+      "padding": 8
+     }
+    },
+    {
+     "id": "card-0012",
+     "kind": "sweep",
+     "props": {
+      "padding": 10
+     }
+    },
+    {
+     "id": "card-0013",
+     "kind": "sweep",
+     "props": {
+      "variant": "transparent"
+     }
+    },
+    {
+     "id": "card-0014",
+     "kind": "sweep",
+     "props": {
+      "variant": "muted"
+     }
+    },
+    {
+     "id": "card-0015",
+     "kind": "sweep",
+     "props": {
+      "variant": "blue"
+     }
+    },
+    {
+     "id": "card-0016",
+     "kind": "sweep",
+     "props": {
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0017",
+     "kind": "sweep",
+     "props": {
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0018",
+     "kind": "sweep",
+     "props": {
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0019",
+     "kind": "sweep",
+     "props": {
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0020",
+     "kind": "sweep",
+     "props": {
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0021",
+     "kind": "sweep",
+     "props": {
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0022",
+     "kind": "sweep",
+     "props": {
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0023",
+     "kind": "sweep",
+     "props": {
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0024",
+     "kind": "sweep",
+     "props": {
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0025",
+     "kind": "sweep",
+     "props": {
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0026",
+     "kind": "sweep",
+     "props": {
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0027",
+     "kind": "sweep",
+     "props": {
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0028",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0029",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0030",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0031",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0032",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0033",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0034",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0035",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0036",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0037",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0038",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0039",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0040",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0041",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "transparent"
+     }
+    },
+    {
+     "id": "card-0042",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "muted",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0043",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "blue",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0044",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "cyan",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0045",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "gray",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0046",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "green",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0047",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "orange",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0048",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "pink",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0049",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "purple",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0050",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "red",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0051",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "teal",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0052",
+     "kind": "pairwise",
+     "props": {
+      "padding": 0.5,
+      "variant": "yellow",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0053",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0054",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "transparent",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0055",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "muted"
+     }
+    },
+    {
+     "id": "card-0056",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "blue",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0057",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "cyan",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0058",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "gray",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0059",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "green",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0060",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "orange",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0061",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "pink",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0062",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "purple",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0063",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "red",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0064",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "teal",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0065",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1,
+      "variant": "yellow",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0066",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0067",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "transparent",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0068",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "muted",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0069",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "blue"
+     }
+    },
+    {
+     "id": "card-0070",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "cyan",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0071",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "gray",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0072",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "green",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0073",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "orange",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0074",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "pink",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0075",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "purple",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0076",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "red",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0077",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "teal",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0078",
+     "kind": "pairwise",
+     "props": {
+      "padding": 1.5,
+      "variant": "yellow",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0079",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0080",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0081",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0082",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0083",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0084",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0085",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0086",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0087",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0088",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0089",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0090",
+     "kind": "pairwise",
+     "props": {
+      "padding": 2,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0091",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0092",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0093",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0094",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0095",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0096",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0097",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0098",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0099",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0100",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0101",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0102",
+     "kind": "pairwise",
+     "props": {
+      "padding": 3,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0103",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0104",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0105",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0106",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0107",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0108",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0109",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0110",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0111",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0112",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0113",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0114",
+     "kind": "pairwise",
+     "props": {
+      "padding": 4,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0115",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0116",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0117",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0118",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0119",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0120",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0121",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0122",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0123",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0124",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0125",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0126",
+     "kind": "pairwise",
+     "props": {
+      "padding": 5,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0127",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0128",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0129",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0130",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0131",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0132",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0133",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0134",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0135",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0136",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0137",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0138",
+     "kind": "pairwise",
+     "props": {
+      "padding": 6,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0139",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0140",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0141",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0142",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0143",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0144",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0145",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0146",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0147",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0148",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0149",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0150",
+     "kind": "pairwise",
+     "props": {
+      "padding": 8,
+      "variant": "yellow"
+     }
+    },
+    {
+     "id": "card-0151",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "transparent",
+      "elevation": "low"
+     }
+    },
+    {
+     "id": "card-0152",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "muted",
+      "elevation": "med"
+     }
+    },
+    {
+     "id": "card-0153",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "blue",
+      "elevation": "high"
+     }
+    },
+    {
+     "id": "card-0154",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "cyan"
+     }
+    },
+    {
+     "id": "card-0155",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "gray"
+     }
+    },
+    {
+     "id": "card-0156",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "green"
+     }
+    },
+    {
+     "id": "card-0157",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "orange"
+     }
+    },
+    {
+     "id": "card-0158",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "pink"
+     }
+    },
+    {
+     "id": "card-0159",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "purple"
+     }
+    },
+    {
+     "id": "card-0160",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "red"
+     }
+    },
+    {
+     "id": "card-0161",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "teal"
+     }
+    },
+    {
+     "id": "card-0162",
+     "kind": "pairwise",
+     "props": {
+      "padding": 10,
+      "variant": "yellow"
+     }
+    }
+   ]
+  }
+ ]
+}

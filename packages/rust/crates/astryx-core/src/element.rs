@@ -42,14 +42,36 @@ impl<Msg: 'static> Element<Msg> {
             }),
         }
     }
+
+    /// Makes `value` the nearest context of type `T` for this element and
+    /// everything inside it, as a React context provider does. Components
+    /// read it with [`BuildCx::context`]. It reaches every child slot.
+    pub fn provide<T: 'static>(self, value: std::rc::Rc<T>) -> Self {
+        Element {
+            build: Box::new(Provided { value, child: self }),
+        }
+    }
+}
+
+struct Provided<T, Msg> {
+    value: std::rc::Rc<T>,
+    child: Element<Msg>,
+}
+
+impl<T: 'static, Msg> Build<Msg> for Provided<T, Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        cx.provide(self.value);
+        cx.child(self.child);
+        cx.unprovide::<T>();
+    }
 }
 
 /// Builds one component into nodes.
-pub(crate) trait Build<Msg> {
+pub trait Build<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>);
 }
 
-pub(crate) fn element<Msg, B: Build<Msg> + 'static>(b: B) -> Element<Msg> {
+pub fn element<Msg, B: Build<Msg> + 'static>(b: B) -> Element<Msg> {
     Element { build: Box::new(b) }
 }
 
@@ -141,7 +163,7 @@ impl Space {
 /// identity (focus, accessibility id) stable when its siblings change, and
 /// `is_hidden` removes it.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct Base {
+pub struct Base {
     pub id: Option<String>,
     pub is_hidden: bool,
 }
@@ -184,7 +206,7 @@ pub(crate) use base_props;
 
 /// What a node paints for itself, before its children.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Draw {
+pub enum Draw {
     None,
     Box(BoxDraw),
     Text(TextDraw),
@@ -197,11 +219,50 @@ pub(crate) enum Draw {
     Sprite(crate::world::SpriteDraw),
     /// A light pass, a light, or a glowing rect.
     Light(crate::light::LightDraw),
+    /// Draw commands a component computes from its box and the clock, for
+    /// shapes the other kinds do not cover.
+    Paint(Painter),
+}
+
+/// Paints a node from its box (in points) and the runtime clock (seconds).
+/// `plays` says whether the result changes with the clock, so the shell keeps
+/// drawing frames while the node is visible. Two painters are equal only when
+/// they share one closure, so give a stable painter a fresh value each build.
+#[derive(Clone)]
+pub struct Painter {
+    pub paint: std::rc::Rc<dyn Fn(crate::contract::Rect, f32) -> Vec<crate::contract::DrawCmd>>,
+    pub plays: bool,
+}
+
+impl Painter {
+    pub fn new(
+        plays: bool,
+        paint: impl Fn(crate::contract::Rect, f32) -> Vec<crate::contract::DrawCmd> + 'static,
+    ) -> Self {
+        Painter {
+            paint: std::rc::Rc::new(paint),
+            plays,
+        }
+    }
+}
+
+impl std::fmt::Debug for Painter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Painter")
+            .field("plays", &self.plays)
+            .finish()
+    }
+}
+
+impl PartialEq for Painter {
+    fn eq(&self, other: &Self) -> bool {
+        self.plays == other.plays && std::rc::Rc::ptr_eq(&self.paint, &other.paint)
+    }
 }
 
 /// A registered image filling the node's box.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct ImageDraw {
+pub struct ImageDraw {
     pub image: crate::contract::ImageId,
     pub fit: crate::contract::ImageFit,
     pub radii: Radii,
@@ -211,7 +272,7 @@ pub(crate) struct ImageDraw {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct BoxDraw {
+pub struct BoxDraw {
     pub fill: Color,
     pub radii: Radii,
     /// Color and width of a border drawn inside the node's edge.
@@ -231,7 +292,7 @@ impl BoxDraw {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct TextDraw {
+pub struct TextDraw {
     pub text: String,
     pub style: TextStyle,
     pub color: Color,
@@ -243,7 +304,7 @@ pub(crate) struct TextDraw {
 
 /// A vector shape in a square `view_box`, scaled to the node's box.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct PathDraw {
+pub struct PathDraw {
     pub commands: Vec<PathCmd>,
     pub view_box: f32,
     pub fill: Option<Color>,
@@ -253,7 +314,7 @@ pub(crate) struct PathDraw {
 /// The focus ring and pressed overlay a node paints for the nearest
 /// focusable node around it (or itself).
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct Indicator {
+pub struct Indicator {
     pub ring: Option<Color>,
     pub radii: Radii,
     pub overlay: Option<Color>,
@@ -277,7 +338,7 @@ impl Indicator {
 }
 
 /// Makes a node a focus stop.
-pub(crate) struct Interact<Msg> {
+pub struct Interact<Msg> {
     /// Sent when the node is activated (A).
     pub on_activate: Option<Msg>,
     /// Disabled controls keep their focus stop but never activate.
@@ -294,7 +355,7 @@ pub(crate) struct Interact<Msg> {
 }
 
 /// A text field's value and how to report a new one.
-pub(crate) struct Edit<Msg> {
+pub struct Edit<Msg> {
     pub value: String,
     pub on_change: std::rc::Rc<dyn Fn(String) -> Msg>,
     /// The index of the node that draws the value, for the caret.
@@ -306,7 +367,7 @@ pub(crate) struct Edit<Msg> {
 
 /// What activating a control does to the open popup (a Selector's menu).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) enum PopupAction {
+pub enum PopupAction {
     #[default]
     None,
     /// Opens this control's popup, or closes it when open.
@@ -340,7 +401,7 @@ impl<Msg> Interact<Msg> {
 
 /// What assistive technology reads for a node.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Semantics {
+pub struct Semantics {
     pub role: Role,
     pub label: Option<String>,
     pub value: Option<String>,
@@ -409,14 +470,14 @@ pub(crate) fn safe_destination(href: &str) -> Option<String> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Axis {
+pub enum Axis {
     Horizontal,
     Vertical,
 }
 
 /// Takes an input, its phase, and the runtime's clock in milliseconds; may
 /// return the app's message and a feedback cue.
-pub(crate) type Capture<Msg> = std::rc::Rc<
+pub type Capture<Msg> = std::rc::Rc<
     dyn Fn(
         crate::contract::Input,
         crate::contract::InputPhase,
@@ -425,7 +486,7 @@ pub(crate) type Capture<Msg> = std::rc::Rc<
 >;
 
 /// One built node. Children always follow their parent in the node list.
-pub(crate) struct Node<Msg> {
+pub struct Node<Msg> {
     pub id: u64,
     pub parent: Option<u32>,
     pub children: Vec<u32>,
@@ -559,7 +620,7 @@ impl<Msg> Node<Msg> {
 
 /// The text style and color `inherit` resolves to inside a component.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct Inherited {
+pub struct Inherited {
     pub style: TextStyle,
     pub color: Color,
 }
@@ -574,10 +635,10 @@ impl Inherited {
 }
 
 /// Builds a popup once the view is built.
-pub(crate) type Overlay<Msg> = Box<dyn FnOnce(&mut BuildCx<Msg>)>;
+pub type Overlay<Msg> = Box<dyn FnOnce(&mut BuildCx<Msg>)>;
 
 /// Builds elements into the node list.
-pub(crate) struct BuildCx<Msg> {
+pub struct BuildCx<Msg> {
     pub nodes: Vec<Node<Msg>>,
     pub tokens: &'static Tokens,
     /// The theme `tokens` come from, for what it adds beyond tokens.
@@ -603,6 +664,8 @@ pub(crate) struct BuildCx<Msg> {
     /// The pixel size of each ready image.
     pub image_sizes:
         std::sync::Arc<std::collections::HashMap<crate::contract::ImageId, (u32, u32)>>,
+    /// Context values by type, innermost last. See [`Element::provide`].
+    contexts: std::collections::HashMap<std::any::TypeId, Vec<std::rc::Rc<dyn std::any::Any>>>,
     open: Vec<u32>,
     key: Option<u64>,
     /// The `id` prop behind `key`, for the node `begin` opens next.
@@ -625,6 +688,7 @@ impl<Msg> BuildCx<Msg> {
             overlays: Vec::new(),
             images: Default::default(),
             image_sizes: Default::default(),
+            contexts: Default::default(),
             open: Vec::new(),
             key: None,
             name: None,
@@ -635,6 +699,32 @@ impl<Msg> BuildCx<Msg> {
     /// (`Some(false)`), or not registered yet, so still loading (`None`).
     pub fn image_state(&self, src: &str) -> Option<bool> {
         self.images.get(&crate::contract::ImageId::of(src)).copied()
+    }
+
+    /// Makes `value` the nearest context of type `T` until the matching
+    /// [`Self::unprovide`].
+    pub fn provide<T: 'static>(&mut self, value: std::rc::Rc<T>) {
+        self.contexts
+            .entry(std::any::TypeId::of::<T>())
+            .or_default()
+            .push(value);
+    }
+
+    /// Ends the innermost context of type `T`.
+    pub fn unprovide<T: 'static>(&mut self) {
+        if let Some(stack) = self.contexts.get_mut(&std::any::TypeId::of::<T>()) {
+            stack.pop();
+        }
+    }
+
+    /// The nearest context of type `T`, if an ancestor provides one.
+    pub fn context<T: 'static>(&self) -> Option<std::rc::Rc<T>> {
+        let any = self
+            .contexts
+            .get(&std::any::TypeId::of::<T>())?
+            .last()?
+            .clone();
+        any.downcast::<T>().ok()
     }
 
     pub fn inherited(&self) -> Inherited {

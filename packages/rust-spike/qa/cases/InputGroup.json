@@ -11,7 +11,7 @@
  ],
  "components": [
   {
-   "component": "InputGroupText",
+   "component": "InputGroup",
    "visualProps": {
     "isLabelHidden": [
      false,
@@ -48,14 +48,14 @@
    "takesChildren": true,
    "cases": [
     {
-     "id": "inputgrouptext-0001",
+     "id": "input-group-0001",
      "kind": "default",
      "props": {
       "label": "Label"
      }
     },
     {
-     "id": "inputgrouptext-0002",
+     "id": "input-group-0002",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -63,7 +63,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0003",
+     "id": "input-group-0003",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -71,7 +71,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0004",
+     "id": "input-group-0004",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -79,7 +79,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0005",
+     "id": "input-group-0005",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -87,7 +87,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0006",
+     "id": "input-group-0006",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -95,7 +95,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0007",
+     "id": "input-group-0007",
      "kind": "sweep",
      "props": {
       "label": "Label",
@@ -103,7 +103,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0008",
+     "id": "input-group-0008",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -113,7 +113,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0009",
+     "id": "input-group-0009",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -123,7 +123,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0010",
+     "id": "input-group-0010",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -134,7 +134,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0011",
+     "id": "input-group-0011",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -143,7 +143,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0012",
+     "id": "input-group-0012",
      "kind": "pairwise",
      "props": {
       "label": "Label",
@@ -152,7 +152,7 @@
      }
     },
     {
-     "id": "inputgrouptext-0013",
+     "id": "input-group-0013",
      "kind": "pairwise",
      "props": {
       "label": "Label",
