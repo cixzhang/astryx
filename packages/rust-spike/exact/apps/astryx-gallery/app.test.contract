@@ -1,0 +1,3 @@
+test "the index lists the foundations case"
+  clock data
+  expect tree has "open-foundations-0001"

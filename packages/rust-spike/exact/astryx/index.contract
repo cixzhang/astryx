@@ -1,0 +1,6 @@
+// @astryx-spike/astryx: Astryx components in Contract. Their look is the
+// package's tokens (astryx.tamber, Astryx's default theme); an app restyles
+// them by setting a token by its full name, or picks an Astryx theme through
+// the `theme` axis (tokens/themes.tamber).
+
+use space, elementSize, radius, fontSize from "./foundations.contract"

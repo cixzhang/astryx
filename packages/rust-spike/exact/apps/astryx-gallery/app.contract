@@ -1,0 +1,55 @@
+// Astryx Gallery: every ported family's visual cases, one per page, for QA.
+// A page is `/?case=<id>&scheme=light|dark&theme=<astryx theme>`; with no case
+// the page lists the families.
+use space, radius from "@astryx-spike/astryx"
+
+shape Case
+  id: string
+  family: string
+  title: string
+
+shape CaseList
+  items: Case[]
+
+routes nav
+  home "/"
+
+component AstryxGallery
+  resource cases = galleryCases() as shape CaseList else empty()
+  derive entry = top(nav)
+  derive caseId = searchParam(entry, "case")
+  derive scheme = searchParam(entry, "scheme")
+  derive themeName = searchParam(entry, "theme")
+  task applyPrefs mount
+    after(1, applyPrefs)
+  action applyPrefs
+    if scheme == "dark"
+      setScheme("dark")
+    if scheme == "light"
+      setScheme("light")
+    if themeName != ""
+      setMode("theme", themeName)
+  view
+    main testId="root" navigationKey=`${entry.id}` width="100%" height="100%" background-color="astryx.surface.body" color="astryx.text.primary"
+      scroll id="content" height="100%"
+        if caseId == ""
+          column padding=space("4") gap=space("2")
+            text "Astryx Gallery" role="heading" aria-level=1 font="astryx.type.heading-1"
+            for c in cases.items key=c.id
+              link href=`/?case=${c.id}` testId=`open-${c.id}`
+                text `${c.family}: ${c.title}`
+        else
+          column padding=16 testId="page"
+            view testId="case" align-self="flex-start"
+              Swatches()
+
+component Swatches
+  view
+    column gap=space("2")
+      row gap=space("2")
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.accent"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.surface.card" border-width=1 border-style="solid" border-color="astryx.border"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.error"
+        view width=48 height=48 border-radius=radius("element") background-color="astryx.success"
+      text "Body text" font="astryx.type.body"
+      text "Secondary" font="astryx.type.supporting" color="astryx.text.secondary"

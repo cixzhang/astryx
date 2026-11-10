@@ -1,0 +1,22 @@
+{
+  "$schema": "../../.exact-sdk/scripts/app.schema.json",
+  "name": "Astryx Settings Dialog",
+  "short_name": "Astryx Settings Dialog",
+  "id": "com.example.astryx-settings-dialog-42dea2",
+  "start_url": "/",
+  "display": "standalone",
+  "app": {
+    "id": "com.example.astryx-settings-dialog-42dea2",
+    "name": "Astryx Settings Dialog"
+  },
+  "host": {
+    "web": {},
+    "linux": {}
+  },
+  "deploy": {
+    "store": {
+      "web": "0",
+      "linux": "0"
+    }
+  }
+}

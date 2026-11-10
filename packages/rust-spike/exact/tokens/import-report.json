@@ -1,0 +1,678 @@
+{
+ "themes": {
+  "default": {
+   "counted": {
+    "mapped": 279,
+    "reported": 7,
+    "source": 286
+   },
+   "unmapped": [
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "neutral": {
+   "counted": {
+    "mapped": 280,
+    "reported": 17,
+    "source": 297
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "stone": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "butter": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "chocolate": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "gothic": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "matcha": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  },
+  "y2k": {
+   "counted": {
+    "mapped": 279,
+    "reported": 17,
+    "source": 296
+   },
+   "unmapped": [
+    {
+     "name": "--_astryx-motion-tempo",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-fast-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-medium-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-max",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--_astryx-pre-tempo-duration-slow-min",
+     "why": "a token Tamber's Astryx mapping does not name"
+    },
+    {
+     "name": "--duration-fast-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-fast-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-medium-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-max",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--duration-slow-min",
+     "why": "a duration's min or max tier: Tamber has one value per duration token"
+    },
+    {
+     "name": "--focus-outline-style",
+     "why": "no Tamber kind: a line style"
+    }
+   ],
+   "offers": [
+    {
+     "role": "-exact-background",
+     "token": "astryx.surface.body"
+    },
+    {
+     "role": "AccentColor",
+     "token": "astryx.accent"
+    }
+   ]
+  }
+ },
+ "motionTokensFixedAcrossThemes": [
+  {
+   "name": "astryx.duration.exit",
+   "themes": 7
+  },
+  {
+   "name": "astryx.duration.fast",
+   "themes": 7
+  },
+  {
+   "name": "astryx.duration.medium",
+   "themes": 7
+  },
+  {
+   "name": "astryx.duration.slow",
+   "themes": 7
+  }
+ ]
+}
