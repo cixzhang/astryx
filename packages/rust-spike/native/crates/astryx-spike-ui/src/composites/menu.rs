@@ -689,29 +689,57 @@ impl<Msg: Clone + 'static> Build<Msg> for ContextMenu<Msg> {
         if self.base.is_hidden {
             return;
         }
-        cx.key(self.base.id.as_deref());
+        use astryx_core::authoring::KeyResponse;
+        use astryx_core::{InputPhase, Key, KeyEvent};
+        let id = self
+            .base
+            .id
+            .clone()
+            .unwrap_or_else(|| format!("context-menu:{}", self.label));
+        cx.key(Some(&id));
+        let h = cx.local_handle::<Option<Point>>();
+        let controlled = self.on_open_change.is_some();
+        let open_at = if controlled { self.open_at } else { h.get() };
+        let target = cx.last_rect(&id);
         let mut node = Node::new(Style {
             flex_direction: FlexDirection::Column,
             ..Style::default()
         });
-        // The Menu key opens the menu at the target (keyboard parity for a
-        // secondary press). Secondary presses arrive with pointer support.
-        if let (Some(f), false) = (&self.on_open_change, self.is_disabled) {
-            let f = f.clone();
-            let cap: astryx_core::authoring::Capture<Msg> = Rc::new(move |input, phase, _| {
-                use astryx_core::contract::{Input, InputPhase};
-                if input == Input::Menu && phase == InputPhase::Pressed {
-                    (Some(f(Some(Point { x: 0.0, y: 0.0 }))), None)
-                } else {
-                    (None, None)
+        if !self.is_disabled {
+            let (f1, h1) = (self.on_open_change.clone(), h.clone());
+            node.on_context = Some(Rc::new(move |at: Point| match &f1 {
+                Some(f) => Some(f(Some(at))),
+                None => {
+                    h1.set(Some(at));
+                    None
                 }
-            });
-            node.capture = Some(cap);
+            }));
+            // Shift+F10 and the Menu key open it at the target's corner.
+            let (f2, h2) = (self.on_open_change.clone(), h.clone());
+            node.on_key = Some(Rc::new(move |e: &KeyEvent| {
+                let opens = e.phase == InputPhase::Pressed
+                    && (e.key == Key::ContextMenu || (e.key == Key::F(10) && e.modifiers.shift));
+                if !opens {
+                    return KeyResponse::Pass;
+                }
+                let at = target.map_or(Point { x: 0.0, y: 0.0 }, |r| Point {
+                    x: r.x,
+                    y: r.y + r.height,
+                });
+                match &f2 {
+                    Some(f) => KeyResponse::Send(f(Some(at))),
+                    None => {
+                        h2.set(Some(at));
+                        KeyResponse::Handled
+                    }
+                }
+            }));
         }
+        cx.key(Some(&id));
         cx.begin(node);
         cx.child(self.child);
         cx.end();
-        if let (Some(at), false) = (self.open_at, self.is_disabled) {
+        if let (Some(at), false) = (open_at, self.is_disabled) {
             let list = MenuList {
                 options: self.items,
                 size: self.size,
@@ -720,11 +748,16 @@ impl<Msg: Clone + 'static> Build<Msg> for ContextMenu<Msg> {
                 header: None,
                 footer: None,
                 on_close: self.on_open_change.as_ref().map(|f| f(None)),
-                close_effect: None,
+                close_effect: (!controlled).then(|| {
+                    let h = h.clone();
+                    Rc::new(move || h.set(None)) as Rc<dyn Fn()>
+                }),
             };
+            let h3 = h.clone();
             let mut layer = Layer::menu_at(at, astryx_core::authoring::element(list))
                 .role(Role::Menu)
-                .label(self.label);
+                .label(self.label)
+                .on_dismiss_effect(move |_| h3.set(None));
             if let Some(f) = &self.on_open_change {
                 let f = f.clone();
                 layer = layer.on_dismiss(move |_| f(None));

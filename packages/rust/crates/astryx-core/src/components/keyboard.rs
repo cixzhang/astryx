@@ -903,13 +903,14 @@ impl<Msg: 'static> Build<Msg> for OnScreenKeyboard<Msg> {
             let state = self.state.clone();
             interact.edit = Some(Edit {
                 value: self.value.clone(),
-                on_change: Rc::new(move |value| {
+                on_change: Some(Rc::new(move |value| {
                     f(KeyboardUpdate {
                         state: state.clone(),
                         value,
                         action: None,
                     })
-                }),
+                })),
+                effect: None,
                 text_node: text_ix,
                 masked: false,
                 caret: c.text_primary.into(),

@@ -35,6 +35,33 @@ pub(crate) fn map_key(
     })
 }
 
+/// The Astryx key for a `KeyboardEvent.key` value.
+pub(crate) fn key_of(key: &str) -> Option<astryx_core::Key> {
+    use astryx_core::Key as K;
+    Some(match key {
+        "Enter" => K::Enter,
+        " " | "Spacebar" => K::Space,
+        "Escape" | "Esc" => K::Escape,
+        "Tab" => K::Tab,
+        "ArrowUp" | "Up" => K::Up,
+        "ArrowDown" | "Down" => K::Down,
+        "ArrowLeft" | "Left" => K::Left,
+        "ArrowRight" | "Right" => K::Right,
+        "Home" => K::Home,
+        "End" => K::End,
+        "PageUp" => K::PageUp,
+        "PageDown" => K::PageDown,
+        "Backspace" => K::Backspace,
+        "Delete" | "Del" => K::Delete,
+        "ContextMenu" | "Apps" => K::ContextMenu,
+        f if f.len() >= 2 && f.starts_with('F') && f[1..].parse::<u8>().is_ok() => {
+            K::F(f[1..].parse().expect("checked"))
+        }
+        c if c.chars().count() == 1 => K::Character(c.to_string()),
+        _ => return None,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

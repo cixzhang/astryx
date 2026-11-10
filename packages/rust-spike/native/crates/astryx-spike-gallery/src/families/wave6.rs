@@ -3,7 +3,7 @@
 use super::{inline, kid_text, kids, v, Family};
 use crate::props::Props;
 use crate::Msg;
-use astryx_core::{Element, Point, Space};
+use astryx_core::{Element, Space};
 use astryx_spike_ui::*;
 use serde_json::json;
 
@@ -126,21 +126,17 @@ fn render_collapsible(p: Props) -> Element<Msg> {
 }
 
 fn render_dropdown(p: Props) -> Element<Msg> {
-    let mut m = DropdownMenu::new(
-        "menu",
-        vec![
-            MenuOption::item("Rename").icon(Icon::new("copy")),
-            MenuOption::item("Duplicate"),
-            MenuOption::Divider,
-            MenuOption::item("Delete").variant(MenuItemVariant::Destructive),
-        ],
-    )
-    .label(p.str_or("label", "Menu"))
-    .has_chevron(
-        p.get("hasChevron")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true),
-    );
+    // A text child is custom menu content; it shows when the menu is open.
+    let mut m = DropdownMenu::new("menu", Vec::new())
+        .label(p.str_or("label", "Menu"))
+        .has_chevron(
+            p.get("hasChevron")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true),
+        );
+    if let Some(t) = kid_text(&p) {
+        m = m.header(Text::new(t));
+    }
     if let Some(o) = p.get("isMenuOpen").and_then(|v| v.as_bool()) {
         m = m.is_menu_open(o).on_open_change(|_| Msg::Noop);
     }
@@ -148,21 +144,23 @@ fn render_dropdown(p: Props) -> Element<Msg> {
 }
 
 fn render_context_menu(p: Props) -> Element<Msg> {
-    let open = p.bool("isOpen");
-    ContextMenu::new(
-        Card::new().child(Text::new("Right-click here")),
-        vec![MenuOption::item("Copy"), MenuOption::item("Paste")],
-    )
-    .open_at(open.then_some(Point { x: 24.0, y: 64.0 }))
-    .on_open_change(|_| Msg::Noop)
-    .into()
+    let child: Element<Msg> = match kid_text(&p) {
+        Some(t) => Text::new(t).into(),
+        None => VStack::new().into(),
+    };
+    ContextMenu::new(child, Vec::new())
+        .label(p.str_or("label", "Context menu"))
+        .is_disabled(p.bool("isDisabled"))
+        .size(match p.str_or("size", "md") {
+            "sm" => astryx_spike_foundations::ComponentSize::Sm,
+            "lg" => astryx_spike_foundations::ComponentSize::Lg,
+            _ => astryx_spike_foundations::ComponentSize::Md,
+        })
+        .into()
 }
 
 fn render_toolbar(p: Props) -> Element<Msg> {
     let mut t = Toolbar::new(p.str_or("label", "Label"))
-        .start_content(Button::new("Bold"))
-        .start_content(Button::new("Italic"))
-        .end_content(Button::new("Share").variant(ButtonVariant::Primary))
         .orientation(if p.str("orientation") == Some("vertical") {
             ToolbarOrientation::Vertical
         } else {
@@ -173,6 +171,9 @@ fn render_toolbar(p: Props) -> Element<Msg> {
             "muted" => SectionVariant::Muted,
             _ => SectionVariant::Transparent,
         });
+    for k in kids(&p) {
+        t = t.start_content(k);
+    }
     if let Some(g) = p.space("gap") {
         t = t.gap(g);
     }
@@ -187,8 +188,8 @@ fn render_toolbar(p: Props) -> Element<Msg> {
 }
 
 fn render_pagination(p: Props) -> Element<Msg> {
-    let mut pg = Pagination::new(p.num("page").unwrap_or(3.0) as u32, |_| Msg::Noop)
-        .total_pages(p.num("totalPages").unwrap_or(10.0) as u32)
+    let mut pg = Pagination::new(p.num("page").unwrap_or(1.0) as u32, |_| Msg::Noop)
+        .label(p.str_or("label", "Pagination"))
         .variant(match p.str_or("variant", "pages") {
             "count" => PaginationVariant::Count,
             "compact" => PaginationVariant::Compact,
@@ -198,6 +199,12 @@ fn render_pagination(p: Props) -> Element<Msg> {
             _ => PaginationVariant::Pages,
         })
         .is_disabled(p.bool("isDisabled"));
+    if let Some(n) = p.num("totalPages") {
+        pg = pg.total_pages(n as u32);
+    }
+    if let Some(b) = p.get("hasFirstLast").and_then(|v| v.as_bool()) {
+        pg = pg.has_first_last(b);
+    }
     if p.str("size") == Some("sm") {
         pg = pg.size(astryx_spike_foundations::ComponentSize::Sm);
     }
@@ -205,13 +212,15 @@ fn render_pagination(p: Props) -> Element<Msg> {
 }
 
 fn render_overflow(p: Props) -> Element<Msg> {
-    let mut o =
-        OverflowList::new().max_visible_items(p.num("maxVisibleItems").unwrap_or(3.0) as usize);
+    let mut o = OverflowList::new();
+    if let Some(n) = p.num("maxVisibleItems") {
+        o = o.max_visible_items(n as usize);
+    }
     if let Some(g) = p.space("gap") {
         o = o.gap(g);
     }
-    for name in ["Design", "Engineering", "Research", "Marketing", "Sales"] {
-        o = o.child(Token::new(name));
+    for k in kids(&p) {
+        o = o.child(k);
     }
     o.into()
 }

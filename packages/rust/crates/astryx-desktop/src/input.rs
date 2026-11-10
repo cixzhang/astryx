@@ -28,6 +28,46 @@ pub fn key_input(key: &Key, shift: bool) -> Option<Input> {
     }
 }
 
+/// The Astryx key for a winit key.
+pub fn key_of(key: &Key) -> Option<astryx_core::Key> {
+    use astryx_core::Key as K;
+    Some(match key {
+        Key::Character(c) if c == " " => K::Space,
+        Key::Character(c) => K::Character(c.to_string()),
+        Key::Named(named) => match named {
+            NamedKey::Enter => K::Enter,
+            NamedKey::Space => K::Space,
+            NamedKey::Escape => K::Escape,
+            NamedKey::Tab => K::Tab,
+            NamedKey::ArrowUp => K::Up,
+            NamedKey::ArrowDown => K::Down,
+            NamedKey::ArrowLeft => K::Left,
+            NamedKey::ArrowRight => K::Right,
+            NamedKey::Home => K::Home,
+            NamedKey::End => K::End,
+            NamedKey::PageUp => K::PageUp,
+            NamedKey::PageDown => K::PageDown,
+            NamedKey::Backspace => K::Backspace,
+            NamedKey::Delete => K::Delete,
+            NamedKey::ContextMenu => K::ContextMenu,
+            NamedKey::F1 => K::F(1),
+            NamedKey::F2 => K::F(2),
+            NamedKey::F3 => K::F(3),
+            NamedKey::F4 => K::F(4),
+            NamedKey::F5 => K::F(5),
+            NamedKey::F6 => K::F(6),
+            NamedKey::F7 => K::F(7),
+            NamedKey::F8 => K::F(8),
+            NamedKey::F9 => K::F(9),
+            NamedKey::F10 => K::F(10),
+            NamedKey::F11 => K::F(11),
+            NamedKey::F12 => K::F(12),
+            _ => return None,
+        },
+        _ => return None,
+    })
+}
+
 /// True for keys that type into a focused text field instead of moving
 /// focus or confirming.
 pub fn is_text_key(key: &Key) -> bool {

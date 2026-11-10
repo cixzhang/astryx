@@ -1,0 +1,21 @@
+Group
+  Heading(2) label="Item"
+  Text label="Density compact, balanced, spacious"
+  Button label="Compact" description="Density" focusable focused
+  Button label="Balanced" description="Density" focusable
+  Button label="Spacious" description="Density" focusable
+  Text label="Inline layout, highlighted, selected"
+  Text label="Inline"
+  Text label="Description beside the label"
+  Text label="Highlighted"
+  Text label="Selected"
+  Text label="Align center, start, first line"
+  Image label="Center"
+  Text label="Center: a label long enough to wrap onto a second line in this row, which shows how the start and end content line up with the words"
+  Text label="3"
+  Image label="Start"
+  Text label="Start: a label long enough to wrap onto a second line in this row, which shows how the start and end content line up with the words"
+  Text label="3"
+  Image label="First line"
+  Text label="First line: a label long enough to wrap onto a second line in this row, which shows how the start and end content line up with the words"
+  Text label="3"

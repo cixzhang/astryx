@@ -1,0 +1,10 @@
+[package]
+name = "astryx-spike-virtual"
+description = "Astryx list windowing for the Rust stack: render only the rows in view of 10,000+, variable row heights, scroll restore, and row count and index for assistive technology"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+astryx-core = { workspace = true }
+taffy = { workspace = true }

@@ -817,6 +817,10 @@ impl<Msg: Clone + 'static> Build<Msg> for BottomSheet<Msg> {
             SheetHeight::Points(h) => h.min(vh),
         };
         let fixed = matches!(self.height, SheetHeight::Tall | SheetHeight::Points(_));
+        // How far the sheet is dragged down, kept across rebuilds.
+        cx.key(Some(&format!("sheet:{}", self.label)));
+        let drag = cx.local_handle::<f32>();
+        let offset = drag.get();
         let mut spec = LayerSpec::new(
             LayerAnchor::None,
             Rc::new(|input: &PlaceInput| Point {
@@ -835,6 +839,47 @@ impl<Msg: Clone + 'static> Build<Msg> for BottomSheet<Msg> {
             spec.on_dismiss = Some(Rc::new(move |_: DismissReason| on(false)));
         }
         let pad = self.padding.map_or(t.space.s4, |p| p.points(t));
+        // Dragging down follows the finger; a release past a quarter of the
+        // sheet, or a downward flick, dismisses it unless it is required.
+        let can_dismiss = self.purpose != SheetPurpose::Required;
+        let dismiss_msg = self.on_open_change.as_ref().map(|f| f(false));
+        let motion = astryx_spike_motion::tokens(cx);
+        let follow = astryx_spike_motion::state_change(
+            motion,
+            astryx_core::motion::Channel::TranslateY,
+            offset,
+        );
+        let drag_spec = {
+            use astryx_core::gesture::{DragEvent, DragPhase, DragSpec};
+            let drag = drag.clone();
+            DragSpec {
+                wants: Rc::new(|d: Point| d.y > 0.0 && d.y.abs() >= d.x.abs()),
+                on_drag: Some(Rc::new(move |e: &DragEvent| -> Option<Msg> {
+                    let dy = (e.at.y - e.start.y).max(0.0);
+                    match e.phase {
+                        DragPhase::Start | DragPhase::Move => {
+                            drag.set(dy);
+                            None
+                        }
+                        DragPhase::End => {
+                            let ms = (e.time_ms - e.start_ms).max(1.0) as f32;
+                            let flick = dy / ms * 1000.0 >= astryx_spike_gestures::FLICK_THRESHOLD;
+                            drag.set(0.0);
+                            if can_dismiss && (dy > max_h * 0.25 || flick) {
+                                dismiss_msg.clone()
+                            } else {
+                                None
+                            }
+                        }
+                        DragPhase::Cancel => {
+                            drag.set(0.0);
+                            None
+                        }
+                    }
+                })),
+                effect: None,
+            }
+        };
         let label = self.label;
         let children = self.children;
         let r = t.radius.container;
@@ -872,8 +917,10 @@ impl<Msg: Clone + 'static> Build<Msg> for BottomSheet<Msg> {
                 shadow,
                 ..BoxDraw::fill(ground, radius)
             }))
-            .sem(Semantics::new(Role::Dialog, label).with_state(|s| s.modal = true));
+            .sem(Semantics::new(Role::Dialog, label).with_state(|s| s.modal = true))
+            .animate(follow);
             node.clip = Some(radius);
+            node.drag = Some(drag_spec);
             cx.begin(node);
             // The grab bar.
             cx.begin(Node::new(Style {

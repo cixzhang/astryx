@@ -1,0 +1,15 @@
+Group
+  Heading(2) label="ProgressBar"
+  Text label="Variants with value labels"
+  ProgressBar label="Accent" value="20%"
+  ProgressBar label="Success" value="40%"
+  ProgressBar label="Warning" value="60%"
+  ProgressBar label="Error" value="80%"
+  ProgressBar label="Neutral" value="100%"
+  Text label="Empty, full, marks, hidden label, disabled, indeterminate"
+  ProgressBar label="Empty" value="0%"
+  ProgressBar label="Full" value="100%"
+  ProgressBar label="With marks" value="60%"
+  ProgressBar label="Hidden label" value="40%"
+  ProgressBar label="Disabled" value="40%" disabled
+  ProgressBar label="Indeterminate"

@@ -1,0 +1,23 @@
+[package]
+name = "astryx-spike-infra-gallery"
+description = "Gallery screens for the spike's infra rows (foundations, layers, motion, gestures, virtualizer), for capture on web and desktop"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+astryx-core.workspace = true
+astryx-tokens.workspace = true
+taffy.workspace = true
+serde_json.workspace = true
+astryx-spike-foundations = { path = "../astryx-spike-foundations" }
+astryx-spike-layers = { path = "../astryx-spike-layers" }
+astryx-spike-motion = { path = "../astryx-spike-motion" }
+astryx-spike-gestures = { path = "../astryx-spike-gestures" }
+astryx-spike-virtual = { path = "../astryx-spike-virtual" }
+
+[dev-dependencies]
+astryx-desktop.workspace = true
+astryx-headless.workspace = true
+astryx-render-soft.workspace = true

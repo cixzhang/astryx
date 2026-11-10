@@ -135,3 +135,43 @@ fn info_tip_trigger_toggles_and_describes() {
     assert!(rig.messages().iter().all(|m| *m == Msg::Open(true)));
     assert!(!rig.messages().is_empty());
 }
+
+#[test]
+fn bottom_sheet_dismisses_on_a_drag_down() {
+    let mut rig = Rig::sized(
+        || {
+            BottomSheet::new("Share", true)
+                .on_open_change(Msg::Open)
+                .child(Text::new("Body"))
+                .into()
+        },
+        400,
+        800,
+    );
+    rig.redraw();
+    let sheet = all(&rig.tree(), Role::Dialog)[0].bounds;
+    let from = astryx_core::Point {
+        x: sheet.x + sheet.width / 2.0,
+        y: sheet.y + 10.0,
+    };
+    // A short drag springs back.
+    rig.drag(
+        from,
+        astryx_core::Point {
+            x: from.x,
+            y: from.y + 20.0,
+        },
+        10,
+    );
+    assert!(rig.messages().is_empty());
+    // A long one dismisses.
+    rig.drag(
+        from,
+        astryx_core::Point {
+            x: from.x,
+            y: from.y + 300.0,
+        },
+        30,
+    );
+    assert_eq!(rig.messages(), vec![Msg::Open(false)]);
+}

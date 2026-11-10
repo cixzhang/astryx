@@ -38,7 +38,7 @@ pub struct DragEvent {
 }
 
 /// A handler's message for a drag event.
-pub type OnDrag<Msg> = Rc<dyn Fn(&DragEvent) -> Msg>;
+pub type OnDrag<Msg> = Rc<dyn Fn(&DragEvent) -> Option<Msg>>;
 /// A handler's change to component state for a drag event.
 pub type DragEffect = Rc<dyn Fn(&DragEvent)>;
 
@@ -47,7 +47,8 @@ pub struct DragSpec<Msg> {
     /// Whether the handler takes a drag that has travelled this far from
     /// its start when it passes the hysteresis.
     pub wants: Rc<dyn Fn(Point) -> bool>,
-    /// The message each event sends.
+    /// The message an event sends, if any (a handler may send only at the
+    /// release).
     pub on_drag: Option<OnDrag<Msg>>,
     /// Runs on each event before `on_drag`: a change to component state.
     pub effect: Option<DragEffect>,

@@ -1,0 +1,13 @@
+Group
+  Heading(2) label="OnScreenKeyboard"
+  TextInput label="Message" value="" description="Hold or tap a direction, then press A, B, X, or Y" focusable focused
+  Text live=Polite
+  Image label="L1 or R1 buttons"
+  Text label="Layer"
+  Image label="Start button"
+  Text label="Done"
+  Image label="Select button"
+  Text label="Cancel"
+  Image label="L1 button + R1 button"
+  Text label="Keyboard"
+  Text label="Hold or tap a direction, then A, B, X, or Y"

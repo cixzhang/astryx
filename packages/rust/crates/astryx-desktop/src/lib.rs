@@ -457,6 +457,29 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
             }
             WindowEvent::ModifiersChanged(m) => self.modifiers = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
+                if let Some(key) = input::key_of(&event.logical_key) {
+                    let outcome = self.surface.key(astryx_core::KeyEvent {
+                        key,
+                        phase: match event.state {
+                            ElementState::Pressed => InputPhase::Pressed,
+                            ElementState::Released => InputPhase::Released,
+                        },
+                        modifiers: astryx_core::Modifiers {
+                            shift: self.modifiers.shift_key(),
+                            ctrl: self.modifiers.control_key(),
+                            alt: self.modifiers.alt_key(),
+                            meta: self.modifiers.super_key(),
+                        },
+                        repeat: event.repeat,
+                    });
+                    self.handle(event_loop, outcome.command);
+                    if outcome.handled {
+                        if let Some(gpu) = &self.gpu {
+                            gpu.window.request_redraw();
+                        }
+                        return;
+                    }
+                }
                 if self.text_field.is_some() && input::is_text_key(&event.logical_key) {
                     if event.state == ElementState::Pressed {
                         if let Some(text) = input::typed_text(event.text.as_deref(), self.modifiers)
@@ -507,6 +530,26 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 self.pointer = None;
                 self.update_cursor();
                 self.hover();
+            }
+            WindowEvent::MouseInput {
+                state: ElementState::Pressed,
+                button: MouseButton::Right,
+                ..
+            } => {
+                if let Some(at) = self.pointer {
+                    let outcome = self.surface.pointer(PointerEvent {
+                        id: 0,
+                        kind: PointerKind::Mouse,
+                        phase: PointerPhase::Down,
+                        at,
+                        button: 2,
+                        time_ms: shell_ms(),
+                    });
+                    self.handle(event_loop, outcome.command);
+                    if let Some(gpu) = &self.gpu {
+                        gpu.window.request_redraw();
+                    }
+                }
             }
             WindowEvent::MouseInput {
                 state,

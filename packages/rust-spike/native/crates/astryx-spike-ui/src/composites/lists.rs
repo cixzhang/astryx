@@ -51,7 +51,38 @@ pub struct List<Msg> {
     list_style: ListStyle,
     start: u32,
     label: Option<String>,
+    reorderable: Option<Reorderable<Msg>>,
     children: Vec<Element<Msg>>,
+}
+
+/// List `reorderable`: rows get a grip that moves them by pointer or by
+/// keyboard (Space or Enter picks a row up, arrows move it, Space or Enter
+/// drops it, Escape puts it back), with spoken updates.
+pub struct Reorderable<Msg> {
+    on_reorder: Rc<dyn Fn(usize, usize) -> Msg>,
+    labels: Vec<String>,
+}
+
+impl<Msg> Reorderable<Msg> {
+    /// `on_reorder(from, to)` moves the row at `from` to `to`.
+    pub fn new(on_reorder: impl Fn(usize, usize) -> Msg + 'static) -> Self {
+        Reorderable {
+            on_reorder: Rc::new(on_reorder),
+            labels: Vec::new(),
+        }
+    }
+    /// The rows' names, for the grips and the announcements.
+    pub fn labels(mut self, labels: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+struct ReorderState {
+    /// The row picked up (its index in the list) and where it is now.
+    grabbed: Option<(usize, usize)>,
+    announcement: String,
 }
 
 impl<Msg> Default for List<Msg> {
@@ -65,6 +96,7 @@ impl<Msg> Default for List<Msg> {
             list_style: ListStyle::None,
             start: 1,
             label: None,
+            reorderable: None,
             children: Vec::new(),
         }
     }
@@ -103,6 +135,10 @@ impl<Msg> List<Msg> {
         self.label = Some(l.into());
         self
     }
+    pub fn reorderable(mut self, r: Reorderable<Msg>) -> Self {
+        self.reorderable = Some(r);
+        self
+    }
     pub fn child(mut self, c: impl Into<Element<Msg>>) -> Self {
         self.children.push(c.into());
         self
@@ -114,6 +150,189 @@ impl<Msg> List<Msg> {
 }
 
 component!(List<Msg>);
+
+/// Fills a catalog message with a position.
+type Words = Rc<dyn Fn(&str, usize) -> String>;
+
+/// What every grip of one list shares.
+struct Grips<Msg> {
+    list_id: String,
+    total: usize,
+    state: astryx_core::authoring::LocalHandle<ReorderState>,
+    on_reorder: Rc<dyn Fn(usize, usize) -> Msg>,
+    /// Row names in the order shown.
+    labels: Rc<Vec<String>>,
+    tr: Words,
+    /// The vertical middle of each row slot, from the last frame, for
+    /// pointer drags.
+    slots: Rc<Vec<f32>>,
+}
+
+fn reorder_grip<Msg: Clone + 'static>(
+    cx: &mut BuildCx<Msg>,
+    g: &Grips<Msg>,
+    index: usize,
+    label: String,
+) {
+    let (list_id, total, state, on_reorder, labels, tr) = (
+        g.list_id.as_str(),
+        g.total,
+        g.state.clone(),
+        g.on_reorder.clone(),
+        g.labels.clone(),
+        g.tr.clone(),
+    );
+    use astryx_core::authoring::KeyResponse;
+    use astryx_core::{InputPhase, Key, KeyEvent};
+    let t = cx.tokens;
+    let c = &t.color;
+    let current = state.get();
+    let grabbed_here = current.grabbed.map(|(from, _)| from) == Some(index);
+    let name = cx.t(
+        "@astryx.list.reorderHandle",
+        &args! {"label" => label.clone()},
+    );
+    let hint = cx.t("@astryx.list.reorderHint", &args! {});
+    let place = {
+        let labels = labels.clone();
+        move |pos: usize, label: &str| {
+            let prev = pos.checked_sub(1).and_then(|p| labels.get(p).cloned());
+            let next = labels.get(pos + 1).cloned();
+            match (prev, next) {
+                (None, Some(n)) => format!(
+                    "{label}, position {} of {total}, at the top, before {n}",
+                    pos + 1
+                ),
+                (Some(p), None) => format!(
+                    "{label}, position {} of {total}, after {p}, at the end",
+                    pos + 1
+                ),
+                (Some(p), Some(n)) => format!(
+                    "{label}, position {} of {total}, after {p}, before {n}",
+                    pos + 1
+                ),
+                (None, None) => label.to_string(),
+            }
+        }
+    };
+    let grip_id = format!("{list_id}:grip-{index}");
+    let focus = cx.focus_requests();
+    let on_key = {
+        let state = state.clone();
+        let grip_id = grip_id.clone();
+        let label = label.clone();
+        Rc::new(move |e: &KeyEvent| -> KeyResponse<Msg> {
+            if e.phase != InputPhase::Pressed {
+                return KeyResponse::Pass;
+            }
+            let mut s = state.get();
+            match (&e.key, s.grabbed) {
+                (Key::Space | Key::Enter, None) => {
+                    s.grabbed = Some((index, index));
+                    s.announcement = tr("@astryx.list.reorderPickedUp", index);
+                    state.set(s);
+                    KeyResponse::Handled
+                }
+                (Key::Space | Key::Enter, Some((from, to))) => {
+                    s.grabbed = None;
+                    s.announcement = tr("@astryx.list.reorderDropped", to);
+                    state.set(s);
+                    if from == to {
+                        KeyResponse::Handled
+                    } else {
+                        KeyResponse::Send(on_reorder(from, to))
+                    }
+                }
+                (Key::Escape, Some((from, _))) => {
+                    s.grabbed = None;
+                    s.announcement = tr("@astryx.list.reorderCancelled", from);
+                    state.set(s);
+                    KeyResponse::Handled
+                }
+                (Key::Up | Key::Down | Key::Home | Key::End, Some((from, to))) => {
+                    let next = match e.key {
+                        Key::Up => to.saturating_sub(1),
+                        Key::Down => (to + 1).min(total - 1),
+                        Key::Home => 0,
+                        _ => total - 1,
+                    };
+                    s.grabbed = Some((from, next));
+                    s.announcement = place(next, &label);
+                    state.set(s);
+                    focus.request(grip_id.clone());
+                    KeyResponse::Handled
+                }
+                _ => KeyResponse::Pass,
+            }
+        })
+    };
+    let r = radii(t.radius.inner);
+    let mut sem = Semantics::new(Role::Button, name);
+    sem.description = Some(hint);
+    sem.state.pressed = Some(grabbed_here);
+    let mut node = Node::new(Style {
+        flex_shrink: 0.0,
+        align_items: AlignItems::CENTER,
+        justify_content: JustifyContent::CENTER,
+        size: taffy::Size {
+            width: Dimension::length(t.size.element_sm),
+            height: Dimension::length(t.size.element_sm),
+        },
+        ..Style::default()
+    })
+    .interact(Interact::new(None, false))
+    .indicator(Indicator::ring(color(c.accent), r, None))
+    .sem(sem);
+    if grabbed_here {
+        node = node.draw(Draw::Box(BoxDraw::fill(color(c.overlay_hover), r)));
+    }
+    node.on_key = Some(on_key);
+    // A pointer drag on the grip moves the row to the slot under the
+    // pointer, shown in place while it moves, and sends at the release.
+    {
+        use astryx_core::gesture::{DragEvent, DragPhase, DragSpec};
+        let state = g.state.clone();
+        let slots = g.slots.clone();
+        let on_reorder = g.on_reorder.clone();
+        let nearest = move |y: f32| -> Option<usize> {
+            slots
+                .iter()
+                .enumerate()
+                .min_by(|a, b| (a.1 - y).abs().total_cmp(&(b.1 - y).abs()))
+                .map(|(i, _)| i)
+        };
+        node.drag = Some(DragSpec {
+            wants: Rc::new(|d: astryx_core::Point| d.y.abs() >= d.x.abs()),
+            on_drag: Some(Rc::new(move |e: &DragEvent| -> Option<Msg> {
+                let to = nearest(e.at.y).unwrap_or(index);
+                match e.phase {
+                    DragPhase::Start | DragPhase::Move => {
+                        state.set(ReorderState {
+                            grabbed: Some((index, to)),
+                            announcement: String::new(),
+                        });
+                        None
+                    }
+                    DragPhase::End => {
+                        state.set(ReorderState::default());
+                        (to != index).then(|| on_reorder(index, to))
+                    }
+                    DragPhase::Cancel => {
+                        state.set(ReorderState::default());
+                        None
+                    }
+                }
+            })),
+            effect: None,
+        });
+    }
+    cx.key(Some(&grip_id));
+    cx.begin(node);
+    if let Some(n) = icon_node::<Msg>("grip", 16.0, color(c.icon_secondary)) {
+        cx.leaf(n);
+    }
+    cx.end();
+}
 
 impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
@@ -129,7 +348,12 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
             Some(l) => Semantics::new(Role::List, l.clone()),
             None => Semantics::role(Role::List),
         };
-        cx.key(self.base.id.as_deref());
+        let list_id = self.base.id.clone().unwrap_or_else(|| "list".into());
+        // Reorder state lives on the list's own node.
+        cx.key(Some(&list_id));
+        let reorder = self
+            .reorderable
+            .map(|r| (cx.local_handle::<ReorderState>(), r));
         cx.begin(Node::new(Style {
             flex_direction: FlexDirection::Column,
             margin: taffy::Rect {
@@ -156,8 +380,59 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
         );
         let n = self.children.len();
         let pad_block = super::super::controls::density_pad(t, self.density) - t.space.s2;
-        for (i, child) in self.children.into_iter().enumerate() {
-            cx.key_slot(i as u64);
+        // While a row is picked up, it shows at its new place.
+        let mut order: Vec<usize> = (0..n).collect();
+        if let Some((h, _)) = &reorder {
+            if let Some((from, to)) = h.get().grabbed {
+                if from < n && to < n {
+                    let item = order.remove(from);
+                    order.insert(to, item);
+                }
+            }
+        }
+        let mut slots: Vec<Option<Element<Msg>>> = self.children.into_iter().map(Some).collect();
+        let ordered: Vec<(usize, Element<Msg>)> = order
+            .iter()
+            .filter_map(|&i| slots[i].take().map(|e| (i, e)))
+            .collect();
+        let labels: Rc<Vec<String>> = Rc::new(match &reorder {
+            Some((_, r)) => order
+                .iter()
+                .map(|&i| {
+                    r.labels
+                        .get(i)
+                        .cloned()
+                        .unwrap_or_else(|| format!("Item {}", i + 1))
+                })
+                .collect(),
+            None => Vec::new(),
+        });
+        // The spoken updates, in the reader's language.
+        let tr: Words = {
+            let i18n = cx.i18n();
+            Rc::new(move |k: &str, p: usize| i18n.t(k, &args! {"position" => p + 1, "total" => n}))
+        };
+        // Slot middles in screen order: which item drew in which slot last
+        // frame does not matter, only where the slots are.
+        let slots: Rc<Vec<f32>> = Rc::new({
+            let mut mids: Vec<f32> = (0..n)
+                .filter_map(|i| cx.last_rect(&format!("{list_id}:row-{i}")))
+                .map(|r| r.y + r.height / 2.0)
+                .collect();
+            mids.sort_by(f32::total_cmp);
+            mids
+        });
+        let grips = reorder.as_ref().map(|(h, r)| Grips {
+            list_id: list_id.clone(),
+            total: n,
+            state: h.clone(),
+            on_reorder: r.on_reorder.clone(),
+            labels: labels.clone(),
+            tr: tr.clone(),
+            slots: slots.clone(),
+        });
+        for (i, (orig, child)) in ordered.into_iter().enumerate() {
+            cx.key(Some(&format!("{list_id}:row-{orig}")));
             cx.begin(Node::new(Style {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::CENTER,
@@ -173,6 +448,14 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
                 },
                 ..Style::default()
             }));
+            if let Some((_, r)) = &reorder {
+                let label = r
+                    .labels
+                    .get(orig)
+                    .cloned()
+                    .unwrap_or_else(|| format!("Item {}", orig + 1));
+                reorder_grip(cx, grips.as_ref().expect("grips"), orig, label);
+            }
             match self.list_style {
                 ListStyle::None => {}
                 style => {
@@ -204,6 +487,7 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
             cx.child(child);
             cx.end();
             cx.end();
+            let _ = orig;
             if self.has_dividers && i + 1 < n {
                 cx.leaf(
                     Node::new(Style {
@@ -218,6 +502,28 @@ impl<Msg: Clone + 'static> Build<Msg> for List<Msg> {
             }
         }
         cx.end();
+        if let Some((h, _)) = &reorder {
+            let words = h.get().announcement;
+            let mut live = text_node(
+                words.clone(),
+                type_style(t.font.body, FontFamily::Body),
+                color(c.text_primary),
+            );
+            live.style.size = taffy::Size {
+                width: Dimension::length(1.0),
+                height: Dimension::length(1.0),
+            };
+            live.style.position = taffy::Position::Absolute;
+            live.style.overflow = taffy::Point {
+                x: taffy::Overflow::Clip,
+                y: taffy::Overflow::Clip,
+            };
+            live.opacity = 0.0;
+            let mut sem = Semantics::new(Role::Status, words);
+            sem.live = Some(astryx_core::contract::Live::Polite);
+            live.sem = Some(sem);
+            cx.leaf(live);
+        }
         cx.end();
     }
 }

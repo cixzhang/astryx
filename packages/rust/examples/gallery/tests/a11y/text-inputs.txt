@@ -1,0 +1,51 @@
+Group
+  Heading(2) label="TextInput"
+  Text label="Empty, filled, password, sizes"
+  Text label="Name"
+  Text label="As it appears on your badge"
+  TextInput label="Name" value="" description="As it appears on your badge" focusable focused
+    Text live=Polite
+  Text label="Email"
+  TextInput label="Email" value="ada@example.com" focusable
+    Text live=Polite
+    Button label="Clear Email" focusable
+  Text label="Password"
+  TextInput label="Password" value="••••••••" focusable secure
+    Text live=Polite
+  Text label="Small"
+  TextInput label="Small" value="sm" focusable
+    Text live=Polite
+  Text label="Large"
+  TextInput label="Large" value="lg" focusable
+    Text live=Polite
+  Text label="Disabled, read only, loading, required, optional"
+  Text label="Disabled"
+  TextInput label="Disabled" value="Can't edit" description="Ask an admin to change this" focusable disabled
+    Text live=Polite
+  Text label="Read only"
+  TextInput label="Read only" value="Fixed value" focusable
+    Text live=Polite
+  Text label="Loading"
+  TextInput label="Loading" value="Checking" focusable
+    Text label="Loading" live=Polite
+  Text label="Required"
+  Text label="· Required"
+  TextInput label="Required, Required" value="" focusable
+    Text live=Polite
+  Text label="Optional"
+  Text label="· Optional"
+  TextInput label="Optional, Optional" value="" focusable
+    Text live=Polite
+  Text label="Status"
+  Text label="Username"
+  TextInput label="Username" value="ada" description="That name is taken" focusable
+    Text live=Polite
+  Text label="That name is taken" live=Assertive
+  Text label="Phone"
+  TextInput label="Phone" value="555 0100" description="Check the area code" focusable
+    Text live=Polite
+  Text label="Check the area code" live=Polite
+  Text label="Code"
+  TextInput label="Code" value="4242" description="Code accepted" focusable
+    Text live=Polite
+  Text label="Code accepted" live=Polite

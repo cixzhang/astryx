@@ -1,0 +1,29 @@
+Group
+  Heading(2) label="Selector"
+  Text label="Variants"
+  Text label="Fruit"
+  ComboBox label="Fruit" value="Apple" focusable focused
+    Text live=Polite
+    Button label="Clear Fruit" focusable
+  Text label="Secondary"
+  ComboBox label="Secondary" value="Apple" focusable
+    Text live=Polite
+  Text label="Ghost"
+  ComboBox label="Ghost" value="Apple" focusable
+    Text live=Polite
+  Text label="Placeholder, disabled, loading, status"
+  Text label="Empty"
+  Text label="Nothing picked yet"
+  ComboBox label="Empty" description="Nothing picked yet" focusable
+    Text live=Polite
+  Text label="Disabled"
+  ComboBox label="Disabled" value="Apple" focusable disabled
+    Text live=Polite
+  Text label="Loading"
+  ComboBox label="Loading" value="Apple" focusable
+    Text label="Loading" live=Polite
+  Text label="Required"
+  Text label="· Required"
+  ComboBox label="Required, Required" value="Apple" description="Pick a fruit" focusable
+    Text live=Polite
+  Text label="Pick a fruit" live=Assertive
