@@ -14,7 +14,7 @@ enum Msg {
 fn spinner_is_named_loading_and_keeps_frames_coming() {
     let rig = Rig::<Msg>::new(|| Spinner::new().size(SpinnerSize::Xl).into());
     let tree = rig.tree();
-    assert!(find(&tree, Role::ProgressBar, "Loading").is_some());
+    assert!(find(&tree, Role::Status, "Loading").is_some());
     assert!(astryx_core::contract::Surface::wants_frames(&rig.rt));
 }
 
@@ -22,7 +22,7 @@ fn spinner_is_named_loading_and_keeps_frames_coming() {
 fn spinner_label_names_it_and_shows_below() {
     let rig = Rig::<Msg>::new(|| Spinner::new().label("Fetching").into());
     let tree = rig.tree();
-    let ring = find(&tree, Role::ProgressBar, "Fetching").expect("named by its label");
+    let ring = find(&tree, Role::Status, "Fetching").expect("named by its label");
     assert!(ring.bounds.height > 18.0, "label sits below the ring");
 }
 
@@ -36,7 +36,7 @@ fn spinner_box_is_diameter_plus_two_strokes() {
     ] {
         let rig = Rig::<Msg>::new(move || HStack::new().child(Spinner::new().size(size)).into());
         let tree = rig.tree();
-        let ring = find(&tree, Role::ProgressBar, "Loading").unwrap();
+        let ring = find(&tree, Role::Status, "Loading").unwrap();
         assert_eq!(ring.bounds.width, side, "{size:?}");
     }
 }
@@ -51,7 +51,7 @@ fn link_activates_and_announces_new_tab() {
             .into()
     });
     let tree = rig.tree();
-    let link = find(&tree, Role::Button, "Docs (opens in new tab)").expect("link node");
+    let link = find(&tree, Role::Link, "Docs (opens in new tab)").expect("link node");
     assert!(link.focusable);
     rig.press(Input::Next);
     rig.press(Input::A);
@@ -102,11 +102,10 @@ fn avatar_group_overlaps_by_a_quarter_and_counts_overflow() {
             .into()
     });
     let tree = rig.tree();
-    assert!(find(&tree, Role::Group, "Avatar group").is_some());
+    let group = find(&tree, Role::Group, "Avatars").unwrap_or_else(|| panic!("{tree:#?}"));
+    assert_eq!(all(group, Role::Image).len(), 3);
     // Three 52 point avatars (48 + a 2 point ring each side) step by 40,
     // so the overflow starts at 3 x 40 = 120.
-    // a11y-role: once labeled groups stop covering their children, also
-    // assert the three avatar images are in the tree.
     let more = find(&tree, Role::Button, "4 more").unwrap();
     assert_eq!(more.bounds.x, 120.0);
     assert!(find(&tree, Role::Button, "4 more").is_some());

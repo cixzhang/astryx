@@ -1,0 +1,210 @@
+{
+ "family": "Chat",
+ "source": "packages/core/src/Chat/Chat.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "ChatMessageList",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatmessagelist-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatMessage",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatmessage-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatMessageBubble",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatmessagebubble-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatMessageMetadata",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatmessagemetadata-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatSystemMessage",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatsystemmessage-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatComposer",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatcomposer-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatComposerInput",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatcomposerinput-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatComposerDrawer",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatcomposerdrawer-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatSendButton",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatsendbutton-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatToolCalls",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chattoolcalls-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatTokenizedText",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chattokenizedtext-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatComposerTokenElement",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatcomposertokenelement-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatLayout",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatlayout-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  },
+  {
+   "component": "ChatLayoutScrollButton",
+   "visualProps": {},
+   "defaults": {},
+   "base": {},
+   "takesChildren": false,
+   "cases": [
+    {
+     "id": "chatlayoutscrollbutton-0001",
+     "kind": "default",
+     "props": {}
+    }
+   ]
+  }
+ ]
+}

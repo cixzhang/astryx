@@ -205,7 +205,6 @@ impl Icon {
         self
     }
     /// The size a container asks for when the caller set none.
-    #[allow(dead_code)]
     pub(crate) fn default_size(mut self, size: IconSize) -> Self {
         self.size.get_or_insert(size);
         self

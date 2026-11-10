@@ -1,0 +1,419 @@
+{
+ "family": "AppShell",
+ "source": "packages/core/src/AppShell/AppShell.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "AppShell",
+   "visualProps": {
+    "contentPadding": [
+     0,
+     0.5,
+     1,
+     1.5,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8,
+     10
+    ],
+    "height": [
+     "fill",
+     "auto"
+    ],
+    "variant": [
+     "wash",
+     "surface",
+     "section",
+     "elevated"
+    ]
+   },
+   "defaults": {
+    "contentPadding": 0,
+    "height": "fill",
+    "variant": "elevated"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "appshell-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "appshell-0002",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 0.5
+     }
+    },
+    {
+     "id": "appshell-0003",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 1
+     }
+    },
+    {
+     "id": "appshell-0004",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 1.5
+     }
+    },
+    {
+     "id": "appshell-0005",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 2
+     }
+    },
+    {
+     "id": "appshell-0006",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 3
+     }
+    },
+    {
+     "id": "appshell-0007",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 4
+     }
+    },
+    {
+     "id": "appshell-0008",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 5
+     }
+    },
+    {
+     "id": "appshell-0009",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 6
+     }
+    },
+    {
+     "id": "appshell-0010",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 8
+     }
+    },
+    {
+     "id": "appshell-0011",
+     "kind": "sweep",
+     "props": {
+      "contentPadding": 10
+     }
+    },
+    {
+     "id": "appshell-0012",
+     "kind": "sweep",
+     "props": {
+      "height": "auto"
+     }
+    },
+    {
+     "id": "appshell-0013",
+     "kind": "sweep",
+     "props": {
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0014",
+     "kind": "sweep",
+     "props": {
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0015",
+     "kind": "sweep",
+     "props": {
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0016",
+     "kind": "pairwise",
+     "props": {
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0017",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 0.5,
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0018",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 0.5,
+      "height": "auto",
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0019",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0020",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1,
+      "height": "auto"
+     }
+    },
+    {
+     "id": "appshell-0021",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1.5,
+      "height": "auto",
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0022",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 2,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0023",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 2,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0024",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 3,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0025",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 3,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0026",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 4,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0027",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 4,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0028",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 5,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0029",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 5,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0030",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 6,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0031",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 6,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0032",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 8,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0033",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 8,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0034",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 10,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0035",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 10,
+      "height": "auto",
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0036",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 0.5,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0037",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0038",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1,
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0039",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1.5,
+      "variant": "wash"
+     }
+    },
+    {
+     "id": "appshell-0040",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 1.5,
+      "variant": "surface"
+     }
+    },
+    {
+     "id": "appshell-0041",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 2,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0042",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 3,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0043",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 4,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0044",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 5,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0045",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 6,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0046",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 8,
+      "variant": "section"
+     }
+    },
+    {
+     "id": "appshell-0047",
+     "kind": "pairwise",
+     "props": {
+      "contentPadding": 10,
+      "variant": "section"
+     }
+    }
+   ]
+  }
+ ]
+}

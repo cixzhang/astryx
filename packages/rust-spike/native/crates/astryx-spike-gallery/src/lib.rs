@@ -33,6 +33,7 @@ pub struct Gallery {
     case: Option<Case>,
     mode: Mode,
     direction: Direction,
+    theme: &'static astryx_core::Theme,
 }
 
 impl Default for Gallery {
@@ -49,6 +50,7 @@ impl Gallery {
             case: None,
             mode: Mode::Light,
             direction: Direction::Ltr,
+            theme: astryx_core::Theme::NEUTRAL,
         }
     }
 
@@ -66,16 +68,27 @@ impl Gallery {
         self
     }
 
+    /// A theme by name (`neutral`, `astryx`, `butter` …); unknown names keep
+    /// the default, `neutral`.
+    pub fn with_theme(mut self, name: &str) -> Self {
+        if let Some(t) = astryx_core::Theme::ALL.iter().find(|t| t.name == name) {
+            self.theme = t;
+        }
+        self
+    }
+
     pub fn with_direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
     }
 
+    /// Renders a case with its part's family when the gallery has one
+    /// (`$component` HStack inside Stack.json), else its file's family.
     fn render(&self, case: &Case) -> Element<Msg> {
-        let render = self
-            .families
-            .iter()
-            .find(|f| f.name == case.family)
+        let part = case.props.get("$component").and_then(|v| v.as_str());
+        let render = part
+            .and_then(|p| self.families.iter().find(|f| f.name == p))
+            .or_else(|| self.families.iter().find(|f| f.name == case.family))
             .map(|f| f.render)
             .expect("family of case");
         render(Props(&case.props))
@@ -93,7 +106,12 @@ struct Page {
 impl Build<Msg> for Page {
     fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
         let _ = &self.base;
-        let ground = cx.tokens.color.background_body.into();
+        // Case pages sit on the surface color, as the Storybook baseline does.
+        let ground = if self.name.is_some() {
+            cx.tokens.color.background_surface.into()
+        } else {
+            cx.tokens.color.background_body.into()
+        };
         let node = Node::new(taffy::Style {
             flex_direction: taffy::FlexDirection::Column,
             align_items: if self.name.is_some() {
@@ -231,8 +249,8 @@ impl App for Gallery {
 
     fn theme(&self) -> ThemeChoice {
         ThemeChoice {
+            theme: self.theme,
             mode: Some(self.mode),
-            ..ThemeChoice::default()
         }
     }
 
@@ -242,9 +260,12 @@ impl App for Gallery {
 }
 
 /// Every case id in the gallery, in family order.
+/// A repeated id keeps its first family.
 pub fn all_case_ids() -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
     families::all()
         .iter()
         .flat_map(|f| families::cases(f).into_iter().map(|c| c.id))
+        .filter(|id| seen.insert(id.clone()))
         .collect()
 }

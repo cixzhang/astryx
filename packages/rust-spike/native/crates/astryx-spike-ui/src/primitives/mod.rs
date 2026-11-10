@@ -18,12 +18,12 @@ pub use astryx_core::{
     TextColor, TextJustify, TextSize, TextType, TextWeight, BUILT_IN_ICONS,
 };
 pub use avatar_group::{AvatarGroup, AvatarGroupOverflow};
-#[allow(unused_imports)]
 pub(crate) use icon::icon_node;
 pub use icon::{glyph, Icon, IconColor, IconSize};
 pub use indicators::{
     CheckIndicator, CheckboxIndicator, CheckboxState, IndicatorSize, RadioIndicator,
 };
 pub use link::{Link, LinkDisplay};
+pub(crate) use spinner::spinner_painter;
 pub use spinner::{Spinner, SpinnerShade, SpinnerSize};
 pub use visually_hidden::VisuallyHidden;

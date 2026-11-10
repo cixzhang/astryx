@@ -1,0 +1,118 @@
+{
+ "family": "SegmentedControl",
+ "source": "packages/core/src/SegmentedControl/SegmentedControl.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "SegmentedControlItem",
+   "visualProps": {
+    "size": [
+     "sm",
+     "md",
+     "lg"
+    ],
+    "layout": [
+     "hug",
+     "fill"
+    ],
+    "isDisabled": [
+     false,
+     true
+    ]
+   },
+   "defaults": {
+    "size": "md",
+    "layout": "hug",
+    "isDisabled": false
+   },
+   "base": {
+    "value": "value",
+    "onChange": "onChange",
+    "label": "Label"
+   },
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "segmentedcontrolitem-0001",
+     "kind": "default",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label"
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0002",
+     "kind": "sweep",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "size": "sm"
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0003",
+     "kind": "sweep",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "size": "lg"
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0004",
+     "kind": "sweep",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "layout": "fill"
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0005",
+     "kind": "sweep",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0006",
+     "kind": "pairwise",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "size": "sm",
+      "layout": "fill",
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "segmentedcontrolitem-0007",
+     "kind": "pairwise",
+     "props": {
+      "value": "value",
+      "onChange": "onChange",
+      "label": "Label",
+      "size": "lg",
+      "layout": "fill",
+      "isDisabled": true
+     }
+    }
+   ]
+  }
+ ]
+}

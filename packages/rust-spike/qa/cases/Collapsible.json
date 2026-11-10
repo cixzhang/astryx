@@ -1,0 +1,112 @@
+{
+ "family": "Collapsible",
+ "source": "packages/core/src/Collapsible/Collapsible.doc.mjs",
+ "schemes": [
+  "light",
+  "dark"
+ ],
+ "widths": [
+  390,
+  1280
+ ],
+ "components": [
+  {
+   "component": "CollapsibleGroup",
+   "visualProps": {
+    "defaultIsOpen": [
+     false,
+     true
+    ],
+    "isOpen": [
+     false,
+     true
+    ],
+    "isDisabled": [
+     false,
+     true
+    ],
+    "chevronPosition": [
+     "start",
+     "end"
+    ]
+   },
+   "defaults": {
+    "defaultIsOpen": true,
+    "isOpen": false,
+    "isDisabled": false,
+    "chevronPosition": "end"
+   },
+   "base": {},
+   "takesChildren": true,
+   "cases": [
+    {
+     "id": "collapsiblegroup-0001",
+     "kind": "default",
+     "props": {}
+    },
+    {
+     "id": "collapsiblegroup-0002",
+     "kind": "sweep",
+     "props": {
+      "defaultIsOpen": false
+     }
+    },
+    {
+     "id": "collapsiblegroup-0003",
+     "kind": "sweep",
+     "props": {
+      "isOpen": true
+     }
+    },
+    {
+     "id": "collapsiblegroup-0004",
+     "kind": "sweep",
+     "props": {
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "collapsiblegroup-0005",
+     "kind": "sweep",
+     "props": {
+      "chevronPosition": "start"
+     }
+    },
+    {
+     "id": "collapsiblegroup-0006",
+     "kind": "pairwise",
+     "props": {
+      "defaultIsOpen": false,
+      "chevronPosition": "start"
+     }
+    },
+    {
+     "id": "collapsiblegroup-0007",
+     "kind": "pairwise",
+     "props": {
+      "defaultIsOpen": false,
+      "isOpen": true,
+      "isDisabled": true
+     }
+    },
+    {
+     "id": "collapsiblegroup-0008",
+     "kind": "pairwise",
+     "props": {
+      "isDisabled": true,
+      "chevronPosition": "start"
+     }
+    },
+    {
+     "id": "collapsiblegroup-0009",
+     "kind": "pairwise",
+     "props": {
+      "defaultIsOpen": false,
+      "isOpen": true,
+      "chevronPosition": "start"
+     }
+    }
+   ]
+  }
+ ]
+}

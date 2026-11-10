@@ -2,6 +2,7 @@
 
 mod wave1;
 mod wave2;
+mod wave5;
 
 use crate::props::Props;
 use crate::Msg;
@@ -41,6 +42,7 @@ pub(crate) fn v(values: &[&str]) -> Vec<Value> {
 pub fn all() -> Vec<Family> {
     let mut out = wave1::families();
     out.extend(wave2::families());
+    out.extend(wave5::families());
     out
 }
 
@@ -59,17 +61,11 @@ fn prefix(name: &str) -> String {
 /// plus every single-prop sweep.
 pub fn cases(f: &Family) -> Vec<Case> {
     if let Some((_, text)) = QA_CASES.iter().find(|(name, _)| *name == f.name) {
-        if let Ok(Value::Array(items)) = serde_json::from_str::<Value>(text) {
-            return items
-                .into_iter()
-                .filter_map(|item| {
-                    Some(Case {
-                        id: item.get("id")?.as_str()?.to_string(),
-                        family: f.name,
-                        props: item.get("props").cloned().unwrap_or(json!({})),
-                    })
-                })
-                .collect();
+        if let Ok(doc) = serde_json::from_str::<Value>(text) {
+            let qa = qa_cases(f.name, &doc);
+            if !qa.is_empty() {
+                return qa;
+            }
         }
     }
     let base = (f.base)();
@@ -92,12 +88,52 @@ pub fn cases(f: &Family) -> Vec<Case> {
     out
 }
 
+/// Reads a QA case file: `{components: [{component, cases: [{id, props}]}]}`,
+/// or a bare `[{id, props}]` list. Each case's props gain `$component`, the
+/// part the case is for.
+fn qa_cases(family: &'static str, doc: &Value) -> Vec<Case> {
+    let mut out = Vec::new();
+    let mut push = |component: &str, items: &Value| {
+        for item in items.as_array().into_iter().flatten() {
+            let Some(id) = item.get("id").and_then(Value::as_str) else {
+                continue;
+            };
+            let mut props = item
+                .get("props")
+                .and_then(Value::as_object)
+                .cloned()
+                .unwrap_or_default();
+            props.insert("$component".into(), json!(component));
+            out.push(Case {
+                id: id.to_string(),
+                family,
+                props: Value::Object(props),
+            });
+        }
+    };
+    match doc {
+        Value::Array(_) => push(family, doc),
+        Value::Object(o) => {
+            for c in o
+                .get("components")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+            {
+                let name = c.get("component").and_then(Value::as_str).unwrap_or(family);
+                if let Some(cases) = c.get("cases") {
+                    push(name, cases);
+                }
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
 /// Finds a case by id across every family.
 pub fn find_case(id: &str) -> Option<(Case, Render)> {
     for f in all() {
-        if !id.starts_with(&prefix(f.name)) {
-            continue;
-        }
         if let Some(c) = cases(&f).into_iter().find(|c| c.id == id) {
             return Some((c, f.render));
         }
