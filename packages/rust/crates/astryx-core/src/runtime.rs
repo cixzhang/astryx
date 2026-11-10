@@ -326,6 +326,8 @@ pub struct Runtime<A: App> {
     resizes: HashMap<u64, ResizeTrack>,
     /// Component state, shared with every build.
     locals: crate::element::Locals,
+    /// The drawable size the last build saw.
+    build_viewport: (f32, f32),
 }
 
 /// A closed node's last drawing, leaving.
@@ -421,6 +423,7 @@ impl<A: App> Runtime<A> {
             captured: HashMap::new(),
             resizes: HashMap::new(),
             locals: Default::default(),
+            build_viewport: (0.0, 0.0),
         }
     }
 
@@ -601,7 +604,7 @@ impl<A: App> Runtime<A> {
         let mut cx = BuildCx::new(tokens);
         cx.theme = self.theme.theme;
         cx.prefs = self.prefs.clone();
-        cx.viewport = self.viewport;
+        cx.viewport = self.build_viewport;
         self.direction = self.app.direction();
         cx.direction = self.direction;
         cx.images = self.images.clone();
@@ -2858,6 +2861,12 @@ impl<A: App> Surface for Runtime<A> {
         // it (a theme with other sizes) can keep it in place.
         let anchor = self.focused_rect().zip(self.focused);
         if self.locals.take_changed() {
+            self.stale = true;
+        }
+        // Components may size themselves from the viewport while they
+        // build, so a new viewport rebuilds, and the first build sees it.
+        if viewport != self.build_viewport {
+            self.build_viewport = viewport;
             self.stale = true;
         }
         if self.stale || self.app.theme() != self.theme || self.app.direction() != self.direction {
