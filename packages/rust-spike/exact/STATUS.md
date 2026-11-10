@@ -10,6 +10,31 @@ A row counts as ported when its Contract port gives the Astryx behavior and look
 workaround when it needs a different shape or an escape hatch (the note says which), and blocked
 when Contract cannot express it (the note gives the smallest failing snippet).
 
+Tests: `apps/astryx-gallery` (cases for every family, four interactive playgrounds, 23 tests),
+`apps/astryx-shell-nav` (6 tests) and `apps/astryx-settings-dialog` (5 tests) pass on the web host;
+all three build and respond on the Linux host. `gaps.test.contract` keeps the known failing test.
+
+## Ceilings found
+
+| Area | Finding | Evidence |
+| --- | --- | --- |
+| Library rules | Exact holds a library (a private package with a design) to always showing a component's slot: no slot inside `if`, a popover, a hidden or zero-size box. Every Astryx component that hides content until opened (Popover, Collapsible, Tooltip, Dialog, menus, sheets, pickers) lives in a second, plain package, @astryx-spike/astryx-layers. | lower-anatomy-slot, lower-anatomy-slot-placement |
+| Library rules | A library cannot size the node that holds its slot from a prop (free width, maxWidth). Callers wrap the component in a sized box; Layout panels use a zero-height strut. | lower-anatomy-slot (computed width) |
+| Library rules | A library control must be the native control (input, button, select). Switch, checkbox, radio and segmented controls draw Astryx's look under a transparent native input. | lower-library-control |
+| Composition | One slot per component and no slot forwarding: named slots (Layout header/start/end, AppShell topNav/sideNav, Collapsible trigger) become child parts or text props; HStack and VStack repeat Stack's body. | syntax-no-slot, 'no forwarding in v1' |
+| Composition | No context through a slot: ButtonGroup corners, List density and dividers, CollapsibleGroup's open item and radio/checkbox list options are props or data on each child. | layout.contract, composites.contract notes |
+| Composition | Contract expands a component at each place it is used, so bundle size grows with call sites. Icon is one path chosen by a function, and gallery cases are data read by one call per family. | app.js 1.0 MB for 104 cases before, 143 KB after |
+| Root-only | Resources (viewport, reduced motion), tasks and timers are the app root's. A component cannot read the width (responsive shells are the app's choice), reduced motion (moving components take `still`), or delay/debounce (Tooltip's delay is a fade delay). | type-unknown-command `after` |
+| Theming | Exact imports Astryx themes itself (`contract tamber import astryx`): 279 of 286 tokens map. Motion tokens cannot vary by theme (durations and easings are written at build); a themed type role must sit on each text, not a container. | tokens/import-report.json; tamber-motion-axis, tamber-inherited-axis |
+| CSS | Refused or missing: inline-flex, clip-path inset, word-break, :focus-within, logical properties (left/right only; the page mirrors under RTL), vertical-align top/bottom in table cells, a state class chosen by a prop, non-paint rows in :hover (underline, scale). | lower-attr-value, syntax-state, lower-state-row, lower-state-literal |
+| Accessibility | Refused ARIA: aria-activedescendant, aria-autocomplete, aria-multiselectable, aria-rowcount/rowindex, aria-checked=mixed. Combobox highlights are drawn, not announced; indeterminate checkboxes read as unchecked. | lower-attr-type and refused attributes |
+| Behavior | Keyboard reorder did not move a row in our web run (the grip is an unfocused generic element); pointer-drag reorder works. | apps/astryx-gallery/gaps.test.contract |
+| Behavior | A dialog opens and closes by command only (showModal, close); state cannot hold it open, so Dialog takes no isOpen prop and isInline is a plain card. | Dialog notes |
+| Data | No records keyed by a run-time string: a Table row is its cells in column order. Dates and numbers format en-US only; the Calendar does its own day arithmetic. | table.contract, pickers.contract |
+| Linux host | A popover opened by its invoker button (`popovertarget`) is not presented on Linux (Exact logs 'Linux does not support popover presentation'), so the shell's menus and the selectors open nothing there; a popover opened by `showPopover()` did render in our headless run. Exit animations do not run. Exact's generated Linux shell bakes through Hermes, whose compiler needs glibc 2.36; our linux-host/ bakes with an empty Rust data source instead. No AT-SPI tree headless. | agent linux logs |
+
+## Ledger rows
+
 | Row | Files | Groups | Wave | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | AppShell | 5 | core, stretch, template | 8 | workaround | gallery app-shell-*; shell-nav template (web and Linux) | One slot: TopNav, SideNav and AppShellContent are children that place themselves on the shell's grid. Folding the side navigation into a drawer on narrow screens is the app root's choice (only the root reads the viewport); the shell-nav template does it with a BottomSheet. |
@@ -34,7 +59,7 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | DateTimeInput | 2 | core, stretch | 7 | workaround | composed: DateInput beside TimeInput | No separate component: the two fields side by side. |
 | Dialog | 5 | core, stretch, template | 6 | workaround | gallery dialog-*; playground test opens and closes | The platform's modal `dialog` (focus trap, inert page, Escape via closedby). Opened by showModal or commandfor, not by an isOpen prop: a dialog that state holds open is not available in Contract yet. isInline not possible. Lives in astryx-layers (hides its slot). |
 | Divider | 2 | core, stretch, template | 1 | ported | gallery divider-* | isFullBleed needs the container's padding, which Contract cannot read (no runtime CSS variables): ignored. |
-| DropdownMenu | 18 | core, stretch, template | 6 | workaround | gallery dropdownmenu-*; playground test picks an item | The platform menu (popover role=menu). Items are data (MenuItem[]); submenus, radio groups and type-ahead not wired. |
+| DropdownMenu | 18 | core, stretch, template | 6 | workaround | gallery dropdownmenu-*; playground test picks an item | The platform menu (popover role=menu). Items are data (MenuItem[]); submenus, radio groups and type-ahead not wired. Not presented on Linux (popovertarget). |
 | EmptyState | 2 | core, stretch | 2 | ported | gallery emptystate-* | actions are the slot. |
 | Field | 9 | core, stretch, template, weakness | 5 | ported | gallery field-* | The control is the slot and names itself by the label's id. |
 | FieldStatus | 3 | core, stretch, template, weakness | 5 | ported | gallery fieldstatus-* |  |
@@ -55,18 +80,18 @@ when Contract cannot express it (the note gives the smallest failing snippet).
 | Link | 3 | core, stretch, template, weakness | 1 | ported | gallery link-* | Hover underline thickness refused (a state row paints only); hover dims instead. LinkProvider (router swap) is Contract's own `link`/routes. |
 | List | 6 | core, stretch, weakness | 6 | workaround | gallery list-* | Rows are the slot (ListItem); a slot passes no context, so each row takes the list's density, divider and marker. Reorderable lists are ReorderList (data rows). Edge compensation by custom properties dropped. |
 | MobileNav | 2 | core | 8 | ported | shell.contract MobileNav | Items are data. |
-| MultiSelector | 3 | core | 7 | workaround | gallery multiselector-*; playground test chooses several | Selector with isMultiple. aria-multiselectable is refused. |
+| MultiSelector | 3 | core | 7 | workaround | gallery multiselector-*; playground test chooses several | Selector with isMultiple. aria-multiselectable is refused. Not presented on Linux (popovertarget). |
 | NumberInput | 4 | core, stretch | 5 | ported | gallery numberinput-*; playground test steps it | Value is text; parse and clamp are the caller's (parseNumber). |
-| OverflowList | 2 | core, stretch | 9 | workaround | gallery overflowlist-*; playground test opens the rest | Astryx measures items against the width (ResizeObserver). A component cannot measure (geometry reads are the app root's), so the visible count is the caller's; the rest sit in a menu (popover; not presented on Linux). |
+| OverflowList | 2 | core, stretch | 9 | workaround | gallery overflowlist-*; playground test opens the rest | Astryx measures items against the width (ResizeObserver). A component cannot measure (geometry reads are the app root's), so the visible count is the caller's; the rest sit in a menu (popover; not presented on Linux). Not presented on Linux (popovertarget). |
 | Pagination | 2 | core | 7 | ported | gallery pagination-*; playground test pages | Ellipsis for long ranges not wired. |
-| Popover | 8 | core, stretch, template, weakness | 3 | workaround | gallery popover-*; web and Linux | Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). Headless Linux `showPopover` is reported unsupported by Exact's docs, yet the anchored popover rendered in our headless run. |
+| Popover | 8 | core, stretch, template, weakness | 3 | workaround | gallery popover-*; web and Linux | Trigger is the caller's button (`popovertarget`). Placement maps to position-area; isModal, hasAutoFocus and presentation (bottom-sheet/adaptive) not yet wired (adaptive needs the viewport, which only the app root reads). On Linux, a popover opened by showPopover() rendered anchored in our headless run; one opened by a popovertarget button is not presented. |
 | PowerSearch | 16 | stretch | 9 | workaround | gallery powersearch-*; playground test adds and removes filters (web) | Filter tokens plus a suggestion listbox (field names, then a field's values after `field:`). Combobox ARIA (activedescendant, autocomplete) is refused, so suggestions are buttons in the tab order. Operator menus beyond `is`, async value sources and saved queries not wired. |
 | RadioList | 3 | stretch | 5 | workaround | gallery radiolist-*; playground test picks an option | Options are data (ChoiceItem[]), not RadioListItem children: one slot cannot tell a list which child is chosen. |
 | Resizable | 6 | core, template | 6 | workaround | gallery resizable-*; playground test drags the handle 60 px | Width is the caller's state; drag by pointer events. Arrow-key resizing not wired. In astryx-layers: the library cannot size a slot-holding node from a prop. |
 | Section | 2 | core, stretch, template | 2 | workaround | gallery section-* | Nested full-bleed (cancel the container's padding) needs the padding by prop (`bleed`): no runtime custom properties, no context through a slot. |
 | SegmentedControl | 6 | template | 5 | workaround | gallery segmented-control-*; playground test picks a segment | A library control must be the native one, so each segment is a transparent radio input over its drawn segment. Items are data. |
 | SelectableCard | 3 | template | 5 | ported | gallery selectable-card-* | A native button with aria-pressed. |
-| Selector | 11 | core, stretch, template | 7 | workaround | gallery selector-*; playground test chooses | A trigger and a listbox popover. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Type-ahead in the list not wired. |
+| Selector | 11 | core, stretch, template | 7 | workaround | gallery selector-*; playground test chooses | A trigger and a listbox popover. Contract refuses aria-activedescendant and aria-autocomplete, so the highlighted option is drawn, not announced; options are buttons in the tab order. Type-ahead in the list not wired. Not presented on Linux (popovertarget). |
 | SideNav | 2 | core | 8 | workaround | shell-nav and settings-dialog templates | Resizing composes Resizable; header/topContent/sections are the slot. SideNavItem ported. |
 | SizeContext | 2 | core, stretch, template, weakness | 0 | workaround | - | No context through a slot: size is a prop each child takes. |
 | Spinner | 4 | core, stretch, template, weakness | 1 | ported | gallery spinner-* | Turn is a CSS keyframe; reduced motion not yet wired. |

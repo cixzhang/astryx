@@ -1,0 +1,72 @@
+[
+ {
+  "area": "Library rules",
+  "finding": "Exact holds a library (a private package with a design) to always showing a component's slot: no slot inside `if`, a popover, a hidden or zero-size box. Every Astryx component that hides content until opened (Popover, Collapsible, Tooltip, Dialog, menus, sheets, pickers) lives in a second, plain package, @astryx-spike/astryx-layers.",
+  "evidence": "lower-anatomy-slot, lower-anatomy-slot-placement"
+ },
+ {
+  "area": "Library rules",
+  "finding": "A library cannot size the node that holds its slot from a prop (free width, maxWidth). Callers wrap the component in a sized box; Layout panels use a zero-height strut.",
+  "evidence": "lower-anatomy-slot (computed width)"
+ },
+ {
+  "area": "Library rules",
+  "finding": "A library control must be the native control (input, button, select). Switch, checkbox, radio and segmented controls draw Astryx's look under a transparent native input.",
+  "evidence": "lower-library-control"
+ },
+ {
+  "area": "Composition",
+  "finding": "One slot per component and no slot forwarding: named slots (Layout header/start/end, AppShell topNav/sideNav, Collapsible trigger) become child parts or text props; HStack and VStack repeat Stack's body.",
+  "evidence": "syntax-no-slot, 'no forwarding in v1'"
+ },
+ {
+  "area": "Composition",
+  "finding": "No context through a slot: ButtonGroup corners, List density and dividers, CollapsibleGroup's open item and radio/checkbox list options are props or data on each child.",
+  "evidence": "layout.contract, composites.contract notes"
+ },
+ {
+  "area": "Composition",
+  "finding": "Contract expands a component at each place it is used, so bundle size grows with call sites. Icon is one path chosen by a function, and gallery cases are data read by one call per family.",
+  "evidence": "app.js 1.0 MB for 104 cases before, 143 KB after"
+ },
+ {
+  "area": "Root-only",
+  "finding": "Resources (viewport, reduced motion), tasks and timers are the app root's. A component cannot read the width (responsive shells are the app's choice), reduced motion (moving components take `still`), or delay/debounce (Tooltip's delay is a fade delay).",
+  "evidence": "type-unknown-command `after`"
+ },
+ {
+  "area": "Theming",
+  "finding": "Exact imports Astryx themes itself (`contract tamber import astryx`): 279 of 286 tokens map. Motion tokens cannot vary by theme (durations and easings are written at build); a themed type role must sit on each text, not a container.",
+  "evidence": "tokens/import-report.json; tamber-motion-axis, tamber-inherited-axis"
+ },
+ {
+  "area": "CSS",
+  "finding": "Refused or missing: inline-flex, clip-path inset, word-break, :focus-within, logical properties (left/right only; the page mirrors under RTL), vertical-align top/bottom in table cells, a state class chosen by a prop, non-paint rows in :hover (underline, scale).",
+  "evidence": "lower-attr-value, syntax-state, lower-state-row, lower-state-literal"
+ },
+ {
+  "area": "Accessibility",
+  "finding": "Refused ARIA: aria-activedescendant, aria-autocomplete, aria-multiselectable, aria-rowcount/rowindex, aria-checked=mixed. Combobox highlights are drawn, not announced; indeterminate checkboxes read as unchecked.",
+  "evidence": "lower-attr-type and refused attributes"
+ },
+ {
+  "area": "Behavior",
+  "finding": "Keyboard reorder did not move a row in our web run (the grip is an unfocused generic element); pointer-drag reorder works.",
+  "evidence": "apps/astryx-gallery/gaps.test.contract"
+ },
+ {
+  "area": "Behavior",
+  "finding": "A dialog opens and closes by command only (showModal, close); state cannot hold it open, so Dialog takes no isOpen prop and isInline is a plain card.",
+  "evidence": "Dialog notes"
+ },
+ {
+  "area": "Data",
+  "finding": "No records keyed by a run-time string: a Table row is its cells in column order. Dates and numbers format en-US only; the Calendar does its own day arithmetic.",
+  "evidence": "table.contract, pickers.contract"
+ },
+ {
+  "area": "Linux host",
+  "finding": "A popover opened by its invoker button (`popovertarget`) is not presented on Linux (Exact logs 'Linux does not support popover presentation'), so the shell's menus and the selectors open nothing there; a popover opened by `showPopover()` did render in our headless run. Exit animations do not run. Exact's generated Linux shell bakes through Hermes, whose compiler needs glibc 2.36; our linux-host/ bakes with an empty Rust data source instead. No AT-SPI tree headless.",
+  "evidence": "agent linux logs"
+ }
+]
