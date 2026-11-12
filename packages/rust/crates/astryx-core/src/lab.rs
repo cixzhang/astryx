@@ -103,6 +103,13 @@ fn status_label(d: &DeviceStatus, sound_off: bool) -> String {
         Radio::On => "Wi-Fi on, not connected".to_string(),
         Radio::Connected => "Wi-Fi connected".to_string(),
     }];
+    if d.wifi != Radio::Connected {
+        match d.tether {
+            Radio::Off => {}
+            Radio::On => parts.push("connecting through your phone".into()),
+            Radio::Connected => parts.push("online through your phone".into()),
+        }
+    }
     match d.bluetooth {
         Radio::Off => {}
         Radio::On => parts.push("Bluetooth on".into()),
@@ -204,6 +211,32 @@ const WIFI_OFF_BITS: &[&str] = &[
     ".....##...##",
     ".....##....#",
     "............",
+];
+const PHONE_BITS: &[&str] = &[
+    "............",
+    ".#####...#..",
+    ".#...#....#.",
+    ".#...#..#.#.",
+    ".#...#..#.#.",
+    ".#...#..#.#.",
+    ".#...#....#.",
+    ".#####...#..",
+    ".#.#.#......",
+    ".#####......",
+    "............",
+    "............",
+];
+/// A phone with a signal arc, for the vector icon set.
+const PHONE: &[PathCmd] = &[
+    PathCmd::MoveTo(pt(4.0, 3.0)),
+    PathCmd::LineTo(pt(12.0, 3.0)),
+    PathCmd::LineTo(pt(12.0, 21.0)),
+    PathCmd::LineTo(pt(4.0, 21.0)),
+    PathCmd::Close,
+    PathCmd::MoveTo(pt(7.0, 18.0)),
+    PathCmd::LineTo(pt(9.0, 18.0)),
+    PathCmd::MoveTo(pt(16.0, 8.0)),
+    PathCmd::QuadTo(pt(19.0, 12.0), pt(16.0, 16.0)),
 ];
 const BLUETOOTH_BITS: &[&str] = &[
     ".....#......",
@@ -340,6 +373,25 @@ impl<Msg> Build<Msg> for StatusBar {
             flex_grow: 1.0,
             ..Style::default()
         }));
+        // Online through the phone: its icon stands in for the crossed-out
+        // Wi-Fi; dim while connecting.
+        let tethered = device.tether == Radio::Connected && device.wifi != Radio::Connected;
+        if device.tether != Radio::Off && device.wifi != Radio::Connected {
+            let color = if tethered {
+                c.icon_primary
+            } else {
+                c.icon_secondary
+            };
+            let icon = named_icon(
+                cx,
+                ("phone", PHONE_BITS),
+                PHONE.to_vec(),
+                side,
+                color.into(),
+                false,
+            );
+            cx.leaf(icon);
+        }
         let (wifi, wifi_color) = match device.wifi {
             Radio::Off => ("wifiOff", c.icon_secondary),
             Radio::On => ("wifiOff", c.icon_secondary),
@@ -352,8 +404,10 @@ impl<Msg> Build<Msg> for StatusBar {
             paths.extend_from_slice(SLASH);
         }
         let bits = if offline { WIFI_OFF_BITS } else { WIFI_BITS };
-        let icon = named_icon(cx, (wifi, bits), paths, side, wifi_color.into(), false);
-        cx.leaf(icon);
+        if !tethered {
+            let icon = named_icon(cx, (wifi, bits), paths, side, wifi_color.into(), false);
+            cx.leaf(icon);
+        }
         if device.bluetooth != Radio::Off {
             let color = if device.bluetooth == Radio::Connected {
                 c.icon_primary

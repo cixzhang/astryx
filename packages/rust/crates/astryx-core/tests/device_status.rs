@@ -44,6 +44,7 @@ fn device_status_reaches_the_app_on_change() {
         battery_percent: Some(87),
         charging: true,
         time: (21, 40),
+        tether: Radio::Off,
     };
     let prefs = Preferences {
         device: Some(status.clone()),
