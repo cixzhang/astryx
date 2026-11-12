@@ -7,6 +7,25 @@ defaults, or methods; existing callers and the focus-first paths behave as
 before. Every push runs the full `packages/rust` workspace tests,
 including the pixel goldens.
 
+## Now on `rust`
+
+`rust` f7555d0 adds pieces that overlapped this branch; the branch now
+uses `rust`'s versions and no longer proposes its own:
+
+- `Role::Link` and the current row: a `Link`, `Button` or `ListItem` with
+  `selected: Some(true)` is the current one (`aria-current` page or true)
+  on AccessKit and in the DOM mirror. The spike's `Current::{True, Page}`
+  are gone; the spike nav item sets `selected`. `A11yState::current` keeps
+  only the kinds `rust` does not express (`Step`, `Location`, `Date`,
+  `Time`), for items whose `selected` means a choice (a calendar's today).
+- `Command::Focus(id)` and its runtime path (`apply_focus_request` after
+  the next build). `BuildCx::focus_requests` stays for components that
+  have no message to return; its request now feeds the same path, so the
+  spike's own focus-request code is gone.
+- `Command::Handled`. The spike had no parallel command; its
+  `KeyResponse::Handled` means a key handler took a key (no message), a
+  different thing, and stays.
+
 ## Proposal groups
 
 The changes cut into separate atomic proposals. Commits on this branch
@@ -20,7 +39,8 @@ and splits by hunk along the rows below.
   press forwarding.
 - **b. Focus-visible ring**: focus visibility in the runtime, rings only
   while visible, `Runtime::hide_focus_until_keyboard`.
-- **c. Accessibility roles and states**: `Role` variants, `A11yState`,
+- **c. Accessibility roles and states**: `Role` variants (not `Link`,
+  now on `rust`), `A11yState`,
   `Semantics::{state, refs}`, relation resolution, the covering rule, and
   the AccessKit and DOM-mirror bridges.
 - **d. Draw variants and backdrop**: `Node::variants`, `When`, the paint
@@ -42,8 +62,9 @@ and splits by hunk along the rows below.
   is held.
 - **h. Keys, context press, focus requests**: `Key`, `Modifiers`,
   `KeyEvent`, `KeyOutcome`, `Surface::key`; `Node::{on_key, on_context}`,
-  `KeyResponse`; `BuildCx::focus_requests`, `FocusRequests`; the shells'
-  key and right-click forwarding.
+  `KeyResponse`; `BuildCx::focus_requests`, `FocusRequests` (a build-time
+  way into `rust`'s `Command::Focus` path); the shells' key and
+  right-click forwarding.
 - **i. Scroll hooks for windowing**: `Node::{rebuild_on_scroll,
   initial_scroll, scroll_report, scroll_adjust}`,
   `BuildCx::{scroll_offsets, scroll_offset}`. Groups h and i share one
@@ -56,7 +77,7 @@ and splits by hunk along the rows below.
 | astryx-core `lib.rs`, `element.rs`, `components/text.rs`, `light.rs`, `world.rs` | `pub mod authoring` re-exports the build types (Build, BuildCx, Node, Draw, …) | Components outside the crate | Additive (visibility) |
 | astryx-core `element.rs` | `Draw::Paint(Painter)`, a custom painter | UI components with custom drawing | Additive |
 | astryx-core `element.rs` | Typed context: `Element::provide`, `BuildCx::{provide, unprovide, context}` | Locale, size cascade, group context through slots | Additive |
-| astryx-core `contract.rs` | 36 new `Role` variants; `A11yState` with ARIA states and relations; `HasPopup`, `Current`, `Sort`, `A11yOrientation` | Closure roles (dialog, menu, grid, tree, landmarks, …) and states (row count, activedescendant, …) | Additive (new enum variants: exhaustive matches outside the crate must add arms) |
+| astryx-core `contract.rs` | 35 new `Role` variants (`Link` is `rust`'s); `A11yState` with ARIA states and relations; `HasPopup`, `Current` (`Step`, `Location`, `Date`, `Time` only; `rust`'s `selected` covers current links and rows), `Sort`, `A11yOrientation` | Closure roles (dialog, menu, grid, tree, landmarks, …) and states (row count, activedescendant, …) | Additive (new enum variants: exhaustive matches outside the crate must add arms) |
 | astryx-core `contract.rs` | `A11yNode::state` field | Carries the states | Additive (struct literals add `state: Default::default()`) |
 | astryx-core `element.rs` | `Semantics::{state, refs}`, `A11yRefs`, `Semantics::{role, with_state, with_refs}` | States and relations by element id | Additive |
 | astryx-core `a11y.rs`, `element.rs` | Relations resolved from id props; a labeled node covers its children only for roles named from content, unless `Semantics::one_stop` asks for the old behavior | Labeled containers (a group of avatars) hid their children | Behavior change for labeled container roles only. No `rust` code labels a container whose children are not focus stops (cards, HoldCards and rows use Radio, Checkbox, Button or ListItem, which still cover), so screen-reader output is unchanged: `examples/gallery/tests/a11y_golden.rs` checks the accessibility tree of all 20 gallery sections against goldens written from the tree before this change (`tests/a11y/*.txt`, including cards with children, HoldCard, SelectableCardGroup and Settings-style rows). `one_stop` restores the old reading for any container that needs it. |
@@ -74,7 +95,7 @@ and splits by hunk along the rows below.
 | astryx-core `element.rs`, `layer.rs`, `runtime.rs` | Component state kept by the runtime per node id and type (`LocalHandle`), changed from `Interact::effect`, `LayerSpec::dismiss_effect` and `HoverSpec::effect`; a change rebuilds; state is dropped with its node | Astryx's uncontrolled APIs (Tooltip, Popover, Collapsible `defaultIsOpen`, Table default sort) without an app message per bit of UI state | Additive; `HoverSpec::on_change` is now optional (introduced on this branch) |
 | astryx-core `runtime.rs` | The build sees the frame's viewport (it saw (0, 0) on the first frame), and a viewport change rebuilds | Layers and sheets size from `BuildCx::viewport` | Bug fix (one more rebuild per resize) |
 | astryx-core `gesture.rs` (new), `element.rs`, `runtime.rs`, `contract.rs`; astryx-desktop `lib.rs`; astryx-web `shell.rs` | `DragSpec` drag handlers; the runtime gives a drag to the innermost handler (or finger-scrolled container) that wants its direction after 10 points, cancels the press under it, scrolls containers under a finger with a coast at UIScrollView's deceleration; `PointerEvent::time_ms`; shells forward moves while pressed | Gestures row: sheets over scrolling lists, swipe rows, reorder, momentum | Additive (no drag handlers: only finger scrolling, which no shell sent before) |
-| astryx-core `contract.rs`, `element.rs`, `runtime.rs`; astryx-desktop `lib.rs`, `input.rs`; astryx-web `keys.rs`, `shell.rs` | `Surface::key` with `KeyEvent` (logical key, modifiers, repeat), offered first to `on_key` handlers from the focused node out (Pass keeps today's mapping); `on_context` for a right click at a point; `FocusRequests` move focus to an element by id after a build | Menus, comboboxes, grids, tree lists, reorder, context menus (Shift+F10, right click), roving focus | Additive (no handlers: shells map keys as before) |
+| astryx-core `contract.rs`, `element.rs`, `runtime.rs`; astryx-desktop `lib.rs`, `input.rs`; astryx-web `keys.rs`, `shell.rs` | `Surface::key` with `KeyEvent` (logical key, modifiers, repeat), offered first to `on_key` handlers from the focused node out (Pass keeps today's mapping); `on_context` for a right click at a point; `FocusRequests` let a component ask, while building, for `rust`'s `Command::Focus` (focus an element by id after the build) | Menus, comboboxes, grids, tree lists, reorder, context menus (Shift+F10, right click), roving focus | Additive (no handlers: shells map keys as before) |
 | astryx-core `element.rs`, `runtime.rs` | A scroll container can rebuild the view when its offset changes and read the offset while building; start at an initial offset when it appears; report offset changes; shift its offset once when content above the viewport changes height | Virtualizer: windowed rows, scroll restore, scroll anchoring | Additive |
 | astryx-core `element.rs`, `runtime.rs`, `components/input.rs`, `components/keyboard.rs` | `Edit::on_change` is optional and `Edit::effect` runs first with a new value | Inputs that keep their own draft text (combobox query, number draft) | Struct change: `Edit` literals wrap `on_change` in `Some` and add `effect: None` (three sites updated) |
 | astryx-core `gesture.rs`, `runtime.rs` | `DragSpec::on_drag` returns an optional message | Handlers that send only at the release (reorder, drag to dismiss) | Introduced on this branch |

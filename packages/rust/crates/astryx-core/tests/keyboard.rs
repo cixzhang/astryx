@@ -229,3 +229,67 @@ fn the_shells_face_layout_places_the_keys() {
     assert!(r.0 < n.0 && r.0 < c.0, "X is left");
     assert!(c.1 < a.1 && c.1 < n.1, "Y is at the top");
 }
+
+/// A keyboard on the first page of a pager flipped with L1 and R1.
+#[derive(Default)]
+struct PagedPad {
+    pad: Pad,
+}
+
+impl App for PagedPad {
+    type Msg = KeyboardUpdate;
+    fn view(&self) -> Element<KeyboardUpdate> {
+        astryx_core::paged::Paged::new()
+            .flip_buttons(astryx_core::paged::FlipButtons::L1R1)
+            .child(
+                OnScreenKeyboard::new("Message", self.pad.text.clone(), self.pad.state.clone())
+                    .on_change(|u| u),
+            )
+            .children((0..40).map(|i| Text::new(format!("Filler line {i}"))))
+            .into()
+    }
+    fn update(&mut self, u: KeyboardUpdate) -> Command {
+        self.pad.update(u)
+    }
+}
+
+#[test]
+fn a_focused_keyboard_keeps_l1_and_r1_over_a_pager_that_flips_with_them() {
+    let mut rt = Runtime::new(PagedPad::default());
+    let page = |rt: &Runtime<PagedPad>| {
+        a11y_nodes(&rt.accessibility().unwrap())
+            .into_iter()
+            .find_map(|n| n.label.filter(|l| l.starts_with("Page ")))
+    };
+    let draw = |rt: &mut Runtime<PagedPad>| {
+        rt.frame(
+            &FrameInfo {
+                width: 1024,
+                height: 768,
+                scale: 2.0,
+                dt: 0.0,
+            },
+            &measure(),
+        )
+    };
+    draw(&mut rt);
+    assert!(
+        page(&rt).is_some_and(|p| p.starts_with("Page 1 of ")),
+        "{:?}",
+        page(&rt)
+    );
+    let layer = rt.app().pad.state.layer;
+    rt.input(Input::R1, InputPhase::Pressed);
+    rt.input(Input::R1, InputPhase::Released);
+    draw(&mut rt);
+    assert_ne!(
+        rt.app().pad.state.layer,
+        layer,
+        "the keyboard changed layer"
+    );
+    assert!(
+        page(&rt).is_some_and(|p| p.starts_with("Page 1 of ")),
+        "the pager stayed: {:?}",
+        page(&rt)
+    );
+}

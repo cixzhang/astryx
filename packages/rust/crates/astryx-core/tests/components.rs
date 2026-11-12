@@ -576,6 +576,103 @@ fn stack_wraps_children_onto_new_lines() {
     assert!(ys.iter().any(|&y| y > 0.0), "{ys:?}");
 }
 
+/// A text pushed to the end of its stack item, so its right edge is the
+/// item's right edge.
+fn end_text(words: &'static str) -> HStack<()> {
+    HStack::new()
+        .h_align(StackJustify::End)
+        .child(Text::new(words))
+}
+
+#[test]
+fn a_fill_item_takes_the_space_left_and_fill_items_share_it() {
+    let list = paint(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(Text::new("Logo")))
+            .child(StackItem::with_child(end_text("main")).size(StackItemSize::Fill))
+            .child(Text::new("Actions"))
+            .into()
+    });
+    let (logo, main, actions) = (
+        text(&list, "Logo").0,
+        text(&list, "main").0,
+        text(&list, "Actions").0,
+    );
+    assert_eq!(logo.x, 0.0);
+    assert_eq!(
+        actions.x + actions.width,
+        400.0,
+        "the last child sits at the end"
+    );
+    assert_eq!(
+        main.x + main.width,
+        actions.x,
+        "the fill item ends where Actions starts"
+    );
+
+    let list = paint(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(end_text("one")).size(StackItemSize::Fill))
+            .child(StackItem::with_child(end_text("two")).size(StackItemSize::Fill))
+            .into()
+    });
+    let (one, two) = (text(&list, "one").0, text(&list, "two").0);
+    assert_eq!(
+        (one.x + one.width, two.x + two.width),
+        (200.0, 400.0),
+        "even halves"
+    );
+}
+
+#[test]
+fn a_fill_item_fills_a_column_and_static_items_keep_their_size() {
+    let list = paint(|| {
+        VStack::<()>::new()
+            .height(SizeValue::Percent(100.0))
+            .child(Text::new("Header"))
+            .child(
+                StackItem::with_child(
+                    VStack::new()
+                        .height(SizeValue::Percent(100.0))
+                        .v_align(StackJustify::End)
+                        .child(Text::new("bottom")),
+                )
+                .size(StackItemSize::Fill),
+            )
+            .child(StackItem::with_child(Text::new("Footer")))
+            .into()
+    });
+    let (bottom, footer) = (text(&list, "bottom").0, text(&list, "Footer").0);
+    assert_eq!(footer.y + footer.height, 600.0);
+    assert_eq!(
+        bottom.y + bottom.height,
+        footer.y,
+        "the fill item reaches the footer"
+    );
+    // A static item does not shrink below its content when space is short.
+    let mut rt = runtime(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(Text::new("keep these words")))
+            .child(Text::new("and these other words that are long"))
+            .into()
+    });
+    let list = draw(&mut rt, 120, 400);
+    let natural = text(
+        &paint(|| {
+            HStack::<()>::new()
+                .child(Text::new("keep these words"))
+                .into()
+        }),
+        "keep these words",
+    )
+    .0;
+    assert_eq!(
+        text(&list, "keep these words").0.width,
+        natural.width,
+        "not squeezed"
+    );
+}
+
 #[test]
 fn hidden_elements_are_not_built() {
     let list = paint(|| {
@@ -755,6 +852,50 @@ fn pressable_selected_list_item() {
     assert_eq!(a11y(&rt, Role::Button)[0].label.as_deref(), Some("Inbox"));
     tap(&mut rt, Input::A);
     assert_eq!(rt.app().sent, vec!["inbox"]);
+}
+
+/// A navigation list: rows with an `href` read as links, and the selected
+/// one is marked current; a row with only `on_click` stays a button.
+#[test]
+fn list_rows_with_href_read_as_links_and_the_selected_one_is_current() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(
+                ListItem::new("Home")
+                    .href("https://example.com/home")
+                    .is_selected(true),
+            )
+            .child(
+                ListItem::new("Help")
+                    .href("https://example.com/help")
+                    .on_click("help"),
+            )
+            .child(ListItem::new("Refresh").on_click("refresh"))
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    let links = a11y(&rt, Role::Link);
+    let named: Vec<_> = links
+        .iter()
+        .map(|n| (n.label.as_deref(), n.selected, n.focusable))
+        .collect();
+    assert_eq!(
+        named,
+        [(Some("Home"), Some(true), true), (Some("Help"), None, true)]
+    );
+    let buttons = a11y(&rt, Role::Button);
+    assert_eq!(buttons.len(), 1);
+    assert_eq!(buttons[0].label.as_deref(), Some("Refresh"));
+    // An unsafe destination is no link; the row is a button for its press.
+    let mut rt = runtime(|| {
+        ListItem::new("Odd")
+            .href("javascript:alert(1)")
+            .on_click("odd")
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    assert!(a11y(&rt, Role::Link).is_empty());
+    assert_eq!(a11y(&rt, Role::Button)[0].label.as_deref(), Some("Odd"));
 }
 
 #[test]
@@ -1234,6 +1375,62 @@ fn hrefs_open_after_the_press_handler() {
         Command::None,
         "disabled links never open"
     );
+}
+
+/// An app that shows some places itself: its press handler answers
+/// `Command::Handled` for them, and the runtime opens nothing.
+struct InApp {
+    shown: Vec<&'static str>,
+}
+
+impl App for InApp {
+    type Msg = &'static str;
+    fn view(&self) -> Element<&'static str> {
+        VStack::new()
+            .child(
+                ListItem::new("Settings")
+                    .href("https://example.com/settings")
+                    .on_click("settings"),
+            )
+            .child(
+                ListItem::new("Help")
+                    .href("https://example.com/help")
+                    .on_click("help"),
+            )
+            .into()
+    }
+    fn update(&mut self, msg: &'static str) -> Command {
+        if msg == "settings" {
+            self.shown.push(msg);
+            Command::Handled
+        } else {
+            Command::None
+        }
+    }
+}
+
+#[test]
+fn a_handled_press_keeps_the_link_in_the_app() {
+    let mut rt = Runtime::new(InApp { shown: Vec::new() });
+    draw(&mut rt, 400, 600);
+    assert_eq!(tap(&mut rt, Input::A), Command::Handled, "nothing to open");
+    assert_eq!(rt.app().shown, ["settings"]);
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::OpenUrl("https://example.com/help".into()),
+        "a None answer still opens the link"
+    );
+}
+
+#[test]
+fn handled_joins_other_commands_as_the_other_one() {
+    let open = || Command::OpenUrl("https://example.com".into());
+    assert_eq!(Command::Handled.and(Command::None), Command::Handled);
+    assert_eq!(Command::None.and(Command::Handled), Command::Handled);
+    assert_eq!(Command::Handled.and(open()), open());
+    assert_eq!(open().and(Command::Handled), open());
+    assert_eq!(Command::Handled.and(Command::Handled), Command::Handled);
 }
 
 #[test]

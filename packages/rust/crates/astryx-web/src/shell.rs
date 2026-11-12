@@ -236,7 +236,8 @@ impl Shell {
 
     fn handle(&mut self, command: Command) {
         match command {
-            Command::None => {}
+            // The runtime carries out focus requests; none reach the shell.
+            Command::None | Command::Handled | Command::Focus(_) => {}
             Command::Batch(commands) => {
                 for command in commands {
                     self.handle(command);

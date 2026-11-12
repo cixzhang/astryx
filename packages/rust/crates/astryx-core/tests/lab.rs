@@ -2,7 +2,7 @@
 
 mod common;
 
-use astryx_core::lab::{HoldButton, HoldCard, Image, SelectableCardGroup, StatusBar};
+use astryx_core::lab::{HoldButton, HoldCard, Image, SelectableCardGroup, StatusBar, WidthReader};
 use astryx_core::testing::*;
 use astryx_core::*;
 use common::*;
@@ -894,4 +894,99 @@ fn the_phone_connection_shows_and_reads_only_without_wifi() {
         "Wi-Fi connected, 9:41 AM",
         "Wi-Fi in use: the phone is not mentioned"
     );
+}
+
+/// A grid that fits as many 100-point columns as its width allows, from the
+/// width a `WidthReader` reports.
+struct Grid {
+    columns: usize,
+    heard: Vec<f32>,
+    padding: Space,
+}
+
+impl App for Grid {
+    type Msg = f32;
+    fn view(&self) -> Element<f32> {
+        VStack::new()
+            .padding(self.padding)
+            .child(WidthReader::new(|w| w).child(
+                HStack::new().children((0..self.columns).map(|i| Text::new(format!("c{i}")))),
+            ))
+            .into()
+    }
+    fn update(&mut self, width: f32) -> Command {
+        self.heard.push(width);
+        self.columns = ((width / 100.0).floor() as usize).max(1);
+        Command::None
+    }
+}
+
+#[test]
+fn a_width_reader_lets_the_app_fit_columns_before_the_first_frame_is_drawn() {
+    let mut rt = Runtime::new(Grid {
+        columns: 1,
+        heard: Vec::new(),
+        padding: Space::S0,
+    });
+    let list = draw(&mut rt, 400, 300);
+    assert_eq!(rt.app().heard, [400.0]);
+    assert_eq!(
+        texts(&list).len(),
+        4,
+        "the first frame already has 4 columns"
+    );
+    // The same width again is not news.
+    draw(&mut rt, 400, 300);
+    assert_eq!(rt.app().heard, [400.0]);
+    // A narrower window: fewer columns, in the same frame.
+    let list = draw(&mut rt, 250, 300);
+    assert_eq!(rt.app().heard, [400.0, 250.0]);
+    assert_eq!(texts(&list).len(), 2);
+}
+
+#[test]
+fn a_width_reader_reports_the_width_inside_its_parent() {
+    let mut rt = Runtime::new(Grid {
+        columns: 1,
+        heard: Vec::new(),
+        padding: Space::S4,
+    });
+    draw(&mut rt, 400, 300);
+    let s4 = Theme::ASTRYX.light.space.s4;
+    assert_eq!(rt.app().heard, [400.0 - 2.0 * s4]);
+}
+
+/// An app whose content sets the width it then hears: each answer changes
+/// the width again.
+struct Chase {
+    width: f32,
+    heard: usize,
+}
+
+impl App for Chase {
+    type Msg = f32;
+    fn view(&self) -> Element<f32> {
+        HStack::new()
+            .child(
+                VStack::new()
+                    .width(SizeValue::Points(self.width))
+                    .child(WidthReader::new(|w| w)),
+            )
+            .into()
+    }
+    fn update(&mut self, width: f32) -> Command {
+        self.heard += 1;
+        self.width = width - 10.0;
+        Command::None
+    }
+}
+
+#[test]
+fn a_reader_that_chases_its_own_width_stops_after_a_few_rounds() {
+    let mut rt = Runtime::new(Chase {
+        width: 200.0,
+        heard: 0,
+    });
+    draw(&mut rt, 400, 300);
+    assert!(rt.app().heard <= 3, "{}", rt.app().heard);
 }

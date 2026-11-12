@@ -272,8 +272,10 @@ pub struct Runtime<A: App> {
     highlight: PressHighlight,
     /// D-pad hold-to-repeat.
     repeats: RepeatGesture<Input>,
-    /// L2 and R2.
+    /// L2 and R2, or a pager's flip buttons.
     paging: PagingGesture,
+    /// The held page button is the pager's flip button.
+    paging_flip: bool,
     /// A hold in progress, and the fill draining after a hold let go early.
     hold: Option<Hold>,
     hold_release: Option<(u64, Animated<f32>)>,
@@ -284,6 +286,10 @@ pub struct Runtime<A: App> {
     moving: HashMap<u64, Moving>,
     /// Each pager's pages and the page it shows, by node id.
     pagers: HashMap<u64, Pager>,
+    /// The width each `WidthReader` last told the app, by node id.
+    widths: HashMap<u64, f32>,
+    /// The `id` of a `Command::Focus` to carry out after the next rebuild.
+    focus_request: Option<String>,
     /// The pager whose page has no focus stop, while focus rests on it.
     bare_page: Option<u64>,
     /// The view was rebuilt since the last frame.
@@ -430,12 +436,15 @@ impl<A: App> Runtime<A> {
             highlight: PressHighlight::new(),
             repeats: RepeatGesture::new(DPAD_REPEAT),
             paging: PagingGesture::new(),
+            paging_flip: false,
             hold: None,
             hold_release: None,
             press_scale: Animated::new(1.0),
             scaled: None,
             moving: HashMap::new(),
             pagers: HashMap::new(),
+            widths: HashMap::new(),
+            focus_request: None,
             bare_page: None,
             reported_focus: None,
             rebuilt: false,
@@ -628,7 +637,56 @@ impl<A: App> Runtime<A> {
     pub fn send(&mut self, msg: A::Msg) -> Command {
         let command = self.app.update(msg);
         self.stale = true;
-        command
+        self.take_focus_requests(command)
+    }
+
+    /// Keeps the `Command::Focus` requests in `command` for the next
+    /// rebuild (the last one wins) and returns the rest, with `Handled` in
+    /// place of each request so a pressed link stays in the app.
+    fn take_focus_requests(&mut self, command: Command) -> Command {
+        match command {
+            Command::Focus(id) => {
+                self.focus_request = Some(id);
+                Command::Handled
+            }
+            Command::Batch(list) => Command::Batch(
+                list.into_iter()
+                    .map(|c| self.take_focus_requests(c))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
+    /// Carries out the last `Command::Focus`, now that the view it names
+    /// is built and laid out. A request a component made while building
+    /// (`BuildCx::focus_requests`) comes later, so it wins.
+    fn apply_focus_request(&mut self) {
+        let from_build = self.focus_requests.take();
+        let Some(id) = from_build.or(self.focus_request.take()) else {
+            return;
+        };
+        self.focus_request = None;
+        let Some(target) = self
+            .nodes
+            .iter()
+            .position(|n| n.name.as_deref() == Some(id.as_str()))
+        else {
+            return;
+        };
+        let inside = |mut ix: usize| loop {
+            if ix == target {
+                return true;
+            }
+            match self.nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
+        // Stops are in reading order: the element itself comes first.
+        if let Some(stop) = self.stops.iter().position(|&(ix, _)| inside(ix)) {
+            self.set_focus(stop);
+        }
     }
 
     /// The preferences the shell passed last.
@@ -639,6 +697,33 @@ impl<A: App> Runtime<A> {
     /// Phase timings of the last frame.
     pub fn timings(&self) -> FrameTimings {
         self.timings
+    }
+
+    /// Sends each width reader's new width to the app.
+    fn report_widths(&mut self) -> Command {
+        let Some(layout) = &self.layout else {
+            return Command::None;
+        };
+        let mut changed = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(on_width) = &node.on_width else {
+                continue;
+            };
+            let width = layout.rects[ix].width;
+            seen.insert(node.id);
+            let known = self.widths.get(&node.id);
+            if known.is_none_or(|&w| (w - width).abs() >= 0.5) {
+                changed.push((node.id, width, on_width(width)));
+            }
+        }
+        self.widths.retain(|id, _| seen.contains(id));
+        let mut command = Command::None;
+        for (id, width, msg) in changed {
+            self.widths.insert(id, width);
+            command = command.and(self.send(msg));
+        }
+        command
     }
 
     /// The accessibility id of the focused element.
@@ -1801,15 +1886,30 @@ impl<A: App> Runtime<A> {
         Command::None
     }
 
+    /// Which way `input` flips the pager it acts on (true is forward), if it
+    /// is one of that pager's flip buttons.
+    fn flips(&self, input: Input) -> Option<bool> {
+        let p = self.button_pager()?;
+        self.nodes[p].flip_buttons.direction(input)
+    }
+
+    /// The pager a page button acts on: the one focus is in, or the first
+    /// one on screen.
+    fn button_pager(&self) -> Option<usize> {
+        self.focus_pager()
+            .or_else(|| self.nodes.iter().position(|n| n.pager))
+    }
+
     /// L2 and R2 scroll the nearest vertical scroll container by a viewport,
     /// keeping a little of the last one in view. Focus that scrolls out of
-    /// view moves to the first focus stop in view.
-    fn page(&mut self, page: Page) -> Command {
-        // L2 and R2 flip the pager focus is in, or the first one on screen.
-        if let Some(p) = self
-            .focus_pager()
-            .or_else(|| self.nodes.iter().position(|n| n.pager))
-        {
+    /// view moves to the first focus stop in view. A pager flips instead,
+    /// with the buttons it was given (`flip`).
+    fn page(&mut self, page: Page, flip: bool) -> Command {
+        if let Some(p) = self.button_pager() {
+            if !flip {
+                // A pager flipped by other buttons ignores these.
+                return Command::None;
+            }
             let id = self.nodes[p].id;
             if let Some(pager) = self.pagers.get(&id) {
                 let target = match page {
@@ -2144,7 +2244,7 @@ impl<A: App> Runtime<A> {
             }
         }
         if let Some(page) = self.paging.poll(now) {
-            self.page(page);
+            self.page(page, self.paging_flip);
         }
         command
     }
@@ -2192,7 +2292,8 @@ impl<A: App> Runtime<A> {
             None => Command::None,
         };
         // A link opens after its press handler, unless the app asked for
-        // something else.
+        // something else (`Command::Handled` when it shows the place
+        // itself).
         match (command, href) {
             (Command::None, Some(href)) => Command::OpenUrl(href),
             (command, _) => command,
@@ -3029,35 +3130,6 @@ impl<A: App> Runtime<A> {
         }
     }
 
-    /// Moves focus to the element a component asked for: the stop with that
-    /// `id` prop, or the first stop inside it.
-    fn apply_focus_request(&mut self) {
-        let Some(name) = self.focus_requests.take() else {
-            return;
-        };
-        let Some(target) = self
-            .nodes
-            .iter()
-            .position(|n| n.name.as_deref() == Some(name.as_str()))
-        else {
-            return;
-        };
-        let inside = |mut ix: usize| loop {
-            if ix == target {
-                return true;
-            }
-            match self.nodes[ix].parent {
-                Some(p) => ix = p as usize,
-                None => return false,
-            }
-        };
-        if let Some(stop) = self.stops.iter().position(|&(ix, _)| inside(ix)) {
-            self.set_focus(stop);
-            self.reveal = true;
-            self.repaint = true;
-        }
-    }
-
     /// Offers a key to the handlers from the focused node out to the root.
     fn route_key(&mut self, event: &crate::contract::KeyEvent) -> Option<Command> {
         use crate::element::KeyResponse;
@@ -3384,17 +3456,24 @@ impl<A: App> Runtime<A> {
                     None => Command::None,
                 }
             }
-            (Input::L2 | Input::R2, _) => {
-                let page = if input == Input::R2 {
-                    Page::Next
-                } else {
-                    Page::Previous
+            // The pager on screen takes its flip buttons; L2 and R2 also
+            // scroll a plain scroll container.
+            (Input::L1 | Input::R1 | Input::L2 | Input::R2, _)
+                if matches!(input, Input::L2 | Input::R2) || self.flips(input).is_some() =>
+            {
+                let flip = self.flips(input);
+                self.paging_flip = flip.is_some();
+                let page = match flip {
+                    Some(true) => Page::Next,
+                    Some(false) => Page::Previous,
+                    None if input == Input::R2 => Page::Next,
+                    None => Page::Previous,
                 };
                 match self
                     .paging
                     .input(page, gesture_phase(phase), self.motion_ms)
                 {
-                    Some(page) => self.page(page),
+                    Some(page) => self.page(page, flip.is_some()),
                     None => Command::None,
                 }
             }
@@ -3687,14 +3766,30 @@ impl<A: App> Surface for Runtime<A> {
                 .as_mut()
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
+            // Width readers tell the app their width; the app's answer is
+            // built and laid out before this frame is drawn. A few rounds
+            // at most, in case an answer changes the width it depends on.
+            for _ in 0..3 {
+                let command = self.report_widths();
+                self.pending = std::mem::take(&mut self.pending).and(command);
+                if !self.stale {
+                    break;
+                }
+                self.rebuild();
+                let layout = self.layout.as_mut().expect("layout");
+                if std::mem::take(&mut self.relayout) {
+                    layout.compute(&self.nodes, viewport, text);
+                    layout.place(&self.nodes, &self.scroll);
+                }
+            }
         }
         // New nodes need their page labels and focus stops even when the
         // geometry they share with the old ones is kept.
         if laid_out || std::mem::take(&mut self.rebuilt) {
             self.update_pagers();
             self.settle_focus();
+            self.apply_focus_request();
         }
-        self.apply_focus_request();
         self.report_scroll();
         self.timings.laid_out = laid_out;
         if laid_out {

@@ -1,8 +1,8 @@
 //! Bridges the Astryx [`A11yNode`] tree to AccessKit.
 
 use accesskit::{
-    Action, ActionRequest, Node, NodeId, Rect, Role as AkRole, TextDirection, Toggled, TreeId,
-    TreeInfo, TreeUpdate,
+    Action, ActionRequest, AriaCurrent, Node, NodeId, Rect, Role as AkRole, TextDirection, Toggled,
+    TreeId, TreeInfo, TreeUpdate,
 };
 use astryx_core::{A11yAction, A11yNode, Live, Role};
 
@@ -106,8 +106,6 @@ fn add_state(ak: &mut Node, state: &astryx_core::A11yState) {
     }
     if let Some(current) = state.current {
         ak.set_aria_current(match current {
-            Current::True => accesskit::AriaCurrent::True,
-            Current::Page => accesskit::AriaCurrent::Page,
             Current::Step => accesskit::AriaCurrent::Step,
             Current::Location => accesskit::AriaCurrent::Location,
             Current::Date => accesskit::AriaCurrent::Date,
@@ -207,8 +205,18 @@ fn add(node: &A11yNode, scale: f64, out: &mut Vec<(NodeId, Node)>, focus: &mut O
     if let Some(description) = &node.description {
         ak.set_description(description.clone());
     }
-    if let Some(selected) = node.selected {
-        ak.set_selected(selected);
+    match (node.role, node.selected) {
+        // The current row of a navigation list: links are the current
+        // page, other rows the current item.
+        (Role::Link, Some(true)) => ak.set_aria_current(AriaCurrent::Page),
+        (Role::Button, Some(true)) => ak.set_aria_current(AriaCurrent::True),
+        (Role::ListItem, Some(true)) => {
+            ak.set_aria_current(AriaCurrent::True);
+            ak.set_selected(true);
+        }
+        (Role::Link | Role::Button, _) => {}
+        (_, Some(selected)) => ak.set_selected(selected),
+        (_, None) => {}
     }
     if let Some(live) = node.live {
         ak.set_live(match live {
@@ -378,6 +386,36 @@ mod tests {
             .unwrap()
             .1;
         assert_eq!(group.children(), &[NodeId(2), NodeId(3)]);
+    }
+
+    #[test]
+    fn links_map_to_links_and_the_current_row_says_so() {
+        assert_eq!(role(Role::Link), AkRole::Link);
+        let mut link = node(1, Role::Link, false, vec![]);
+        link.focusable = true;
+        let mut current = node(2, Role::Link, false, vec![]);
+        current.selected = Some(true);
+        let mut button = node(3, Role::Button, false, vec![]);
+        button.selected = Some(true);
+        let root = node(9, Role::Group, false, vec![link, current, button]);
+        let update = tree_update(Some(&root), "t", 1.0);
+        let get = |id| {
+            &update
+                .nodes
+                .iter()
+                .find(|(n, _)| *n == NodeId(id))
+                .unwrap()
+                .1
+        };
+        assert_eq!(get(1).aria_current(), None);
+        assert!(get(1).supports_action(Action::Click) && get(1).supports_action(Action::Focus));
+        assert_eq!(get(2).aria_current(), Some(AriaCurrent::Page));
+        assert_eq!(get(3).aria_current(), Some(AriaCurrent::True));
+        assert_eq!(
+            get(3).is_selected(),
+            None,
+            "a button row is current, not selected"
+        );
     }
 
     #[test]
