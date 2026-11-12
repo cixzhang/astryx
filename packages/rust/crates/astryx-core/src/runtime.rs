@@ -1982,7 +1982,8 @@ impl<A: App> Runtime<A> {
             None => Command::None,
         };
         // A link opens after its press handler, unless the app asked for
-        // something else.
+        // something else (`Command::Handled` when it shows the place
+        // itself).
         match (command, href) {
             (Command::None, Some(href)) => Command::OpenUrl(href),
             (command, _) => command,

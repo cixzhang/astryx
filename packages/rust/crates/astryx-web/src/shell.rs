@@ -236,7 +236,7 @@ impl Shell {
 
     fn handle(&mut self, command: Command) {
         match command {
-            Command::None => {}
+            Command::None | Command::Handled => {}
             Command::Batch(commands) => {
                 for command in commands {
                     self.handle(command);

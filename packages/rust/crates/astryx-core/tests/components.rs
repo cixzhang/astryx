@@ -1280,6 +1280,62 @@ fn hrefs_open_after_the_press_handler() {
     );
 }
 
+/// An app that shows some places itself: its press handler answers
+/// `Command::Handled` for them, and the runtime opens nothing.
+struct InApp {
+    shown: Vec<&'static str>,
+}
+
+impl App for InApp {
+    type Msg = &'static str;
+    fn view(&self) -> Element<&'static str> {
+        VStack::new()
+            .child(
+                ListItem::new("Settings")
+                    .href("https://example.com/settings")
+                    .on_click("settings"),
+            )
+            .child(
+                ListItem::new("Help")
+                    .href("https://example.com/help")
+                    .on_click("help"),
+            )
+            .into()
+    }
+    fn update(&mut self, msg: &'static str) -> Command {
+        if msg == "settings" {
+            self.shown.push(msg);
+            Command::Handled
+        } else {
+            Command::None
+        }
+    }
+}
+
+#[test]
+fn a_handled_press_keeps_the_link_in_the_app() {
+    let mut rt = Runtime::new(InApp { shown: Vec::new() });
+    draw(&mut rt, 400, 600);
+    assert_eq!(tap(&mut rt, Input::A), Command::Handled, "nothing to open");
+    assert_eq!(rt.app().shown, ["settings"]);
+    tap(&mut rt, Input::Down);
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::OpenUrl("https://example.com/help".into()),
+        "a None answer still opens the link"
+    );
+}
+
+#[test]
+fn handled_joins_other_commands_as_the_other_one() {
+    let open = || Command::OpenUrl("https://example.com".into());
+    assert_eq!(Command::Handled.and(Command::None), Command::Handled);
+    assert_eq!(Command::None.and(Command::Handled), Command::Handled);
+    assert_eq!(Command::Handled.and(open()), open());
+    assert_eq!(open().and(Command::Handled), open());
+    assert_eq!(Command::Handled.and(Command::Handled), Command::Handled);
+}
+
 #[test]
 fn dividers_are_separators() {
     let mut rt = runtime(|| {

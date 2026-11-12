@@ -766,14 +766,22 @@ pub enum Command {
     PlaySound(SoundId),
     /// Several commands, carried out in order.
     Batch(Vec<Command>),
+    /// The app took care of the press itself; there is nothing more to do.
+    /// A press on something with an `href` opens the link only when its
+    /// `on_click` handler returns `Command::None`, so returning `Handled`
+    /// keeps the link inside the app (the app shows the place itself).
+    /// Shells do nothing for it.
+    Handled,
 }
 
 impl Command {
     /// This command, then `next`: the one that is not `None` when the other
-    /// is, else both in a batch.
+    /// is, else both in a batch. `Handled` with anything else is the other
+    /// command (which keeps a link in the app just as well).
     pub fn and(self, next: Command) -> Command {
         match (self, next) {
             (Command::None, c) | (c, Command::None) => c,
+            (Command::Handled, c) | (c, Command::Handled) => c,
             (Command::Batch(mut a), Command::Batch(b)) => {
                 a.extend(b);
                 Command::Batch(a)
