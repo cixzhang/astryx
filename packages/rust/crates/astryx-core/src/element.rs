@@ -479,6 +479,8 @@ pub(crate) struct Node<Msg> {
     pub timer: Option<(f64, Msg)>,
     /// A `paged::Paged` viewport: its scroll offset rests on page starts.
     pub pager: bool,
+    /// The buttons that flip a pager directly.
+    pub flip_buttons: crate::paged::FlipButtons,
     /// A `paged::CameraFollow` viewport, offset in both directions.
     pub camera: bool,
     /// Tells the app the width this node is laid out in, each time it
@@ -516,6 +518,7 @@ impl<Msg> Node<Msg> {
             capture: None,
             timer: None,
             pager: false,
+            flip_buttons: crate::paged::FlipButtons::L2R2,
             camera: false,
             on_width: None,
         }

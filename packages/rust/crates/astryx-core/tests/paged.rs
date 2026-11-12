@@ -2,7 +2,7 @@
 
 mod common;
 
-use astryx_core::paged::{CameraFollow, Paged};
+use astryx_core::paged::{CameraFollow, FlipButtons, Paged};
 use astryx_core::testing::*;
 use astryx_core::*;
 use common::*;
@@ -191,6 +191,103 @@ fn l2_and_r2_flip_pages_directly() {
         Some("B5"),
         "the first stop on the page"
     );
+}
+
+/// An app that hears the buttons nothing else took.
+struct Shoulders {
+    heard: Vec<Input>,
+    buttons: FlipButtons,
+}
+
+impl App for Shoulders {
+    type Msg = usize;
+    fn view(&self) -> Element<usize> {
+        Paged::new()
+            .gap(Space::S4)
+            .padding(Space::S4)
+            .flip_buttons(self.buttons)
+            .children((0..12).map(|i| Button::new(format!("B{i}")).on_click(i)))
+            .into()
+    }
+    fn update(&mut self, msg: usize) -> Command {
+        match msg {
+            100 => self.heard.push(Input::L1),
+            101 => self.heard.push(Input::R1),
+            _ => {}
+        }
+        Command::None
+    }
+    fn on_input(&self, input: Input) -> Option<usize> {
+        match input {
+            Input::L1 => Some(100),
+            Input::R1 => Some(101),
+            _ => None,
+        }
+    }
+}
+
+fn shoulders(buttons: FlipButtons) -> Runtime<Shoulders> {
+    let mut rt = Runtime::new(Shoulders {
+        heard: Vec::new(),
+        buttons,
+    });
+    draw(&mut rt, W, H);
+    rt
+}
+
+fn page_of(rt: &Runtime<Shoulders>) -> Option<String> {
+    a11y_nodes(&rt.accessibility()?)
+        .into_iter()
+        .find(|n| n.live.is_some() && n.label.as_deref().is_some_and(|l| l.starts_with("Page ")))
+        .and_then(|n| n.label)
+}
+
+fn settle_app<A: App>(rt: &mut Runtime<A>) {
+    draw(rt, W, H);
+    rt.frame(
+        &FrameInfo {
+            width: W,
+            height: H,
+            scale: 1.0,
+            dt: 1.0,
+        },
+        &measure(),
+    );
+}
+
+#[test]
+fn l1_and_r1_flip_a_pager_set_to_them_and_l2_and_r2_then_do_nothing() {
+    let mut rt = shoulders(FlipButtons::L1R1);
+    tap(&mut rt, Input::R1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 2 of 3"));
+    tap(&mut rt, Input::R2);
+    settle_app(&mut rt);
+    assert_eq!(
+        page_of(&rt).as_deref(),
+        Some("Page 2 of 3"),
+        "R2 is not a flip button here"
+    );
+    tap(&mut rt, Input::L1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 1 of 3"));
+    assert!(
+        !rt.app().heard.contains(&Input::R1) && !rt.app().heard.contains(&Input::L1),
+        "the pager took L1 and R1: {:?}",
+        rt.app().heard
+    );
+}
+
+#[test]
+fn by_default_l1_and_r1_reach_the_app_and_the_pager_stays() {
+    let mut rt = shoulders(FlipButtons::default());
+    tap(&mut rt, Input::R1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 1 of 3"));
+    assert_eq!(rt.app().heard, [Input::R1]);
+    tap(&mut rt, Input::R2);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 2 of 3"));
 }
 
 #[test]

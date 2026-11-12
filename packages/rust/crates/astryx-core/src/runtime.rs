@@ -266,8 +266,10 @@ pub struct Runtime<A: App> {
     highlight: PressHighlight,
     /// D-pad hold-to-repeat.
     repeats: RepeatGesture<Input>,
-    /// L2 and R2.
+    /// L2 and R2, or a pager's flip buttons.
     paging: PagingGesture,
+    /// The held page button is the pager's flip button.
+    paging_flip: bool,
     /// A hold in progress, and the fill draining after a hold let go early.
     hold: Option<Hold>,
     hold_release: Option<(u64, Animated<f32>)>,
@@ -345,6 +347,7 @@ impl<A: App> Runtime<A> {
             highlight: PressHighlight::new(),
             repeats: RepeatGesture::new(DPAD_REPEAT),
             paging: PagingGesture::new(),
+            paging_flip: false,
             hold: None,
             hold_release: None,
             press_scale: Animated::new(1.0),
@@ -1641,15 +1644,30 @@ impl<A: App> Runtime<A> {
         Command::None
     }
 
+    /// Which way `input` flips the pager it acts on (true is forward), if it
+    /// is one of that pager's flip buttons.
+    fn flips(&self, input: Input) -> Option<bool> {
+        let p = self.button_pager()?;
+        self.nodes[p].flip_buttons.direction(input)
+    }
+
+    /// The pager a page button acts on: the one focus is in, or the first
+    /// one on screen.
+    fn button_pager(&self) -> Option<usize> {
+        self.focus_pager()
+            .or_else(|| self.nodes.iter().position(|n| n.pager))
+    }
+
     /// L2 and R2 scroll the nearest vertical scroll container by a viewport,
     /// keeping a little of the last one in view. Focus that scrolls out of
-    /// view moves to the first focus stop in view.
-    fn page(&mut self, page: Page) -> Command {
-        // L2 and R2 flip the pager focus is in, or the first one on screen.
-        if let Some(p) = self
-            .focus_pager()
-            .or_else(|| self.nodes.iter().position(|n| n.pager))
-        {
+    /// view moves to the first focus stop in view. A pager flips instead,
+    /// with the buttons it was given (`flip`).
+    fn page(&mut self, page: Page, flip: bool) -> Command {
+        if let Some(p) = self.button_pager() {
+            if !flip {
+                // A pager flipped by other buttons ignores these.
+                return Command::None;
+            }
             let id = self.nodes[p].id;
             if let Some(pager) = self.pagers.get(&id) {
                 let target = match page {
@@ -1967,7 +1985,7 @@ impl<A: App> Runtime<A> {
             }
         }
         if let Some(page) = self.paging.poll(now) {
-            self.page(page);
+            self.page(page, self.paging_flip);
         }
         command
     }
@@ -2224,17 +2242,24 @@ impl<A: App> Runtime<A> {
                     None => Command::None,
                 }
             }
-            (Input::L2 | Input::R2, _) => {
-                let page = if input == Input::R2 {
-                    Page::Next
-                } else {
-                    Page::Previous
+            // The pager on screen takes its flip buttons; L2 and R2 also
+            // scroll a plain scroll container.
+            (Input::L1 | Input::R1 | Input::L2 | Input::R2, _)
+                if matches!(input, Input::L2 | Input::R2) || self.flips(input).is_some() =>
+            {
+                let flip = self.flips(input);
+                self.paging_flip = flip.is_some();
+                let page = match flip {
+                    Some(true) => Page::Next,
+                    Some(false) => Page::Previous,
+                    None if input == Input::R2 => Page::Next,
+                    None => Page::Previous,
                 };
                 match self
                     .paging
                     .input(page, gesture_phase(phase), self.motion_ms)
                 {
-                    Some(page) => self.page(page),
+                    Some(page) => self.page(page, flip.is_some()),
                     None => Command::None,
                 }
             }

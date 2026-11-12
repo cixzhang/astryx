@@ -5,7 +5,8 @@
 //! scrolling one. [`Paged`] cuts its content into pages that fit its
 //! viewport exactly: it never splits an item across pages, and long text
 //! breaks between lines. The D-pad moves focus inside a page; pressing past
-//! the last focus stop flips to the next page, and L2 and R2 flip directly.
+//! the last focus stop flips to the next page, and L2 and R2 flip directly
+//! (or L1 and R1, with [`Paged::flip_buttons`]).
 //! A small row of dots at the bottom edge shows the page, as Astryx
 //! Pagination's `dots` variant draws them.
 //!
@@ -20,11 +21,36 @@ use crate::Tokens;
 use taffy::prelude::*;
 use taffy::Overflow;
 
+/// The pair of buttons that flips a [`Paged`] directly.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum FlipButtons {
+    /// L2 back, R2 forward.
+    #[default]
+    L2R2,
+    /// L1 back, R1 forward, for devices that keep L2 and R2 for something
+    /// else. The pager takes L1 and R1, so the app does not hear them while
+    /// the pager is on screen.
+    L1R1,
+}
+
+impl FlipButtons {
+    /// The direction `input` flips, if it is one of the pair.
+    pub(crate) fn direction(self, input: crate::contract::Input) -> Option<bool> {
+        use crate::contract::Input;
+        match (self, input) {
+            (FlipButtons::L2R2, Input::R2) | (FlipButtons::L1R1, Input::R1) => Some(true),
+            (FlipButtons::L2R2, Input::L2) | (FlipButtons::L1R1, Input::L1) => Some(false),
+            _ => None,
+        }
+    }
+}
+
 /// A vertical list of children laid out into whole pages.
 pub struct Paged<Msg> {
     base: Base,
     gap: Space,
     padding: Space,
+    flip_buttons: FlipButtons,
     children: Vec<Element<Msg>>,
 }
 
@@ -34,6 +60,7 @@ impl<Msg> Default for Paged<Msg> {
             base: Base::default(),
             gap: Space::S0,
             padding: Space::S0,
+            flip_buttons: FlipButtons::default(),
             children: Vec::new(),
         }
     }
@@ -50,6 +77,11 @@ impl<Msg> Paged<Msg> {
     /// Space around each page's content.
     pub fn padding(mut self, padding: Space) -> Self {
         self.padding = padding;
+        self
+    }
+    /// The buttons that flip pages directly: L2 and R2 unless set.
+    pub fn flip_buttons(mut self, buttons: FlipButtons) -> Self {
+        self.flip_buttons = buttons;
         self
     }
     pub fn child(mut self, child: impl Into<Element<Msg>>) -> Self {
@@ -118,6 +150,7 @@ impl<Msg> Build<Msg> for Paged<Msg> {
         });
         view.scroll = Some(Axis::Vertical);
         view.pager = true;
+        view.flip_buttons = self.flip_buttons;
         cx.begin(view);
         for child in self.children {
             cx.child(child);
