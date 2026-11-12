@@ -14,6 +14,7 @@ fn devices() -> [DeviceStatus; 3] {
             battery_percent: Some(82),
             charging: true,
             time: (19, 42),
+            tether: Radio::Off,
         },
         DeviceStatus {
             wifi: Radio::On,
