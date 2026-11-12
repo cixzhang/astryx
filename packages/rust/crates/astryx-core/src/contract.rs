@@ -892,6 +892,10 @@ pub enum Role {
     RadioGroup,
     /// One choice in a `RadioGroup`. `checked` tells whether it is chosen.
     Radio,
+    /// Something that goes to another place, such as a row with an `href`.
+    /// `selected` marks the one for the current place (ARIA
+    /// `aria-current`).
+    Link,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to
@@ -910,7 +914,9 @@ pub struct A11yNode {
     pub disabled: bool,
     /// `Some(true|false)` for toggles.
     pub checked: Option<bool>,
-    /// `Some(true|false)` for choices that can be selected.
+    /// `Some(true|false)` for choices that can be selected. On a `Link`,
+    /// `Button` or `ListItem`, `Some(true)` marks the current one, such as
+    /// the selected row of a navigation list (ARIA `aria-current`).
     pub selected: Option<bool>,
     /// True when the node takes keyboard focus.
     pub focusable: bool,

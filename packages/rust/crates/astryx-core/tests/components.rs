@@ -757,6 +757,50 @@ fn pressable_selected_list_item() {
     assert_eq!(rt.app().sent, vec!["inbox"]);
 }
 
+/// A navigation list: rows with an `href` read as links, and the selected
+/// one is marked current; a row with only `on_click` stays a button.
+#[test]
+fn list_rows_with_href_read_as_links_and_the_selected_one_is_current() {
+    let mut rt = runtime(|| {
+        VStack::new()
+            .child(
+                ListItem::new("Home")
+                    .href("https://example.com/home")
+                    .is_selected(true),
+            )
+            .child(
+                ListItem::new("Help")
+                    .href("https://example.com/help")
+                    .on_click("help"),
+            )
+            .child(ListItem::new("Refresh").on_click("refresh"))
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    let links = a11y(&rt, Role::Link);
+    let named: Vec<_> = links
+        .iter()
+        .map(|n| (n.label.as_deref(), n.selected, n.focusable))
+        .collect();
+    assert_eq!(
+        named,
+        [(Some("Home"), Some(true), true), (Some("Help"), None, true)]
+    );
+    let buttons = a11y(&rt, Role::Button);
+    assert_eq!(buttons.len(), 1);
+    assert_eq!(buttons[0].label.as_deref(), Some("Refresh"));
+    // An unsafe destination is no link; the row is a button for its press.
+    let mut rt = runtime(|| {
+        ListItem::new("Odd")
+            .href("javascript:alert(1)")
+            .on_click("odd")
+            .into()
+    });
+    draw(&mut rt, 400, 600);
+    assert!(a11y(&rt, Role::Link).is_empty());
+    assert_eq!(a11y(&rt, Role::Button)[0].label.as_deref(), Some("Odd"));
+}
+
 #[test]
 fn disabled_list_item_dims_its_words_and_stays_inert() {
     let mut rt = runtime(|| ListItem::new("Off").is_disabled(true).on_click(1).into());

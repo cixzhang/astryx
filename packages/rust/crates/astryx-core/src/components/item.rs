@@ -107,7 +107,8 @@ macro_rules! row_props {
             self.p.on_click = Some(msg);
             self
         }
-        /// A link the row opens on a press, after `on_click`.
+        /// A link the row opens on a press, after `on_click`. Assistive
+        /// technology announces the row as a link.
         pub fn href(mut self, href: impl Into<String>) -> Self {
             self.p.href = Some(href.into());
             self
@@ -117,6 +118,9 @@ macro_rules! row_props {
             self.p.is_disabled = on;
             self
         }
+        /// Marks the row chosen. Assistive technology announces a
+        /// selected link or button row as the current one, as in a
+        /// navigation list.
         pub fn is_selected(mut self, on: bool) -> Self {
             self.p.is_selected = on;
             self
@@ -278,7 +282,10 @@ fn build_row<Msg>(base: Base, p: ItemProps<Msg>, static_role: Option<Role>, cx: 
     }));
     let href = p.href.as_deref().and_then(crate::element::safe_destination);
     let interactive = p.on_click.is_some() || href.is_some();
-    let mut sem = if interactive {
+    let mut sem = if href.is_some() {
+        // A row that goes somewhere reads as a link, even with `on_click`.
+        Some(Semantics::new(Role::Link, p.label.clone()))
+    } else if interactive {
         Some(Semantics::new(Role::Button, p.label.clone()))
     } else {
         static_role.map(|role| Semantics::new(role, p.label.clone()))

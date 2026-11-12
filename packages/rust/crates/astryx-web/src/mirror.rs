@@ -209,6 +209,23 @@ pub(crate) fn describe(node: &A11yNode, tab_stop: Option<bool>) -> NodeDesc {
             d.tag = "div";
             role = Some("img");
         }
+        Role::Link => {
+            // No `href`: the app opens the destination, the mirror only
+            // names it for assistive technology.
+            d.tag = "div";
+            role = Some("link");
+            d.text = node.label.clone().filter(|_| leaf);
+            name_from_text = true;
+        }
+    }
+    // The current row of a navigation list (selection on choices is
+    // `aria-selected`, above).
+    if node.selected == Some(true) {
+        match node.role {
+            Role::Link => d.attrs.push(("aria-current", "page".into())),
+            Role::Button | Role::ListItem => d.attrs.push(("aria-current", "true".into())),
+            _ => {}
+        }
     }
     if let Some(role) = role {
         d.attrs.push(("role", role.into()));
@@ -604,6 +621,30 @@ mod tests {
             .iter()
             .find(|(n, _)| *n == name)
             .map(|(_, v)| v.as_str())
+    }
+
+    #[test]
+    fn links_read_as_links_and_the_current_one_says_so() {
+        let mut n = node(Role::Link);
+        n.focusable = true;
+        let d = describe(&n, Some(false));
+        assert_eq!((d.tag, attr(&d, "role")), ("div", Some("link")));
+        assert_eq!(d.text.as_deref(), Some("Wi-Fi"));
+        assert_eq!(attr(&d, "aria-current"), None);
+        assert_eq!(attr(&d, "tabindex"), Some("-1"));
+        n.selected = Some(true);
+        assert_eq!(attr(&describe(&n, None), "aria-current"), Some("page"));
+        let mut b = node(Role::Button);
+        b.selected = Some(true);
+        assert_eq!(attr(&describe(&b, None), "aria-current"), Some("true"));
+        // Choices keep aria-selected and never get aria-current.
+        let mut o = node(Role::ListBoxOption);
+        o.selected = Some(true);
+        let d = describe(&o, None);
+        assert_eq!(
+            (attr(&d, "aria-selected"), attr(&d, "aria-current")),
+            (Some("true"), None)
+        );
     }
 
     #[test]
