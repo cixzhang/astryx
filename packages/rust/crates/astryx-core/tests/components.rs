@@ -576,6 +576,103 @@ fn stack_wraps_children_onto_new_lines() {
     assert!(ys.iter().any(|&y| y > 0.0), "{ys:?}");
 }
 
+/// A text pushed to the end of its stack item, so its right edge is the
+/// item's right edge.
+fn end_text(words: &'static str) -> HStack<()> {
+    HStack::new()
+        .h_align(StackJustify::End)
+        .child(Text::new(words))
+}
+
+#[test]
+fn a_fill_item_takes_the_space_left_and_fill_items_share_it() {
+    let list = paint(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(Text::new("Logo")))
+            .child(StackItem::with_child(end_text("main")).size(StackItemSize::Fill))
+            .child(Text::new("Actions"))
+            .into()
+    });
+    let (logo, main, actions) = (
+        text(&list, "Logo").0,
+        text(&list, "main").0,
+        text(&list, "Actions").0,
+    );
+    assert_eq!(logo.x, 0.0);
+    assert_eq!(
+        actions.x + actions.width,
+        400.0,
+        "the last child sits at the end"
+    );
+    assert_eq!(
+        main.x + main.width,
+        actions.x,
+        "the fill item ends where Actions starts"
+    );
+
+    let list = paint(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(end_text("one")).size(StackItemSize::Fill))
+            .child(StackItem::with_child(end_text("two")).size(StackItemSize::Fill))
+            .into()
+    });
+    let (one, two) = (text(&list, "one").0, text(&list, "two").0);
+    assert_eq!(
+        (one.x + one.width, two.x + two.width),
+        (200.0, 400.0),
+        "even halves"
+    );
+}
+
+#[test]
+fn a_fill_item_fills_a_column_and_static_items_keep_their_size() {
+    let list = paint(|| {
+        VStack::<()>::new()
+            .height(SizeValue::Percent(100.0))
+            .child(Text::new("Header"))
+            .child(
+                StackItem::with_child(
+                    VStack::new()
+                        .height(SizeValue::Percent(100.0))
+                        .v_align(StackJustify::End)
+                        .child(Text::new("bottom")),
+                )
+                .size(StackItemSize::Fill),
+            )
+            .child(StackItem::with_child(Text::new("Footer")))
+            .into()
+    });
+    let (bottom, footer) = (text(&list, "bottom").0, text(&list, "Footer").0);
+    assert_eq!(footer.y + footer.height, 600.0);
+    assert_eq!(
+        bottom.y + bottom.height,
+        footer.y,
+        "the fill item reaches the footer"
+    );
+    // A static item does not shrink below its content when space is short.
+    let mut rt = runtime(|| {
+        HStack::<()>::new()
+            .child(StackItem::with_child(Text::new("keep these words")))
+            .child(Text::new("and these other words that are long"))
+            .into()
+    });
+    let list = draw(&mut rt, 120, 400);
+    let natural = text(
+        &paint(|| {
+            HStack::<()>::new()
+                .child(Text::new("keep these words"))
+                .into()
+        }),
+        "keep these words",
+    )
+    .0;
+    assert_eq!(
+        text(&list, "keep these words").0.width,
+        natural.width,
+        "not squeezed"
+    );
+}
+
 #[test]
 fn hidden_elements_are_not_built() {
     let list = paint(|| {

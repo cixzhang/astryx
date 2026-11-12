@@ -352,3 +352,95 @@ macro_rules! hstack {
         $crate::HStack::new()$(.child($child))*
     };
 }
+
+/// How a [`StackItem`] sizes along its stack, as Astryx's `StackItem`
+/// `size`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum StackItemSize {
+    /// Its content's size; it never grows or shrinks.
+    #[default]
+    Static,
+    /// Takes the space left in the stack, shared evenly with other `Fill`
+    /// items.
+    Fill,
+}
+
+/// One child of a VStack or HStack with its own sizing (`StackItem`). Its
+/// content stacks top to bottom across its full width. It may shrink below
+/// its content's size, so a `Fill` item with a scrollable stack inside
+/// scrolls instead of growing the page.
+pub struct StackItem<Msg> {
+    base: Base,
+    size: StackItemSize,
+    children: Vec<Element<Msg>>,
+}
+
+impl<Msg> Default for StackItem<Msg> {
+    fn default() -> Self {
+        Self {
+            base: Base::default(),
+            size: StackItemSize::default(),
+            children: Vec::new(),
+        }
+    }
+}
+
+impl<Msg> StackItem<Msg> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    /// An item holding `child`.
+    pub fn with_child(child: impl Into<Element<Msg>>) -> Self {
+        Self::new().child(child)
+    }
+    pub fn size(mut self, size: StackItemSize) -> Self {
+        self.size = size;
+        self
+    }
+    /// Adds one child after the others.
+    pub fn child(mut self, child: impl Into<Element<Msg>>) -> Self {
+        self.children.push(child.into());
+        self
+    }
+    /// Adds children after the others.
+    pub fn children<E: Into<Element<Msg>>>(
+        mut self,
+        children: impl IntoIterator<Item = E>,
+    ) -> Self {
+        self.children.extend(into_elements(children));
+        self
+    }
+}
+
+base_props!(StackItem<Msg>);
+
+impl<Msg> Build<Msg> for StackItem<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        let s = *self;
+        if s.base.is_hidden {
+            return;
+        }
+        let (grow, shrink) = match s.size {
+            StackItemSize::Static => (0.0, 0.0),
+            StackItemSize::Fill => (1.0, 1.0),
+        };
+        let style = Style {
+            flex_direction: FlexDirection::Column,
+            flex_grow: grow,
+            flex_shrink: shrink,
+            // Astryx resets the flex minimum so an item can be smaller
+            // than its content.
+            min_size: taffy::Size {
+                width: taffy::LengthPercentageAuto::length(0.0),
+                height: taffy::LengthPercentageAuto::length(0.0),
+            },
+            ..Style::default()
+        };
+        cx.key(s.base.id.as_deref());
+        cx.begin(Node::new(style));
+        for child in s.children {
+            cx.child(child);
+        }
+        cx.end();
+    }
+}
