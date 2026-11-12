@@ -481,6 +481,9 @@ pub(crate) struct Node<Msg> {
     pub pager: bool,
     /// A `paged::CameraFollow` viewport, offset in both directions.
     pub camera: bool,
+    /// Tells the app the width this node is laid out in, each time it
+    /// changes (`lab::WidthReader`).
+    pub on_width: Option<std::rc::Rc<dyn Fn(f32) -> Msg>>,
 }
 
 impl<Msg> Node<Msg> {
@@ -514,6 +517,7 @@ impl<Msg> Node<Msg> {
             timer: None,
             pager: false,
             camera: false,
+            on_width: None,
         }
     }
     pub fn draw(mut self, draw: Draw) -> Self {

@@ -278,6 +278,8 @@ pub struct Runtime<A: App> {
     moving: HashMap<u64, Moving>,
     /// Each pager's pages and the page it shows, by node id.
     pagers: HashMap<u64, Pager>,
+    /// The width each `WidthReader` last told the app, by node id.
+    widths: HashMap<u64, f32>,
     /// The pager whose page has no focus stop, while focus rests on it.
     bare_page: Option<u64>,
     /// The view was rebuilt since the last frame.
@@ -349,6 +351,7 @@ impl<A: App> Runtime<A> {
             scaled: None,
             moving: HashMap::new(),
             pagers: HashMap::new(),
+            widths: HashMap::new(),
             bare_page: None,
             reported_focus: None,
             rebuilt: false,
@@ -526,6 +529,33 @@ impl<A: App> Runtime<A> {
     /// Phase timings of the last frame.
     pub fn timings(&self) -> FrameTimings {
         self.timings
+    }
+
+    /// Sends each width reader's new width to the app.
+    fn report_widths(&mut self) -> Command {
+        let Some(layout) = &self.layout else {
+            return Command::None;
+        };
+        let mut changed = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        for (ix, node) in self.nodes.iter().enumerate() {
+            let Some(on_width) = &node.on_width else {
+                continue;
+            };
+            let width = layout.rects[ix].width;
+            seen.insert(node.id);
+            let known = self.widths.get(&node.id);
+            if known.is_none_or(|&w| (w - width).abs() >= 0.5) {
+                changed.push((node.id, width, on_width(width)));
+            }
+        }
+        self.widths.retain(|id, _| seen.contains(id));
+        let mut command = Command::None;
+        for (id, width, msg) in changed {
+            self.widths.insert(id, width);
+            command = command.and(self.send(msg));
+        }
+        command
     }
 
     /// The accessibility id of the focused element.
@@ -2343,6 +2373,22 @@ impl<A: App> Surface for Runtime<A> {
                 .as_mut()
                 .expect("layout")
                 .place(&self.nodes, &self.scroll);
+            // Width readers tell the app their width; the app's answer is
+            // built and laid out before this frame is drawn. A few rounds
+            // at most, in case an answer changes the width it depends on.
+            for _ in 0..3 {
+                let command = self.report_widths();
+                self.pending = std::mem::take(&mut self.pending).and(command);
+                if !self.stale {
+                    break;
+                }
+                self.rebuild();
+                let layout = self.layout.as_mut().expect("layout");
+                if std::mem::take(&mut self.relayout) {
+                    layout.compute(&self.nodes, viewport, text);
+                    layout.place(&self.nodes, &self.scroll);
+                }
+            }
         }
         // New nodes need their page labels and focus stops even when the
         // geometry they share with the old ones is kept.
