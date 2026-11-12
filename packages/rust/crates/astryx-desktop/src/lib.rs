@@ -232,7 +232,8 @@ impl<S: Surface> Shell<S> {
 
     fn handle(&mut self, event_loop: &ActiveEventLoop, command: Command) {
         match command {
-            Command::None => {}
+            // The runtime carries out focus requests; none reach the shell.
+            Command::None | Command::Handled | Command::Focus(_) => {}
             Command::Batch(commands) => {
                 for command in commands {
                     self.handle(event_loop, command);

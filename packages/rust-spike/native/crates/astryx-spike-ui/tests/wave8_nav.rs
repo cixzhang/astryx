@@ -45,10 +45,7 @@ fn app_shell_lays_out_navigation_and_main() {
     let main = all(&tree, Role::Main)[0];
     assert!(main.bounds.x >= 260.0 && main.bounds.width > 900.0);
     let home = find(&tree, Role::Button, "Home").unwrap();
-    assert_eq!(
-        home.state.current,
-        Some(astryx_core::contract::Current::Page)
-    );
+    assert_eq!(home.selected, Some(true), "the current item");
 }
 
 #[test]

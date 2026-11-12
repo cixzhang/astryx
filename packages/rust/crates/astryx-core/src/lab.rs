@@ -13,6 +13,8 @@
 //!   in the accent.
 //! - [`OnScreenKeyboard`]: text entry with a gamepad, as a chord ring or a
 //!   grid.
+//! - [`WidthReader`]: tells the app the width its content is laid out in,
+//!   so the app can fit its own columns.
 
 pub use crate::components::keyboard::{
     ChordKey, ChordLayer, ChordLayout, GridLayout, KeyboardAction, KeyboardKind, KeyboardState,
@@ -613,6 +615,65 @@ impl<Msg: Clone + 'static> Build<Msg> for HoldButton<Msg> {
         }
         button.hold = Some(self.duration_ms);
         cx.child(button.into());
+    }
+}
+
+// ---- WidthReader ----
+
+/// Tells the app the width it is laid out in, so the app can choose a
+/// layout that fits, such as a number of grid columns. It stacks its
+/// children top to bottom across its width: in a column (a VStack, or the
+/// app's root) that is the column's width; in a row, give it a width.
+///
+/// `on_width` is sent with the width in points after layout, the first time
+/// and whenever it changes by half a point or more. The runtime builds and
+/// lays out the app's answer before it draws, so the first frame already
+/// shows the fitted layout. Keep the content's width independent of what
+/// it reports (it should fill the width, not set it), or the two can chase
+/// each other; the runtime stops after a few rounds.
+pub struct WidthReader<Msg> {
+    base: Base,
+    on_width: std::rc::Rc<dyn Fn(f32) -> Msg>,
+    children: Vec<crate::element::Element<Msg>>,
+}
+
+impl<Msg> WidthReader<Msg> {
+    pub fn new(on_width: impl Fn(f32) -> Msg + 'static) -> Self {
+        WidthReader {
+            base: Base::default(),
+            on_width: std::rc::Rc::new(on_width),
+            children: Vec::new(),
+        }
+    }
+    /// Adds one child after the others.
+    pub fn child(mut self, child: impl Into<crate::element::Element<Msg>>) -> Self {
+        self.children.push(child.into());
+        self
+    }
+}
+
+base_props!(WidthReader<Msg>);
+
+impl<Msg> Build<Msg> for WidthReader<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        if self.base.is_hidden {
+            return;
+        }
+        let mut node = Node::new(Style {
+            flex_direction: FlexDirection::Column,
+            min_size: Size {
+                width: length(0.0),
+                height: auto(),
+            },
+            ..Style::default()
+        });
+        node.on_width = Some(self.on_width);
+        cx.key(self.base.id.as_deref());
+        cx.begin(node);
+        for child in self.children {
+            cx.child(child);
+        }
+        cx.end();
     }
 }
 

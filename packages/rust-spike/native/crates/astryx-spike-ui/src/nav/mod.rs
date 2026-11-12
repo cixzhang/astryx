@@ -958,8 +958,9 @@ impl<Msg: Clone + 'static> Build<Msg> for SideNavItem<Msg> {
             Semantics::new(Role::Button, self.label.clone())
         };
         sem.disabled = self.is_disabled;
+        // A selected link or button row is the current one (aria-current).
         if self.is_selected {
-            sem.state.current = Some(astryx_core::contract::Current::Page);
+            sem.selected = Some(true);
         }
         if has_children {
             sem.state.expanded = Some(open);

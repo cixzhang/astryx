@@ -2,7 +2,7 @@
 
 mod common;
 
-use astryx_core::paged::{CameraFollow, Paged};
+use astryx_core::paged::{CameraFollow, FlipButtons, KeepWhole, Paged};
 use astryx_core::testing::*;
 use astryx_core::*;
 use common::*;
@@ -193,6 +193,103 @@ fn l2_and_r2_flip_pages_directly() {
     );
 }
 
+/// An app that hears the buttons nothing else took.
+struct Shoulders {
+    heard: Vec<Input>,
+    buttons: FlipButtons,
+}
+
+impl App for Shoulders {
+    type Msg = usize;
+    fn view(&self) -> Element<usize> {
+        Paged::new()
+            .gap(Space::S4)
+            .padding(Space::S4)
+            .flip_buttons(self.buttons)
+            .children((0..12).map(|i| Button::new(format!("B{i}")).on_click(i)))
+            .into()
+    }
+    fn update(&mut self, msg: usize) -> Command {
+        match msg {
+            100 => self.heard.push(Input::L1),
+            101 => self.heard.push(Input::R1),
+            _ => {}
+        }
+        Command::None
+    }
+    fn on_input(&self, input: Input) -> Option<usize> {
+        match input {
+            Input::L1 => Some(100),
+            Input::R1 => Some(101),
+            _ => None,
+        }
+    }
+}
+
+fn shoulders(buttons: FlipButtons) -> Runtime<Shoulders> {
+    let mut rt = Runtime::new(Shoulders {
+        heard: Vec::new(),
+        buttons,
+    });
+    draw(&mut rt, W, H);
+    rt
+}
+
+fn page_of(rt: &Runtime<Shoulders>) -> Option<String> {
+    a11y_nodes(&rt.accessibility()?)
+        .into_iter()
+        .find(|n| n.live.is_some() && n.label.as_deref().is_some_and(|l| l.starts_with("Page ")))
+        .and_then(|n| n.label)
+}
+
+fn settle_app<A: App>(rt: &mut Runtime<A>) {
+    draw(rt, W, H);
+    rt.frame(
+        &FrameInfo {
+            width: W,
+            height: H,
+            scale: 1.0,
+            dt: 1.0,
+        },
+        &measure(),
+    );
+}
+
+#[test]
+fn l1_and_r1_flip_a_pager_set_to_them_and_l2_and_r2_then_do_nothing() {
+    let mut rt = shoulders(FlipButtons::L1R1);
+    tap(&mut rt, Input::R1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 2 of 3"));
+    tap(&mut rt, Input::R2);
+    settle_app(&mut rt);
+    assert_eq!(
+        page_of(&rt).as_deref(),
+        Some("Page 2 of 3"),
+        "R2 is not a flip button here"
+    );
+    tap(&mut rt, Input::L1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 1 of 3"));
+    assert!(
+        !rt.app().heard.contains(&Input::R1) && !rt.app().heard.contains(&Input::L1),
+        "the pager took L1 and R1: {:?}",
+        rt.app().heard
+    );
+}
+
+#[test]
+fn by_default_l1_and_r1_reach_the_app_and_the_pager_stays() {
+    let mut rt = shoulders(FlipButtons::default());
+    tap(&mut rt, Input::R1);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 1 of 3"));
+    assert_eq!(rt.app().heard, [Input::R1]);
+    tap(&mut rt, Input::R2);
+    settle_app(&mut rt);
+    assert_eq!(page_of(&rt).as_deref(), Some("Page 2 of 3"));
+}
+
 #[test]
 fn flips_are_instant_under_reduced_motion() {
     let mut rt = runtime(buttons(12));
@@ -212,6 +309,72 @@ fn flips_are_instant_under_reduced_motion() {
 }
 
 const LONG: &str = "Pages break between lines of long text so every line is whole on one page and none is cut in half at the bottom edge of the screen.";
+
+/// Five labeled fields that do not fit one page: in plain columns the page
+/// may end between a label and its field; kept whole, it never does.
+fn fields(keep: bool) -> impl Fn() -> Element<usize> {
+    move || {
+        Paged::new()
+            .padding(Space::S4)
+            .gap(Space::S4)
+            .children((0..5).map(|i| {
+                let label = Text::new(format!("Label {i}"));
+                let field = Button::new(format!("Field {i}")).on_click(i);
+                if keep {
+                    KeepWhole::new(label).child(field).into()
+                } else {
+                    Element::from(VStack::new().child(label).child(field))
+                }
+            }))
+            .into()
+    }
+}
+
+/// The labels whose field is on another page.
+fn split_labels(list: &DisplayList, rt: &Runtime<View<usize>>) -> Vec<String> {
+    let clip = page_clip(list);
+    let end = clip.y + clip.height;
+    let shown = |top: f32, bottom: f32| top >= clip.y - 0.5 && bottom <= end + 0.5;
+    texts(list)
+        .into_iter()
+        .filter(|t| t.1.starts_with("Label "))
+        .filter(|t| shown(t.0.y, t.0.y + t.0.height))
+        .filter(|t| {
+            let field = format!("Field {}", &t.1[6..]);
+            a11y(rt, Role::Button)
+                .into_iter()
+                .find(|b| b.label.as_deref() == Some(field.as_str()))
+                .is_some_and(|b| !shown(b.bounds.y, b.bounds.y + b.bounds.height))
+        })
+        .map(|t| t.1)
+        .collect()
+}
+
+#[test]
+fn kept_whole_a_label_and_its_field_share_a_page() {
+    let mut plain = runtime(fields(false));
+    let list = settle(&mut plain);
+    assert!(
+        !split_labels(&list, &plain).is_empty(),
+        "plain columns let the page end between a label and its field"
+    );
+    let mut kept = runtime(fields(true));
+    let list = settle(&mut kept);
+    assert!(split_labels(&list, &kept).is_empty());
+    // Every page still flips through all five fields.
+    let mut seen = Vec::new();
+    for _ in 0..12 {
+        if let Some(f) = focused(&kept) {
+            if !seen.contains(&f) {
+                seen.push(f);
+            }
+        }
+        tap(&mut kept, Input::Down);
+        let list = settle(&mut kept);
+        assert!(split_labels(&list, &kept).is_empty());
+    }
+    assert_eq!(seen.len(), 5, "{seen:?}");
+}
 
 #[test]
 fn text_breaks_between_lines_and_text_pages_flip_with_down() {

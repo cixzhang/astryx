@@ -766,14 +766,30 @@ pub enum Command {
     PlaySound(SoundId),
     /// Several commands, carried out in order.
     Batch(Vec<Command>),
+    /// The app took care of the press itself; there is nothing more to do.
+    /// A press on something with an `href` opens the link only when its
+    /// `on_click` handler returns `Command::None`, so returning `Handled`
+    /// keeps the link inside the app (the app shows the place itself).
+    /// Shells do nothing for it.
+    Handled,
+    /// Move focus to the element with this `id` prop once the app's next
+    /// view is built: to the element when it is a focus stop, else to the
+    /// first focus stop inside it, flipping a pager or scrolling to show
+    /// it. When no element has the id, or nothing inside it takes focus,
+    /// focus stays where it would have been. The runtime carries it out;
+    /// shells never receive it. Like `Handled`, it keeps a pressed link in
+    /// the app.
+    Focus(String),
 }
 
 impl Command {
     /// This command, then `next`: the one that is not `None` when the other
-    /// is, else both in a batch.
+    /// is, else both in a batch. `Handled` with anything else is the other
+    /// command (which keeps a link in the app just as well).
     pub fn and(self, next: Command) -> Command {
         match (self, next) {
             (Command::None, c) | (c, Command::None) => c,
+            (Command::Handled, c) | (c, Command::Handled) => c,
             (Command::Batch(mut a), Command::Batch(b)) => {
                 a.extend(b);
                 Command::Batch(a)
@@ -892,6 +908,9 @@ pub enum Role {
     RadioGroup,
     /// One choice in a `RadioGroup`. `checked` tells whether it is chosen.
     Radio,
+    /// Something that goes to another place, such as a row with an `href`.
+    /// `selected` marks the one for the current place (ARIA
+    /// `aria-current`).
     Link,
     /// A dialog; `state.modal` tells whether the page behind is inert.
     Dialog,
@@ -946,11 +965,11 @@ pub enum HasPopup {
     Dialog,
 }
 
-/// The current item in a set, as ARIA `aria-current`.
+/// The kind of current item, as ARIA `aria-current`, for items whose
+/// `selected` means a choice (a calendar's today, a stepper's step). A
+/// `Link`, `Button` or `ListItem` marks the current one with `selected`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Current {
-    True,
-    Page,
     Step,
     Location,
     Date,
@@ -1034,7 +1053,9 @@ pub struct A11yNode {
     pub disabled: bool,
     /// `Some(true|false)` for toggles.
     pub checked: Option<bool>,
-    /// `Some(true|false)` for choices that can be selected.
+    /// `Some(true|false)` for choices that can be selected. On a `Link`,
+    /// `Button` or `ListItem`, `Some(true)` marks the current one, such as
+    /// the selected row of a navigation list (ARIA `aria-current`).
     pub selected: Option<bool>,
     /// True when the node takes keyboard focus.
     pub focusable: bool,

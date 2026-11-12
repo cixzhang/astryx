@@ -615,8 +615,15 @@ pub struct Node<Msg> {
     pub timer: Option<(f64, Msg)>,
     /// A `paged::Paged` viewport: its scroll offset rests on page starts.
     pub pager: bool,
+    /// The buttons that flip a pager directly.
+    pub flip_buttons: crate::paged::FlipButtons,
     /// A `paged::CameraFollow` viewport, offset in both directions.
     pub camera: bool,
+    /// Tells the app the width this node is laid out in, each time it
+    /// changes (`lab::WidthReader`).
+    pub on_width: Option<std::rc::Rc<dyn Fn(f32) -> Msg>>,
+    /// A pager never cuts this node across pages (`paged::KeepWhole`).
+    pub keep_whole: bool,
     /// Makes the node the root of a layer. See [`BuildCx::layer`].
     pub layer: Option<crate::layer::LayerSpec<Msg>>,
     /// Reports pointer hover (and keyboard focus) after delays.
@@ -700,6 +707,7 @@ impl<Msg> Node<Msg> {
             capture: None,
             timer: None,
             pager: false,
+            flip_buttons: crate::paged::FlipButtons::L2R2,
             camera: false,
             layer: None,
             hover: None,
@@ -715,6 +723,8 @@ impl<Msg> Node<Msg> {
             initial_scroll: None,
             scroll_report: None,
             scroll_adjust: 0.0,
+            on_width: None,
+            keep_whole: false,
         }
     }
 
@@ -1214,7 +1224,8 @@ impl Locals {
     }
 }
 
-/// Focus moves components ask for, applied by the runtime after a build.
+/// Focus moves components ask for while building, for components with no
+/// message to return. The runtime carries one out as `Command::Focus`.
 #[derive(Clone, Default)]
 pub struct FocusRequests(std::rc::Rc<std::cell::RefCell<Option<String>>>);
 
