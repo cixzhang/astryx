@@ -282,6 +282,8 @@ pub struct Runtime<A: App> {
     pagers: HashMap<u64, Pager>,
     /// The width each `WidthReader` last told the app, by node id.
     widths: HashMap<u64, f32>,
+    /// The `id` of a `Command::Focus` to carry out after the next rebuild.
+    focus_request: Option<String>,
     /// The pager whose page has no focus stop, while focus rests on it.
     bare_page: Option<u64>,
     /// The view was rebuilt since the last frame.
@@ -355,6 +357,7 @@ impl<A: App> Runtime<A> {
             moving: HashMap::new(),
             pagers: HashMap::new(),
             widths: HashMap::new(),
+            focus_request: None,
             bare_page: None,
             reported_focus: None,
             rebuilt: false,
@@ -521,7 +524,53 @@ impl<A: App> Runtime<A> {
     pub fn send(&mut self, msg: A::Msg) -> Command {
         let command = self.app.update(msg);
         self.stale = true;
-        command
+        self.take_focus_requests(command)
+    }
+
+    /// Keeps the `Command::Focus` requests in `command` for the next
+    /// rebuild (the last one wins) and returns the rest, with `Handled` in
+    /// place of each request so a pressed link stays in the app.
+    fn take_focus_requests(&mut self, command: Command) -> Command {
+        match command {
+            Command::Focus(id) => {
+                self.focus_request = Some(id);
+                Command::Handled
+            }
+            Command::Batch(list) => Command::Batch(
+                list.into_iter()
+                    .map(|c| self.take_focus_requests(c))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
+    /// Carries out the last `Command::Focus`, now that the view it names
+    /// is built and laid out.
+    fn apply_focus_request(&mut self) {
+        let Some(id) = self.focus_request.take() else {
+            return;
+        };
+        let Some(target) = self
+            .nodes
+            .iter()
+            .position(|n| n.name.as_deref() == Some(id.as_str()))
+        else {
+            return;
+        };
+        let inside = |mut ix: usize| loop {
+            if ix == target {
+                return true;
+            }
+            match self.nodes[ix].parent {
+                Some(p) => ix = p as usize,
+                None => return false,
+            }
+        };
+        // Stops are in reading order: the element itself comes first.
+        if let Some(stop) = self.stops.iter().position(|&(ix, _)| inside(ix)) {
+            self.set_focus(stop);
+        }
     }
 
     /// The preferences the shell passed last.
@@ -2420,6 +2469,7 @@ impl<A: App> Surface for Runtime<A> {
         if laid_out || std::mem::take(&mut self.rebuilt) {
             self.update_pagers();
             self.settle_focus();
+            self.apply_focus_request();
         }
         self.timings.laid_out = laid_out;
         if laid_out {

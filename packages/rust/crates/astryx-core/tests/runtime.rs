@@ -1318,3 +1318,95 @@ fn apps_read_the_day_phase_with_the_other_preferences() {
         Some(&(DayPhase::Dusk, ColorScheme::Dark))
     );
 }
+
+/// A screen whose rows are rebuilt on Refresh, after which the app puts
+/// focus where it wants it with `Command::Focus`.
+struct Refocus {
+    target: &'static str,
+    refreshed: u32,
+}
+
+impl App for Refocus {
+    type Msg = &'static str;
+    fn view(&self) -> Element<&'static str> {
+        astryx_core::paged::Paged::new()
+            .child(Button::new("Refresh").id("refresh").on_click("refresh"))
+            .child(VStack::new().id("rows").children((0..3).map(|i| {
+                Button::new(format!("Row {i} v{}", self.refreshed))
+                    .id(format!("row-{i}"))
+                    .on_click("row")
+            })))
+            .children((0..12).map(|i| Text::new(format!("Filler {i}"))))
+            .child(Button::new("Far").id("far").on_click("far"))
+            .into()
+    }
+    fn update(&mut self, msg: &'static str) -> Command {
+        if msg == "refresh" {
+            self.refreshed += 1;
+            Command::Focus(self.target.into())
+        } else {
+            Command::None
+        }
+    }
+}
+
+fn focused_in<A: App>(rt: &Runtime<A>) -> Option<String> {
+    a11y_nodes(&rt.accessibility()?)
+        .into_iter()
+        .find(|n| n.focused)
+        .and_then(|n| n.label)
+}
+
+fn refocus(target: &'static str) -> Runtime<Refocus> {
+    let mut rt = Runtime::new(Refocus {
+        target,
+        refreshed: 0,
+    });
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Refresh"));
+    rt
+}
+
+#[test]
+fn focus_by_id_lands_on_the_named_element_after_the_rebuild() {
+    let mut rt = refocus("row-2");
+    assert_eq!(
+        tap(&mut rt, Input::A),
+        Command::Handled,
+        "shells never see the request"
+    );
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Row 2 v1"));
+}
+
+#[test]
+fn focus_by_id_on_a_container_lands_on_its_first_stop() {
+    let mut rt = refocus("rows");
+    tap(&mut rt, Input::A);
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Row 0 v1"));
+}
+
+#[test]
+fn focus_by_id_shows_an_element_on_another_page() {
+    let mut rt = refocus("far");
+    tap(&mut rt, Input::A);
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Far"));
+    let page = a11y_nodes(&rt.accessibility().unwrap())
+        .into_iter()
+        .find_map(|n| n.label.filter(|l| l.starts_with("Page ")))
+        .unwrap();
+    assert!(!page.starts_with("Page 1 "), "{page}");
+}
+
+#[test]
+fn focus_by_an_absent_id_leaves_focus_where_it_was() {
+    let mut rt = refocus("gone");
+    tap(&mut rt, Input::A);
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Refresh"));
+    // The request is spent: a later rebuild does not act on it.
+    draw(&mut rt, 400, 300);
+    assert_eq!(focused_in(&rt).as_deref(), Some("Refresh"));
+}

@@ -772,6 +772,14 @@ pub enum Command {
     /// keeps the link inside the app (the app shows the place itself).
     /// Shells do nothing for it.
     Handled,
+    /// Move focus to the element with this `id` prop once the app's next
+    /// view is built: to the element when it is a focus stop, else to the
+    /// first focus stop inside it, flipping a pager or scrolling to show
+    /// it. When no element has the id, or nothing inside it takes focus,
+    /// focus stays where it would have been. The runtime carries it out;
+    /// shells never receive it. Like `Handled`, it keeps a pressed link in
+    /// the app.
+    Focus(String),
 }
 
 impl Command {
