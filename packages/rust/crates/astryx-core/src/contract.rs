@@ -1135,6 +1135,9 @@ pub struct DeviceStatus {
     pub charging: bool,
     /// Local time, hours 0 to 23 and minutes.
     pub time: (u8, u8),
+    /// Online through the person's phone (Bluetooth network sharing): on
+    /// while connecting, connected while in use. Off when not used.
+    pub tether: Radio,
 }
 
 /// A radio's state.

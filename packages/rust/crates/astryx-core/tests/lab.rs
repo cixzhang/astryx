@@ -863,3 +863,35 @@ fn plans_view() -> Element<String> {
     }
     group.into()
 }
+
+#[test]
+fn the_phone_connection_shows_and_reads_only_without_wifi() {
+    let label = |wifi, tether| {
+        let mut rt = runtime(move || {
+            Element::<()>::from(StatusBar::new().device(DeviceStatus {
+                wifi,
+                time: (9, 41),
+                tether,
+                ..DeviceStatus::default()
+            }))
+        });
+        draw(&mut rt, 400, 100);
+        a11y_nodes(&rt.accessibility().unwrap())
+            .iter()
+            .find_map(|n| n.label.clone().filter(|l| l.starts_with("Wi-Fi")))
+            .unwrap()
+    };
+    assert_eq!(
+        label(Radio::On, Radio::Connected),
+        "Wi-Fi on, not connected, online through your phone, 9:41 AM"
+    );
+    assert_eq!(
+        label(Radio::Off, Radio::On),
+        "Wi-Fi off, connecting through your phone, 9:41 AM"
+    );
+    assert_eq!(
+        label(Radio::Connected, Radio::Connected),
+        "Wi-Fi connected, 9:41 AM",
+        "Wi-Fi in use: the phone is not mentioned"
+    );
+}

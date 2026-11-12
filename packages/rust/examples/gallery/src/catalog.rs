@@ -385,6 +385,7 @@ pub const COMPONENTS: &[ComponentSpec] = &[
         props: &[
             choice("wifi", RADIOS, "connected"),
             choice("bluetooth", RADIOS, "off"),
+            choice("tether", RADIOS, "off"),
             flag("has_battery", true),
             PropSpec {
                 name: "battery",
@@ -991,6 +992,7 @@ pub fn build<Msg: Clone + 'static>(
                     battery_percent: p.flag("has_battery").then(|| p.int("battery") as u8),
                     charging: p.flag("charging"),
                     time: (p.int("hour") as u8, p.int("minute") as u8),
+                    tether: radio("tether"),
                 })
                 .into()
         }
