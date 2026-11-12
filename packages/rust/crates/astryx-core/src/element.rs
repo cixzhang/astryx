@@ -486,6 +486,8 @@ pub(crate) struct Node<Msg> {
     /// Tells the app the width this node is laid out in, each time it
     /// changes (`lab::WidthReader`).
     pub on_width: Option<std::rc::Rc<dyn Fn(f32) -> Msg>>,
+    /// A pager never cuts this node across pages (`paged::KeepWhole`).
+    pub keep_whole: bool,
 }
 
 impl<Msg> Node<Msg> {
@@ -521,6 +523,7 @@ impl<Msg> Node<Msg> {
             flip_buttons: crate::paged::FlipButtons::L2R2,
             camera: false,
             on_width: None,
+            keep_whole: false,
         }
     }
     pub fn draw(mut self, draw: Draw) -> Self {

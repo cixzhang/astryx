@@ -2,7 +2,7 @@
 
 mod common;
 
-use astryx_core::paged::{CameraFollow, FlipButtons, Paged};
+use astryx_core::paged::{CameraFollow, FlipButtons, KeepWhole, Paged};
 use astryx_core::testing::*;
 use astryx_core::*;
 use common::*;
@@ -309,6 +309,72 @@ fn flips_are_instant_under_reduced_motion() {
 }
 
 const LONG: &str = "Pages break between lines of long text so every line is whole on one page and none is cut in half at the bottom edge of the screen.";
+
+/// Five labeled fields that do not fit one page: in plain columns the page
+/// may end between a label and its field; kept whole, it never does.
+fn fields(keep: bool) -> impl Fn() -> Element<usize> {
+    move || {
+        Paged::new()
+            .padding(Space::S4)
+            .gap(Space::S4)
+            .children((0..5).map(|i| {
+                let label = Text::new(format!("Label {i}"));
+                let field = Button::new(format!("Field {i}")).on_click(i);
+                if keep {
+                    KeepWhole::new(label).child(field).into()
+                } else {
+                    Element::from(VStack::new().child(label).child(field))
+                }
+            }))
+            .into()
+    }
+}
+
+/// The labels whose field is on another page.
+fn split_labels(list: &DisplayList, rt: &Runtime<View<usize>>) -> Vec<String> {
+    let clip = page_clip(list);
+    let end = clip.y + clip.height;
+    let shown = |top: f32, bottom: f32| top >= clip.y - 0.5 && bottom <= end + 0.5;
+    texts(list)
+        .into_iter()
+        .filter(|t| t.1.starts_with("Label "))
+        .filter(|t| shown(t.0.y, t.0.y + t.0.height))
+        .filter(|t| {
+            let field = format!("Field {}", &t.1[6..]);
+            a11y(rt, Role::Button)
+                .into_iter()
+                .find(|b| b.label.as_deref() == Some(field.as_str()))
+                .is_some_and(|b| !shown(b.bounds.y, b.bounds.y + b.bounds.height))
+        })
+        .map(|t| t.1)
+        .collect()
+}
+
+#[test]
+fn kept_whole_a_label_and_its_field_share_a_page() {
+    let mut plain = runtime(fields(false));
+    let list = settle(&mut plain);
+    assert!(
+        !split_labels(&list, &plain).is_empty(),
+        "plain columns let the page end between a label and its field"
+    );
+    let mut kept = runtime(fields(true));
+    let list = settle(&mut kept);
+    assert!(split_labels(&list, &kept).is_empty());
+    // Every page still flips through all five fields.
+    let mut seen = Vec::new();
+    for _ in 0..12 {
+        if let Some(f) = focused(&kept) {
+            if !seen.contains(&f) {
+                seen.push(f);
+            }
+        }
+        tap(&mut kept, Input::Down);
+        let list = settle(&mut kept);
+        assert!(split_labels(&list, &kept).is_empty());
+    }
+    assert_eq!(seen.len(), 5, "{seen:?}");
+}
 
 #[test]
 fn text_breaks_between_lines_and_text_pages_flip_with_down() {

@@ -7,6 +7,7 @@
 //! breaks between lines. The D-pad moves focus inside a page; pressing past
 //! the last focus stop flips to the next page, and L2 and R2 flip directly
 //! (or L1 and R1, with [`Paged::flip_buttons`]).
+//! [`KeepWhole`] keeps a group, such as a field with its label, on one page.
 //! A small row of dots at the bottom edge shows the page, as Astryx
 //! Pagination's `dots` variant draws them.
 //!
@@ -169,6 +170,51 @@ impl<Msg> Build<Msg> for Paged<Msg> {
     }
 }
 
+/// Content a [`Paged`] keeps on one page: it never cuts between its
+/// children or between lines of its text, as it would inside a plain
+/// column. A group taller than a page is still cut, since nothing else
+/// fits. It stacks its children top to bottom.
+pub struct KeepWhole<Msg> {
+    base: Base,
+    children: Vec<Element<Msg>>,
+}
+
+impl<Msg> KeepWhole<Msg> {
+    /// A group holding `child`.
+    pub fn new(child: impl Into<Element<Msg>>) -> Self {
+        KeepWhole {
+            base: Base::default(),
+            children: vec![child.into()],
+        }
+    }
+    /// Adds one child after the others.
+    pub fn child(mut self, child: impl Into<Element<Msg>>) -> Self {
+        self.children.push(child.into());
+        self
+    }
+}
+
+base_props!(KeepWhole<Msg>);
+
+impl<Msg> Build<Msg> for KeepWhole<Msg> {
+    fn build(self: Box<Self>, cx: &mut BuildCx<Msg>) {
+        if self.base.is_hidden {
+            return;
+        }
+        let mut node = Node::new(Style {
+            flex_direction: FlexDirection::Column,
+            ..Style::default()
+        });
+        node.keep_whole = true;
+        cx.key(self.base.id.as_deref());
+        cx.begin(node);
+        for child in self.children {
+            cx.child(child);
+        }
+        cx.end();
+    }
+}
+
 /// A viewport over content larger than itself in both directions, such as
 /// a board or a map, that follows the focused item. It moves only when
 /// focus comes within a quarter of the viewport of an edge, and shows no
@@ -222,8 +268,9 @@ impl<Msg> Build<Msg> for CameraFollow<Msg> {
 /// content it shows, measured from the pager's top edge.
 ///
 /// A page ends at the last place that cuts no item: between children of
-/// plain vertical stacks, or between lines of text. A single item taller
-/// than the page is cut at the page's end, since nothing else fits.
+/// plain vertical stacks, or between lines of text, but never inside a
+/// [`KeepWhole`]. A single item taller than the page is cut at the page's
+/// end, since nothing else fits.
 pub(crate) fn pages<Msg>(
     nodes: &[Node<Msg>],
     boxes: &[Rect],
@@ -265,6 +312,9 @@ pub(crate) fn pages<Msg>(
         if !(top < y - 0.5 && bottom > y + 0.5) {
             return false;
         }
+        if nodes[n].keep_whole {
+            return true;
+        }
         if let Some(lh) = line(n) {
             let k = (y - top) / lh;
             return (k - k.round()).abs() > 0.01;
@@ -295,7 +345,8 @@ pub(crate) fn pages<Msg>(
 /// A stack that only arranges its children vertically: cutting between
 /// its children cuts no item.
 fn is_plain_column<Msg>(node: &Node<Msg>) -> bool {
-    matches!(node.draw, Draw::None)
+    !node.keep_whole
+        && matches!(node.draw, Draw::None)
         && node.interact.is_none()
         && node.indicator.is_none()
         && node.clip.is_none()
