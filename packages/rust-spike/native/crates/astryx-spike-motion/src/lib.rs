@@ -87,6 +87,16 @@ pub fn collapse(t: &MotionTokens) -> Resize {
     Resize::new(Motion::curve(t.durations.medium, t.ease_move))
 }
 
+/// A sheet or drawer settling on a snap point after a release, on the
+/// `settle` spring from the release speed, as Astryx's drag to snap points
+/// does. While a finger drags it, it follows at once: pass `None`.
+pub fn settle(t: &MotionTokens, release_velocity: Option<f32>) -> Resize {
+    match release_velocity {
+        None => Resize::new(Motion::Instant),
+        Some(v) => Resize::new(Motion::Spring(t.spring(springs::SETTLE).spring())).velocity(v),
+    }
+}
+
 /// A color change of state (hover, selection): instant under Reduce Motion
 /// on any pointer.
 pub fn color_change(t: &MotionTokens, channel: Channel, to: f32) -> Anim {
