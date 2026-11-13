@@ -194,6 +194,13 @@ impl Shell {
             return;
         }
         let command = self.surface.input(input, phase);
+        self.after_input(command);
+    }
+
+    /// An input reached the surface: draw its effect, even with no command
+    /// (focus moved, a press began).
+    fn after_input(&mut self, command: Command) {
+        self.dirty = true;
         self.handle(command);
     }
 
@@ -202,7 +209,7 @@ impl Shell {
             return;
         }
         let command = self.surface.text_input(text);
-        self.handle(command);
+        self.after_input(command);
     }
 
     fn text_compose(&mut self, text: &str) {
@@ -234,13 +241,24 @@ impl Shell {
         moved
     }
 
+    /// Carries out `command`. Only a command that changes what is shown
+    /// marks the shell dirty: the deferred command comes back after every
+    /// frame, and an empty one must not draw again (a connected gamepad
+    /// keeps frames coming to poll it, and each would redraw).
     fn handle(&mut self, command: Command) {
+        if needs_frame(&command) {
+            self.dirty = true;
+        }
+        self.carry_out(command);
+    }
+
+    fn carry_out(&mut self, command: Command) {
         match command {
             // The runtime carries out focus requests; none reach the shell.
             Command::None | Command::Handled | Command::Focus(_) => {}
             Command::Batch(commands) => {
                 for command in commands {
-                    self.handle(command);
+                    self.carry_out(command);
                 }
             }
             // A page cannot close itself, so the app stops taking input and frames.
@@ -257,7 +275,6 @@ impl Shell {
             }
             Command::PlaySound(id) => self.play(id),
         }
-        self.dirty = true;
     }
 
     fn play(&mut self, id: astryx_core::SoundId) {
@@ -392,7 +409,7 @@ impl Shell {
             return;
         }
         let command = self.surface.a11y_action(id, action);
-        self.handle(command);
+        self.after_input(command);
     }
 
     /// Sizes the canvas backing store. `physical` is the exact device-pixel
@@ -527,6 +544,23 @@ struct Runner {
     shell: RefCell<Shell>,
     raf: RefCell<Option<FrameCallback>>,
     raf_pending: Cell<bool>,
+}
+
+/// Whether carrying out `command` changes what is shown, so a frame is
+/// needed: a transition does; nothing, a handled press, a focus request
+/// (the runtime wants the frame for its rebuild itself), a link, a sound
+/// and quitting do not.
+fn needs_frame(command: &Command) -> bool {
+    match command {
+        Command::Batch(commands) => commands.iter().any(needs_frame),
+        Command::Transition(_) => true,
+        Command::None
+        | Command::Handled
+        | Command::Focus(_)
+        | Command::Quit
+        | Command::OpenUrl(_)
+        | Command::PlaySound(_) => false,
+    }
 }
 
 impl Runner {
@@ -1091,7 +1125,28 @@ fn start(
 
 #[cfg(test)]
 mod tests {
-    use super::is_openable_scheme;
+    use super::{is_openable_scheme, needs_frame};
+    use astryx_core::{Command, Easing, SoundId, Transition, TransitionKind};
+
+    #[test]
+    fn only_commands_that_change_the_screen_mark_it_dirty() {
+        let fade = Command::Transition(Transition {
+            kind: TransitionKind::Fade,
+            duration_ms: 200,
+            easing: Easing::Linear,
+            sound: None,
+        });
+        assert!(
+            !needs_frame(&Command::None),
+            "the deferred command after every frame"
+        );
+        assert!(!needs_frame(&Command::Batch(vec![])));
+        assert!(!needs_frame(&Command::Handled));
+        assert!(!needs_frame(&Command::Focus("row".into())));
+        assert!(!needs_frame(&Command::PlaySound(SoundId(1))));
+        assert!(needs_frame(&fade));
+        assert!(needs_frame(&Command::Batch(vec![Command::None, fade])));
+    }
 
     #[test]
     fn opens_only_web_mail_and_phone_links() {

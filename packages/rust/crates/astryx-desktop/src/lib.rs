@@ -224,13 +224,39 @@ impl<S: Surface> Shell<S> {
         })
     }
 
+    /// Asks for one more frame (a no-op when one is already pending).
+    fn request_redraw(&self) {
+        if let Some(gpu) = &self.gpu {
+            gpu.window.request_redraw();
+        }
+    }
+
+    /// Carries out `command`, and asks for a frame only when it changes
+    /// what is shown. A frame for any other reason comes from what changed
+    /// it: an input ([`Self::after_input`]), a resize, or the surface
+    /// wanting frames while something moves.
     fn handle(&mut self, event_loop: &ActiveEventLoop, command: Command) {
+        if needs_frame(&command) {
+            self.request_redraw();
+        }
+        self.carry_out(event_loop, command);
+    }
+
+    /// An input reached the surface: draw its effect. The surface may have
+    /// changed state even when it returned no command (focus moved, a
+    /// press began), and a surface without a runtime cannot say so.
+    fn after_input(&mut self, event_loop: &ActiveEventLoop, command: Command) {
+        self.request_redraw();
+        self.carry_out(event_loop, command);
+    }
+
+    fn carry_out(&mut self, event_loop: &ActiveEventLoop, command: Command) {
         match command {
             // The runtime carries out focus requests; none reach the shell.
             Command::None | Command::Handled | Command::Focus(_) => {}
             Command::Batch(commands) => {
                 for command in commands {
-                    self.handle(event_loop, command);
+                    self.carry_out(event_loop, command);
                 }
             }
             Command::Quit => event_loop.exit(),
@@ -246,9 +272,6 @@ impl<S: Surface> Shell<S> {
                 self.pending_transition = Some(t);
             }
             Command::PlaySound(id) => self.play(id),
-        }
-        if let Some(gpu) = &self.gpu {
-            gpu.window.request_redraw();
         }
     }
 
@@ -278,12 +301,12 @@ impl<S: Surface> Shell<S> {
 
     fn send(&mut self, event_loop: &ActiveEventLoop, input: Input, phase: InputPhase) {
         let command = self.surface.input(input, phase);
-        self.handle(event_loop, command);
+        self.after_input(event_loop, command);
     }
 
     fn type_text(&mut self, event_loop: &ActiveEventLoop, text: &str) {
         let command = self.surface.text_input(text);
-        self.handle(event_loop, command);
+        self.after_input(event_loop, command);
     }
 
     /// The node under the pointer in the last frame's tree.
@@ -502,7 +525,7 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                         self.pointer_target = hit;
                         if let Some(id) = hit {
                             let command = self.surface.a11y_action(id, A11yAction::PressStart);
-                            self.handle(event_loop, command);
+                            self.after_input(event_loop, command);
                         }
                     }
                     ElementState::Released => {
@@ -515,7 +538,7 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                                 A11yAction::PressCancel
                             };
                             let command = self.surface.a11y_action(id, action);
-                            self.handle(event_loop, command);
+                            self.after_input(event_loop, command);
                         }
                     }
                 }
@@ -547,7 +570,7 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
             accesskit_winit::WindowEvent::ActionRequested(request) => {
                 if let Some((id, action)) = a11y::action(&request) {
                     let command = self.surface.a11y_action(id, action);
-                    self.handle(event_loop, command);
+                    self.after_input(event_loop, command);
                 }
             }
             accesskit_winit::WindowEvent::AccessibilityDeactivated => {}
@@ -556,6 +579,8 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
         // Commands the app returned during frames, such as a hold completing.
+        // This runs on every turn of the event loop, so it draws only for a
+        // command that changes what is shown; otherwise the loop waits.
         let deferred = self.surface.take_command();
         self.handle(event_loop, deferred);
         #[cfg(feature = "gamepad")]
@@ -608,9 +633,50 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
     }
 }
 
+/// Whether carrying out `command` changes what is shown, so a frame is
+/// needed. Nothing, a press the app handled itself, and a focus request
+/// (the runtime already wants a frame for the rebuild it waits on) need
+/// none; a transition needs one to begin.
+fn needs_frame(command: &Command) -> bool {
+    match command {
+        Command::None | Command::Handled | Command::Focus(_) => false,
+        Command::Batch(commands) => commands.iter().any(needs_frame),
+        Command::Quit | Command::OpenUrl(_) | Command::PlaySound(_) => false,
+        Command::Transition(_) => true,
+    }
+}
+
 fn find_focused_text_field(node: &A11yNode) -> Option<astryx_core::Rect> {
     if node.focused && node.role == astryx_core::Role::TextInput {
         return Some(node.bounds);
     }
     node.children.iter().find_map(find_focused_text_field)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::needs_frame;
+    use astryx_core::{Command, Easing, SoundId, Transition, TransitionKind};
+
+    #[test]
+    fn only_commands_that_change_the_screen_ask_for_a_frame() {
+        let fade = Command::Transition(Transition {
+            kind: TransitionKind::Fade,
+            duration_ms: 200,
+            easing: Easing::Linear,
+            sound: None,
+        });
+        // The idle path: the loop asks for the deferred command on every
+        // turn, and an empty answer must not draw.
+        assert!(!needs_frame(&Command::None));
+        assert!(!needs_frame(&Command::Batch(vec![])));
+        assert!(!needs_frame(&Command::Handled));
+        assert!(!needs_frame(&Command::Focus("row".into())));
+        assert!(!needs_frame(&Command::PlaySound(SoundId(1))));
+        assert!(!needs_frame(&Command::OpenUrl(
+            "https://example.com".into()
+        )));
+        assert!(needs_frame(&fade));
+        assert!(needs_frame(&Command::Batch(vec![Command::None, fade])));
+    }
 }
