@@ -359,6 +359,7 @@ dependencies = [
  "astryx-headless",
  "astryx-render-soft",
  "astryx-spike-foundations",
+ "astryx-spike-gallery",
  "astryx-spike-gestures",
  "astryx-spike-layers",
  "astryx-spike-motion",

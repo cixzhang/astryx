@@ -162,6 +162,19 @@ impl<T: Animatable> Animated<T> {
         self.run = Run::Idle;
     }
 
+    /// Moves toward `target` with `motion`, starting at `velocity` (units
+    /// per second), as the animator's `animate(target, {velocity})` does: a
+    /// spring after a release carries the release speed. A curve or an
+    /// instant move ignores `velocity`.
+    pub fn animate_to_with_velocity(&mut self, target: T, motion: Motion, velocity: T) {
+        if let Motion::Spring(_) = motion {
+            self.velocity = velocity.to_components();
+            // A release starts a new settle even toward the same target.
+            self.run = Run::Idle;
+        }
+        self.animate_to(target, motion);
+    }
+
     /// Moves toward `target` with `motion`, from wherever the value is now.
     /// The same target while already moving there changes nothing.
     pub fn animate_to(&mut self, target: T, motion: Motion) {

@@ -92,6 +92,9 @@ impl Exit {
 pub struct Resize {
     pub motion: Motion,
     pub change: Change,
+    /// The speed (points per second) a spring starts at when the height
+    /// changes: a sheet let go mid-flick settles from the release speed.
+    pub velocity: Option<f32>,
 }
 
 impl Resize {
@@ -99,6 +102,13 @@ impl Resize {
         Resize {
             motion,
             change: Change::Transition,
+            velocity: None,
         }
+    }
+
+    /// Starts the next height change at `velocity` points per second.
+    pub fn velocity(mut self, velocity: f32) -> Self {
+        self.velocity = Some(velocity);
+        self
     }
 }

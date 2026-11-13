@@ -18,6 +18,8 @@ astryx-spike-gestures = { path = "../astryx-spike-gestures" }
 astryx-spike-virtual = { path = "../astryx-spike-virtual" }
 
 [dev-dependencies]
+# The idle tests also settle every UI gallery case.
+astryx-spike-gallery = { path = "../astryx-spike-gallery" }
 astryx-desktop.workspace = true
 astryx-headless.workspace = true
 astryx-render-soft.workspace = true

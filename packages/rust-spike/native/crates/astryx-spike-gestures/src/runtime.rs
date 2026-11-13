@@ -163,8 +163,12 @@ pub struct SnapDrag {
     pub points: Vec<f32>,
     /// The snap point it rests on.
     pub index: usize,
-    /// Where it is drawn now.
+    /// Where it is drawn now: under the finger while dragging (rubber
+    /// banded past the first and last points), else the snap point.
     pub offset: f32,
+    /// The speed (points per second) of the last release, for the settle
+    /// spring; `None` while a finger drags it.
+    pub release_velocity: Option<f32>,
     start: Option<f32>,
 }
 
@@ -175,7 +179,26 @@ impl SnapDrag {
             points,
             index,
             offset,
+            release_velocity: Some(0.0),
             start: None,
+        }
+    }
+
+    /// `at` with travel past the first or last snap point rubber banded.
+    fn banded(&self, at: f32) -> f32 {
+        let lo = self.points.iter().copied().fold(f32::INFINITY, f32::min);
+        let hi = self
+            .points
+            .iter()
+            .copied()
+            .fold(f32::NEG_INFINITY, f32::max);
+        let span = (hi - lo).max(1.0);
+        if at < lo {
+            lo + crate::rubber_band(at - lo, span)
+        } else if at > hi {
+            hi + crate::rubber_band(at - hi, span)
+        } else {
+            at
         }
     }
 
@@ -184,23 +207,26 @@ impl SnapDrag {
         match e.phase {
             PanPhase::Began => {
                 self.start = Some(self.offset);
-                self.offset = self.points[self.index] + e.translation.y;
+                self.release_velocity = None;
+                self.offset = self.banded(self.points[self.index] + e.translation.y);
                 None
             }
             PanPhase::Changed => {
-                self.offset = self.start.unwrap_or(self.offset) + e.translation.y;
+                self.offset = self.banded(self.start.unwrap_or(self.offset) + e.translation.y);
                 None
             }
             PanPhase::Ended => {
                 let start = self.start.take();
-                self.offset = start.unwrap_or(self.offset) + e.translation.y;
-                self.index = resolve_snap(&self.points, self.offset, e.velocity.y, start);
+                let released = self.banded(start.unwrap_or(self.offset) + e.translation.y);
+                self.index = resolve_snap(&self.points, released, e.velocity.y, start);
                 self.offset = self.points[self.index];
+                self.release_velocity = Some(e.velocity.y);
                 Some(self.index)
             }
             _ => {
                 self.start = None;
                 self.offset = self.points[self.index];
+                self.release_velocity = Some(0.0);
                 None
             }
         }

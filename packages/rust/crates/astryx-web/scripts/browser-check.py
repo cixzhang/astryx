@@ -779,6 +779,13 @@ def main():
         cdp.eval("__stubPad.axes[1] = 0")
         settle(cdp, 100)
         check("gamepad stick moves focus", tab_stop(cdp) == "16", tab_stop(cdp))
+        # A connected pad keeps animation frames coming to poll it; with no
+        # input they must not draw.
+        settle(cdp, 300)
+        f0 = cdp.eval(FRAMES)
+        settle(cdp, 500)
+        check("no frames while idle with a gamepad connected", cdp.eval(FRAMES) == f0,
+              f"{f0} -> {cdp.eval(FRAMES)}")
         cdp.eval("window.__stubPadOn = false")
         settle(cdp, 100)
 

@@ -85,7 +85,8 @@ impl Gallery {
             theme: astryx_core::Theme::NEUTRAL,
             on: false,
             expanded: true,
-            sheet: SnapDrag::new(vec![0.0, 240.0, 420.0], 1),
+            // Room above the top point for its rubber band.
+            sheet: SnapDrag::new(vec![96.0, 280.0, 440.0], 1),
             open: true,
         }
     }
@@ -214,6 +215,7 @@ impl Gallery {
         .id("sheet");
         element(Offset {
             y: self.sheet.offset,
+            release_velocity: self.sheet.release_velocity,
             child: Some(sheet.into()),
         })
     }
@@ -578,22 +580,35 @@ impl Build<Msg> for Collapse {
 }
 
 /// Moves its child down by `y` points (a sheet at its snap point).
+/// A sheet `y` points down the screen: a spacer above it follows the
+/// finger at once and settles on the snap point on the settle spring from
+/// the release speed. The spacer is laid out, so the sheet's hit area and
+/// accessibility bounds move with it.
 struct Offset {
     y: f32,
+    release_velocity: Option<f32>,
     child: Option<Element<Msg>>,
 }
 
 impl Build<Msg> for Offset {
     fn build(mut self: Box<Self>, cx: &mut BuildCx<Msg>) {
-        let node = Node::new(taffy::Style {
+        cx.begin(Node::new(taffy::Style {
             flex_direction: taffy::FlexDirection::Column,
-            margin: taffy::Rect {
-                top: taffy::LengthPercentageAuto::length(self.y),
-                ..taffy::Rect::zero()
+            ..Default::default()
+        }));
+        let mut spacer = Node::new(taffy::Style {
+            size: taffy::Size {
+                width: taffy::Dimension::auto(),
+                height: taffy::Dimension::length(self.y.max(0.0)),
             },
+            flex_shrink: 0.0,
             ..Default::default()
         });
-        cx.begin(node);
+        spacer.resize = Some(astryx_spike_motion::settle(
+            astryx_spike_motion::tokens(cx),
+            self.release_velocity,
+        ));
+        cx.leaf(spacer);
         if let Some(c) = self.child.take() {
             cx.child(c);
         }

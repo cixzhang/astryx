@@ -26,6 +26,18 @@ uses `rust`'s versions and no longer proposes its own:
   `KeyResponse::Handled` means a key handler took a key (no message), a
   different thing, and stays.
 
+- Shells draw only when something changed (`rust` 9f35ac5). The spike's
+  shell input paths follow its rule: a pointer or key event the surface
+  takes (a drag, a right click, a key handler, a pointer-only press) asks
+  for a frame as any input does; an untaken pointer move does not; any key
+  press asks for one, since it shows the focus ring again. Every spike
+  animation and timer keeps `wants_frames` true until it settles (layer
+  entrances and exit copies, springs and retargets, height animation,
+  hover-intent timers, coasts, rubber band and snap settles) and false
+  after; `astryx-spike-infra-gallery/tests/idle.rs` checks each, and that
+  all 13 infra screens and every UI gallery screen settle and stay idle
+  (only screens with a spinner keep frames coming).
+
 ## Proposal groups
 
 The changes cut into separate atomic proposals. Commits on this branch
@@ -126,3 +138,5 @@ caret sits on its wrapped line. `A11yState::multiline` exposes it
 DOM mirror keeps an `<input>` for the field, so the browser's own editing
 of a line break in the hidden field is not used; the runtime edits it.
 | astryx-core `runtime.rs`, `paint.rs`, `contract.rs`, `a11y.rs`; astryx-web `mirror.rs` | Text selection in a focused field: Ctrl or Cmd+A selects all; Shift with Left, Right, Home and End extends; a plain arrow collapses a selection; typing, Backspace and Delete replace it; the selection paints behind the text and reaches assistive technology as `text_selection` (anchor, caret). `A11yState::editable` marks any node with an `Edit`, and the DOM mirror gives an editable combobox, search box or spin button a text `<input>` with its role, so browser text input reaches the app | Typeahead, Selector search, CommandPalette, PowerSearch and NumberInput on the web; select-all parity | Additive for fields (select all was not handled before); mirror change only for editable non-TextInput roles |
+| astryx-desktop `lib.rs`, astryx-web `shell.rs` | The spike's pointer and key forwarding asks for a frame through `after_input` when the surface takes the event (and on any key press); an untaken pointer move goes through `handle`, which draws only for a command that changes the screen | Draw-only-on-change shells (`rust` 9f35ac5) | Merge resolution in groups a, g and h |
+| astryx-motion `animated.rs`; astryx-core `motion.rs`, `runtime.rs` | `Animated::animate_to_with_velocity` (a spring that starts at a given speed, as the animator's `animate(target, {velocity})`); `Resize::velocity`, used when a height change starts | A sheet settles on its snap point from the release speed (Astryx's drag to snap points, `springs.settle`) | Additive (group e) |
