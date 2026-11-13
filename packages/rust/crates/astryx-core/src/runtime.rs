@@ -2694,7 +2694,10 @@ impl<A: App> Runtime<A> {
             });
             if (track.natural - natural).abs() > 0.25 {
                 track.natural = natural;
-                track.shown.animate_to(natural, motion);
+                match resize.velocity {
+                    Some(v) => track.shown.animate_to_with_velocity(natural, motion, v),
+                    None => track.shown.animate_to(natural, motion),
+                }
             }
             if track.shown.is_animating() {
                 overrides.push((ix, track.shown.value()));
