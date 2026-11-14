@@ -1,6 +1,7 @@
 //! Maps keyboard keys and gamepad buttons to Astryx [`Input`].
 
-use astryx_core::Input;
+use astryx_core::{A11yNode, Command, Input, Rect, Role, Surface};
+use winit::event::Ime;
 use winit::keyboard::{Key, ModifiersState, NamedKey};
 
 /// The input for a key, given whether Shift is held.
@@ -123,6 +124,69 @@ fn gamepad_other(button: gilrs::Button) -> Option<Input> {
     })
 }
 
+/// What one input method event asks of the surface, in order.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ImeStep {
+    /// `Surface::text_compose`: composing text and its cursor, a UTF-8 byte
+    /// offset; empty text ends composing.
+    Compose(String, u32),
+    /// `Surface::text_input`: committed text.
+    Commit(String),
+}
+
+/// The surface calls for an input method event, as the web shell makes
+/// them for composition events: composing text goes to `text_compose` with
+/// the input method's cursor (the end of the text when it hides the
+/// cursor); a commit ends composing, then types the text; an input method
+/// that turns off ends composing.
+pub fn ime_steps(event: &Ime) -> Vec<ImeStep> {
+    match event {
+        Ime::Enabled => Vec::new(),
+        Ime::Preedit(text, cursor) => {
+            let at = match cursor {
+                _ if text.is_empty() => 0,
+                Some((_, end)) => (*end).min(text.len()),
+                None => text.len(),
+            };
+            vec![ImeStep::Compose(text.clone(), at as u32)]
+        }
+        Ime::Commit(text) => {
+            let mut steps = vec![ImeStep::Compose(String::new(), 0)];
+            if !text.is_empty() {
+                steps.push(ImeStep::Commit(text.clone()));
+            }
+            steps
+        }
+        Ime::Disabled => vec![ImeStep::Compose(String::new(), 0)],
+    }
+}
+
+/// Where the input method works: the focused text field's bounds, in
+/// logical points, from the accessibility tree; `None` when no text field
+/// has focus. The shell turns the input method on while there is one and
+/// places its candidate window there.
+pub fn ime_area(tree: Option<&A11yNode>) -> Option<Rect> {
+    fn find(node: &A11yNode) -> Option<Rect> {
+        if node.focused && node.role == Role::TextInput {
+            return Some(node.bounds);
+        }
+        node.children.iter().find_map(find)
+    }
+    tree.and_then(find)
+}
+
+/// Gives `steps` to `surface`; the command the commits returned.
+pub fn apply_ime<S: Surface + ?Sized>(surface: &mut S, steps: Vec<ImeStep>) -> Command {
+    let mut command = Command::None;
+    for step in steps {
+        match step {
+            ImeStep::Compose(text, cursor) => surface.text_compose(&text, cursor),
+            ImeStep::Commit(text) => command = command.and(surface.text_input(&text)),
+        }
+    }
+    command
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,5 +253,105 @@ mod tests {
         assert_eq!(gamepad_input(B::South, true), Some(Input::B));
         assert_eq!(gamepad_input(B::North, true), Some(Input::X));
         assert_eq!(gamepad_input(B::West, true), Some(Input::Y));
+    }
+
+    use astryx_core::{DisplayList, FrameInfo, InputPhase, TextMeasure};
+    use winit::event::Ime;
+
+    #[test]
+    fn composing_text_goes_to_text_compose_with_the_input_methods_cursor() {
+        assert_eq!(
+            ime_steps(&Ime::Preedit("にほ".into(), Some((3, 3)))),
+            [ImeStep::Compose("にほ".into(), 3)]
+        );
+        // A selection inside the composing text: the caret is at its end.
+        assert_eq!(
+            ime_steps(&Ime::Preedit("にほん".into(), Some((3, 6)))),
+            [ImeStep::Compose("にほん".into(), 6)]
+        );
+        // A hidden cursor sits at the end, as the web shell puts it.
+        assert_eq!(
+            ime_steps(&Ime::Preedit("ä".into(), None)),
+            [ImeStep::Compose("ä".into(), 2)]
+        );
+        // Empty composing text ends composing.
+        assert_eq!(
+            ime_steps(&Ime::Preedit(String::new(), None)),
+            [ImeStep::Compose(String::new(), 0)]
+        );
+    }
+
+    #[test]
+    fn a_commit_ends_composing_then_types_and_turning_off_ends_composing() {
+        assert_eq!(
+            ime_steps(&Ime::Commit("日本".into())),
+            [
+                ImeStep::Compose(String::new(), 0),
+                ImeStep::Commit("日本".into())
+            ]
+        );
+        assert_eq!(
+            ime_steps(&Ime::Commit(String::new())),
+            [ImeStep::Compose(String::new(), 0)]
+        );
+        assert_eq!(
+            ime_steps(&Ime::Disabled),
+            [ImeStep::Compose(String::new(), 0)]
+        );
+        assert_eq!(ime_steps(&Ime::Enabled), []);
+    }
+
+    /// Records the text calls a surface receives.
+    #[derive(Default)]
+    struct Calls(Vec<String>);
+
+    impl Surface for Calls {
+        fn input(&mut self, _: Input, _: InputPhase) -> Command {
+            Command::None
+        }
+        fn frame(&mut self, _: &FrameInfo, _: &dyn TextMeasure) -> DisplayList {
+            DisplayList::default()
+        }
+        fn accessibility(&self) -> Option<A11yNode> {
+            None
+        }
+        fn wants_frames(&self) -> bool {
+            false
+        }
+        fn text_compose(&mut self, text: &str, cursor: u32) {
+            self.0.push(format!("compose {text:?} {cursor}"));
+        }
+        fn text_input(&mut self, text: &str) -> Command {
+            self.0.push(format!("input {text:?}"));
+            Command::None
+        }
+    }
+
+    #[test]
+    fn a_composition_reaches_the_surface_as_the_web_shell_sends_it() {
+        let mut s = Calls::default();
+        for event in [
+            Ime::Enabled,
+            Ime::Preedit("k".into(), Some((1, 1))),
+            Ime::Preedit("か".into(), Some((3, 3))),
+            Ime::Preedit(String::new(), None),
+            Ime::Commit("か".into()),
+            Ime::Preedit("n".into(), Some((1, 1))),
+            Ime::Disabled,
+        ] {
+            apply_ime(&mut s, ime_steps(&event));
+        }
+        assert_eq!(
+            s.0,
+            [
+                "compose \"k\" 1",
+                "compose \"か\" 3",
+                "compose \"\" 0",
+                "compose \"\" 0",
+                "input \"か\"",
+                "compose \"n\" 1",
+                "compose \"\" 0",
+            ]
+        );
     }
 }
