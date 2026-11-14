@@ -6,6 +6,7 @@
 //! [`TextEngine::add_fallback_font`]; text measured after that uses them, so
 //! layout is correct again on the next frame.
 
+use crate::cache::Generational;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -314,8 +315,11 @@ struct ShapeKey {
     direction: Option<TextDirection>,
 }
 
+// The caches start at these sizes and grow, up to 16 times, when the texts
+// in use do not fit (a long page); see `cache::Generational`.
 const SHAPE_CACHE_LIMIT: usize = 4096;
 const MEASURE_CACHE_LIMIT: usize = 16384;
+const CACHE_GROWTH: usize = 16;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 struct MeasureKey {
@@ -343,8 +347,8 @@ struct EngineInner {
     generation: u64,
     shaper: ShapeContext,
     scaler: ScaleContext,
-    shapes: HashMap<ShapeKey, Rc<ShapedText>>,
-    measures: HashMap<MeasureKey, Size>,
+    shapes: Generational<ShapeKey, Rc<ShapedText>>,
+    measures: Generational<MeasureKey, Size>,
     glyphs: HashMap<GlyphKey, Rc<GlyphBitmap>>,
     provider: Option<FallbackProvider>,
     /// Glyphs rasterized on the calling thread since the last read.
@@ -354,6 +358,8 @@ struct EngineInner {
     /// Scripts asked for that no provider answered, for shells that load
     /// faces asynchronously.
     missing: Vec<Script>,
+    /// Texts shaped since creation, for tests.
+    shapes_made: usize,
 }
 
 impl Default for TextEngine {
@@ -370,15 +376,38 @@ impl TextEngine {
                 generation: 0,
                 shaper: ShapeContext::new(),
                 scaler: ScaleContext::new(),
-                shapes: HashMap::new(),
-                measures: HashMap::new(),
+                shapes: Generational::new(SHAPE_CACHE_LIMIT, SHAPE_CACHE_LIMIT * CACHE_GROWTH),
+                measures: Generational::new(
+                    MEASURE_CACHE_LIMIT,
+                    MEASURE_CACHE_LIMIT * CACHE_GROWTH,
+                ),
                 glyphs: HashMap::new(),
                 provider: None,
                 rasterized: 0,
                 requested: Vec::new(),
                 missing: Vec::new(),
+                shapes_made: 0,
             }),
         }
+    }
+
+    /// An engine whose caches hold `shapes` shapes and `measures` measures,
+    /// for tests that fill them.
+    #[cfg(test)]
+    fn with_cache_limits(fonts: FontSet, shapes: usize, measures: usize) -> Self {
+        let engine = Self::new(fonts);
+        {
+            let mut inner = engine.inner.borrow_mut();
+            inner.shapes = Generational::new(shapes, shapes * CACHE_GROWTH);
+            inner.measures = Generational::new(measures, measures * CACHE_GROWTH);
+        }
+        engine
+    }
+
+    /// Texts shaped since creation, for tests.
+    #[cfg(test)]
+    fn shapes_made(&self) -> usize {
+        self.inner.borrow().shapes_made
     }
 
     /// Adds a face after creation, for example one the web shell loaded.
@@ -608,7 +637,7 @@ impl TextEngine {
         };
         let mut inner = self.inner.borrow_mut();
         if let Some(found) = inner.shapes.get(&key) {
-            return found.clone();
+            return found;
         }
         let inner = &mut *inner;
         if inner.request_faces(text) {
@@ -648,9 +677,7 @@ impl TextEngine {
             ascent,
             descent,
         });
-        if inner.shapes.len() >= SHAPE_CACHE_LIMIT {
-            inner.shapes.clear();
-        }
+        inner.shapes_made += 1;
         inner.shapes.insert(key, shaped.clone());
         shaped
     }
@@ -999,8 +1026,8 @@ impl TextMeasure for TextEngine {
             direction: style.direction,
             max_width: max_width.map(f32::to_bits),
         };
-        if let Some(found) = self.inner.borrow().measures.get(&key) {
-            return *found;
+        if let Some(found) = self.inner.borrow_mut().measures.get(&key) {
+            return found;
         }
         let shaped = self.shaped(text, style);
         let (mut lines, mut widest) = (0usize, 0.0f32);
@@ -1015,14 +1042,19 @@ impl TextMeasure for TextEngine {
             height: lines as f32 * size * style.leading,
         };
         let mut inner = self.inner.borrow_mut();
-        if inner.measures.len() >= MEASURE_CACHE_LIMIT {
-            inner.measures.clear();
-        }
         inner.measures.insert(key, result);
         result
     }
 
+    /// Layout asks for the generation once at the start of each frame, so
+    /// the caches take it as the frame boundary: texts measured within one
+    /// frame are not dropped in that frame.
     fn generation(&self) -> u64 {
+        {
+            let mut inner = self.inner.borrow_mut();
+            inner.shapes.next_frame();
+            inner.measures.next_frame();
+        }
         TextEngine::generation(self)
     }
 }
@@ -1709,5 +1741,66 @@ mod tests {
         engine.place(&layout, (0.0, 0.0), 2.0, true, &mut out);
         assert_eq!(out.len(), 2);
         assert!(out.iter().all(|g| g.bitmap.data.iter().any(|&a| a > 200)));
+    }
+
+    /// What layout does with a long page: measures every text with no
+    /// width and at its width, pass after pass.
+    fn layout_passes(engine: &TextEngine, texts: &[String], passes: usize) {
+        let st = style(14.0, 400);
+        for _ in 0..passes {
+            for t in texts {
+                engine.measure(t, &st, None);
+                engine.measure(t, &st, Some(120.0));
+            }
+        }
+    }
+
+    #[test]
+    fn a_page_bigger_than_the_text_caches_is_not_shaped_again_on_later_passes() {
+        // Caches that hold 64 shapes and 256 measures, and a page of 300
+        // texts: 600 measures a pass.
+        let texts: Vec<String> = (0..300)
+            .map(|i| format!("Row {i}, with a detail line"))
+            .collect();
+        let engine = TextEngine::with_cache_limits(roboto(), 64, 256);
+        layout_passes(&engine, &texts, 2);
+        let first = engine.shapes_made();
+        assert!(
+            first <= 2 * texts.len(),
+            "the first layout shapes each text at most twice: {first} shapes for {} texts",
+            texts.len()
+        );
+        // Later layouts of the same page (a relayout, the next frames) find
+        // every text in the caches.
+        layout_passes(&engine, &texts, 3);
+        assert_eq!(
+            engine.shapes_made() - first,
+            0,
+            "later passes shape nothing again ({} texts)",
+            texts.len()
+        );
+    }
+
+    #[test]
+    fn the_caches_still_drop_texts_that_are_no_longer_used() {
+        let engine = TextEngine::with_cache_limits(roboto(), 64, 256);
+        let st = style(14.0, 400);
+        // A stream of texts each shown once, a frame each (a clock, a
+        // log), keeps the caches bounded.
+        for i in 0..5000 {
+            TextMeasure::generation(&engine);
+            engine.measure(&format!("tick {i}"), &st, None);
+        }
+        let inner = engine.inner.borrow();
+        assert!(
+            inner.measures.len() <= 2 * 256,
+            "{} measures",
+            inner.measures.len()
+        );
+        assert!(
+            inner.shapes.len() <= 2 * 64,
+            "{} shapes",
+            inner.shapes.len()
+        );
     }
 }
