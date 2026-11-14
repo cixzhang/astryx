@@ -46,3 +46,7 @@ harness = false
 [[test]]
 name = "window_idle"
 harness = false
+
+[[test]]
+name = "window_ime"
+harness = false
