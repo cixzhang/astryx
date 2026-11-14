@@ -683,6 +683,18 @@ impl Mirror {
         }
     }
 
+    /// Where a node's mirror element sits. While an input method composes
+    /// in a field, its hidden input shrinks to the drawn caret, so the
+    /// browser puts the input method's window at the caret on the canvas.
+    fn input_bounds(&self, node: &A11yNode, desc: &NodeDesc) -> Rect {
+        match node.state.caret_bounds {
+            Some(caret) if self.composing && node.focused && desc.tag == "input" => {
+                Rect::new(caret.x, caret.y, 1.0, caret.height)
+            }
+            _ => node.bounds,
+        }
+    }
+
     pub(crate) fn set_composing(&mut self, composing: bool) {
         self.composing = composing;
         if !composing {
@@ -759,7 +771,7 @@ impl Mirror {
         live.insert(node.id);
         let tab_stop = node.focusable.then(|| self.tab_stop == Some(node.id));
         let desc = describe(node, tab_stop);
-        let style = geometry(&node.bounds, origin);
+        let style = geometry(&self.input_bounds(node, &desc), origin);
         let reuse = self
             .entries
             .get(&node.id)

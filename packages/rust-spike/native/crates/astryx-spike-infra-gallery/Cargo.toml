@@ -20,6 +20,12 @@ astryx-spike-virtual = { path = "../astryx-spike-virtual" }
 [dev-dependencies]
 # The idle tests also settle every UI gallery case.
 astryx-spike-gallery = { path = "../astryx-spike-gallery" }
+# The input method tests compose into the UI lane's text fields.
+astryx-spike-ui = { path = "../astryx-spike-ui" }
 astryx-desktop.workspace = true
 astryx-headless.workspace = true
 astryx-render-soft.workspace = true
+
+[[test]]
+name = "window_ime"
+harness = false

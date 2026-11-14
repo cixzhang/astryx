@@ -1035,6 +1035,9 @@ pub struct A11yState {
     /// The node edits text (a text field, an editable combobox, a spin
     /// button), so platforms give it a text input.
     pub editable: bool,
+    /// Where the focused field's caret is drawn, so a platform places an
+    /// input method's window at it.
+    pub caret_bounds: Option<Rect>,
 }
 
 /// One node of the accessibility tree a frame produces. Shells bridge it to

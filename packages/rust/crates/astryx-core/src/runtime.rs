@@ -2432,6 +2432,13 @@ impl<A: App> Runtime<A> {
         let id = self.nodes[ix].id;
         let value = self.field_value(id, edit);
         let caret = self.caret(id, &value);
+        if let (true, Some((lid, _)), Some((cid, pre, cursor))) =
+            (edit.multiline, &self.caret_lines, &self.composing)
+        {
+            if *lid == id && *cid == id {
+                return self.compose_paint_multiline(edit, &value, caret, pre, *cursor, text);
+            }
+        }
         if let (true, Some((lid, lines))) = (edit.multiline, &self.caret_lines) {
             if *lid == id && self.composing.is_none() {
                 // A multi-line field wraps instead of sliding: the caret sits
@@ -2468,7 +2475,7 @@ impl<A: App> Runtime<A> {
                     rect: Rect::new((rect.x + x).round(), rect.y + line as f32 * line_h, 1.0, h),
                     color: edit.caret,
                     text: None,
-                    underline: None,
+                    underline: Vec::new(),
                     selection,
                 });
             }
@@ -2544,7 +2551,93 @@ impl<A: App> Runtime<A> {
                 (s, w)
             }),
             underline: underline
-                .map(|(a, b)| Rect::new(rect.x + a - shift, top + line - 2.0, b - a, 1.0)),
+                .map(|(a, b)| Rect::new(rect.x + a - shift, top + line - 2.0, b - a, 1.0))
+                .into_iter()
+                .collect(),
+        })
+    }
+
+    /// Gives the focused field's accessibility node where its caret is
+    /// drawn, so a platform places an input method's window there.
+    fn mark_caret_bounds(&mut self, caret: Option<Rect>) {
+        let (Some(rect), Some(id)) = (caret, self.focused) else {
+            return;
+        };
+        fn find(n: &mut A11yNode, id: u64) -> Option<&mut A11yNode> {
+            if n.id == id {
+                return Some(n);
+            }
+            n.children.iter_mut().find_map(|c| find(c, id))
+        }
+        if let Some(node) = self.a11y.as_mut().and_then(|root| find(root, id)) {
+            node.state.caret_bounds = Some(rect);
+        }
+    }
+
+    /// A multi-line field while an input method composes: the composing
+    /// text shows inline at the caret, wrapped with the rest, underlined on
+    /// each line it spans, with the caret at the input method's cursor.
+    fn compose_paint_multiline(
+        &self,
+        edit: &Edit<A::Msg>,
+        value: &str,
+        caret: usize,
+        pre: &str,
+        cursor: u32,
+        text: &dyn TextMeasure,
+    ) -> Option<paint::Caret> {
+        let layout = self.layout.as_ref()?;
+        let crate::element::Draw::Text(t) = &self.nodes[edit.text_node as usize].draw else {
+            return None;
+        };
+        let rect = layout.rects[edit.text_node as usize];
+        let chars: Vec<char> = value.chars().collect();
+        let pre_chars: Vec<char> = pre.chars().collect();
+        let mut shown: Vec<char> = chars[..caret].to_vec();
+        shown.extend(&pre_chars);
+        shown.extend(&chars[caret..]);
+        let shown_str: String = shown.iter().collect();
+        let width = |a: usize, b: usize| -> f32 {
+            text.measure(&shown[a..b].iter().collect::<String>(), &t.style, None)
+                .width
+        };
+        let lines = wrap_lines(&shown_str, rect.width, &|s| {
+            text.measure(s, &t.style, None).width
+        });
+        let cursor_chars = pre
+            .char_indices()
+            .take_while(|&(i, _)| i < cursor as usize)
+            .count();
+        let at = caret + cursor_chars;
+        let line_h = t.style.size * t.style.leading;
+        let h = (line_h - 0.01).ceil();
+        let line = line_of(&lines, at);
+        let x = width(lines[line].0, at);
+        let (a, b) = (caret, caret + pre_chars.len());
+        let underline = lines
+            .iter()
+            .enumerate()
+            .filter_map(|(n, &(ls, le))| {
+                let (sa, sb) = (a.max(ls), b.min(le));
+                (sa < sb).then(|| {
+                    Rect::new(
+                        rect.x + width(ls, sa),
+                        rect.y + n as f32 * line_h + h - 2.0,
+                        width(sa, sb),
+                        1.0,
+                    )
+                })
+            })
+            .collect::<Vec<_>>();
+        Some(paint::Caret {
+            text_node: edit.text_node as usize,
+            shift: 0.0,
+            rect: Rect::new((rect.x + x).round(), rect.y + line as f32 * line_h, 1.0, h),
+            color: edit.caret,
+            // The composed value wraps in the text box; it never widens it.
+            text: Some((shown_str, rect.width)),
+            underline,
+            selection: Vec::new(),
         })
     }
 
@@ -3646,6 +3739,11 @@ impl<A: App> Surface for Runtime<A> {
         if event.phase == InputPhase::Pressed {
             self.focus_by_pointer = false;
         }
+        // While an input method composes, its keys (Enter to commit, the
+        // arrows to choose) are its own: no key handler sees them.
+        if self.composing.is_some() {
+            return crate::contract::KeyOutcome::default();
+        }
         // Component key handlers come first; a multi-line field's own line
         // breaks and line moves apply when they pass.
         let Some(command) = self.route_key(&event) else {
@@ -3837,6 +3935,7 @@ impl<A: App> Surface for Runtime<A> {
         self.track_hover(&rects);
         self.layout_caret_lines(text);
         let caret = self.caret_paint(text);
+        self.mark_caret_bounds(caret.as_ref().map(|c| c.rect));
         let indicators = self.indicators(&rects);
         let tooltip = self.tooltip_paint(&rects, text);
         let mut transforms = self.transforms(&rects);
@@ -4173,8 +4272,10 @@ fn contains(r: Rect, p: Point) -> bool {
 }
 
 /// Lines of `value` as a text box `width` wide wraps them: hard breaks at
-/// `\n`, soft breaks after spaces where the next word would pass the width.
-/// Each line is a character range without its line break.
+/// `\n`; soft breaks after spaces and around CJK characters (the break
+/// opportunities the renderer uses for these scripts) where the next piece
+/// would pass the width. A piece wider than the box overflows. Each line is
+/// a character range without its line break.
 fn wrap_lines(value: &str, width: f32, measure: &dyn Fn(&str) -> f32) -> Vec<(usize, usize)> {
     let chars: Vec<char> = value.chars().collect();
     let mut lines = Vec::new();
@@ -4186,24 +4287,39 @@ fn wrap_lines(value: &str, width: f32, measure: &dyn Fn(&str) -> f32) -> Vec<(us
         .map(|(i, _)| i)
         .chain([chars.len()]);
     for end in breaks {
-        // One paragraph, chars[start..end], broken greedily after spaces.
+        // One paragraph, chars[start..end], broken greedily.
         let mut line_start = start;
-        for j in start..end {
-            let soft_break = chars[j] == ' ' && j + 1 < end && chars[j + 1] != ' ';
-            if !soft_break {
-                continue;
+        let mut last_break = None;
+        let mut j = start + 1;
+        while j <= end {
+            if j < end && can_break_before(chars[j - 1], chars[j]) {
+                last_break = Some(j);
             }
-            let word_end = (j + 1..end).find(|&k| chars[k] == ' ').unwrap_or(end);
-            let candidate: String = chars[line_start..word_end].iter().collect();
-            if measure(candidate.trim_end()) > width + 0.5 {
-                lines.push((line_start, j + 1));
-                line_start = j + 1;
+            let piece: String = chars[line_start..j].iter().collect();
+            if measure(piece.trim_end()) > width + 0.5 {
+                if let Some(b) = last_break.filter(|&b| b > line_start && b < j) {
+                    lines.push((line_start, b));
+                    line_start = b;
+                    last_break = None;
+                    continue;
+                }
             }
+            j += 1;
         }
         lines.push((line_start, end));
         start = end + 1;
     }
     lines
+}
+
+/// Whether a line may break between `a` and `b`: after a run of spaces, or
+/// next to a CJK character (ideographs, kana, Hangul, full-width forms).
+fn can_break_before(a: char, b: char) -> bool {
+    fn cjk(c: char) -> bool {
+        matches!(c as u32,
+            0x1100..=0x11FF | 0x2E80..=0x9FFF | 0xAC00..=0xD7AF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
+    }
+    (a == ' ' && b != ' ') || ((cjk(a) || cjk(b)) && b != ' ')
 }
 
 /// The line holding caret position `caret`: at a soft break the caret shows

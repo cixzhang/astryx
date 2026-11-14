@@ -40,7 +40,7 @@ use glutin::surface::{GlSurface, Surface as GlutinSurface, SwapInterval, WindowS
 use glutin_winit::{DisplayBuilder, GlWindow};
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalPosition, LogicalSize};
-use winit::event::{ElementState, Ime, MouseButton, WindowEvent};
+use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::ModifiersState;
 use winit::raw_window_handle::HasWindowHandle;
@@ -340,21 +340,22 @@ impl<S: Surface> Shell<S> {
         }
     }
 
-    /// Turns the input method on while a text field has focus and keeps its
-    /// candidate window next to that field.
+    /// Turns the input method on while a text field has focus, off when
+    /// focus leaves it, and keeps its candidate window at that field.
     fn update_text_field(&mut self, tree: Option<&A11yNode>) {
-        let field = tree.and_then(find_focused_text_field);
+        let field = input::ime_area(tree);
         if field == self.text_field {
             return;
         }
-        if let Some(gpu) = &self.gpu {
+        let Some(gpu) = &self.gpu else { return };
+        if field.is_some() != self.text_field.is_some() {
             gpu.window.set_ime_allowed(field.is_some());
-            if let Some(r) = field {
-                gpu.window.set_ime_cursor_area(
-                    LogicalPosition::new(r.x, r.y),
-                    LogicalSize::new(r.width, r.height),
-                );
-            }
+        }
+        if let Some(r) = field {
+            gpu.window.set_ime_cursor_area(
+                LogicalPosition::new(r.x, r.y),
+                LogicalSize::new(r.width, r.height),
+            );
         }
         self.text_field = field;
     }
@@ -525,9 +526,14 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                     self.send(event_loop, input, phase);
                 }
             }
-            WindowEvent::Ime(Ime::Commit(text)) => {
-                if !text.is_empty() {
-                    self.type_text(event_loop, &text);
+            // Composing text shows inline in the focused field; a commit
+            // ends it and types the text (as the web shell's composition
+            // events do).
+            WindowEvent::Ime(ime) => {
+                let steps = input::ime_steps(&ime);
+                if !steps.is_empty() {
+                    let command = input::apply_ime(&mut self.surface, steps);
+                    self.after_input(event_loop, command);
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
@@ -730,13 +736,6 @@ fn needs_frame(command: &Command) -> bool {
         Command::Quit | Command::OpenUrl(_) | Command::PlaySound(_) => false,
         Command::Transition(_) => true,
     }
-}
-
-fn find_focused_text_field(node: &A11yNode) -> Option<astryx_core::Rect> {
-    if node.focused && node.role == astryx_core::Role::TextInput {
-        return Some(node.bounds);
-    }
-    node.children.iter().find_map(find_focused_text_field)
 }
 
 /// Milliseconds since the shell's first pointer event, for release velocity.
