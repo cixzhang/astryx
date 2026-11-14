@@ -54,6 +54,16 @@ impl std::fmt::Display for GlError {
 
 impl std::error::Error for GlError {}
 
+/// When the renderer warms up the driver.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Warm {
+    /// Made, no frame drawn yet.
+    AfterFirstFrame,
+    /// The first frame is drawn; the warm-up runs before the next one.
+    Due,
+    Done,
+}
+
 /// How long the last frame took inside the renderer, for profiling shells.
 /// Times are zero on targets without a clock (WebAssembly).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -422,6 +432,8 @@ pub struct GlRenderer {
     layer_cache: HashMap<u64, Layer>,
     layer_cache_next: HashMap<u64, Layer>,
     frame: u64,
+    /// Where the warm-up stands: due once the first frame is drawn.
+    warm: Warm,
     frame_size: (i32, i32),
     targets: Vec<Target>,
     groups: Vec<Group>,
@@ -437,6 +449,8 @@ pub struct GlRenderer {
     nearest: std::collections::HashSet<glow::Texture>,
     /// Registered images: the texture and its size in pixels.
     images: HashMap<ImageId, (glow::Texture, u32, u32)>,
+    /// Images set but not drawn yet: uploaded when a frame first draws them.
+    pending_images: HashMap<ImageId, ImageData>,
 }
 
 impl GlRenderer {
@@ -529,6 +543,7 @@ impl GlRenderer {
                 layer_cache: HashMap::new(),
                 layer_cache_next: HashMap::new(),
                 frame: 0,
+                warm: Warm::AfterFirstFrame,
                 frame_size: (1, 1),
                 targets: Vec::new(),
                 groups: Vec::new(),
@@ -541,8 +556,11 @@ impl GlRenderer {
                 grids: Vec::new(),
                 nearest: std::collections::HashSet::new(),
                 images: HashMap::new(),
+                pending_images: HashMap::new(),
             };
-            renderer.warm_up();
+            // The warm-up waits for the first frame, so that frame shows
+            // sooner; the atlas is ready for it.
+            renderer.atlas.prepare(&renderer.gl, renderer.dialect);
             Ok(renderer)
         }
     }
@@ -593,19 +611,39 @@ impl GlRenderer {
     }
 
     /// Adds or replaces an image; `None` frees it. Pixels that do not match
-    /// the size are ignored.
+    /// the size are ignored. The image goes to the GPU when a frame first
+    /// draws it, so images an app registers ahead cost nothing at start.
     pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
-        let gl = self.gl.clone();
         if let Some((old, _, _)) = self.images.remove(&id) {
             self.nearest.remove(&old);
             // SAFETY: the texture belongs to this context.
-            unsafe { gl.delete_texture(old) };
+            unsafe { self.gl.delete_texture(old) };
         }
+        self.pending_images.remove(&id);
         let Some(d) = data else { return };
         let (w, h) = (d.width as usize, d.height as usize);
         if w == 0 || h == 0 || d.rgba.len() != w * h * 4 {
             return;
         }
+        self.pending_images.insert(id, d.clone());
+    }
+
+    /// Uploads the images `list` draws that are not on the GPU yet.
+    fn upload_drawn_images(&mut self, list: &DisplayList) {
+        if self.pending_images.is_empty() {
+            return;
+        }
+        for cmd in &list.commands {
+            if let DrawCmd::Image { image, .. } = cmd {
+                if let Some(d) = self.pending_images.remove(image) {
+                    self.upload_image(*image, &d);
+                }
+            }
+        }
+    }
+
+    fn upload_image(&mut self, id: ImageId, d: &ImageData) {
+        let gl = self.gl.clone();
         // Premultiplied, so filtering does not bleed the color of transparent
         // pixels into their neighbours.
         let mut px = d.rgba.to_vec();
@@ -2143,6 +2181,15 @@ impl GlRenderer {
     /// Draws one frame into the current framebuffer, through the running
     /// transition, if any.
     pub fn render_list(&mut self, list: &DisplayList, frame: &FrameInfo) {
+        match self.warm {
+            Warm::AfterFirstFrame => self.warm = Warm::Due,
+            // Not while a transition holds the frame on screen.
+            Warm::Due if self.transition.is_none() => {
+                self.warm = Warm::Done;
+                self.warm_up();
+            }
+            _ => {}
+        }
         let Some(mut run) = self.transition.take() else {
             return self.render_frame(list, frame);
         };
@@ -2362,6 +2409,7 @@ impl GlRenderer {
 
     /// Draws one frame into the current framebuffer.
     fn render_frame(&mut self, list: &DisplayList, frame: &FrameInfo) {
+        self.upload_drawn_images(list);
         let start = now();
         let (w, h) = (frame.width.max(1) as i32, frame.height.max(1) as i32);
         let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
@@ -2459,11 +2507,11 @@ impl GlRenderer {
     }
 
     /// Draws one small frame with every kind of draw offscreen, so the
-    /// driver compiles its shader variants and allocates its first textures
-    /// before the first real frame.
+    /// driver compiles its shader variants and allocates its first textures.
+    /// Runs before the second frame: the first frame shows without waiting
+    /// for it and pays only for the draws it has.
     fn warm_up(&mut self) {
         use astryx_core::{FontFamily, Point, Radii, Rect, ShadowLayer, TextStyle};
-        self.atlas.prepare(&self.gl, self.dialect);
         let r = |x, y| Rect::new(x, y, 24.0, 24.0);
         let red = Color::rgba(1.0, 0.0, 0.0, 1.0);
         let list = DisplayList {
@@ -2577,7 +2625,7 @@ impl GlRenderer {
         }
         self.layers.append(&mut self.frame_layers);
         self.framebuffer = saved;
-        // SAFETY: the context is current while the renderer is created.
+        // SAFETY: the context is current while the renderer draws.
         unsafe { self.gl.finish() };
         self.layers.push(target);
         // Layers cached from the warm-up go back to the pool. The frame
