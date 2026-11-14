@@ -363,6 +363,7 @@ dependencies = [
  "astryx-spike-gestures",
  "astryx-spike-layers",
  "astryx-spike-motion",
+ "astryx-spike-ui",
  "astryx-spike-virtual",
  "astryx-tokens",
  "serde_json",
