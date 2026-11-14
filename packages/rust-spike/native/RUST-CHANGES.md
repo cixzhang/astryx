@@ -81,6 +81,33 @@ and splits by hunk along the rows below.
   initial_scroll, scroll_report, scroll_adjust}`,
   `BuildCx::{scroll_offsets, scroll_offset}`. Groups h and i share one
   commit; they split by the rows below.
+- **j. Input method composition** (one atomic proposal, with its tests).
+  Commit 8d58863 holds it with the multi-line composition drawing and
+  CJK line breaking of group f; it splits by hunk along these parts:
+  - **j1. Candidate window at the caret** (kept separable: `rust` keeps
+    field-rect placement until the owner decides between this and a
+    default `Surface::caret_area`). Hunks: `A11yState::caret_bounds`
+    (contract.rs); `Runtime::mark_caret_bounds` and its call after
+    `caret_paint` (runtime.rs); the `caret_bounds` preference in
+    `input::ime_area` (astryx-desktop input.rs) and its unit-test
+    assertion; `Mirror::input_bounds` (astryx-web mirror.rs); the caret
+    expectation in astryx-desktop `tests/ime.rs`. Swapping to
+    `Surface::caret_area` replaces these hunks only: the runtime would
+    return its last caret rect from that method and the shells would ask
+    it instead of reading the tree. Without j1, `ime_area` returns the
+    field bounds and `tests/ime.rs` keeps `rust`'s field expectation.
+  - **j2. The input method for any focused `Edit`**: `ime_area` accepts
+    `state.editable` (ComboBox, SearchBox, SpinButton), not only
+    `Role::TextInput`, so the desktop shell turns the input method on
+    and types into them.
+  - **j3. Keys belong to the input method while it composes**: the
+    composing guard at the top of `Runtime::key` (runtime.rs) and the
+    `is_composing`/`Process` guard in the web shell's `offer_key`.
+  - Tests: astryx-desktop `input.rs`
+    (`the_input_method_works_at_the_focused_fields_caret`, j1 and j2),
+    `tests/ime.rs` (j1); spike `astryx-spike-infra-gallery/tests/ime.rs`
+    (all parts, headless) and `tests/window_ime.rs` (a real input
+    method).
 
 ## Changes
 
@@ -140,4 +167,4 @@ of a line break in the hidden field is not used; the runtime edits it.
 | astryx-core `runtime.rs`, `paint.rs`, `contract.rs`, `a11y.rs`; astryx-web `mirror.rs` | Text selection in a focused field: Ctrl or Cmd+A selects all; Shift with Left, Right, Home and End extends; a plain arrow collapses a selection; typing, Backspace and Delete replace it; the selection paints behind the text and reaches assistive technology as `text_selection` (anchor, caret). `A11yState::editable` marks any node with an `Edit`, and the DOM mirror gives an editable combobox, search box or spin button a text `<input>` with its role, so browser text input reaches the app | Typeahead, Selector search, CommandPalette, PowerSearch and NumberInput on the web; select-all parity | Additive for fields (select all was not handled before); mirror change only for editable non-TextInput roles |
 | astryx-desktop `lib.rs`, astryx-web `shell.rs` | The spike's pointer and key forwarding asks for a frame through `after_input` when the surface takes the event (and on any key press); an untaken pointer move goes through `handle`, which draws only for a command that changes the screen | Draw-only-on-change shells (`rust` 9f35ac5) | Merge resolution in groups a, g and h |
 | astryx-motion `animated.rs`; astryx-core `motion.rs`, `runtime.rs` | `Animated::animate_to_with_velocity` (a spring that starts at a given speed, as the animator's `animate(target, {velocity})`); `Resize::velocity`, used when a height change starts | A sheet settles on its snap point from the release speed (Astryx's drag to snap points, `springs.settle`) | Additive (group e) |
-| astryx-core `runtime.rs`, `paint.rs`, `contract.rs`; astryx-desktop `input.rs`; astryx-web `mirror.rs`, `shell.rs` | Input method composition in every field: a multi-line field draws the composing text inline, wrapped with the rest and underlined on each line it spans (`Caret::underline` holds one rect per line); line wrapping breaks around CJK characters too; `A11yState::caret_bounds` carries where the caret is drawn, and the desktop shell puts the candidate window there for any focused field that edits text (`state.editable`, not only `Role::TextInput`); while composing, the web mirror's hidden input shrinks to the caret so the browser puts its window there; keys belong to the input method while it composes (no `on_key` handler sees them, on desktop and web) | IME preedit parity for TextInput, NumberInput, the combobox family and the multi-line chat composer | Behavior change on desktop: the candidate window moves from the field's bounds to its caret (as platform text fields and the browser place it); astryx-desktop `tests/ime.rs` now checks the caret, and that it follows the composition. Keys during composition no longer reach `on_key` handlers. `Caret::underline` (crate-private) holds one rect per line |
+| astryx-core `runtime.rs`, `paint.rs`, `contract.rs`; astryx-desktop `input.rs`; astryx-web `mirror.rs`, `shell.rs` | Group j (and group f's multi-line part). Input method composition in every field: a multi-line field draws the composing text inline, wrapped with the rest and underlined on each line it spans (`Caret::underline` holds one rect per line); line wrapping breaks around CJK characters too; `A11yState::caret_bounds` carries where the caret is drawn, and the desktop shell puts the candidate window there for any focused field that edits text (`state.editable`, not only `Role::TextInput`); while composing, the web mirror's hidden input shrinks to the caret so the browser puts its window there; keys belong to the input method while it composes (no `on_key` handler sees them, on desktop and web) | IME preedit parity for TextInput, NumberInput, the combobox family and the multi-line chat composer | Behavior change on desktop: the candidate window moves from the field's bounds to its caret (as platform text fields and the browser place it); astryx-desktop `tests/ime.rs` now checks the caret, and that it follows the composition. Keys during composition no longer reach `on_key` handlers. `Caret::underline` (crate-private) holds one rect per line |
