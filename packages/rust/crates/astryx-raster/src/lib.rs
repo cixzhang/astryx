@@ -3,6 +3,7 @@
 //! [`geom`]etry, and CSS `box-shadow` masks in [`shadow`]. Pure Rust with no
 //! GPU or OS dependency; builds for `wasm32-unknown-unknown`.
 
+mod cache;
 pub mod geom;
 pub mod light;
 pub mod path;
