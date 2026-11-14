@@ -94,15 +94,16 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         pressing: false,
         cursor: CursorIcon::Default,
         #[cfg(feature = "gamepad")]
-        gamepads: gilrs::Gilrs::new().ok(),
+        gamepads: None,
         #[cfg(feature = "gamepad")]
         preferences: astryx_core::Preferences::default(),
         pending_transition: None,
         last_list: None,
         #[cfg(feature = "audio")]
-        audio: audio::Audio::open()
-            .map_err(|e| eprintln!("astryx-desktop: no sound: {e}"))
-            .ok(),
+        audio: None,
+        devices_open: false,
+        #[cfg(feature = "audio")]
+        early_sounds: Vec::new(),
     };
     event_loop.run_app(&mut shell)?;
     match shell.error.take() {
@@ -150,6 +151,12 @@ struct Shell<S: Surface> {
     last_list: Option<astryx_core::DisplayList>,
     #[cfg(feature = "audio")]
     audio: Option<audio::Audio>,
+    /// Gamepads and the audio output open once the first frame is on
+    /// screen, so they do not delay it.
+    devices_open: bool,
+    /// Sounds played before the audio output opened.
+    #[cfg(feature = "audio")]
+    early_sounds: Vec<astryx_core::SoundId>,
 }
 
 fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
@@ -281,17 +288,45 @@ impl<S: Surface> Shell<S> {
         }
     }
 
-    fn play(&self, id: astryx_core::SoundId) {
+    fn play(&mut self, id: astryx_core::SoundId) {
         #[cfg(feature = "audio")]
         if let Some(a) = &self.audio {
             a.control.play(id);
+        } else if !self.devices_open {
+            self.early_sounds.push(id);
         }
         #[cfg(not(feature = "audio"))]
         let _ = id;
     }
 
-    /// Hands sounds the app registered to the audio output.
+    /// Opens gamepads and the audio output, after the first frame is on
+    /// screen; hands the audio output the sounds registered and played
+    /// before.
+    fn open_devices(&mut self) {
+        if !std::mem::replace(&mut self.devices_open, true) {
+            #[cfg(feature = "gamepad")]
+            {
+                self.gamepads = gilrs::Gilrs::new().ok();
+            }
+            #[cfg(feature = "audio")]
+            {
+                self.audio = audio::Audio::open()
+                    .map_err(|e| eprintln!("astryx-desktop: no sound: {e}"))
+                    .ok();
+                self.take_sounds();
+                for id in std::mem::take(&mut self.early_sounds) {
+                    self.play(id);
+                }
+            }
+        }
+    }
+
+    /// Hands sounds the app registered to the audio output. Until it opens
+    /// they wait in the surface.
     fn take_sounds(&mut self) {
+        if !self.devices_open {
+            return;
+        }
         let updates = self.surface.take_sound_updates();
         #[cfg(feature = "audio")]
         if let Some(a) = &self.audio {
@@ -405,6 +440,9 @@ impl<S: Surface> Shell<S> {
             event_loop.exit();
             return;
         }
+        if self.frames == 1 {
+            self.open_devices();
+        }
         let tree = self.surface.accessibility();
         self.update_text_field(tree.as_ref());
         let Some(gpu) = &mut self.gpu else { return };
@@ -416,7 +454,9 @@ impl<S: Surface> Shell<S> {
             self.update_cursor();
         }
         let Some(gpu) = &mut self.gpu else { return };
-        if self.surface.wants_frames() || gpu.renderer.transitioning() {
+        // One more frame right after the first, which carries the
+        // renderer's warm-up, so it is done before the first input.
+        if self.surface.wants_frames() || gpu.renderer.transitioning() || self.frames == 1 {
             gpu.window.request_redraw();
         } else {
             self.last_frame = None;
