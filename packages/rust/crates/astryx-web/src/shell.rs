@@ -647,6 +647,11 @@ impl Runner {
 
     /// Offers a key to the app's key handlers; true when one took it.
     fn offer_key(shell: &mut Shell, event: &KeyboardEvent, phase: InputPhase) -> bool {
+        // An input method's keys (Enter to commit, arrows to choose) are
+        // its own while it composes.
+        if event.is_composing() || event.key() == "Process" {
+            return false;
+        }
         let Some(key) = crate::keys::key_of(&event.key()) else {
             return false;
         };

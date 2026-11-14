@@ -108,18 +108,20 @@ fn the_input_method_works_at_the_focused_field_while_composing() {
         }
         find(&rt.accessibility().unwrap()).unwrap()
     };
+    let inside = |r: Rect, f: Rect| {
+        r.x >= f.x && r.x <= f.x + f.width && r.y >= f.y && r.y + r.height <= f.y + f.height + 0.5
+    };
     let at = ime_area(rt.accessibility().as_ref()).expect("a focused field");
-    assert_eq!(
-        at,
-        field_rect(&rt),
-        "the candidate window sits at the field"
+    assert!(
+        inside(at, field_rect(&rt)) && at.width <= 2.0,
+        "the candidate window sits at the caret, in the field: {at:?}"
     );
     ime(&mut rt, Ime::Preedit("かな".into(), Some((6, 6))));
     draw(&mut rt, 300, 200);
-    assert_eq!(
-        ime_area(rt.accessibility().as_ref()),
-        Some(at),
-        "still the field while composing"
+    let composing = ime_area(rt.accessibility().as_ref()).expect("still the field");
+    assert!(
+        inside(composing, field_rect(&rt)) && composing.x > at.x,
+        "while composing it follows the caret to the end of the composition: {at:?} -> {composing:?}"
     );
     // Focus leaves the field (to the button): the input method turns off.
     tap(&mut rt, Input::Next);

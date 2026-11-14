@@ -125,8 +125,8 @@ pub(crate) struct Caret {
     pub color: Color,
     /// The value with composing text in it, and its width, while composing.
     pub text: Option<(String, f32)>,
-    /// The line under the composing text.
-    pub underline: Option<Rect>,
+    /// The lines under the composing text, one per line it spans.
+    pub underline: Vec<Rect>,
     /// The selected text's boxes, one per line, drawn behind the text.
     pub selection: Vec<Rect>,
 }
@@ -705,9 +705,9 @@ fn paint_node<Msg>(
         Draw::Paint(p) => out.extend((p.paint)(rect, state.time)),
         _ => {}
     }
-    if let Some(line) = caret.and_then(|c| c.underline) {
+    for line in caret.map(|c| c.underline.as_slice()).unwrap_or_default() {
         out.push(DrawCmd::Rect {
-            rect: line,
+            rect: *line,
             radii: Radii::default(),
             fill: caret.map_or(Color::TRANSPARENT, |c| c.color),
             stroke: None,

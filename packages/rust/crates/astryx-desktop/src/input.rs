@@ -161,14 +161,16 @@ pub fn ime_steps(event: &Ime) -> Vec<ImeStep> {
     }
 }
 
-/// Where the input method works: the focused text field's bounds, in
-/// logical points, from the accessibility tree; `None` when no text field
-/// has focus. The shell turns the input method on while there is one and
-/// places its candidate window there.
+/// Where the input method works: the focused text field's caret (else its
+/// bounds), in logical points, from the accessibility tree; `None` when no
+/// text field has focus. The shell turns the input method on while there
+/// is one and places its candidate window there.
 pub fn ime_area(tree: Option<&A11yNode>) -> Option<Rect> {
     fn find(node: &A11yNode) -> Option<Rect> {
-        if node.focused && node.role == Role::TextInput {
-            return Some(node.bounds);
+        // Any focused node that edits text (a field, an editable combobox,
+        // a spin button); the input method's window goes at its caret.
+        if node.focused && (node.role == Role::TextInput || node.state.editable) {
+            return Some(node.state.caret_bounds.unwrap_or(node.bounds));
         }
         node.children.iter().find_map(find)
     }
@@ -190,6 +192,51 @@ pub fn apply_ime<S: Surface + ?Sized>(surface: &mut S, steps: Vec<ImeStep>) -> C
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn field(role: Role, focused: bool) -> A11yNode {
+        A11yNode {
+            id: 2,
+            role,
+            label: Some("Fruit".into()),
+            value: None,
+            description: None,
+            bounds: Rect::new(10.0, 20.0, 200.0, 32.0),
+            focused,
+            focusable: true,
+            disabled: false,
+            checked: None,
+            selected: None,
+            secure: false,
+            rtl: false,
+            live: None,
+            text_selection: None,
+            state: Default::default(),
+            children: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn the_input_method_works_at_the_focused_fields_caret() {
+        let mut combo = field(Role::ComboBox, true);
+        assert_eq!(
+            ime_area(Some(&combo)),
+            None,
+            "a select-only combobox takes no text"
+        );
+        combo.state.editable = true;
+        assert_eq!(
+            ime_area(Some(&combo)),
+            Some(combo.bounds),
+            "an editable one does"
+        );
+        combo.state.caret_bounds = Some(Rect::new(58.0, 26.0, 1.0, 20.0));
+        assert_eq!(
+            ime_area(Some(&combo)),
+            combo.state.caret_bounds,
+            "the candidate window goes at the caret"
+        );
+        assert_eq!(ime_area(Some(&field(Role::TextInput, false))), None);
+    }
 
     #[test]
     fn keys_map_to_inputs() {
