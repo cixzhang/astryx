@@ -78,9 +78,15 @@ fn main() {
         if idle_frames != 0 {
             fail(format!("{idle_frames} frames over 2 s of idle"));
         }
-        // About 10 a second; more would mean the shell spins.
+        // About 10 a second: more would mean the shell spins, far fewer that
+        // it stopped asking.
         if wakeups > 25 {
             fail(format!("{wakeups} wakeups over 2 s of idle"));
+        }
+        if wakeups < 10 {
+            fail(format!(
+                "{wakeups} wakeups over 2 s of idle: the shell does not ask again while idle"
+            ));
         }
         let mut waits = Vec::new();
         for i in 0..UPDATES {

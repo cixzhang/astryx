@@ -27,6 +27,15 @@ fn background_updates() -> u32 {
     BACKGROUND_UPDATES.load(std::sync::atomic::Ordering::SeqCst)
 }
 
+/// The app asked to quit; the browser checks set it.
+static QUIT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The app returns `Command::Quit` after its next frame.
+#[wasm_bindgen]
+pub fn request_quit() {
+    QUIT.store(true, std::sync::atomic::Ordering::SeqCst);
+}
+
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
     let options = Options {
@@ -681,6 +690,14 @@ impl Surface for Demo {
 
     fn wants_frames(&self) -> bool {
         self.ring < 1.0 || self.drawn_updates != background_updates()
+    }
+
+    fn take_command(&mut self) -> Command {
+        if QUIT.swap(false, std::sync::atomic::Ordering::SeqCst) {
+            Command::Quit
+        } else {
+            Command::None
+        }
     }
 
     fn set_preferences(&mut self, preferences: &Preferences) {
