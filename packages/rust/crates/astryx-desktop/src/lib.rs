@@ -153,6 +153,11 @@ struct Shell<S: Surface> {
     early_sounds: Vec<astryx_core::SoundId>,
 }
 
+/// How often an idle shell asks the surface whether it wants a frame, so a
+/// surface that changes by itself is drawn within this time: about ten
+/// wakeups a second and no frames while nothing changes.
+const IDLE_POLL: std::time::Duration = std::time::Duration::from_millis(100);
+
 fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
     // Prefer no multisampling: the renderer antialiases itself.
     configs
@@ -629,6 +634,12 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
         // command that changes what is shown; otherwise the loop waits.
         let deferred = self.surface.take_command();
         self.handle(event_loop, deferred);
+        // A surface that changes by itself (an update from another thread or
+        // a stream) says so through wants_frames(); every wakeup asks again,
+        // including the idle re-poll below.
+        if self.surface.wants_frames() {
+            self.request_redraw();
+        }
         #[cfg(feature = "gamepad")]
         {
             let mut events = Vec::new();
@@ -675,7 +686,9 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 return;
             }
         }
-        event_loop.set_control_flow(ControlFlow::Wait);
+        // Idle: wake every IDLE_POLL to ask wants_frames() again, drawing
+        // nothing unless it says so.
+        event_loop.set_control_flow(ControlFlow::WaitUntil(Instant::now() + IDLE_POLL));
     }
 }
 
