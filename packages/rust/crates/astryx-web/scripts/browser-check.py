@@ -42,17 +42,23 @@ CHROME_CANDIDATES = [
     "google-chrome",
 ]
 
-# Counts timers of 50 ms or more, the shell's idle re-poll among them.
+# Counts timers of 50 ms or more, the shell's idle re-poll among them, and
+# timers by delay: the shell's re-poll is the only 100 ms one (the checks'
+# own waits use other delays while it is counted).
 TIMER_COUNTER = """
 (() => {
   window.__idleTimers = 0;
+  window.__timersAt = {};
   const setTimeout = window.setTimeout;
   window.setTimeout = function (callback, delay, ...rest) {
     if (delay >= 50) window.__idleTimers += 1;
+    window.__timersAt[delay] = (window.__timersAt[delay] || 0) + 1;
     return setTimeout.call(this, callback, delay, ...rest);
   };
 })();
 """
+
+IDLE_POLLS = "(window.__timersAt[100] || 0)"
 
 # Sends the demo an update without input, as a network stream would, and
 # resolves with the milliseconds until a frame draws it (-1: none in 2 s).
@@ -837,9 +843,14 @@ def main():
         # input they must not draw.
         settle(cdp, 300)
         f0 = cdp.eval(FRAMES)
+        polls0 = cdp.eval(IDLE_POLLS)
         settle(cdp, 500)
         check("no frames while idle with a gamepad connected", cdp.eval(FRAMES) == f0,
               f"{f0} -> {cdp.eval(FRAMES)}")
+        # Animation frames run (polling the pad): no idle re-poll beside them.
+        polls = cdp.eval(IDLE_POLLS) - polls0
+        check("no idle re-poll timers while animation frames run", polls <= 1,
+              f"{polls} re-poll timers over 500 ms")
         cdp.eval("window.__stubPadOn = false")
         settle(cdp, 100)
 
@@ -885,6 +896,24 @@ def main():
                   or (e.get("method") == "Runtime.consoleAPICalled"
                       and e["params"].get("type") in ("error", "warning"))]
         check("no console errors or exceptions", not errors, errors[:3])
+
+        # Still idle and polling after everything above.
+        polls0 = cdp.eval(IDLE_POLLS)
+        settle(cdp, 1499)
+        polls = cdp.eval(IDLE_POLLS) - polls0
+        check("the idle re-poll still runs at the end", 10 <= polls <= 20,
+              f"{polls} re-poll timers over 1.5 s")
+
+        # The app quits (Command::Quit): the shell stops, and so does its
+        # idle re-poll.
+        cdp.eval("import('./demo.js').then((m) => { m.request_quit(); m.background_update(); })",
+                 await_promise=True)
+        settle(cdp, 499)
+        polls0, f0 = cdp.eval(IDLE_POLLS), cdp.eval(FRAMES)
+        settle(cdp, 1499)
+        polls = cdp.eval(IDLE_POLLS) - polls0
+        check("no idle re-poll after the app quits", polls == 0 and cdp.eval(FRAMES) == f0,
+              f"{polls} re-poll timers, frames {f0} -> {cdp.eval(FRAMES)} over 1.5 s")
         cdp.close()
 
     gallery_check(chrome, url.replace("index.html", "gallery.html"), args.proof, check, summary)
