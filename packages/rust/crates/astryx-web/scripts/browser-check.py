@@ -42,6 +42,38 @@ CHROME_CANDIDATES = [
     "google-chrome",
 ]
 
+# Counts timers of 50 ms or more, the shell's idle re-poll among them.
+TIMER_COUNTER = """
+(() => {
+  window.__idleTimers = 0;
+  const setTimeout = window.setTimeout;
+  window.setTimeout = function (callback, delay, ...rest) {
+    if (delay >= 50) window.__idleTimers += 1;
+    return setTimeout.call(this, callback, delay, ...rest);
+  };
+})();
+"""
+
+# Sends the demo an update without input, as a network stream would, and
+# resolves with the milliseconds until a frame draws it (-1: none in 2 s).
+BACKGROUND_UPDATE = """
+new Promise((resolve) => {
+  const frames = () => Number(document.querySelector('.astryx-a11y').getAttribute('data-astryx-frames'));
+  const f0 = frames();
+  import('./demo.js').then((m) => {
+    const t0 = performance.now();
+    m.background_update();
+    const tick = () => {
+      const ms = performance.now() - t0;
+      if (frames() !== f0) resolve(ms);
+      else if (ms > 2000) resolve(-1);
+      else setTimeout(tick, 2);
+    };
+    tick();
+  });
+})
+"""
+
 GAMEPAD_STUB = """
 (() => {
   const pad = { id: 'stub', index: 0, connected: true, mapping: 'standard', timestamp: 0,
@@ -534,6 +566,7 @@ def main():
         summary["chrome_version"] = cdp.send("Browser.getVersion", session=False)["product"]
         cdp.send("Target.setDiscoverTargets", {"discover": True}, session=False)
         cdp.send("Page.addScriptToEvaluateOnNewDocument", {"source": GAMEPAD_STUB})
+        cdp.send("Page.addScriptToEvaluateOnNewDocument", {"source": TIMER_COUNTER})
         summary["timing"] = load(cdp, url)
         settle(cdp, 300)
 
@@ -621,6 +654,27 @@ def main():
         f0 = cdp.eval(FRAMES)
         settle(cdp, 500)
         check("no frames while idle", cdp.eval(FRAMES) == f0, f"{f0} -> {cdp.eval(FRAMES)}")
+
+        # Updates that arrive without input (a stream on another thread): the
+        # shell asks wants_frames() again while idle, so they draw soon, and
+        # an idle page still wakes only about ten times a second.
+        cdp.eval("window.__idleTimers = 0")
+        settle(cdp, 2000)
+        timers = cdp.eval("window.__idleTimers")
+        check("idle re-poll wakes at most about 10 times a second", timers <= 25,
+              f"{timers} timers over 2 s")
+        waits = []
+        for _ in range(5):
+            settle(cdp, 300)
+            waits.append(cdp.eval(BACKGROUND_UPDATE, await_promise=True))
+        check("background updates draw without input within the idle interval",
+              all(0 <= w <= 250 for w in waits), [round(w) for w in waits])
+        summary["background_update_wait_ms"] = [round(w, 1) for w in waits]
+        settle(cdp, 300)
+        f0 = cdp.eval(FRAMES)
+        settle(cdp, 500)
+        check("no frames while idle after background updates", cdp.eval(FRAMES) == f0,
+              f"{f0} -> {cdp.eval(FRAMES)}")
 
         # Keyboard. Page content before and after the app shows Tab entering and leaving.
         cdp.eval("document.body.insertAdjacentHTML('afterbegin', '<button id=before>Before</button>');"

@@ -50,3 +50,7 @@ harness = false
 [[test]]
 name = "window_ime"
 harness = false
+
+[[test]]
+name = "window_async"
+harness = false
