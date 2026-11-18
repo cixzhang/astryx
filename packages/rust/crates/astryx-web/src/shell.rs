@@ -576,7 +576,15 @@ struct Runner {
     shell: RefCell<Shell>,
     raf: RefCell<Option<FrameCallback>>,
     raf_pending: Cell<bool>,
+    /// The idle re-poll: while no frames run, asks the surface every
+    /// IDLE_POLL_MS whether it wants one.
+    idle_poll: RefCell<Option<Closure<dyn FnMut()>>>,
+    idle_pending: Cell<bool>,
 }
+
+/// How often an idle shell asks the surface whether it wants a frame, so a
+/// surface that changes by itself is drawn within this time.
+const IDLE_POLL_MS: i32 = 100;
 
 /// Whether carrying out `command` changes what is shown, so a frame is
 /// needed: a transition does; nothing, a handled press, a focus request
@@ -632,6 +640,48 @@ impl Runner {
         };
         if keep_going {
             self.schedule();
+        } else {
+            self.schedule_idle_poll();
+        }
+    }
+
+    /// Arms the idle re-poll unless it is armed.
+    fn schedule_idle_poll(&self) {
+        if self.idle_pending.get() {
+            return;
+        }
+        if let Some(callback) = self.idle_poll.borrow().as_ref() {
+            if self
+                .window
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    callback.as_ref().unchecked_ref(),
+                    IDLE_POLL_MS,
+                )
+                .is_ok()
+            {
+                self.idle_pending.set(true);
+            }
+        }
+    }
+
+    /// While idle: a surface that changed by itself (an update from a
+    /// stream) gets a frame; otherwise the re-poll waits again. Frames that
+    /// run arm it when they stop.
+    fn on_idle_poll(&self) {
+        self.idle_pending.set(false);
+        if self.raf_pending.get() {
+            return;
+        }
+        let wants = match self.shell.try_borrow() {
+            Ok(shell) if shell.stopped => return,
+            Ok(shell) => shell.surface.wants_frames(),
+            // An event handler holds the shell; ask again next time.
+            Err(_) => false,
+        };
+        if wants {
+            self.schedule();
+        } else {
+            self.schedule_idle_poll();
         }
     }
 
@@ -1132,6 +1182,8 @@ fn start(
         shell: RefCell::new(shell),
         raf: RefCell::new(None),
         raf_pending: Cell::new(false),
+        idle_poll: RefCell::new(None),
+        idle_pending: Cell::new(false),
     });
 
     {
@@ -1148,6 +1200,8 @@ fn start(
     *runner.raf.borrow_mut() = Some(Closure::new(move |now_ms: f64| {
         frame_runner.on_frame(now_ms)
     }));
+    let poll_runner = runner.clone();
+    *runner.idle_poll.borrow_mut() = Some(Closure::new(move || poll_runner.on_idle_poll()));
 
     let root: web_sys::EventTarget = runner.shell.borrow().mirror.root().clone().into();
     listen::<KeyboardEvent>(&root, "keydown", &runner, Runner::on_keydown)?;

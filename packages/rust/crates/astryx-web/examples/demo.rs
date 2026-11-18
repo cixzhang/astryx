@@ -12,6 +12,21 @@ use astryx_core::{
 use astryx_web::{ColorScheme, Options};
 use wasm_bindgen::prelude::*;
 
+/// Updates that arrived without input, as from a network stream; the
+/// browser checks send them.
+static BACKGROUND_UPDATES: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// An update that arrives without input. The demo draws it at its next
+/// frame and says it wants one until then.
+#[wasm_bindgen]
+pub fn background_update() {
+    BACKGROUND_UPDATES.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+}
+
+fn background_updates() -> u32 {
+    BACKGROUND_UPDATES.load(std::sync::atomic::Ordering::SeqCst)
+}
+
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
     let options = Options {
@@ -108,6 +123,8 @@ const RECENT_FILES: [&str; 8] = [
 const FIRST_RTL_FILE: usize = 6;
 
 struct Demo {
+    /// Background updates drawn so far.
+    drawn_updates: u32,
     items: Vec<Item>,
     focus: Option<usize>,
     saves: u32,
@@ -131,6 +148,7 @@ impl Demo {
             caret: 0,
         };
         Self {
+            drawn_updates: 0,
             items: vec![
                 item(11, Kind::Switch, "Wi-Fi", true, false),
                 item(12, Kind::Checkbox, "Send diagnostics", false, false),
@@ -288,6 +306,7 @@ impl Surface for Demo {
     }
 
     fn frame(&mut self, frame: &FrameInfo, text: &dyn TextMeasure) -> DisplayList {
+        self.drawn_updates = background_updates();
         let preferences = self.preferences.clone();
         let p = Palette::for_scheme(preferences.color_scheme);
         if preferences.reduced_motion {
@@ -662,7 +681,7 @@ impl Surface for Demo {
     }
 
     fn wants_frames(&self) -> bool {
-        self.ring < 1.0
+        self.ring < 1.0 || self.drawn_updates != background_updates()
     }
 
     fn set_preferences(&mut self, preferences: &Preferences) {
