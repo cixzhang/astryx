@@ -169,6 +169,17 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
 - The Brick shell dims to about 8 frames a second after 30 seconds without
   input. It stops drawing after 2 minutes, and any input wakes it at once.
 
+### CPU renderer
+
+- `SoftRenderer` keeps the frame it drew last and draws again only the
+  regions whose commands changed. A change of size, scale, clear color, an
+  image or a font, lighting, or a transition draws the whole frame.
+- It paints in horizontal bands on up to 8 threads. Bands meet only at rows
+  that just straight vertical edges cross, so a band paints the pixels the
+  whole frame would; text and shadows are prepared on the renderer's thread.
+- Every frame equals, pixel for pixel, the same frame drawn whole by a new
+  renderer (`tests/damage.rs`, the gallery's `soft_damage.rs`).
+
 App model (Lane A owns it): Elm style. `view(&self) -> Element<Msg>`,
 `update(&mut self, msg) -> Command`. An app is a library crate; each shell
 runs it with one call, with no `cfg` in app code.

@@ -6,25 +6,23 @@
 //! same code the GPU renderer uses.
 
 use astryx_core::{
-    Color, DisplayList, DrawCmd, FrameInfo, ImageData, ImageFit, ImageId, Renderer, TextMeasure,
+    Color, DisplayList, DrawCmd, FrameInfo, ImageData, ImageId, Renderer, TextMeasure,
 };
 use std::collections::HashMap;
-use tiny_skia::{
-    FillRule, FilterQuality, IntSize, LineCap, LineJoin, Mask, Paint, PathBuilder, Pattern, Pixmap,
-    PixmapPaint, SpreadMode, Stroke, Transform,
-};
+use std::rc::Rc;
+use tiny_skia::{IntSize, Mask, PathBuilder, Pixmap};
 
 pub use astryx_raster;
 pub use tiny_skia;
 
-use astryx_raster::geom::{
-    border_ring, fit_radii, line_rect, path_segs, rect_px, rounded_rect, snap_rect, width_px,
-    Affine, PxRect, Seg,
-};
-use astryx_raster::light::{light_map, PlacedLight, MAP_DIVISOR};
-use astryx_raster::shadow::{ShadowCache, ShadowKey};
+use astryx_raster::geom::{fit_radii, rect_px, snap_rect, Affine, PxRect, Seg};
+use astryx_raster::light::{light_map, LightMap, PlacedLight};
+use astryx_raster::shadow::{ShadowCache, ShadowKey, ShadowMask};
 use astryx_raster::text::{FontData, FontError, FontSet, GlyphDraw, TextEngine};
 use astryx_raster::transition::{turn, Moment};
+
+mod damage;
+mod paint;
 
 fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
@@ -62,11 +60,14 @@ fn div255(v: u32) -> u32 {
     (v + (v >> 8)) >> 8
 }
 
-/// Source-over blends `color` through an 8-bit coverage bitmap whose top left
-/// lands at (`x`, `y`), gated by the clip mask.
+/// Source-over blends `color` into `pixels` (RGBA rows `dw` x `dh`)
+/// through an 8-bit coverage bitmap whose top left lands at (`x`, `y`),
+/// gated by the clip mask.
 #[allow(clippy::too_many_arguments)]
 fn blend_coverage(
-    dst: &mut Pixmap,
+    pixels: &mut [u8],
+    dw: u32,
+    dh: u32,
     clip: Option<&Mask>,
     x: i32,
     y: i32,
@@ -78,13 +79,12 @@ fn blend_coverage(
     if color[3] == 0 {
         return;
     }
-    let (dw, dh) = (dst.width() as i32, dst.height() as i32);
+    let (dw, dh) = (dw as i32, dh as i32);
     let (x0, y0) = (x.max(0), y.max(0));
     let (x1, y1) = ((x + w as i32).min(dw), (y + h as i32).min(dh));
     if x0 >= x1 || y0 >= y1 {
         return;
     }
-    let pixels = dst.data_mut();
     for py in y0..y1 {
         for px in x0..x1 {
             let mut c = coverage[((py - y) * w as i32 + (px - x)) as usize] as u32;
@@ -105,35 +105,24 @@ fn blend_coverage(
     }
 }
 
-enum Group {
-    Clip,
-    /// An opacity group drawn into its own buffer.
-    Layer,
-    /// An opacity group that needs no buffer.
-    Pass,
-    /// A transform, holding the one around it.
-    Transform(Affine),
-}
-
 /// The CPU renderer. Owns its pixel buffer; read it with [`Self::pixmap`].
+///
+/// It redraws only what changed since the frame it drew last, and paints in
+/// bands on several threads; every frame is the same, pixel for pixel, as
+/// the same frame drawn whole by a new renderer.
 pub struct SoftRenderer {
     text: TextEngine,
     shadows: ShadowCache,
     base: Pixmap,
-    layers: Vec<(Pixmap, f32)>,
-    pool: Vec<Pixmap>,
-    clips: Vec<Mask>,
-    groups: Vec<Group>,
-    transform: Affine,
-    segs: Vec<Seg>,
-    placed: Vec<GlyphDraw>,
-    /// Open pixel grids, innermost last, in points.
-    grids: Vec<f32>,
     /// Registered images, premultiplied.
     images: HashMap<ImageId, Pixmap>,
-    /// The open lighting pass, if any.
-    lighting: Option<LightingPass>,
     transition: Option<Running>,
+    /// The frame on screen, to tell what the next one changes.
+    last: Option<LastFrame>,
+    /// An image changed since the last frame.
+    images_changed: bool,
+    /// How many pixels the last frame drew again.
+    painted: u64,
 }
 
 /// A transition in progress: the old frame and the time so far.
@@ -143,12 +132,37 @@ struct Running {
     old: Pixmap,
 }
 
-/// A lighting pass collecting its lights and emissive rects until it closes.
-struct LightingPass {
-    lighting: astryx_core::Lighting,
-    lights: Vec<PlacedLight>,
-    /// Emissive rects, already moved by the transform, and whether they snap.
-    emissive: Vec<(astryx_core::Rect, astryx_core::Color, bool)>,
+/// What the last frame drew, to compare the next with.
+struct LastFrame {
+    list: DisplayList,
+    bounds: Vec<Option<PxRect>>,
+    lighting: bool,
+    size: (u32, u32),
+    scale: f32,
+    text_generation: u64,
+    /// Where its bands met.
+    seams: Vec<u32>,
+}
+
+/// A group open while preparing a frame. A pop closes groups up to the
+/// nearest of its kind.
+#[derive(Clone, Copy, PartialEq)]
+enum Open {
+    Clip,
+    Opacity,
+    Transform,
+}
+
+/// Text and shadows of a frame, from the caches only the renderer's thread
+/// may use, ready for the bands to paint.
+struct Prepared {
+    /// Per command: a text command's glyphs, top-left in frame pixels.
+    glyphs: Vec<Vec<(i32, i32, Rc<astryx_raster::text::GlyphBitmap>)>>,
+    /// Per command: a shadow command's masks, in drawing order.
+    shadows: Vec<Vec<Option<Rc<ShadowMask>>>>,
+    /// Each lighting pass's light map, by the index of the command closing
+    /// it (`usize::MAX`: the end of the list).
+    light_maps: HashMap<usize, LightMap>,
 }
 
 impl Default for SoftRenderer {
@@ -180,23 +194,18 @@ impl SoftRenderer {
             text: TextEngine::new(fonts),
             shadows: ShadowCache::default(),
             base: Pixmap::new(1, 1).expect("1x1 pixmap"),
-            layers: Vec::new(),
-            pool: Vec::new(),
-            clips: Vec::new(),
-            groups: Vec::new(),
-            transform: Affine::IDENTITY,
-            segs: Vec::new(),
-            placed: Vec::new(),
-            grids: Vec::new(),
             images: HashMap::new(),
-            lighting: None,
             transition: None,
+            last: None,
+            images_changed: false,
+            painted: 0,
         }
     }
 
     /// Adds or replaces an image; `None` frees it. Pixels that do not match
     /// the size are ignored.
     pub fn set_image(&mut self, id: ImageId, data: Option<&ImageData>) {
+        self.images_changed = true;
         let pixmap = data.and_then(|d| {
             let size = IntSize::from_wh(d.width, d.height)?;
             if d.rgba.len() != (d.width as usize) * (d.height as usize) * 4 {
@@ -248,530 +257,295 @@ impl SoftRenderer {
             .expect("PNG encoding of an in-memory pixmap")
     }
 
-    fn target(&mut self) -> (&mut Pixmap, Option<&Mask>) {
-        let target = match self.layers.last_mut() {
-            Some((layer, _)) => layer,
-            None => &mut self.base,
-        };
-        (target, self.clips.last())
-    }
-
-    fn fill(&mut self, rule: FillRule, color: Color) {
-        let Some(path) = to_skia_path(&self.segs) else {
-            return;
-        };
-        let mut paint = Paint::default();
-        paint.set_color(skia_color(color));
-        paint.anti_alias = self.grids.is_empty();
-        let (target, clip) = self.target();
-        target.fill_path(&path, &paint, rule, Transform::identity(), clip);
-    }
-
-    fn fill_px_rect(&mut self, rect: &PxRect, color: Color) {
-        self.segs.clear();
-        rounded_rect(rect, [0.0; 4], &mut self.segs);
-        self.fill(FillRule::Winding, color);
-    }
-
-    fn stroke(&mut self, width: f32, color: Color, round: bool) {
-        let Some(path) = to_skia_path(&self.segs) else {
-            return;
-        };
-        let mut paint = Paint::default();
-        paint.set_color(skia_color(color));
-        paint.anti_alias = self.grids.is_empty();
-        let stroke = Stroke {
-            width,
-            line_cap: if round { LineCap::Round } else { LineCap::Butt },
-            line_join: if round {
-                LineJoin::Round
-            } else {
-                LineJoin::Miter
-            },
-            ..Stroke::default()
-        };
-        let (target, clip) = self.target();
-        target.stroke_path(&path, &paint, &stroke, Transform::identity(), clip);
-    }
-
-    fn push_clip(&mut self, rect: &PxRect, radii: [f32; 4]) {
-        let (w, h) = (self.base.width(), self.base.height());
-        let mut mask = Mask::new(w, h).expect("frame-sized mask");
-        self.segs.clear();
-        rounded_rect(rect, radii, &mut self.segs);
-        if let (Some(path), false) = (to_skia_path(&self.segs), rect.is_empty()) {
-            let anti_alias = self.grids.is_empty();
-            mask.fill_path(&path, FillRule::Winding, anti_alias, Transform::identity());
-        }
-        if let Some(parent) = self.clips.last() {
-            for (m, &p) in mask.data_mut().iter_mut().zip(parent.data()) {
-                *m = div255(*m as u32 * p as u32) as u8;
-            }
-        }
-        self.clips.push(mask);
-        self.groups.push(Group::Clip);
-    }
-
-    fn push_opacity(&mut self, opacity: f32) {
-        if opacity >= 1.0 {
-            self.groups.push(Group::Pass);
-            return;
-        }
-        let (w, h) = (self.base.width(), self.base.height());
-        let mut layer = match self.pool.pop() {
-            Some(p) if p.width() == w && p.height() == h => p,
-            _ => Pixmap::new(w, h).expect("frame-sized layer"),
-        };
-        layer.fill(tiny_skia::Color::TRANSPARENT);
-        self.layers.push((layer, opacity.max(0.0)));
-        self.groups.push(Group::Layer);
-    }
-
-    /// Closes the innermost group and returns which kind it was.
-    fn pop_group(&mut self) -> Option<Group> {
-        let group = self.groups.pop()?;
-        match group {
-            Group::Clip => {
-                self.clips.pop();
-            }
-            Group::Layer => {
-                let (layer, opacity) = self.layers.pop().expect("layer for group");
-                let paint = PixmapPaint {
-                    opacity,
-                    ..PixmapPaint::default()
-                };
-                let (target, _) = self.target();
-                target.draw_pixmap(0, 0, layer.as_ref(), &paint, Transform::identity(), None);
-                self.pool.push(layer);
-            }
-            Group::Pass => {}
-            Group::Transform(previous) => self.transform = previous,
-        }
-        Some(group)
-    }
-
-    /// Closes groups until one that `done` accepts is closed. Groups opened
-    /// inside it and never closed close with it.
-    fn pop_until(&mut self, done: impl Fn(&Group) -> bool) {
-        while let Some(group) = self.pop_group() {
-            if done(&group) {
-                break;
-            }
-        }
-    }
-
-    fn draw(&mut self, cmd: &DrawCmd, s: f32) {
-        match cmd {
-            DrawCmd::PushTransform {
-                origin,
-                scale,
-                translate,
-            } => {
-                let previous = self.transform;
-                self.transform = previous.then(*origin, *scale, *translate);
-                self.groups.push(Group::Transform(previous));
-                return;
-            }
-            DrawCmd::PopTransform => return self.pop_until(|g| matches!(g, Group::Transform(_))),
-            DrawCmd::PushPixelGrid { cell } => {
-                self.grids.push(*cell);
-                return;
-            }
-            DrawCmd::PopPixelGrid => {
-                self.grids.pop();
-                return;
-            }
-            DrawCmd::PushLighting(lighting) => {
-                if self.lighting.is_none() {
-                    self.lighting = Some(LightingPass {
-                        lighting: *lighting,
-                        lights: Vec::new(),
-                        emissive: Vec::new(),
-                    });
-                }
-                return;
-            }
-            DrawCmd::PopLighting => return self.finish_lighting(s),
-            DrawCmd::PopClip => return self.pop_until(|g| matches!(g, Group::Clip)),
-            DrawCmd::PopOpacity => {
-                return self.pop_until(|g| matches!(g, Group::Layer | Group::Pass))
-            }
-            _ => {}
-        }
-        let t = self.transform;
-        if t.is_identity() {
-            self.draw_moved(cmd, s, true);
-        } else if let (
-            DrawCmd::Shadow {
-                rect,
-                radii,
-                layers,
-            },
-            false,
-        ) = (cmd, t.snaps())
-        {
-            self.draw_scaled_shadow(rect, radii, layers, s);
-        } else {
-            self.draw_moved(&t.apply(cmd), s, t.snaps());
-        }
-    }
-
-    /// A shadow under a scaling transform: the untransformed mask, scaled.
-    /// Blurred edges scale without visible loss, and the mask stays cached
-    /// while the scale animates.
-    fn draw_scaled_shadow(
+    /// Lays out the frame's text and finds its shadow masks and light
+    /// maps, following its transforms and pixel grids as painting does.
+    fn prepare(
         &mut self,
-        rect: &astryx_core::Rect,
-        radii: &astryx_core::Radii,
-        layers: &[astryx_core::ShadowLayer],
+        list: &DisplayList,
+        bounds: &[Option<PxRect>],
+        regions: Option<&[(u32, u32, u32, u32)]>,
         s: f32,
-    ) {
-        let r = snap_rect(rect, s);
-        let radii = fit_radii(radii, s, &r);
-        let t = self.transform;
-        for layer in layers.iter().rev() {
-            let Some(mask) = self.shadows.get(&ShadowKey::new(&r, radii, layer, s)) else {
-                continue;
-            };
-            let Some(mut tinted) = Pixmap::new(mask.width, mask.height) else {
-                continue;
-            };
-            let color = premultiplied(layer.color);
-            for (px, &c) in tinted
-                .data_mut()
-                .as_chunks_mut::<4>()
-                .0
-                .iter_mut()
-                .zip(&mask.data)
-            {
-                *px = color.map(|v| div255(v as u32 * c as u32) as u8);
-            }
-            let (x, y) = (r.x0 + mask.x as f32, r.y0 + mask.y as f32);
-            let transform = Transform::from_row(
-                t.scale,
-                0.0,
-                0.0,
-                t.scale,
-                x * t.scale + t.offset.x * s,
-                y * t.scale + t.offset.y * s,
-            );
-            let paint = PixmapPaint {
-                quality: tiny_skia::FilterQuality::Bilinear,
-                ..PixmapPaint::default()
-            };
-            let (target, clip) = self.target();
-            target.draw_pixmap(0, 0, tinted.as_ref(), &paint, transform, clip);
-        }
-    }
-
-    /// Draws a command already moved by the transform. Edges snap to whole
-    /// pixels only when `snap` is set.
-    fn draw_moved(&mut self, cmd: &DrawCmd, s: f32, snap: bool) {
-        match cmd {
-            DrawCmd::Rect {
-                rect,
-                radii,
-                fill,
-                stroke,
-            } => {
-                let r = rect_px(rect, s, snap);
-                if r.is_empty() {
-                    return;
-                }
-                let radii = fit_radii(radii, s, &r);
-                if fill.a > 0.0 {
-                    self.segs.clear();
-                    rounded_rect(&r, radii, &mut self.segs);
-                    self.fill(FillRule::Winding, *fill);
-                }
-                if let Some((color, width)) = stroke {
-                    let w = width_px(*width, s, snap);
-                    if w > 0.0 && color.a > 0.0 {
-                        self.segs.clear();
-                        let ring = border_ring(&r, radii, w, &mut self.segs);
-                        self.fill(
-                            if ring {
-                                FillRule::EvenOdd
-                            } else {
-                                FillRule::Winding
-                            },
-                            *color,
-                        );
+        (w, h): (u32, u32),
+    ) -> Prepared {
+        // Text and shadows only where something is drawn again.
+        let wanted = |i: usize| match (regions, &bounds[i]) {
+            (Some(rs), Some(b)) => rs.iter().any(|&(x0, y0, x1, y1)| {
+                b.x0 < x1 as f32 && x0 as f32 <= b.x1 && b.y0 < y1 as f32 && y0 as f32 <= b.y1
+            }),
+            _ => true,
+        };
+        let n = list.commands.len();
+        let mut out = Prepared {
+            glyphs: vec![Vec::new(); n],
+            shadows: vec![Vec::new(); n],
+            light_maps: HashMap::new(),
+        };
+        // Transforms open as groups of their own kind, closed by the next
+        // pop of their kind; pops of other kinds leave them open.
+        let mut transforms: Vec<Affine> = Vec::new();
+        let mut kinds: Vec<Open> = Vec::new();
+        let mut t = Affine::IDENTITY;
+        let mut grids: Vec<f32> = Vec::new();
+        let mut pass: Option<(astryx_core::Lighting, Vec<PlacedLight>)> = None;
+        let mut placed: Vec<GlyphDraw> = Vec::new();
+        let pop_until =
+            |kinds: &mut Vec<Open>, transforms: &mut Vec<Affine>, t: &mut Affine, kind: Open| {
+                while let Some(k) = kinds.pop() {
+                    if k == Open::Transform {
+                        *t = transforms.pop().expect("transform group");
+                    }
+                    if k == kind {
+                        break;
                     }
                 }
-            }
-            DrawCmd::Shadow {
-                rect,
-                radii,
-                layers,
-            } => {
-                let r = rect_px(rect, s, snap);
-                let radii = fit_radii(radii, s, &r);
-                // CSS paints the first layer on top.
-                for layer in layers.iter().rev() {
-                    let Some(mask) = self.shadows.get(&ShadowKey::new(&r, radii, layer, s)) else {
-                        continue;
-                    };
-                    let color = premultiplied(layer.color);
-                    let (target, clip) = self.target();
-                    let (x, y) = (r.x0 as i32 + mask.x, r.y0 as i32 + mask.y);
-                    blend_coverage(
-                        target,
-                        clip,
-                        x,
-                        y,
-                        mask.width,
-                        mask.height,
-                        &mask.data,
-                        color,
-                    );
+            };
+        for (i, cmd) in list.commands.iter().enumerate() {
+            match cmd {
+                DrawCmd::PushTransform {
+                    origin,
+                    scale,
+                    translate,
+                } => {
+                    transforms.push(t);
+                    kinds.push(Open::Transform);
+                    t = t.then(*origin, *scale, *translate);
                 }
-            }
-            DrawCmd::Text {
-                rect,
-                text,
-                style,
-                color,
-                align,
-            } => {
-                let layout = self.text.layout(text, style, Some(rect.width), *align);
-                let mut placed = std::mem::take(&mut self.placed);
-                placed.clear();
-                match self.grids.last() {
-                    Some(&cell) if snap => self.text.place_on_grid(
-                        &layout,
-                        (rect.x, rect.y),
-                        s,
-                        cell,
-                        own_family(style),
-                        &mut placed,
-                    ),
-                    _ => self
-                        .text
-                        .place(&layout, (rect.x, rect.y), s, snap, &mut placed),
+                DrawCmd::PopTransform => {
+                    pop_until(&mut kinds, &mut transforms, &mut t, Open::Transform)
                 }
-                let color = premultiplied(*color);
-                let (target, clip) = self.target();
-                for g in &placed {
-                    let b = &g.bitmap;
-                    blend_coverage(
-                        target,
-                        clip,
-                        g.pen_x + b.left,
-                        g.pen_y - b.top,
-                        b.width,
-                        b.height,
-                        &b.data,
-                        color,
-                    );
+                DrawCmd::PushClip { .. } => kinds.push(Open::Clip),
+                DrawCmd::PopClip => pop_until(&mut kinds, &mut transforms, &mut t, Open::Clip),
+                DrawCmd::PushOpacity(_) => kinds.push(Open::Opacity),
+                DrawCmd::PopOpacity => {
+                    pop_until(&mut kinds, &mut transforms, &mut t, Open::Opacity)
                 }
-                self.placed = placed;
-            }
-            DrawCmd::Line {
-                from,
-                to,
-                color,
-                width,
-            } => {
-                if let Some(r) = line_rect(*from, *to, *width, s, snap) {
-                    self.fill_px_rect(&r, *color);
-                } else {
-                    self.segs.clear();
-                    self.segs.push(Seg::Move(from.x * s, from.y * s));
-                    self.segs.push(Seg::Line(to.x * s, to.y * s));
-                    self.stroke(width * s, *color, false);
+                DrawCmd::PushPixelGrid { cell } => grids.push(*cell),
+                DrawCmd::PopPixelGrid => {
+                    grids.pop();
                 }
-            }
-            DrawCmd::Path {
-                commands,
-                fill,
-                stroke,
-            } => {
-                self.segs.clear();
-                path_segs(commands, s, &mut self.segs);
-                if let Some(fill) = fill {
-                    self.fill(FillRule::Winding, *fill);
-                }
-                if let Some((color, width)) = stroke {
-                    self.stroke(width * s, *color, true);
-                }
-            }
-            DrawCmd::Image {
-                rect,
-                radii,
-                image,
-                fit,
-            } => self.draw_image(rect, radii, *image, *fit, s, snap),
-            DrawCmd::PushClip { rect, radii } => {
-                let r = rect_px(rect, s, snap);
-                let radii = fit_radii(radii, s, &r);
-                self.push_clip(&r, radii);
-            }
-            DrawCmd::PushOpacity(opacity) => self.push_opacity(*opacity),
-            DrawCmd::Light(light) => {
-                if let Some(pass) = &mut self.lighting {
-                    let l = &pass.lighting;
-                    pass.lights
-                        .push(PlacedLight::new(light, l.time, s, l.strength));
-                }
-            }
-            DrawCmd::Emissive { rect, color } => match &mut self.lighting {
-                Some(pass) => pass.emissive.push((*rect, *color, snap)),
-                None => self.draw_emissive(rect, *color, s, snap),
-            },
-            DrawCmd::PopClip
-            | DrawCmd::PopOpacity
-            | DrawCmd::PushTransform { .. }
-            | DrawCmd::PopTransform
-            | DrawCmd::PushPixelGrid { .. }
-            | DrawCmd::PopPixelGrid
-            | DrawCmd::PushLighting(_)
-            | DrawCmd::PopLighting => {}
-        }
-    }
-
-    fn draw_emissive(
-        &mut self,
-        rect: &astryx_core::Rect,
-        color: astryx_core::Color,
-        s: f32,
-        snap: bool,
-    ) {
-        let cmd = DrawCmd::Rect {
-            rect: *rect,
-            radii: astryx_core::Radii::default(),
-            fill: color,
-            stroke: None,
-        };
-        self.draw_moved(&cmd, s, snap);
-    }
-
-    /// Multiplies the light map over the target, then draws the emissive rects.
-    fn finish_lighting(&mut self, s: f32) {
-        let Some(pass) = self.lighting.take() else {
-            return;
-        };
-        if pass.lighting.strength > 0.0 {
-            let (target, _) = self.target();
-            let (w, h) = (target.width(), target.height());
-            let map = light_map(&pass.lighting, &pass.lights, s, w, h);
-            let data = target.data_mut();
-            for y in 0..h {
-                let row = (y / MAP_DIVISOR * map.width) as usize;
-                for x in 0..w {
-                    let m = &map.rgb[(row + (x / MAP_DIVISOR) as usize) * 3..][..3];
-                    let px = &mut data[((y * w + x) * 4) as usize..][..3];
-                    for (c, &k) in px.iter_mut().zip(m) {
-                        *c = div255(*c as u32 * k as u32) as u8;
+                DrawCmd::PushLighting(lighting) => {
+                    if pass.is_none() {
+                        pass = Some((*lighting, Vec::new()));
                     }
                 }
-            }
-        }
-        for (rect, color, snap) in pass.emissive {
-            self.draw_emissive(&rect, color, s, snap);
-        }
-    }
-
-    fn draw_image(
-        &mut self,
-        rect: &astryx_core::Rect,
-        radii: &astryx_core::Radii,
-        image: ImageId,
-        fit: ImageFit,
-        s: f32,
-        snap: bool,
-    ) {
-        let r = rect_px(rect, s, snap);
-        let Some((pw, ph)) = self.images.get(&image).map(|p| (p.width(), p.height())) else {
-            return;
-        };
-        if r.is_empty() {
-            return;
-        }
-        let radii = fit_radii(radii, s, &r);
-        let area = astryx_core::Rect::new(r.x0, r.y0, r.width(), r.height());
-        let dest = fit.place(area, pw, ph);
-        // Contain can leave part of the box empty, so it clips to the box and
-        // fills only where the image lands; the other fits cover the box.
-        let contained = fit == ImageFit::Contain;
-        if contained {
-            self.push_clip(&r, radii);
-        }
-        self.segs.clear();
-        if contained {
-            // Whole pixels while snapping, so the letterbox edges are sharp.
-            let edge = |v: f32| if snap { v.round() } else { v };
-            let d = PxRect {
-                x0: edge(dest.x.max(r.x0)),
-                y0: edge(dest.y.max(r.y0)),
-                x1: edge((dest.x + dest.width).min(r.x1)),
-                y1: edge((dest.y + dest.height).min(r.y1)),
-            };
-            rounded_rect(&d, [0.0; 4], &mut self.segs);
-        } else {
-            rounded_rect(&r, radii, &mut self.segs);
-        }
-        if let (Some(path), Some(pixmap)) = (to_skia_path(&self.segs), self.images.get(&image)) {
-            let transform = Transform::from_row(
-                dest.width / pw as f32,
-                0.0,
-                0.0,
-                dest.height / ph as f32,
-                dest.x,
-                dest.y,
-            );
-            let paint = Paint {
-                shader: Pattern::new(
-                    pixmap.as_ref(),
-                    SpreadMode::Pad,
-                    // On a pixel grid, image pixels stay square.
-                    if self.grids.is_empty() {
-                        FilterQuality::Bilinear
+                DrawCmd::Light(_) => {
+                    if let Some((l, lights)) = &mut pass {
+                        let moved = if t.is_identity() {
+                            cmd.clone()
+                        } else {
+                            t.apply(cmd)
+                        };
+                        if let DrawCmd::Light(light) = &moved {
+                            lights.push(PlacedLight::new(light, l.time, s, l.strength));
+                        }
+                    }
+                }
+                DrawCmd::PopLighting => {
+                    if let Some((l, lights)) = pass.take() {
+                        if l.strength > 0.0 {
+                            out.light_maps.insert(i, light_map(&l, &lights, s, w, h));
+                        }
+                    }
+                }
+                DrawCmd::Text {
+                    rect,
+                    text,
+                    style,
+                    align,
+                    ..
+                } if wanted(i) => {
+                    let moved;
+                    let (rect, text, style, align, snap) = if t.is_identity() {
+                        (rect, text, style, align, true)
                     } else {
-                        FilterQuality::Nearest
-                    },
-                    1.0,
-                    transform,
-                ),
-                anti_alias: self.grids.is_empty(),
-                ..Paint::default()
-            };
-            let target = match self.layers.last_mut() {
-                Some((layer, _)) => layer,
-                None => &mut self.base,
-            };
-            target.fill_path(
-                &path,
-                &paint,
-                FillRule::Winding,
-                Transform::identity(),
-                self.clips.last(),
-            );
+                        moved = t.apply(cmd);
+                        let DrawCmd::Text {
+                            rect,
+                            text,
+                            style,
+                            align,
+                            ..
+                        } = &moved
+                        else {
+                            unreachable!("a moved text is text")
+                        };
+                        (rect, text, style, align, t.snaps())
+                    };
+                    let layout = self.text.layout(text, style, Some(rect.width), *align);
+                    placed.clear();
+                    match grids.last() {
+                        Some(&cell) if snap => self.text.place_on_grid(
+                            &layout,
+                            (rect.x, rect.y),
+                            s,
+                            cell,
+                            own_family(style),
+                            &mut placed,
+                        ),
+                        _ => self
+                            .text
+                            .place(&layout, (rect.x, rect.y), s, snap, &mut placed),
+                    }
+                    out.glyphs[i] = placed
+                        .iter()
+                        .map(|g| {
+                            (
+                                g.pen_x + g.bitmap.left,
+                                g.pen_y - g.bitmap.top,
+                                g.bitmap.clone(),
+                            )
+                        })
+                        .collect();
+                }
+                DrawCmd::Shadow {
+                    rect,
+                    radii,
+                    layers,
+                } if wanted(i) => {
+                    let scaled = !t.is_identity() && !t.snaps();
+                    let (r, radii, layers, scale_by) = if t.is_identity() || scaled {
+                        let r = if scaled {
+                            snap_rect(rect, s)
+                        } else {
+                            rect_px(rect, s, true)
+                        };
+                        (r, fit_radii(radii, s, &r), layers.clone(), s)
+                    } else {
+                        let moved = t.apply(cmd);
+                        let DrawCmd::Shadow {
+                            rect,
+                            radii,
+                            layers,
+                        } = moved
+                        else {
+                            unreachable!("a moved shadow is a shadow")
+                        };
+                        let r = rect_px(&rect, s, t.snaps());
+                        (r, fit_radii(&radii, s, &r), layers, s)
+                    };
+                    out.shadows[i] = layers
+                        .iter()
+                        .rev()
+                        .map(|layer| {
+                            self.shadows
+                                .get(&ShadowKey::new(&r, radii, layer, scale_by))
+                        })
+                        .collect();
+                }
+                _ => {}
+            }
         }
-        if contained {
-            self.pop_group();
+        if let Some((l, lights)) = pass.take() {
+            if l.strength > 0.0 {
+                out.light_maps
+                    .insert(usize::MAX, light_map(&l, &lights, s, w, h));
+            }
         }
+        out
     }
 
-    /// Draws one frame into the buffer, resizing it to the frame.
+    /// Draws one frame into the buffer, resizing it to the frame. Only the
+    /// pixels that can differ from the frame drawn last are drawn again;
+    /// the result is the same as drawing the whole frame.
     pub fn render_list(&mut self, list: &DisplayList, frame: &FrameInfo) {
         let (w, h) = (frame.width.max(1), frame.height.max(1));
+        let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
+        let walk = damage::walk(list, scale, &self.text);
+        let text_generation = TextMeasure::generation(&self.text);
+        let seams = seams(h, &walk.no_seam);
+        let regions = match &self.last {
+            Some(last)
+                if last.size == (w, h)
+                    && last.scale == scale
+                    && last.list.clear == list.clear
+                    && last.text_generation == text_generation
+                    && !last.lighting
+                    && !walk.lighting
+                    && !self.images_changed
+                    && self.transition.is_none() =>
+            {
+                let changed = damage::changed(
+                    &last.list.commands,
+                    &last.bounds,
+                    &list.commands,
+                    &walk.bounds,
+                );
+                let mut regions = damage::regions(&changed, w, h);
+                // A band's pixels depend on where it starts and ends: bands
+                // that moved paint again.
+                let old = bands(&last.seams, h);
+                regions.extend(
+                    bands(&seams, h)
+                        .filter(|b| !old.clone().any(|o| o == *b))
+                        .map(|(y0, y1)| (0, y0, w, y1)),
+                );
+                let area: u64 = regions
+                    .iter()
+                    .map(|&(x0, y0, x1, y1)| u64::from(x1 - x0) * u64::from(y1 - y0))
+                    .sum();
+                // Most of the frame: drawing it whole costs less.
+                (area * 2 < u64::from(w) * u64::from(h)).then_some(regions)
+            }
+            _ => None,
+        };
         if self.base.width() != w || self.base.height() != h {
             self.base = Pixmap::new(w, h).expect("frame pixmap");
-            self.pool.clear();
         }
-        self.base.fill(skia_color(list.clear));
         self.shadows.begin_frame();
-        self.transform = Affine::IDENTITY;
-        self.grids.clear();
-        self.lighting = None;
-        let scale = if frame.scale > 0.0 { frame.scale } else { 1.0 };
-        for cmd in &list.commands {
-            self.draw(cmd, scale);
+        // Nothing changed: the frame on screen stays.
+        if !regions.as_ref().is_some_and(|r| r.is_empty()) {
+            let prepared = self.prepare(list, &walk.bounds, regions.as_deref(), scale, (w, h));
+            let glyphs: Vec<Vec<(i32, i32, &astryx_raster::text::GlyphBitmap)>> = prepared
+                .glyphs
+                .iter()
+                .map(|g| g.iter().map(|(x, y, b)| (*x, *y, &**b)).collect())
+                .collect();
+            let shadows: Vec<Vec<Option<&ShadowMask>>> = prepared
+                .shadows
+                .iter()
+                .map(|v| v.iter().map(|m| m.as_deref()).collect())
+                .collect();
+            let shared = paint::Shared {
+                cmds: &list.commands,
+                bounds: &walk.bounds,
+                glyphs: &glyphs,
+                shadows: &shadows,
+                light_maps: &prepared.light_maps,
+                images: &self.images,
+                scale,
+                width: w,
+            };
+            let clear = skia_color(list.clear).premultiply().to_color_u8();
+            let clear = [clear.red(), clear.green(), clear.blue(), clear.alpha()];
+            paint_frame(
+                &shared,
+                self.base.data_mut(),
+                clear,
+                regions.as_deref(),
+                &seams,
+                painters(),
+            );
         }
-        self.finish_lighting(scale);
-        while self.pop_group().is_some() {}
-        self.compose_transition(frame, scale);
+        self.painted = match &regions {
+            None => u64::from(w) * u64::from(h),
+            Some(rs) => rs
+                .iter()
+                .map(|&(x0, y0, x1, y1)| u64::from(x1 - x0) * u64::from(y1 - y0))
+                .sum(),
+        };
+        if regions.is_none() {
+            self.compose_transition(frame, scale);
+        }
+        self.images_changed = false;
+        self.last = Some(LastFrame {
+            list: list.clone(),
+            bounds: walk.bounds,
+            lighting: walk.lighting,
+            size: (w, h),
+            scale,
+            text_generation,
+            seams,
+        });
     }
 
     /// Starts a transition from `from` to the frames rendered next.
@@ -893,10 +667,192 @@ fn own_family(style: &astryx_core::TextStyle) -> Option<&'static str> {
     }
 }
 
+/// How many threads paint a frame.
+fn painters() -> usize {
+    if cfg!(target_arch = "wasm32") {
+        1
+    } else {
+        std::thread::available_parallelism()
+            .map_or(1, |n| n.get())
+            .min(8)
+    }
+}
+
+/// About how tall a band is, in pixels. Fixed, not taken from the number
+/// of threads, so a frame comes out the same on every machine.
+const BAND: u32 = 128;
+
+/// The bands, (first row, end row), that `seams` cut `h` rows into.
+fn bands(seams: &[u32], h: u32) -> impl Iterator<Item = (u32, u32)> + Clone + '_ {
+    let starts = std::iter::once(0).chain(seams.iter().copied());
+    let ends = seams.iter().copied().chain(std::iter::once(h));
+    starts.zip(ends)
+}
+
+/// Where bands meet: rows, increasing, that split a frame `h` rows tall
+/// into bands about [`BAND`] rows tall, none of them inside `no_seam`.
+fn seams(h: u32, no_seam: &[(f32, f32)]) -> Vec<u32> {
+    let count = h.div_ceil(BAND) as usize;
+    if count <= 1 {
+        return Vec::new();
+    }
+    // Rows r where a seam would cut a pixel row a shape crosses: from
+    // floor(a) + 1 to ceil(b) - 1 for each interval.
+    let mut off: Vec<(i64, i64)> = no_seam
+        .iter()
+        .map(|&(a, b)| (a.floor() as i64 + 1, b.ceil() as i64 - 1))
+        .filter(|(a, b)| a <= b)
+        .collect();
+    off.sort_unstable();
+    let mut merged: Vec<(i64, i64)> = Vec::new();
+    for (a, b) in off {
+        match merged.last_mut() {
+            Some(last) if a <= last.1 + 1 => last.1 = last.1.max(b),
+            _ => merged.push((a, b)),
+        }
+    }
+    let free = |r: i64| {
+        let i = merged.partition_point(|&(a, _)| a <= r);
+        i == 0 || merged[i - 1].1 < r
+    };
+    let step = h as f32 / count as f32;
+    let mut out: Vec<u32> = Vec::new();
+    for k in 1..count {
+        let target = (k as f32 * step).round() as i64;
+        let reach = (step / 2.0) as i64;
+        let found = (0..=reach).find_map(|d| {
+            [target - d, target + d]
+                .into_iter()
+                .find(|&r| r > 0 && r < h as i64 && free(r))
+        });
+        if let Some(r) = found {
+            let r = r as u32;
+            if out.last().is_none_or(|&last| r > last) {
+                out.push(r);
+            }
+        }
+    }
+    out
+}
+
+/// Paints `shared`'s frame into `data`, band by band on `threads` threads:
+/// every band, or with `regions` only the bands they touch, and in those
+/// only the regions' pixels. Bands meet at `seams`.
+fn paint_frame(
+    shared: &paint::Shared,
+    data: &mut [u8],
+    clear: [u8; 4],
+    regions: Option<&[(u32, u32, u32, u32)]>,
+    seams: &[u32],
+    threads: usize,
+) {
+    let w = shared.width;
+    let row_bytes = w as usize * 4;
+    let regions: Option<Vec<PxRect>> = regions.map(|rs| {
+        rs.iter()
+            .map(|&(x0, y0, x1, y1)| PxRect {
+                x0: x0 as f32,
+                y0: y0 as f32,
+                x1: x1 as f32,
+                y1: y1 as f32,
+            })
+            .collect()
+    });
+    let mut jobs: Vec<(u32, &mut [u8])> = Vec::new();
+    let mut rest = data;
+    let mut y0 = 0u32;
+    let total = (rest.len() / row_bytes) as u32;
+    for end in seams.iter().copied().chain([total]) {
+        let (chunk, tail) = rest.split_at_mut((end - y0) as usize * row_bytes);
+        rest = tail;
+        let band = PxRect {
+            x0: 0.0,
+            y0: y0 as f32,
+            x1: w as f32,
+            y1: end as f32,
+        };
+        if regions
+            .as_ref()
+            .is_none_or(|rs| rs.iter().any(|r| paint::overlaps(r, &band)))
+        {
+            jobs.push((y0, chunk));
+        }
+        y0 = end;
+    }
+    let paint_job = |(y0, chunk): (u32, &mut [u8])| {
+        let bh = (chunk.len() / (w as usize * 4)) as u32;
+        let band = PxRect {
+            x0: 0.0,
+            y0: y0 as f32,
+            x1: w as f32,
+            y1: (y0 + bh) as f32,
+        };
+        match &regions {
+            None => {
+                for px in chunk.as_chunks_mut::<4>().0 {
+                    *px = clear;
+                }
+                paint::paint_band(shared, chunk, y0, bh, &[band]);
+            }
+            Some(rs) => {
+                // The band painted whole into a buffer of its own, from
+                // which only the regions' pixels are kept: painting goes
+                // past the regions.
+                let cull: Vec<PxRect> = rs
+                    .iter()
+                    .filter(|r| paint::overlaps(r, &band))
+                    .map(|r| PxRect {
+                        x0: r.x0,
+                        y0: r.y0.max(band.y0),
+                        x1: r.x1,
+                        y1: r.y1.min(band.y1),
+                    })
+                    .collect();
+                let mut own = vec![0u8; chunk.len()];
+                let row = w as usize * 4;
+                for r in &cull {
+                    for y in (r.y0 as u32 - y0) as usize..(r.y1 as u32 - y0) as usize {
+                        for px in own[y * row + r.x0 as usize * 4..y * row + r.x1 as usize * 4]
+                            .as_chunks_mut::<4>()
+                            .0
+                        {
+                            *px = clear;
+                        }
+                    }
+                }
+                paint::paint_band(shared, &mut own, y0, bh, &cull);
+                for r in &cull {
+                    let (a, b) = (r.x0 as usize * 4, r.x1 as usize * 4);
+                    for y in (r.y0 as u32 - y0) as usize..(r.y1 as u32 - y0) as usize {
+                        chunk[y * row + a..y * row + b]
+                            .copy_from_slice(&own[y * row + a..y * row + b]);
+                    }
+                }
+            }
+        }
+    };
+    let threads = threads.min(jobs.len());
+    if threads <= 1 {
+        jobs.into_iter().for_each(paint_job);
+        return;
+    }
+    // Bands deal out in turn, so each thread gets rows from the whole frame.
+    let mut per: Vec<Vec<(u32, &mut [u8])>> = (0..threads).map(|_| Vec::new()).collect();
+    for (k, job) in jobs.into_iter().enumerate() {
+        per[k % threads].push(job);
+    }
+    std::thread::scope(|scope| {
+        for mine in per {
+            let paint_job = &paint_job;
+            scope.spawn(move || mine.into_iter().for_each(paint_job));
+        }
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use astryx_core::{Radii, Rect};
+    use astryx_core::{ImageFit, Radii, Rect};
 
     fn frame(w: u32, h: u32, scale: f32) -> FrameInfo {
         FrameInfo {
@@ -905,6 +861,92 @@ mod tests {
             scale,
             dt: 0.0,
         }
+    }
+
+    /// A page of rows like a settings page: a card behind them, a label and a
+    /// switch in each.
+    fn rows_page(on: usize) -> DisplayList {
+        let mut commands = vec![
+            DrawCmd::Shadow {
+                rect: Rect::new(16.0, 16.0, 688.0, 868.0),
+                radii: Radii::all(12.0),
+                layers: vec![astryx_core::ShadowLayer {
+                    x: 0.0,
+                    y: 2.0,
+                    blur: 8.0,
+                    spread: 0.0,
+                    inset: false,
+                    color: Color::rgba(0.0, 0.0, 0.0, 0.2),
+                }],
+            },
+            DrawCmd::Rect {
+                rect: Rect::new(16.0, 16.0, 688.0, 868.0),
+                radii: Radii::all(12.0),
+                fill: Color::rgba(1.0, 1.0, 1.0, 1.0),
+                stroke: Some((Color::rgba(0.8, 0.8, 0.85, 1.0), 1.0)),
+            },
+            DrawCmd::PushClip {
+                rect: Rect::new(16.0, 16.0, 688.0, 868.0),
+                radii: Radii::all(12.0),
+            },
+        ];
+        for i in 0..20 {
+            let y = 32.0 + i as f32 * 42.0;
+            commands.push(DrawCmd::Text {
+                rect: Rect::new(40.0, y + 8.0, 400.0, 22.0),
+                text: format!("Setting number {i}"),
+                style: astryx_core::TextStyle {
+                    direction: None,
+                    family: astryx_core::FontFamily::Body,
+                    size: 15.0,
+                    weight: 400,
+                    leading: 1.4,
+                },
+                color: Color::rgba(0.1, 0.1, 0.12, 1.0),
+                align: astryx_core::TextAlign::Start,
+            });
+            commands.push(DrawCmd::Rect {
+                rect: Rect::new(620.0, y + 6.0, 52.0, 30.0),
+                radii: Radii::all(15.0),
+                fill: if i == on {
+                    Color::rgba(0.2, 0.45, 0.95, 1.0)
+                } else {
+                    Color::rgba(0.75, 0.75, 0.78, 1.0)
+                },
+                stroke: None,
+            });
+            commands.push(DrawCmd::Rect {
+                rect: Rect::new(if i == on { 644.0 } else { 624.0 }, y + 10.0, 24.0, 22.0),
+                radii: Radii::all(11.0),
+                fill: Color::rgba(1.0, 1.0, 1.0, 1.0),
+                stroke: None,
+            });
+        }
+        commands.push(DrawCmd::PopClip);
+        DisplayList {
+            clear: Color::rgba(0.95, 0.95, 0.96, 1.0),
+            commands,
+        }
+    }
+
+    #[test]
+    fn a_frame_draws_again_only_what_changed() {
+        let frame = frame(1440, 1800, 2.0);
+        let mut r = SoftRenderer::new();
+        r.render_list(&rows_page(3), &frame);
+        assert_eq!(r.painted, 1440 * 1800, "the first frame draws whole");
+        r.render_list(&rows_page(3), &frame);
+        assert_eq!(r.painted, 0, "an unchanged frame draws nothing");
+        // Two switches change: the one turned off and the one turned on.
+        r.render_list(&rows_page(4), &frame);
+        assert!(
+            r.painted < 1440 * 1800 / 10,
+            "a toggle draws a tenth of the frame at most, drew {} pixels",
+            r.painted
+        );
+        let mut whole = SoftRenderer::new();
+        whole.render_list(&rows_page(4), &frame);
+        assert!(r.pixmap().data() == whole.pixmap().data());
     }
 
     fn px(r: &SoftRenderer, x: u32, y: u32) -> [u8; 4] {
