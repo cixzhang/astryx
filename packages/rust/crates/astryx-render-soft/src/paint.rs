@@ -74,6 +74,17 @@ struct LightingPass {
     emissive: Vec<(astryx_core::Rect, Color, bool)>,
 }
 
+/// Paint for a solid color. A translucent color blends in floating point,
+/// as the GPU blends it: the 8-bit pipeline rounds the blend down by a level
+/// in some channels (a Save button's fill at 10% over the page came out 230
+/// where the exact blend is 230.9).
+fn solid(color: Color) -> Paint<'static> {
+    let mut paint = Paint::default();
+    paint.set_color(skia_color(color));
+    paint.force_hq_pipeline = color.a < 1.0;
+    paint
+}
+
 pub(crate) fn inside(a: &PxRect, b: &PxRect) -> bool {
     a.x0 >= b.x0 && a.y0 >= b.y0 && a.x1 <= b.x1 && a.y1 <= b.y1
 }
@@ -213,8 +224,7 @@ impl Painter<'_, '_> {
         let Some(path) = to_skia_path(&self.segs) else {
             return;
         };
-        let mut paint = Paint::default();
-        paint.set_color(skia_color(color));
+        let mut paint = solid(color);
         paint.anti_alias = self.grids.is_empty();
         let to_band = self.to_band();
         let (mut target, clip) = self.target();
@@ -231,8 +241,7 @@ impl Painter<'_, '_> {
         let Some(path) = to_skia_path(&self.segs) else {
             return;
         };
-        let mut paint = Paint::default();
-        paint.set_color(skia_color(color));
+        let mut paint = solid(color);
         paint.anti_alias = self.grids.is_empty();
         let stroke = Stroke {
             width,

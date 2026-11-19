@@ -970,6 +970,43 @@ mod tests {
         );
     }
 
+    #[test]
+    fn translucent_fills_blend_exactly() {
+        // A translucent fill over the page shows the exact blend, rounded,
+        // as the GPU renderer gives it: the Save button's fill over the
+        // settings page is (217, 225, 231), not 230 in blue.
+        let cases = [
+            ((241, 244, 247), (5, 54, 89), 26),
+            ((255, 255, 255), (10, 19, 23), 128),
+            ((30, 30, 30), (200, 100, 50), 64),
+            ((120, 200, 40), (0, 0, 0), 191),
+            ((10, 20, 30), (255, 255, 255), 13),
+        ];
+        for ((cr, cg, cb), (r, g, b), a) in cases {
+            let c = |v: u8| v as f32 / 255.0;
+            let list = DisplayList {
+                clear: Color::rgba(c(cr), c(cg), c(cb), 1.0),
+                commands: vec![DrawCmd::Rect {
+                    rect: Rect::new(0.0, 0.0, 8.0, 8.0),
+                    radii: Radii::default(),
+                    fill: Color::rgba(c(r), c(g), c(b), c(a)),
+                    stroke: None,
+                }],
+            };
+            let mut renderer = SoftRenderer::new();
+            renderer.render_list(&list, &frame(8, 8, 1.0));
+            let alpha = a as f64 / 255.0;
+            let blend =
+                |src: u8, dst: u8| (src as f64 * alpha + dst as f64 * (1.0 - alpha)).round() as u8;
+            let want = [blend(r, cr), blend(g, cg), blend(b, cb), 255];
+            assert_eq!(
+                px(&renderer, 4, 4),
+                want,
+                "rgba({r}, {g}, {b}, {a}) over ({cr}, {cg}, {cb})"
+            );
+        }
+    }
+
     fn px(r: &SoftRenderer, x: u32, y: u32) -> [u8; 4] {
         let p = r.pixmap().pixel(x, y).unwrap();
         [p.red(), p.green(), p.blue(), p.alpha()]
