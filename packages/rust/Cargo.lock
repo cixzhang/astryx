@@ -241,6 +241,7 @@ dependencies = [
  "gilrs",
  "glutin",
  "glutin-winit",
+ "libc",
  "softbuffer",
  "winit",
  "x11-dl",

@@ -161,6 +161,7 @@ mod x11 {
     use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
     use winit::window::Window;
     use x11rb::connection::{Connection, RequestConnection};
+    use x11rb::protocol::shm::ConnectionExt as _;
     use x11rb::protocol::xproto::{
         ChangeWindowAttributesAux, ConnectionExt, CreateGCAux, EventMask, ImageFormat, ImageOrder,
         VisualClass,
@@ -204,9 +205,12 @@ mod x11 {
         exposed
     }
 
-    /// The most rows one image carries: enough to keep requests few, small
-    /// enough to keep the buffer that builds them small.
+    /// The most rows one image carries without shared memory: enough to keep
+    /// requests few, small enough to keep the buffer that builds them small.
     const MOST_ROWS: usize = 32;
+
+    /// About how many bytes each shared-memory strip holds.
+    const STRIP_BYTES: usize = 256 * 1024;
 
     /// Frames as X images of the rows that changed.
     pub(in super::super) struct Images {
@@ -219,7 +223,14 @@ mod x11 {
         /// A hash of each row on screen; empty when the window's pixels are
         /// not known (first frame, a new size, an Expose).
         rows: Vec<u64>,
-        /// Rows converted for the server, reused.
+        /// The server asked for the window's pixels again while this
+        /// presenter waited for a strip: the next frame goes whole.
+        exposed: bool,
+        /// Two strips of shared memory the server reads images from, one
+        /// filled while the server reads the other; `None` where the server
+        /// has no MIT-SHM 1.2 or is not on this machine.
+        strips: Option<shm::Strips>,
+        /// Without shared memory: rows converted for the server, reused.
         strip: Vec<u8>,
     }
 
@@ -266,6 +277,8 @@ mod x11 {
                 depth: geometry.depth,
                 size: (0, 0),
                 rows: Vec::new(),
+                exposed: false,
+                strips: None,
                 strip: Vec::new(),
             })
         }
@@ -275,16 +288,28 @@ mod x11 {
             if w == 0 || h == 0 {
                 return Ok(());
             }
-            if exposed(&self.conn) || self.size != (w, h) {
+            let row_bytes = w as usize * 4;
+            if self.size.0 != w {
+                // Strips fit the width: new ones, once the server has read
+                // the old.
+                if let Some(old) = self.strips.take() {
+                    old.release(&self.conn);
+                }
+                self.strips = shm::Strips::new(&self.conn, row_bytes, STRIP_BYTES);
+            }
+            if self.take_events()? || std::mem::take(&mut self.exposed) || self.size != (w, h) {
                 self.rows.clear();
             }
             self.size = (w, h);
             let known = !self.rows.is_empty();
             self.rows.resize(h as usize, 0);
-            let row_bytes = w as usize * 4;
-            // Rows per image: what one request carries, at most MOST_ROWS.
-            let fit = (self.conn.maximum_request_bytes().saturating_sub(64) / row_bytes).max(1);
-            let per = fit.min(MOST_ROWS);
+            // Rows per image: what a strip holds, or what one request
+            // carries, at most MOST_ROWS.
+            let per = match &self.strips {
+                Some(s) => s.rows(),
+                None => (self.conn.maximum_request_bytes().saturating_sub(64) / row_bytes)
+                    .clamp(1, MOST_ROWS),
+            };
             let mut run: Option<usize> = None;
             let data = frame.data();
             for y in 0..=h as usize {
@@ -313,6 +338,33 @@ mod x11 {
             Ok(())
         }
 
+        /// Takes the events that arrived; whether one was an Expose.
+        fn take_events(&mut self) -> Result<bool, Box<dyn Error>> {
+            // A round trip first: the server sends the connection every
+            // Expose it made before answering, so none that woke the frame
+            // is still on its way.
+            self.conn.get_input_focus()?.reply()?;
+            let mut exposed = false;
+            while let Some(event) = self.conn.poll_for_event()? {
+                exposed |= self.note(event);
+            }
+            Ok(exposed)
+        }
+
+        /// Notes one event; whether it was an Expose.
+        fn note(&mut self, event: Event) -> bool {
+            match event {
+                Event::Expose(_) => true,
+                Event::ShmCompletion(done) => {
+                    if let Some(strips) = &mut self.strips {
+                        strips.done(done.shmseg);
+                    }
+                    false
+                }
+                _ => false,
+            }
+        }
+
         /// Sends rows `first..end` of `data`, a frame `w` pixels wide.
         fn send(
             &mut self,
@@ -323,19 +375,45 @@ mod x11 {
         ) -> Result<(), Box<dyn Error>> {
             let row_bytes = w as usize * 4;
             let src = &data[first * row_bytes..end * row_bytes];
-            self.strip.clear();
-            self.strip.extend(
-                src.as_chunks::<4>()
-                    .0
-                    .iter()
-                    .flat_map(|p| [p[2], p[1], p[0], 0xff]),
-            );
+            let rows = (end - first) as u16;
+            if self.strips.is_some() {
+                // A strip the server has finished reading.
+                while !self.strips.as_ref().expect("strips").free() {
+                    let event = self.conn.wait_for_event()?;
+                    self.exposed |= self.note(event);
+                }
+                let strips = self.strips.as_mut().expect("strips");
+                let (seg, dst) = strips.take();
+                convert(src, dst);
+                self.conn.shm_put_image(
+                    self.window,
+                    self.gc,
+                    w as u16,
+                    rows,
+                    0,
+                    0,
+                    w as u16,
+                    rows,
+                    0,
+                    first as i16,
+                    self.depth,
+                    ImageFormat::Z_PIXMAP.into(),
+                    true,
+                    seg,
+                    0,
+                )?;
+                // Send now: the server reads this strip while the next fills.
+                self.conn.flush()?;
+                return Ok(());
+            }
+            self.strip.resize(src.len(), 0);
+            convert(src, &mut self.strip);
             self.conn.put_image(
                 ImageFormat::Z_PIXMAP,
                 self.window,
                 self.gc,
                 w as u16,
-                (end - first) as u16,
+                rows,
                 0,
                 first as i16,
                 0,
@@ -346,19 +424,53 @@ mod x11 {
         }
     }
 
-    /// A 64-bit hash of one row's bytes, for telling changed rows.
+    impl Drop for Images {
+        fn drop(&mut self) {
+            if let Some(strips) = self.strips.take() {
+                strips.release(&self.conn);
+            }
+        }
+    }
+
+    /// Premultiplied RGBA to the server's XRGB, little-endian.
+    fn convert(src: &[u8], dst: &mut [u8]) {
+        for (d, s) in dst
+            .as_chunks_mut::<4>()
+            .0
+            .iter_mut()
+            .zip(src.as_chunks::<4>().0)
+        {
+            let p = u32::from_le_bytes(*s);
+            let xrgb = (p & 0x0000_ff00) | ((p >> 16) & 0xff) | ((p & 0xff) << 16);
+            *d = (0xff00_0000 | xrgb).to_le_bytes();
+        }
+    }
+
+    /// A 64-bit hash of one row's bytes, for telling changed rows. Four
+    /// lanes, so the multiplies do not wait on each other.
     fn row_hash(row: &[u8]) -> u64 {
-        let (words, rest) = row.as_chunks::<8>();
-        let mut h: u64 = 0x243f_6a88_85a3_08d3;
-        for w in words {
-            h = (h ^ u64::from_le_bytes(*w))
-                .wrapping_mul(0x9e37_79b9_7f4a_7c15)
-                .rotate_left(29);
+        const K: u64 = 0x9e37_79b9_7f4a_7c15;
+        let (blocks, rest) = row.as_chunks::<32>();
+        let mut h = [
+            0x243f_6a88_85a3_08d3u64,
+            0x1319_8a2e_0370_7344,
+            0xa409_3822_299f_31d0,
+            0x082e_fa98_ec4e_6c89,
+        ];
+        for b in blocks {
+            for (lane, w) in h.iter_mut().zip(b.as_chunks::<8>().0) {
+                *lane = (*lane ^ u64::from_le_bytes(*w))
+                    .wrapping_mul(K)
+                    .rotate_left(29);
+            }
         }
+        let mut out = h.iter().fold(row.len() as u64, |acc, &l| {
+            (acc ^ l).wrapping_mul(K).rotate_left(31)
+        });
         for &b in rest {
-            h = (h ^ u64::from(b)).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+            out = (out ^ u64::from(b)).wrapping_mul(K);
         }
-        h
+        out
     }
 
     /// Expose events for one window, on a connection of their own: each X
@@ -378,6 +490,193 @@ mod x11 {
 
         pub(in super::super) fn exposed(&self) -> bool {
             exposed(&self.conn)
+        }
+    }
+
+    /// Strips of shared memory for X images: the server reads the image
+    /// from memory this process maps too, so its bytes are not copied
+    /// through the connection.
+    mod shm {
+        use std::os::fd::{FromRawFd, OwnedFd};
+        use std::ptr::NonNull;
+
+        use x11rb::connection::Connection;
+        use x11rb::protocol::shm::ConnectionExt;
+        use x11rb::protocol::xproto::ConnectionExt as _;
+        use x11rb::rust_connection::RustConnection;
+
+        /// One mapped segment, attached on the server.
+        struct Strip {
+            seg: u32,
+            ptr: NonNull<u8>,
+            len: usize,
+            /// The server may still be reading it.
+            busy: bool,
+        }
+
+        /// Two strips, used in turn.
+        pub(super) struct Strips {
+            strips: [Strip; 2],
+            rows: usize,
+            next: usize,
+        }
+
+        // SAFETY, for every `unsafe` in this module: a strip's memory is
+        // mapped from `new` until `release`, and this process writes it only
+        // while the strip is not busy: after the server's ShmCompletion for
+        // its last image, or before its first. The server only reads it.
+
+        impl Strips {
+            /// Strips of about `bytes` each, whole rows of `row_bytes`;
+            /// `None` without MIT-SHM 1.2 (fd passing) or when the server
+            /// cannot attach this process's memory (another machine).
+            pub(super) fn new(
+                conn: &RustConnection,
+                row_bytes: usize,
+                bytes: usize,
+            ) -> Option<Self> {
+                if !cfg!(target_os = "linux") {
+                    return None;
+                }
+                let version = conn.shm_query_version().ok()?.reply().ok()?;
+                if (version.major_version, version.minor_version) < (1, 2) {
+                    return None;
+                }
+                let rows = (bytes / row_bytes).clamp(1, 128);
+                let len = rows * row_bytes;
+                let a = Strip::new(conn, len)?;
+                let b = match Strip::new(conn, len) {
+                    Some(b) => b,
+                    None => {
+                        a.release(conn);
+                        return None;
+                    }
+                };
+                Some(Self {
+                    strips: [a, b],
+                    rows,
+                    next: 0,
+                })
+            }
+
+            /// Rows one strip holds.
+            pub(super) fn rows(&self) -> usize {
+                self.rows
+            }
+
+            /// Whether the strip to use next is free.
+            pub(super) fn free(&self) -> bool {
+                !self.strips[self.next].busy
+            }
+
+            /// The next strip, marked busy: its segment, and its memory to
+            /// fill before the image is sent. Only when [`Self::free`].
+            pub(super) fn take(&mut self) -> (u32, &mut [u8]) {
+                let strip = &mut self.strips[self.next];
+                assert!(!strip.busy, "strip still read by the server");
+                strip.busy = true;
+                self.next ^= 1;
+                // SAFETY: see the top of the module; the strip was not busy.
+                let memory =
+                    unsafe { std::slice::from_raw_parts_mut(strip.ptr.as_ptr(), strip.len) };
+                (strip.seg, memory)
+            }
+
+            /// The server finished reading segment `seg`.
+            pub(super) fn done(&mut self, seg: u32) {
+                for strip in &mut self.strips {
+                    if strip.seg == seg {
+                        strip.busy = false;
+                    }
+                }
+            }
+
+            /// Detaches and unmaps both, after the server has read them.
+            pub(super) fn release(self, conn: &RustConnection) {
+                // After this round trip the server has handled every image
+                // sent before it.
+                let _ = conn.get_input_focus().map(|c| c.reply());
+                for strip in self.strips {
+                    strip.release(conn);
+                }
+            }
+        }
+
+        impl Strip {
+            fn new(conn: &RustConnection, len: usize) -> Option<Self> {
+                #[cfg(target_os = "linux")]
+                {
+                    // SAFETY: see the top of the module. The file and the
+                    // mapping are this process's own; the fd moves to the
+                    // server, and the mapping stays until `release`.
+                    unsafe {
+                        let fd = libc::memfd_create(c"astryx-strip".as_ptr(), libc::MFD_CLOEXEC);
+                        if fd < 0 {
+                            return None;
+                        }
+                        let fd = OwnedFd::from_raw_fd(fd);
+                        if libc::ftruncate(std::os::fd::AsRawFd::as_raw_fd(&fd), len as libc::off_t)
+                            != 0
+                        {
+                            return None;
+                        }
+                        let ptr = libc::mmap(
+                            std::ptr::null_mut(),
+                            len,
+                            libc::PROT_READ | libc::PROT_WRITE,
+                            libc::MAP_SHARED,
+                            std::os::fd::AsRawFd::as_raw_fd(&fd),
+                            0,
+                        );
+                        if ptr == libc::MAP_FAILED {
+                            return None;
+                        }
+                        let ptr = NonNull::new(ptr.cast::<u8>())?;
+                        let strip = Self {
+                            seg: 0,
+                            ptr,
+                            len,
+                            busy: false,
+                        };
+                        let seg = match conn.generate_id() {
+                            Ok(id) => id,
+                            Err(_) => {
+                                strip.unmap();
+                                return None;
+                            }
+                        };
+                        // Read-only for the server: it only reads images.
+                        let attached = conn
+                            .shm_attach_fd(seg, fd, true)
+                            .ok()
+                            .and_then(|c| c.check().ok());
+                        if attached.is_none() {
+                            strip.unmap();
+                            return None;
+                        }
+                        Some(Self { seg, ..strip })
+                    }
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    let _ = (conn, len);
+                    None
+                }
+            }
+
+            fn release(self, conn: &RustConnection) {
+                let _ = conn.shm_detach(self.seg);
+                let _ = conn.flush();
+                self.unmap();
+            }
+
+            fn unmap(self) {
+                // SAFETY: see the top of the module; mapped in `new`, and
+                // nothing uses it after this.
+                unsafe {
+                    libc::munmap(self.ptr.as_ptr().cast(), self.len);
+                }
+            }
         }
     }
 }

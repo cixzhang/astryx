@@ -1,7 +1,8 @@
 //! The CPU path end to end: with `ASTRYX_RENDERER=cpu`, the window shows,
 //! pixel for pixel, what the CPU renderer draws, both the first frame and a
-//! later frame where only part changed, and keeps no frame-sized
-//! shared-memory buffer for it. The pixels are read back from the X
+//! later frame where only part changed, and keeps less shared memory for
+//! it than one frame, sending images through shared memory where the X
+//! server takes them. The pixels are read back from the X
 //! server, so this checks what reaches the screen. Needs an X display; run
 //! it under Xvfb on headless machines. A plain `main` because winit wants
 //! the main thread.
@@ -24,6 +25,11 @@ mod x11 {
     use astryx_headless::{astryx_render_soft::SoftRenderer, frame_info};
     use x11rb::connection::Connection;
     use x11rb::protocol::xproto::{ConnectionExt, ImageFormat};
+
+    /// Shared memory mapped once both frames showed.
+    static SHARED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    /// The server takes images from shared memory.
+    static SHM: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
     /// What the test has asked of the window so far.
     const FIRST: u8 = 0;
@@ -149,14 +155,44 @@ mod x11 {
             watch.store(CHANGED, Ordering::SeqCst);
             wait_for(&conn, root, &expected(CHANGED), "changed frame");
             // On X11 the frames go as images of the rows that changed: no
-            // frame-sized shared-memory buffer beside the renderer's own.
+            // frame-sized shared-memory buffer beside the renderer's own,
+            // only strips smaller than a frame together.
             let maps = std::fs::read_to_string("/proc/self/maps").unwrap_or_default();
-            // Shared memory shows as a SysV segment or a file in /dev/shm
-            // (softbuffer's buffer is /dev/shm/softbuffer-x11-*).
-            let shared = |l: &&str| l.contains("SYSV") || l.contains("/dev/shm/");
-            if let Some(shm) = maps.lines().find(shared) {
-                fail(format!("a shared-memory buffer is mapped: {shm}"));
+            // Shared memory shows as a SysV segment, a file in /dev/shm
+            // (softbuffer's buffer is /dev/shm/softbuffer-x11-*) or a memfd.
+            let shared: Vec<&str> = maps
+                .lines()
+                .filter(|l| l.contains("SYSV") || l.contains("/dev/shm/") || l.contains("/memfd:"))
+                .collect();
+            let bytes: u64 = shared
+                .iter()
+                .filter_map(|l| {
+                    let (a, b) = l.split_whitespace().next()?.split_once('-')?;
+                    Some(u64::from_str_radix(b, 16).ok()? - u64::from_str_radix(a, 16).ok()?)
+                })
+                .sum();
+            let frame_bytes = u64::from(FIXTURE_SIZE.0) * u64::from(FIXTURE_SIZE.1) * 4;
+            if bytes >= frame_bytes {
+                fail(format!(
+                    "{bytes} bytes of shared memory mapped, a frame is {frame_bytes}: {shared:?}"
+                ));
             }
+            // Where the server takes images from shared memory (MIT-SHM
+            // 1.2, on this machine), they go through it: their bytes are
+            // not copied through the connection.
+            use x11rb::protocol::shm::ConnectionExt as _;
+            let shm = conn
+                .shm_query_version()
+                .ok()
+                .and_then(|c| c.reply().ok())
+                .is_some_and(|v| (v.major_version, v.minor_version) >= (1, 2));
+            if shm && !shared.iter().any(|l| l.contains("astryx-strip")) {
+                fail(format!(
+                    "the server has MIT-SHM, but no shared-memory strip is mapped: {shared:?}"
+                ));
+            }
+            SHARED.store(bytes, Ordering::SeqCst);
+            SHM.store(shm, Ordering::SeqCst);
             watch.store(DONE, Ordering::SeqCst);
         });
         let surface = Steps {
@@ -175,7 +211,9 @@ mod x11 {
         }
         println!(
             "window_cpu: first and changed frames on screen equal the CPU renderer's; \
-             no shared-memory frame buffer"
+             {} bytes of shared memory, less than a frame; images through shared memory: {}",
+            SHARED.load(Ordering::SeqCst),
+            SHM.load(Ordering::SeqCst)
         );
         println!("window_cpu: ok");
     }
