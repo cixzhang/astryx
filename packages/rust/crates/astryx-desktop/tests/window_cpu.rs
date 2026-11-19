@@ -1,6 +1,7 @@
 //! The CPU path end to end: with `ASTRYX_RENDERER=cpu`, the window shows,
 //! pixel for pixel, what the CPU renderer draws, both the first frame and a
-//! later frame where only part changed. The pixels are read back from the X
+//! later frame where only part changed, and keeps no frame-sized
+//! shared-memory buffer for it. The pixels are read back from the X
 //! server, so this checks what reaches the screen. Needs an X display; run
 //! it under Xvfb on headless machines. A plain `main` because winit wants
 //! the main thread.
@@ -147,6 +148,15 @@ mod x11 {
             // Only the square changes: the window gets just those rows.
             watch.store(CHANGED, Ordering::SeqCst);
             wait_for(&conn, root, &expected(CHANGED), "changed frame");
+            // On X11 the frames go as images of the rows that changed: no
+            // frame-sized shared-memory buffer beside the renderer's own.
+            let maps = std::fs::read_to_string("/proc/self/maps").unwrap_or_default();
+            // Shared memory shows as a SysV segment or a file in /dev/shm
+            // (softbuffer's buffer is /dev/shm/softbuffer-x11-*).
+            let shared = |l: &&str| l.contains("SYSV") || l.contains("/dev/shm/");
+            if let Some(shm) = maps.lines().find(shared) {
+                fail(format!("a shared-memory buffer is mapped: {shm}"));
+            }
             watch.store(DONE, Ordering::SeqCst);
         });
         let surface = Steps {
@@ -163,7 +173,10 @@ mod x11 {
         if step.load(Ordering::SeqCst) != DONE {
             fail("the window closed before both frames showed".into());
         }
-        println!("window_cpu: first and changed frames on screen equal the CPU renderer's");
+        println!(
+            "window_cpu: first and changed frames on screen equal the CPU renderer's; \
+             no shared-memory frame buffer"
+        );
         println!("window_cpu: ok");
     }
 }

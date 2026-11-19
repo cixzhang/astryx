@@ -183,8 +183,10 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
   renderer (`tests/damage.rs`, the gallery's `soft_damage.rs`).
 - The desktop shell draws with it where OpenGL runs only on the CPU: an X
   server with neither DRI3 nor NV-GLX (Xvfb, most VMs), `LIBGL_ALWAYS_SOFTWARE`
-  set, or no OpenGL context at all. It presents through `softbuffer`, sending
-  only the rows that changed.
+  set, or no OpenGL context at all. On X11 it sends only the rows that
+  changed, as X images over a connection of its own, and keeps just a hash
+  of each row on screen; elsewhere it presents through `softbuffer`. Rows
+  the X server dropped (Expose) go again.
 - On an X server with a GPU (X11 only), it draws the first frames while
   OpenGL starts on a thread of its own (`astryx-gl`), over its own X
   connection: GL takes about 150 ms to start on NVIDIA, and the driver

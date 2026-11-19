@@ -624,9 +624,7 @@ impl<S: Surface> Shell<S> {
                             context,
                             ..
                         } => gl_surface.swap_buffers(context).map_err(Into::into),
-                        Draw::Cpu { renderer, present } => {
-                            present.show(renderer.pixmap()).map_err(Into::into)
-                        }
+                        Draw::Cpu { renderer, present } => present.show(renderer.pixmap()),
                         #[cfg(all(
                             unix,
                             not(any(
