@@ -174,7 +174,9 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
 - `SoftRenderer` keeps the frame it drew last and draws again only the
   regions whose commands changed. A change of size, scale, clear color, an
   image or a font, lighting, or a transition draws the whole frame.
-- It paints in horizontal bands on up to 8 threads. Bands meet only at rows
+- It paints in horizontal bands on up to 8 threads, kept for the renderer's
+  life (starting a thread waits for the dynamic loader, which a GL driver
+  load can hold for 30 ms). Bands meet only at rows
   that just straight vertical edges cross, so a band paints the pixels the
   whole frame would; text and shadows are prepared on the renderer's thread.
 - Every frame equals, pixel for pixel, the same frame drawn whole by a new
@@ -182,7 +184,22 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
 - The desktop shell draws with it where OpenGL runs only on the CPU: an X
   server with neither DRI3 nor NV-GLX (Xvfb, most VMs), `LIBGL_ALWAYS_SOFTWARE`
   set, or no OpenGL context at all. It presents through `softbuffer`, sending
-  only the rows that changed. `ASTRYX_RENDERER=gl` or `cpu` chooses outright.
+  only the rows that changed.
+- On an X server with a GPU (X11 only), it draws the first frames while
+  OpenGL starts on a thread of its own (`astryx-gl`), over its own X
+  connection: GL takes about 150 ms to start on NVIDIA, and the driver
+  charges each thread 50–100 ms the first time it makes a context current.
+  That thread then draws every frame: the main thread keeps input and
+  layout, hands it each display list and waits for the swap, so frame
+  timing, transitions and the accessibility update after each present are
+  as on the main thread. The switch waits for a frame drawn ahead off
+  screen and for any transition to end; the GL frame matches the CPU frame
+  within antialiasing, so it does not show. On quit, or if GL fails to
+  start, the thread ends and the shell waits for it. Elsewhere (Wayland,
+  macOS, Windows) OpenGL starts on the main thread before the first frame.
+- `ASTRYX_RENDERER` chooses outright: `gl` (OpenGL on the main thread from
+  the first frame, as before the CPU renderer came first), `cpu-first`, or
+  `cpu`.
 
 App model (Lane A owns it): Elm style. `view(&self) -> Element<Msg>`,
 `update(&mut self, msg) -> Command`. An app is a library crate; each shell

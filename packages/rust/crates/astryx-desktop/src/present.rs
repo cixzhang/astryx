@@ -8,7 +8,7 @@
 
 use std::error::Error;
 use std::num::NonZeroU32;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use astryx_render_soft::tiny_skia::Pixmap;
 use winit::window::Window;
@@ -16,8 +16,8 @@ use winit::window::Window;
 /// Shows frames in a window.
 pub(crate) struct Present {
     // Field order is drop order: the surface goes before its context.
-    surface: softbuffer::Surface<Rc<Window>, Rc<Window>>,
-    _context: softbuffer::Context<Rc<Window>>,
+    surface: softbuffer::Surface<Arc<Window>, Arc<Window>>,
+    _context: softbuffer::Context<Arc<Window>>,
     /// On X11: where the server asks for the window's pixels again.
     #[cfg(all(
         unix,
@@ -27,7 +27,7 @@ pub(crate) struct Present {
 }
 
 impl Present {
-    pub(crate) fn new(window: &Rc<Window>) -> Result<Self, Box<dyn Error>> {
+    pub(crate) fn new(window: &Arc<Window>) -> Result<Self, Box<dyn Error>> {
         let context = softbuffer::Context::new(window.clone())?;
         let surface = softbuffer::Surface::new(&context, window.clone())?;
         Ok(Self {

@@ -243,6 +243,7 @@ dependencies = [
  "glutin-winit",
  "softbuffer",
  "winit",
+ "x11-dl",
  "x11rb",
 ]
 

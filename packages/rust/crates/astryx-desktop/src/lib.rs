@@ -15,12 +15,20 @@
 //! Where OpenGL runs only on the CPU, the CPU renderer draws the window
 //! instead: on an X server with neither DRI3 nor NV-GLX (Xvfb, most VMs),
 //! with `LIBGL_ALWAYS_SOFTWARE` set, or when no OpenGL context can be made.
-//! `ASTRYX_RENDERER=gl` or `ASTRYX_RENDERER=cpu` chooses outright.
+//! On an X server with a GPU, the CPU renderer draws the first frames while
+//! OpenGL starts on a thread of its own, which then draws every frame.
+//! `ASTRYX_RENDERER=gl` (OpenGL on the main thread from the first frame),
+//! `cpu-first` or `cpu` chooses outright.
 
 pub mod a11y;
 #[cfg(feature = "audio")]
 mod audio;
 mod backend;
+#[cfg(all(
+    unix,
+    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+))]
+mod gl_thread;
 pub mod input;
 pub mod platform;
 pub mod pointer;
@@ -30,7 +38,7 @@ use std::error::Error;
 use std::ffi::CString;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Instant;
 
 use astryx_core::{
@@ -111,7 +119,10 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         devices_open: false,
         #[cfg(feature = "audio")]
         early_sounds: Vec::new(),
+        gl_images: std::collections::HashMap::new(),
+        shot_pending: false,
     };
+    shell.shot_pending = shell.options.screenshot.is_some();
     event_loop.run_app(&mut shell)?;
     match shell.error.take() {
         Some(e) => Err(e),
@@ -121,10 +132,20 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
 
 /// The window and what draws it.
 struct Screen {
-    // Field order is drop order: the drawing goes before the window.
+    // Field order is drop order: the drawing and OpenGL starting go before
+    // the window.
     draw: Draw,
+    /// OpenGL starting on its own thread while the CPU renderer draws.
+    #[cfg(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    ))]
+    gl_thread: Option<gl_thread::GlThread>,
+    /// OpenGL starts after the first frame is on screen: loading its
+    /// driver would hold up the first frame's threads.
+    gl_wanted: bool,
     adapter: accesskit_winit::Adapter,
-    window: Rc<Window>,
+    window: Arc<Window>,
 }
 
 enum Draw {
@@ -139,13 +160,28 @@ enum Draw {
         renderer: Box<SoftRenderer>,
         present: present::Present,
     },
+    /// OpenGL on its own thread. The CPU renderer that drew the first
+    /// frames stays for measuring text, so its caches stay warm.
+    #[cfg(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    ))]
+    Thread {
+        gl: gl_thread::GlThread,
+        measurer: Box<SoftRenderer>,
+    },
 }
 
 impl Draw {
-    fn renderer(&mut self) -> &mut dyn Renderer {
+    fn transitioning(&self) -> bool {
         match self {
-            Draw::Gl { renderer, .. } => &mut **renderer,
-            Draw::Cpu { renderer, .. } => &mut **renderer,
+            Draw::Gl { renderer, .. } => renderer.transitioning(),
+            Draw::Cpu { renderer, .. } => renderer.transitioning(),
+            #[cfg(all(
+                unix,
+                not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+            ))]
+            Draw::Thread { gl, .. } => gl.transitioning(),
         }
     }
 }
@@ -184,6 +220,12 @@ struct Shell<S: Surface> {
     /// Sounds played before the audio output opened.
     #[cfg(feature = "audio")]
     early_sounds: Vec<astryx_core::SoundId>,
+    /// While OpenGL starts: the images the app gave the CPU renderer, for
+    /// the GPU renderer that takes over.
+    gl_images: std::collections::HashMap<astryx_core::ImageId, astryx_core::ImageData>,
+    /// The screenshot is still to be written: from the first frame of the
+    /// renderer that keeps drawing.
+    shot_pending: bool,
 }
 
 /// How often an idle shell asks the surface whether it wants a frame, so a
@@ -204,6 +246,28 @@ fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
         .expect("at least one GL config")
 }
 
+/// A context for `config`: OpenGL 3.3, else OpenGL ES 3.0, else ES 2.0.
+fn make_context(
+    display: &glutin::display::Display,
+    config: &Config,
+    handle: winit::raw_window_handle::RawWindowHandle,
+) -> Result<glutin::context::NotCurrentContext, Box<dyn Error>> {
+    for api in [
+        ContextApi::OpenGl(Some(Version::new(3, 3))),
+        ContextApi::Gles(Some(Version::new(3, 0))),
+        ContextApi::Gles(Some(Version::new(2, 0))),
+    ] {
+        let attrs = ContextAttributesBuilder::new()
+            .with_context_api(api)
+            .build(Some(handle));
+        // SAFETY: the config belongs to this display and the handle to a live window.
+        if let Ok(c) = unsafe { display.create_context(config, &attrs) } {
+            return Ok(c);
+        }
+    }
+    Err("no OpenGL or OpenGL ES context available".into())
+}
+
 impl<S: Surface> Shell<S> {
     fn window_attributes(&self) -> WindowAttributes {
         let (w, h) = self.options.size;
@@ -221,19 +285,25 @@ impl<S: Surface> Shell<S> {
             event_loop.display_handle()?.as_raw(),
             RawDisplayHandle::Xlib(_) | RawDisplayHandle::Xcb(_)
         );
-        if backend::choose(&backend::facts(on_x11)) == backend::Backend::Gl {
-            match self.create_gl(event_loop) {
+        match backend::choose(&backend::facts(on_x11)) {
+            backend::Backend::Gl => match self.create_gl(event_loop) {
                 Ok(screen) => return Ok(screen),
                 Err(e) => {
                     eprintln!("astryx-desktop: no OpenGL ({e}); drawing with the CPU renderer")
                 }
+            },
+            backend::Backend::CpuFirst => {
+                let mut screen = self.create_cpu(event_loop)?;
+                screen.gl_wanted = true;
+                return Ok(screen);
             }
+            backend::Backend::Cpu => {}
         }
         self.create_cpu(event_loop)
     }
 
     fn create_cpu(&mut self, event_loop: &ActiveEventLoop) -> Result<Screen, Box<dyn Error>> {
-        let window = Rc::new(event_loop.create_window(self.window_attributes())?);
+        let window = Arc::new(event_loop.create_window(self.window_attributes())?);
         let present = present::Present::new(&window)?;
         self.show(
             event_loop,
@@ -259,22 +329,7 @@ impl<S: Surface> Shell<S> {
         };
         let handle = window.window_handle()?.as_raw();
         let display = config.display();
-        let mut context = None;
-        for api in [
-            ContextApi::OpenGl(Some(Version::new(3, 3))),
-            ContextApi::Gles(Some(Version::new(3, 0))),
-            ContextApi::Gles(Some(Version::new(2, 0))),
-        ] {
-            let attrs = ContextAttributesBuilder::new()
-                .with_context_api(api)
-                .build(Some(handle));
-            // SAFETY: the config belongs to this display and the handle to a live window.
-            if let Ok(c) = unsafe { display.create_context(&config, &attrs) } {
-                context = Some(c);
-                break;
-            }
-        }
-        let context = context.ok_or("no OpenGL or OpenGL ES context available")?;
+        let context = make_context(&display, &config, handle)?;
         let surface_attrs = window.build_surface_attributes(Default::default())?;
         // SAFETY: as above.
         let gl_surface = unsafe { display.create_window_surface(&config, &surface_attrs)? };
@@ -290,7 +345,7 @@ impl<S: Surface> Shell<S> {
         .map_err(|e| format!("GPU renderer: {e:?}"))?;
         self.show(
             event_loop,
-            Rc::new(window),
+            Arc::new(window),
             Draw::Gl {
                 renderer: Box::new(renderer),
                 gl_surface,
@@ -303,7 +358,7 @@ impl<S: Surface> Shell<S> {
     fn show(
         &mut self,
         event_loop: &ActiveEventLoop,
-        window: Rc<Window>,
+        window: Arc<Window>,
         draw: Draw,
     ) -> Result<Screen, Box<dyn Error>> {
         let adapter = accesskit_winit::Adapter::with_event_loop_proxy(
@@ -315,6 +370,12 @@ impl<S: Surface> Shell<S> {
         window.request_redraw();
         Ok(Screen {
             draw,
+            #[cfg(all(
+                unix,
+                not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+            ))]
+            gl_thread: None,
+            gl_wanted: false,
             adapter,
             window,
         })
@@ -496,46 +557,112 @@ impl<S: Surface> Shell<S> {
             scale: screen.window.scale_factor() as f32,
             dt,
         };
-        let renderer = screen.draw.renderer();
-        for (id, data) in self.surface.take_image_updates() {
-            renderer.set_image(id, data.as_ref());
+        take_gl(screen, &self.gl_images);
+        let starting_gl = screen.starting_gl();
+        if !starting_gl {
+            self.gl_images.clear();
         }
-        let list = self.surface.frame(&frame, renderer.measurer());
-        if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
-            renderer.begin_transition(&t, from, &frame);
-        }
-        renderer.render(&list, &frame);
-        self.last_list = Some(list);
-        self.frames += 1;
-        if self.frames == 1 {
-            if let Some(path) = self.options.screenshot.clone() {
-                if let Err(e) = save_screenshot(&mut screen.draw, frame.width, frame.height, &path)
-                {
-                    self.error = Some(e);
-                    event_loop.exit();
-                    return;
-                }
-                if self.options.exit_after_screenshot {
-                    event_loop.exit();
-                }
-            }
-        }
-        screen.window.pre_present_notify();
-        let shown: Result<(), Box<dyn Error>> = match &mut screen.draw {
-            Draw::Gl {
-                gl_surface,
-                context,
-                ..
-            } => gl_surface.swap_buffers(context).map_err(Into::into),
-            Draw::Cpu { renderer, present } => present.show(renderer.pixmap()).map_err(Into::into),
+        let updates = self.surface.take_image_updates();
+        // The screenshot comes from the renderer that keeps drawing.
+        let shot = if self.shot_pending && !starting_gl {
+            self.options.screenshot.clone()
+        } else {
+            None
         };
-        if let Err(e) = shown {
+        let drawn: Result<(), Box<dyn Error>> = match &mut screen.draw {
+            #[cfg(all(
+                unix,
+                not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+            ))]
+            Draw::Thread { gl, measurer } => {
+                for (id, data) in updates {
+                    gl.set_image(id, data);
+                }
+                let list = self.surface.frame(&frame, measurer.text());
+                if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
+                    gl.begin_transition(&t, from);
+                }
+                screen.window.pre_present_notify();
+                gl.draw(list, frame, shot.clone()).map(|list| {
+                    self.last_list = Some(list);
+                })
+            }
+            draw => {
+                let renderer: &mut dyn Renderer = match draw {
+                    Draw::Gl { renderer, .. } => &mut **renderer,
+                    Draw::Cpu { renderer, .. } => &mut **renderer,
+                    #[cfg(all(
+                        unix,
+                        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+                    ))]
+                    Draw::Thread { .. } => unreachable!("handled above"),
+                };
+                for (id, data) in updates {
+                    renderer.set_image(id, data.as_ref());
+                    if starting_gl {
+                        match data {
+                            Some(d) => self.gl_images.insert(id, d),
+                            None => self.gl_images.remove(&id),
+                        };
+                    }
+                }
+                let list = self.surface.frame(&frame, renderer.measurer());
+                if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
+                    renderer.begin_transition(&t, from, &frame);
+                }
+                renderer.render(&list, &frame);
+                self.last_list = Some(list);
+                let saved = match &shot {
+                    Some(path) => save_screenshot(draw, frame.width, frame.height, path),
+                    None => Ok(()),
+                };
+                saved.and_then(|()| {
+                    screen.window.pre_present_notify();
+                    match draw {
+                        Draw::Gl {
+                            gl_surface,
+                            context,
+                            ..
+                        } => gl_surface.swap_buffers(context).map_err(Into::into),
+                        Draw::Cpu { renderer, present } => {
+                            present.show(renderer.pixmap()).map_err(Into::into)
+                        }
+                        #[cfg(all(
+                            unix,
+                            not(any(
+                                target_os = "macos",
+                                target_os = "ios",
+                                target_os = "android"
+                            ))
+                        ))]
+                        Draw::Thread { .. } => Ok(()),
+                    }
+                })
+            }
+        };
+        if let Err(e) = drawn {
             self.error = Some(e);
             event_loop.exit();
             return;
         }
+        self.frames += 1;
+        if shot.is_some() {
+            self.shot_pending = false;
+            if self.options.exit_after_screenshot {
+                event_loop.exit();
+            }
+        }
         if self.frames == 1 {
             self.open_devices();
+            #[cfg(all(
+                unix,
+                not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+            ))]
+            if let Some(screen) = &mut self.screen {
+                if std::mem::take(&mut screen.gl_wanted) {
+                    screen.gl_thread = Some(gl_thread::GlThread::spawn(screen.window.clone()));
+                }
+            }
         }
         let tree = self.surface.accessibility();
         self.update_text_field(tree.as_ref());
@@ -555,12 +682,136 @@ impl<S: Surface> Shell<S> {
         };
         // One more frame right after the first, which carries the GPU
         // renderer's warm-up, so it is done before the first input.
-        if self.surface.wants_frames() || screen.draw.renderer().transitioning() || self.frames == 1
-        {
+        if self.surface.wants_frames() || screen.draw.transitioning() || self.frames == 1 {
             screen.window.request_redraw();
         } else {
             self.last_frame = None;
         }
+    }
+}
+
+impl Screen {
+    /// Whether OpenGL is still to start or starting, while the CPU renderer
+    /// draws.
+    fn starting_gl(&self) -> bool {
+        #[cfg(all(
+            unix,
+            not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+        ))]
+        if self.gl_wanted || self.gl_thread.is_some() {
+            return true;
+        }
+        false
+    }
+}
+
+/// Follows OpenGL starting, between frames: once it has started, has it
+/// draw the frame on screen ahead, off screen and off this thread. Returns
+/// whether a frame is needed: to switch, or for the screenshot when OpenGL
+/// failed and the CPU renderer stays.
+fn gl_step(
+    screen: &mut Screen,
+    images: &std::collections::HashMap<astryx_core::ImageId, astryx_core::ImageData>,
+    on_screen: Option<&astryx_core::DisplayList>,
+) -> bool {
+    #[cfg(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    ))]
+    {
+        let Some(gl) = &mut screen.gl_thread else {
+            return false;
+        };
+        if gl.prepared() {
+            // Switch in a frame once no transition runs.
+            return !screen.draw.transitioning();
+        }
+        match gl.poll() {
+            None => false,
+            Some(Err(e)) => {
+                eprintln!("astryx-desktop: no OpenGL ({e}); drawing with the CPU renderer");
+                screen.gl_thread = None;
+                true
+            }
+            Some(Ok(gl_thread::Started::Ready)) => {
+                for (id, data) in images {
+                    gl.set_image(*id, Some(data.clone()));
+                }
+                let size = screen.window.inner_size();
+                let frame = FrameInfo {
+                    width: size.width.max(1),
+                    height: size.height.max(1),
+                    scale: screen.window.scale_factor() as f32,
+                    dt: 0.0,
+                };
+                gl.prepare(on_screen.cloned().unwrap_or_default(), frame);
+                false
+            }
+            Some(Ok(gl_thread::Started::Prepared)) => {
+                gl.again();
+                !screen.draw.transitioning()
+            }
+        }
+    }
+    #[cfg(not(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    )))]
+    {
+        let _ = (screen, images, on_screen);
+        false
+    }
+}
+
+/// Switches to OpenGL on its thread once it has drawn its frame ahead and no
+/// transition runs. This frame is then the GPU renderer's: the same picture
+/// within antialiasing, so the switch does not show.
+fn take_gl(
+    screen: &mut Screen,
+    images: &std::collections::HashMap<astryx_core::ImageId, astryx_core::ImageData>,
+) {
+    #[cfg(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    ))]
+    {
+        let Some(gl) = &mut screen.gl_thread else {
+            return;
+        };
+        if screen.draw.transitioning() || !gl.prepared() {
+            return;
+        }
+        let mut gl = screen.gl_thread.take().expect("started");
+        // Images given since the frame ahead; setting one twice is harmless.
+        for (id, data) in images {
+            gl.set_image(*id, Some(data.clone()));
+        }
+        let Draw::Cpu { renderer, .. } = &mut screen.draw else {
+            unreachable!("the CPU renderer draws while OpenGL starts")
+        };
+        // An empty stand-in, gone with the CPU path below.
+        let stand_in =
+            SoftRenderer::with_fonts(astryx_render_soft::astryx_raster::text::FontSet::new());
+        let mut renderer = std::mem::replace(renderer, Box::new(stand_in));
+        // Kept for measuring text only: let its frame buffer go.
+        let tiny = FrameInfo {
+            width: 1,
+            height: 1,
+            scale: 1.0,
+            dt: 0.0,
+        };
+        renderer.render_list(&astryx_core::DisplayList::default(), &tiny);
+        screen.draw = Draw::Thread {
+            gl,
+            measurer: renderer,
+        };
+    }
+    #[cfg(not(all(
+        unix,
+        not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+    )))]
+    {
+        let _ = (screen, images);
     }
 }
 
@@ -570,13 +821,27 @@ fn save_screenshot(
     height: u32,
     path: &std::path::Path,
 ) -> Result<(), Box<dyn Error>> {
-    let renderer = match draw {
-        Draw::Gl { renderer, .. } => renderer,
+    match draw {
+        Draw::Gl { renderer, .. } => save_gl_screenshot(renderer, width, height, path),
         Draw::Cpu { renderer, .. } => {
             renderer.pixmap().save_png(path)?;
-            return Ok(());
+            Ok(())
         }
-    };
+        #[cfg(all(
+            unix,
+            not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+        ))]
+        Draw::Thread { .. } => Err("the OpenGL thread writes its own screenshots".into()),
+    }
+}
+
+/// Writes the GPU renderer's frame, read back from the framebuffer.
+fn save_gl_screenshot(
+    renderer: &mut GlRenderer,
+    width: u32,
+    height: u32,
+    path: &std::path::Path,
+) -> Result<(), Box<dyn Error>> {
     let mut rgba = renderer
         .read_pixels()
         .map_err(|e| format!("read pixels: {e:?}"))?;
@@ -801,6 +1066,17 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 .as_ref()
                 .is_some_and(|g| g.gamepads().next().is_some());
             if connected {
+                let next = Instant::now() + std::time::Duration::from_millis(8);
+                event_loop.set_control_flow(ControlFlow::WaitUntil(next));
+                return;
+            }
+        }
+        // While OpenGL starts, look for its news often.
+        if let Some(screen) = &mut self.screen {
+            if screen.starting_gl() {
+                if gl_step(screen, &self.gl_images, self.last_list.as_ref()) {
+                    screen.window.request_redraw();
+                }
                 let next = Instant::now() + std::time::Duration::from_millis(8);
                 event_loop.set_control_flow(ControlFlow::WaitUntil(next));
                 return;

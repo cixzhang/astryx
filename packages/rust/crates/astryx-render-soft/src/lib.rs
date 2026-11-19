@@ -23,6 +23,7 @@ use astryx_raster::transition::{turn, Moment};
 
 mod damage;
 mod paint;
+mod pool;
 
 fn to_skia_path(segs: &[Seg]) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
@@ -123,6 +124,9 @@ pub struct SoftRenderer {
     images_changed: bool,
     /// How many pixels the last frame drew again.
     painted: u64,
+    /// Threads that paint bands, started with the first frame that uses
+    /// them.
+    painters: Option<pool::Pool>,
 }
 
 /// A transition in progress: the old frame and the time so far.
@@ -199,6 +203,7 @@ impl SoftRenderer {
             last: None,
             images_changed: false,
             painted: 0,
+            painters: None,
         }
     }
 
@@ -523,7 +528,8 @@ impl SoftRenderer {
                 clear,
                 regions.as_deref(),
                 &seams,
-                painters(),
+                self.painters
+                    .get_or_insert_with(|| pool::Pool::new(painters() - 1)),
             );
         }
         self.painted = match &regions {
@@ -735,7 +741,7 @@ fn seams(h: u32, no_seam: &[(f32, f32)]) -> Vec<u32> {
     out
 }
 
-/// Paints `shared`'s frame into `data`, band by band on `threads` threads:
+/// Paints `shared`'s frame into `data`, band by band on the pool's threads:
 /// every band, or with `regions` only the bands they touch, and in those
 /// only the regions' pixels. Bands meet at `seams`.
 fn paint_frame(
@@ -744,7 +750,7 @@ fn paint_frame(
     clear: [u8; 4],
     regions: Option<&[(u32, u32, u32, u32)]>,
     seams: &[u32],
-    threads: usize,
+    pool: &pool::Pool,
 ) {
     let w = shared.width;
     let row_bytes = w as usize * 4;
@@ -831,20 +837,18 @@ fn paint_frame(
             }
         }
     };
-    let threads = threads.min(jobs.len());
-    if threads <= 1 {
+    if jobs.len() <= 1 {
         jobs.into_iter().for_each(paint_job);
         return;
     }
-    // Bands deal out in turn, so each thread gets rows from the whole frame.
-    let mut per: Vec<Vec<(u32, &mut [u8])>> = (0..threads).map(|_| Vec::new()).collect();
-    for (k, job) in jobs.into_iter().enumerate() {
-        per[k % threads].push(job);
-    }
-    std::thread::scope(|scope| {
-        for mine in per {
-            let paint_job = &paint_job;
-            scope.spawn(move || mine.into_iter().for_each(paint_job));
+    // Each band once, to whichever thread takes it.
+    let jobs: Vec<_> = jobs
+        .into_iter()
+        .map(|j| std::sync::Mutex::new(Some(j)))
+        .collect();
+    pool.run(jobs.len(), &|i| {
+        if let Some(job) = jobs[i].lock().expect("band").take() {
+            paint_job(job);
         }
     });
 }
@@ -947,6 +951,23 @@ mod tests {
         let mut whole = SoftRenderer::new();
         whole.render_list(&rows_page(4), &frame);
         assert!(r.pixmap().data() == whole.pixmap().data());
+    }
+
+    #[test]
+    fn dropping_the_renderer_ends_its_painting_threads() {
+        let mut renderer = SoftRenderer::new();
+        renderer.render_list(&rows_page(0), &frame(1440, 1800, 2.0));
+        let watch = renderer
+            .painters
+            .as_ref()
+            .expect("painting threads")
+            .watch();
+        drop(renderer);
+        // Each thread holds the pool's shared state until it has ended.
+        assert!(
+            watch.upgrade().is_none(),
+            "a painting thread outlived the renderer"
+        );
     }
 
     fn px(r: &SoftRenderer, x: u32, y: u32) -> [u8; 4] {
