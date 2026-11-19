@@ -1,5 +1,6 @@
-//! Opens a real window, draws the gallery fixture through the GL path, and
-//! checks the screenshot against the CPU renderer. Needs a display; run it
+//! Opens a real window, draws the gallery fixture through the GL path (chosen
+//! outright: on Xvfb the shell would pick the CPU renderer), and checks the
+//! screenshot against the CPU renderer. Needs a display; run it
 //! under Xvfb on headless machines (`xvfb-run cargo test -p astryx-desktop`).
 //! It is a plain `main` because winit wants the main thread.
 
@@ -14,6 +15,7 @@ fn main() {
         println!("window_smoke: skipped, no display");
         return;
     }
+    std::env::set_var("ASTRYX_RENDERER", "gl");
     let path =
         std::env::temp_dir().join(format!("astryx-desktop-smoke-{}.png", std::process::id()));
     let options = Options {

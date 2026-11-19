@@ -11,23 +11,34 @@
 //! # }
 //! astryx_desktop::run(App).unwrap();
 //! ```
+//!
+//! Where OpenGL runs only on the CPU, the CPU renderer draws the window
+//! instead: on an X server with neither DRI3 nor NV-GLX (Xvfb, most VMs),
+//! with `LIBGL_ALWAYS_SOFTWARE` set, or when no OpenGL context can be made.
+//! `ASTRYX_RENDERER=gl` or `ASTRYX_RENDERER=cpu` chooses outright.
 
 pub mod a11y;
 #[cfg(feature = "audio")]
 mod audio;
+mod backend;
 pub mod input;
 pub mod platform;
 pub mod pointer;
+mod present;
 
 use std::error::Error;
 use std::ffi::CString;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::time::Instant;
 
-use astryx_core::{A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, Surface};
+use astryx_core::{
+    A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, Renderer, Surface,
+};
 use astryx_render_gl::GlRenderer;
 use astryx_render_soft::tiny_skia::{IntSize, Pixmap};
+use astryx_render_soft::SoftRenderer;
 use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
     ContextApi, ContextAttributesBuilder, NotCurrentGlContext, PossiblyCurrentContext, Version,
@@ -40,7 +51,7 @@ use winit::dpi::{LogicalPosition, LogicalSize};
 use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::ModifiersState;
-use winit::raw_window_handle::HasWindowHandle;
+use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle, RawDisplayHandle};
 use winit::window::{CursorIcon, Window, WindowAttributes, WindowId};
 
 /// Window and run settings.
@@ -49,7 +60,7 @@ pub struct Options {
     pub title: String,
     /// Initial inner size in logical points.
     pub size: (u32, u32),
-    /// Writes the first frame, read back from the GL framebuffer, to this PNG file.
+    /// Writes the first frame, read back from the renderer, to this PNG file.
     pub screenshot: Option<PathBuf>,
     /// Exits after the screenshot is written.
     pub exit_after_screenshot: bool,
@@ -79,7 +90,7 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         surface,
         options,
         proxy,
-        gpu: None,
+        screen: None,
         error: None,
         modifiers: ModifiersState::empty(),
         text_field: None,
@@ -108,20 +119,42 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
     }
 }
 
-struct Gpu {
-    // Field order is drop order: the renderer's GL objects go before the context.
-    renderer: GlRenderer,
-    gl_surface: GlutinSurface<WindowSurface>,
-    context: PossiblyCurrentContext,
+/// The window and what draws it.
+struct Screen {
+    // Field order is drop order: the drawing goes before the window.
+    draw: Draw,
     adapter: accesskit_winit::Adapter,
-    window: Window,
+    window: Rc<Window>,
+}
+
+enum Draw {
+    Gl {
+        // Field order is drop order: the renderer's GL objects go before
+        // the context.
+        renderer: Box<GlRenderer>,
+        gl_surface: GlutinSurface<WindowSurface>,
+        context: PossiblyCurrentContext,
+    },
+    Cpu {
+        renderer: Box<SoftRenderer>,
+        present: present::Present,
+    },
+}
+
+impl Draw {
+    fn renderer(&mut self) -> &mut dyn Renderer {
+        match self {
+            Draw::Gl { renderer, .. } => &mut **renderer,
+            Draw::Cpu { renderer, .. } => &mut **renderer,
+        }
+    }
 }
 
 struct Shell<S: Surface> {
     surface: S,
     options: Options,
     proxy: winit::event_loop::EventLoopProxy<accesskit_winit::Event>,
-    gpu: Option<Gpu>,
+    screen: Option<Screen>,
     error: Option<Box<dyn Error>>,
     modifiers: ModifiersState,
     /// Bounds of the focused text field, when one has focus.
@@ -172,13 +205,48 @@ fn pick_config(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
 }
 
 impl<S: Surface> Shell<S> {
-    fn create(&mut self, event_loop: &ActiveEventLoop) -> Result<Gpu, Box<dyn Error>> {
+    fn window_attributes(&self) -> WindowAttributes {
         let (w, h) = self.options.size;
-        let attributes = WindowAttributes::default()
+        WindowAttributes::default()
             .with_title(self.options.title.clone())
             .with_inner_size(LogicalSize::new(w, h))
             // AccessKit must attach before the window is first shown.
-            .with_visible(false);
+            .with_visible(false)
+    }
+
+    /// Opens the window with the renderer for this machine
+    /// ([`backend::choose`]); without OpenGL, with the CPU renderer.
+    fn create(&mut self, event_loop: &ActiveEventLoop) -> Result<Screen, Box<dyn Error>> {
+        let on_x11 = matches!(
+            event_loop.display_handle()?.as_raw(),
+            RawDisplayHandle::Xlib(_) | RawDisplayHandle::Xcb(_)
+        );
+        if backend::choose(&backend::facts(on_x11)) == backend::Backend::Gl {
+            match self.create_gl(event_loop) {
+                Ok(screen) => return Ok(screen),
+                Err(e) => {
+                    eprintln!("astryx-desktop: no OpenGL ({e}); drawing with the CPU renderer")
+                }
+            }
+        }
+        self.create_cpu(event_loop)
+    }
+
+    fn create_cpu(&mut self, event_loop: &ActiveEventLoop) -> Result<Screen, Box<dyn Error>> {
+        let window = Rc::new(event_loop.create_window(self.window_attributes())?);
+        let present = present::Present::new(&window)?;
+        self.show(
+            event_loop,
+            window,
+            Draw::Cpu {
+                renderer: Box::new(SoftRenderer::new()),
+                present,
+            },
+        )
+    }
+
+    fn create_gl(&mut self, event_loop: &ActiveEventLoop) -> Result<Screen, Box<dyn Error>> {
+        let attributes = self.window_attributes();
         let template = ConfigTemplateBuilder::new()
             .with_alpha_size(8)
             .with_stencil_size(8);
@@ -220,6 +288,24 @@ impl<S: Surface> Shell<S> {
             })
         }
         .map_err(|e| format!("GPU renderer: {e:?}"))?;
+        self.show(
+            event_loop,
+            Rc::new(window),
+            Draw::Gl {
+                renderer: Box::new(renderer),
+                gl_surface,
+                context,
+            },
+        )
+    }
+
+    /// Attaches AccessKit, shows the window and asks for its first frame.
+    fn show(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window: Rc<Window>,
+        draw: Draw,
+    ) -> Result<Screen, Box<dyn Error>> {
         let adapter = accesskit_winit::Adapter::with_event_loop_proxy(
             event_loop,
             &window,
@@ -227,10 +313,8 @@ impl<S: Surface> Shell<S> {
         );
         window.set_visible(true);
         window.request_redraw();
-        Ok(Gpu {
-            renderer,
-            gl_surface,
-            context,
+        Ok(Screen {
+            draw,
             adapter,
             window,
         })
@@ -238,8 +322,8 @@ impl<S: Surface> Shell<S> {
 
     /// Asks for one more frame (a no-op when one is already pending).
     fn request_redraw(&self) {
-        if let Some(gpu) = &self.gpu {
-            gpu.window.request_redraw();
+        if let Some(screen) = &self.screen {
+            screen.window.request_redraw();
         }
     }
 
@@ -359,8 +443,8 @@ impl<S: Surface> Shell<S> {
     /// Tells the surface where the mouse is, for hover, and repaints.
     fn hover(&mut self) {
         self.surface.pointer_move(self.pointer);
-        if let Some(gpu) = &self.gpu {
-            gpu.window.request_redraw();
+        if let Some(screen) = &self.screen {
+            screen.window.request_redraw();
         }
     }
 
@@ -368,8 +452,8 @@ impl<S: Surface> Shell<S> {
         let cursor = pointer::cursor_for(self.pointer_hit());
         if cursor != self.cursor {
             self.cursor = cursor;
-            if let Some(gpu) = &self.gpu {
-                gpu.window.set_cursor(cursor);
+            if let Some(screen) = &self.screen {
+                screen.window.set_cursor(cursor);
             }
         }
     }
@@ -381,12 +465,12 @@ impl<S: Surface> Shell<S> {
         if field == self.text_field {
             return;
         }
-        let Some(gpu) = &self.gpu else { return };
+        let Some(screen) = &self.screen else { return };
         if field.is_some() != self.text_field.is_some() {
-            gpu.window.set_ime_allowed(field.is_some());
+            screen.window.set_ime_allowed(field.is_some());
         }
         if let Some(r) = field {
-            gpu.window.set_ime_cursor_area(
+            screen.window.set_ime_cursor_area(
                 LogicalPosition::new(r.x, r.y),
                 LogicalSize::new(r.width, r.height),
             );
@@ -396,8 +480,10 @@ impl<S: Surface> Shell<S> {
 
     fn redraw(&mut self, event_loop: &ActiveEventLoop) {
         self.take_sounds();
-        let Some(gpu) = &mut self.gpu else { return };
-        let size = gpu.window.inner_size();
+        let Some(screen) = &mut self.screen else {
+            return;
+        };
+        let size = screen.window.inner_size();
         if size.width == 0 || size.height == 0 {
             return;
         }
@@ -407,22 +493,23 @@ impl<S: Surface> Shell<S> {
         let frame = FrameInfo {
             width: size.width,
             height: size.height,
-            scale: gpu.window.scale_factor() as f32,
+            scale: screen.window.scale_factor() as f32,
             dt,
         };
+        let renderer = screen.draw.renderer();
         for (id, data) in self.surface.take_image_updates() {
-            gpu.renderer.set_image(id, data.as_ref());
+            renderer.set_image(id, data.as_ref());
         }
-        let list = self.surface.frame(&frame, gpu.renderer.text());
+        let list = self.surface.frame(&frame, renderer.measurer());
         if let (Some(t), Some(from)) = (self.pending_transition.take(), &self.last_list) {
-            gpu.renderer.begin_transition(&t, from, &frame);
+            renderer.begin_transition(&t, from, &frame);
         }
-        gpu.renderer.render_list(&list, &frame);
+        renderer.render(&list, &frame);
         self.last_list = Some(list);
         self.frames += 1;
         if self.frames == 1 {
             if let Some(path) = self.options.screenshot.clone() {
-                if let Err(e) = save_screenshot(&mut gpu.renderer, frame.width, frame.height, &path)
+                if let Err(e) = save_screenshot(&mut screen.draw, frame.width, frame.height, &path)
                 {
                     self.error = Some(e);
                     event_loop.exit();
@@ -433,9 +520,17 @@ impl<S: Surface> Shell<S> {
                 }
             }
         }
-        gpu.window.pre_present_notify();
-        if let Err(e) = gpu.gl_surface.swap_buffers(&gpu.context) {
-            self.error = Some(e.into());
+        screen.window.pre_present_notify();
+        let shown: Result<(), Box<dyn Error>> = match &mut screen.draw {
+            Draw::Gl {
+                gl_surface,
+                context,
+                ..
+            } => gl_surface.swap_buffers(context).map_err(Into::into),
+            Draw::Cpu { renderer, present } => present.show(renderer.pixmap()).map_err(Into::into),
+        };
+        if let Err(e) = shown {
+            self.error = Some(e);
             event_loop.exit();
             return;
         }
@@ -444,19 +539,25 @@ impl<S: Surface> Shell<S> {
         }
         let tree = self.surface.accessibility();
         self.update_text_field(tree.as_ref());
-        let Some(gpu) = &mut self.gpu else { return };
+        let Some(screen) = &mut self.screen else {
+            return;
+        };
         if self.last_tree.as_ref() != Some(&tree) {
-            let (title, scale) = (self.options.title.clone(), gpu.window.scale_factor());
-            gpu.adapter
+            let (title, scale) = (self.options.title.clone(), screen.window.scale_factor());
+            screen
+                .adapter
                 .update_if_active(|| a11y::tree_update(tree.as_ref(), &title, scale));
             self.last_tree = Some(tree);
             self.update_cursor();
         }
-        let Some(gpu) = &mut self.gpu else { return };
-        // One more frame right after the first, which carries the
+        let Some(screen) = &mut self.screen else {
+            return;
+        };
+        // One more frame right after the first, which carries the GPU
         // renderer's warm-up, so it is done before the first input.
-        if self.surface.wants_frames() || gpu.renderer.transitioning() || self.frames == 1 {
-            gpu.window.request_redraw();
+        if self.surface.wants_frames() || screen.draw.renderer().transitioning() || self.frames == 1
+        {
+            screen.window.request_redraw();
         } else {
             self.last_frame = None;
         }
@@ -464,11 +565,18 @@ impl<S: Surface> Shell<S> {
 }
 
 fn save_screenshot(
-    renderer: &mut GlRenderer,
+    draw: &mut Draw,
     width: u32,
     height: u32,
     path: &std::path::Path,
 ) -> Result<(), Box<dyn Error>> {
+    let renderer = match draw {
+        Draw::Gl { renderer, .. } => renderer,
+        Draw::Cpu { renderer, .. } => {
+            renderer.pixmap().save_png(path)?;
+            return Ok(());
+        }
+    };
     let mut rgba = renderer
         .read_pixels()
         .map_err(|e| format!("read pixels: {e:?}"))?;
@@ -486,11 +594,11 @@ fn save_screenshot(
 
 impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.gpu.is_some() {
+        if self.screen.is_some() {
             return;
         }
         match self.create(event_loop) {
-            Ok(gpu) => self.gpu = Some(gpu),
+            Ok(screen) => self.screen = Some(screen),
             Err(e) => {
                 self.error = Some(e);
                 event_loop.exit();
@@ -499,24 +607,32 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _: WindowId, event: WindowEvent) {
-        if let Some(gpu) = &mut self.gpu {
-            gpu.adapter.process_event(&gpu.window, &event);
+        if let Some(screen) = &mut self.screen {
+            screen.adapter.process_event(&screen.window, &event);
         }
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {
-                if let (Some(gpu), Some(w), Some(h)) = (
-                    &self.gpu,
+                if let (Some(screen), Some(w), Some(h)) = (
+                    &self.screen,
                     NonZeroU32::new(size.width),
                     NonZeroU32::new(size.height),
                 ) {
-                    gpu.gl_surface.resize(&gpu.context, w, h);
-                    gpu.window.request_redraw();
+                    // The CPU path sizes its buffer to each frame.
+                    if let Draw::Gl {
+                        gl_surface,
+                        context,
+                        ..
+                    } = &screen.draw
+                    {
+                        gl_surface.resize(context, w, h);
+                    }
+                    screen.window.request_redraw();
                 }
             }
             WindowEvent::ScaleFactorChanged { .. } => {
-                if let Some(gpu) = &self.gpu {
-                    gpu.window.request_redraw();
+                if let Some(screen) = &self.screen {
+                    screen.window.request_redraw();
                 }
             }
             WindowEvent::ModifiersChanged(m) => self.modifiers = m.state(),
@@ -551,7 +667,10 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                let scale = self.gpu.as_ref().map_or(1.0, |g| g.window.scale_factor());
+                let scale = self
+                    .screen
+                    .as_ref()
+                    .map_or(1.0, |g| g.window.scale_factor());
                 let logical = position.to_logical::<f32>(scale);
                 self.pointer = Some(Point {
                     x: logical.x,
@@ -595,10 +714,10 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 }
             }
             WindowEvent::MouseWheel { delta, .. } => {
-                if let (Some(at), Some(gpu)) = (self.pointer, &self.gpu) {
-                    let delta = pointer::scroll_delta(delta, gpu.window.scale_factor());
+                if let (Some(at), Some(screen)) = (self.pointer, &self.screen) {
+                    let delta = pointer::scroll_delta(delta, screen.window.scale_factor());
                     if self.surface.scroll(at, delta) {
-                        gpu.window.request_redraw();
+                        screen.window.request_redraw();
                     }
                 }
             }
@@ -611,9 +730,10 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
         match event.window_event {
             accesskit_winit::WindowEvent::InitialTreeRequested => {
                 let tree = self.surface.accessibility();
-                if let Some(gpu) = &mut self.gpu {
-                    let (title, scale) = (self.options.title.clone(), gpu.window.scale_factor());
-                    gpu.adapter
+                if let Some(screen) = &mut self.screen {
+                    let (title, scale) = (self.options.title.clone(), screen.window.scale_factor());
+                    screen
+                        .adapter
                         .update_if_active(|| a11y::tree_update(tree.as_ref(), &title, scale));
                 }
                 self.last_tree = Some(tree);
@@ -659,8 +779,8 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 if layout != self.preferences.face_layout {
                     self.preferences.face_layout = layout;
                     self.surface.set_preferences(&self.preferences);
-                    if let Some(gpu) = &self.gpu {
-                        gpu.window.request_redraw();
+                    if let Some(screen) = &self.screen {
+                        screen.window.request_redraw();
                     }
                 }
             }

@@ -1,6 +1,6 @@
 [package]
 name = "astryx-desktop"
-description = "Desktop Astryx shell: winit window, glutin GL context, GPU renderer, keyboard and gamepad input, AccessKit"
+description = "Desktop Astryx shell: winit window, glutin GL context, GPU renderer (CPU renderer where GL is software only), keyboard and gamepad input, AccessKit"
 edition.workspace = true
 license.workspace = true
 version.workspace = true
@@ -22,7 +22,13 @@ astryx-audio = { path = "../astryx-audio", optional = true }
 cpal = { version = "0.16", optional = true }
 glutin = "0.32.3"
 glutin-winit = "0.5.0"
+# Presents the CPU renderer's frames where GL runs only on the CPU.
+softbuffer = { version = "0.4.8", default-features = false, features = ["x11", "x11-dlopen", "wayland", "wayland-dlopen"] }
 winit = "0.30.13"
+
+# Asks the X server whether it draws with a GPU (winit already uses it).
+[target.'cfg(all(unix, not(any(target_os = "macos", target_os = "ios", target_os = "android"))))'.dependencies]
+x11rb = "0.13.2"
 
 [dev-dependencies]
 astryx-headless = { path = "../astryx-headless" }
@@ -53,4 +59,12 @@ harness = false
 
 [[test]]
 name = "window_async"
+harness = false
+
+[[test]]
+name = "window_cpu"
+harness = false
+
+[[test]]
+name = "window_backend"
 harness = false

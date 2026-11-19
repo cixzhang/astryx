@@ -179,6 +179,10 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
   whole frame would; text and shadows are prepared on the renderer's thread.
 - Every frame equals, pixel for pixel, the same frame drawn whole by a new
   renderer (`tests/damage.rs`, the gallery's `soft_damage.rs`).
+- The desktop shell draws with it where OpenGL runs only on the CPU: an X
+  server with neither DRI3 nor NV-GLX (Xvfb, most VMs), `LIBGL_ALWAYS_SOFTWARE`
+  set, or no OpenGL context at all. It presents through `softbuffer`, sending
+  only the rows that changed. `ASTRYX_RENDERER=gl` or `cpu` chooses outright.
 
 App model (Lane A owns it): Elm style. `view(&self) -> Element<Msg>`,
 `update(&mut self, msg) -> Command`. An app is a library crate; each shell
