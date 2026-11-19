@@ -67,7 +67,16 @@ pub(crate) struct Buffered {
         not(any(target_os = "macos", target_os = "ios", target_os = "android"))
     ))]
     exposes: Option<x11::Exposes>,
+    /// The rows (first, end) each recent present wrote into its buffer,
+    /// newest last; `None` for a whole frame. A buffer `age` frames old
+    /// misses the rows the last `age - 1` presents wrote, so those are sent
+    /// again with the rows that change now (Wayland's two buffers give age
+    /// 2).
+    written: std::collections::VecDeque<Option<(usize, usize)>>,
 }
+
+/// How many presents [`Buffered::written`] keeps.
+const KEPT: usize = 3;
 
 impl Buffered {
     fn new(window: &Arc<Window>) -> Result<Self, Box<dyn Error>> {
@@ -81,11 +90,14 @@ impl Buffered {
                 not(any(target_os = "macos", target_os = "ios", target_os = "android"))
             ))]
             exposes: x11::Exposes::watch(window),
+            written: std::collections::VecDeque::new(),
         })
     }
 
-    /// As [`Present::show`]; when the buffer holds the frame on screen, only
-    /// rows that changed are written into it.
+    /// As [`Present::show`]. Every pixel that differs from the buffer's is
+    /// written, so the buffer then holds the frame whatever its age; the
+    /// rows sent are those written now and those the buffer's age says the
+    /// screen has newer than the buffer had.
     fn show(&mut self, frame: &Pixmap) -> Result<(), softbuffer::SoftBufferError> {
         let (Some(w), Some(h)) = (
             NonZeroU32::new(frame.width()),
@@ -96,10 +108,13 @@ impl Buffered {
         let exposed = self.exposed();
         self.surface.resize(w, h)?;
         let mut buffer = self.surface.buffer_mut()?;
-        // Age 1: the buffer holds the frame on screen. Otherwise its pixels
-        // are new or older, and every row goes; so it does when the server
-        // has dropped part of the window.
-        let whole = buffer.age() != 1 || exposed;
+        // A new buffer (age 0), one older than the presents kept, a new
+        // size, or a server that dropped part of the window: every row goes.
+        let age = usize::from(buffer.age());
+        let newer: Option<Vec<Option<(usize, usize)>>> = (age >= 1
+            && age - 1 <= self.written.len())
+        .then(|| self.written.iter().rev().take(age - 1).copied().collect());
+        let whole = exposed || newer.as_ref().is_none_or(|n| n.iter().any(Option::is_none));
         let width = w.get() as usize;
         let (mut first, mut last) = (usize::MAX, 0);
         for (y, (out, row)) in buffer
@@ -120,17 +135,34 @@ impl Buffered {
                 last = y;
             }
         }
+        let mut keep = |entry| {
+            self.written.push_back(entry);
+            if self.written.len() > KEPT {
+                self.written.pop_front();
+            }
+        };
         if whole {
+            keep(None);
             return buffer.present();
         }
-        if first > last {
+        let now = (first <= last).then_some((first, last + 1));
+        // The rows to send: written now, or newer on screen than in this
+        // buffer.
+        let send = newer
+            .unwrap_or_default()
+            .into_iter()
+            .flatten()
+            .chain(now)
+            .reduce(|(a0, a1), (b0, b1)| (a0.min(b0), a1.max(b1)));
+        let Some((y0, y1)) = send else {
             // Nothing changed: the frame on screen stays.
             return Ok(());
-        }
-        let rows = NonZeroU32::new((last - first + 1) as u32).expect("at least one row");
+        };
+        keep(now);
+        let rows = NonZeroU32::new((y1 - y0) as u32).expect("at least one row");
         buffer.present_with_damage(&[softbuffer::Rect {
             x: 0,
-            y: first as u32,
+            y: y0 as u32,
             width: w,
             height: rows,
         }])

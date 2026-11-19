@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="weston_screenshooter">
+  <!-- weston's screen capture, offered when weston runs with debug
+       protocols (weston debug). -->
+  <interface name="weston_screenshooter" version="1">
+    <request name="shoot">
+      <arg name="output" type="object" interface="wl_output"/>
+      <arg name="buffer" type="object" interface="wl_buffer"/>
+    </request>
+    <event name="done"/>
+  </interface>
+</protocol>

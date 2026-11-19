@@ -182,14 +182,20 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
 - Every frame equals, pixel for pixel, the same frame drawn whole by a new
   renderer (`tests/damage.rs`, the gallery's `soft_damage.rs`).
 - The desktop shell draws with it where OpenGL runs only on the CPU: an X
-  server with neither DRI3 nor NV-GLX (Xvfb, most VMs), `LIBGL_ALWAYS_SOFTWARE`
-  set, or no OpenGL context at all. On X11 it sends only the rows that
+  server with neither DRI3 nor NV-GLX (Xvfb, most VMs); a Wayland
+  compositor that takes no GPU buffers (none of `zwp_linux_dmabuf_v1`,
+  `wl_drm`, `wl_eglstream_display`; weston's headless and pixman
+  backends), or a machine without a GPU render node (`/dev/dri/renderD*`,
+  `/dev/nvidia0`); `LIBGL_ALWAYS_SOFTWARE` set; or no OpenGL context at
+  all. The display server is asked before any GL library loads: one round
+  trip, well under a millisecond. On X11 it sends only the rows that
   changed, as X images over a connection of its own, and keeps just a hash
   of each row on screen. Where the server takes images from shared memory
   (MIT-SHM 1.2, on this machine), they go through two small strips used in
   turn (about 256 KB each), not through the connection. Elsewhere it
-  presents through `softbuffer`. Rows the X server dropped (Expose) go
-  again.
+  presents through `softbuffer`: on Wayland its two buffers are each two
+  frames old, so the rows the previous frame changed go again with the
+  rows that change now. Rows the X server dropped (Expose) go again.
 - On an X server with a GPU (X11 only), it draws the first frames while
   OpenGL starts on a thread of its own (`astryx-gl`), over its own X
   connection: GL takes about 150 ms to start on NVIDIA, and the driver

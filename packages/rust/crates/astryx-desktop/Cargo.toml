@@ -31,10 +31,15 @@ winit = "0.30.13"
 [target.'cfg(all(unix, not(any(target_os = "macos", target_os = "ios", target_os = "android"))))'.dependencies]
 x11rb = { version = "0.13.2", features = ["shm"] }
 x11-dl = "2.21.0"
+# Asks the Wayland compositor which buffers it takes (winit already uses it).
+wayland-client = "0.31.15"
 # Shared memory for the CPU path's images on X11.
 libc = "0.2"
 
 [dev-dependencies]
+# Window tests on Wayland read weston's screenshooter.
+wayland-scanner = "0.31.11"
+wayland-backend = "0.3.17"
 astryx-headless = { path = "../astryx-headless" }
 
 [[test]]

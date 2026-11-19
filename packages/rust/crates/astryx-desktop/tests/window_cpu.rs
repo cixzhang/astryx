@@ -1,17 +1,24 @@
 //! The CPU path end to end: with `ASTRYX_RENDERER=cpu`, the window shows,
-//! pixel for pixel, what the CPU renderer draws, both the first frame and a
-//! later frame where only part changed, and keeps less shared memory for
-//! it than one frame, sending images through shared memory where the X
-//! server takes them. The pixels are read back from the X
-//! server, so this checks what reaches the screen. Needs an X display; run
-//! it under Xvfb on headless machines. A plain `main` because winit wants
-//! the main thread.
+//! pixel for pixel, what the CPU renderer draws: the first frame, then
+//! frames where only part changed, including a part that changes back
+//! (on Wayland each buffer is two frames old, so rows sent for the frame
+//! before must go again). The pixels are read back from the display
+//! server, so this checks what reaches the screen. On X11 it also keeps
+//! less shared memory than one frame, and sends images through it where the
+//! server takes them. Needs an X display (Xvfb) or weston with `--debug`;
+//! a plain `main` because winit wants the main thread.
 
 #[cfg(all(
     unix,
     not(any(target_os = "macos", target_os = "ios", target_os = "android"))
 ))]
-mod x11 {
+mod common;
+
+#[cfg(all(
+    unix,
+    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+))]
+mod cpu {
     use std::sync::atomic::{AtomicU8, Ordering};
     use std::sync::Arc;
     use std::time::{Duration, Instant};
@@ -23,35 +30,43 @@ mod x11 {
     use astryx_desktop::{run_with, Options};
     use astryx_headless::fixtures::{FixtureSurface, FIXTURE_SIZE};
     use astryx_headless::{astryx_render_soft::SoftRenderer, frame_info};
-    use x11rb::connection::Connection;
-    use x11rb::protocol::xproto::{ConnectionExt, ImageFormat};
 
-    /// Shared memory mapped once both frames showed.
+    use super::common::{self, Kind, Screen};
+
+    /// Shared memory mapped once the frames showed.
     static SHARED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     /// The server takes images from shared memory.
     static SHM: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-    /// What the test has asked of the window so far.
+    /// What the test has asked of the window so far: the page, then a red
+    /// square on it, moved, moved back.
     const FIRST: u8 = 0;
-    const CHANGED: u8 = 1;
-    const DONE: u8 = 2;
+    const SQUARE: u8 = 1;
+    const MOVED: u8 = 2;
+    const BACK: u8 = 3;
+    const DONE: u8 = 4;
 
-    /// The gallery fixture, with a red square added once the test asks.
+    /// The gallery fixture with the marker, and the square once the test
+    /// asks.
     struct Steps {
         inner: FixtureSurface,
         step: Arc<AtomicU8>,
         drawn: u8,
     }
 
-    fn with_square(mut list: DisplayList, step: u8) -> DisplayList {
-        if step >= CHANGED {
-            list.commands.push(DrawCmd::Rect {
-                rect: Rect::new(40.0, 60.0, 48.0, 32.0),
-                radii: Radii::all(6.0),
-                fill: Color::rgba(0.9, 0.1, 0.1, 1.0),
-                stroke: None,
-            });
-        }
+    fn with_square(list: DisplayList, step: u8) -> DisplayList {
+        let mut list = common::with_marker(list);
+        let x = match step {
+            SQUARE | BACK => 40.0,
+            MOVED => 200.0,
+            _ => return list,
+        };
+        list.commands.push(DrawCmd::Rect {
+            rect: Rect::new(x, 60.0, 48.0, 32.0),
+            radii: Radii::all(6.0),
+            fill: Color::rgba(0.9, 0.1, 0.1, 1.0),
+            stroke: None,
+        });
         list
     }
 
@@ -83,24 +98,6 @@ mod x11 {
         std::process::exit(1);
     }
 
-    /// The window's pixels as RGB, read from the top left of the screen,
-    /// where a window opens on an X server with no window manager.
-    fn grab(conn: &impl Connection, root: u32) -> Vec<[u8; 3]> {
-        let (w, h) = FIXTURE_SIZE;
-        let image = conn
-            .get_image(ImageFormat::Z_PIXMAP, root, 0, 0, w as u16, h as u16, !0)
-            .expect("get image")
-            .reply()
-            .expect("image");
-        image
-            .data
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|p| [p[2], p[1], p[0]])
-            .collect()
-    }
-
     /// What the CPU renderer draws for the fixture at `step`, as RGB.
     fn expected(step: u8) -> Vec<[u8; 3]> {
         let (w, h) = FIXTURE_SIZE;
@@ -120,79 +117,94 @@ mod x11 {
     }
 
     /// Waits until the screen shows `want`, up to two seconds.
-    fn wait_for(conn: &impl Connection, root: u32, want: &[[u8; 3]], what: &str) {
+    fn wait_for(screen: &mut Screen, want: &[[u8; 3]], what: &str) {
+        let (w, h) = FIXTURE_SIZE;
         let start = Instant::now();
         loop {
-            let got = grab(conn, root);
-            if got == want {
+            let got = screen.window(w, h);
+            if got.as_deref() == Some(want) {
                 return;
             }
             if start.elapsed() > Duration::from_secs(2) {
+                let Some(got) = got else {
+                    fail(format!("{what}: the window never showed"));
+                };
                 let differ = got.iter().zip(want).filter(|(a, b)| a != b).count();
                 let first = got.iter().zip(want).position(|(a, b)| a != b);
                 fail(format!(
                     "{what}: {differ} pixels differ from the CPU renderer's; first at {:?}",
-                    first.map(|i| (i as u32 % FIXTURE_SIZE.0, i as u32 / FIXTURE_SIZE.0))
+                    first.map(|i| (i as u32 % w, i as u32 / w))
                 ));
             }
             std::thread::sleep(Duration::from_millis(20));
         }
     }
 
-    pub fn main() {
-        if std::env::var_os("DISPLAY").is_none() {
-            println!("window_cpu: skipped, no X display");
-            return;
+    /// On X11: less shared memory than one frame, and images through it
+    /// where the server takes them.
+    fn check_x11_memory() {
+        let maps = std::fs::read_to_string("/proc/self/maps").unwrap_or_default();
+        // Shared memory shows as a SysV segment, a file in /dev/shm
+        // (softbuffer's buffer is /dev/shm/softbuffer-x11-*) or a memfd.
+        let shared: Vec<&str> = maps
+            .lines()
+            .filter(|l| l.contains("SYSV") || l.contains("/dev/shm/") || l.contains("/memfd:"))
+            .collect();
+        let bytes: u64 = shared
+            .iter()
+            .filter_map(|l| {
+                let (a, b) = l.split_whitespace().next()?.split_once('-')?;
+                Some(u64::from_str_radix(b, 16).ok()? - u64::from_str_radix(a, 16).ok()?)
+            })
+            .sum();
+        let frame_bytes = u64::from(FIXTURE_SIZE.0) * u64::from(FIXTURE_SIZE.1) * 4;
+        if bytes >= frame_bytes {
+            fail(format!(
+                "{bytes} bytes of shared memory mapped, a frame is {frame_bytes}: {shared:?}"
+            ));
         }
+        // Where the server takes images from shared memory (MIT-SHM 1.2, on
+        // this machine), they go through it: their bytes are not copied
+        // through the connection.
+        use x11rb::protocol::shm::ConnectionExt as _;
+        let (conn, _) = x11rb::connect(None).expect("X connection");
+        let shm = conn
+            .shm_query_version()
+            .ok()
+            .and_then(|c| c.reply().ok())
+            .is_some_and(|v| (v.major_version, v.minor_version) >= (1, 2));
+        if shm && !shared.iter().any(|l| l.contains("astryx-strip")) {
+            fail(format!(
+                "the server has MIT-SHM, but no shared-memory strip is mapped: {shared:?}"
+            ));
+        }
+        SHARED.store(bytes, Ordering::SeqCst);
+        SHM.store(shm, Ordering::SeqCst);
+    }
+
+    pub fn main() {
+        let Some(kind) = common::kind() else {
+            println!("window_cpu: skipped, no display");
+            return;
+        };
         std::env::set_var("ASTRYX_RENDERER", "cpu");
-        let (conn, screen) = x11rb::connect(None).expect("X connection");
-        let root = conn.setup().roots[screen].root;
         let step = Arc::new(AtomicU8::new(FIRST));
         let watch = step.clone();
         std::thread::spawn(move || {
-            wait_for(&conn, root, &expected(FIRST), "first frame");
+            let mut screen = Screen::connect();
+            wait_for(&mut screen, &expected(FIRST), "first frame");
             // Only the square changes: the window gets just those rows.
-            watch.store(CHANGED, Ordering::SeqCst);
-            wait_for(&conn, root, &expected(CHANGED), "changed frame");
-            // On X11 the frames go as images of the rows that changed: no
-            // frame-sized shared-memory buffer beside the renderer's own,
-            // only strips smaller than a frame together.
-            let maps = std::fs::read_to_string("/proc/self/maps").unwrap_or_default();
-            // Shared memory shows as a SysV segment, a file in /dev/shm
-            // (softbuffer's buffer is /dev/shm/softbuffer-x11-*) or a memfd.
-            let shared: Vec<&str> = maps
-                .lines()
-                .filter(|l| l.contains("SYSV") || l.contains("/dev/shm/") || l.contains("/memfd:"))
-                .collect();
-            let bytes: u64 = shared
-                .iter()
-                .filter_map(|l| {
-                    let (a, b) = l.split_whitespace().next()?.split_once('-')?;
-                    Some(u64::from_str_radix(b, 16).ok()? - u64::from_str_radix(a, 16).ok()?)
-                })
-                .sum();
-            let frame_bytes = u64::from(FIXTURE_SIZE.0) * u64::from(FIXTURE_SIZE.1) * 4;
-            if bytes >= frame_bytes {
-                fail(format!(
-                    "{bytes} bytes of shared memory mapped, a frame is {frame_bytes}: {shared:?}"
-                ));
+            for (next, what) in [
+                (SQUARE, "square drawn"),
+                (MOVED, "square moved"),
+                (BACK, "square moved back"),
+            ] {
+                watch.store(next, Ordering::SeqCst);
+                wait_for(&mut screen, &expected(next), what);
             }
-            // Where the server takes images from shared memory (MIT-SHM
-            // 1.2, on this machine), they go through it: their bytes are
-            // not copied through the connection.
-            use x11rb::protocol::shm::ConnectionExt as _;
-            let shm = conn
-                .shm_query_version()
-                .ok()
-                .and_then(|c| c.reply().ok())
-                .is_some_and(|v| (v.major_version, v.minor_version) >= (1, 2));
-            if shm && !shared.iter().any(|l| l.contains("astryx-strip")) {
-                fail(format!(
-                    "the server has MIT-SHM, but no shared-memory strip is mapped: {shared:?}"
-                ));
+            if kind == Kind::X11 {
+                check_x11_memory();
             }
-            SHARED.store(bytes, Ordering::SeqCst);
-            SHM.store(shm, Ordering::SeqCst);
             watch.store(DONE, Ordering::SeqCst);
         });
         let surface = Steps {
@@ -207,14 +219,20 @@ mod x11 {
         };
         run_with(surface, options).expect("desktop shell runs");
         if step.load(Ordering::SeqCst) != DONE {
-            fail("the window closed before both frames showed".into());
+            fail("the window closed before every frame showed".into());
         }
-        println!(
-            "window_cpu: first and changed frames on screen equal the CPU renderer's; \
-             {} bytes of shared memory, less than a frame; images through shared memory: {}",
-            SHARED.load(Ordering::SeqCst),
-            SHM.load(Ordering::SeqCst)
-        );
+        match kind {
+            Kind::X11 => println!(
+                "window_cpu: X11: first and changed frames on screen equal the CPU renderer's; \
+                 {} bytes of shared memory, less than a frame; images through shared memory: {}",
+                SHARED.load(Ordering::SeqCst),
+                SHM.load(Ordering::SeqCst)
+            ),
+            Kind::Wayland => println!(
+                "window_cpu: Wayland: first and changed frames on screen equal the CPU \
+                 renderer's, including a change back"
+            ),
+        }
         println!("window_cpu: ok");
     }
 }
@@ -224,5 +242,5 @@ fn main() {
         unix,
         not(any(target_os = "macos", target_os = "ios", target_os = "android"))
     ))]
-    x11::main();
+    cpu::main();
 }

@@ -13,8 +13,11 @@
 //! ```
 //!
 //! Where OpenGL runs only on the CPU, the CPU renderer draws the window
-//! instead: on an X server with neither DRI3 nor NV-GLX (Xvfb, most VMs),
-//! with `LIBGL_ALWAYS_SOFTWARE` set, or when no OpenGL context can be made.
+//! instead: on an X server with neither DRI3 nor NV-GLX (Xvfb, most VMs), on
+//! a Wayland compositor that takes no GPU buffers or a machine without a
+//! GPU render node, with `LIBGL_ALWAYS_SOFTWARE` set, or when no OpenGL
+//! context can be made.
+//!
 //! On an X server with a GPU, the CPU renderer draws the first frames while
 //! OpenGL starts on a thread of its own, which then draws every frame.
 //! `ASTRYX_RENDERER=gl` (OpenGL on the main thread from the first frame),
@@ -281,11 +284,12 @@ impl<S: Surface> Shell<S> {
     /// Opens the window with the renderer for this machine
     /// ([`backend::choose`]); without OpenGL, with the CPU renderer.
     fn create(&mut self, event_loop: &ActiveEventLoop) -> Result<Screen, Box<dyn Error>> {
-        let on_x11 = matches!(
-            event_loop.display_handle()?.as_raw(),
-            RawDisplayHandle::Xlib(_) | RawDisplayHandle::Xcb(_)
-        );
-        match backend::choose(&backend::facts(on_x11)) {
+        let display = match event_loop.display_handle()?.as_raw() {
+            RawDisplayHandle::Xlib(_) | RawDisplayHandle::Xcb(_) => backend::Display::X11,
+            RawDisplayHandle::Wayland(_) => backend::Display::Wayland,
+            _ => backend::Display::Other,
+        };
+        match backend::choose(&backend::facts(display)) {
             backend::Backend::Gl => match self.create_gl(event_loop) {
                 Ok(screen) => return Ok(screen),
                 Err(e) => {

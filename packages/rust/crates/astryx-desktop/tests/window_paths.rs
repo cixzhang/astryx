@@ -1,7 +1,8 @@
 //! The window behaves the same whichever way it is drawn: OpenGL on the main
 //! thread (`ASTRYX_RENDERER=gl`), the CPU renderer first and then OpenGL on
 //! its own thread (`cpu-first`, the default on an X server with a GPU), and
-//! the CPU renderer only (`cpu`). Each way runs in a child process (one
+//! the CPU renderer only (`cpu`); on Wayland, where the CPU renderer does
+//! not draw first, `gl` and `cpu`. Each way runs in a child process (one
 //! event loop per process) and must show:
 //! - a first picture, then never anything but that picture within
 //!   antialiasing (no blank or partial frame, no flash at the switch from
@@ -14,18 +15,25 @@
 //! - on quit, no thread left behind (OpenGL's, or the CPU renderer's
 //!   painting threads).
 //!
-//! Needs an X display with OpenGL (Xvfb has llvmpipe). A plain `main`
-//! because winit wants the main thread.
+//! Needs an X display with OpenGL (Xvfb has llvmpipe) or weston with
+//! `--debug`. A plain `main` because winit wants the main thread.
 
 #[cfg(all(
     unix,
     not(any(target_os = "macos", target_os = "ios", target_os = "android"))
 ))]
-mod x11 {
+mod common;
+
+#[cfg(all(
+    unix,
+    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+))]
+mod paths {
     use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicU8, Ordering};
     use std::sync::Arc;
     use std::time::{Duration, Instant};
 
+    use super::common::{self, Kind, Screen};
     use astryx_core::{
         A11yNode, Command, DisplayList, Easing, FrameInfo, Input, InputPhase, Surface, TextMeasure,
         Transition, TransitionKind,
@@ -33,10 +41,9 @@ mod x11 {
     use astryx_desktop::{run_with, Options};
     use astryx_headless::fixtures::{FixtureSurface, FIXTURE_SIZE};
     use astryx_headless::{astryx_render_soft::SoftRenderer, frame_info};
-    use x11rb::connection::Connection;
-    use x11rb::protocol::xproto::{ConnectionExt, ImageFormat};
 
     const MODES: [&str; 3] = ["gl", "cpu-first", "cpu"];
+    const WAYLAND_MODES: [&str; 2] = ["gl", "cpu"];
     const ANIMATION: u32 = 12;
 
     /// What the test asks of the surface, after nothing (0).
@@ -82,7 +89,7 @@ mod x11 {
             if s.animate.load(Ordering::SeqCst) > 0 {
                 s.animate.fetch_sub(1, Ordering::SeqCst);
             }
-            self.inner.frame(frame, text)
+            common::with_marker(self.inner.frame(frame, text))
         }
         // The shell reads the tree after each frame is presented.
         fn accessibility(&self) -> Option<A11yNode> {
@@ -120,20 +127,9 @@ mod x11 {
         std::process::exit(1);
     }
 
-    fn grab(conn: &impl Connection, root: u32) -> Vec<[u8; 3]> {
+    fn grab(screen: &mut Screen) -> Option<Vec<[u8; 3]>> {
         let (w, h) = FIXTURE_SIZE;
-        let image = conn
-            .get_image(ImageFormat::Z_PIXMAP, root, 0, 0, w as u16, h as u16, !0)
-            .expect("get image")
-            .reply()
-            .expect("image");
-        image
-            .data
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|p| [p[2], p[1], p[0]])
-            .collect()
+        screen.window(w, h)
     }
 
     /// Pixels differing by more than 16 levels.
@@ -151,7 +147,7 @@ mod x11 {
         let list = FixtureSurface::new("gallery")
             .expect("fixture")
             .frame(&frame, soft.text());
-        soft.render_list(&list, &frame);
+        soft.render_list(&common::with_marker(list), &frame);
         soft.pixmap()
             .data()
             .as_chunks::<4>()
@@ -171,12 +167,11 @@ mod x11 {
     fn child(mode: &str) {
         let mode = mode.to_owned();
         let shared = Arc::new(Shared::default());
-        let (conn, screen) = x11rb::connect(None).expect("X connection");
-        let root = conn.setup().roots[screen].root;
+        let mut screen = Screen::connect();
         let expected = cpu_picture();
         // Tolerance as window_smoke: GL and CPU agree within antialiasing.
         let allowed = expected.len() / 200;
-        let blank = grab(&conn, root);
+        let blank = grab(&mut screen);
         let watch = shared.clone();
         let m = mode.clone();
         let driver = std::thread::spawn(move || {
@@ -188,11 +183,15 @@ mod x11 {
             let mut grabs = 0;
             let mut switched = false;
             while start.elapsed() < Duration::from_millis(2500) {
-                let got = grab(&conn, root);
+                let got = grab(&mut screen);
+                if first.is_none() && got == blank {
+                    continue;
+                }
+                let Some(got) = got else {
+                    // On Wayland: not on screen yet.
+                    continue;
+                };
                 if first.is_none() {
-                    if got == blank {
-                        continue;
-                    }
                     // The window may be mapped before its first frame:
                     // wait until it shows the page.
                     if over(&got, &expected) > allowed {
@@ -314,17 +313,21 @@ mod x11 {
     }
 
     pub fn main() {
-        if std::env::var_os("DISPLAY").is_none() {
-            println!("window_paths: skipped, no X display");
+        let Some(kind) = common::kind() else {
+            println!("window_paths: skipped, no display");
             return;
-        }
+        };
         if let Ok(mode) = std::env::var("ASTRYX_PATHS_CHILD") {
             child(&mode);
             return;
         }
         let me = std::env::current_exe().expect("test binary");
         let mut failed = false;
-        for mode in MODES {
+        let modes: &[&str] = match kind {
+            Kind::X11 => &MODES,
+            Kind::Wayland => &WAYLAND_MODES,
+        };
+        for &mode in modes {
             let out = std::process::Command::new(&me)
                 .env("ASTRYX_PATHS_CHILD", mode)
                 .env("ASTRYX_RENDERER", mode)
@@ -355,5 +358,5 @@ fn main() {
         unix,
         not(any(target_os = "macos", target_os = "ios", target_os = "android"))
     ))]
-    x11::main();
+    paths::main();
 }

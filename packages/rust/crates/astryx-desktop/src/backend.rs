@@ -6,6 +6,13 @@
 //! a change, and uses far less memory, so the shell uses it there. The
 //! choice is made before any GL library loads.
 //!
+//! On Wayland, a compositor that can take GPU buffers from its clients
+//! offers `zwp_linux_dmabuf_v1`, `wl_drm` or (NVIDIA) `wl_eglstream_display`;
+//! one that offers none of them, such as weston's headless or pixman
+//! backends, can only take shared-memory buffers, so a client's OpenGL runs
+//! on the CPU. Without a GPU render node (`/dev/dri/renderD*`, or NVIDIA's
+//! `/dev/nvidia0`), OpenGL is software too.
+//!
 //! On an X server with a GPU, OpenGL takes about 150 ms to start (driver
 //! loading, context creation, the first make-current), so the CPU renderer
 //! draws the first frames while OpenGL starts on a thread of its own, which
@@ -32,6 +39,26 @@ pub(crate) struct Facts {
     pub mesa_software: bool,
     /// On X11, what the server offers.
     pub x11: Option<X11>,
+    /// On Wayland, what the compositor and the machine offer.
+    pub wayland: Option<Wayland>,
+}
+
+/// What a Wayland client's OpenGL needs to run on a GPU.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Wayland {
+    /// The compositor takes GPU buffers: it offers `zwp_linux_dmabuf_v1`,
+    /// `wl_drm` or `wl_eglstream_display`.
+    pub gpu_buffers: bool,
+    /// The machine has a GPU render node.
+    pub render_node: bool,
+}
+
+/// Where the window opens.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Display {
+    X11,
+    Wayland,
+    Other,
 }
 
 /// The X server's GPU extensions. An X server that draws with a GPU offers
@@ -66,10 +93,17 @@ pub(crate) fn choose(facts: &Facts) -> Backend {
     if facts.mesa_software {
         return Backend::Cpu;
     }
-    match facts.x11 {
-        Some(x) if !x.dri3 && !x.nv_glx => Backend::Cpu,
-        _ => gl,
+    if let Some(x) = facts.x11 {
+        if !x.dri3 && !x.nv_glx {
+            return Backend::Cpu;
+        }
     }
+    if let Some(w) = facts.wayland {
+        if !w.gpu_buffers || !w.render_node {
+            return Backend::Cpu;
+        }
+    }
+    gl
 }
 
 /// Whether `choice` chooses outright.
@@ -92,24 +126,36 @@ fn env_on(value: Option<std::ffi::OsString>) -> bool {
     })
 }
 
-/// The facts on this machine. `on_x11` says whether the window opens on an
-/// X server; only then is the server asked.
-pub(crate) fn facts(on_x11: bool) -> Facts {
+/// The facts on this machine, for a window that opens on `display`; only
+/// that display server is asked.
+pub(crate) fn facts(display: Display) -> Facts {
     let choice = std::env::var("ASTRYX_RENDERER").ok();
     let mesa_software = env_on(std::env::var_os("LIBGL_ALWAYS_SOFTWARE"));
-    // An explicit choice needs no server round trip.
-    let decided = choice.as_deref().is_some_and(decides);
-    let x11 = if on_x11 && !decided && !mesa_software {
-        x11_extensions()
-    } else {
-        None
-    };
+    // An explicit choice needs no round trip.
+    let ask = !choice.as_deref().is_some_and(decides) && !mesa_software;
+    let x11 = (ask && display == Display::X11)
+        .then(x11_extensions)
+        .flatten();
+    let wayland = (ask && display == Display::Wayland)
+        .then(wayland_offers)
+        .flatten();
     Facts {
         choice,
-        on_x11,
+        on_x11: display == Display::X11,
         mesa_software,
         x11,
+        wayland,
     }
+}
+
+/// Whether the machine has a GPU render node: Mesa's drivers open one
+/// (`/dev/dri/renderD*`), NVIDIA's open `/dev/nvidia0`.
+fn render_node() -> bool {
+    let dri = std::fs::read_dir("/dev/dri").is_ok_and(|d| {
+        d.flatten()
+            .any(|e| e.file_name().to_string_lossy().starts_with("renderD"))
+    });
+    dri || std::path::Path::new("/dev/nvidia0").exists()
 }
 
 /// Asks the X server named by `DISPLAY` for its GPU extensions: one
@@ -134,6 +180,58 @@ fn x11_extensions() -> Option<X11> {
     not(any(target_os = "macos", target_os = "ios", target_os = "android"))
 )))]
 fn x11_extensions() -> Option<X11> {
+    None
+}
+
+/// Asks the compositor named by `WAYLAND_DISPLAY` which buffers it takes:
+/// one connection and one round trip for its globals, well under a
+/// millisecond. `None` when it cannot be asked, which leaves the choice to
+/// GL.
+#[cfg(all(
+    unix,
+    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+))]
+fn wayland_offers() -> Option<Wayland> {
+    use wayland_client::protocol::wl_registry;
+    use wayland_client::{Connection, Dispatch, QueueHandle};
+
+    /// Whether a global for GPU buffers was offered.
+    struct Globals(bool);
+
+    impl Dispatch<wl_registry::WlRegistry, ()> for Globals {
+        fn event(
+            state: &mut Self,
+            _: &wl_registry::WlRegistry,
+            event: wl_registry::Event,
+            _: &(),
+            _: &Connection,
+            _: &QueueHandle<Self>,
+        ) {
+            if let wl_registry::Event::Global { interface, .. } = event {
+                state.0 |= matches!(
+                    interface.as_str(),
+                    "zwp_linux_dmabuf_v1" | "wl_drm" | "wl_eglstream_display"
+                );
+            }
+        }
+    }
+
+    let conn = Connection::connect_to_env().ok()?;
+    let mut queue = conn.new_event_queue();
+    conn.display().get_registry(&queue.handle(), ());
+    let mut globals = Globals(false);
+    queue.roundtrip(&mut globals).ok()?;
+    Some(Wayland {
+        gpu_buffers: globals.0,
+        render_node: render_node(),
+    })
+}
+
+#[cfg(not(all(
+    unix,
+    not(any(target_os = "macos", target_os = "ios", target_os = "android"))
+)))]
+fn wayland_offers() -> Option<Wayland> {
     None
 }
 
@@ -171,6 +269,36 @@ mod tests {
         assert_eq!(choose(&on_x11(None)), Backend::CpuFirst);
         // Not on X11: GL from the first frame.
         assert_eq!(choose(&Facts::default()), Backend::Gl);
+    }
+
+    fn on_wayland(gpu_buffers: bool, render_node: bool) -> Facts {
+        Facts {
+            wayland: Some(Wayland {
+                gpu_buffers,
+                render_node,
+            }),
+            ..Facts::default()
+        }
+    }
+
+    #[test]
+    fn software_only_wayland_draws_on_the_cpu() {
+        // weston headless or pixman: shared-memory buffers only.
+        assert_eq!(choose(&on_wayland(false, true)), Backend::Cpu);
+        // No GPU render node: OpenGL is software whatever the compositor.
+        assert_eq!(choose(&on_wayland(true, false)), Backend::Cpu);
+        assert_eq!(choose(&on_wayland(false, false)), Backend::Cpu);
+        // A compositor that takes GPU buffers, on a machine with a GPU: GL
+        // from the first frame, as before.
+        assert_eq!(choose(&on_wayland(true, true)), Backend::Gl);
+        // The compositor could not be asked: GL.
+        assert_eq!(choose(&Facts::default()), Backend::Gl);
+        // An explicit choice wins.
+        let gl = Facts {
+            choice: Some("gl".into()),
+            ..on_wayland(false, false)
+        };
+        assert_eq!(choose(&gl), Backend::Gl);
     }
 
     #[test]
