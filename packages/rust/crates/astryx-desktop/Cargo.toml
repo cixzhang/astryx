@@ -68,3 +68,7 @@ harness = false
 [[test]]
 name = "window_backend"
 harness = false
+
+[[test]]
+name = "window_expose"
+harness = false
