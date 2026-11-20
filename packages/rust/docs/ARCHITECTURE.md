@@ -208,6 +208,11 @@ diamonds, read it, and treat `Unknown` as `Nintendo`.
   within antialiasing, so it does not show. On quit, or if GL fails to
   start, the thread ends and the shell waits for it. Elsewhere (Wayland,
   macOS, Windows) OpenGL starts on the main thread before the first frame.
+- Frames that no input asked for (the surface wants frames, or a transition
+  runs) come at the display's rate on the CPU path, as OpenGL's do when it
+  waits for the display on each swap: the monitor's refresh rate where the
+  windowing system reports one, at most 60 Hz, else 60 Hz. An input is
+  drawn at once.
 - `ASTRYX_RENDERER` chooses outright: `gl` (OpenGL on the main thread from
   the first frame, as before the CPU renderer came first), `cpu-first`, or
   `cpu`.

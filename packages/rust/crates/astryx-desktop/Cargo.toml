@@ -85,3 +85,7 @@ harness = false
 [[test]]
 name = "window_paths"
 harness = false
+
+[[test]]
+name = "window_paced"
+harness = false

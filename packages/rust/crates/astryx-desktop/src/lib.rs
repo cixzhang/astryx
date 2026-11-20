@@ -42,7 +42,7 @@ use std::ffi::CString;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use astryx_core::{
     A11yAction, A11yNode, Command, FrameInfo, Input, InputPhase, Point, Renderer, Surface,
@@ -124,6 +124,7 @@ pub fn run_with<S: Surface>(surface: S, options: Options) -> Result<(), Box<dyn 
         early_sounds: Vec::new(),
         gl_images: std::collections::HashMap::new(),
         shot_pending: false,
+        paced: None,
     };
     shell.shot_pending = shell.options.screenshot.is_some();
     event_loop.run_app(&mut shell)?;
@@ -148,7 +149,26 @@ struct Screen {
     /// driver would hold up the first frame's threads.
     gl_wanted: bool,
     adapter: accesskit_winit::Adapter,
+    /// The CPU path's frame time ([`frame_interval`]). OpenGL waits for the
+    /// display when it swaps; the CPU renderer presents at once, so frames
+    /// that the surface or a transition wants come at this rate instead of
+    /// as fast as the CPU allows. An input draws at once.
+    frame_interval: Duration,
     window: Arc<Window>,
+}
+
+/// The CPU path's frame time: the display's refresh rate where the windowing
+/// system reports one, at most 60 Hz (at least 30), else 60 Hz. A reported
+/// rate can be wrong (winit gives 170 Hz for an 85 Hz NVIDIA mode), and the
+/// CPU renderer has little to gain from more than 60 frames a second.
+fn frame_interval(window: &Window) -> Duration {
+    let hz = window
+        .current_monitor()
+        .and_then(|m| m.refresh_rate_millihertz())
+        .map(|mhz| f64::from(mhz) / 1000.0)
+        .filter(|hz| hz.is_finite() && *hz > 0.0)
+        .map_or(60.0, |hz| hz.clamp(30.0, 60.0));
+    Duration::from_secs_f64(1.0 / hz)
 }
 
 enum Draw {
@@ -229,6 +249,9 @@ struct Shell<S: Surface> {
     /// The screenshot is still to be written: from the first frame of the
     /// renderer that keeps drawing.
     shot_pending: bool,
+    /// When the CPU renderer draws its next frame of a run the surface or a
+    /// transition wants (see [`Screen::frame_interval`]).
+    paced: Option<Instant>,
 }
 
 /// How often an idle shell asks the surface whether it wants a frame, so a
@@ -373,6 +396,7 @@ impl<S: Surface> Shell<S> {
         window.set_visible(true);
         window.request_redraw();
         Ok(Screen {
+            frame_interval: frame_interval(&window),
             draw,
             #[cfg(all(
                 unix,
@@ -389,6 +413,25 @@ impl<S: Surface> Shell<S> {
     fn request_redraw(&self) {
         if let Some(screen) = &self.screen {
             screen.window.request_redraw();
+        }
+    }
+
+    /// The surface wants a frame without an input: at once with OpenGL,
+    /// which waits for the display itself; for the CPU renderer, a frame
+    /// time after its last frame.
+    fn want_frame(&mut self) {
+        let Some(screen) = &self.screen else {
+            return;
+        };
+        if !matches!(screen.draw, Draw::Cpu { .. }) {
+            screen.window.request_redraw();
+            return;
+        }
+        if self.paced.is_none() {
+            let since = self
+                .last_frame
+                .map_or(screen.frame_interval, |t| t.elapsed());
+            self.paced = Some(Instant::now() + screen.frame_interval.saturating_sub(since));
         }
     }
 
@@ -555,6 +598,8 @@ impl<S: Surface> Shell<S> {
         let now = Instant::now();
         let dt = self.last_frame.map_or(0.0, |t| (now - t).as_secs_f32());
         self.last_frame = Some(now);
+        // This frame is the one a run was waiting for, or comes sooner.
+        self.paced = None;
         let frame = FrameInfo {
             width: size.width,
             height: size.height,
@@ -684,8 +729,16 @@ impl<S: Surface> Shell<S> {
         };
         // One more frame right after the first, which carries the GPU
         // renderer's warm-up, so it is done before the first input.
-        if self.surface.wants_frames() || screen.draw.transitioning() || self.frames == 1 {
+        if self.frames == 1 {
             screen.window.request_redraw();
+        } else if self.surface.wants_frames() || screen.draw.transitioning() {
+            if matches!(screen.draw, Draw::Cpu { .. }) {
+                // The next frame of the run, a frame time after this one
+                // began (see `about_to_wait`).
+                self.paced = Some(now + screen.frame_interval);
+            } else {
+                screen.window.request_redraw();
+            }
         } else {
             self.last_frame = None;
         }
@@ -1025,8 +1078,18 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
         // a stream) says so through wants_frames(); every wakeup asks again,
         // including the idle re-poll below.
         if self.surface.wants_frames() {
+            self.want_frame();
+        }
+        // A frame a run wants is due: draw it. Every wait below ends by then.
+        if self.paced.is_some_and(|t| t <= Instant::now()) {
+            self.paced = None;
             self.request_redraw();
         }
+        let paced = self.paced;
+        let until = |t: Instant| match paced {
+            Some(p) => t.min(p),
+            None => t,
+        };
         #[cfg(feature = "gamepad")]
         {
             let mut events = Vec::new();
@@ -1069,7 +1132,7 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                 .is_some_and(|g| g.gamepads().next().is_some());
             if connected {
                 let next = Instant::now() + std::time::Duration::from_millis(8);
-                event_loop.set_control_flow(ControlFlow::WaitUntil(next));
+                event_loop.set_control_flow(ControlFlow::WaitUntil(until(next)));
                 return;
             }
         }
@@ -1080,13 +1143,13 @@ impl<S: Surface> ApplicationHandler<accesskit_winit::Event> for Shell<S> {
                     screen.window.request_redraw();
                 }
                 let next = Instant::now() + std::time::Duration::from_millis(8);
-                event_loop.set_control_flow(ControlFlow::WaitUntil(next));
+                event_loop.set_control_flow(ControlFlow::WaitUntil(until(next)));
                 return;
             }
         }
         // Idle: wake every IDLE_POLL to ask wants_frames() again, drawing
-        // nothing unless it says so.
-        event_loop.set_control_flow(ControlFlow::WaitUntil(Instant::now() + IDLE_POLL));
+        // nothing unless it says so; sooner for a frame a run wants.
+        event_loop.set_control_flow(ControlFlow::WaitUntil(until(Instant::now() + IDLE_POLL)));
     }
 }
 
